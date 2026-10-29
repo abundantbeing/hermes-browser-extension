@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "الإضافة المرافقة للمتصفح",
+    "message": "إضافة Hermes Browser Extension",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "تم التحميل: الإصدار {version}، الملف الشخصي {profile}، عدد الأدوات {toolCount}. لم تتمكن هذه البوابة من التأكد مما إذا كانت مجموعة أدواتها مفعّلة لخادم API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "نسخة أقدم من هذه الإضافة محمّلة باسمها السابق hermes-browser-companion. أزلها (`hermes plugins remove hermes-browser-companion`)، وثبّت hermes-browser-extension لهذا الملف الشخصي، وأعد تشغيل البوابة.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "متاح عبر إضافة المرافق (الإصدار {version})، التي تقدّم هذا المسار على هذه البوابة. لا يوفّر Hermes نفسه هذا المسار.",

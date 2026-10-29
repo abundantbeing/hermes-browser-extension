@@ -313,7 +313,7 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
 //
 // Fallback upstream ask, only if that route is ever unreachable: publish
 // `features.browser_companion_plugin: true` (and the version) in
-// /v1/capabilities when the plugin registry loads hermes-browser-companion for
+// /v1/capabilities when the plugin registry loads hermes-browser-extension for
 // the profile that serves the connection.
 
 // One entry per flag whose value comes from /v1/capabilities. `features` and
@@ -625,7 +625,7 @@ function rowDefinitions({ browserSpeechAvailable = false } = {}) {
     { key: 'browserContextProvider', label: 'Browser Context Protocol', off: 'The gateway turned the browser context protocol off.', on: 'Extension can emit hermes.browser.context.v1 payloads.' },
     { key: 'browserContextUpload', label: 'Browser context upload', off: 'Hermes has no side-channel route for browser context. Context goes inline with each message, which is how it is read.', on: 'Side-channel browser context upload route available.' },
     { key: 'browserContextStatus', label: 'Browser context status', off: 'Hermes has no browser context status route. The Browser context sent with each message shows what was sent.', on: 'Browser context status route available.' },
-    { key: 'browserCompanionPlugin', label: 'Browser Companion Plugin', off: 'Optional companion plugin: the gateway does not advertise it, so the extension cannot tell whether it is loaded. Context still goes inline with each message.', on: 'Companion plugin capability advertised.' },
+    { key: 'browserCompanionPlugin', label: 'Hermes Browser Extension plugin', off: 'Optional companion plugin: the gateway does not advertise it, so the extension cannot tell whether it is loaded. Context still goes inline with each message.', on: 'Companion plugin capability advertised.' },
     { key: 'pluginActions', label: 'Plugin actions', off: 'Hermes has no plugin-actions route. The extension does not run plugin actions.', on: 'Plugin actions advertised.' },
     { key: 'sessionContext', label: 'Context status', off: 'Native session context status unavailable — Browser uses local/runtime estimates.', on: 'Native session context inspection available.' },
     { key: 'sessionCompress', label: 'Context compaction', off: 'Manual compaction is not available on this connection — Hermes compacts on its own.', on: 'Manual compaction available.' },

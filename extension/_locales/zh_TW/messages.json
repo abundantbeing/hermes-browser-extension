@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "瀏覽器配套外掛",
+    "message": "Hermes Browser Extension 外掛",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "已載入：版本 {version}，設定檔 {profile}，{toolCount} 個工具。此閘道無法確認其工具組是否已為 API 伺服器啟用。",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "已載入此外掛的舊版本，使用的是先前的名稱 hermes-browser-companion。請將其移除（`hermes plugins remove hermes-browser-companion`），為此設定檔安裝 hermes-browser-extension，並重新啟動閘道。",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "透過配套外掛（版本 {version}）提供，該外掛在此閘道上提供此路由。Hermes 本身沒有這樣的路由。",

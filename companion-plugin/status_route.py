@@ -1,4 +1,4 @@
-"""One read-only readiness route for the Hermes Browser extension.
+"""One read-only readiness route for the Hermes Browser Extension.
 
 The extension needs to know whether this plugin is loaded for the profile that
 serves its connection. Hermes does not advertise plugins in /v1/capabilities,
@@ -9,7 +9,7 @@ router freezes).
 
 What it serves::
 
-    GET /api/plugins/hermes-browser-companion/status
+    GET /api/plugins/hermes-browser-extension/status
     {"object": "hermes.browser_companion.status", "plugin": "...",
      "version": "...", "profile": "...", "tools": [...], "hooks": [...],
      "routes": [...], "live": false}
@@ -39,8 +39,9 @@ from typing import Any, Callable, Iterable, Optional
 
 logger = logging.getLogger(__name__)
 
-PLUGIN_NAME = "hermes-browser-companion"
+PLUGIN_NAME = "hermes-browser-extension"
 ROUTE_PATH = f"/api/plugins/{PLUGIN_NAME}/status"
+# A wire identifier the extension checks; it keeps the name it had before the plugin was renamed.
 STATUS_OBJECT = "hermes.browser_companion.status"
 PLATFORM = "api_server"
 

@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Супутній плагін браузера",
+    "message": "Плагін Hermes Browser Extension",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Завантажено: версія {version}, профіль {profile}, інструментів: {toolCount}. Цей шлюз не зміг підтвердити, чи ввімкнено його набір інструментів для сервера API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Завантажено застарілу копію цього плагіна під попередньою назвою hermes-browser-companion. Видаліть її (`hermes plugins remove hermes-browser-companion`), установіть hermes-browser-extension для цього профілю та перезапустіть шлюз.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Доступно через плагін-компаньйон (версія {version}), який надає цей маршрут на цьому шлюзі. У самому Hermes такого маршруту немає.",

@@ -1,4 +1,4 @@
-"""Authorized tool handlers for the Hermes Browser companion plugin.
+"""Authorized tool handlers for the Hermes Browser Extension plugin.
 
 ``browser_get_context`` never consults the process-global store.  The trusted
 ``pre_tool_call`` hook atomically consumes a context capability and hands the

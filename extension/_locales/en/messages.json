@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Browser Companion Plugin",
+    "message": "Hermes Browser Extension plugin",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1455,8 +1455,12 @@
     "message": "Loaded: version {version}, profile {profile}, {toolCount} tools. This gateway could not confirm whether its toolset is on for the API server.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "An older copy of this plugin is loaded under its previous name, hermes-browser-companion. Remove it (`hermes plugins remove hermes-browser-companion`), install hermes-browser-extension for this profile and restart the gateway.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
+  },
   "runtime_capability_reason_companion_route": {
-    "message": "Available through the companion plugin (version {version}), which serves this route on this gateway. Hermes itself has no such route.",
+    "message": "Available through the hermes-browser-extension plugin (version {version}), which serves this route on this gateway. Hermes itself has no such route.",
     "description": "Runtime interface message capability.reason.companion_route"
   },
   "runtime_capability_reason_companion_tools_missing": {
@@ -1528,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "Not advertised by this gateway. Hermes Browser cannot tell whether the companion plugin is loaded, so this does not mean it is missing.",
+    "message": "Not advertised by this gateway. The extension cannot tell whether its Hermes plugin is loaded, so this does not mean it is missing.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {

@@ -1033,6 +1033,11 @@ browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
   controllerWorker?.handleTabUpdated(tabId, changeInfo)
     .catch((error) => console.warn('[Hermes Browser] Could not invalidate controller document authority:', error));
 });
+// A tab one of Hermes's actions opened (a link to a new tab, a page's window.open) becomes one Hermes can act in.
+browserApi.tabs?.onCreated?.addListener?.((tab) => {
+  controllerWorker?.handleTabCreated(tab)
+    .catch((error) => console.warn('[Hermes Browser] Could not adopt a tab Hermes Control opened:', error));
+});
 // The Hermes Web launch tab finished loading the Webapp itself: show it and close the "Opening Hermes Web" page.
 browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo, tab) => {
   hermesWebOpening.handleTabUpdated(tabId, changeInfo, tab)

@@ -1,4 +1,4 @@
-"""Hermes Browser companion plugin — context cache for Hermes Agent.
+"""Hermes Browser Extension plugin — context cache for Hermes Agent.
 
 Registers tools and lifecycle hooks that let the Hermes agent query the
 current browser context captured from the Hermes Browser Extension. The
@@ -83,7 +83,7 @@ def register(ctx) -> None:
     # ── Tools ──────────────────────────────────────────────────────────
     ctx.register_tool(
         name="browser_context_status",
-        toolset="hermes-browser-companion",
+        toolset="hermes-browser-extension",
         schema=tools.SCHEMA_STATUS,
         handler=tools.browser_context_status,
         description="Check whether browser context is currently cached and available.",
@@ -92,7 +92,7 @@ def register(ctx) -> None:
 
     ctx.register_tool(
         name="browser_get_context",
-        toolset="hermes-browser-companion",
+        toolset="hermes-browser-extension",
         schema=tools.SCHEMA_GET_CONTEXT,
         handler=tools.browser_get_context,
         description="Consume this turn's cached browser context once, using its opaque context_id.",
@@ -101,7 +101,7 @@ def register(ctx) -> None:
 
     ctx.register_tool(
         name="browser_clear_context",
-        toolset="hermes-browser-companion",
+        toolset="hermes-browser-extension",
         schema=tools.SCHEMA_CLEAR_CONTEXT,
         handler=tools.browser_clear_context,
         description="Clear the cached browser context. The next extension prompt will re-populate it.",
@@ -110,7 +110,7 @@ def register(ctx) -> None:
 
     ctx.register_tool(
         name="browser_event_log",
-        toolset="hermes-browser-companion",
+        toolset="hermes-browser-extension",
         schema=tools.SCHEMA_EVENT_LOG,
         handler=tools.browser_event_log,
         description="Return recent browser companion events for diagnostics.",
@@ -119,7 +119,7 @@ def register(ctx) -> None:
 
     ctx.register_tool(
         name="browser_control_status",
-        toolset="hermes-browser-companion",
+        toolset="hermes-browser-extension",
         schema=tools.SCHEMA_CONTROL_STATUS,
         handler=tools.browser_control_status,
         description="Return historical owner-scoped Browser control metadata; never live authority.",
@@ -128,7 +128,7 @@ def register(ctx) -> None:
 
     ctx.register_tool(
         name="browser_context_journal",
-        toolset="hermes-browser-companion",
+        toolset="hermes-browser-extension",
         schema=tools.SCHEMA_JOURNAL,
         handler=tools.browser_context_journal,
         description="Return the metadata-only owner-scoped journal of stored browser-context deliveries; never page data.",
@@ -137,7 +137,7 @@ def register(ctx) -> None:
 
     ctx.register_tool(
         name="browser_text_utility",
-        toolset="hermes-browser-companion",
+        toolset="hermes-browser-extension",
         schema=tools.SCHEMA_TEXT_UTILITY,
         handler=tools.browser_text_utility,
         description="Run bounded deterministic text cleanup, bullets, stats, or diff without a model call.",
@@ -179,6 +179,6 @@ def register(ctx) -> None:
 
     # ── Bundled skill ──────────────────────────────────────────────────
     skills_dir = Path(__file__).resolve().parent / "skills"
-    skill_md = skills_dir / "hermes-browser" / "SKILL.md"
+    skill_md = skills_dir / "hermes-browser-extension" / "SKILL.md"
     if skill_md.is_file():
-        ctx.register_skill("hermes-browser", skill_md)
+        ctx.register_skill("hermes-browser-extension", skill_md)

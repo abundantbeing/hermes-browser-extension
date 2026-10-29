@@ -257,7 +257,8 @@ test('Phase 6 worker executes enabled real actions with exact worker-owned scope
       command_id: 'phase6-nav-1',
       tab_id: 77,
       ok: true,
-      result: { status: 'navigated', url: 'https://example.test/next' },
+      // Every page action names the tab it ran in.
+      result: { status: 'navigated', url: 'https://example.test/next', tab_id: 77 },
     },
   });
   const status = worker.status();
@@ -454,7 +455,7 @@ test('Phase 6 approval grants require a trusted extension sender and bind exact 
     command_id: 'press-1',
     tab_id: 80,
     ok: true,
-    result: { status: 'pressed' },
+    result: { status: 'pressed', tab_id: 80 },
   });
 });
 

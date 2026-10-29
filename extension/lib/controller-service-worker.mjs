@@ -34,6 +34,8 @@ import {
   validateBrowserControlUrl,
 } from './browser-control-safety.mjs';
 import { isGatewayAuthRejection, transportUsesDashboardTicket } from './connection-modes.mjs';
+import { CONTROL_TOOL_FAMILIES, controlToolFamily, controlToolName, setControlToolFamily } from './control-tool-names.mjs';
+import { safeNetworkUrl } from './browser-control-executor.mjs';
 
 export const CONTROLLER_WORKER_VERSION = 1;
 export const CONTROLLER_WORKER_STORAGE_KEY = 'hermesBrowserControllerWorker';
@@ -75,6 +77,15 @@ const SESSION_PENDING_RETRY_MS = 15_000;
 const TAB_ARGUMENT_OWNED_ACTIONS = new Set([
   'browser_tab_activate', 'browser_tab_close', 'browser_tab_group', 'browser_tab_ungroup',
 ]);
+// Commands about the tab list rather than one page: any owned tab can carry them, so they never
+// need the default target the page actions fall back on.
+const TAB_MANAGEMENT_ACTIONS = new Set(['browser_tabs', 'browser_tab_create', ...TAB_ARGUMENT_OWNED_ACTIONS]);
+// The task set of the tabs Hermes opens itself (tab_create, or a link or page script one of its actions
+// opened) when the person's attached tabs are not a task set: one set, so those tabs can be grouped.
+const HERMES_OPENED_TASK_SET = 'hermes-opened';
+// A tab a page opens just after a Hermes action on it ended (a link's navigation, a script's window.open
+// after a delay) still belongs to that action.
+const OPENED_TAB_GRACE_MS = 3_000;
 
 function cleanIdentity(raw = {}) {
   const controllerId = String(raw?.controllerId || '').trim();
@@ -278,6 +289,8 @@ export function createControllerServiceWorker({
   // The tab of the most recent action Hermes ran. Show tab points at it between
   // actions, so the button does not flicker with each action.
   let lastActionTabId = 0;
+  // When and on which tab the latest Hermes action ended, so a tab its page opens a moment later is still adopted.
+  let lastActionEnded = { tabId: 0, at: 0 };
   // The last refusal worth telling the person about (a frame withheld a screenshot, a pointer action would land in
   // a frame Hermes cannot read): a code, never page details. The model gets the full message with its result; this
   // is for the Hermes Control window. It ends when the next command starts or after a couple of minutes.
@@ -384,20 +397,28 @@ export function createControllerServiceWorker({
         || groupedLease.ownerId !== controllerId
         || groupedLease.kind !== TAB_LEASE_KINDS.TASK_SET
       )) || taskSetIds.size !== 1) {
-        return terminalError('lease_not_owned', 'Every grouped tab must belong to one owned task set.');
+        return terminalError(
+          'lease_not_owned',
+          'Only tabs of one task set can be grouped: the tabs Hermes opened, or tabs the person attached as a task set. Tabs the person attached one by one stay as they are.',
+        );
       }
     }
 
+    const commandId = String(frame?.command_id || '').trim();
     activeAction = {
-      commandId: String(frame?.command_id || '').trim(),
+      commandId,
       action,
       tabId,
       startedAt: Number(now()),
+      // Tabs a link or page script opened while this action ran, adopted by handleTabCreated.
+      openedTabs: [],
+      ...(action === 'browser_tab_close' ? { closingTabId: Number(actionArgs.tab_id) } : {}),
     };
+    const running = activeAction;
     lastActionTabId = tabId;
     lastNote = null;
     try {
-      const result = await browserExecutor(frame, executorContext(context, { lease, tabId, frameId, authoritative }));
+      let result = await browserExecutor(frame, executorContext(context, { lease, tabId, frameId, authoritative }));
       if (!result?.ok) {
         const noteCode = personNoteCode(action, result);
         if (noteCode) lastNote = { code: noteCode, tabId, at: Number(now()) };
@@ -413,7 +434,7 @@ export function createControllerServiceWorker({
         const requestedKind = String(actionArgs.lease_kind || TAB_LEASE_KINDS.TASK_SET).trim();
         const kind = KNOWN_LEASE_KINDS.has(requestedKind) ? requestedKind : TAB_LEASE_KINDS.TASK_SET;
         const taskSetId = kind === TAB_LEASE_KINDS.TASK_SET
-          ? String(actionArgs.task_set_id || `task-${String(frame?.command_id || '').trim()}`).trim()
+          ? String(actionArgs.task_set_id || openedTaskSetId(lease)).trim()
           : null;
         const acquired = leases.acquire({
           tabId: createdTabId,
@@ -431,7 +452,8 @@ export function createControllerServiceWorker({
 
       if (action === 'browser_tab_close') {
         const closedTabId = Number(actionArgs.tab_id);
-        lifecycle.cancelTab(closedTabId);
+        // Commands still queued on the closed tab end with it; this one, which closed it, keeps its result.
+        lifecycle.cancelTab(closedTabId, { except: commandId });
         leases.release({ tabId: closedTabId, ownerId: controllerId });
         const nextPaused = { ...pausedLeases };
         delete nextPaused[String(closedTabId)];
@@ -448,10 +470,38 @@ export function createControllerServiceWorker({
         at: Number(now()),
       });
       if (renewed.ok) await persist();
+      if (result.result && typeof result.result === 'object' && !Array.isArray(result.result)) {
+        // Every page action says which tab it ran in: refs are numbered per page, so results from two
+        // tabs are told apart by this, and a tab a click opened is named so the model can act on it.
+        const extra = {};
+        if (!TAB_MANAGEMENT_ACTIONS.has(action)) extra.tab_id = tabId;
+        if (running.openedTabs.length) extra.opened_tabs = running.openedTabs.map((opened) => ({ ...opened }));
+        if (Object.keys(extra).length) result = { ...result, result: { ...result.result, ...extra } };
+      }
       return result;
     } finally {
+      lastActionEnded = { tabId, at: Number(now()) };
       activeAction = null;
     }
+  }
+
+  // Tabs Hermes opens join the task set of the tab it acted in when that is one the person chose, else
+  // Hermes's own, so they can be grouped together.
+  function openedTaskSetId(carrierLease) {
+    return carrierLease?.kind === TAB_LEASE_KINDS.TASK_SET && carrierLease.taskSetId
+      ? carrierLease.taskSetId
+      : HERMES_OPENED_TASK_SET;
+  }
+
+  // The first document generation of an owned tab whose page has not reported one (the content script
+  // does not run on PDFs, error pages or tabs open since before the extension loaded). Returns whether
+  // it set one; the caller persists.
+  function seedDocumentGeneration(tabId, frameId = 0) {
+    const key = frameKey(tabId, frameId);
+    if (Number(documentGenerations[key] || 0) > 0) return false;
+    documentGenerations = Object.fromEntries(Object.entries({ ...documentGenerations, [key]: 1 })
+      .slice(-CONTROLLER_MAX_DOCUMENT_GENERATIONS));
+    return true;
   }
 
   function createWorkerLifecycle() {
@@ -518,6 +568,8 @@ export function createControllerServiceWorker({
     return {
       ok: true,
       connected,
+      // Which names the model has for the control tools while connected (control-tool-names.mjs).
+      controlToolFamily: connected ? controlToolFamily() : null,
       controlEnabled: settings?.browserControlEnabled === true && Boolean(browserExecutor),
       paused: settings?.browserControlPaused === true,
       controllerId,
@@ -655,6 +707,26 @@ export function createControllerServiceWorker({
     ));
   }
 
+  // The owned tab a tab-list command is queued and authorized on: a switch is carried by the tab it
+  // names, a group by one of its tabs, a close by another tab when there is one (so the close does not
+  // end with the tab it closes), anything else by the turn's tab, then the last tab Hermes acted in,
+  // then any owned tab. 0 when none is owned.
+  function tabListCarrier(action, args = {}, ownedTabIds = new Set()) {
+    const owned = (value) => {
+      const id = Number(value);
+      return Number.isInteger(id) && ownedTabIds.has(id) ? id : 0;
+    };
+    const preferred = [lastTurnTabId, lastActionTabId, ...ownedTabIds].map((id) => owned(id)).filter(Boolean);
+    const named = owned(args.tab_id);
+    if (action === 'browser_tab_close') return preferred.find((id) => id !== named) || named;
+    if (action === 'browser_tab_activate') return named || preferred[0] || 0;
+    if (action === 'browser_tab_group' || action === 'browser_tab_ungroup') {
+      const grouped = (Array.isArray(args.tab_ids) ? args.tab_ids : []).map((id) => owned(id)).find(Boolean);
+      return grouped || preferred[0] || 0;
+    }
+    return preferred[0] || 0;
+  }
+
   function normalizeBrokerCommandTarget(rawParams = {}) {
     const params = { ...rawParams };
     const tabIdValue = Number(params.tab_id);
@@ -707,16 +779,19 @@ export function createControllerServiceWorker({
     const argTabId = Number(args.tab_id);
     const namesTab = args.tab_id !== undefined && args.tab_id !== null && args.tab_id !== ''
       && !TAB_ARGUMENT_OWNED_ACTIONS.has(String(params.action || ''));
+    const action = String(params.action || '');
     let tabId = 0;
     if (namesTab) {
       if (!Number.isInteger(argTabId) || !ownedTabIds.has(argTabId)) {
         return {
           ok: false,
           code: 'lease_not_owned',
-          message: 'tab_id is not a browser tab attached to Hermes Control.',
+          message: `tab_id is not a browser tab attached to Hermes Control. ${controlToolName('browser_tabs')} lists the ones it can use.`,
         };
       }
       tabId = argTabId;
+    } else if (TAB_MANAGEMENT_ACTIONS.has(action)) {
+      tabId = tabListCarrier(action, args, ownedTabIds);
     } else if (owned.length === 1) {
       tabId = owned[0].tabId;
     } else if (owned.length > 1 && ownedTabIds.has(lastTurnTabId)) {
@@ -728,10 +803,13 @@ export function createControllerServiceWorker({
         code: owned.length === 0 ? 'target_unavailable' : 'ambiguous_target',
         message: owned.length === 0
           ? 'No exact owned browser tab is available for this controller.'
-          : 'The controller owns more than one browser tab; an exact target is required.',
+          : `Hermes Control has ${owned.length} tabs and this command did not say which: pass tab_id, one of ${[...ownedTabIds].join(', ')} (${controlToolName('browser_tabs')} shows each tab's title and URL).`,
       };
     }
     const frameId = 0;
+    // An owned tab whose page never reported itself (a PDF, an error page, a tab open since before the
+    // extension loaded) gets its first generation now, as the turn's tab does when a turn resolves it.
+    if (seedDocumentGeneration(tabId, frameId)) void persist();
     const documentGeneration = Number(documentGenerations[frameKey(tabId, frameId)] || 0);
     if (!documentGeneration) {
       return {
@@ -901,6 +979,9 @@ export function createControllerServiceWorker({
         }
         activeConnection = candidate;
         connected = true;
+        setControlToolFamily(candidate.route === CONTROL_TOOL_FAMILIES.plugin
+          ? CONTROL_TOOL_FAMILIES.plugin
+          : CONTROL_TOOL_FAMILIES.core);
         lastConnectFailure = null;
         nextConnectAt = 0;
         lifecycle.resetBackoff();
@@ -1219,9 +1300,15 @@ export function createControllerServiceWorker({
       const staged = createTabLeaseStore({ now, supportsTabGroups, generation });
       const snapshot = leases.snapshot();
       staged.hydrate(snapshot);
+      // The person picks which of their tabs Hermes may use; the tabs Hermes opened itself are not theirs to
+      // pick and stay Hermes's, so they are not stranded open with nothing able to use or close them.
+      const dropped = [];
       for (const lease of snapshot.entries) {
         if (lease.ownerId === ownerId && lease.ownership === TAB_LEASE_OWNERSHIPS.OWNED) {
+          const hermesOpened = lease.kind === TAB_LEASE_KINDS.TASK_SET && lease.taskSetId === HERMES_OPENED_TASK_SET;
+          if (hermesOpened && !tabIds.includes(lease.tabId)) continue;
           staged.release({ tabId: lease.tabId, ownerId });
+          if (!tabIds.includes(lease.tabId)) dropped.push(lease.tabId);
         }
       }
       const at = Math.max(Number(now()), ...snapshot.entries.map((lease) => lease.acquiredAt + 1));
@@ -1248,6 +1335,8 @@ export function createControllerServiceWorker({
         }
         return { ok: false, error: 'scope_persist_failed' };
       }
+      // A tab no longer attached lets its debugger go now, as releasing it from the panel does.
+      for (const droppedTabId of dropped) releaseDebuggerSession(droppedTabId);
       return { ...status(), scopeChanging: false, scope: kind };
     } finally {
       scopeChanging = false;
@@ -1580,6 +1669,43 @@ export function createControllerServiceWorker({
     return { ok: true, changed };
   }
 
+  // A tab one of Hermes's own actions opened (a link to a new tab, a page's window.open) belongs to that
+  // action: it is adopted like a tab Hermes created, so the agent can act on it, and the action's result
+  // names it. Only while that action runs on the tab that opened it, or a moment after it ended; a tab the
+  // person opens from an attached tab is not taken.
+  async function handleTabCreated(tab = {}) {
+    await boot();
+    const tabId = Number(tab?.id);
+    const openerTabId = Number(tab?.openerTabId);
+    if (!Number.isInteger(tabId) || tabId <= 0 || !Number.isInteger(openerTabId) || openerTabId <= 0) {
+      return { ok: true, adopted: false };
+    }
+    if (settings?.browserControlEnabled !== true || settings?.browserControlPaused === true) {
+      return { ok: true, adopted: false };
+    }
+    const running = activeAction?.tabId === openerTabId ? activeAction : null;
+    const justEnded = lastActionEnded.tabId === openerTabId && Number(now()) - lastActionEnded.at <= OPENED_TAB_GRACE_MS;
+    if (!running && !justEnded) return { ok: true, adopted: false };
+    const opener = leases.leaseForTab(openerTabId);
+    if (!opener || opener.generation !== generation || opener.ownership !== TAB_LEASE_OWNERSHIPS.OWNED
+      || opener.ownerId !== controllerId || leases.leaseForTab(tabId)) {
+      return { ok: true, adopted: false };
+    }
+    const acquired = leases.acquire({
+      tabId,
+      windowId: Number(tab.windowId) || opener.windowId,
+      kind: TAB_LEASE_KINDS.TASK_SET,
+      ownerId: controllerId,
+      ownership: TAB_LEASE_OWNERSHIPS.OWNED,
+      taskSetId: openedTaskSetId(opener),
+    });
+    if (!acquired.ok) return { ok: true, adopted: false, error: acquired.error };
+    const url = safeNetworkUrl(tab.pendingUrl || tab.url || '');
+    running?.openedTabs.push({ id: tabId, ...(url ? { url } : {}) });
+    await persist();
+    return { ok: true, adopted: true, tabId };
+  }
+
   async function handleTabRemoved(tabId) {
     stopTurnReads(tabId);
     await boot();
@@ -1613,7 +1739,11 @@ export function createControllerServiceWorker({
     const normalizedTabId = Number(tabId);
     const normalizedReason = String(reason || 'unknown').trim().slice(0, 120) || 'unknown';
     if (!Number.isInteger(normalizedTabId) || normalizedTabId <= 0) return { ok: false, error: 'invalid_tab' };
-    const cancelled = lifecycle.cancelTab(normalizedTabId).cancelled;
+    // The tab closing because Hermes's own close is running on it: that close keeps its result.
+    const closing = normalizedReason === 'target_closed' && activeAction?.closingTabId === normalizedTabId
+      ? activeAction.commandId
+      : '';
+    const cancelled = lifecycle.cancelTab(normalizedTabId, { except: closing }).cancelled;
     if (normalizedReason === 'target_closed') {
       const leaseRemoved = leases.removeTab(normalizedTabId).ok;
       const nextPaused = { ...pausedLeases };
@@ -1693,6 +1823,7 @@ export function createControllerServiceWorker({
     syncSettings,
     handleMessage,
     handleTabUpdated,
+    handleTabCreated,
     handleTabRemoved,
     handleDebuggerDetach,
     status,

@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "ブラウザ用コンパニオンプラグイン",
+    "message": "Hermes Browser Extension プラグイン",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "読み込み済み：バージョン {version}、プロファイル {profile}、ツール {toolCount} 個。このゲートウェイは、API サーバーでツールセットが有効かどうかを確認できませんでした。",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "このプラグインの古いコピーが以前の名前 hermes-browser-companion で読み込まれています。それを削除し（`hermes plugins remove hermes-browser-companion`）、このプロファイル向けに hermes-browser-extension をインストールして、ゲートウェイを再起動してください。",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "コンパニオンプラグイン（バージョン {version}）経由で利用できます。このゲートウェイでそのプラグインがこのルートを提供しています。Hermes 自体にはこのようなルートはありません。",

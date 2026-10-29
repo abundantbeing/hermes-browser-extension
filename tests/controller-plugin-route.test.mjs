@@ -18,10 +18,10 @@ import {
 // connector asks core first and falls back to the plugin on 404 or 405.
 
 const CORE_REGISTER = 'http://127.0.0.1:8642/v1/browser-control/register';
-const PLUGIN_REGISTER = 'http://127.0.0.1:8642/api/plugins/hermes-browser-companion/control/register';
+const PLUGIN_REGISTER = 'http://127.0.0.1:8642/api/plugins/hermes-browser-extension/control/register';
 const CORE_SOCKET = 'ws://127.0.0.1:8642/v1/browser-control/ws';
-const PLUGIN_SOCKET = 'ws://127.0.0.1:8642/api/plugins/hermes-browser-companion/control/ws';
-const PLUGIN_WS_PATH = '/api/plugins/hermes-browser-companion/control/ws';
+const PLUGIN_SOCKET = 'ws://127.0.0.1:8642/api/plugins/hermes-browser-extension/control/ws';
+const PLUGIN_WS_PATH = '/api/plugins/hermes-browser-extension/control/ws';
 
 const IDENTITY = Object.freeze({
   controllerId: 'controller-fixture',
@@ -175,7 +175,7 @@ test('a plugin registration for a session the server does not know is "not ready
 
 test('a named profile is addressed with /p/<profile> on both routes and on the socket; the profile header stays', async () => {
   const core = 'http://127.0.0.1:8642/p/luxord/v1/browser-control/register';
-  const plugin = 'http://127.0.0.1:8642/p/luxord/api/plugins/hermes-browser-companion/control/register';
+  const plugin = 'http://127.0.0.1:8642/p/luxord/api/plugins/hermes-browser-extension/control/register';
   const fake = gateway({
     [core]: jsonResponse(404, {}),
     [plugin]: jsonResponse(201, { ticket: 'plugin-ticket-fixture', ws_path: PLUGIN_WS_PATH }),
@@ -216,7 +216,7 @@ test('a remote HTTPS gateway with a path prefix reaches the plugin routes under 
   const prefixed = 'https://hermes.example/gateway';
   const fake = gateway({
     [`${prefixed}/v1/browser-control/register`]: jsonResponse(404, {}),
-    [`${prefixed}/api/plugins/hermes-browser-companion/control/register`]: jsonResponse(201, { ticket: 'plugin-ticket-fixture', ws_path: PLUGIN_WS_PATH }),
+    [`${prefixed}/api/plugins/hermes-browser-extension/control/register`]: jsonResponse(201, { ticket: 'plugin-ticket-fixture', ws_path: PLUGIN_WS_PATH }),
   });
   const connection = await connect(fake, { ...LOCAL_SETTINGS, connectionTransport: 'remote-api', gatewayUrl: prefixed });
   assert.equal(FakeSocket.instances[0].url, `wss://hermes.example/gateway${PLUGIN_WS_PATH}`);

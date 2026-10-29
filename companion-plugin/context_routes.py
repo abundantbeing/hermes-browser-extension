@@ -1,12 +1,12 @@
-"""Browser-context side channel for the Hermes Browser extension.
+"""Browser-context side channel for the Hermes Browser Extension.
 
 Three routes on the API server, wired by the same ``register_platform_handler``
 factory as the readiness route (status_route.py) and authenticated by the API
 server's own request check, exactly like it::
 
-    GET  /api/plugins/hermes-browser-companion/context/status
-    POST /api/plugins/hermes-browser-companion/context
-    GET  /api/plugins/hermes-browser-companion/actions
+    GET  /api/plugins/hermes-browser-extension/context/status
+    POST /api/plugins/hermes-browser-extension/context
+    GET  /api/plugins/hermes-browser-extension/actions
 
 Context status and upload name the caller's session with the ``X-Hermes-Session-Id``
 header (or ``?session_id=``), the same session id the API server uses for a chat.

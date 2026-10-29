@@ -55,15 +55,16 @@ print(json.dumps(recorded))
   const recorded = JSON.parse(out.trim().split('\n').pop());
   assert.equal(recorded.tools.length, 27);
   assert.deepEqual(recorded.hooks, ['pre_llm_call', 'pre_tool_call', 'post_tool_call']);
-  assert.deepEqual(recorded.skills, ['hermes-browser']);
+  assert.deepEqual(recorded.skills, ['hermes-browser-extension']);
 });
 
 test('the manifest declares exactly the tools and hooks register() registers', () => {
-  const declaredTools = [...manifest.matchAll(/^ {2}- (browser_\w+)$/gm)].map((match) => match[1]);
+  const declaredTools = [...manifest.matchAll(/^ {2}- ((?:browser|tab)_\w+)$/gm)].map((match) => match[1]);
   const init = readFileSync('companion-plugin/__init__.py', 'utf8');
   const registeredTools = [...init.matchAll(/name="(browser_\w+)"/g)].map((match) => match[1]);
-  // The Hermes Control tools are registered in a loop over the broker's actions.
-  const controlTools = [...readFileSync('companion-plugin/control_broker.py', 'utf8').matchAll(/^ {4}"(browser_\w+)",$/gm)].map((match) => match[1]);
+  // The Hermes Control tools are registered in a loop over the broker's actions, under the
+  // tab_* names control_schemas.TOOL_NAMES gives them.
+  const controlTools = [...readFileSync('companion-plugin/control_schemas.py', 'utf8').matchAll(/^ {4}"browser_\w+": "(tab_\w+)",$/gm)].map((match) => match[1]);
   assert.equal(controlTools.length, 20);
   registeredTools.push(...controlTools);
   assert.equal(declaredTools.length, 27);
@@ -75,15 +76,15 @@ test('the manifest declares exactly the tools and hooks register() registers', (
 });
 
 test('the manifest carries the platform metadata and asks for no privileged capability', () => {
-  assert.match(manifest, /^name: hermes-browser-companion$/m);
+  assert.match(manifest, /^name: hermes-browser-extension$/m);
   assert.match(manifest, /^manifest_version: 2$/m);
   assert.match(manifest, /^license: MIT$/m);
   assert.match(manifest, /^homepage: https:\/\/github\.com\/abundantbeing\/hermes-browser-extension$/m);
   // A SemVer floor, never a CalVer date.
   assert.match(manifest, /^requires_hermes: ">=0\.\d+(\.\d+)?"$/m);
   assert.match(manifest, /^capabilities: \[\]$/m);
-  // The tool names are all `browser_*`: nothing here can shadow a built-in tool,
-  // so `tools.override` would be a declared capability the plugin never uses.
+  // The tool names are `browser_*` context tools and `tab_*` control tools: nothing here can
+  // shadow a built-in tool, so `tools.override` would be a declared capability the plugin never uses.
   assert.doesNotMatch(manifest, /tools\.override|llm\.|gateway\.platform_actions/);
   assert.doesNotMatch(manifest, /^requires_env:/m);
   assert.doesNotMatch(manifest, /^python_dependencies:/m);

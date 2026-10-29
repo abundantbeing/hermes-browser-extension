@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 // installed. They never start a gateway or open a socket to one.
 
 const manifest = readFileSync('companion-plugin/plugin.yaml', 'utf8');
-const manifestTools = [...manifest.matchAll(/^ {2}- (browser_\w+)$/gm)].map((match) => match[1]);
+const manifestTools = [...manifest.matchAll(/^ {2}- ((?:browser|tab)_\w+)$/gm)].map((match) => match[1]);
 
 function runPython(script) {
   const result = spawnSync(process.env.PYTHON || 'python', ['-c', script], {
@@ -68,17 +68,17 @@ print(json.dumps({"tools": ctx.tools, "hooks": ctx.hooks, "skills": ctx.skills, 
   assert.deepEqual([...data.tools].sort(), [...manifestTools].sort());
   assert.deepEqual([...data.constants[0]].sort(), [...data.tools].sort());
   assert.deepEqual([...data.constants[1]].sort(), [...data.hooks].sort());
-  assert.deepEqual(data.skills, ['hermes-browser']);
+  assert.deepEqual(data.skills, ['hermes-browser-extension']);
   assert.deepEqual(Object.keys(data.payload).sort(), ['hooks', 'live', 'object', 'plugin', 'profile', 'routes', 'tools', 'version']);
   assert.equal(data.payload.object, 'hermes.browser_companion.status');
-  assert.equal(data.payload.plugin, 'hermes-browser-companion');
+  assert.equal(data.payload.plugin, 'hermes-browser-extension');
   assert.equal(data.payload.live, false);
   assert.equal(data.payload.version, manifest.match(/^version:\s*(\S+)/m)[1]);
   assert.deepEqual(data.payload.routes, [
-    '/api/plugins/hermes-browser-companion/actions',
-    '/api/plugins/hermes-browser-companion/context',
-    '/api/plugins/hermes-browser-companion/context/status',
-    '/api/plugins/hermes-browser-companion/status',
+    '/api/plugins/hermes-browser-extension/actions',
+    '/api/plugins/hermes-browser-extension/context',
+    '/api/plugins/hermes-browser-extension/context/status',
+    '/api/plugins/hermes-browser-extension/status',
   ]);
   assert.deepEqual(data.payload.tools, [...manifestTools].sort());
 });
@@ -113,7 +113,7 @@ async def exercise(adapter):
     module.register(ctx)
     app = web.Application()
     ctx.factories[0][1](app, adapter)
-    path = "/api/plugins/hermes-browser-companion/status"
+    path = "/api/plugins/hermes-browser-extension/status"
     seen = {}
     async with TestClient(TestServer(app)) as client:
         denied = await client.get(path)
@@ -127,7 +127,7 @@ async def exercise(adapter):
         for method in ("post", "put", "patch", "delete"):
             response = await getattr(client, method)(path, headers={"Authorization": "Bearer paired-token"})
             seen[method] = response.status
-        other = await client.get("/api/plugins/hermes-browser-companion/unknown", headers={"Authorization": "Bearer paired-token"})
+        other = await client.get("/api/plugins/hermes-browser-extension/unknown", headers={"Authorization": "Bearer paired-token"})
         seen["other"] = other.status
         routes = sorted((r.method, r.resource.canonical) for r in app.router.routes())
         seen["routes"] = routes
@@ -146,17 +146,17 @@ print(json.dumps({"good": good, "raising": [raising["ok"], raising["anonymous"]]
   assert.equal(data.good.cache, 'no-store');
   for (const method of ['post', 'put', 'patch', 'delete']) assert.equal(data.good[method], 405, method);
   assert.equal(data.good.other, 404);
-  assert.deepEqual(data.good.routes.filter(([, resource]) => resource.includes('hermes-browser-companion')).sort(), [
-    ['GET', '/api/plugins/hermes-browser-companion/actions'],
-    ['GET', '/api/plugins/hermes-browser-companion/context/status'],
-    ['GET', '/api/plugins/hermes-browser-companion/control/ws'],
-    ['GET', '/api/plugins/hermes-browser-companion/status'],
-    ['HEAD', '/api/plugins/hermes-browser-companion/actions'],
-    ['HEAD', '/api/plugins/hermes-browser-companion/context/status'],
-    ['HEAD', '/api/plugins/hermes-browser-companion/control/ws'],
-    ['HEAD', '/api/plugins/hermes-browser-companion/status'],
-    ['POST', '/api/plugins/hermes-browser-companion/context'],
-    ['POST', '/api/plugins/hermes-browser-companion/control/register'],
+  assert.deepEqual(data.good.routes.filter(([, resource]) => resource.includes('hermes-browser-extension')).sort(), [
+    ['GET', '/api/plugins/hermes-browser-extension/actions'],
+    ['GET', '/api/plugins/hermes-browser-extension/context/status'],
+    ['GET', '/api/plugins/hermes-browser-extension/control/ws'],
+    ['GET', '/api/plugins/hermes-browser-extension/status'],
+    ['HEAD', '/api/plugins/hermes-browser-extension/actions'],
+    ['HEAD', '/api/plugins/hermes-browser-extension/context/status'],
+    ['HEAD', '/api/plugins/hermes-browser-extension/control/ws'],
+    ['HEAD', '/api/plugins/hermes-browser-extension/status'],
+    ['POST', '/api/plugins/hermes-browser-extension/context'],
+    ['POST', '/api/plugins/hermes-browser-extension/control/register'],
   ]); // aiohttp's add_get also answers HEAD, through the same authenticated handler
   assert.equal(data.good.body.profile, 'luxord');
   assert.equal(data.good.body.live, false);
@@ -186,7 +186,7 @@ print(json.dumps({"tools": len(ctx.tools), "hooks": ctx.hooks, "skills": ctx.ski
   const data = JSON.parse(out);
   assert.equal(data.tools, 27);
   assert.deepEqual(data.hooks, ['pre_llm_call', 'pre_tool_call', 'post_tool_call']);
-  assert.deepEqual(data.skills, ['hermes-browser']);
+  assert.deepEqual(data.skills, ['hermes-browser-extension']);
   assert.equal(data.factories, 0);
 });
 

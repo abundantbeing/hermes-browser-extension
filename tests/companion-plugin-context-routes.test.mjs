@@ -37,7 +37,7 @@ store_module = sys.modules["probe_plugin.context_store"]
 
 PAGE = "PAGE_TEXT_SENTINEL_DO_NOT_LEAK"
 TOKEN = "Bearer paired-token"
-BASE = "/api/plugins/hermes-browser-companion"
+BASE = "/api/plugins/hermes-browser-extension"
 
 class Ctx:
     profile_name = "luxord"
@@ -147,12 +147,12 @@ print(json.dumps(asyncio.run(main())))
   assert.deepEqual(data.raising, [401, 401, 401]);
   assert.deepEqual(data.nocheck, [401, 401, 401]);
   assert.deepEqual(data.listed, [
-    '/api/plugins/hermes-browser-companion/actions',
-    '/api/plugins/hermes-browser-companion/context',
-    '/api/plugins/hermes-browser-companion/context/status',
-    '/api/plugins/hermes-browser-companion/control/register',
-    '/api/plugins/hermes-browser-companion/control/ws',
-    '/api/plugins/hermes-browser-companion/status',
+    '/api/plugins/hermes-browser-extension/actions',
+    '/api/plugins/hermes-browser-extension/context',
+    '/api/plugins/hermes-browser-extension/context/status',
+    '/api/plugins/hermes-browser-extension/control/register',
+    '/api/plugins/hermes-browser-extension/control/ws',
+    '/api/plugins/hermes-browser-extension/status',
   ]);
 });
 

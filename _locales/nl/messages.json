@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Browser-companionplug-in",
+    "message": "Hermes Browser Extension-plugin",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Geladen: versie {version}, profiel {profile}, {toolCount} tools. Deze gateway kon niet bevestigen of de toolset voor de API-server aan staat.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Een oudere kopie van deze plugin is geladen onder de vorige naam, hermes-browser-companion. Verwijder die (`hermes plugins remove hermes-browser-companion`), installeer hermes-browser-extension voor dit profiel en start de gateway opnieuw.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Beschikbaar via de companion-plugin (versie {version}), die deze route op deze gateway aanbiedt. Hermes zelf heeft zo'n route niet.",

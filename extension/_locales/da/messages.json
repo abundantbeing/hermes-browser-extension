@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Browser-companion-plugin",
+    "message": "Hermes Browser Extension-plugin",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Indlæst: version {version}, profil {profile}, {toolCount} værktøjer. Denne gateway kunne ikke bekræfte, om dens værktøjssæt er slået til for API-serveren.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "En ældre kopi af dette plugin er indlæst under det tidligere navn hermes-browser-companion. Fjern den (`hermes plugins remove hermes-browser-companion`), installér hermes-browser-extension for denne profil, og genstart gatewayen.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Tilgængelig via ledsagerpluginet (version {version}), som leverer denne rute på denne gateway. Hermes har selv ikke en sådan rute.",

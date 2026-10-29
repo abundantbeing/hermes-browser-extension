@@ -41,7 +41,7 @@ const files = [
   'companion-plugin/control_schemas.py',
   'companion-plugin/control_tools.py',
   'companion-plugin/install.md',
-  'companion-plugin/skills/hermes-browser/SKILL.md',
+  'companion-plugin/skills/hermes-browser-extension/SKILL.md',
 ];
 
 test('companion plugin files exist', () => {
@@ -52,7 +52,7 @@ test('companion plugin files exist', () => {
 
 test('plugin.yaml uses standard Hermes plugin format', () => {
   const manifest = readFileSync('companion-plugin/plugin.yaml', 'utf8');
-  assert.match(manifest, /name:\s*hermes-browser-companion/);
+  assert.match(manifest, /name:\s*hermes-browser-extension/);
   assert.match(manifest, /kind:\s*standalone/);
   assert.match(manifest, /provides_tools:/);
   assert.match(manifest, /provides_hooks:/);
@@ -145,10 +145,10 @@ assert [tool["name"] for tool in ctx.tools] == [
     "browser_control_status",
     "browser_context_journal",
     "browser_text_utility",
-    "browser_back", "browser_batch", "browser_click", "browser_drag", "browser_fill",
-    "browser_hover", "browser_navigate", "browser_press", "browser_screenshot", "browser_scroll",
-    "browser_scroll_to", "browser_select", "browser_snapshot", "browser_tab_activate", "browser_tab_close",
-    "browser_tab_create", "browser_tab_group", "browser_tab_ungroup", "browser_tabs", "browser_type",
+    "tab_back", "tab_batch", "tab_click", "tab_drag", "tab_fill",
+    "tab_hover", "tab_navigate", "tab_press", "tab_screenshot", "tab_scroll",
+    "tab_scroll_to", "tab_select", "tab_snapshot", "tab_activate", "tab_close",
+    "tab_create", "tab_group", "tab_ungroup", "tab_list", "tab_type",
 ]
 for tool in ctx.tools:
     schema = tool["schema"]
@@ -156,7 +156,7 @@ for tool in ctx.tools:
     assert isinstance(schema.get("description"), str) and schema["description"]
     assert schema["parameters"]["type"] == "object"
 assert [name for name, _callback in ctx.hooks] == ["pre_llm_call", "pre_tool_call", "post_tool_call"]
-assert ctx.skills and ctx.skills[0][0] == "hermes-browser"
+assert ctx.skills and ctx.skills[0][0] == "hermes-browser-extension"
 assert ctx.config_reads == [("durable_receipts", True), ("receipt_limit", 8)]
 `;
   runPluginPython(script);
@@ -537,7 +537,7 @@ test('policy allows browser control only through Hermes Control, with an attache
 });
 
 test('companion skill preserves browser context trust boundaries', () => {
-  const skill = readFileSync('companion-plugin/skills/hermes-browser/SKILL.md', 'utf8');
+  const skill = readFileSync('companion-plugin/skills/hermes-browser-extension/SKILL.md', 'utf8');
   assert.match(skill, /untrusted webpage data/i);
   assert.match(skill, /Chat only/i);
   assert.match(skill, /Never claim browser control/i);
@@ -584,7 +584,7 @@ test('no network, route, or browser-control capability in companion plugin files
 
 test('install.md documents the plugin correctly', () => {
   const install = readFileSync('companion-plugin/install.md', 'utf8');
-  assert.match(install, /hermes plugins enable hermes-browser-companion/);
+  assert.match(install, /hermes plugins enable hermes-browser-extension/);
   assert.match(install, /plugin\.yaml/);
   assert.doesNotMatch(install, /v0\.1\.10/);
   assert.match(install, /fail-soft/i);

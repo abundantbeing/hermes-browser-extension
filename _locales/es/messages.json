@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Plugin complementario del navegador",
+    "message": "Plugin de Hermes Browser Extension",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Cargado: versión {version}, perfil {profile}, {toolCount} herramientas. Esta pasarela no pudo confirmar si su conjunto de herramientas está activo para el servidor de la API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Hay una copia antigua de este plugin cargada con su nombre anterior, hermes-browser-companion. Elimínela (`hermes plugins remove hermes-browser-companion`), instale hermes-browser-extension para este perfil y reinicie la pasarela.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Disponible a través del plugin complementario (versión {version}), que ofrece esta ruta en esta pasarela. Hermes por sí mismo no tiene esa ruta.",

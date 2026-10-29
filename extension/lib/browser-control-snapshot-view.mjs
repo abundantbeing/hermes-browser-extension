@@ -1,5 +1,6 @@
 import { redactSensitiveText } from './browser-context-protocol.mjs';
 import { FRAME_ELEMENT_SHARE, FRAME_TEXT_SHARE } from './browser-control-frames.mjs';
+import { controlToolName } from './control-tool-names.mjs';
 
 // Character budgets for the rendered page view. Post-action results stay small
 // because every action carries one; an explicit snapshot may be larger.
@@ -157,7 +158,7 @@ export function renderControlSnapshot(snapshot = {}, { maxChars = SNAPSHOT_VIEW_
   }
   const omitted = elementCount - shown.length;
   const hint = omitted > 0
-    ? `… ${omitted} more element${omitted === 1 ? '' : 's'} — ${fullText ? 'scroll to reveal more' : 'scroll or call browser_snapshot with full=true'}`
+    ? `… ${omitted} more element${omitted === 1 ? '' : 's'} — ${fullText ? 'scroll to reveal more' : `scroll or call ${controlToolName('browser_snapshot')} with full=true`}`
     : '';
   const elementBlock = shown.length
     ? [...shown, ...(hint ? [hint] : [])].join('\n')

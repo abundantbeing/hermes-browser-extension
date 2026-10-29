@@ -1,11 +1,28 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { HERMES_BROWSER_SYSTEM_PROMPT } from '../extension/lib/common.mjs';
+import { readFileSync } from 'node:fs';
+
+import { HERMES_BROWSER_SYSTEM_PROMPT, hermesBrowserSystemPrompt } from '../extension/lib/common.mjs';
 import { buildBrowserTurnEnvelope } from '../extension/lib/browser-context-protocol.mjs';
 
 const lines = HERMES_BROWSER_SYSTEM_PROMPT.split('\n');
 const lineWith = (needle) => lines.find((line) => line.includes(needle)) || '';
+
+test('the system prompt names the control tools as the model has them on each route', () => {
+  assert.equal(hermesBrowserSystemPrompt(), HERMES_BROWSER_SYSTEM_PROMPT);
+  assert.equal(hermesBrowserSystemPrompt('core'), HERMES_BROWSER_SYSTEM_PROMPT);
+  // Through the plugin the tools are tab_*: browser_* there belongs to Hermes' Camofox plugin.
+  const plugin = hermesBrowserSystemPrompt('plugin');
+  assert.match(plugin, /Act directly with tab_click\/tab_type\/tab_press\/tab_scroll/);
+  assert.match(plugin, /do not call tab_navigate for it/);
+  assert.doesNotMatch(plugin, /\bbrowser_(?:click|type|press|scroll|navigate|snapshot|tabs)\b/);
+  assert.match(plugin, /browser_control\.state = "ready"/, 'the envelope field keeps its name');
+  // The panel asks for the route the controller reports, or the one it would take.
+  const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(panel, /hermesBrowserSystemPrompt\(currentControlToolFamily\(\)\)/);
+  assert.match(panel, /browserControlStatus\?\.controlToolFamily/);
+});
 
 test('a gateway without extension control gets its own envelope state and no exclusivity rule', () => {
   const envelope = buildBrowserTurnEnvelope({

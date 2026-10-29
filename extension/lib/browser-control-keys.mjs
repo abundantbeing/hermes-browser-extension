@@ -2,6 +2,8 @@
 // adapter (what is dispatched) both take their key and modifiers from here, so a spelling
 // the adapter understands can never be one the classifier does not.
 
+import { controlToolName } from './control-tool-names.mjs';
+
 function compact(value, limit = 2_000) {
   return String(value || '').replace(/\s+/g, ' ').trim().slice(0, limit);
 }
@@ -46,7 +48,8 @@ export const KEY_ALIASES = Object.freeze({
   'right arrow': { key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 },
 });
 
-const KEY_HELP = 'Use a single character, or one of Enter, Tab, Escape, Backspace, Delete, Insert, Home, End, PageUp, PageDown, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Space or F1 to F12, optionally with Control, Alt, Shift or Meta (for example Control+A). To type text, use browser_type.';
+// Read when the error is made: the typing tool's name follows the route control is connected through.
+const keyHelp = () => `Use a single character, or one of Enter, Tab, Escape, Backspace, Delete, Insert, Home, End, PageUp, PageDown, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Space or F1 to F12, optionally with Control, Alt, Shift or Meta (for example Control+A). To type text, use ${controlToolName('browser_type')}.`;
 
 // A key name for a message: bounded, with control and formatting characters taken out.
 function shownKey(value, limit = 30) {
@@ -61,7 +64,7 @@ const MODIFIER_BITS = Object.freeze({ alt: 1, ctrl: 2, meta: 4, shift: 8 });
 
 export function keyDescriptor(value = '') {
   const raw = String(value ?? '');
-  if (!compact(raw, 80) && raw !== ' ') throw new Error(`No key was given to press. ${KEY_HELP}`);
+  if (!compact(raw, 80) && raw !== ' ') throw new Error(`No key was given to press. ${keyHelp()}`);
   const key = raw === ' ' ? raw : compact(raw, 80);
   const alias = KEY_ALIASES[key.toLowerCase()];
   if (alias) return { ...alias };
@@ -83,9 +86,9 @@ export function keyDescriptor(value = '') {
   // Not a key Hermes can send. A name the browser does not know is dispatched as no key at all, and the press would
   // still be reported as done, so it is refused with the name it could not understand.
   if (Object.hasOwn(MODIFIER_NAMES, key.toLowerCase())) {
-    throw new Error(`"${shownKey(key)}" is a modifier, not a key to press by itself. Press it together with a key, for example ${shownKey(key)}+Tab. ${KEY_HELP}`);
+    throw new Error(`"${shownKey(key)}" is a modifier, not a key to press by itself. Press it together with a key, for example ${shownKey(key)}+Tab. ${keyHelp()}`);
   }
-  throw new Error(`Hermes could not understand the key "${shownKey(key)}". ${KEY_HELP}`);
+  throw new Error(`Hermes could not understand the key "${shownKey(key)}". ${keyHelp()}`);
 }
 
 // "Control+a", "Meta+a", "Shift+Tab", "Control++": the last part is the key,

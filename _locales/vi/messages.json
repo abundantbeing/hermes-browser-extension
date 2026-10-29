@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Plugin đồng hành của trình duyệt",
+    "message": "Plugin Hermes Browser Extension",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Đã tải: phiên bản {version}, hồ sơ {profile}, {toolCount} công cụ. Cổng này không thể xác nhận bộ công cụ của nó có đang bật cho máy chủ API hay không.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Một bản cũ của plugin này đang được tải dưới tên trước đây, hermes-browser-companion. Hãy gỡ bản đó (`hermes plugins remove hermes-browser-companion`), cài hermes-browser-extension cho hồ sơ này và khởi động lại cổng.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Có sẵn qua plugin đồng hành (phiên bản {version}), plugin này cung cấp tuyến này trên cổng này. Bản thân Hermes không có tuyến như vậy.",

@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Browser-Companion-Plugin",
+    "message": "Hermes Browser Extension-Plugin",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Geladen: Version {version}, Profil {profile}, {toolCount} Werkzeuge. Dieses Gateway konnte nicht bestätigen, ob sein Werkzeugsatz für den API-Server aktiviert ist.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Eine ältere Kopie dieses Plugins ist unter seinem früheren Namen hermes-browser-companion geladen. Entfernen Sie sie (`hermes plugins remove hermes-browser-companion`), installieren Sie hermes-browser-extension für dieses Profil und starten Sie das Gateway neu.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Verfügbar über das Companion-Plugin (Version {version}), das diese Route auf diesem Gateway bereitstellt. Hermes selbst hat keine solche Route.",

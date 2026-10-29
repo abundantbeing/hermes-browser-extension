@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "ब्राउज़र सहायक प्लगइन",
+    "message": "Hermes Browser Extension प्लगिन",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "लोड हुआ: संस्करण {version}, प्रोफ़ाइल {profile}, {toolCount} टूल। यह गेटवे पुष्टि नहीं कर सका कि API सर्वर के लिए इसका टूलसेट चालू है या नहीं।",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "इस प्लगिन की एक पुरानी प्रति उसके पिछले नाम hermes-browser-companion से लोड है। उसे हटाएँ (`hermes plugins remove hermes-browser-companion`), इस प्रोफ़ाइल के लिए hermes-browser-extension इंस्टॉल करें और गेटवे को पुनः आरंभ करें।",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "सहयोगी प्लगिन (संस्करण {version}) के माध्यम से उपलब्ध, जो इस गेटवे पर यह रूट देता है। Hermes के पास स्वयं ऐसा कोई रूट नहीं है।",

@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Сопутствующий плагин браузера",
+    "message": "Плагин Hermes Browser Extension",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Загружено: версия {version}, профиль {profile}, инструментов: {toolCount}. Этот шлюз не смог подтвердить, включён ли его набор инструментов для сервера API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Загружена устаревшая копия этого плагина под прежним именем hermes-browser-companion. Удалите её (`hermes plugins remove hermes-browser-companion`), установите hermes-browser-extension для этого профиля и перезапустите шлюз.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Доступно через плагин-компаньон (версия {version}), который предоставляет этот маршрут на этом шлюзе. В самом Hermes такого маршрута нет.",

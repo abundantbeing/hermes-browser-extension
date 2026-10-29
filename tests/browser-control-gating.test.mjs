@@ -194,7 +194,7 @@ const companionProbe = (routes) => classifyCompanionPlugin({
   route: {
     kind: 'ok',
     parsed: parseCompanionStatusPayload({
-      object: 'hermes.browser_companion.status', plugin: 'hermes-browser-companion', version: '0.4.0', profile: 'default',
+      object: 'hermes.browser_companion.status', plugin: 'hermes-browser-extension', version: '0.4.0', profile: 'default',
       tools: COMPANION_TOOLS, hooks: [], routes, live: false,
     }),
   },

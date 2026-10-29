@@ -21,6 +21,7 @@ import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
 import { REST_TURN_SOURCES } from './session-materialization.mjs';
 import { isSidePanelSessionId } from './session-ownership.mjs';
 import { isSessionBusyRefusal } from './gateway-refusal.mjs';
+import { CONTROL_TOOL_FAMILIES, PLUGIN_TOOL_NAMES } from './control-tool-names.mjs';
 export { redactSensitiveText, shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams, formatGroupTurnWithBrowserContext };
 
 export const GATEWAY_MODES = Object.freeze([
@@ -296,6 +297,19 @@ When a Browser turn contains browser_control.isolated_fallback = forbidden, live
 When the active tab is a YouTube watch page and transcript text is supplied in the browser context, use that transcript before relying on the visible page text. Do not open or navigate tabs to fetch a transcript unless the user asks or a browser-control tool is explicitly available.
 If the user message begins with a Hermes skill command such as /skill-name or @skill-name, treat that as an explicit skill invocation: use available skill tools or the listed skill name to load and follow that skill before answering.
 Do not tell the user the Browser Extension is read-only or limited to page context. If a requested action needs tools, use the available Hermes tools; if the connected runtime truly lacks a required tool, say exactly which capability is missing.`;
+
+// Every Hermes Control tool name in the prompt, longest first so browser_scroll_to is not read as browser_scroll.
+const CONTROL_TOOL_NAME_RE = new RegExp(`\\b(?:${Object.keys(PLUGIN_TOOL_NAMES).sort((a, b) => b.length - a.length).join('|')})\\b`, 'g');
+
+/**
+ * The system prompt with the Hermes Control tools named as the model has them: browser_* on a Hermes
+ * with extension control in core, tab_* through the Hermes Browser Extension plugin (where browser_*
+ * belongs to Hermes' Camofox plugin, a different browser). See control-tool-names.mjs.
+ */
+export function hermesBrowserSystemPrompt(toolFamily = CONTROL_TOOL_FAMILIES.core) {
+  if (toolFamily !== CONTROL_TOOL_FAMILIES.plugin) return HERMES_BROWSER_SYSTEM_PROMPT;
+  return HERMES_BROWSER_SYSTEM_PROMPT.replace(CONTROL_TOOL_NAME_RE, (name) => PLUGIN_TOOL_NAMES[name] || name);
+}
 
 const RESTRICTED_SCHEMES = new Set([
   'about:',

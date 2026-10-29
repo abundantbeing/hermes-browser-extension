@@ -1,10 +1,11 @@
-// Is the Hermes Browser companion plugin ready on the gateway this connection uses?
+// Is the Hermes Browser Extension plugin (hermes-browser-extension, the
+// extension's companion plugin) ready on the gateway this connection uses?
 //
 // Hermes does not advertise plugins in /v1/capabilities, so the plugin answers
 // for itself: with `plugins.isolation: in_process` (the default) it wires one
 // read-only route into the API server (companion-plugin/status_route.py):
 //
-//   GET /api/plugins/hermes-browser-companion/status
+//   GET /api/plugins/hermes-browser-extension/status
 //   -> { object, plugin, version, profile, tools, hooks, routes, live: false }
 //
 // The API server authenticates it with the same paired loopback token or API key
@@ -27,8 +28,12 @@
 //
 // Pure module: no DOM, no storage. The caller supplies fetch.
 
-export const COMPANION_PLUGIN_NAME = 'hermes-browser-companion';
+export const COMPANION_PLUGIN_NAME = 'hermes-browser-extension';
 export const COMPANION_STATUS_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/status`;
+// The name the plugin had before 0.4.0. A copy under it is reported as one to replace, never used:
+// it registers the browser_* control tools Hermes' Camofox plugin also owns.
+export const COMPANION_LEGACY_PLUGIN_NAME = 'hermes-browser-companion';
+export const COMPANION_LEGACY_STATUS_PATH = `/api/plugins/${COMPANION_LEGACY_PLUGIN_NAME}/status`;
 export const COMPANION_TOOLSETS_PATH = '/v1/toolsets';
 export const COMPANION_STATUS_OBJECT = 'hermes.browser_companion.status';
 // The browser-context side channel the plugin lists in its status `routes`
@@ -80,6 +85,7 @@ export const COMPANION_REASONS = Object.freeze({
   'companion-version-old': ({ version, expected } = {}) => `Loaded, but it is version ${clean(version) || 'unknown'} and this extension expects ${clean(expected) || COMPANION_EXPECTED_VERSION}. Reinstall it for this profile and restart the gateway.`,
   'companion-tools-missing': ({ version, missing = [] } = {}) => `Loaded (version ${clean(version) || 'unknown'}) but missing tools: ${list(missing)}. Reinstall it for this profile and restart the gateway.`,
   'companion-no-route': ({ present = [] } = {}) => `A companion plugin is loaded with ${present.length} of ${COMPANION_EXPECTED_TOOLS.length} tools, but it does not serve the status route, so it is an older copy. Reinstall it for this profile and restart the gateway.`,
+  'companion-renamed': () => `An older copy of this plugin is loaded under its previous name, ${COMPANION_LEGACY_PLUGIN_NAME}. Remove it (\`hermes plugins remove ${COMPANION_LEGACY_PLUGIN_NAME}\`), install ${COMPANION_PLUGIN_NAME} for this profile and restart the gateway.`,
   'companion-toolset-off': () => 'Loaded, but its toolset is switched off for the API server. Turn it on with `hermes tools`, or remove it from agent.disabled_toolsets.',
   'companion-not-loaded': () => 'Not loaded on this gateway: the status route is absent and no companion toolset is listed. It is not installed, not enabled for this profile, or the gateway has not been restarted since. Run `hermes plugins list` for the profile.',
   'companion-cannot-tell': () => 'This gateway serves no status route and no readable toolset list, so the extension cannot tell whether the companion plugin is loaded. This does not mean it is missing.',
@@ -87,7 +93,7 @@ export const COMPANION_REASONS = Object.freeze({
   'companion-gateway-error': ({ status } = {}) => `The gateway answered HTTP ${status ?? 500}, so the plugin could not be checked.`,
   'companion-network': ({ detail } = {}) => `The gateway could not be reached${clean(detail) ? ` (${clean(detail)})` : ''}, so the plugin could not be checked.`,
   'companion-no-token': () => 'No gateway token is available, so the plugin was not checked.',
-  'companion-route': ({ version } = {}) => `Available through the companion plugin (version ${clean(version) || 'unknown'}), which serves this route on this gateway. Hermes itself has no such route.`,
+  'companion-route': ({ version } = {}) => `Available through the ${COMPANION_PLUGIN_NAME} plugin (version ${clean(version) || 'unknown'}), which serves this route on this gateway. Hermes itself has no such route.`,
 });
 
 export function companionReasonText(code, params = {}) {
@@ -152,16 +158,25 @@ export function parseCompanionStatusPayload(payload, { expectedTools = COMPANION
   };
 }
 
+/** The version an older copy under the plugin's previous name reports, or null when `payload` is not one. */
+export function parseLegacyCompanionStatus(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  if (payload.object !== COMPANION_STATUS_OBJECT || payload.plugin !== COMPANION_LEGACY_PLUGIN_NAME) return null;
+  return { version: clean(payload.version) };
+}
+
 /**
  * Find the companion toolset in a GET /v1/toolsets body: `{ present, enabled,
- * tools }`, or `{ present: false }`. `valid: false` when the body is not a
+ * tools }`, or `{ present: false }` (with `legacy: true` when only a toolset under
+ * the plugin's previous name is listed). `valid: false` when the body is not a
  * toolset list at all.
  */
 export function parseCompanionToolsets(payload) {
   const rows = Array.isArray(payload?.data) ? payload.data : null;
   if (!rows) return { valid: false, present: false };
-  const row = rows.find((item) => item && typeof item === 'object' && item.name === COMPANION_PLUGIN_NAME);
-  if (!row) return { valid: true, present: false };
+  const named = (name) => rows.find((item) => item && typeof item === 'object' && item.name === name);
+  const row = named(COMPANION_PLUGIN_NAME);
+  if (!row) return { valid: true, present: false, ...(named(COMPANION_LEGACY_PLUGIN_NAME) ? { legacy: true } : {}) };
   return {
     valid: true,
     present: true,
@@ -198,9 +213,17 @@ export function classifyCompanionPlugin({ route, toolsets = null, expectedVersio
   if (route?.kind === 'error') {
     return result(COMPANION_STATES.unreachable, route.reasonCode, route.params || {}, { via: 'route', ...stamp });
   }
+  // A copy under the plugin's previous name: replaced, not used alongside (it owns browser_* tool names).
+  if (route?.kind === 'renamed') {
+    const version = clean(route.version);
+    return result(COMPANION_STATES.outdated, 'companion-renamed', { version }, { version, via: 'route', ...stamp });
+  }
   // The route is absent on a gateway that answered. Ask the toolset list.
   if (!toolsets || !toolsets.valid) {
     return result(COMPANION_STATES.unreachable, 'companion-cannot-tell', {}, { via: 'toolsets', ...stamp });
+  }
+  if (!toolsets.present && toolsets.legacy) {
+    return result(COMPANION_STATES.outdated, 'companion-renamed', {}, { via: 'toolsets', ...stamp });
   }
   if (!toolsets.present) {
     return result(COMPANION_STATES.notInstalled, 'companion-not-loaded', {}, { via: 'toolsets', ...stamp });
@@ -244,7 +267,7 @@ async function getJson(fetchImpl, url, { token, timeoutMs }) {
 
 /**
  * Probe the gateway at `baseUrl` (the API server, e.g. http://127.0.0.1:8642)
- * with the paired token. Bounded (two GETs, each with a timeout) and read-only.
+ * with the paired token. Bounded (at most three GETs, each with a timeout) and read-only.
  * Never throws: every failure is an `unreachable` result with its reason.
  */
 export async function probeCompanionPlugin({
@@ -282,6 +305,12 @@ export async function probeCompanionPlugin({
       return classify({ kind: 'ok', parsed }, toolsets);
     }
     // A 200 that is not the plugin's body (a proxy, a different server): treat as no route.
+  }
+  if (status.status === 404 || status.status === 405) {
+    // Not under the plugin's name. An older copy under its previous name answers on its own path.
+    const legacy = await getJson(fetchImpl, joinUrl(baseUrl, COMPANION_LEGACY_STATUS_PATH), options);
+    const renamed = legacy.status >= 200 && legacy.status < 300 ? parseLegacyCompanionStatus(legacy.body) : null;
+    if (renamed) return classify({ kind: 'renamed', version: renamed.version });
   }
   // 404/405, an unrecognised 200, or a network failure (a browser reports a
   // cross-origin 404 without CORS headers as a network error). The toolset list

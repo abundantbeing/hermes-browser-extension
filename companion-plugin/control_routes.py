@@ -3,8 +3,8 @@
 Two routes on the API server, wired by the same ``register_platform_handler``
 factory as the readiness route (status_route.py)::
 
-    POST /api/plugins/hermes-browser-companion/control/register
-    GET  /api/plugins/hermes-browser-companion/control/ws
+    POST /api/plugins/hermes-browser-extension/control/register
+    GET  /api/plugins/hermes-browser-extension/control/ws
 
 They carry the controller protocol Hermes core used to serve at
 ``/v1/browser-control/register`` and ``/v1/browser-control/ws``, so the extension

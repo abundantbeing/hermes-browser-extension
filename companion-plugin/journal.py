@@ -1,4 +1,4 @@
-"""Metadata-only rotation journal for the Hermes Browser companion plugin.
+"""Metadata-only rotation journal for the Hermes Browser Extension plugin.
 
 Phase 8 Task 31: a bounded, owner-scoped journal of *what was delivered*
 to the agent — never the payload itself.  Every row is validated metadata

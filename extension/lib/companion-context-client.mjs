@@ -1,12 +1,12 @@
-// The Hermes Browser companion plugin's browser-context side channel, client side.
+// The Hermes Browser Extension plugin's browser-context side channel, client side.
 //
 // Hermes has no route for browser context, but the companion plugin (when it is
 // loaded and its status route lists them) serves three on the API server
 // (companion-plugin/context_routes.py), behind the same paired token or API key:
 //
-//   GET  /api/plugins/hermes-browser-companion/context/status   what it holds for a session
-//   POST /api/plugins/hermes-browser-companion/context          park one full-context envelope
-//   GET  /api/plugins/hermes-browser-companion/actions          declarative action descriptors
+//   GET  /api/plugins/hermes-browser-extension/context/status   what it holds for a session
+//   POST /api/plugins/hermes-browser-extension/context          park one full-context envelope
+//   GET  /api/plugins/hermes-browser-extension/actions          declarative action descriptors
 //
 // Status and upload name the session with X-Hermes-Session-Id. An upload is not
 // readable on arrival: the plugin binds it to a turn only when a reference turn

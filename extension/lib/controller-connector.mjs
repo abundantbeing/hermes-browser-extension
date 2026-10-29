@@ -235,7 +235,7 @@ export function createControllerConnector({
     }
     const ticket = String(payload?.ticket || '').trim();
     if (!ticket) throw new Error('Controller registration did not return a ticket.');
-    return { ticket, socketPath: controllerSocketPath(route, payload?.ws_path) };
+    return { ticket, socketPath: controllerSocketPath(route, payload?.ws_path), route };
   }
 
   // Hermes core's route first. A Hermes without extension control in core answers
@@ -250,7 +250,7 @@ export function createControllerConnector({
         return await registerOnRoute({ ...options, route: CONTROLLER_ROUTES.plugin });
       } catch (pluginError) {
         if (pluginError?.code !== CONTROLLER_UNSUPPORTED_GATEWAY) throw pluginError;
-        throw unsupportedGatewayError(`${coreError.message} The Hermes Browser companion plugin's control route is not available on it either (HTTP ${pluginError.status}).`);
+        throw unsupportedGatewayError(`${coreError.message} The Hermes Browser Extension plugin's control route is not available on it either (HTTP ${pluginError.status}).`);
       }
     }
   }
@@ -280,7 +280,7 @@ export function createControllerConnector({
       if (timeoutId !== null) clearTimeout(timeoutId);
     }
 
-    return openControllerSocket({
+    const connection = await openControllerSocket({
       WebSocketImpl,
       url: controllerWebSocketUrl(baseUrl, registered.socketPath, activeProfileOf(settings)),
       protocols: controllerWebSocketProtocols(registered.ticket),
@@ -288,6 +288,8 @@ export function createControllerConnector({
       onClose,
       timeoutMs: connectTimeoutMs,
     });
+    // The route decides the names the model's control tools have (control-tool-names.mjs).
+    return { ...connection, route: registered.route };
   }
 
   async function connectCloud({ settings, identity, onFrame, onClose }) {

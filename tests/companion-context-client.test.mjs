@@ -35,7 +35,7 @@ const ALL_ROUTES = [COMPANION_ACTIONS_PATH, COMPANION_CONTEXT_UPLOAD_PATH, COMPA
 
 function probe({ routes = ALL_ROUTES, version = '0.4.0', state = 'ready' } = {}) {
   const parsed = parseCompanionStatusPayload({
-    object: 'hermes.browser_companion.status', plugin: 'hermes-browser-companion', version, profile: 'default',
+    object: 'hermes.browser_companion.status', plugin: 'hermes-browser-extension', version, profile: 'default',
     tools: ALL_TOOLS, hooks: [], routes, live: false,
   });
   const result = classifyCompanionPlugin({ route: { kind: 'ok', parsed }, toolsets: null, checkedAt: NOW });
@@ -47,14 +47,14 @@ const restCaps = () => normalizeGatewayCapabilities({
 }, { healthOk: true, hasApiKey: true });
 
 test('the status payload parser keeps the listed routes and the probe result carries them', () => {
-  const parsed = parseCompanionStatusPayload({ object: 'hermes.browser_companion.status', plugin: 'hermes-browser-companion', tools: ALL_TOOLS, routes: [COMPANION_STATUS_PATH, 7, ''] });
+  const parsed = parseCompanionStatusPayload({ object: 'hermes.browser_companion.status', plugin: 'hermes-browser-extension', tools: ALL_TOOLS, routes: [COMPANION_STATUS_PATH, 7, ''] });
   assert.deepEqual(parsed.routes, [COMPANION_STATUS_PATH]);
   const result = probe();
   assert.deepEqual([...result.routes].sort(), [...ALL_ROUTES].sort());
   assert.equal(result.state, COMPANION_STATES.ready);
   // An older copy lists only the status route (or nothing at all).
   assert.deepEqual([...probe({ routes: [COMPANION_STATUS_PATH] }).routes], [COMPANION_STATUS_PATH]);
-  assert.deepEqual(parseCompanionStatusPayload({ object: 'hermes.browser_companion.status', plugin: 'hermes-browser-companion', tools: [] }).routes, []);
+  assert.deepEqual(parseCompanionStatusPayload({ object: 'hermes.browser_companion.status', plugin: 'hermes-browser-extension', tools: [] }).routes, []);
 });
 
 test('each of the three rows is "available via the companion plugin" only when the ready plugin lists its route', () => {
@@ -63,7 +63,7 @@ test('each of the three rows is "available via the companion plugin" only when t
     assert.equal(fields.state, 'available', id);
     assert.equal(fields.reasonCode, 'companion-route');
     assert.equal(fields.params.route, COMPANION_ROUTE_CAPABILITIES[id]);
-    assert.match(fields.reason, /Available through the companion plugin \(version 0\.4\.0\)/);
+    assert.match(fields.reason, /Available through the hermes-browser-extension plugin \(version 0\.4\.0\)/);
     assert.equal(fields.checkedAt, NOW);
     assert.ok(isCompanionReasonCode(fields.reasonCode));
     // Not listed (an older copy), or the plugin is not ready: nothing to claim.
@@ -108,7 +108,7 @@ test('deriveCapabilityRecords flips the three rows with a listing probe and keep
   for (const id of ROW_IDS) {
     const row = rows.find((item) => item.key === id);
     assert.equal(row.status, 'ok', id);
-    assert.match(row.detail, /Available through the companion plugin/);
+    assert.match(row.detail, /Available through the hermes-browser-extension plugin/);
   }
 });
 
@@ -176,7 +176,7 @@ test('upload refuses what the plugin would refuse and never throws', async () =>
 
 test('status reads counts, ages and hashes for the session and is never live', async () => {
   const body = {
-    object: 'hermes.browser_companion.context_status', plugin: 'hermes-browser-companion',
+    object: 'hermes.browser_companion.context_status', plugin: 'hermes-browser-extension',
     held: 2, consumed: 1, payload_hash: 'abc123def4567890', scope: 'follow-active', newest_age_ms: 4000,
     oldest_age_ms: 15000, expires_in_ms: 296000, pending_upload: { present: true, payload_hash: 'ffff', age_ms: 10, expires_in_ms: 20 }, live: true,
   };

@@ -12,6 +12,7 @@ import {
   classifyCompanionPlugin,
   companionRecordFields,
   companionReasonText,
+  companionRouteRecordFields,
   compareVersions,
   parseCompanionStatusPayload,
   parseCompanionToolsets,
@@ -33,7 +34,7 @@ const ALL_TOOLS = [...COMPANION_EXPECTED_TOOLS];
 function statusBody(overrides = {}) {
   return {
     object: 'hermes.browser_companion.status',
-    plugin: 'hermes-browser-companion',
+    plugin: 'hermes-browser-extension',
     version: COMPANION_EXPECTED_VERSION,
     profile: 'luxord',
     tools: ALL_TOOLS,
@@ -46,7 +47,7 @@ function statusBody(overrides = {}) {
 
 function toolsetsBody({ present = true, enabled = true, tools = ALL_TOOLS } = {}) {
   const data = [{ name: 'web', enabled: true, tools: ['web_search'] }];
-  if (present) data.push({ name: 'hermes-browser-companion', label: 'Browser companion', enabled, tools });
+  if (present) data.push({ name: 'hermes-browser-extension', label: 'Browser companion', enabled, tools });
   return { object: 'list', platform: 'api_server', data };
 }
 
@@ -72,13 +73,36 @@ const probe = (routes, extra = {}) => {
 
 test('the extension expects exactly what companion-plugin/plugin.yaml ships', () => {
   assert.equal(manifest.match(/^version:\s*(\S+)/m)[1], COMPANION_EXPECTED_VERSION);
-  const tools = [...manifest.matchAll(/^ {2}- (browser_\w+)$/gm)].map((match) => match[1]);
-  // The Hermes Control tools are not expected: a Hermes whose core still carries
-  // extension control skips them, and the extension's readiness does not need them.
+  const tools = [...manifest.matchAll(/^ {2}- ((?:browser|tab)_\w+)$/gm)].map((match) => match[1]);
+  // The Hermes Control tools are not expected: they are offered only while a browser is
+  // attached, and the extension's readiness does not need them. They are all tab_*.
   const control = tools.filter((name) => !COMPANION_EXPECTED_TOOLS.includes(name));
   assert.equal(control.length, 20);
+  assert.ok(control.every((name) => name.startsWith('tab_')), control.join(', '));
   assert.deepEqual(tools.filter((name) => COMPANION_EXPECTED_TOOLS.includes(name)).sort(), [...COMPANION_EXPECTED_TOOLS]);
-  assert.equal(COMPANION_STATUS_PATH, '/api/plugins/hermes-browser-companion/status');
+  assert.equal(COMPANION_STATUS_PATH, '/api/plugins/hermes-browser-extension/status');
+});
+
+test('a copy under the plugin\'s old name is an older copy to replace, never a loaded plugin', async () => {
+  const legacy = { status: 200, body: statusBody({ plugin: 'hermes-browser-companion', routes: ['/api/plugins/hermes-browser-companion/control/register'] }) };
+  const { result, calls } = await probe({ '/api/plugins/hermes-browser-companion/status': legacy });
+  assert.equal(result.state, COMPANION_STATES.outdated);
+  assert.equal(result.reasonCode, 'companion-renamed');
+  assert.match(result.reason, /hermes plugins remove hermes-browser-companion/);
+  assert.match(result.reason, /install hermes-browser-extension/);
+  // Nothing the old copy serves is taken as available: its control tools carry browser_* names.
+  assert.equal(companionRouteRecordFields(result, 'browserControl'), null);
+  assert.deepEqual(calls.map((call) => call.url.slice(BASE.length)), [COMPANION_STATUS_PATH, '/api/plugins/hermes-browser-companion/status']);
+
+  // A gateway without a status route at all still tells an old-name toolset apart.
+  const listed = { status: 200, body: { object: 'list', platform: 'api_server', data: [{ name: 'hermes-browser-companion', enabled: true, tools: ALL_TOOLS }] } };
+  const viaToolsets = await probe({ [COMPANION_TOOLSETS_PATH]: listed });
+  assert.equal(viaToolsets.result.reasonCode, 'companion-renamed');
+  assert.equal(viaToolsets.result.state, COMPANION_STATES.outdated);
+
+  // And a gateway with neither still reads as not installed.
+  const none = await probe({ [COMPANION_TOOLSETS_PATH]: { status: 200, body: toolsetsBody({ present: false }) } });
+  assert.equal(none.result.reasonCode, 'companion-not-loaded');
 });
 
 test('versions compare numerically and refuse what is not a plain version', () => {

@@ -684,11 +684,12 @@ const CONTEXT_TOOLS = [
   'browser_context_journal',
   'browser_text_utility',
 ];
+// Registered in the broker's (wire action) order under their tab_* names.
 const CONTROL_TOOLS = [
-  'browser_back', 'browser_batch', 'browser_click', 'browser_drag', 'browser_fill',
-  'browser_hover', 'browser_navigate', 'browser_press', 'browser_screenshot', 'browser_scroll',
-  'browser_scroll_to', 'browser_select', 'browser_snapshot', 'browser_tab_activate', 'browser_tab_close',
-  'browser_tab_create', 'browser_tab_group', 'browser_tab_ungroup', 'browser_tabs', 'browser_type',
+  'tab_back', 'tab_batch', 'tab_click', 'tab_drag', 'tab_fill',
+  'tab_hover', 'tab_navigate', 'tab_press', 'tab_screenshot', 'tab_scroll',
+  'tab_scroll_to', 'tab_select', 'tab_snapshot', 'tab_activate', 'tab_close',
+  'tab_create', 'tab_group', 'tab_ungroup', 'tab_list', 'tab_type',
 ];
 const COMPANION_TOOLS = [...CONTEXT_TOOLS, ...CONTROL_TOOLS];
 
@@ -730,7 +731,7 @@ print(json.dumps({"tools": ctx.tools, "hooks": ctx.hooks}))
   assert.deepEqual(registered.tools, COMPANION_TOOLS);
   assert.deepEqual(registered.hooks, ['pre_llm_call', 'pre_tool_call', 'post_tool_call']);
 
-  const skill = readFileSync('companion-plugin/skills/hermes-browser/SKILL.md', 'utf8');
+  const skill = readFileSync('companion-plugin/skills/hermes-browser-extension/SKILL.md', 'utf8');
   const install = readFileSync('companion-plugin/install.md', 'utf8');
   for (const name of COMPANION_TOOLS) {
     assert.ok(skill.includes(`\`${name}\``), `SKILL.md lists ${name}`);
@@ -781,20 +782,20 @@ assert call("browser_clear_context") == UNAVAILABLE
 });
 
 test('the plugin claims a closed set of routes, and control only through Hermes Control, never action execution by a route', () => {
-  const claims = ['companion-plugin/install.md', 'companion-plugin/skills/hermes-browser/SKILL.md', 'companion-plugin/plugin.yaml', 'DATA-FLOW.md']
+  const claims = ['companion-plugin/install.md', 'companion-plugin/skills/hermes-browser-extension/SKILL.md', 'companion-plugin/plugin.yaml', 'DATA-FLOW.md']
     .map((file) => readFileSync(file, 'utf8')).join('\n');
   assert.doesNotMatch(claims, /\/v1\/browser|\/api\/browser|browser_context_upload|browser_context_provider|plugin_actions/);
-  assert.doesNotMatch(claims, /\/api\/plugins\/hermes-browser-companion\/(?!status|context|actions|control\/(?:register|ws)\b)/);
+  assert.doesNotMatch(claims, /\/api\/plugins\/hermes-browser-extension\/(?!status|context|actions|control\/(?:register|ws)\b)/);
   const install = readFileSync('companion-plugin/install.md', 'utf8');
   assert.match(install, /context tools do \*\*not\*\* control the browser/);
-  assert.match(install, /\/api\/plugins\/hermes-browser-companion\/control\/register/);
-  assert.match(install, /\/api\/plugins\/hermes-browser-companion\/control\/ws/);
-  assert.match(install, /\/api\/plugins\/hermes-browser-companion\/status/);
+  assert.match(install, /\/api\/plugins\/hermes-browser-extension\/control\/register/);
+  assert.match(install, /\/api\/plugins\/hermes-browser-extension\/control\/ws/);
+  assert.match(install, /\/api\/plugins\/hermes-browser-extension\/status/);
   assert.match(install, /read-only/);
-  assert.match(install, /\/api\/plugins\/hermes-browser-companion\/context\/status/);
-  assert.match(install, /\/api\/plugins\/hermes-browser-companion\/actions/);
+  assert.match(install, /\/api\/plugins\/hermes-browser-extension\/context\/status/);
+  assert.match(install, /\/api\/plugins\/hermes-browser-extension\/actions/);
   assert.match(install, /never execution|descriptors, never execution/i);
-  const skill = readFileSync('companion-plugin/skills/hermes-browser/SKILL.md', 'utf8');
+  const skill = readFileSync('companion-plugin/skills/hermes-browser-extension/SKILL.md', 'utf8');
   assert.match(skill, /Never claim browser control unless a Hermes Control tool actually ran/);
   assert.match(skill, /always `live: false`/);
   const policy = readFileSync('companion-plugin/policy.py', 'utf8');

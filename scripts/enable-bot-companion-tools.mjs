@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Install and enable the Hermes Browser companion plugin for ONE profile, with
+ * Install and enable the Hermes Browser Extension plugin (hermes-browser-extension) for ONE profile, with
  * Hermes' own `hermes plugins install`. This script is a thin, careful wrapper:
  * the clone, the security scan, the atomic install and the `plugins.enabled`
  * entry are all done by the official CLI; the script adds only what the CLI does
@@ -18,6 +18,9 @@
  *     every tool twice. It never moves or deletes files; it says what to move
  *   - an installed flat copy of a different version is replaced only with
  *     `--replace` (the CLI's `--force`); the same version is left alone
+ *   - it refuses while a copy under the plugin's previous name
+ *     (`hermes-browser-companion`) is installed: both register the same context tools,
+ *     so Hermes would reject one set. It prints the `hermes plugins remove` to run first
  *   - it never edits config.yaml itself and hardcodes no personal profile name
  *
  * Usage:
@@ -33,14 +36,16 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-export const COMPANION_PLUGIN_NAME = 'hermes-browser-companion';
+export const COMPANION_PLUGIN_NAME = 'hermes-browser-extension';
+// The plugin's name before 0.4.0. A copy under it has to be removed, not installed beside.
+export const COMPANION_LEGACY_PLUGIN_NAME = 'hermes-browser-companion';
 export const COMPANION_PLUGIN_MANIFEST = 'plugin.yaml';
 // The plugin lives in a subdirectory of this repository; `hermes plugins install`
 // reads `<git url>#<subdir>` and sparse-checks-out only that directory.
 export const COMPANION_INSTALL_SOURCE = 'https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin';
 
 const HELP = [
-  'Install and enable the Hermes Browser companion plugin for one profile,',
+  'Install and enable the Hermes Browser Extension plugin for one profile,',
   'through the official `hermes plugins install`.',
   '',
   '  node scripts/enable-bot-companion-tools.mjs --list                       (discovery, read-only)',
@@ -58,6 +63,8 @@ const HELP = [
   "  - Restart that profile's gateway afterwards: tools, hooks and the status route load at start.",
   '  - A nested older copy (plugins/<dir>/companion-plugin) must be moved aside first; this',
   '    script never moves or deletes files.',
+  '  - A copy under the old name (hermes-browser-companion) must be removed first:',
+  '    hermes plugins remove hermes-browser-companion --profile <name>',
 ].join('\n');
 
 // Mirrors Hermes' own profile id rule (lower-case; Hermes casefolds the flag).
@@ -123,8 +130,13 @@ export function resolveProfileHome({ root = '', profile = '', exists = () => fal
   return exists(named) ? named : '';
 }
 
-export function companionPluginDir(profileHome = '') {
-  return path.join(profileHome, 'plugins', COMPANION_PLUGIN_NAME);
+export function companionPluginDir(profileHome = '', name = COMPANION_PLUGIN_NAME) {
+  return path.join(profileHome, 'plugins', name);
+}
+
+/** `hermes plugins remove <name> --profile <profile>`: how an old-name copy goes. */
+export function buildPluginRemoveCommand(profile = '', name = COMPANION_LEGACY_PLUGIN_NAME) {
+  return { command: 'hermes', args: ['plugins', 'remove', name, '--profile', String(profile || '').trim()] };
 }
 
 export function buildPluginEnableCommand(profile = '') {
@@ -159,11 +171,13 @@ export function readPluginManifest(text = '') {
 
 /**
  * Find the staged companion plugin the way Hermes discovers user plugins: a
- * manifest named `hermes-browser-companion` at `plugins/<dir>/plugin.yaml` or one
- * level deeper (`plugins/<category>/<dir>/plugin.yaml`). The canonical
- * `plugins/hermes-browser-companion/` location is preferred.
+ * manifest named `name` (default `hermes-browser-extension`) at
+ * `plugins/<dir>/plugin.yaml` or one level deeper (`plugins/<category>/<dir>/plugin.yaml`).
+ * The canonical `plugins/<name>/` location is preferred.
  */
-export function findStagedCompanion({ profileHome = '', exists = () => false, readDir = () => [], readText = () => '' } = {}) {
+export function findStagedCompanion({
+  profileHome = '', exists = () => false, readDir = () => [], readText = () => '', name = COMPANION_PLUGIN_NAME,
+} = {}) {
   if (!profileHome) return null;
   const pluginsRoot = path.join(profileHome, 'plugins');
   const describe = (pluginDir, layout) => {
@@ -171,9 +185,9 @@ export function findStagedCompanion({ profileHome = '', exists = () => false, re
     let text = '';
     try { text = readText(manifestPath); } catch { text = ''; }
     const manifest = readPluginManifest(text);
-    return { pluginDir, manifestPath, layout, name: manifest.name || COMPANION_PLUGIN_NAME, version: manifest.version };
+    return { pluginDir, manifestPath, layout, name: manifest.name || name, version: manifest.version };
   };
-  const canonical = companionPluginDir(profileHome);
+  const canonical = companionPluginDir(profileHome, name);
   if (exists(path.join(canonical, COMPANION_PLUGIN_MANIFEST))) return describe(canonical, 'flat');
   const names = (directory) => {
     try { return readDir(directory).filter((entry) => !(entry.startsWith('__') && entry.endsWith('__'))); } catch { return []; }
@@ -181,7 +195,7 @@ export function findStagedCompanion({ profileHome = '', exists = () => false, re
   const matches = (pluginDir) => {
     const manifestPath = path.join(pluginDir, COMPANION_PLUGIN_MANIFEST);
     if (!exists(manifestPath)) return false;
-    try { return readPluginManifest(readText(manifestPath)).name === COMPANION_PLUGIN_NAME; } catch { return false; }
+    try { return readPluginManifest(readText(manifestPath)).name === name; } catch { return false; }
   };
   for (const entry of names(pluginsRoot)) {
     const first = path.join(pluginsRoot, entry);
@@ -257,6 +271,7 @@ export function discoverProfiles({
   return [...new Set(names)].map((name) => {
     const profileHome = resolveProfileHome({ root, profile: name, exists });
     const staged = findStagedCompanion({ profileHome, exists, readDir, readText });
+    const legacy = findStagedCompanion({ profileHome, exists, readDir, readText, name: COMPANION_LEGACY_PLUGIN_NAME });
     const configPath = path.join(profileHome, 'config.yaml');
     let configText = null;
     try { if (exists(configPath)) configText = readText(configPath); } catch { configText = null; }
@@ -266,9 +281,10 @@ export function discoverProfiles({
       profile: name,
       profileHome,
       staged: staged ? { pluginDir: staged.pluginDir, layout: staged.layout, version: staged.version } : null,
+      legacy: legacy ? { pluginDir: legacy.pluginDir, layout: legacy.layout, version: legacy.version } : null,
       enabled,
       stale,
-      state: !staged ? 'not-staged' : stale ? 'stale' : enabled === 'yes' ? 'enabled' : 'staged',
+      state: legacy ? 'old-name' : !staged ? 'not-staged' : stale ? 'stale' : enabled === 'yes' ? 'enabled' : 'staged',
     };
   });
 }
@@ -299,6 +315,14 @@ export function buildActivationPlan({
   if (!profileHome) return { ok: false, reason: 'profile-missing', profile: name };
   const staged = findStagedCompanion({ profileHome, exists, readDir, readText });
   const base = { profile: name, profileHome, repoVersion, touches: [path.join(profileHome, 'config.yaml')] };
+  const legacy = findStagedCompanion({ profileHome, exists, readDir, readText, name: COMPANION_LEGACY_PLUGIN_NAME });
+  if (legacy) {
+    // Both copies register the same context tools, so Hermes would reject one set: the old one goes first.
+    return {
+      ok: false, reason: 'legacy-copy-present', ...base,
+      legacyDir: legacy.pluginDir, legacyVersion: legacy.version, remove: buildPluginRemoveCommand(name),
+    };
+  }
 
   if (!staged) {
     return { ok: true, ...base, action: 'install', command: buildPluginInstallCommand({ profile: name, source, ref }) };
@@ -327,7 +351,8 @@ function readConfig(profileHome, exists, readText) {
 
 const REFUSAL_HINTS = Object.freeze({
   'nested-copy-present': 'An older copy is nested under plugins/<dir>/companion-plugin. Move that directory out of the profile (for example to plugins-backup/), then run this again. See companion-plugin/install.md.',
-  'plugin-stale': 'A copy of a different version is installed. Re-run with --replace to reinstall it, or use hermes plugins update hermes-browser-companion.',
+  'plugin-stale': 'A copy of a different version is installed. Re-run with --replace to reinstall it, or use hermes plugins update hermes-browser-extension.',
+  'legacy-copy-present': 'A copy under the plugin\'s old name (hermes-browser-companion) is installed. Run the "remove" command shown, then run this again.',
 });
 
 export function runActivation({ argv = [], deps = {} } = {}) {
@@ -365,10 +390,13 @@ export function runActivation({ argv = [], deps = {} } = {}) {
     }
     const profiles = discoverProfiles({ root, exists, readDir, readText, isDirectory, repoVersion });
     log(`Hermes root: ${root}`);
-    log(`Repository companion plugin version: ${repoVersion || 'unknown'}`);
+    log(`Repository plugin (${COMPANION_PLUGIN_NAME}) version: ${repoVersion || 'unknown'}`);
     for (const row of profiles) {
       const where = row.staged ? `${row.staged.layout} copy v${row.staged.version || '?'} at ${row.staged.pluginDir}` : 'not staged';
       log(`  ${row.profile.padEnd(16)} ${row.state.padEnd(11)} enabled=${row.enabled}  ${where}`);
+      if (row.legacy) {
+        log(`  ${' '.repeat(16)} old-name copy v${row.legacy.version || '?'} at ${row.legacy.pluginDir}: remove it with hermes plugins remove ${COMPANION_LEGACY_PLUGIN_NAME} --profile ${row.profile}`);
+      }
       if (row.staged?.layout === 'nested') {
         log(`  ${' '.repeat(16)} nested copy: hermes plugins install/update does not manage it; see companion-plugin/install.md to replace it`);
       }

@@ -1,4 +1,4 @@
-"""Access policy for the Hermes Browser companion plugin."""
+"""Access policy for the Hermes Browser Extension plugin."""
 
 # The context channel (hooks, context routes, context tools) never drives the
 # browser. Hermes Control (control_*.py) does, and only while the person has the

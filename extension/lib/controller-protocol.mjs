@@ -7,7 +7,7 @@
  *  - cloud-ticket-ws → gateway-rpc (authenticated gateway RPC method call)
  *
  * Two gateway routes carry that protocol: Hermes core's (CONTROLLER_ROUTES.core,
- * on a Hermes that still has extension control) and the Hermes Browser companion
+ * on a Hermes that still has extension control) and the Hermes Browser Extension
  * plugin's (CONTROLLER_ROUTES.plugin, which gives a stock Hermes the same control).
  * The payload, ticket and frames are identical on both.
  *
@@ -107,7 +107,7 @@ const TRANSPORT_GATEWAY_RPC = 'gateway-rpc';
 
 export const CONTROLLER_ROUTES = Object.freeze({ core: 'core', plugin: 'plugin' });
 
-const PLUGIN_BASE_PATH = '/api/plugins/hermes-browser-companion';
+const PLUGIN_BASE_PATH = '/api/plugins/hermes-browser-extension';
 const ROUTE_PATHS = Object.freeze({
   [CONTROLLER_ROUTES.core]: Object.freeze({
     register: '/v1/browser-control/register',

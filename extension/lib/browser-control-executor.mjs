@@ -201,7 +201,8 @@ function pickResultValue(value = null) {
   return value;
 }
 
-function safeNetworkUrl(value = '') {
+// A URL as a result may carry it: bounded, a credential-bearing one cut to its origin, secrets redacted.
+export function safeNetworkUrl(value = '') {
   const url = compact(value, 2_000);
   if (!url) return '';
   if (hasCredentialBearingUrl(url)) {
@@ -308,8 +309,8 @@ export function approvalBindingFields(action, args, target, destination) {
     const parts = [];
     if (refs.length) parts.push(`ref:${refs.join('>')}`);
     if (Number.isFinite(Number(args.x)) && Number.isFinite(Number(args.y))) parts.push(`point:${Number(args.x)},${Number(args.y)}`);
-    // A switch is bound to the tab it switches to, so a grant covers that tab only.
-    if (action === 'browser_tab_activate') parts.push(`tab:${Number(args.tab_id)}`);
+    // A switch or a close is bound to the tab it names, so a grant covers that tab only.
+    if (action === 'browser_tab_activate' || action === 'browser_tab_close') parts.push(`tab:${Number(args.tab_id)}`);
     if (parts.length) fields.binding = parts.join(' ');
   }
   const material = approvalValueMaterial(action, args);
@@ -448,7 +449,9 @@ function sanitizedActionResult(action, value) {
       id: Number(tab.id),
       windowId: Number(tab.windowId),
       active: tab.active === true,
-      url: compact(tab.url, 2_000),
+      url: safeResultUrl(tab.url || tab.pendingUrl),
+      // Still loading when the wait ran out: the first action on it may find the page not ready yet.
+      ...(value?.timedOut === true ? { loading: true } : {}),
     } };
   }
   if (action === 'browser_tab_group') return { status: 'tabs-grouped', groupId: Number(value?.groupId) };
@@ -470,6 +473,8 @@ function sanitizedActionResult(action, value) {
       tabs: Array.isArray(value?.tabs) ? value.tabs.slice(0, 100).map((tab) => ({
         id: Number(tab?.id),
         active: tab?.active === true,
+        // `active` is per window: two windows each have an active tab.
+        ...(Number(tab?.windowId) > 0 ? { windowId: Number(tab.windowId) } : {}),
         title: compact(tab?.title, 500),
         url: compact(tab?.url, 2_000),
       })).filter((tab) => Number.isInteger(tab.id) && tab.id > 0) : [],
@@ -745,8 +750,9 @@ export function createBrowserControlExecutor({
     // The approval card names the tab a switch would bring forward, read through the
     // adapter. Without a readable title the generic wording stands; either way the
     // approval is bound to the tab id, not to this text.
-    async function tabSwitchReason(args) {
-      const generic = APPROVAL_MESSAGES['tab-activate'];
+    // A switch or a close names the tab it is about: the card is shown on whichever tab carries the
+    // command, which need not be the one switched to or closed.
+    async function namedTabReason(args, generic, ask) {
       const targetTabId = Number(args.tab_id);
       if (typeof adapter.inspect !== 'function' || !Number.isInteger(targetTabId) || targetTabId <= 0) return generic;
       try {
@@ -754,10 +760,18 @@ export function createBrowserControlExecutor({
           tabId: targetTabId, frameId: 0, signal: controller.signal, light: true,
         });
         const label = tabSwitchLabel(info?.title, info?.currentUrl);
-        return label ? `Switch your view to "${label}"?` : generic;
+        return label ? ask(label) : generic;
       } catch {
         return generic;
       }
+    }
+
+    function tabSwitchReason(args) {
+      return namedTabReason(args, APPROVAL_MESSAGES['tab-activate'], (label) => `Switch your view to "${label}"?`);
+    }
+
+    function tabCloseReason(args) {
+      return namedTabReason(args, APPROVAL_MESSAGES['tab-close'], (label) => `Close the tab "${label}"?`);
     }
 
     // One action under the full rule set: ref resolution, page probe,
@@ -851,8 +865,8 @@ export function createBrowserControlExecutor({
         }
         let consumed = approvals.consume(approval);
         if (!consumed.ok) {
-          if (action === 'browser_tab_activate') {
-            approvalReason = await tabSwitchReason(args);
+          if (action === 'browser_tab_activate' || action === 'browser_tab_close') {
+            approvalReason = await (action === 'browser_tab_activate' ? tabSwitchReason(args) : tabCloseReason(args));
             // A cancel that landed during the title read must not leave a request behind.
             if (controller.signal.aborted) {
               return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');

@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "ปลั๊กอินเสริมของเบราว์เซอร์",
+    "message": "ปลั๊กอิน Hermes Browser Extension",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "โหลดแล้ว: เวอร์ชัน {version} โปรไฟล์ {profile} เครื่องมือ {toolCount} รายการ เกตเวย์นี้ไม่สามารถยืนยันได้ว่าชุดเครื่องมือเปิดใช้งานสำหรับเซิร์ฟเวอร์ API อยู่หรือไม่",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "มีสำเนาเก่าของปลั๊กอินนี้โหลดอยู่ภายใต้ชื่อเดิม hermes-browser-companion โปรดลบออก (`hermes plugins remove hermes-browser-companion`) ติดตั้ง hermes-browser-extension สำหรับโปรไฟล์นี้ และรีสตาร์ทเกตเวย์",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "ใช้ได้ผ่านปลั๊กอินคู่หู (เวอร์ชัน {version}) ซึ่งให้บริการเส้นทางนี้บนเกตเวย์นี้ ตัว Hermes เองไม่มีเส้นทางดังกล่าว",

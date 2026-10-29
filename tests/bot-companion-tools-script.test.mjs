@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 
 import {
   COMPANION_INSTALL_SOURCE,
+  COMPANION_LEGACY_PLUGIN_NAME,
   COMPANION_PLUGIN_NAME,
   buildActivationPlan,
   buildPluginInstallCommand,
@@ -28,7 +29,7 @@ function fakeFs(present = []) {
 }
 
 const PLUGIN_YAML = (version) => `name: ${COMPANION_PLUGIN_NAME}\nkind: standalone\nversion: ${version}\n`;
-const ENABLED_CONFIG = 'plugins:\n  enabled:\n    - hermes-browser-companion\n';
+const ENABLED_CONFIG = 'plugins:\n  enabled:\n    - hermes-browser-extension\n';
 
 function fakeTree(files = {}, directories = []) {
   const normalized = Object.fromEntries(Object.entries(files).map(([file, text]) => [path.normalize(file), text]));
@@ -162,7 +163,7 @@ test('the current flat copy that is not enabled gets the official enable command
 
 test('a flat copy of another version, or one whose version cannot be read, needs --replace and then runs install --force', () => {
   const home = homeOf('luxord');
-  for (const yaml of [PLUGIN_YAML('0.2.0'), 'name: hermes-browser-companion\n']) {
+  for (const yaml of [PLUGIN_YAML('0.2.0'), 'name: hermes-browser-extension\n']) {
     const tree = fakeTree({ [manifestAt(home, COMPANION_PLUGIN_NAME)]: yaml });
     const refused = buildActivationPlan({ profile: 'luxord', root: ROOT, ...tree, repoVersion: '0.3.4' });
     assert.equal(refused.ok, false);
@@ -188,6 +189,22 @@ test('a nested older copy blocks everything, even with --replace, because both c
     assert.equal(plan.stagedVersion, '0.2.0');
   }
   assert.equal(findStagedCompanion({ profileHome: home, ...fakeTree({ [manifestAt(home, 'unrelated')]: 'name: other\n' }) }), null);
+});
+
+test('a copy under the old name blocks the install and names the command that removes it', () => {
+  const home = homeOf('luxord');
+  const oldYaml = `name: ${COMPANION_LEGACY_PLUGIN_NAME}\nkind: standalone\nversion: 0.4.0\n`;
+  const tree = fakeTree({ [manifestAt(home, COMPANION_LEGACY_PLUGIN_NAME)]: oldYaml, [path.join(home, 'config.yaml')]: 'model: x\n' });
+  for (const replace of [false, true]) {
+    const plan = buildActivationPlan({ profile: 'luxord', root: ROOT, ...tree, repoVersion: '0.4.0', replace });
+    assert.equal(plan.ok, false);
+    assert.equal(plan.reason, 'legacy-copy-present');
+    assert.equal(plan.legacyVersion, '0.4.0');
+    assert.deepEqual(plan.remove, { command: 'hermes', args: ['plugins', 'remove', COMPANION_LEGACY_PLUGIN_NAME, '--profile', 'luxord'] });
+  }
+  const [row] = discoverProfiles({ root: ROOT, ...tree, isDirectory: () => true, repoVersion: '0.4.0' }).filter((entry) => entry.profile === 'luxord');
+  assert.equal(row.state, 'old-name');
+  assert.equal(row.legacy.version, '0.4.0');
 });
 
 test('activation rejects profile paths, lists, wildcards and "all" before any filesystem access', () => {
@@ -361,12 +378,12 @@ test('--list discovers every profile read-only and reports staged version, stale
 test('companionEnabledInConfig reads the plugins.enabled allow-list without a YAML parser', () => {
   assert.equal(companionEnabledInConfig(null), 'unknown');
   assert.equal(companionEnabledInConfig('model: x\n'), 'no');
-  assert.equal(companionEnabledInConfig('plugins:\n  enabled:\n    - a\n    - hermes-browser-companion  # on\ntools: 1\n'), 'yes');
-  assert.equal(companionEnabledInConfig('plugins:\n  enabled:\n  - "hermes-browser-companion"\n'), 'yes');
-  assert.equal(companionEnabledInConfig('plugins:\n  enabled: [a, hermes-browser-companion]\n'), 'yes');
+  assert.equal(companionEnabledInConfig('plugins:\n  enabled:\n    - a\n    - hermes-browser-extension  # on\ntools: 1\n'), 'yes');
+  assert.equal(companionEnabledInConfig('plugins:\n  enabled:\n  - "hermes-browser-extension"\n'), 'yes');
+  assert.equal(companionEnabledInConfig('plugins:\n  enabled: [a, hermes-browser-extension]\n'), 'yes');
   assert.equal(companionEnabledInConfig('plugins:\n  enabled: [a]\n'), 'no');
-  assert.equal(companionEnabledInConfig('plugins:\n  disabled:\n    - hermes-browser-companion\n'), 'no');
-  assert.equal(companionEnabledInConfig('other:\n  enabled:\n    - hermes-browser-companion\nplugins:\n  x: 1\n'), 'no');
+  assert.equal(companionEnabledInConfig('plugins:\n  disabled:\n    - hermes-browser-extension\n'), 'no');
+  assert.equal(companionEnabledInConfig('other:\n  enabled:\n    - hermes-browser-extension\nplugins:\n  x: 1\n'), 'no');
 });
 
 test('HERMES_HOME may name the root or a profile directory', () => {

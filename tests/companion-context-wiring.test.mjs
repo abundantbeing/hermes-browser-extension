@@ -144,10 +144,10 @@ function stubs({ probe, identityKey = 'conn-1', status = 200, throwFetch = false
 }
 
 const ROUTES = [
-  '/api/plugins/hermes-browser-companion/context',
-  '/api/plugins/hermes-browser-companion/context/status',
-  '/api/plugins/hermes-browser-companion/actions',
-  '/api/plugins/hermes-browser-companion/status',
+  '/api/plugins/hermes-browser-extension/context',
+  '/api/plugins/hermes-browser-extension/context/status',
+  '/api/plugins/hermes-browser-extension/actions',
+  '/api/plugins/hermes-browser-extension/status',
 ];
 
 function readyProbe(checkedAt = Date.now(), routes = ROUTES) {
@@ -159,7 +159,7 @@ test('with a proven route the helper uploads the same full envelope once, with t
   const helper = await loadUploadHelper(s);
   assert.equal(await helper.run(TURN()), true);
   assert.equal(s.calls.length, 1);
-  assert.equal(s.calls[0].path, '/api/plugins/hermes-browser-companion/context');
+  assert.equal(s.calls[0].path, '/api/plugins/hermes-browser-extension/context');
   assert.equal(s.calls[0].init.method, 'POST');
   assert.equal(s.calls[0].init.headers['X-Hermes-Session-Id'], 'sess-9');
   const envelope = JSON.parse(s.calls[0].init.body);

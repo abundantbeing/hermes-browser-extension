@@ -121,11 +121,11 @@ test('REST registration answered 404 or 405 by Hermes core and by the companion 
       connector.connect({ settings: { ...LOCAL_SETTINGS }, identity: IDENTITY }),
       (error) => error.code === CONTROLLER_UNSUPPORTED_GATEWAY
         && /does not support Hermes Control \(HTTP \d+\)/.test(error.message)
-        && /companion plugin's control route is not available/.test(error.message),
+        && /Hermes Browser Extension plugin's control route is not available/.test(error.message),
     );
     assert.deepEqual(requests, [
       'http://127.0.0.1:8642/v1/browser-control/register',
-      'http://127.0.0.1:8642/api/plugins/hermes-browser-companion/control/register',
+      'http://127.0.0.1:8642/api/plugins/hermes-browser-extension/control/register',
     ], 'both routes are asked once; an unsupported gateway is neither materialized, retried nor dialled');
     assert.equal(FakeSocket.instances.length, 0);
   }

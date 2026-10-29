@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Plugin pendamping browser",
+    "message": "Plugin Hermes Browser Extension",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Dimuat: versi {version}, profil {profile}, {toolCount} alat. Gateway ini tidak dapat memastikan apakah toolset-nya aktif untuk server API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Salinan lama plugin ini dimuat dengan nama sebelumnya, hermes-browser-companion. Hapus salinan itu (`hermes plugins remove hermes-browser-companion`), instal hermes-browser-extension untuk profil ini, lalu mulai ulang gateway.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Tersedia melalui plugin pendamping (versi {version}), yang menyediakan rute ini di gateway ini. Hermes sendiri tidak memiliki rute seperti itu.",

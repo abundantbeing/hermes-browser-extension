@@ -84,7 +84,7 @@ test('the companion flag no gateway advertises reads "not advertised by this gat
     assert.match(records[id].reason, /^Not advertised by this gateway\./, id);
     assert.doesNotMatch(records[id].reason, /unavailable|not installed/i, id);
   }
-  assert.match(records.browserCompanionPlugin.reason, /cannot tell whether the companion plugin is loaded/);
+  assert.match(records.browserCompanionPlugin.reason, /cannot tell whether its Hermes plugin is loaded/);
   assert.match(records.browserCompanionPlugin.reason, /does not mean it is missing/);
 });
 

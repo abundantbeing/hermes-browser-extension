@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "Tarayıcı yardımcı eklentisi",
+    "message": "Hermes Browser Extension eklentisi",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "Yüklendi: sürüm {version}, profil {profile}, {toolCount} araç. Bu ağ geçidi, araç setinin API sunucusu için açık olup olmadığını doğrulayamadı.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Bu eklentinin eski bir kopyası önceki adı hermes-browser-companion ile yüklü. Onu kaldırın (`hermes plugins remove hermes-browser-companion`), bu profil için hermes-browser-extension'ı yükleyin ve ağ geçidini yeniden başlatın.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "Bu ağ geçidinde bu yolu sunan eşlikçi eklenti (sürüm {version}) üzerinden kullanılabilir. Hermes'in kendisinde böyle bir yol yoktur.",

@@ -1,6 +1,6 @@
 """Broker for Hermes Control: the agent driving the person's own browser.
 
-The Hermes Browser extension registers as a *controller* for one Hermes session;
+The Hermes Browser Extension registers as a *controller* for one Hermes session;
 the plugin's tools are the *callers*. This module is the transport-neutral core
 that binds them. It is the broker Hermes core used to carry for the extension,
 kept here so control works on a Hermes whose core has no extension control.

@@ -316,6 +316,34 @@ test('Phase 6 advertised screenshot and tab actions stay inside worker-owned lea
   ]);
 });
 
+test('a close names the tab it closes, and its approval cannot be spent on a different tab', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const calls = [];
+  const approvals = createBrowserControlApprovalStore();
+  const titles = new Map([[7, 'Command tab'], [8, 'Quarterly report']]);
+  const adapter = fullAdapter(async (action, args) => {
+    calls.push({ action, tabId: args.tab_id ?? null });
+    return { status: 'tab-closed' };
+  });
+  adapter.contract.actions.push('browser_tab_close');
+  adapter.inspect = async ({ tabId }) => ({ currentUrl: 'https://example.test/start', hasUnsavedContent: false, title: titles.get(tabId) || '' });
+  const executor = createBrowserControlExecutor({ adapter, approvals, refs: createBrowserControlRefStore(), now: () => 5_000 });
+
+  // The command rides on tab 7 and closes tab 8: the card says which tab goes.
+  const closing = executor.execute(frame('browser_tab_close', { tab_id: 8 }, { command_id: 'close-8' }), {
+    scope, leasedTabIds: [7, 8], ownedTabIds: [7, 8],
+  });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const [pending] = approvals.pending();
+  assert.equal(pending.reason, 'Close the tab "Quarterly report"?');
+  assert.equal(pending.binding, 'tab:8');
+  assert.equal(approvals.grant({ ...pending, binding: 'tab:9' }).ok, false);
+  assert.deepEqual(calls, [], 'nothing closes before the grant');
+  approvals.grant(pending);
+  assert.equal((await closing).ok, true);
+  assert.deepEqual(calls, [{ action: 'browser_tab_close', tabId: 8 }]);
+});
+
 test('a tab switch names the tab it switches to, and its approval cannot be spent on a different tab', async () => {
   const { createBrowserControlExecutor } = await executorModule();
   const calls = [];

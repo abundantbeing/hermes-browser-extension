@@ -1304,7 +1304,7 @@
     "description": "Runtime interface message capability.feature.auth"
   },
   "runtime_capability_feature_browserCompanionPlugin": {
-    "message": "브라우저 컴패니언 플러그인",
+    "message": "Hermes Browser Extension 플러그인",
     "description": "Runtime interface message capability.feature.browserCompanionPlugin"
   },
   "runtime_capability_feature_browserContextProvider": {
@@ -1454,6 +1454,10 @@
   "runtime_capability_reason_companion_ready_route_only": {
     "message": "로드됨: 버전 {version}, 프로필 {profile}, 도구 {toolCount}개. 이 게이트웨이는 API 서버에서 도구 세트가 켜져 있는지 확인하지 못했습니다.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "이 플러그인의 오래된 사본이 이전 이름 hermes-browser-companion으로 로드되어 있습니다. 이를 제거하고(`hermes plugins remove hermes-browser-companion`) 이 프로필에 hermes-browser-extension을 설치한 다음 게이트웨이를 재시작하세요.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
   },
   "runtime_capability_reason_companion_route": {
     "message": "컴패니언 플러그인(버전 {version})을 통해 사용할 수 있습니다. 이 게이트웨이에서 해당 플러그인이 이 경로를 제공합니다. Hermes 자체에는 이런 경로가 없습니다.",

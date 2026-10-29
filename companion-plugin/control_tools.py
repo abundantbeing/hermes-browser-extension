@@ -1,7 +1,8 @@
 """Hermes Control tools: the agent acting in the person's own browser.
 
-One tool per browser action the extension can run, named exactly as the wire
-action (``browser_click``, ``browser_tabs``, ...). A handler resolves the
+One tool per browser action the extension can run, registered under its tab_*
+name (``tab_click``, ``tab_list``, ...; control_schemas.TOOL_NAMES) and run as the
+wire action (``browser_click``, ``browser_tabs``, ...). A handler resolves the
 controller from the trusted ``session_id`` Hermes passes it (never from the
 model's arguments) within this plugin's profile, sends the action over the
 broker and returns the extension's answer as a string.
@@ -41,12 +42,13 @@ from .control_broker import (
     ControllerUnavailable,
     get_control_broker,
 )
-from .control_schemas import CONTROL_SCHEMAS
+from .control_schemas import CONTROL_SCHEMAS, TOOL_NAMES as TOOL_FOR_ACTION
 
 logger = logging.getLogger(__name__)
 
-TOOLSET = "hermes-browser-companion"
-TOOL_NAMES = CONTROL_ACTIONS
+TOOLSET = "hermes-browser-extension"
+# What the model calls, one per wire action, in the broker's order.
+TOOL_NAMES = tuple(TOOL_FOR_ACTION[action] for action in CONTROL_ACTIONS)
 
 # A screenshot is a PNG the extension caps at 1.5M characters of base64. It goes to
 # a file, never into the tool result, so it cannot flood the model's context.
@@ -193,18 +195,19 @@ def _url_refusal(action: str, args: dict[str, Any]) -> Optional[str]:
             if isinstance(step, dict) and step.get("action") == "navigate" and isinstance(step.get("url"), str):
                 reason = _blocked_url(step["url"])
                 if reason:
-                    return f"browser_batch: step {index + 1} (navigate): {reason} Nothing was run."
+                    return f"{TOOL_FOR_ACTION[action]}: step {index + 1} (navigate): {reason} Nothing was run."
     return None
 
 
 def _missing_argument(action: str, args: dict[str, Any]) -> Optional[str]:
     """What a call lacks, from the schema's required list (a click needs a ref or both coordinates)."""
+    tool = TOOL_FOR_ACTION[action]
     if action == "browser_click":
         if "ref" in args or ("x" in args and "y" in args):
             return None
-        return "browser_click needs a ref, or both x and y."
-    missing = [name for name in CONTROL_SCHEMAS[action]["parameters"]["required"] if args.get(name) is None]
-    return f"{action} needs: {', '.join(missing)}." if missing else None
+        return f"{tool} needs a ref, or both x and y."
+    missing = [name for name in CONTROL_SCHEMAS[tool]["parameters"]["required"] if args.get(name) is None]
+    return f"{tool} needs: {', '.join(missing)}." if missing else None
 
 
 # ── Results ───────────────────────────────────────────────────────────
@@ -267,8 +270,11 @@ def _rejection(error: ControllerRejected) -> str:
     return _failure("rejected", str(detail or "The browser refused the action."))
 
 
-def _tool_call_id() -> Optional[str]:
-    """The id of the tool call being run, when Hermes exposes it; the extension keys a cancel by it."""
+def _tool_call_id(passed: Any = None) -> Optional[str]:
+    """The id of the tool call being run; the extension keys a cancel by it. A Hermes that passes
+    handlers ``tool_call_id`` gives it directly; an older one has it only in its approval context."""
+    if isinstance(passed, str) and passed.strip():
+        return passed.strip()
     try:
         from tools.approval_context import _approval_tool_call_id
 
@@ -293,13 +299,14 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
     if refusal:
         return _failure("url_blocked", refusal)
 
+    tool = TOOL_FOR_ACTION[action]
     broker = _broker()
     scopes = broker.lane_scopes(profile_id=_config["profile"], session_id=session_id)
     if not scopes:
         return _failure(
             "no_browser",
             "No browser is connected for this session. The person has to turn on Hermes Control in the Hermes Browser "
-            "extension and attach a tab. Do not look for another browser; answer without acting, or tell them what to switch on.",
+            "Extension and attach a tab. Do not look for another browser; answer without acting, or tell them what to switch on.",
         )
     if len(scopes) > 1:
         return _failure(
@@ -311,24 +318,24 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
     if broker.select(scope, action) is None:
         return _failure(
             "browser_unavailable",
-            f"The browser for this session is offline or cannot run {action}. Ask the person to check Hermes Control in the extension.",
+            f"The browser for this session is offline or cannot run {tool}. Ask the person to check Hermes Control in the extension.",
         )
     try:
-        result = broker.dispatch(scope, action=action, arguments=values, tool_call_id=_tool_call_id())
+        result = broker.dispatch(scope, action=action, arguments=values, tool_call_id=_tool_call_id((kwargs or {}).get("tool_call_id")))
     except ControllerUnavailable:
-        return _failure("browser_unavailable", f"The browser for this session went offline before {action} ran.")
+        return _failure("browser_unavailable", f"The browser for this session went offline before {tool} ran.")
     except ControllerTimeout:
         return _failure(
             "timeout",
-            f"The browser did not answer {action} in time. It may still have run: take a snapshot before repeating it.",
+            f"The browser did not answer {tool} in time. It may still have run: take a snapshot before repeating it.",
         )
     except ControllerCancelled:
-        return _failure("cancelled", f"{action} was cancelled: the browser disconnected or the call was stopped.")
+        return _failure("cancelled", f"{tool} was cancelled: the browser disconnected or the call was stopped.")
     except ControllerRejected as error:
         return _rejection(error)
     except Exception as error:  # never raise into the agent
-        logger.exception("Hermes Control %s failed", action)
-        return _failure("control_error", f"{action} failed: {type(error).__name__}.")
+        logger.exception("Hermes Control %s failed", tool)
+        return _failure("control_error", f"{tool} failed: {type(error).__name__}.")
     return _result_text(action, result)
 
 
@@ -336,13 +343,14 @@ def make_handler(action: str) -> Callable[..., str]:
     def handler(args: Optional[dict[str, Any]] = None, **kwargs: Any) -> str:
         return run_control_action(action, args, kwargs)
 
-    handler.__name__ = action
+    handler.__name__ = TOOL_FOR_ACTION[action]
     return handler
 
 
 def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, profile: str = "default", data_dir: Any = None) -> None:
-    """Register every Hermes Control tool. A name another toolset already owns (a Hermes that still has
-    extension control in core) is skipped by Hermes with a warning, and that core tool keeps serving it."""
+    """Register every Hermes Control tool under its tab_* name. Those names belong to no Hermes core tool
+    and no other catalog plugin; a Hermes that still has extension control in core keeps its own
+    browser_* tools, and the extension then attaches to core's broker, so these stay hidden there."""
     configure(broker=broker, profile=profile, screenshot_dir=Path(data_dir) / "control-screenshots" if data_dir else None)
     _broker().add_presence_listener(_refresh_tool_listing)
     check_fn: Callable[[], bool] = control_available
@@ -357,13 +365,13 @@ def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, 
     except Exception:
         pass
     for action in CONTROL_ACTIONS:
-        schema = CONTROL_SCHEMAS[action]
+        tool = TOOL_FOR_ACTION[action]
         ctx.register_tool(
-            name=action,
+            name=tool,
             toolset=TOOLSET,
-            schema=schema,
+            schema=CONTROL_SCHEMAS[tool],
             handler=make_handler(action),
             check_fn=check_fn,
-            description=f"Hermes Control: {action} in the person's own browser, through the Hermes Browser extension.",
+            description=f"Hermes Control: {tool} in the person's own browser, through the Hermes Browser Extension.",
             emoji="🖱️",
         )

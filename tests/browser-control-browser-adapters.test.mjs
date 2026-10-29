@@ -843,6 +843,8 @@ test('Phase 6 tab listing redacts restricted leased-tab metadata', async () => {
     title: '(restricted tab)',
     url: '(omitted by privacy guard)',
     favIconUrl: '',
+    // Two windows each have an active tab; the window tells them apart.
+    windowId: 4,
   }]);
 });
 
@@ -854,6 +856,7 @@ test('Phase 6 adapters create and close owned tabs while Chromium alone groups t
   // The agent asking for a foreground tab changes nothing: the new tab opens in the background.
   assert.deepEqual(await chrome.execute('browser_tab_create', { url: 'https://example.test/new', active: true }, context), {
     tab: { id: 9, windowId: 4, active: false, url: 'https://example.test/new' },
+    timedOut: false,
   });
   await chrome.execute('browser_tab_group', { tab_ids: [7, 8] }, context);
   await chrome.execute('browser_tab_ungroup', { tab_ids: [7, 8] }, context);
@@ -876,6 +879,27 @@ test('Phase 6 adapters create and close owned tabs while Chromium alone groups t
   ]);
   await fox.execute('browser_tab_close', { tab_id: 8 }, context);
   await assert.rejects(fox.execute('browser_tab_group', { tab_ids: [7, 8] }, context), /not supported/i);
+});
+
+test('a new tab opens in the window its carrier is in now, and a switch brings that tab\'s window forward', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  const get = chromium.api.tabs.get;
+  // The person dragged the attached tab 7 into window 6 after attaching it in window 4.
+  chromium.api.tabs.get = async (tabId) => (Number(tabId) === 7 ? { ...(await get(7)), windowId: 6 } : get(tabId));
+  chromium.api.windows = {
+    update: async (windowId, changes) => { chromium.calls.push(['windows.update', windowId, changes]); return { id: windowId }; },
+  };
+  const chrome = createChromiumCdpAdapter({ browserApi: chromium.api });
+  const context = { scope, leasedTabIds: [7, 8], ownedTabIds: [7, 8], currentWindowId: 4, signal: new AbortController().signal };
+  const created = await chrome.execute('browser_tab_create', { url: 'https://example.test/new' }, context);
+  assert.equal(created.tab.windowId, 6);
+  await chrome.execute('browser_tab_activate', { tab_id: 8 }, context);
+  assert.deepEqual(chromium.calls.filter((call) => call[0] === 'tabs.create' || call[0].startsWith('windows.') || call[0] === 'tabs.update'), [
+    ['tabs.create', { url: 'https://example.test/new', active: false, windowId: 6 }],
+    ['tabs.update', 8, { active: true }],
+    ['windows.update', 4, { focused: true }],
+  ]);
 });
 
 test('Phase 6 inspection does not inject a page probe into restricted surfaces', async () => {

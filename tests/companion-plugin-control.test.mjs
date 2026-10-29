@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 import { CONTROLLER_BROWSER_CAPABILITIES } from '../extension/lib/controller-protocol.mjs';
+import { PLUGIN_TOOL_NAMES } from '../extension/lib/control-tool-names.mjs';
 
 // Hermes Control inside the companion plugin: the broker, the register and socket
 // routes, and the tools. These tests drive the real plugin code, the real aiohttp
@@ -34,7 +35,7 @@ routes = sys.modules["probe_plugin.control_routes"]
 tools = sys.modules["probe_plugin.control_tools"]
 schemas = sys.modules["probe_plugin.control_schemas"]
 
-BASE = "/api/plugins/hermes-browser-companion"
+BASE = "/api/plugins/hermes-browser-extension"
 REGISTER = BASE + "/control/register"
 WS = BASE + "/control/ws"
 TOKEN = "Bearer paired-token"
@@ -134,19 +135,23 @@ test('the Hermes Control tools, schemas, broker actions and the extension capabi
   const out = runPython(`${PRELUDE}
 print(json.dumps({"actions": list(broker_module.CONTROL_ACTIONS), "schemas": sorted(schemas.CONTROL_SCHEMAS),
                   "tools": list(tools.TOOL_NAMES), "caps": sorted(broker_module.CONTROL_CAPABILITIES),
-                  "names": [schemas.CONTROL_SCHEMAS[name]["name"] for name in broker_module.CONTROL_ACTIONS],
-                  "descriptions": [schemas.CONTROL_SCHEMAS[name]["description"] for name in broker_module.CONTROL_ACTIONS],
-                  "types": [schemas.CONTROL_SCHEMAS[name]["parameters"]["type"] for name in broker_module.CONTROL_ACTIONS]}))
+                  "mapping": schemas.TOOL_NAMES,
+                  "names": [schemas.CONTROL_SCHEMAS[schemas.TOOL_NAMES[name]]["name"] for name in broker_module.CONTROL_ACTIONS],
+                  "descriptions": [schemas.CONTROL_SCHEMAS[schemas.TOOL_NAMES[name]]["description"] for name in broker_module.CONTROL_ACTIONS],
+                  "types": [schemas.CONTROL_SCHEMAS[schemas.TOOL_NAMES[name]]["parameters"]["type"] for name in broker_module.CONTROL_ACTIONS]}))
 `);
   const data = JSON.parse(out);
   assert.deepEqual([...data.actions].sort(), [...CONTROLLER_BROWSER_CAPABILITIES].sort());
-  assert.deepEqual(data.schemas, [...data.actions].sort());
-  assert.deepEqual(data.tools, data.actions);
-  assert.deepEqual(data.names, data.actions);
+  // The plugin and the extension name every action's tool the same way (tab_*).
+  assert.deepEqual(data.mapping, { ...PLUGIN_TOOL_NAMES });
+  const toolNames = data.actions.map((action) => PLUGIN_TOOL_NAMES[action]);
+  assert.deepEqual(data.schemas, [...toolNames].sort());
+  assert.deepEqual(data.tools, toolNames);
+  assert.deepEqual(data.names, toolNames);
   assert.deepEqual(data.caps, ['controller.noop', ...data.actions].sort());
   assert.equal(data.actions.length, 20);
   for (const description of data.descriptions) {
-    assert.match(description, /person's own browser through the Hermes Browser extension/);
+    assert.match(description, /person's own browser through the Hermes Browser Extension/);
     assert.match(description, /separate from browser_exec/);
   }
   for (const type of data.types) assert.equal(type, 'object');
@@ -170,9 +175,9 @@ class Ctx:
     def register_hook(self, name, callback): pass
     def register_skill(self, name, path): pass
 
-ctx = Ctx(owned=["browser_click"])
+ctx = Ctx(owned=["tab_click"])
 module.register(ctx)
-control = {name: entry for name, entry in ctx.registered.items() if name in broker_module.CONTROL_ACTIONS}
+control = {name: entry for name, entry in ctx.registered.items() if name in tools.TOOL_NAMES}
 broker = broker_module.get_control_broker()
 before = tools.control_available()
 scope = broker_module.ControllerScope(principal_id="p", profile_id="luxord", session_id="sess-A", controller_id="c",
@@ -181,14 +186,14 @@ broker.attach(scope, lambda frame: None, owner=object())
 during = tools.control_available()
 checks = {name: entry["check_fn"]() for name, entry in control.items()}
 broker.reset()
-print(json.dumps({"count": len(control), "skipped_owned": "browser_click" not in control, "toolsets": sorted({e["toolset"] for e in control.values()}),
+print(json.dumps({"count": len(control), "skipped_owned": "tab_click" not in control, "toolsets": sorted({e["toolset"] for e in control.values()}),
                   "before": before, "during": during, "checks": sorted(set(checks.values())), "after": tools.control_available(),
                   "schemas_ok": all(e["schema"]["name"] == name for name, e in control.items())}))
 `);
   const data = JSON.parse(out);
   assert.equal(data.count, 19);
   assert.equal(data.skipped_owned, true);
-  assert.deepEqual(data.toolsets, ['hermes-browser-companion']);
+  assert.deepEqual(data.toolsets, ['hermes-browser-extension']);
   assert.equal(data.before, false);
   assert.equal(data.during, true);
   assert.deepEqual(data.checks, [true]);
@@ -292,7 +297,7 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.cache, 'no-store');
   assert.equal(data.tickets_minted, 1, 'only the valid registration minted a ticket');
   assert.equal(data.ok.protocol_version, 1);
-  assert.equal(data.ok.ws_path, '/api/plugins/hermes-browser-companion/control/ws');
+  assert.equal(data.ok.ws_path, '/api/plugins/hermes-browser-extension/control/ws');
   assert.equal(data.ok.ticket_expires_in_seconds, 30);
   assert.match(data.ok.ticket, /^[A-Za-z0-9_-]{30,}$/);
   assert.deepEqual(data.ok.scope.capabilities, ['browser_batch', 'browser_click', 'browser_navigate', 'browser_screenshot', 'browser_snapshot', 'controller.noop']);
@@ -336,9 +341,9 @@ print(json.dumps(asyncio.run(main())))
   if (skipped(data)) return;
   assert.deepEqual(data.register, [401, 401]);
   assert.equal(data.ws_plain, 401);
-  assert.ok(data.routes.includes('/api/plugins/hermes-browser-companion/control/register'));
-  assert.ok(data.routes.includes('/api/plugins/hermes-browser-companion/control/ws'));
-  for (const name of CONTROLLER_BROWSER_CAPABILITIES) assert.ok(data.tools.includes(name), name);
+  assert.ok(data.routes.includes('/api/plugins/hermes-browser-extension/control/register'));
+  assert.ok(data.routes.includes('/api/plugins/hermes-browser-extension/control/ws'));
+  for (const action of CONTROLLER_BROWSER_CAPABILITIES) assert.ok(data.tools.includes(PLUGIN_TOOL_NAMES[action]), action);
 });
 
 test('the socket takes a ticket only from the subprotocol, exactly once, and not after it expires', () => {
@@ -1049,4 +1054,21 @@ test('the Hermes Control modules read no credential, open no outbound connection
   assert.match(routesSource, /hermes-browser-control-ticket\./);
   // the plugin's skill and manifest never pin a mutable path for the socket
   assert.doesNotMatch(readFileSync('companion-plugin/plugin.yaml', 'utf8'), /control\/ws/);
+});
+
+test('a call carries the id Hermes gives the handler, and its messages name the tab_* tool the model called', () => {
+  const out = runPython(`${PRELUDE}
+passed = tools._tool_call_id("call-from-hermes")
+blank = tools._tool_call_id("  ")
+missing = tools.run_control_action("browser_click", {}, {"session_id": "sess-A", "tool_call_id": "call-1"})
+none = tools.run_control_action("browser_tabs", {}, {"session_id": "sess-A"})
+print(json.dumps({"passed": passed, "blank": blank, "missing": json.loads(missing), "none": json.loads(none)}))
+`);
+  const data = JSON.parse(out);
+  assert.equal(data.passed, 'call-from-hermes');
+  assert.equal(data.blank, null, 'a blank id falls back to the approval context, absent here');
+  assert.match(data.missing.error, /^tab_click needs a ref, or both x and y\.$/);
+  assert.equal(data.none.code, 'no_browser');
+  const source = readFileSync('companion-plugin/control_tools.py', 'utf8');
+  assert.match(source, /tool_call_id=_tool_call_id\(\(kwargs or \{\}\)\.get\("tool_call_id"\)\)/);
 });

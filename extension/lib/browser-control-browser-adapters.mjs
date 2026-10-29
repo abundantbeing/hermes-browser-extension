@@ -3,6 +3,7 @@ import {
 } from './browser-controller-adapter.mjs';
 import { isRestrictedUrl, privacySafeTabForPrompt } from './browser-context-protocol.mjs';
 import { resolveKeyPress } from './browser-control-keys.mjs';
+import { controlToolName } from './control-tool-names.mjs';
 import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, frameChainReadable, frameUrlReadable, readableChildFrames } from './browser-control-frames.mjs';
 import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
@@ -33,7 +34,8 @@ const DETACHED_WHILE_HANDLING_RE = /detached while handling/i;
 // a moment before it delivers onDetach; wait this long for the event.
 const DETACH_EVENT_GRACE_MS = 75;
 const STALE_NODE_RE = /could not find node|no node with given id|node with given id|node is detached|does not belong to the document|no node found for given backend id|could not find object/i;
-const STALE_REF_MESSAGE = 'That element is gone \u2014 use the refs in the latest result or call browser_snapshot.';
+// Read when the error is made: the tool's name follows the route control is connected through.
+const staleRefMessage = () => `That element is gone \u2014 use the refs in the latest result or call ${controlToolName('browser_snapshot')}.`;
 const ACTIONABLE_AX_ROLES = new Set([
   'button', 'checkbox', 'combobox', 'dialog', 'gridcell', 'link', 'listbox',
   'menuitem', 'option', 'radio', 'searchbox', 'slider', 'spinbutton', 'switch',
@@ -214,7 +216,56 @@ function privacySafeLeasedTabs(tabs = [], leasedTabIds = []) {
   const allowed = new Set(Array.from(leasedTabIds || []).map(Number));
   return tabs
     .filter((tab) => allowed.has(Number(tab?.id)))
-    .map(privacySafeTabForPrompt);
+    // `active` is per window, so the window says which of several active tabs is which.
+    .map((tab) => ({ ...privacySafeTabForPrompt(tab), windowId: Number(tab?.windowId) || null }));
+}
+
+// A switch the person approved brings the tab in front: active in its window, and that window
+// focused, since a tab active in a window behind another is still out of sight.
+async function activateTab(browserApi, tabId) {
+  const activated = await browserApi.tabs.update(tabId, { active: true });
+  const windowId = Number(activated?.windowId);
+  if (windowId && typeof browserApi.windows?.update === 'function') {
+    try {
+      await browserApi.windows.update(windowId, { focused: true });
+    } catch {
+      // The tab is in front in its own window either way.
+    }
+  }
+  return activated;
+}
+
+// Opens a URL in a background tab in the window the carrier tab is in now (the person may have moved
+// it since it was attached), then waits for the page, so the first action on the new tab reads it
+// rather than a blank document. A wait that is cut short still reports the tab, so it is not left
+// open with nothing owning it.
+async function createBackgroundTab(browserApi, waitForLoad, {
+  url, carrierTabId, fallbackWindowId = null, signal,
+}) {
+  let windowId = null;
+  try {
+    windowId = Number((await browserApi.tabs.get(carrierTabId))?.windowId) || null;
+  } catch {
+    // The carrier closed: the window it was attached in, if any.
+  }
+  windowId = windowId || Number(fallbackWindowId) || null;
+  // Hermes never takes the person's view: a tab it opens starts in the background.
+  const tab = await browserApi.tabs.create({ url: String(url || ''), active: false, ...(windowId ? { windowId } : {}) });
+  const createdId = Number(tab?.id);
+  if (!Number.isInteger(createdId) || createdId <= 0) return { tab };
+  let timedOut = false;
+  try {
+    ({ timedOut } = await waitForLoad(createdId, { signal, sawLoading: tab?.status === 'loading' }));
+  } catch {
+    timedOut = true;
+  }
+  let loaded = tab;
+  try {
+    loaded = (await browserApi.tabs.get(createdId)) || tab;
+  } catch {
+    // Closed while loading: report what was opened.
+  }
+  return { tab: loaded, timedOut: timedOut === true };
 }
 
 function tabIdFrom(scope = {}) {
@@ -778,7 +829,7 @@ function withheldScreenshotMessage(verdict) {
     : (frame.kind === 'document'
       ? 'A frame on this page that is not an ordinary web page (a browser, data or blob document) is in view, so the screenshot was withheld.'
       : 'A frame on this page could not be checked, so the screenshot was withheld.');
-  return `${lead} Hermes can still read the page text with browser_snapshot. Scroll the frame out of view, take a screenshot of one element away from it, or ask the person to look at it themselves.`;
+  return `${lead} Hermes can still read the page text with ${controlToolName('browser_snapshot')}. Scroll the frame out of view, take a screenshot of one element away from it, or ask the person to look at it themselves.`;
 }
 
 // The same for a pointer action that would land inside a frame.
@@ -1003,7 +1054,7 @@ function createChromiumCdpAdapter({
   function mapNodeError(method, error) {
     if ((method.startsWith('DOM.') || method === 'Runtime.callFunctionOn')
       && STALE_NODE_RE.test(String(error?.message || error || ''))) {
-      return codedError('stale_ref', STALE_REF_MESSAGE);
+      return codedError('stale_ref', staleRefMessage());
     }
     return error;
   }
@@ -1266,7 +1317,7 @@ function createChromiumCdpAdapter({
         } catch (error) {
           if (abortError(signal)) throw error;
           if (error?.code === 'stale_ref' || STALE_NODE_RE.test(String(error?.message || error || ''))) {
-            throw codedError('stale_ref', STALE_REF_MESSAGE);
+            throw codedError('stale_ref', staleRefMessage());
           }
         }
       }
@@ -2107,17 +2158,12 @@ function createChromiumCdpAdapter({
     if (action === 'browser_tab_activate') {
       const targetTabId = Number(args.tab_id);
       if (!Number.isInteger(targetTabId) || targetTabId <= 0) throw new Error('A valid tab id is required.');
-      return browserApi.tabs.update(targetTabId, { active: true });
+      return activateTab(browserApi, targetTabId);
     }
     if (action === 'browser_tab_create') {
-      const windowId = Number(currentWindowId) || Number((await browserApi.tabs.get(tabId))?.windowId) || null;
-      const tab = await browserApi.tabs.create({
-        url: String(args.url || ''),
-        // Hermes never takes the person's view: a tab it opens starts in the background.
-        active: false,
-        ...(windowId ? { windowId } : {}),
+      return createBackgroundTab(browserApi, waitForLoad, {
+        url: args.url, carrierTabId: tabId, fallbackWindowId: currentWindowId, signal,
       });
-      return { tab };
     }
     if (action === 'browser_tab_close') {
       const targetTabId = Number(args.tab_id);
@@ -2403,7 +2449,7 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
       if (args.ref || target) {
         throw codedError(
           'unsupported_for_ref',
-          'Firefox can only capture the whole visible tab, so a screenshot of one element is not available. Call browser_screenshot without a ref, or read the element with browser_snapshot.',
+          `Firefox can only capture the whole visible tab, so a screenshot of one element is not available. Call ${controlToolName('browser_screenshot')} without a ref, or read the element with ${controlToolName('browser_snapshot')}.`,
         );
       }
       // captureVisibleTab photographs the WINDOW's active tab, whichever tab that is. The
@@ -2435,17 +2481,12 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
     if (action === 'browser_tab_activate') {
       const targetTabId = Number(args.tab_id);
       if (!Number.isInteger(targetTabId) || targetTabId <= 0) throw new Error('A valid tab id is required.');
-      return browserApi.tabs.update(targetTabId, { active: true });
+      return activateTab(browserApi, targetTabId);
     }
     if (action === 'browser_tab_create') {
-      const windowId = Number(currentWindowId) || Number((await browserApi.tabs.get(tabId))?.windowId) || null;
-      const tab = await browserApi.tabs.create({
-        url: String(args.url || ''),
-        // Hermes never takes the person's view: a tab it opens starts in the background.
-        active: false,
-        ...(windowId ? { windowId } : {}),
+      return createBackgroundTab(browserApi, waitForLoad, {
+        url: args.url, carrierTabId: tabId, fallbackWindowId: currentWindowId, signal,
       });
-      return { tab };
     }
     if (action === 'browser_tab_close') {
       const targetTabId = Number(args.tab_id);

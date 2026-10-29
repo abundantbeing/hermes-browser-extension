@@ -1,8 +1,9 @@
 import { reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
+import { CONTROL_TOOL_FAMILIES } from './lib/control-tool-names.mjs';
 import {
   AUDIO_TRANSCRIBE_ENDPOINT,
   DEFAULT_SETTINGS,
-  HERMES_BROWSER_SYSTEM_PROMPT,
+  hermesBrowserSystemPrompt,
   MODEL_EFFORTS,
   appendOpenAiChunkText,
   autoSessionTitleFromText,
@@ -25035,6 +25036,16 @@ function currentModelOptionsPayload() {
   return buildHermesModelOptions(settings);
 }
 
+// Which names the model has for the Hermes Control tools: the controller says once it is connected;
+// before that, the route it would take (Hermes core first, then the plugin).
+function currentControlToolFamily() {
+  const reported = browserControlStatus?.controlToolFamily;
+  if (reported === CONTROL_TOOL_FAMILIES.plugin || reported === CONTROL_TOOL_FAMILIES.core) return reported;
+  return browserControlSupport(gatewayCapabilities) !== 'supported' && companionControlSupport() === 'supported'
+    ? CONTROL_TOOL_FAMILIES.plugin
+    : CONTROL_TOOL_FAMILIES.core;
+}
+
 function currentHermesBrowserSystemPrompt() {
   const runtimeSelection = buildHermesRuntimeSelectionNote({
     model: currentModelRequestId(),
@@ -25042,7 +25053,7 @@ function currentHermesBrowserSystemPrompt() {
     modelOptions: currentModelOptionsPayload(),
   });
   const styleNote = responseStyleInstructions(settings.responseStyle);
-  return `${HERMES_BROWSER_SYSTEM_PROMPT}\n\n${runtimeSelection}${styleNote ? `\n\n${styleNote}` : ''}`;
+  return `${hermesBrowserSystemPrompt(currentControlToolFamily())}\n\n${runtimeSelection}${styleNote ? `\n\n${styleNote}` : ''}`;
 }
 
 // The response style contract each Browser turn carries (response_style):
