@@ -708,9 +708,17 @@ test('remote gateway diagnostic detects dashboard SSO, API auth, and CORS setup 
   const cors = classifyRemoteGatewaySetup({
     url: 'http://tailnet-host:8642',
     error: 'TypeError: Failed to fetch because CORS origin is blocked',
+    origin: 'moz-extension://8c1f',
   });
   assert.equal(cors.kind, 'cors');
   assert.match(cors.detail, /API_SERVER_CORS_ORIGINS/);
+  assert.match(cors.detail, /Add moz-extension:\/\/8c1f to/, 'the origin of this install, not a Chrome placeholder');
+
+  // A bare network failure is the network (wrong address, host down, TLS), not CORS: it falls
+  // through to the generic, network-shaped troubleshooting.
+  for (const error of ['TypeError: Failed to fetch', 'NetworkError when attempting to fetch resource.', 'Load failed']) {
+    assert.equal(classifyRemoteGatewaySetup({ url: 'http://100.64.0.9:8642', error }).kind, 'unknown', error);
+  }
 });
 
 test('connection diagnostics can represent connected-but-degraded optional failures', () => {
@@ -4488,4 +4496,20 @@ test('a Bot Chat keeps its source on a REST turn; other foreign sessions are sti
   assert.equal(restTurnSourceRepair({ session: { source: 'desktop', title: 'Bot Chat' } }), null);
   assert.equal(restTurnSourceRepair({ source: 'desktop', title: 'Bot Chat #2', root_title: 'Bot Chat' }), null);
   assert.deepEqual(restTurnSourceRepair({ source: 'desktop', title: 'Notes' }), { source: 'api_server' });
+});
+
+test('a gateway address typed without a scheme gets one instead of failing every request', async () => {
+  const { withGatewayScheme } = await import('../extension/lib/common.mjs');
+  assert.equal(withGatewayScheme('box.tailnet.ts.net:8642'), 'http://box.tailnet.ts.net:8642');
+  assert.equal(withGatewayScheme(' localhost:8642 '), 'http://localhost:8642');
+  assert.equal(withGatewayScheme('192.168.1.20:8642/v1'), 'http://192.168.1.20:8642/v1');
+  assert.equal(withGatewayScheme('agent.example.com:443'), 'https://agent.example.com:443');
+  assert.equal(withGatewayScheme('hermes.example.com', { secure: true }), 'https://hermes.example.com');
+  // Anything that already names a scheme, and an empty field, are left as typed.
+  for (const kept of ['http://127.0.0.1:8642', 'https://agent.example.com', 'HTTPS://Agent.example.com', '']) {
+    assert.equal(withGatewayScheme(kept), kept);
+  }
+  const panel = await import('node:fs').then((fs) => fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8'));
+  assert.match(panel, /const rawGatewayUrl = withGatewayScheme\(els\.gatewayUrlInput\.value/);
+  assert.match(panel, /typedUrl: withGatewayScheme\(els\.gatewayUrlInput\?\.value/);
 });

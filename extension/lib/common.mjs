@@ -324,6 +324,16 @@ const SENSITIVE_URL_PATTERNS = [
   /\/tax|irs\.gov|ssa\.gov/i,
 ];
 
+// A gateway address typed without a scheme ("box.tailnet.ts.net:8642", "localhost:8642") parses
+// as a URL whose scheme is the host, so every request to it fails. Give it http:// (https:// for
+// :443, or for a hosted address that is https only); anything that already names a scheme is kept.
+export function withGatewayScheme(value = '', { secure = false } = {}) {
+  const raw = String(value || '').trim();
+  if (!raw || /^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) return raw;
+  const authority = raw.split(/[/?#]/, 1)[0];
+  return `${secure || /:443$/.test(authority) ? 'https' : 'http'}://${raw}`;
+}
+
 export function normalizeGatewayUrl(value = DEFAULT_SETTINGS.gatewayUrl) {
   const raw = String(value || '').trim() || DEFAULT_SETTINGS.gatewayUrl;
   return raw.replace(/\/+$/, '').replace(/\/v1$/i, '');
@@ -432,6 +442,7 @@ export function classifyRemoteGatewaySetup({
   body = '',
   healthOk = false,
   error = '',
+  origin = '',
 } = {}) {
   const urlText = String(url || '').trim();
   const text = `${location} ${body} ${error}`.replace(/\s+/g, ' ').trim().toLowerCase();
@@ -463,11 +474,14 @@ export function classifyRemoteGatewaySetup({
     };
   }
 
-  if (/cors|cross-origin|failed to fetch|networkerror|load failed|typeerror: fetch/.test(text)) {
+  // Only a failure that names CORS. A bare "Failed to fetch" / NetworkError / "Load failed" is the
+  // network (a wrong address, a host that is down or not listening, TLS): an extension page with
+  // host permission is not held to CORS, and Hermes refuses an origin it does not allow with a 403.
+  if (/cors|cross-origin/.test(text)) {
     return {
       kind: 'cors',
       title: 'CORS origin not allowed',
-      detail: 'Browser could not reach the Hermes API from this extension origin. Add chrome-extension://<extension-id> to API_SERVER_CORS_ORIGINS on the remote host.',
+      detail: `Browser could not reach the Hermes API from this extension origin. Add ${String(origin || '').trim() || 'chrome-extension://<extension-id>'} to API_SERVER_CORS_ORIGINS on the remote host.`,
       suggestedUrl: urlText,
     };
   }

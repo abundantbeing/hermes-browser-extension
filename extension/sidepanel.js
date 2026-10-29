@@ -62,6 +62,7 @@ import {
   normalizeFastMode,
   normalizeGatewayMode,
   normalizeGatewayUrl,
+  withGatewayScheme,
   normalizeBrowserModelBinding,
   normalizeRuntimeModelPayload,
   normalizeSessionStartupMode,
@@ -273,7 +274,7 @@ import { discoverLiveSessions, readIdleRowSubagents, readLiveAttachSnapshot, ros
 import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { createRestFollowState, messageCountFromSessionPayload, restFollowDue, restFollowStep } from './lib/session-follow.mjs';
 import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAGE_LIMIT } from './lib/session-paging.mjs';
-import { materializeSessionRoute, restSessionCreateSource, sessionRouteError } from './lib/session-materialization.mjs';
+import { CORS_ORIGINS_SETTING, materializeSessionRoute, restSessionCreateSource, sessionRouteError, sessionRouteOriginRefusal } from './lib/session-materialization.mjs';
 import { createUserFileAttachment, createPageContextAttachment, appendUserFileAttachments, stageUserFiles, attachmentFileContext, attachmentSourceKey, rememberUserFileAttachments, restoreUserFileAttachments, openUserFileAttachment, downloadUserFileAttachment } from './lib/user-file-attachments.mjs';
 import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactDownloadSource, resolveArtifactFileSource } from './lib/media-source.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
@@ -22891,7 +22892,7 @@ async function saveSettingsFromForm() {
   });
   const gatewayMode = legacyGatewayModeForConnection({ connectionMode, connectionTransport });
   const remote = connectionMode !== 'local';
-  const rawGatewayUrl = els.gatewayUrlInput.value.trim();
+  const rawGatewayUrl = withGatewayScheme(els.gatewayUrlInput.value, { secure: connectionMode === 'cloud' });
   const gatewayUrl = connectionMode === 'cloud'
     ? sanitizeGatewayUrlForConnectionMode({
         connectionMode,
@@ -24319,6 +24320,30 @@ function safeHttpBodySnippet(text = '', limit = 500) {
     .trim();
 }
 
+// Hermes answers reads from any origin but refuses a write from an origin missing from
+// API_SERVER_CORS_ORIGINS with a bare 403 (#89), so a test that only reads went green and the
+// first message failed. Its origin gate answers an OPTIONS before any handler runs, so asking
+// changes nothing: a bare 403 is the refusal, anything else (200, or 404/405 from a gateway
+// without the gate) is not.
+async function probeApiOriginRefusal() {
+  if (!hermesGatewayKey() || !settings.gatewayUrl) return null;
+  try {
+    const response = await fetch(`${normalizeGatewayUrl(settings.gatewayUrl)}/v1/capabilities`, {
+      method: 'OPTIONS',
+      cache: 'no-store',
+      signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(2_000) : undefined,
+    });
+    return sessionRouteOriginRefusal({
+      action: 'Origin check',
+      status: response.status,
+      body: await response.text().catch(() => ''),
+      extensionOrigin: currentExtensionOrigin(),
+    });
+  } catch {
+    return null;
+  }
+}
+
 function createSessionRouteError({ action, response, body = '', originRefusal = null } = {}) {
   const status = response?.status || 0;
   const actionText = action || 'Hermes session request';
@@ -24339,6 +24364,7 @@ function createSessionRouteError({ action, response, body = '', originRefusal = 
         healthOk: true,
         status,
         body,
+        origin: currentExtensionOrigin(),
       })
     : null;
   const knownRemoteDiagnostic = diagnostic && diagnostic.kind !== 'unknown' ? diagnostic : null;
@@ -25966,7 +25992,9 @@ async function connectTicketTransport({ cloud = false } = {}) {
 function adoptUnsavedGatewayUrlForConnect() {
   const nextUrl = unsavedGatewayUrlForConnect({
     savedUrl: settings.gatewayUrl,
-    typedUrl: els.gatewayUrlInput?.value,
+    typedUrl: withGatewayScheme(els.gatewayUrlInput?.value, {
+      secure: (els.connectionModeInput?.value || settings.connectionMode) === 'cloud',
+    }),
     savedConnectionMode: settings.connectionMode,
     formConnectionMode: els.connectionModeInput?.value || settings.connectionMode,
     savedGatewayMode: settings.gatewayMode,
@@ -27651,6 +27679,7 @@ async function testConnection() {
           status: response.status,
           location: response.headers?.get?.('location') || '',
           body: text,
+          origin: currentExtensionOrigin(),
         });
         lastRemoteDiagnostic = diagnostic;
         renderRemoteDiagnostics(diagnostic);
@@ -27698,12 +27727,23 @@ async function testConnection() {
     markGatewayReachable(dashboardAttached ? (localDashboardUrl() || normalizeGatewayUrl(settings.gatewayUrl)) : normalizeGatewayUrl(settings.gatewayUrl));
     lastRemoteDiagnostic = null;
     renderRemoteDiagnostics(null);
+    const originRefusal = dashboardAttached ? null : await probeApiOriginRefusal();
+    if (!connectionController.isCurrent(generation)) return;
+    if (originRefusal) {
+      setStatus(
+        'warn',
+        'Hermes will refuse messages from this browser',
+        `Hermes answers this browser's reads but refuses its messages: ${originRefusal.origin} is not in ${CORS_ORIGINS_SETTING}. Add this line to the Hermes .env file, then restart the gateway: ${originRefusal.envLine}`,
+        { translateDetail: false },
+      );
+    }
 
     settings = { ...settings, lastConnectionTestedAt: Date.now() };
     await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     renderConnectionSecurity();
 
-    ok = true;
+    // Reads work, but every message would be refused: not a green test.
+    ok = !originRefusal;
   } catch (error) {
     const diagnostic = classifyGatewayError(error, { url: normalizeGatewayUrl(settings.gatewayUrl) });
     if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
@@ -27715,6 +27755,7 @@ async function testConnection() {
       const diagnostic = classifyRemoteGatewaySetup({
         url: settings.gatewayUrl,
         error: error?.message || String(error),
+        origin: currentExtensionOrigin(),
       });
       if (diagnostic.kind !== 'unknown') {
         applyRemoteDiagnostic(diagnostic, { statusKind: 'error' });
