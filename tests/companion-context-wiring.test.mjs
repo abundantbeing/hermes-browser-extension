@@ -24,7 +24,7 @@ test('the probe feeds the three plugin-served rows, believes only a non-unreacha
   assert.match(fn, /companionRouteRecordFields\(result, id\)/);
   assert.match(fn, /ledger\.observeProbe\(id, via\)/);
   assert.match(fn, /result\.state !== COMPANION_STATES\.unreachable\) capabilityRuntime\.ledger\.forgetProbe\(id\)/);
-  assert.match(fn, /companionProbe = \{ result, identityKey \}/);
+  assert.match(fn, /companionProbe = \{ result, identityKey, gatewayUrl: settings\.gatewayUrl \}/);
   // Still bounded and still not for a remote dashboard (the existing guards are untouched).
   assert.match(fn, /normalizeGatewayMode\(settings\.gatewayMode\) === 'remote-dashboard'/);
   assert.match(fn, /Date\.now\(\) - companionProbeAt < 30_000/);

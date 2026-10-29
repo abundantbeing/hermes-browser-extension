@@ -125,14 +125,16 @@ const KNOWN_SOCKET_PATHS = new Set(Object.values(ROUTE_PATHS).map((paths) => pat
  * Address a path at a named Hermes profile: `/p/<profile>` in front of it, as the
  * rest of the extension does (hermes-client's profileScopedPath). The gateway
  * ignores the X-Hermes-Profile header for routing, so without the prefix a
- * request lands on the default profile. Core mirrors its routes under the prefix;
- * the companion plugin's routes are wired on each profile's own adapter, and the
- * gateway's `/p/{profile}/{tail}` ingress forwards the prefixed request to it.
+ * request lands on the default profile. Core mirrors its routes under the prefix.
+ * The companion plugin's routes are wired on the listener only: stock Hermes hands
+ * any other `/p/{profile}/{tail}` to that profile's platform ingress, so
+ * `/p/default/<plugin route>` is a 404 there while the plain path reaches the same
+ * default profile. The default profile therefore keeps the plain address.
  */
 export function controllerProfilePath(path = '', profile = '') {
   const normalized = String(path || '').startsWith('/') ? String(path || '') : `/${path}`;
   const selected = String(profile || '').trim();
-  if (!selected || /^\/p\/[^/]+(?:\/|$)/.test(normalized)) return normalized;
+  if (!selected || selected === 'default' || /^\/p\/[^/]+(?:\/|$)/.test(normalized)) return normalized;
   return `/p/${encodeURIComponent(selected)}${normalized}`;
 }
 

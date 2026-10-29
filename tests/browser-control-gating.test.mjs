@@ -11,11 +11,21 @@ import {
 } from '../extension/lib/capabilities.mjs';
 import { browserControlView } from '../extension/lib/browser-control-ui.mjs';
 import { CONTROLLER_UNSUPPORTED_GATEWAY } from '../extension/lib/controller-protocol.mjs';
+import {
+  COMPANION_CONTROL_REGISTER_PATH,
+  COMPANION_STATUS_PATH,
+  classifyCompanionPlugin,
+  parseCompanionStatusPayload,
+} from '../extension/lib/companion-plugin-status.mjs';
 import english from '../extension/lib/locales/en.mjs';
 
 const sidepanel = fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const fn = (name) => sidepanel.match(new RegExp(`(?:async )?function ${name}\\([\\s\\S]*?\\n\\}`))?.[0] || '';
 
+const COMPANION_TOOLS = [
+  'browser_clear_context', 'browser_context_journal', 'browser_context_status', 'browser_control_status',
+  'browser_event_log', 'browser_get_context', 'browser_text_utility',
+];
 const STOCK = { object: 'hermes.api_server.capabilities', platform: 'hermes-agent', features: { session_chat: true } };
 const patched = (extra = {}) => ({
   ...STOCK,
@@ -178,4 +188,50 @@ test('enabling control never announces success when it cannot work', () => {
   // The throw lands in the catch that turns control back off.
   assert.match(enable.slice(enable.indexOf('} catch (error) {')), /browserControlEnabled: false/);
   assert.match(fn('attachBrowserControlToCurrentTab'), /browserControlSupportState\(\) === 'unsupported'/);
+});
+
+const companionProbe = (routes) => classifyCompanionPlugin({
+  route: {
+    kind: 'ok',
+    parsed: parseCompanionStatusPayload({
+      object: 'hermes.browser_companion.status', plugin: 'hermes-browser-companion', version: '0.4.0', profile: 'default',
+      tools: COMPANION_TOOLS, hooks: [], routes, live: false,
+    }),
+  },
+  toolsets: null,
+  checkedAt: 1,
+});
+
+test('stock Hermes with the companion plugin serving the control route has Hermes Control', () => {
+  const stock = normalizeGatewayCapabilities(STOCK, { healthOk: true });
+  const record = (companionPlugin) => deriveCapabilityRecords(stock, { identityKey: 'k', checkedAt: 1, companionPlugin })
+    .filter((item) => item.id === 'browserControl');
+  const served = record(companionProbe([COMPANION_STATUS_PATH, COMPANION_CONTROL_REGISTER_PATH]));
+  assert.equal(served.length, 1, 'one browserControl row');
+  assert.equal(served[0].state, 'available');
+  assert.equal(served[0].source, 'probe');
+  assert.equal(served[0].reasonCode, 'companion-route');
+  // An older copy without the control route, or no plugin: still Hermes' own "no".
+  assert.equal(record(companionProbe([COMPANION_STATUS_PATH]))[0].state, 'unsupported');
+  assert.equal(record(null)[0].state, 'unsupported');
+  // A gateway that advertises control itself keeps its own answer.
+  const own = deriveCapabilityRecords(normalizeGatewayCapabilities(patched(), { healthOk: true }), {
+    identityKey: 'k', checkedAt: 1, companionPlugin: companionProbe([COMPANION_STATUS_PATH, COMPANION_CONTROL_REGISTER_PATH]),
+  }).find((item) => item.id === 'browserControl');
+  assert.equal(own.source, '/v1/capabilities');
+});
+
+test('the side panel asks the companion plugin before it calls Hermes Control unsupported', () => {
+  const state = fn('browserControlSupportState');
+  const plugin = state.indexOf('companionControlSupport()');
+  assert.ok(plugin > 0, 'the plugin probe is consulted');
+  assert.ok(plugin < state.indexOf("plugin === 'unsupported'"), 'before a stock answer is final');
+  assert.match(state, /advertised === 'unsupported' && plugin === 'unsupported'/, 'unsupported only when both say no');
+  const support = fn('companionControlSupport');
+  assert.match(support, /companionProbe\.gatewayUrl !== settings\.gatewayUrl/, 'a probe of another gateway proves nothing');
+  assert.match(support, /companionRouteRecordFields\(companionProbe\.result, 'browserControl'\)/);
+  const refresh = fn('refreshCompanionPluginStatus');
+  assert.match(refresh, /companionProbe = \{ result, identityKey, gatewayUrl: settings\.gatewayUrl \}/);
+  assert.ok(refresh.indexOf('renderBrowserControl()') > refresh.indexOf('companionProbe = {'), 'the card follows the probe');
+  assert.match(refresh, /scheduleBrowserControlPoll\(\)/, 'and the poll re-arms');
 });

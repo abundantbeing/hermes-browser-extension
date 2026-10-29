@@ -3209,12 +3209,25 @@ function browserControlConnectionKey() {
     .map((value) => String(value || '')).join('|');
 }
 
+// What the companion plugin's own status route says about Hermes Control on this
+// gateway: 'supported' when it lists the control route, 'unsupported' when it answered
+// without it (not installed, an older copy), 'unknown' until it answered for this gateway.
+function companionControlSupport() {
+  if (!companionProbe || companionProbe.gatewayUrl !== settings.gatewayUrl) return 'unknown';
+  return companionRouteRecordFields(companionProbe.result, 'browserControl') ? 'supported' : 'unsupported';
+}
+
 // 'unsupported' once this Hermes is known to have no extension control: its
-// capabilities answered without the feature (REST), or its controller register
-// was refused as unknown (socket). Otherwise 'supported' or 'unknown'.
+// capabilities answered without the feature (REST) and the companion plugin does
+// not serve it either, or its controller register was refused as unknown (socket).
+// Otherwise 'supported' or 'unknown'.
 function browserControlSupportState() {
   const advertised = browserControlSupport(gatewayCapabilities);
-  if (advertised !== 'unknown') return advertised;
+  if (advertised === 'supported') return advertised;
+  // Stock Hermes has no built-in broker; the companion plugin serves Hermes Control there.
+  const plugin = companionControlSupport();
+  if (plugin === 'supported') return plugin;
+  if (advertised === 'unsupported' && plugin === 'unsupported') return 'unsupported';
   if (browserControlStatus?.lastConnectFailure?.reason === 'unsupported_gateway') {
     browserControlUnsupportedKey = browserControlConnectionKey();
   }
@@ -5635,8 +5648,11 @@ async function refreshCompanionPluginStatus({ force = false } = {}) {
     if (via) capabilityRuntime.ledger.observeProbe(id, via);
     else if (result.state !== COMPANION_STATES.unreachable) capabilityRuntime.ledger.forgetProbe(id);
   }
-  if (result.state !== COMPANION_STATES.unreachable) companionProbe = { result, identityKey };
+  if (result.state !== COMPANION_STATES.unreachable) companionProbe = { result, identityKey, gatewayUrl: settings.gatewayUrl };
   refreshCapabilityViews();
+  // The plugin may be what serves Hermes Control here (companionControlSupport).
+  renderBrowserControl();
+  scheduleBrowserControlPoll();
   return result;
 }
 

@@ -36,6 +36,9 @@ export const COMPANION_STATUS_OBJECT = 'hermes.browser_companion.status';
 export const COMPANION_CONTEXT_STATUS_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/context/status`;
 export const COMPANION_CONTEXT_UPLOAD_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/context`;
 export const COMPANION_ACTIONS_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/actions`;
+// Hermes Control's register route (companion-plugin/control_routes.py), the one Hermes
+// without a built-in broker offers: stock Hermes since it removed its own.
+export const COMPANION_CONTROL_REGISTER_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/control/register`;
 
 // The plugin version this extension build expects. companion-plugin/plugin.yaml
 // carries the same value and a test keeps the two equal: bump them together.
@@ -326,14 +329,15 @@ export function companionRecordFields(probe) {
   };
 }
 
-// The three capability rows the plugin can serve when Hermes cannot, and the path
-// of the route each one means. A row reads "available via the companion plugin"
-// only when the plugin's own status route lists that path and the plugin is
-// ready; otherwise it keeps its honest "no such route" reason.
+// The capability rows the plugin can serve when Hermes cannot, and the path of the
+// route each one means. A row reads "available via the companion plugin" only when
+// the plugin's own status route lists that path and the plugin is ready; otherwise
+// it keeps its honest "no such route" reason.
 export const COMPANION_ROUTE_CAPABILITIES = Object.freeze({
   browserContextUpload: COMPANION_CONTEXT_UPLOAD_PATH,
   browserContextStatus: COMPANION_CONTEXT_STATUS_PATH,
   pluginActions: COMPANION_ACTIONS_PATH,
+  browserControl: COMPANION_CONTROL_REGISTER_PATH,
 });
 
 /**

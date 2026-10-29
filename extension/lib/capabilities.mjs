@@ -143,7 +143,9 @@ export function dashboardWsGatewayCapabilities({ health = false, source = 'dashb
  *
  * A REST gateway reports it in GET /v1/capabilities (`features.browser_extension_control`);
  * stock Hermes no longer has the key, so a capabilities answer without
- * `enabled: true` is a definite "no". A socket transport (dashboard, Cloud) reports no
+ * `enabled: true` is a "no" from Hermes itself. The companion plugin can still serve
+ * it there; the panel asks the plugin's status route before it calls Hermes Control
+ * unsupported (browserControlSupportState). A socket transport (dashboard, Cloud) reports no
  * capability at all, and an unreachable capabilities route proves nothing, so both
  * are 'unknown' until the controller's own registration says otherwise.
  */
@@ -474,27 +476,29 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
     }
   }
 
-  // The companion plugin serves three of those rows itself. When its own status
-  // route lists the route (and the plugin is ready), the row reads "available via
-  // the companion plugin"; otherwise it keeps the honest reason above. A gateway
-  // that advertised the row itself is left as it said.
-  if (transport !== 'none') {
-    for (const id of Object.keys(COMPANION_ROUTE_CAPABILITIES)) {
-      const via = companionRouteRecordFields(companionPlugin, id);
-      if (!via || current(id)?.state === S.available) continue;
-      const at = records.findIndex((record) => record.id === id);
-      const record = createCapabilityRecord({
-        id,
-        state: via.state,
-        source: O.probe,
-        checkedAt: via.checkedAt ?? checkedAt,
-        identityKey,
-        reasonCode: via.reasonCode,
-        params: via.params,
-        reason: via.reason,
-      });
-      if (at >= 0) records[at] = record; else records.push(record);
-    }
+  // The companion plugin serves some rows itself. When its own status route lists
+  // the route (and the plugin is ready), the row reads "available via the companion
+  // plugin"; otherwise it keeps the honest reason it has. A gateway that advertised
+  // the row itself is left as it said.
+  const applyCompanionRoute = (id) => {
+    if (transport === 'none') return;
+    const via = companionRouteRecordFields(companionPlugin, id);
+    if (!via || current(id)?.state === S.available) return;
+    const at = records.findIndex((record) => record.id === id);
+    const record = createCapabilityRecord({
+      id,
+      state: via.state,
+      source: O.probe,
+      checkedAt: via.checkedAt ?? checkedAt,
+      identityKey,
+      reasonCode: via.reasonCode,
+      params: via.params,
+      reason: via.reason,
+    });
+    if (at >= 0) records[at] = record; else records.push(record);
+  };
+  for (const id of Object.keys(COMPANION_ROUTE_CAPABILITIES)) {
+    if (id !== 'browserControl') applyCompanionRoute(id);
   }
 
   // Browser control is negotiated from features.browser_extension_control.
@@ -503,6 +507,8 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   // /v1/capabilities answered in full without the key: stock Hermes, which no longer has extension control.
   else if (transport === 'rest' && caps.raw && typeof caps.raw === 'object') make('browserControl', S.unsupported, O.capabilities, 'not-advertised');
   else make('browserControl', S.unknown, transport === 'none' ? O.none : O.derived, transport === 'legacy' ? 'legacy-gateway' : (transport === 'ws' ? 'ws-not-reported' : 'not-advertised'));
+  // ...unless the companion plugin serves it: Hermes Control's own route on stock Hermes.
+  applyCompanionRoute('browserControl');
 
   // Session authority and what hangs off it.
   const authority = gatewayAuthorityAvailability({ dashboardWs: wsRoute || sideReady, readyPayload, unsupportedMethods: unsupported, method: 'session.mutate' });
