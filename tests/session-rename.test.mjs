@@ -262,3 +262,47 @@ test('renameSessionViaTab reports no_dashboard_tab instead of guessing a transpo
   });
   assert.deepEqual(result, { ok: false, reason: 'no_dashboard_tab', origin: 'https://host.ts.net' });
 });
+
+test('a dashboard rename carries the fence Hermes requires: a request id and the revision it read', async () => {
+  const original = globalThis.fetch;
+  const calls = [];
+  try {
+    globalThis.fetch = async (url, options = {}) => {
+      calls.push({ url: String(url), options });
+      if (String(url).includes('/mutation-snapshot')) {
+        return { ok: true, status: 200, json: async () => ({ session_id: 's1', exists: true, runtime_revision: 7, runtime_generation: 2 }) };
+      }
+      if (String(url).includes('/api/sessions/')) {
+        return { ok: true, status: 200, json: async () => ({ ok: true, title: 'Renamed' }) };
+      }
+      return { ok: true, status: 200, text: async () => 'window.__HERMES_SESSION_TOKEN__ = "tok-1"' };
+    };
+    const result = await renameSessionInPage({ baseUrl: 'https://host.ts.net', sessionId: 's1', title: 'Renamed', profile: 'work' });
+    assert.deepEqual(result, { ok: true, title: 'Renamed' });
+    const snapshot = calls.find((call) => call.url.includes('/mutation-snapshot'));
+    assert.equal(snapshot.url, 'https://host.ts.net/api/sessions/s1/mutation-snapshot?profile=work');
+    assert.equal(snapshot.options.headers['X-Hermes-Session-Token'], 'tok-1');
+    const body = JSON.parse(calls.find((call) => call.options.method === 'PATCH').options.body);
+    assert.equal(body.expected_revision, 7);
+    assert.equal(body.expected_generation, 2);
+    assert.match(body.request_id, /^[0-9a-f-]{32,36}$/);
+    assert.equal(body.title, 'Renamed');
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('sessionMutationFence: the snapshot revision and a request id, nothing for an older Hermes', async () => {
+  const { sessionMutationFence } = await import('../extension/lib/dashboard-bridge.mjs');
+  assert.deepEqual(sessionMutationFence({ runtime_revision: 3, runtime_generation: 1 }, 'r-1'),
+    { request_id: 'r-1', expected_revision: 3, expected_generation: 1 });
+  assert.deepEqual(sessionMutationFence({ runtime_revision: 0, runtime_generation: null }, 'r-1'),
+    { request_id: 'r-1', expected_revision: 0 });
+  for (const snapshot of [null, {}, { runtime_revision: -1 }, { runtime_revision: '3' }]) {
+    assert.deepEqual(sessionMutationFence(snapshot, 'r-1'), {});
+  }
+  const panel = await import('node:fs').then((fs) => fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8'));
+  const local = panel.slice(panel.indexOf('async function renameSessionViaDashboardRest('), panel.indexOf('function sessionRenameFailureMessage('));
+  assert.match(local, /\/mutation-snapshot\$\{query\}/);
+  assert.match(local, /\.\.\.sessionMutationFence\(snapshot\)/);
+});

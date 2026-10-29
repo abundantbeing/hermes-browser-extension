@@ -384,6 +384,7 @@ import {
   mintWsTicket,
   originOf,
   renameSessionViaTab,
+  sessionMutationFence,
   ticketFailureHelp,
 } from './lib/dashboard-bridge.mjs';
 import {
@@ -19411,11 +19412,17 @@ async function renameSessionViaDashboardRest(sessionId, title) {
   }
   if (!localDashboardUrl()) return { ok: false, reason: 'no-dashboard' };
   const profile = safeActiveProfile();
-  const path = `/api/sessions/${encodeSessionId(sessionId)}${profile ? `?profile=${encodeURIComponent(profile)}` : ''}`;
+  const query = profile ? `?profile=${encodeURIComponent(profile)}` : '';
+  const path = `/api/sessions/${encodeSessionId(sessionId)}${query}`;
+  // Hermes refuses an unfenced session PATCH (409): read the revision first. An older dashboard
+  // without the snapshot route takes the plain PATCH.
+  const snapshot = await dashboardApiRequest(`/api/sessions/${encodeSessionId(sessionId)}/mutation-snapshot${query}`, { method: 'GET' })
+    .then((response) => readJsonResponse(response))
+    .catch(() => null);
   try {
     const response = await dashboardApiRequest(path, {
       method: 'PATCH',
-      body: { title, ...(profile ? { profile } : {}) },
+      body: { title, ...(profile ? { profile } : {}), ...sessionMutationFence(snapshot) },
     });
     const payload = await readJsonResponse(response);
     return { ok: true, title: String(payload?.title || '').trim() || title };

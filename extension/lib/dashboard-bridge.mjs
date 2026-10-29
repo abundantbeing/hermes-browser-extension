@@ -452,7 +452,33 @@ export async function renameSessionInPage({ baseUrl = '', sessionId = '', title 
     const profileName = String(profile || '').trim();
     if (profileName) payload.profile = profileName;
 
-    const response = await fetch(sessionUrlFor(baseUrl, sessionId, profileName), {
+    // Hermes fences every session write: the PATCH carries a request id and the revision read from
+    // mutation-snapshot, and an unfenced one is refused 409. A dashboard without that route (an
+    // older Hermes) takes the plain PATCH.
+    const sessionUrl = sessionUrlFor(baseUrl, sessionId, profileName);
+    const [sessionPath, sessionQuery = ''] = sessionUrl.split('?');
+    try {
+      const snapshotResponse = await fetch(`${sessionPath}/mutation-snapshot${sessionQuery ? `?${sessionQuery}` : ''}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json', 'X-Hermes-Session-Token': token },
+        credentials: 'include',
+      });
+      const snapshot = snapshotResponse.ok ? await snapshotResponse.json().catch(() => null) : null;
+      if (Number.isInteger(snapshot?.runtime_revision) && snapshot.runtime_revision >= 0) {
+        const bytes = crypto.getRandomValues(new Uint8Array(16));
+        payload.request_id = typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+        payload.expected_revision = snapshot.runtime_revision;
+        if (Number.isInteger(snapshot.runtime_generation) && snapshot.runtime_generation >= 0) {
+          payload.expected_generation = snapshot.runtime_generation;
+        }
+      }
+    } catch {
+      // No snapshot: the plain PATCH below, as an older Hermes takes it.
+    }
+
+    const response = await fetch(sessionUrl, {
       method: 'PATCH',
       headers: {
         Accept: 'application/json',
@@ -478,6 +504,23 @@ export async function renameSessionInPage({ baseUrl = '', sessionId = '', title 
   } catch (error) {
     return { ok: false, reason: 'fetch_failed', detail: String(error?.message || error) };
   }
+}
+
+/**
+ * The fence fields a dashboard session PATCH carries, from GET .../mutation-snapshot's answer:
+ * `request_id`, `expected_revision`, and `expected_generation` when the row has one. {} when the
+ * answer holds no revision (an older Hermes without the route), which keeps the plain PATCH.
+ * renameSessionInPage applies the same rule inline, since it runs in the page.
+ */
+export function sessionMutationFence(snapshot, requestId = globalThis.crypto?.randomUUID?.() || '') {
+  if (!Number.isInteger(snapshot?.runtime_revision) || snapshot.runtime_revision < 0 || !requestId) return {};
+  return {
+    request_id: requestId,
+    expected_revision: snapshot.runtime_revision,
+    ...(Number.isInteger(snapshot.runtime_generation) && snapshot.runtime_generation >= 0
+      ? { expected_generation: snapshot.runtime_generation }
+      : {}),
+  };
 }
 
 // Rename a session by executing the first-party PATCH inside the trusted
