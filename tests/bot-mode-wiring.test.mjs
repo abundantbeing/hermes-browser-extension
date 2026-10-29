@@ -481,3 +481,12 @@ test('a Bot Chat created over REST sends only its title and source', () => {
   // Without an id of its own the panel binds the id Hermes returns, or stops.
   assert.match(restCreate, /\(sessionId \? \{ id: sessionId,[^}]*\} : null\);\s*if \(!session\) throw new Error\('Hermes did not return the new Bot Chat\.'\);/);
 });
+
+test("a bot's own-key 401 names the profile and the .env line instead of a bare status", async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const lookup = panel.slice(panel.indexOf('async function listBotChatRowsViaGateway('), panel.indexOf('\n}\n', panel.indexOf('async function listBotChatRowsViaGateway(')));
+  const hint = lookup.indexOf("response.status === 401 && name !== 'default'");
+  assert.ok(hint > 0 && hint < lookup.indexOf('Bot Chat lookup failed'), 'checked before the generic failure');
+  assert.match(lookup, /only with \$\{name\}'s own API_SERVER_KEY/);
+});

@@ -15144,6 +15144,11 @@ async function listBotChatRowsViaGateway(profileName, { timeoutMs = 8_000 } = {}
     },
   );
   const payload = await hermesClient.readJson(response);
+  if (response.status === 401 && name !== 'default') {
+    // Hermes serves /p/<bot>/ only with that profile's own API_SERVER_KEY, and refuses a profile
+    // that has none rather than lend it the default one: the key that works here does not reach it.
+    throw new Error(`Hermes refused this key for ${name}: it answers /p/${name}/ only with ${name}'s own API_SERVER_KEY. Put the key this browser uses in that profile's .env as API_SERVER_KEY, then restart the gateway.`);
+  }
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Bot Chat lookup failed (${response.status})`);
   return Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload?.sessions) ? payload.sessions : []);
 }
