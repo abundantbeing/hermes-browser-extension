@@ -402,8 +402,10 @@ export function createDelegationWatchManager({
 
   async function activate({ scopeKey = '', durableSessionId = '', liveSessionId = '' } = {}) {
     const timestamp = now();
+    let touched = false;
     for (const [key, row] of watches) {
       if (row.scopeKey !== scopeKey || row.durableSessionId !== durableSessionId || row.state === 'completed' || row.state === 'cancelled') continue;
+      touched = true;
       cancelTimer(key);
       row.liveSessionId = String(liveSessionId || '').trim();
       const resumedAfterTimeout = row.state === 'timed_out';
@@ -415,7 +417,8 @@ export function createDelegationWatchManager({
       bump(key);
       schedule(row, 0);
     }
-    await save();
+    // Opening a session with no watch of its own changes nothing worth a storage write.
+    if (touched) await save();
     return snapshot();
   }
 
