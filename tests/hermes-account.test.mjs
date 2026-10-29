@@ -383,13 +383,20 @@ test('signIn reports a state mismatch, a closed window, a rejected exchange and 
 
 test('only one sign-in runs at a time, and a non-account origin is refused', async () => {
   let release = () => {};
+  let opened = () => {};
+  // Waits for the sign-in window itself: under load a fixed delay could pass before it opened, and
+  // closing nothing left the sign-in to run into its timeout.
+  const windowOpen = new Promise((resolve) => { opened = resolve; });
   const { account } = harness({
     webRequestApi: { onBeforeRequest: fakeEvent() },
     responses: { '/api/auth/providers': json(200, { providers: [] }) },
-    openWindow: async () => ({ close: async () => {}, closed: new Promise((resolve) => { release = () => resolve(true); }) }),
+    openWindow: async () => {
+      opened();
+      return { close: async () => {}, closed: new Promise((resolve) => { release = () => resolve(true); }) };
+    },
   });
   const first = account.signIn({ origin: ORIGIN });
-  await new Promise((resolve) => setTimeout(resolve, 5));
+  await windowOpen;
   assert.deepEqual(await account.signIn({ origin: ORIGIN }), { ok: false, reason: ACCOUNT_REASONS.BUSY });
   release();
   assert.equal((await first).reason, ACCOUNT_REASONS.CANCELLED);
