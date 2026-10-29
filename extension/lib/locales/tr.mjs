@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "SAYFA İSTEDİR",
   "ui.theme": "Tema",
   "ui.thinking": "Düşünme",
+  "ui.thoughts": "Düşünceler",
   "ui.thinking.off.standard": "Düşünmek · Standart",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "Bu tarayıcı cihazdaki konuşma tanıma özelliğini göstermez.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "Bu tarayıcı, MediaRecorder/getUserMedia'yi uzantı sayfalarına göstermez ve Web Speech geri dönüşü kullanılamaz.",

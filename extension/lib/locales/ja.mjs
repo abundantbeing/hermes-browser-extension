@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "ページがプロンプトです",
   "ui.theme": "テーマ",
   "ui.thinking": "思考中",
+  "ui.thoughts": "思考",
   "ui.thinking.off.standard": "思考オフ · 標準",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "このブラウザは、デバイス上の音声認識を公開しません。",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "このブラウザは MediaRecorder/getUserMedia を拡張ページに公開せず、Web Speech フォールバックは利用できません。",

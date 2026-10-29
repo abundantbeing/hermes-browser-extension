@@ -7743,6 +7743,10 @@
     "message": "Bu istek seçilen Browser oturumuna bağlıdır.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "Düşünceler",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "Zaman",
     "description": "Runtime interface message ui.time"

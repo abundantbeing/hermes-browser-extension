@@ -212,7 +212,7 @@ test('terminal error paths dispose the diffusion placeholder', () => {
   // Side panel: the streaming updater owns an explicit dispose and the turn
   // catch calls it everywhere the stream ends without a final flush.
   assert.match(sidepanelSource, /function dispose\(\) \{[\s\S]*?setToolActivity\(node, null\);/);
-  assert.match(sidepanelSource, /return \{\s*get node\(\) \{ return node; \},\s*captureViewState,\s*rebind,\s*update: updateText,\s*updateText,\s*updateTool,\s*flush,\s*dispose,\s*\};/);
+  assert.match(sidepanelSource, /return \{\s*get node\(\) \{ return node; \},\s*captureViewState,\s*rebind,\s*update: updateText,\s*updateText,\s*updateTool,\s*updateReasoning,\s*get reasoningText\(\) \{ return reasoning\.text; \},\s*flush,\s*dispose,\s*\};/);
   assert.match(sidepanelSource, /if \(error\?\.requestAccepted !== true\) \{\s*\n\s*streamPacer\?\.flush\?\.\(\);\s*\n\s*streamView\?\.dispose\?\.\(\);\s*\n\s*\}/);
   assert.match(sidepanelSource, /if \(contextRecovery\) \{[\s\S]*?streamView\?\.dispose\?\.\(\);/);
 });

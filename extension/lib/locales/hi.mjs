@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "पेज प्रॉम्प्ट है",
   "ui.theme": "विषय",
   "ui.thinking": "सोच",
+  "ui.thoughts": "विचार",
   "ui.thinking.off.standard": "सोच विचार कर · मानक",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "यह ब्राउज़र ऑन-डिवाइस वाक् पहचान को उजागर नहीं करता है।",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "यह ब्राउज़र MediaRecorder/getUserMedia को एक्सटेंशन पृष्ठों पर उजागर नहीं करता है, और Web Speech फ़ॉलबैक अनुपलब्ध है।",

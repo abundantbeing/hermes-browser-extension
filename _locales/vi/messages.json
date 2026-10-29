@@ -7743,6 +7743,10 @@
     "message": "Yêu cầu này bị ràng buộc với phiên Trình duyệt đã chọn.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "Suy nghĩ",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "thời gian",
     "description": "Runtime interface message ui.time"

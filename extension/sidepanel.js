@@ -278,7 +278,9 @@ import { createProjectsController } from './lib/projects-controller.mjs';
 import { renderProjectsPanel } from './lib/projects-panel.mjs';
 import { SESSION_MENU_TABS, SESSION_MENU_TAB_KEY, normalizeSessionMenuTab } from './lib/projects-view.mjs';
 import { friendlyModelName } from './lib/model-friendly-name.mjs';
-import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToolHistoryMessages, mergeToolCallActivity } from './lib/tool-call-group.mjs';
+import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToolHistoryMessages, mergeToolCallActivity, setToolCallGroupTime } from './lib/tool-call-group.mjs';
+import { emptyTurnReasoning, formatTurnDuration, liveTurnStartedAt, reduceTurnReasoning, replyTextAfterCommentary, storedTurnSummaries, turnReasoningFromRestEvent } from './lib/turn-activity.mjs';
+import { bindDashboardReasoning, ensureSessionShowsReasoning } from './lib/turn-reasoning-socket.mjs';
 import { discoverLiveSessions, readIdleRowSubagents, readLiveAttachSnapshot, rosterAfterFailure, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
 import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { createRestFollowState, messageCountFromSessionPayload, restFollowDue, restFollowStep } from './lib/session-follow.mjs';
@@ -20135,7 +20137,7 @@ async function attachLiveSessionIfRunning(sessionId, { scopeRevisionId = scopeRe
   detachLiveSession();
   const generation = ++liveAttachGeneration;
   const { node, record } = addMessage('assistant', THINKING_PLACEHOLDER, { persist: false, roleLabel: assistantMessageRoleLabel(), streaming: true });
-  const view = createStreamingMessageUpdater(node, record);
+  const view = createStreamingMessageUpdater(node, record, { startedAt: liveTurnStartedAt(messages, { normalizeTs: (value) => normalizeMessageTimestamp(value) }) });
   let text = '';
   const sessionIds = [target, liveId];
   const forThis = (event) => matchesDashboardSessionEvent(event, sessionIds);
@@ -20176,12 +20178,25 @@ async function attachLiveSessionIfRunning(sessionId, { scopeRevisionId = scopeRe
   offs.push(connection.client.on('tool.start', (event) => {
     if (!forThis(event) || !stillCurrent()) return;
     liveAttach.eventRevision += 1;
-    view.updateTool(normalizeToolActivity({ type: 'tool.start', tool_name: event.payload?.name, preview: event.payload?.context || '', args: event.payload?.args }));
+    view.updateTool(normalizeToolActivity({ type: 'tool.start', tool_name: event.payload?.name, tool_call_id: event.payload?.tool_id, preview: event.payload?.preview || event.payload?.context || '', args: event.payload?.args }));
   }));
   offs.push(connection.client.on('tool.complete', (event) => {
     if (!forThis(event) || !stillCurrent()) return;
     liveAttach.eventRevision += 1;
-    view.updateTool(normalizeToolActivity({ type: 'tool.complete', status: 'completed', tool_name: event.payload?.name, result: event.payload?.result }));
+    view.updateTool(normalizeToolActivity({ type: 'tool.complete', status: 'completed', tool_name: event.payload?.name, tool_call_id: event.payload?.tool_id, result: event.payload?.result }));
+  }));
+  // The run's reasoning and between-tool notes, as the run's own window shows them.
+  offs.push(...bindDashboardReasoning(connection.client, (event) => forThis(event) && stillCurrent(), {
+    getText: () => text,
+    setText: (value) => {
+      text = value;
+      view.updateText(text);
+    },
+    onReasoning: (update) => {
+      if (!update || update.kind === 'wait') return;
+      if (liveAttach) liveAttach.eventRevision += 1;
+      view.updateReasoning(update);
+    },
   }));
   offs.push(connection.client.on(WS_EVENTS.messageComplete, (event) => {
     if (!forThis(event) || !stillCurrent()) return;
@@ -21817,6 +21832,7 @@ function messageThreadUi() {
     root: els.messages, document, window, locale: getLocale, translate: translateUiText,
     onCopy: (record, node) => copyMessageRecord(record.role, record, node),
     replyLabelFor: (record) => roomReplyLabel(record),
+    durationLabelFor: (record) => turnDurationLabel(turnDurationByRecord.get(record)),
     onReply: (record) => replyToRoomMember(record),
     canRewind: (record) => canRewindMessage(record),
     onEdit: (row, record) => beginEditMessage(row, record),
@@ -22300,7 +22316,7 @@ function setMessageContent(node, content) {
   scrollMessageStreamToBottom();
 }
 
-function createStreamingMessageUpdater(node, record = {role:'assistant',content:''}) {
+function createStreamingMessageUpdater(node, record = {role:'assistant',content:''}, { startedAt = Date.now() } = {}) {
   node.hermesStreamRecord = record;
   node.hermesStreaming = true;
   if (record?.role === 'assistant' || node?.classList?.contains?.('assistant')) {
@@ -22319,11 +22335,28 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
   let running = true;
   let frame = 0;
   let revealPromise = null;
+  let reasoning = emptyTurnReasoning();
+  let reasoningFrame = 0;
+  // Ticks the turn's elapsed time beside the tool count while tools are shown.
+  let clock = 0;
+  const elapsed = () => Math.max(0, Date.now() - startedAt);
+  const stopClock = () => {
+    if (clock) clearInterval(clock);
+    clock = 0;
+  };
+  const paintReasoning = () => {
+    if (reasoningFrame) cancelAnimationFrame(reasoningFrame);
+    reasoningFrame = 0;
+    renderMessageReasoning(node, reasoning.text, { live: running });
+  };
   const flush = async (content = pending, { imageSources = [] } = {}) => {
     pending = content || '';
     activity = null;
     running = false;
+    stopClock();
+    turnDurationByRecord.set(record, elapsed());
     renderCalls();
+    paintReasoning();
     if (frame) {
       cancelAnimationFrame(frame);
       frame = 0;
@@ -22403,13 +22436,34 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
       row.before(toolHost);
     }
     updateToolCallGroup(toolHost, { calls, running, translate: translateUiText, formatCountLabel: t });
+    setToolCallGroupTime(toolHost, turnDurationLabel(running ? elapsed() : turnDurationByRecord.get(record) ?? elapsed()));
+    if (running && !clock) {
+      clock = setInterval(() => {
+        if (!running || !toolHost?.isConnected) return;
+        setToolCallGroupTime(toolHost, turnDurationLabel(elapsed()));
+      }, 1000);
+    }
     if (reattaching) toolHost.querySelector('.tool-call-list').scrollTop = toolScrollTop;
   }
   function captureViewState() {
     if (toolHost?.isConnected) toolScrollTop = toolHost.querySelector('.tool-call-list').scrollTop;
   }
+  // Reasoning and between-tool notes (lib/turn-activity.mjs). A note Hermes
+  // already streamed as reply text is moved out of the answer by the caller.
+  function updateReasoning(update = null) {
+    if (!update) return;
+    const next = reduceTurnReasoning(reasoning, update);
+    if (next.text === reasoning.text) {
+      reasoning = next;
+      return;
+    }
+    reasoning = next;
+    if (!reasoningFrame) reasoningFrame = requestAnimationFrame(paintReasoning);
+  }
   function updateTool(tool = null) {
     activity = tool;
+    // A new tool starts a new paragraph of reasoning.
+    if (tool && !/^(completed|failed|done|error)$/i.test(String(tool.status || ''))) reasoning = reduceTurnReasoning(reasoning, { kind: 'boundary' });
     if (tool) calls = mergeToolCallActivity(calls, tool);
     renderCalls();
     // Keep the generated-image preview, but ordinary tool calls belong in
@@ -22426,6 +22480,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     if (record?.responseStyle && node?.dataset) node.dataset.responseStyle = record.responseStyle;
     paintStream();
     renderCalls();
+    paintReasoning();
     setToolActivity(node, /image_generate/i.test(activity?.rawName || '') ? activity : null);
   }
   function dispose() {
@@ -22433,7 +22488,9 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     // tool-activity slot so the placeholder cannot keep animating after the turn.
     activity = null;
     running = false;
+    stopClock();
     renderCalls();
+    paintReasoning();
     // A paint still waiting for its frame would be lost when the frame is
     // cancelled, leaving the thinking indicator in place of the last text (for
     // example the streaming-failed notice) once the turn has ended. Paint it now.
@@ -22451,9 +22508,52 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     update: updateText,
     updateText,
     updateTool,
+    updateReasoning,
+    get reasoningText() { return reasoning.text; },
     flush,
     dispose,
   };
+}
+
+// How long a turn ran, per reply record, for the rail beside its time. Kept off
+// the record so the stored transcript never carries a derived value.
+const turnDurationByRecord = new WeakMap();
+
+function turnDurationLabel(ms) {
+  return formatTurnDuration(ms, { locale: getLocale() });
+}
+
+// The agent's reasoning in a reply's card, above its text (lib/turn-activity.mjs).
+// Live, it stays open and follows the newest line; once the answer lands it
+// folds to "Thoughts". Empty text removes it.
+function renderMessageReasoning(node, text = '', { live = false } = {}) {
+  let box = node?.querySelector?.(':scope > .message-reasoning') || null;
+  const body = String(text || '').trim();
+  if (!body) {
+    box?.remove();
+    return null;
+  }
+  if (!box) {
+    box = document.createElement('details');
+    box.className = 'message-reasoning';
+    const summary = document.createElement('summary');
+    const content = document.createElement('div');
+    content.className = 'message-reasoning-body';
+    box.append(summary, content);
+    box.open = live;
+    const anchor = node.querySelector(':scope > .live-thinking-slot') || node.querySelector('.message-content');
+    if (anchor) anchor.before(box); else node.append(box);
+  }
+  if (box.classList.contains('is-live') && !live) box.open = false;
+  box.classList.toggle('is-live', live);
+  const summary = box.querySelector(':scope > summary');
+  const label = translateUiText(live ? 'Thinking' : 'Thoughts');
+  if (summary.textContent !== label) summary.textContent = label;
+  const content = box.querySelector('.message-reasoning-body');
+  const following = content.scrollHeight - content.scrollTop - content.clientHeight < 24;
+  if (content.textContent !== body) content.textContent = body;
+  if (live && following) content.scrollTop = content.scrollHeight;
+  return box;
 }
 
 // A turn refused as permission_denied on a chat an older build saved under a
@@ -22815,15 +22915,29 @@ function renderMessagesFromStorage() {
       visibleMessages = messages.filter((message) => String(message.thread || 'main') === threadNeedle);
     }
   }
+  // Each turn's length and stored reasoning, shown on its last reply and beside
+  // its tool count. Rooms have several speakers per turn, so none there.
+  const turnSummaries = activeGroupProjection
+    ? new Map()
+    : storedTurnSummaries(visibleMessages, { normalizeTs: (value) => normalizeMessageTimestamp(value) });
+  let turnToolGroups = [];
   for (const message of groupToolHistoryMessages(sessionToolDisplayMessages(visibleMessages))) {
     if (message.role === 'tool-group') {
       const group = createToolCallGroup({ document, calls: message.calls, translate: translateUiText, formatCountLabel: t });
       group.hermesToolCalls = message.calls;
       els.messages.append(group);
+      turnToolGroups.push(group);
       continue;
     }
+    if (message.role === 'user') turnToolGroups = [];
     if (isDelegationCompletionMarkerMessage(message)) continue;
-    addMessage(message.role, message.content, {
+    const summary = turnSummaries.get(message);
+    if (summary?.durationMs != null) {
+      turnDurationByRecord.set(message, summary.durationMs);
+      for (const group of turnToolGroups) setToolCallGroupTime(group, turnDurationLabel(summary.durationMs));
+      turnToolGroups = [];
+    }
+    const added = addMessage(message.role, message.content, {
           persist: false,
           scroll: false,
           roleLabel: message.roleLabel || '',
@@ -22835,7 +22949,7 @@ function renderMessagesFromStorage() {
           thread: message.thread || '',
           sourceRecord: message,
         });
-
+    if (summary?.reasoning && added?.node) renderMessageReasoning(added.node, summary.reasoning);
   }
   if (viewedStream && !activeGroupProjection) {
     if (retainedLiveRow) {
@@ -25015,7 +25129,7 @@ function bindPromptCard() {
   createPromptCard({ container: els.agentPromptCard, t, controller: promptController });
 }
 
-async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts = [] } = {}) {
+async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, onReasoning, knownAssistantTexts = [] } = {}) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -25034,6 +25148,21 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
       // that chat later, and this stream ends with nothing more to say.
       sawTerminal = true;
       return true;
+    }
+    // A step's reasoning ("_thinking" progress) and the notes written beside
+    // tool calls are not tools and not the answer (lib/turn-activity.mjs).
+    const reasoningUpdate = turnReasoningFromRestEvent(event.type, data);
+    if (reasoningUpdate) {
+      if (reasoningUpdate.kind === 'commentary' && reasoningUpdate.alreadyStreamed && !streamTextState.finalized) {
+        const rest = replyTextAfterCommentary(streamTextState.text, reasoningUpdate.text);
+        if (rest !== null) {
+          streamTextState = { text: rest, finalized: false };
+          finalText = rest;
+          onDelta(finalText);
+        }
+      }
+      onReasoning?.(reasoningUpdate);
+      return false;
     }
     if (event.type === 'run.started' && data.run_id) {
       sawRunStarted = true;
@@ -25508,7 +25637,7 @@ async function streamDashboardWsChat(prompt, onDelta, onTool, options = {}) {
   }
 }
 
-async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [], submitPrompt = true, submissionId = '', attachments: turnAttachments = [], voiceLive = null, truncate = null, onSubmitResponse = null } = {}) {
+async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onReasoning, knownAssistantTexts = [], submitPrompt = true, submissionId = '', attachments: turnAttachments = [], voiceLive = null, truncate = null, onSubmitResponse = null } = {}) {
   onRun?.(sessionId);
   const { client } = connection;
   const sessionIds = [sessionId, connection.wsSessionId, connection.wsStoredSessionId];
@@ -25616,7 +25745,12 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
     offs.push(client.on('tool.start', (event) => {
       if (!forThisSession(event)) return;
       watchdog.ping();
-      if (onTool) onTool({ type: 'tool.start', tool_name: event.payload?.name });
+      if (onTool) onTool({
+        type: 'tool.start',
+        tool_name: event.payload?.name,
+        tool_call_id: event.payload?.tool_id,
+        preview: event.payload?.preview || event.payload?.context || '',
+      });
     }));
     offs.push(client.on('tool.complete', (event) => {
       if (!forThisSession(event)) return;
@@ -25624,8 +25758,18 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
       if (onTool) onTool({
         type: 'tool.complete',
         tool_name: event.payload?.name,
+        tool_call_id: event.payload?.tool_id,
         result: event.payload?.result,
       });
+    }));
+    offs.push(...bindDashboardReasoning(client, forThisSession, {
+      getText: () => finalText,
+      setText: (text) => {
+        finalText = text;
+        onDelta(finalText);
+      },
+      onReasoning,
+      onActivity: () => watchdog.ping(),
     }));
     offs.push(client.on('steer.queued', (event) => {
       if (forThisSession(event)) onSteerQueued?.(event.payload?.text || event.payload?.message || '');
@@ -25658,6 +25802,7 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
         }
         const quirkGatewayUrl = connection.baseUrl || settings.gatewayUrl;
         await gatewayQuirks.load();
+        await ensureSessionShowsReasoning(client, sessionId);
         if (settled) return;
         const submitParams = () => promptSubmitParamsFor(client, {
           session_id: sessionId,
@@ -25694,13 +25839,13 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
   });
 }
 
-async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null } = {}) {
+async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onReasoning, onPrompt, onDelivery, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null } = {}) {
   if (usesDashboardWsChatTransport()) return streamDashboardWsChat(prompt, onDelta, onTool, {
     signal,
     attachments: turnAttachments,
     onRun,
     onSteerQueued,
-    onRuntime,
+    onRuntime, onReasoning,
     knownAssistantTexts,
     truncate,
     onSubmitResponse,
@@ -25716,16 +25861,16 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
     if (Number(setupError?.httpStatus ?? setupError?.status) === 401 && localDashboardUrl() && safeActiveProfile()) {
       activeConversationTransport = 'dashboard-ws';
       return streamDashboardWsChat(prompt, onDelta, onTool, {
-        signal, attachments: turnAttachments, onRun, onSteerQueued, onRuntime, knownAssistantTexts, voiceLive,
+        signal, attachments: turnAttachments, onRun, onSteerQueued, onRuntime, onReasoning, knownAssistantTexts, voiceLive,
       });
     }
     throw setupError;
   }
   // A REST turn waits for the companion context upload started with it (never rejects, bounded).
   if (beforeSend) await beforeSend.catch(() => undefined);
-  if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, onPrompt, knownAssistantTexts, voiceLive });
+  if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, onPrompt, onReasoning, knownAssistantTexts, voiceLive });
   try {
-    return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts, voiceLive });
+    return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onReasoning, onPrompt, onDelivery, knownAssistantTexts, voiceLive });
   } catch (error) {
     // Profile-scoped 401: the gateway multiplexer requires each named
     // profile's own API key. Named-profile sessions still stream over the
@@ -25739,7 +25884,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
         attachments: turnAttachments,
         onRun,
         onSteerQueued,
-        onRuntime,
+        onRuntime, onReasoning,
         knownAssistantTexts,
         voiceLive,
       });
@@ -25748,7 +25893,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   }
 }
 
-async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts, voiceLive = null }) {
+async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, onReasoning, knownAssistantTexts, voiceLive = null }) {
 
   let response;
   try {
@@ -25784,7 +25929,7 @@ async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAtta
     });
   }
   try {
-    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts });
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, onReasoning, knownAssistantTexts });
   } catch (error) {
     if (!error.requestRejected && !error.streamError) {
       error.requestAccepted = true;
@@ -25793,7 +25938,7 @@ async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAtta
   }
 }
 
-async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onPrompt, knownAssistantTexts = [], voiceLive = null } = {}) {
+async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onPrompt, onReasoning, knownAssistantTexts = [], voiceLive = null } = {}) {
   let response;
   try {
     response = await apiFetch('/v1/chat/completions', {
@@ -25829,7 +25974,7 @@ async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachme
     });
   }
   try {
-    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun, onPrompt, knownAssistantTexts });
+    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun, onPrompt, onReasoning, knownAssistantTexts });
     await captureDelegationDispatchesFromCurrentRestHistory();
     return result;
   } catch (error) {
@@ -26744,6 +26889,20 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
           attachments: preparedAttachments,
           voiceLive: turnOptions.voiceLive || null,
           beforeSend: companionContextUpload,
+          onReasoning: (update) => {
+            if (!update || !runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
+            if (update.kind === 'wait') {
+              // Hermes explained a wait on the provider: name it instead of the generic notice.
+              if (runIsViewed()) {
+                slowNoticeShown = true;
+                setStatus('warn', 'Still waiting on the model', update.text, { translateDetail: false });
+              }
+              return;
+            }
+            promptPoller?.activity();
+            noteReplyActivity();
+            streamView.updateReasoning(update);
+          },
           onRun: (runId) => {
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             // Dashboard prompt streams report the live session id here, not a
@@ -26881,7 +27040,9 @@ ${streamError.message}`);
         { content: finalAnswerForStorage, responseStyle: record?.responseStyle || node?.dataset?.responseStyle },
         responsePresentationFromSettings(settings).responseStyle,
       );
-      messages.push({ role: 'assistant', content: finalAnswerForStorage, ts: Date.now(), responseStyle: assistantStyle });
+      // The turn's reasoning rides on its reply, under the field Hermes stores it in.
+      const turnReasoning = streamView.reasoningText;
+      messages.push({ role: 'assistant', content: finalAnswerForStorage, ts: Date.now(), responseStyle: assistantStyle, ...(turnReasoning ? { reasoning: turnReasoning } : {}) });
       await trimAndSaveMessages();
     }
     if (profileContextHandoff

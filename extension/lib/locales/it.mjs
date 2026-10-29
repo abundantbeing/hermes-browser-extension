@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "THE PAGE È THE PROMPT",
   "ui.theme": "Tema",
   "ui.thinking": "Pensare",
+  "ui.thoughts": "Ragionamento",
   "ui.thinking.off.standard": "Pensando · Standard",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "Questo browser non espone il riconoscimento vocale sul dispositivo.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "Questo browser non espone MediaRecorder/getUserMedia alle pagine di estensione e il fallback Web Speech non è disponibile.",

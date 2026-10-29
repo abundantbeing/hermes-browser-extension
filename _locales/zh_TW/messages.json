@@ -7743,6 +7743,10 @@
     "message": "此請求已繫結至所選的瀏覽器工作階段。",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "思考過程",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "時間",
     "description": "Runtime interface message ui.time"

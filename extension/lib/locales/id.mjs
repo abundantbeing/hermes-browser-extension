@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "HALAMAN ADALAH PROMPT",
   "ui.theme": "Tema",
   "ui.thinking": "Pemikiran",
+  "ui.thoughts": "Pemikiran",
   "ui.thinking.off.standard": "Memikirkan · Standar",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "Browser ini tidak menampilkan pengenalan ucapan pada perangkat.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "Browser ini tidak mengekspos MediaRecorder/getUserMedia ke halaman ekstensi, dan cadangan Web Speech tidak tersedia.",

@@ -9,6 +9,8 @@ import { dashboardWatchdogTimeoutAction, matchesDashboardSessionEvent } from '..
 import { messageDisplayText } from '../extension/lib/common.mjs';
 import { hermesGatewayTurnError } from '../extension/lib/turn-recovery.mjs';
 import { turnNotDeliveredError } from '../extension/lib/gateway-refusal.mjs';
+import { emptyTurnReasoning, formatTurnDuration, liveTurnStartedAt, reduceTurnReasoning, replyTextAfterCommentary, turnReasoningFromRestEvent } from '../extension/lib/turn-activity.mjs';
+import { bindDashboardReasoning, ensureSessionShowsReasoning } from '../extension/lib/turn-reasoning-socket.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const attemptSource = source.slice(
@@ -44,7 +46,7 @@ function attemptHarness({ history, status, authority = false, submitPrompt = fal
     },
   };
   const context = vm.createContext({
-    WS_METHODS, WS_EVENTS, promptSubmitParamsFor,
+    WS_METHODS, WS_EVENTS, promptSubmitParamsFor, bindDashboardReasoning, ensureSessionShowsReasoning,
     matchesDashboardSessionEvent, normalizeGatewayHistoryMessages, readGatewaySessionStatus,
     latestAssistantAfterUser, turnDeliveryFromHistory, sessionStatusKnownIdle, messageDisplayText, turnNotDeliveredError,
     dashboardWatchdogTimeoutAction, hermesGatewayTurnError,

@@ -47,7 +47,7 @@ function actionButton(document, { kind, label, translate, onClick }) {
 export function buildMessageRail({
   document, role, ts = null, now = Date.now(), locale, translate = (s) => s,
   showTime = true, canEdit = false, canRestore = false,
-  replyLabel = '', onCopy, onEdit, onRestore, onReply,
+  replyLabel = '', durationLabel = '', onCopy, onEdit, onRestore, onReply,
 } = {}) {
   const rail = document.createElement('div');
   rail.className = 'message-rail';
@@ -67,6 +67,13 @@ export function buildMessageRail({
     time.title = full;
     time.textContent = formatMessageTime(timestamp, { now, locale });
     rail.append(time);
+  }
+  // How long the turn this reply ends took ("14s"), beside its time.
+  if (durationLabel) {
+    const duration = document.createElement('span');
+    duration.className = 'message-duration';
+    duration.textContent = durationLabel;
+    rail.append(duration);
   }
   if (isUser && canRestore) {
     rail.append(actionButton(document, { kind: 'restore', label: 'Restore checkpoint: rerun from this prompt', translate, onClick: onRestore }));

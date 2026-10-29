@@ -7743,6 +7743,10 @@
     "message": "此请求已绑定到所选的 Browser 会话。",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "思考过程",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "时间",
     "description": "Runtime interface message ui.time"

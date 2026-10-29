@@ -7,7 +7,8 @@ export function createMessageThreadUi({
   ResizeObserver = globalThis.ResizeObserver,
   requestFrame = (callback) => (globalThis.requestAnimationFrame || ((fn) => fn()))(callback),
   locale = () => undefined, translate = (text) => text, now = () => Date.now(),
-  canRewind = () => false, replyLabelFor = () => '', onCopy, onEdit, onRestore, onReply, onDayDivider,
+  canRewind = () => false, replyLabelFor = () => '', durationLabelFor = () => '',
+  onCopy, onEdit, onRestore, onReply, onDayDivider,
 } = {}) {
   let pinnedRow = null;
   let previousTs = null;
@@ -48,6 +49,7 @@ export function createMessageThreadUi({
       showTime: !streaming,
       canEdit: rewind, canRestore: rewind,
       replyLabel: room && record.role === 'assistant' ? replyLabelFor(record) : '',
+      durationLabel: !streaming && record.role === 'assistant' ? durationLabelFor(record) : '',
       onReply: () => onReply?.(record, node),
       onCopy: () => onCopy?.(record, node),
       onEdit: () => onEdit?.(row, record),

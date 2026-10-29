@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "TRANG LÀ LỜI KHUYÊN",
   "ui.theme": "chủ đề",
   "ui.thinking": "suy nghĩ",
+  "ui.thoughts": "Suy nghĩ",
   "ui.thinking.off.standard": "Suy nghĩ lại · Tiêu chuẩn",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "Trình duyệt này không hiển thị tính năng nhận dạng giọng nói trên thiết bị.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "Trình duyệt này không hiển thị MediaRecorder/getUserMedia cho các trang tiện ích mở rộng và dự phòng Web Speech không khả dụng.",

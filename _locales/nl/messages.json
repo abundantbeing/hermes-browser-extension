@@ -7743,6 +7743,10 @@
     "message": "Dit verzoek is gebonden aan de geselecteerde browsersessie.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "Gedachten",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "Tijd",
     "description": "Runtime interface message ui.time"

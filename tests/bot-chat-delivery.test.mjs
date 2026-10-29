@@ -13,6 +13,8 @@ import { appendOpenAiChunkText } from '../extension/lib/common.mjs';
 import { isPromptEventName } from '../extension/lib/gateway-prompts.mjs';
 import { normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from '../extension/lib/runtime-events.mjs';
 import english from '../extension/lib/locales/en.mjs';
+import { emptyTurnReasoning, formatTurnDuration, liveTurnStartedAt, reduceTurnReasoning, replyTextAfterCommentary, turnReasoningFromRestEvent } from '../extension/lib/turn-activity.mjs';
+import { bindDashboardReasoning, ensureSessionShowsReasoning } from '../extension/lib/turn-reasoning-socket.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 
@@ -88,6 +90,8 @@ function loadReader() {
     isSubagentEventName: () => false,
     subagentGatewayEventFromSse: () => null,
     ingestSubagentGatewayEvent: () => {},
+    turnReasoningFromRestEvent,
+    replyTextAfterCommentary,
   };
   vm.createContext(context);
   vm.runInContext(

@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "หน้านี้เป็นข้อความแจ้ง",
   "ui.theme": "ธีม",
   "ui.thinking": "กำลังคิด",
+  "ui.thoughts": "ความคิด",
   "ui.thinking.off.standard": "คิดนอกกรอบ · มาตรฐาน",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "เบราว์เซอร์นี้ไม่เปิดเผยการรู้จำคำพูดบนอุปกรณ์",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "เบราว์เซอร์นี้ไม่เปิดเผย MediaRecorder/getUserMedia ในหน้าส่วนขยาย และ Web Speech ทางเลือกไม่พร้อมใช้งาน",

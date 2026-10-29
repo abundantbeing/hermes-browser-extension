@@ -1437,6 +1437,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "页面即提示内容",
   "ui.theme": "主题",
   "ui.thinking": "思考",
+  "ui.thoughts": "思考过程",
   "ui.thinking.off.standard": "思考关闭 · 标准",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "此浏览器未提供设备端语音识别功能。",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "此浏览器不会将 MediaRecorder/getUserMedia 暴露给扩展页面，并且 Web Speech 后备不可用。",

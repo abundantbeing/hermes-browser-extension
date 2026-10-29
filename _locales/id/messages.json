@@ -7743,6 +7743,10 @@
     "message": "Permintaan ini terikat pada sesi Browser yang dipilih.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "Pemikiran",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "Waktu",
     "description": "Runtime interface message ui.time"

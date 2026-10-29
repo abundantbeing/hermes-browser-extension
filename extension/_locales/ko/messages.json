@@ -7743,6 +7743,10 @@
     "message": "이 요청은 선택한 브라우저 세션에 바인딩됩니다.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "생각",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "시간",
     "description": "Runtime interface message ui.time"

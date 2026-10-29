@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "페이지가 바로 프롬프트입니다",
   "ui.theme": "테마",
   "ui.thinking": "생각 중",
+  "ui.thoughts": "생각",
   "ui.thinking.off.standard": "생각 끔 · 표준",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "이 브라우저는 기기 내 음성 인식을 노출하지 않습니다.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "이 브라우저는 MediaRecorder/getUserMedia를 확장 페이지에 노출하지 않으며 Web Speech 대체를 사용할 수 없습니다.",

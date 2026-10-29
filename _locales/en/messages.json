@@ -7743,6 +7743,10 @@
     "message": "This request is bound to the selected Browser session.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "Thoughts",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "Time",
     "description": "Runtime interface message ui.time"

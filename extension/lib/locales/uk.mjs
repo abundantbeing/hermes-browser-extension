@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "СТОРІНКА - ЦЕ ПІДКАЗКА",
   "ui.theme": "Тема",
   "ui.thinking": "Міркування",
+  "ui.thoughts": "Роздуми",
   "ui.thinking.off.standard": "Мислення від · Стандарт",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "Цей браузер не підтримує розпізнавання мовлення на пристрої.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "Цей веб-переглядач не відкриває MediaRecorder/getUserMedia для сторінок розширення, а резервний варіант Web Speech недоступний.",

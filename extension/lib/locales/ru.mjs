@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "СТРАНИЦА — ПОДПРОС",
   "ui.theme": "Тема",
   "ui.thinking": "Размышление",
+  "ui.thoughts": "Размышления",
   "ui.thinking.off.standard": "Раздумья · Стандарт",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "Этот браузер не поддерживает распознавание речи на устройстве.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "Этот браузер не предоставляет доступ к MediaRecorder/getUserMedia страницам расширений, а резервный вариант Web Speech недоступен.",

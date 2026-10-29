@@ -1441,6 +1441,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "THE PAGE IS THE PROMPT",
   "ui.theme": "Theme",
   "ui.thinking": "Thinking",
+  "ui.thoughts": "Thoughts",
   "ui.thinking.off.standard": "Thinking off · Standard",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "This browser does not expose on-device speech recognition.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "This browser does not expose MediaRecorder/getUserMedia to extension pages, and Web Speech fallback is unavailable.",

@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "SIDEN ER PROMPTEN",
   "ui.theme": "Tema",
   "ui.thinking": "Tænker",
+  "ui.thoughts": "Tanker",
   "ui.thinking.off.standard": "Tænker af · Standard",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "Denne browser afslører ikke talegenkendelse på enheden.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "Denne browser udsætter ikke MediaRecorder/getUserMedia for udvidelsessider, og Web Speech er ikke tilgængelig.",

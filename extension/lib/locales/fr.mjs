@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "LA PAGE EST L’INVITE",
   "ui.theme": "Thème",
   "ui.thinking": "Pensée",
+  "ui.thoughts": "Réflexions",
   "ui.thinking.off.standard": "Réflexion · Standard",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "Ce navigateur n'expose pas la reconnaissance vocale sur l'appareil.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "Ce navigateur n'expose pas MediaRecorder/getUserMedia aux pages d'extension et la solution de secours Web Speech n'est pas disponible.",

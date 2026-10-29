@@ -7743,6 +7743,10 @@
     "message": "To żądanie jest powiązane z wybraną sesją przeglądarki.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "Przemyślenia",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "Czas",
     "description": "Runtime interface message ui.time"

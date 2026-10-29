@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "頁面就是提示",
   "ui.theme": "主題",
   "ui.thinking": "思考",
+  "ui.thoughts": "思考過程",
   "ui.thinking.off.standard": "思考關閉 · 標準",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "此瀏覽器未提供裝置端語音辨識。",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "此瀏覽器不會將 MediaRecorder/getUserMedia 暴露給擴充頁面，且 Web Speech 後備不可用。",

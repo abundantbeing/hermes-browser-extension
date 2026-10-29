@@ -7743,6 +7743,10 @@
     "message": "Esta solicitação está vinculada à sessão do navegador selecionada.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
+  "runtime_ui_thoughts": {
+    "message": "Pensamentos",
+    "description": "Runtime interface message ui.thoughts"
+  },
   "runtime_ui_time": {
     "message": "Hora",
     "description": "Runtime interface message ui.time"

@@ -11,6 +11,8 @@ import {
 import {
   WS_EVENTS, WS_METHODS, interruptGatewaySession, isUnknownMethodError, normalizeGatewayHistoryMessages, readGatewaySessionStatus, readSessionExecutionGeneration,
 } from '../extension/lib/gateway-ws.mjs';
+import { emptyTurnReasoning, formatTurnDuration, liveTurnStartedAt, reduceTurnReasoning, replyTextAfterCommentary, turnReasoningFromRestEvent } from '../extension/lib/turn-activity.mjs';
+import { bindDashboardReasoning, ensureSessionShowsReasoning } from '../extension/lib/turn-reasoning-socket.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const between = (a, b) => source.slice(source.indexOf(a), source.indexOf(b));
@@ -59,6 +61,7 @@ function authorityHarness({ rowStatus = 'working', generation = 4 } = {}) {
     completeAttachedRun: async () => {},
     scopeRevision: { current: () => 1, isCurrent: (id) => id === 1 },
     shouldAttachLiveSession, sessionIsLiveFromStatus, readLiveAttachSnapshot, rosterStopTarget, readGatewaySessionStatus,
+    bindDashboardReasoning, liveTurnStartedAt,
     interruptGatewaySession, isUnknownMethodError, normalizeGatewayHistoryMessages, readSessionExecutionGeneration,
     THINKING_PLACEHOLDER: 'Thinking', addMessage: () => ({ node: {}, record: {} }), assistantMessageRoleLabel: () => 'Hermes',
     createStreamingMessageUpdater: () => ({ updateText: (v) => painted.push(v), updateTool: () => {}, flush: async (v) => painted.push(v), dispose: () => {} }),

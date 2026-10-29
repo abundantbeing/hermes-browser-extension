@@ -1410,6 +1410,7 @@ export default Object.freeze({
   "ui.the.page.is.the.prompt": "الصفحة هي الموجه",
   "ui.theme": "سمة",
   "ui.thinking": "التفكير",
+  "ui.thoughts": "الأفكار",
   "ui.thinking.off.standard": "التفكير خارج · قياسي",
   "ui.this.browser.does.not.expose.on.device.speech.recognition": "لا يعرض هذا المتصفح ميزة التعرف على الكلام على الجهاز.",
   "ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71": "لا يعرض هذا المتصفح MediaRecorder/getUserMedia لصفحات الامتدادات، ولا يتوفر خيار Web Speech الاحتياطي.",
