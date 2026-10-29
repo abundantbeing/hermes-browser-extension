@@ -447,6 +447,7 @@ import {
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
 import { connectionIdentityChanged, gatewayMoveResets, sessionIdForSave } from './lib/settings-save-effects.mjs';
+import { fetchSessionHistoryPages } from './lib/session-history-pages.mjs';
 import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
 import { compressionSuccessor, createSessionLineage, rosterSuccessor } from './lib/session-lineage.mjs';
 import { createReplayWatermarks } from './lib/replay-watermarks.mjs';
@@ -20143,9 +20144,12 @@ function detachLiveSession() {
   updateComposerBusyState();
 }
 
+// `allPages` reads a REST chat's whole stored history (the thread on screen); without it, a
+// background read takes the newest page only, which is all it looks at.
 async function fetchSessionMessagesQuietly(sessionId, {
   transport = usesDashboardWsChatTransport() ? 'dashboard-ws' : 'rest',
   connection = activeDashboardWsConnection,
+  allPages = false,
 } = {}) {
   if (transport === 'dashboard-ws') {
     if (connection?.client?.readyState !== 1) throw new Error('Hermes dashboard is not connected.');
@@ -20167,10 +20171,15 @@ async function fetchSessionMessagesQuietly(sessionId, {
     };
   }
   if (!settings.apiKey) throw new Error('Connect to Hermes before loading session messages.');
-  const response = await apiFetch(`/api/sessions/${encodeSessionId(sessionId)}/messages`, { method: 'GET' });
-  const payload = await readJsonResponse(response);
-  if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Messages failed (${response.status})`);
-  const rows = Array.isArray(payload.data) ? payload.data : [];
+  const fetchPage = async (query) => {
+    const response = await apiFetch(`/api/sessions/${encodeSessionId(sessionId)}/messages${query ? `?${query}` : ''}`, { method: 'GET' });
+    const page = await readJsonResponse(response);
+    if (!response.ok) throw new Error(page?.error?.message || page?.error || `Messages failed (${response.status})`);
+    return page;
+  };
+  const { payload, rows } = allPages
+    ? await fetchSessionHistoryPages(fetchPage)
+    : await fetchPage('').then((page) => ({ payload: page, rows: Array.isArray(page?.data) ? page.data : [] }));
   const contextMessages = rows.map((message) => ({
     ...message,
     role: String(message.role || '').toLowerCase(),
@@ -20709,7 +20718,7 @@ async function loadSessionMessages(sessionId = settings.sessionId, {
     return true;
   }
   try {
-    const result = await fetchSessionMessagesQuietly(sessionId, { transport, connection: activeDashboardWsConnection || connection });
+    const result = await fetchSessionMessagesQuietly(sessionId, { transport, connection: activeDashboardWsConnection || connection, allPages: true });
     if (!isCurrentRequest()) return false;
     scheduleLiveSessionPoll();
     return commitFetchedSessionMessages(result, { sessionId: expectedSessionId, requestId, scopeRevisionId });
@@ -20732,7 +20741,7 @@ async function refreshActiveSessionHistoryQuietly(expectedGeneration = runContro
   try {
     const result = usesDashboardWsChatTransport()
       ? await fetchDashboardHistoryWithResume(sessionId)
-      : await fetchSessionMessagesQuietly(sessionId);
+      : await fetchSessionMessagesQuietly(sessionId, { allPages: true });
     if (!runControlGenerationMatches(expectedGeneration, runControlGeneration)) return false;
     if (String(settings.sessionId || '').trim() !== sessionId || sending || activeGroupProjection) return false;
     if (messages.length > 0 && (!Array.isArray(result?.messages) || result.messages.length === 0)) return false;
