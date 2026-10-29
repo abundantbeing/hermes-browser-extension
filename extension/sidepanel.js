@@ -20747,19 +20747,43 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
     contextTokens: estimateLocalSessionContextTokens({ messages: contextMessages }),
     visibleTokens: estimateLocalSessionContextTokens({ messages: browserDisplayMessages(messages) }),
   };
-  await saveMessagesForActiveScope({ scopeRevisionId });
+  // The history write runs beside the paint instead of ahead of it (its copy is
+  // taken here, before any media lands), and the image reads get a short budget:
+  // a gateway that answers quickly still paints them with the first frame, while
+  // a slow or missing dashboard (discovery alone can take seconds) no longer
+  // holds the text back. Images that arrive later repaint the transcript in place.
+  const mediaPaintBudgetMs = 200;
+  const saving = Promise.resolve(saveMessagesForActiveScope({ scopeRevisionId })).then(() => null, (error) => ({ error }));
+  const hydratedMediaCount = () => messages.reduce((count, message) => count
+    + (Array.isArray(message?.attachments) ? message.attachments.filter((attachment) => attachment?.dataUrl).length : 0), 0);
+  // Inline media needs the Desktop dashboard. Without it the transcript must
+  // still paint; the images simply stay as references (media is best-effort).
+  const mediaRead = hydrateSessionMedia(messages).then(() => true, () => true);
+  let budgetTimer;
+  const mediaInTime = await Promise.race([
+    mediaRead,
+    new Promise((resolve) => { budgetTimer = setTimeout(() => resolve(false), mediaPaintBudgetMs); }),
+  ]);
+  clearTimeout(budgetTimer);
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (requestId != null && requestId !== sessionLoadRequestId) return false;
   if (String(settings.sessionId || '').trim() !== String(sessionId || '').trim()) return false;
-  // Inline media needs the Desktop dashboard. Without it the transcript must
-  // still paint; the images simply stay as references.
-  try {
-    await hydrateSessionMedia(messages);
-  } catch {
-    // Media is best-effort.
-  }
+  const paintedCount = messages.length;
+  const paintedMedia = hydratedMediaCount();
   renderMessagesFromStorage();
   void noteLongSharedSessionIfDue();
+  if (!mediaInTime) {
+    void mediaRead.then(() => {
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return;
+      if (requestId != null && requestId !== sessionLoadRequestId) return;
+      if (String(settings.sessionId || '').trim() !== String(sessionId || '').trim()) return;
+      // A turn that arrived meanwhile owns the next paint; the images are on the records already.
+      if (messages.length !== paintedCount || hydratedMediaCount() === paintedMedia) return;
+      renderMessagesFromStorage();
+    });
+  }
+  const saved = await saving;
+  if (saved) throw saved.error;
   return true;
 }
 
