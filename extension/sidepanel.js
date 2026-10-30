@@ -22485,9 +22485,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
       toolHost = createToolCallGroup({ document, calls, running, translate: translateUiText, formatCountLabel: t });
       toolHost.classList.add('live-tool-work');
     }
-    // The tools row sits above the reasoning row when there is one, else above the reply.
-    const anchor = messageReasoningBox(node) || row;
-    const reattaching = toolHost.nextElementSibling !== anchor;
+    const reattaching = toolHost.nextElementSibling !== row;
     if (reattaching) {
       // Reuse the SAME native disclosure after a history rebuild: its open
       // state, individual entries and scroll position survive unchanged.
@@ -22509,7 +22507,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
         }
         previous = previous.previousElementSibling;
       }
-      anchor.before(toolHost);
+      row.before(toolHost);
     }
     updateToolCallGroup(toolHost, { calls, running, translate: translateUiText, formatCountLabel: t });
     setToolCallGroupTime(toolHost, turnDurationLabel(running ? elapsed() : turnDurationByRecord.get(record) ?? elapsed()));
@@ -22600,16 +22598,16 @@ function turnDurationLabel(ms) {
   return formatTurnDuration(ms, { locale: getLocale() });
 }
 
-// The row just above a reply that holds the agent's reasoning, if it has one.
+// The reply's reasoning disclosure, if it has one.
 function messageReasoningBox(node) {
-  const previous = node?.closest?.('.message-row')?.previousElementSibling;
-  return previous?.classList?.contains('message-reasoning') ? previous : null;
+  return node?.querySelector?.(':scope > .message-reasoning') || null;
 }
 
-// The agent's reasoning, in its own row just above the reply and below its
-// tools, styled like the tools row (lib/turn-activity.mjs). Live, it stays open
-// and follows the newest line; once the answer lands it folds to "Thoughts".
-// The thinking faces stay in the reply card. Empty text removes it.
+// The agent's reasoning, folded into the top of the reply under its label and
+// built like the "What Hermes saw" receipt, so a long chat gains no extra rows
+// (lib/turn-activity.mjs). Live, it stays open and follows the newest line;
+// once the answer lands it folds to "Thoughts". The thinking faces stay below
+// it while the agent works. Empty text removes it.
 function renderMessageReasoning(node, text = '', { live = false } = {}) {
   let box = messageReasoningBox(node);
   const body = String(text || '').trim();
@@ -22617,8 +22615,7 @@ function renderMessageReasoning(node, text = '', { live = false } = {}) {
     box?.remove();
     return null;
   }
-  const row = node?.closest?.('.message-row');
-  if (!row) return null;
+  if (!node?.querySelector) return null;
   if (!box) {
     box = document.createElement('details');
     box.className = 'message-reasoning';
@@ -22630,7 +22627,8 @@ function renderMessageReasoning(node, text = '', { live = false } = {}) {
     content.className = 'message-reasoning-body';
     box.append(summary, content);
     box.open = live;
-    row.before(box);
+    const anchor = node.querySelector(':scope > .live-thinking-slot') || node.querySelector(':scope > .message-content');
+    if (anchor) anchor.before(box); else node.append(box);
   }
   if (box.classList.contains('is-live') && !live) box.open = false;
   box.classList.toggle('is-live', live);
