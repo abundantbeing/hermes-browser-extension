@@ -44,9 +44,7 @@ Things to know:
 ## Install
 
 ```bash
-# from the plugin catalog
-hermes plugins install hermes-browser-extension --enable
-# or straight from the repository
+# from this repository (the Hermes plugin catalog has no entry for it yet)
 hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable
 
 # then restart the gateway, and check

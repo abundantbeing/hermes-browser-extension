@@ -45,14 +45,12 @@ Hermes installs plugins per profile, with its own installer: it clones, runs its
 security scan, installs atomically and records where the copy came from.
 
 ```bash
-# default profile, from the plugin catalog
-hermes plugins install hermes-browser-extension --enable
-
-# or from this repository (the plugin is its companion-plugin/ subdirectory)
+# default profile, from this repository (the plugin is its companion-plugin/ subdirectory;
+# the Hermes plugin catalog has no entry for it yet)
 hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable
 
 # a named profile (repeat per profile that should have it)
-hermes plugins install hermes-browser-extension --enable --profile <profile>
+hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable --profile <profile>
 
 # then restart that profile's gateway, and check
 hermes plugins list --profile <profile>
@@ -103,7 +101,7 @@ remove the old one before installing the new one:
 
 ```bash
 hermes plugins remove hermes-browser-companion --profile <profile>
-hermes plugins install hermes-browser-extension --enable --profile <profile>
+hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable --profile <profile>
 # restart that profile's gateway
 ```
 
@@ -126,7 +124,7 @@ New-Item -ItemType Directory -Force ~/.hermes/plugins-backup | Out-Null
 Move-Item ~/.hermes/plugins/hermes-browser-extension/companion-plugin ~/.hermes/plugins-backup/companion-plugin-<old-version>
 
 # 2. install the standard way and restart the gateway
-hermes plugins install hermes-browser-extension --enable
+hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable
 ```
 
 Copies from before the hook-worker fix cannot pass a tool's authorization
