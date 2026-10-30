@@ -17430,6 +17430,9 @@ async function saveBotProfileSheet() {
   } catch {
     setStatus('warn', 'Profile saved', 'Hermes accepted the change, but the roster refresh is still pending.');
   }
+  // The Bot Chat under the sheet painted its hero when it opened; repaint it so
+  // the new face shows without reopening the chat.
+  renderBotChatIntro();
 }
 
 // ── Petdex pet picker (Bot Mode profile sheet): frame-0 icons, per-profile assignment ──
