@@ -761,10 +761,7 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
   width: 76px;
   height: 76px;
   margin-bottom: 10px;
-}
-.bot-chat-intro.compact .bot-chat-intro-avatar img {
-  width: 76px;
-  height: 76px;
+  border-radius: 20px;
 }
 .bot-chat-intro.compact .bot-chat-intro-title {
   font-size: calc(40px * var(--hermes-text-zoom, 1));
@@ -943,16 +940,29 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
 .bot-chat-intro[hidden] {
   display: none;
 }
+/* The hero face is the roster's avatar tile, grown: the blobatar SVG and the
+   pet fill it (a fixed-size face left the box mostly empty and far from the name). */
 .bot-chat-intro-avatar {
-  width: 116px;
-  height: 116px;
+  width: 136px;
+  height: 136px;
   display: grid;
   place-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+  border-radius: 32px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.18) 0%, rgba(0, 0, 0, 0.45) 100%), var(--hermes-paper);
+  border: 2px solid rgba(var(--hermes-fg-rgb), 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1.5px 2px rgba(255, 255, 255, 0.3);
+}
+.bot-chat-intro-avatar svg,
+.bot-chat-intro-avatar .bot-mode-pet-live {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .bot-chat-intro-avatar img {
-  width: 116px;
-  height: 116px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
