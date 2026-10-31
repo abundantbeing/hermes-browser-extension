@@ -91,7 +91,8 @@ function debuggerFake() {
   const calls = [];
   const api = {
     tabs: { get: async () => ({ url: 'https://example.com/', status: 'complete', active: true, windowId: 1 }) },
-    scripting: { executeScript: async () => [{ result: {} }] },
+    // What the real probe reads on a page with nothing focused: the page itself.
+    scripting: { executeScript: async () => [{ result: { focused: { role: '', name: '', inputType: '' } } }] },
     debugger: {
       attach: async () => {},
       detach: async () => {},

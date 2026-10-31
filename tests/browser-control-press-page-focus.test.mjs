@@ -84,6 +84,16 @@ for (const key of ['ArrowDown', 'ArrowUp', 'Escape', 'Home', 'PageDown', 'Ctrl+T
   });
 }
 
+test('focus that cannot be read passes only Tab, never an arrow key', async () => {
+  const f = fixture();
+  f.doc.activeElement = { get tagName() { throw new Error('probe failed'); } };
+  const arrow = await f.press('ArrowDown');
+  assert.equal(arrow.ok, false);
+  assert.equal(f.keys().length, 0);
+  assert.equal((await f.press('Tab', 'tab')).ok, true);
+  assert.equal(f.keys().length, 2);
+});
+
 test('Shift+Tab may leave a focused embedded frame too', async () => {
   const f = fixture();
   f.doc.activeElement = control('IFRAME', 'Video');

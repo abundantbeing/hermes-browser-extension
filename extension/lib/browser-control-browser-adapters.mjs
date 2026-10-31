@@ -2147,9 +2147,13 @@ function createChromiumCdpAdapter({
         // which move focus and change no value, may go into one; an arrow key would work a payment frame's dropdown.
         const current = await inspectPage(browserApi, scope, signal);
         const fields = keyEventFields(args);
-        const inFrame = current?.focused?.inFrame === true || current?.focused?.role === 'frame';
+        // Focus that could not be read at all is treated the same: it may be in a frame.
+        const unread = !current?.focused || typeof current.focused !== 'object';
+        const inFrame = unread || current.focused.inFrame === true || current.focused.role === 'frame';
         if (inFrame && !(fields.down.key === 'Tab' && (fields.down.modifiers & 7) === 0)) {
-          throw codedError('focus_changed', 'Focus is inside an embedded frame, so the key was not sent.');
+          throw codedError('focus_changed', unread
+            ? 'Hermes could not read where focus is, so the key was not sent.'
+            : 'Focus is inside an embedded frame, so the key was not sent.');
         }
         if (expectedFocus) {
           const approved = String(expectedFocus.identity || '');
