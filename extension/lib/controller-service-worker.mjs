@@ -86,6 +86,21 @@ const HERMES_OPENED_TASK_SET = 'hermes-opened';
 // A tab a page opens just after a Hermes action on it ended (a link's navigation, a script's window.open
 // after a delay) still belongs to that action.
 const OPENED_TAB_GRACE_MS = 3_000;
+// The actions that can open a tab: a click or key press on a link, a script's window.open after one, a form
+// submitted by typing, a navigation. A snapshot, screenshot, scroll or tab command never does, so a tab the
+// person opens while one of those runs stays theirs.
+const TAB_OPENING_ACTIONS = new Set([
+  'browser_click', 'browser_press', 'browser_type', 'browser_drag', 'browser_select', 'browser_navigate', 'browser_back',
+]);
+
+// A batch can open a tab when one of its steps can.
+function actionCanOpenTab(action, args = {}) {
+  if (action !== 'browser_batch') return TAB_OPENING_ACTIONS.has(action);
+  return (Array.isArray(args.actions) ? args.actions : []).some((step) => {
+    const name = String(step?.action || '').trim();
+    return TAB_OPENING_ACTIONS.has(name.startsWith('browser_') ? name : `browser_${name}`);
+  });
+}
 
 function cleanIdentity(raw = {}) {
   const controllerId = String(raw?.controllerId || '').trim();
@@ -293,8 +308,8 @@ export function createControllerServiceWorker({
   // The tab of the most recent action Hermes ran. Show tab points at it between
   // actions, so the button does not flicker with each action.
   let lastActionTabId = 0;
-  // When the latest Hermes action ended, so a tab its page opens a moment later is still adopted.
-  let lastActionEndedAt = 0;
+  // When the latest Hermes action that can open a tab ended, so a tab its page opens a moment later is still adopted.
+  let lastOpeningActionEndedAt = 0;
   // The last refusal worth telling the person about (a frame withheld a screenshot, a pointer action would land in
   // a frame Hermes cannot read): a code, never page details. The model gets the full message with its result; this
   // is for the Hermes Control window. It ends when the next command starts or after a couple of minutes.
@@ -306,7 +321,14 @@ export function createControllerServiceWorker({
   const approvals = approvalStore?.grant && approvalStore?.consume && approvalStore?.count
     ? approvalStore
     : createBrowserControlApprovalStore({ now });
-  let activeAction = null;
+  // Commands wait in one queue per tab, so commands on two tabs run at once (and a cancelled command's action
+  // may still be finishing when the next one starts): each running action has its own record here, and only its
+  // own run takes it out. Insertion order, so the last one is the latest to start.
+  const activeActions = new Set();
+  const latestActiveAction = () => {
+    const latest = [...activeActions].at(-1);
+    return latest ? { ...latest } : null;
+  };
   let scopeChanging = false;
   // The turn's page read runs outside the command lifecycle, so it is tracked here: tabId -> its abort controllers.
   // Anything that takes control away from Hermes (a debugger detach, a closed tab, Pause, Turn off, releasing the
@@ -409,16 +431,18 @@ export function createControllerServiceWorker({
     }
 
     const commandId = String(frame?.command_id || '').trim();
-    activeAction = {
+    const running = {
       commandId,
       action,
       tabId,
       startedAt: Number(now()),
+      // Whether this action can open a tab: only then does handleTabCreated adopt one for it.
+      opensTab: actionCanOpenTab(action, actionArgs),
       // Tabs a link or page script opened while this action ran, adopted by handleTabCreated.
       openedTabs: [],
       ...(action === 'browser_tab_close' ? { closingTabId: Number(actionArgs.tab_id) } : {}),
     };
-    const running = activeAction;
+    activeActions.add(running);
     lastActionTabId = tabId;
     lastNote = null;
     try {
@@ -484,8 +508,8 @@ export function createControllerServiceWorker({
       }
       return result;
     } finally {
-      lastActionEndedAt = Number(now());
-      activeAction = null;
+      if (running.opensTab) lastOpeningActionEndedAt = Number(now());
+      activeActions.delete(running);
     }
   }
 
@@ -591,7 +615,7 @@ export function createControllerServiceWorker({
       pendingCommands: lifecycle.pendingCount(),
       pendingApprovals: approvals.count(),
       pendingApproval: approvals.pending?.()[0] || null,
-      activeAction: activeAction ? { ...activeAction } : null,
+      activeAction: latestActiveAction(),
       lastActionTabId: lastActionTabId > 0 ? lastActionTabId : null,
       ...(lastNote && Number(now()) - lastNote.at < NOTE_TTL_MS ? { lastNote: { code: lastNote.code, tabId: lastNote.tabId } } : {}),
       settingsRevision,
@@ -1285,7 +1309,7 @@ export function createControllerServiceWorker({
     if (!connected || settings.browserControlEnabled !== true || !browserExecutor) {
       return { ok: false, error: 'controller_unavailable' };
     }
-    if (scopeChanging || activeAction || lifecycle.pendingCount() || approvals.count()) {
+    if (scopeChanging || activeActions.size || lifecycle.pendingCount() || approvals.count()) {
       return { ok: false, error: 'controller_busy' };
     }
     scopeChanging = true;
@@ -1302,7 +1326,7 @@ export function createControllerServiceWorker({
       if (!connected || ownerId !== controllerId || settings.browserControlEnabled !== true) {
         return { ok: false, error: 'controller_unavailable' };
       }
-      if (activeAction || lifecycle.pendingCount() || approvals.count()) return { ok: false, error: 'controller_busy' };
+      if (activeActions.size || lifecycle.pendingCount() || approvals.count()) return { ok: false, error: 'controller_busy' };
       const previousLeases = leases;
       const previousSettings = settings;
       const previousPausedLeases = pausedLeases;
@@ -1566,7 +1590,7 @@ export function createControllerServiceWorker({
     if (!browserExecutor) return { reason: 'executor_unavailable' };
     // Firefox has no debugger session; only Chromium reads the page this way.
     if (normalizedProduct.engine !== 'chromium') return { reason: 'unsupported_browser' };
-    if (scopeChanging || activeAction || lifecycle.pendingCount() || approvals.count()) {
+    if (scopeChanging || activeActions.size || lifecycle.pendingCount() || approvals.count()) {
       return { reason: 'controller_busy' };
     }
     const allowLocalDocuments = settings?.allowLocalDocuments === true;
@@ -1689,9 +1713,10 @@ export function createControllerServiceWorker({
 
   // A tab one of Hermes's own actions opened (a link to a new tab, a page's window.open) belongs to that
   // action: it is adopted like a tab Hermes created, so the agent can act on it, and the action's result
-  // names it. Only while a Hermes action runs, or a moment after one ended, and only from a tab Hermes
-  // owns: when Hermes clicks in a background tab, Chrome names the tab in front of the window as the
-  // opener, so any owned tab counts. A tab opened from a tab Hermes does not own is never taken.
+  // names it. Only while a Hermes action that can open a tab runs, or a moment after one ended, and only
+  // from a tab Hermes owns: when Hermes clicks in a background tab, Chrome names the tab in front of the
+  // window as the opener, so any owned tab counts. A tab opened from a tab Hermes does not own is never taken,
+  // nor is one that opens while a snapshot, screenshot or tab command runs.
   async function handleTabCreated(tab = {}) {
     await boot();
     const tabId = Number(tab?.id);
@@ -1702,9 +1727,10 @@ export function createControllerServiceWorker({
     if (settings?.browserControlEnabled !== true || settings?.browserControlPaused === true) {
       return { ok: true, adopted: false };
     }
-    const running = activeAction;
-    const justEnded = lastActionEndedAt > 0 && Number(now()) - lastActionEndedAt <= OPENED_TAB_GRACE_MS;
-    if (!running && !justEnded) return { ok: true, adopted: false };
+    // Only an action that can open a tab claims one; a snapshot, screenshot or scroll never does.
+    const openers = [...activeActions].filter((running) => running.opensTab);
+    const justEnded = lastOpeningActionEndedAt > 0 && Number(now()) - lastOpeningActionEndedAt <= OPENED_TAB_GRACE_MS;
+    if (!openers.length && !justEnded) return { ok: true, adopted: false };
     const opener = leases.leaseForTab(openerTabId);
     if (!opener || opener.generation !== generation || opener.ownership !== TAB_LEASE_OWNERSHIPS.OWNED
       || opener.ownerId !== controllerId || leases.leaseForTab(tabId)) {
@@ -1720,7 +1746,10 @@ export function createControllerServiceWorker({
     });
     if (!acquired.ok) return { ok: true, adopted: false, error: acquired.error };
     const url = safeNetworkUrl(tab.pendingUrl || tab.url || '');
-    running?.openedTabs.push({ id: tabId, ...(url ? { url } : {}) });
+    // The action running in the opener's tab, else the latest to start: Chrome names the tab in front as the
+    // opener of a link clicked in a background tab, so the opener alone does not always say whose it is.
+    const claiming = openers.find((running) => running.tabId === openerTabId) || openers.at(-1);
+    claiming?.openedTabs.push({ id: tabId, ...(url ? { url } : {}) });
     await persist();
     return { ok: true, adopted: true, tabId };
   }
@@ -1760,8 +1789,8 @@ export function createControllerServiceWorker({
     const normalizedReason = String(reason || 'unknown').trim().slice(0, 120) || 'unknown';
     if (!Number.isInteger(normalizedTabId) || normalizedTabId <= 0) return { ok: false, error: 'invalid_tab' };
     // The tab closing because Hermes's own close is running on it: that close keeps its result.
-    const closing = normalizedReason === 'target_closed' && activeAction?.closingTabId === normalizedTabId
-      ? activeAction.commandId
+    const closing = normalizedReason === 'target_closed'
+      ? [...activeActions].find((running) => running.closingTabId === normalizedTabId)?.commandId || ''
       : '';
     const cancelled = lifecycle.cancelTab(normalizedTabId, { except: closing }).cancelled;
     if (normalizedReason === 'target_closed') {

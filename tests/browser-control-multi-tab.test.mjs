@@ -82,7 +82,13 @@ async function multiTab({ execute, route, getTab, releaseTabDebugger } = {}) {
     await settle();
     return sent.findLast((frame) => frame.params?.command_id === commandId)?.params;
   };
-  return { worker, ownerId, clock, attach, ready, command, frames, values };
+  // Commands on two tabs run at once: send one and carry on, then read its reply once it has finished.
+  const start = async (commandId, action, args = {}) => {
+    await connection.emit({ method: 'browser.controller.command', params: { command_id: commandId, action, arguments: args } });
+    await settle();
+  };
+  const reply = (commandId) => sent.findLast((frame) => frame.params?.command_id === commandId)?.params;
+  return { worker, ownerId, clock, attach, ready, command, start, reply, frames, values };
 }
 
 test('a tab list, a switch and a close need no default tab when several tabs are attached', async () => {
@@ -209,6 +215,114 @@ test('a link Hermes clicks in a background tab is adopted though Chrome names th
   assert.equal(clicked.ok, true, JSON.stringify(clicked));
   assert.deepEqual(clicked.result.opened_tabs, [{ id: 960, url: 'https://example.test/next' }]);
   assert.deepEqual([...f.worker.status().leasedTabIds].sort((a, b) => a - b), [911, 912, 960]);
+});
+
+test('a tab the person opens while a snapshot, screenshot, scroll or tab command runs, or just after, is not adopted', async () => {
+  const f = await multiTab({
+    execute: async (frame, context, worker) => {
+      // The person ctrl-clicks a link in the attached tab while Hermes only reads or lists.
+      const opened = await worker.handleTabCreated({ id: 980, openerTabId: 911, windowId: 2 });
+      return { ok: true, result: { title: 'Page', text: 'page', refs: [], adopted: opened.adopted } };
+    },
+  });
+  await f.attach([911], TAB_LEASE_KINDS.THIS_TAB);
+  await f.ready(911);
+  const reads = [
+    ['browser_snapshot', {}],
+    ['browser_screenshot', {}],
+    ['browser_scroll', { direction: 'down' }],
+    ['browser_tabs', {}],
+    ['browser_tab_activate', { tab_id: 911 }],
+    ['browser_batch', { actions: [{ action: 'scroll', direction: 'down' }, { action: 'browser_hover', ref: '@e1' }] }],
+  ];
+  for (const [action, args] of reads) {
+    const done = await f.command(`read-${action}`, action, args);
+    assert.equal(done.ok, true, `${action}: ${JSON.stringify(done)}`);
+    assert.equal(done.result.adopted, false, `${action} adopted a tab the person opened`);
+    assert.equal(done.result.opened_tabs, undefined, `${action} named a tab the person opened`);
+    // Right after one of them ended, inside the grace window, the tab is still the person's.
+    assert.equal((await f.worker.handleTabCreated({ id: 981, openerTabId: 911, windowId: 2 })).adopted, false, `${action} grace`);
+  }
+  assert.deepEqual(f.worker.status().leasedTabIds, [911]);
+});
+
+test('a click, a key press or a batch with such a step adopts a tab opened while it runs and just after, a snapshot afterwards does not extend that', async () => {
+  const f = await multiTab({
+    execute: async (frame, context, worker) => {
+      if (frame.arguments.opens) await worker.handleTabCreated({ id: frame.arguments.opens, openerTabId: 911, windowId: 2 });
+      return { ok: true, result: { status: 'done' } };
+    },
+  });
+  await f.attach([911], TAB_LEASE_KINDS.THIS_TAB);
+  await f.ready(911);
+  const press = await f.command('press-link', 'browser_press', { key: 'Enter', opens: 940 });
+  assert.deepEqual(press.result.opened_tabs.map((tab) => tab.id), [940]);
+  const batch = await f.command('batch-click', 'browser_batch', {
+    actions: [{ action: 'scroll', direction: 'down' }, { action: 'click', ref: '@e1' }], opens: 941, tab_id: 911,
+  });
+  assert.deepEqual(batch.result.opened_tabs.map((tab) => tab.id), [941]);
+  f.clock.at += 5_000;
+  const scrollOnly = await f.command('batch-scroll', 'browser_batch', { actions: [{ action: 'scroll', direction: 'down' }], opens: 942, tab_id: 911 });
+  assert.equal(scrollOnly.result.opened_tabs, undefined);
+  assert.deepEqual([...f.worker.status().leasedTabIds].sort((a, b) => a - b), [911, 940, 941]);
+
+  // A page script that opens a tab a moment after a click ended: still that click's.
+  assert.equal((await f.command('click-late', 'browser_click', { ref: '@e1', tab_id: 911 })).ok, true);
+  f.clock.at += 2_000;
+  assert.equal((await f.worker.handleTabCreated({ id: 943, openerTabId: 911, windowId: 2 })).adopted, true);
+  // A snapshot in between does not start a new grace window: three seconds after the click it is over.
+  assert.equal((await f.command('read-after', 'browser_snapshot', { tab_id: 911 })).ok, true);
+  f.clock.at += 1_500;
+  assert.equal((await f.worker.handleTabCreated({ id: 944, openerTabId: 911, windowId: 2 })).adopted, false);
+  assert.deepEqual([...f.worker.status().leasedTabIds].sort((a, b) => a - b), [911, 940, 941, 943]);
+});
+
+test('commands on two tabs at once keep their own action records, so each result names the tabs its own click opened', async () => {
+  const gates = new Map();
+  const f = await multiTab({
+    execute: async (frame) => {
+      await new Promise((resolve) => { gates.set(frame.command_id, resolve); });
+      return { ok: true, result: { status: 'clicked' } };
+    },
+  });
+  await f.attach([911, 912]);
+  await f.ready(911);
+  await f.ready(912);
+  const finish = async (commandId) => { gates.get(commandId)(); await settle(); };
+  const openedIds = (commandId) => (f.reply(commandId).result.opened_tabs || []).map((tab) => tab.id);
+
+  // The first command to finish must not clear the one still running.
+  await f.start('click-a', 'browser_click', { ref: '@e1', tab_id: 911 });
+  await f.start('click-b', 'browser_click', { ref: '@e1', tab_id: 912 });
+  assert.equal(f.worker.status().pendingCommands, 2);
+  await finish('click-a');
+  assert.equal(f.worker.status().activeAction?.commandId, 'click-b', 'b is still running');
+  assert.equal((await f.worker.handleTabCreated({ id: 970, openerTabId: 912, windowId: 2 })).adopted, true);
+  await finish('click-b');
+  assert.deepEqual(openedIds('click-b'), [970]);
+  assert.deepEqual(openedIds('click-a'), []);
+  assert.equal(f.worker.status().activeAction, null);
+
+  // Either order: the second to start finishing first leaves the first one's record alone.
+  await f.start('click-c', 'browser_click', { ref: '@e1', tab_id: 911 });
+  await f.start('click-d', 'browser_click', { ref: '@e1', tab_id: 912 });
+  await finish('click-d');
+  assert.equal(f.worker.status().activeAction?.commandId, 'click-c', 'c is still running');
+  assert.equal((await f.worker.handleTabCreated({ id: 971, openerTabId: 911, windowId: 2 })).adopted, true);
+  await finish('click-c');
+  assert.deepEqual(openedIds('click-c'), [971]);
+  assert.deepEqual(openedIds('click-d'), []);
+
+  // Both running: a tab goes to the command running in the tab that opened it.
+  await f.start('click-e', 'browser_click', { ref: '@e1', tab_id: 911 });
+  await f.start('click-f', 'browser_click', { ref: '@e1', tab_id: 912 });
+  assert.equal((await f.worker.handleTabCreated({ id: 972, openerTabId: 911, windowId: 2 })).adopted, true);
+  assert.equal((await f.worker.handleTabCreated({ id: 973, openerTabId: 912, windowId: 2 })).adopted, true);
+  await finish('click-e');
+  await finish('click-f');
+  assert.deepEqual(openedIds('click-e'), [972]);
+  assert.deepEqual(openedIds('click-f'), [973]);
+  assert.equal(f.worker.status().activeAction, null);
 });
 
 test('changing the attached tabs keeps the tabs Hermes opened and lets go of the dropped tab\'s debugger', async () => {
