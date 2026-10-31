@@ -127,6 +127,7 @@ export async function restartGatewayViaDashboard({
   pollMs = 1_000,
   sleep,
   onProgress = () => {},
+  dashboardToken = '',
 } = {}) {
   const base = String(baseUrl || '').trim().replace(/\/+$/, '');
   if (!base || typeof fetchFn !== 'function') return { ok: false, reason: 'no-dashboard' };
@@ -134,7 +135,7 @@ export async function restartGatewayViaDashboard({
   let token = '';
   try {
     const root = await withTimeout(fetchFn, base, { headers: { Accept: 'text/html' }, cache: 'no-store' }, 2_500);
-    token = extractDashboardSessionToken(await root.text());
+    token = extractDashboardSessionToken(await root.text()) || String(dashboardToken || '').trim();
   } catch {
     return { ok: false, reason: 'unreachable' };
   }
@@ -159,10 +160,10 @@ export async function restartGatewayViaDashboard({
 }
 
 const RESTART_FAILURE_COPY = {
-  'no-dashboard': 'Browser could not find the local Hermes dashboard. Run `hermes gateway restart` in a terminal.',
+  'no-dashboard': 'The extension could not find the local Hermes dashboard. Run `hermes gateway restart` in a terminal.',
   'no-token': 'The Hermes dashboard did not accept Browser. Run `hermes gateway restart` in a terminal.',
   rejected: 'Hermes refused the restart request. Run `hermes gateway restart` in a terminal.',
-  unreachable: 'Browser could not reach the Hermes dashboard. Run `hermes gateway restart` in a terminal.',
+  unreachable: 'The extension could not reach the Hermes dashboard. Run `hermes gateway restart` in a terminal.',
   timeout: 'Hermes is taking longer than usual to come back. Check again, or run `hermes gateway restart` in a terminal.',
 };
 

@@ -193,7 +193,7 @@ function publicDocument(name, description, colors, darkColors = colors) {
   const candidate = { schemaVersion: 1, name, description, colors, darkColors };
   const validation = validateThemeDocument(candidate);
   if (!validation.valid) {
-    const error = codedError('conversion-invalid', 'Converted theme failed Hermes Browser validation');
+    const error = codedError('conversion-invalid', 'Converted theme failed the extension\'s theme validation');
     error.validationErrors = validation.errors;
     throw error;
   }

@@ -1,4 +1,4 @@
-"""Deterministic, standard-library text utilities for Hermes Browser.
+"""Deterministic, standard-library text utilities for the Hermes Browser Extension.
 
 These helpers intentionally do not call a model, network service, or browser API.
 They are bounded so tool arguments cannot turn a convenience operation into an

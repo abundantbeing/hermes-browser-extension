@@ -340,10 +340,12 @@ export function createControllerLifecycle({
     return { ok: true, cancelled: commandIds.length };
   }
 
-  function cancelTab(tabId) {
+  // `except` spares one command: the one that closed the tab, which still has its own result to deliver.
+  function cancelTab(tabId, { except = '' } = {}) {
     const normalizedTabId = Number(tabId);
+    const spared = String(except || '').trim();
     const commandIds = [...pending.values()]
-      .filter((entry) => entry.tabId === normalizedTabId)
+      .filter((entry) => entry.tabId === normalizedTabId && (!spared || entry.commandId !== spared))
       .map((entry) => entry.commandId);
     for (const commandId of commandIds) cancelCommand(commandId);
     return { ok: true, tabId: normalizedTabId, cancelled: commandIds.length };

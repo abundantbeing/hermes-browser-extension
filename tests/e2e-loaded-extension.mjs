@@ -1,16 +1,18 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
 import { crc32 } from '../extension/lib/vsix-theme-extractor.mjs';
 import { assistClick, assistClickWhenVisible, assistEvaluate } from './e2e-assist-driver.mjs';
-import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable } from './e2e-chrome-env.mjs';
+import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable, launchChrome } from './e2e-chrome-env.mjs';
 import { AGENT_THEME_END, AGENT_THEME_START } from '../extension/lib/agent-theme-authoring.mjs';
+import { HERMES_CONTEXT_SOURCE_URL } from '../extension/lib/hermes-context-sync.mjs';
+import { HERMES_CANONICAL_MODEL_CATALOG_URL, NOUS_LIVE_MODEL_CATALOG_URL } from '../extension/lib/model-discovery.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -21,9 +23,7 @@ const ASSIST_THEME = String(process.env.ASSIST_THEME || 'mono');
 const ASSIST_MODE = String(process.env.ASSIST_MODE || 'dark');
 const ASSIST_SCREENSHOT_SUFFIX = ASSIST_THEME === 'mono' && ASSIST_MODE === 'dark' ? '' : `-${ASSIST_THEME}-${ASSIST_MODE}`;
 const TASK_PANEL_SCREENSHOT = path.join(QA_DIR, `feature-recovery-task-panel${ASSIST_SCREENSHOT_SUFFIX}.png`);
-const TASK_WEB_SCREENSHOT = path.join(QA_DIR, `feature-recovery-task-web${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const DELEGATION_PANEL_SCREENSHOT = path.join(QA_DIR, `delegation-completion-panel${ASSIST_SCREENSHOT_SUFFIX}.png`);
-const DELEGATION_WEB_SCREENSHOT = path.join(QA_DIR, `delegation-completion-web${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const INLINE_ROUTE_SCREENSHOT = path.join(QA_DIR, `feature-recovery-inline-routing${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const INLINE_RESULT_SCREENSHOT = path.join(QA_DIR, `feature-recovery-inline-result${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const INLINE_OPEN_SESSION_SCREENSHOT = path.join(QA_DIR, `feature-recovery-inline-open-session${ASSIST_SCREENSHOT_SUFFIX}.png`);
@@ -39,18 +39,12 @@ const MAIN_MODEL_PICKER_SCREENSHOT = path.join(QA_DIR, `main-model-picker${ASSIS
 const PROVIDER_REJECTION_PANEL_SCREENSHOT = path.join(QA_DIR, `provider-rejection-panel${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const GPT56_CONTEXT_PICKER_SCREENSHOT = path.join(QA_DIR, `gpt56-context-picker${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const READABILITY_PANEL_SCREENSHOT = path.join(QA_DIR, `readability-panel-320${ASSIST_SCREENSHOT_SUFFIX}.png`);
-const READABILITY_WEB_SCREENSHOT = path.join(QA_DIR, `readability-web-1024${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const READABILITY_PANEL_420_SCREENSHOT = path.join(QA_DIR, `readability-panel-420${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const READABILITY_PANEL_520_SCREENSHOT = path.join(QA_DIR, `readability-panel-520${ASSIST_SCREENSHOT_SUFFIX}.png`);
-const READABILITY_WEB_1440_SCREENSHOT = path.join(QA_DIR, `readability-web-1440${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_PANEL_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel${ASSIST_SCREENSHOT_SUFFIX}.png`);
-const CUSTOM_THEME_WEB_SCREENSHOT = path.join(QA_DIR, `custom-theme-web${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_PANEL_CARD_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-card${ASSIST_SCREENSHOT_SUFFIX}.png`);
-const CUSTOM_THEME_WEB_CARD_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-card${ASSIST_SCREENSHOT_SUFFIX}.png`);
-const CUSTOM_THEME_WEB_SHELL_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-shell${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_PANEL_320_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-320${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_PANEL_420_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-420${ASSIST_SCREENSHOT_SUFFIX}.png`);
-const CUSTOM_THEME_WEB_1024_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-1024${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const AGENT_THEME_STUDIO_MONO_SCREENSHOT = path.join(QA_DIR, `agent-theme-studio-mono${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const AGENT_THEME_STUDIO_SCREENSHOT = path.join(QA_DIR, `agent-theme-studio${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const SETTINGS_PROFILE_POLISH_SCREENSHOT = path.join(QA_DIR, `settings-profile-polish${ASSIST_SCREENSHOT_SUFFIX}.png`);
@@ -95,11 +89,6 @@ const DELEGATION_PROMPT = 'Dispatch the delayed E2E delegation.';
 const DELEGATION_ID = 'deleg_e2e12345';
 const DELEGATION_ACK = `Delegated background work as ${DELEGATION_ID}. Results will arrive later.`;
 const DELEGATION_RESULT = 'Delayed delegation result appeared without another user turn.';
-const FULLTAB_DELEGATION_PROMPT = 'Dispatch the delayed Hermes Web E2E delegation.';
-const FULLTAB_SESSION_ID = 'hermes-web-e2e';
-const FULLTAB_DELEGATION_ID = 'deleg_web12345';
-const FULLTAB_DELEGATION_ACK = `Delegated Hermes Web background work as ${FULLTAB_DELEGATION_ID}. Results will arrive later.`;
-const FULLTAB_DELEGATION_RESULT = 'Hermes Web rendered its delayed delegation result automatically.';
 const INLINE_REPLY = 'Clearer, tighter, still your voice.';
 
 const zip16 = (value) => [value & 255, (value >>> 8) & 255];
@@ -234,16 +223,19 @@ async function startMockHermes() {
   let delegationSessionId = '';
   let delegationCompletionAvailableAt = 0;
   let delegationHistoryPolls = 0;
-  let fullTabDelegationDispatched = false;
-  let fullTabDelegationSessionId = '';
-  let fullTabDelegationCompletionAvailableAt = 0;
-  let fullTabDelegationHistoryPolls = 0;
   let nextChatStreamRejection = null;
   let nextChatFallbackRejection = null;
   const server = createServer(async (req, res) => {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
     const body = await requestBody(req);
     requests.push({ method: req.method, path: url.pathname, authorization: req.headers.authorization ?? '', body });
+
+    if (url.pathname === '/qa-web/' && req.method === 'GET') {
+      const html = '<!doctype html><html><head><title>Mock Hermes Web</title></head><body>Mock Hermes Web session list</body></html>';
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(html);
+      return;
+    }
 
     if (url.pathname === '/qa-inline' && req.method === 'GET') {
       const html = `<!doctype html><html><head><meta charset="utf-8"><title>Hermes Assist QA</title><style>body{margin:0;min-height:180vh;background:#0505f5;color:#0505f5;font:16px Arial,sans-serif;padding:64px}main{max-width:980px;margin:auto;background:#f8f9ff;border:1px solid #0505f5;padding:32px;box-shadow:12px 12px 0 rgba(0,0,0,.28)}h1{font:700 36px Georgia,serif;margin:0 0 8px}p{color:#3030a5;margin:0 0 28px}textarea,[contenteditable="true"]{display:block;width:100%;min-height:180px;box-sizing:border-box;border:1px solid #0505f5;background:#fff;color:#111;padding:20px;font:18px/1.6 Arial,sans-serif}textarea{resize:none}[contenteditable="true"]{margin-top:28px;white-space:pre-wrap}label{display:block;margin:24px 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}</style></head><body><main><h1>Example compose field</h1><p>Real loaded-extension QA surface. The text is intentionally messy so exact Undo can be verified.</p><label for="draft">Draft</label><textarea id="draft" aria-label="Example compose field">  I wanted   to follow up.  </textarea><label for="rich-draft">Rich draft</label><div id="rich-draft" role="textbox" aria-label="Rich example compose field" contenteditable="true">One   clear   sentence.</div></main><script>window.richInputEvents=0;window.richNormalizeLikeX=false;window.xPopupOutsideClicks=0;document.querySelector('#rich-draft').addEventListener('input',()=>{window.richInputEvents+=1;if(window.richNormalizeLikeX){const rich=document.querySelector('#rich-draft');rich.textContent=rich.textContent.trim()+'\\n';}});document.addEventListener('click',(event)=>{const host=document.querySelector('#hermes-inline-draft-host');if(!host||event.target!==host)return;window.xPopupOutsideClicks+=1;const field=document.querySelector('#draft');if(field)field.replaceWith(field.cloneNode(true));});</script></body></html>`;
@@ -441,19 +433,6 @@ async function startMockHermes() {
           );
         }
       }
-      if (fullTabDelegationDispatched && sessionId === fullTabDelegationSessionId) {
-        fullTabDelegationHistoryPolls += 1;
-        data.push(
-          { role: 'user', content: FULLTAB_DELEGATION_PROMPT },
-          { role: 'assistant', content: FULLTAB_DELEGATION_ACK },
-        );
-        if (Date.now() >= fullTabDelegationCompletionAvailableAt) {
-          data.push(
-            { role: 'user', content: `[ASYNC DELEGATION BATCH COMPLETE — ${FULLTAB_DELEGATION_ID}]\nStatus: completed` },
-            { role: 'assistant', content: FULLTAB_DELEGATION_RESULT },
-          );
-        }
-      }
       json(res, 200, { object: 'list', data });
       return;
     }
@@ -463,7 +442,7 @@ async function startMockHermes() {
       json(res, 200, sessions.find((session) => session.id === sessionId) || {
         id: sessionId,
         session_id: sessionId,
-        title: sessionId === FULLTAB_SESSION_ID ? 'Loaded extension Hermes Web QA' : 'Hermes Browser Extension',
+        title: 'Hermes Browser Extension',
         source: 'hermes_browser_extension',
       });
       return;
@@ -510,28 +489,22 @@ async function startMockHermes() {
       const sessionId = decodeURIComponent(url.pathname.split('/')[3] || '');
       const message = String(body?.message || '');
       const delegated = message.includes(DELEGATION_PROMPT);
-      const fullTabDelegated = message.includes(FULLTAB_DELEGATION_PROMPT);
       if (delegated) {
         delegationDispatched = true;
         delegationSessionId = sessionId;
         delegationCompletionAvailableAt = Date.now() + 1_500;
       }
-      if (fullTabDelegated) {
-        fullTabDelegationDispatched = true;
-        fullTabDelegationSessionId = sessionId;
-        fullTabDelegationCompletionAvailableAt = Date.now() + 1_500;
-      }
       const dispatch = {
         status: 'dispatched',
         mode: 'background',
         count: 1,
-        delegation_id: fullTabDelegated ? FULLTAB_DELEGATION_ID : DELEGATION_ID,
+        delegation_id: DELEGATION_ID,
       };
       const agentThemeRequested = message.includes(AGENT_THEME_START) && message.includes(AGENT_THEME_END);
       const reply = agentThemeRequested
         ? AGENT_THEME_REPLY
-        : fullTabDelegated ? FULLTAB_DELEGATION_ACK : delegated ? DELEGATION_ACK : TEST_REPLY;
-      const hasDelegation = delegated || fullTabDelegated;
+        : delegated ? DELEGATION_ACK : TEST_REPLY;
+      const hasDelegation = delegated;
       const blocks = [
         ['run.started', { run_id: 'run-e2e' }],
         ...(hasDelegation ? [['tool.finished', { tool_name: 'delegate_task', status: 'completed', result: dispatch }]] : []),
@@ -594,7 +567,6 @@ async function startMockHermes() {
     requests,
     getChatRequest: () => chatRequest,
     getDelegationHistoryPolls: () => delegationHistoryPolls,
-    getFullTabDelegationHistoryPolls: () => fullTabDelegationHistoryPolls,
     addSession: (session) => {
       const id = String(session?.id || session?.session_id || '').trim();
       if (!id || sessions.some((candidate) => candidate.id === id)) return;
@@ -781,15 +753,38 @@ async function assertSequentialTabReach(client, selectors, label) {
   }
 }
 
+// The extension's own startup fetches to GitHub (model metadata, the model
+// catalog, the update check) and to the Nous inference API (its live model
+// list). They are handled (the panel falls back to its bundled data, or shows
+// "could not check"), and a run with the network blocked logs each one as a
+// failed resource load. Exactly these five addresses, taken from the modules
+// that fetch them so they cannot drift, and nothing else on those hosts.
+function sidepanelUpdateUrl(name) {
+  const source = readFileSync(path.join(ROOT, 'extension', 'sidepanel.js'), 'utf8');
+  const match = source.match(new RegExp(`const ${name} = '([^']+)';`));
+  assert.ok(match, `extension/sidepanel.js no longer declares ${name}; update the expected-offline list.`);
+  return match[1];
+}
+
+const EXPECTED_HANDLED_GITHUB_FETCHES = new Set([
+  HERMES_CONTEXT_SOURCE_URL,
+  HERMES_CANONICAL_MODEL_CATALOG_URL,
+  sidepanelUpdateUrl('UPDATE_PACKAGE_URL'),
+  sidepanelUpdateUrl('UPDATE_MAIN_COMMIT_URL'),
+  NOUS_LIVE_MODEL_CATALOG_URL,
+]);
+
 // Resource-load failures that are expected in this journey and not page errors:
 //  - the licensed "Rules" typefaces are not in the public source tree (see
 //    extension/lib/fonts.css), so their @font-face files 404 and the fallback stack is used;
 //  - connection discovery probes loopback gateway/dashboard candidates, and the
-//    stub gateway deliberately lacks optional routes (profiles, health detail).
+//    stub gateway deliberately lacks optional routes (profiles, health detail);
+//  - the five handled startup fetches above (the cache-busting ?t= is ignored).
 function expectedResourceFailure(entry = {}) {
   if (entry.source !== 'network') return false;
   const url = String(entry.url || '');
   if (/\/assets\/fonts\/Rules[^/]*\.woff2$/.test(url)) return true;
+  if (EXPECTED_HANDLED_GITHUB_FETCHES.has(url.split(/[?#]/)[0])) return true;
   return /^http:\/\/127\.0\.0\.1:\d+\//.test(url);
 }
 
@@ -835,16 +830,14 @@ async function main() {
   let chrome;
   let setup;
   let panel;
-  let web;
   let fixture;
   let chatgptFixture;
   let marketplaceWorkerSpike;
   let marketplacePanelUi;
-  let marketplaceWebUi;
   let chromeStderr = '';
   try {
     const extensionId = unpackedExtensionId(DIST);
-    chrome = spawn(chromeExecutable(), [
+    chrome = launchChrome(chromeExecutable(), [
       '--headless=new',
       '--no-sandbox',
       '--disable-gpu',
@@ -1114,11 +1107,8 @@ async function main() {
     assert.equal(storedBeforeSend.hermesBrowserSettings.inlineAssistRawModel, 'e2e/test-model');
     assert.equal(storedBeforeSend.hermesBrowserSettings.inlineAssistProvider, 'e2e');
 
-    const introBeforeFirstTurn = await panel.evaluate(`(() => {
-      const hero = document.querySelector('#browserIntroHero');
-      return { exists: Boolean(hero), hidden: Boolean(hero?.hidden) };
-    })()`);
-    assert.deepEqual(introBeforeFirstTurn, { exists: true, hidden: false });
+    // The empty chat no longer opens on the intro card (the wordmark lives in Settings).
+    assert.equal(await panel.evaluate(`Boolean(document.querySelector('#browserIntroHero'))`), false);
 
     await panel.evaluate(`(() => {
       const input = document.querySelector('#promptInput');
@@ -1129,7 +1119,6 @@ async function main() {
     })()`);
 
     await waitFor(() => panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(TEST_REPLY)}))`));
-    await waitFor(() => panel.evaluate(`document.querySelector('#browserIntroHero')?.hidden === true`));
     if (ASSIST_THEME === 'nous' && ASSIST_MODE === 'light') {
       const panelCardState = await panel.evaluate(`(() => {
         const assistant = document.querySelector('.message.assistant');
@@ -1205,7 +1194,7 @@ async function main() {
       const input = document.querySelector('#promptInput');
       const title = document.querySelector('#activeTitle')?.textContent || '';
       const detail = document.querySelector('#activeUrl')?.textContent || '';
-      const connection = document.querySelector('#connectionPill')?.getAttribute('aria-label') || '';
+      const connection = (document.querySelector('#connectPanel')?.hidden ? 'Hermes connected' : 'not connected');
       if (input?.value !== ${JSON.stringify(rejectionPrompt)} || title !== 'Model option rejected' || !messages.includes(${JSON.stringify(rejectionDetail)})) return null;
       return { messages, detail, connection };
     })()`));
@@ -1236,7 +1225,7 @@ async function main() {
       const input = document.querySelector('#promptInput');
       const title = document.querySelector('#activeTitle')?.textContent || '';
       const detail = document.querySelector('#activeUrl')?.textContent || '';
-      const connection = document.querySelector('#connectionPill')?.getAttribute('aria-label') || '';
+      const connection = (document.querySelector('#connectPanel')?.hidden ? 'Hermes connected' : 'not connected');
       if (input?.value !== ${JSON.stringify(fallbackRejectionPrompt)} || title !== 'Model option rejected' || !messages.includes(${JSON.stringify(fallbackRejectionDetail)})) return null;
       return { messages, detail, connection };
     })()`));
@@ -1330,10 +1319,6 @@ async function main() {
         updatedAt: Date.now(),
         tasks: recoveredTasks,
       },
-      [FULLTAB_SESSION_ID]: {
-        updatedAt: Date.now(),
-        tasks: recoveredTasks,
-      },
     };
     await setup.evaluate(`chrome.storage.local.set({hermesBrowserTaskStacks:${JSON.stringify(taskPayload)}})`);
     const taskPanelState = await waitFor(() => panel.evaluate(`(() => {
@@ -1348,118 +1333,7 @@ async function main() {
     await panel.call('Emulation.setDeviceMetricsOverride', { width: 520, height: 900, deviceScaleFactor: 1, mobile: false });
     await saveScreenshot(panel, TASK_PANEL_SCREENSHOT);
 
-    mock.addSession({ id: FULLTAB_SESSION_ID, title: 'Loaded extension Hermes Web QA', source: 'hermes_web' });
-    await setup.evaluate(`(async () => {
-      const stored = await chrome.storage.local.get('hermesBrowserSettings');
-      await chrome.storage.local.set({hermesBrowserSettings:{...stored.hermesBrowserSettings,webSessionId:${JSON.stringify(FULLTAB_SESSION_ID)},webSessionTitle:'Loaded extension QA'}});
-    })()`);
-    const webTarget = await fetchJson(
-      `${devtoolsBase}/json/new?${encodeURIComponent(`chrome-extension://${extensionId}/app.html`)}`,
-      { method: 'PUT' },
-    );
-    web = new CdpClient(webTarget.webSocketDebuggerUrl);
-    await web.connect();
-    await web.call('Runtime.enable');
-    await web.call('Log.enable');
-    await web.call('Page.enable');
-    await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
-    await waitFor(async () => {
-      const state = await web.evaluate(`({
-        listenersReady: document.documentElement.dataset.hermesWebListenersReady === 'true',
-        loadingHidden: document.querySelector('#loadingState')?.hidden === true,
-        promptEnabled: document.querySelector('#fullTabPrompt')?.disabled === false,
-        bootError: document.documentElement.dataset.hermesWebBootError || '',
-      })`);
-      if (state.bootError) throw new Error(`Hermes Web boot failed: ${state.bootError}`);
-      return state.listenersReady && state.loadingHidden && state.promptEnabled;
-    });
-    const taskWebState = await waitFor(() => web.evaluate(`(() => {
-      const stack = document.querySelector('#taskStack');
-      const rows = Array.from(document.querySelectorAll('#taskStackList .task-stack-item'));
-      return !stack?.hidden && rows.length === 3 ? document.querySelector('#taskStackSummary')?.textContent || '' : '';
-    })()`));
-    assert.match(taskWebState, /2\/3 complete · 1 active/i);
-
-    marketplaceWebUi = await runWithMarketplaceInterception(setup, async () => {
-      await web.evaluate(`(() => {
-        document.querySelector('#settingsButton').click();
-        document.querySelector('#settingsCustomThemeManager').open = true;
-      })()`);
-      const loading = await waitFor(() => web.evaluate(`document.querySelector('#settingsMarketplaceThemeStatus')?.textContent?.includes('Loading')`));
-      const rendered = await waitFor(() => web.evaluate(`(() => {
-        const card = document.querySelector('#settingsMarketplaceThemeResults .marketplace-theme-card');
-        const button = card?.querySelector('button');
-        if (!card || !button) return null;
-        return { title: card.querySelector('strong')?.textContent, action: button.textContent };
-      })()`));
-      await web.evaluate(`document.querySelector('#closeSettings').click()`);
-      return { ...rendered, loadingObserved: Boolean(loading), transport: 'cdp-intercepted' };
-    }, 1);
-    assert.equal(marketplaceWebUi.title, 'Dracula');
-    assert.equal(marketplaceWebUi.action, 'Install');
-    assert.equal(marketplaceWebUi.loadingObserved, true);
-
-    const fullTabDelegationStreamsBefore = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
-    await web.evaluate(`(() => {
-      const input = document.querySelector('#fullTabPrompt');
-      const form = document.querySelector('#fullTabComposer');
-      globalThis.__hbeE2eSubmitEvents = 0;
-      form.addEventListener('submit', () => { globalThis.__hbeE2eSubmitEvents += 1; }, { capture: true });
-      input.value = ${JSON.stringify(FULLTAB_DELEGATION_PROMPT)};
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      form.requestSubmit();
-      return true;
-    })()`);
-    try {
-      await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_ACK)}))`));
-    } catch (error) {
-      const webSendState = await web.evaluate(`(() => ({
-        composerStatus: document.querySelector('#composerStatus')?.textContent || '',
-        sessionLabel: document.querySelector('#composerSessionLabel')?.textContent || '',
-        ownershipHidden: document.querySelector('#webSessionOwnershipNotice')?.hidden,
-        ownershipDetail: document.querySelector('#webSessionOwnershipDetail')?.textContent || '',
-        errorHidden: document.querySelector('#errorState')?.hidden,
-        errorDetail: document.querySelector('#errorDetail')?.textContent || '',
-        prompt: document.querySelector('#fullTabPrompt')?.value || '',
-        submitEvents: globalThis.__hbeE2eSubmitEvents || 0,
-        sendDisabled: document.querySelector('#fullTabSend')?.disabled,
-        stopHidden: document.querySelector('#stopRun')?.hidden,
-        queueHidden: document.querySelector('#queueDraft')?.hidden,
-        promptDisabled: document.querySelector('#fullTabPrompt')?.disabled,
-        formValid: document.querySelector('#fullTabComposer')?.checkValidity(),
-        submitState: document.querySelector('#fullTabComposer')?.dataset.submitState || '',
-      }))()`);
-      console.error('[e2e] Hermes Web send state', JSON.stringify(webSendState, null, 2));
-      console.error('[e2e] Hermes Web console tail', JSON.stringify(web.events.slice(-20), null, 2));
-      throw error;
-    }
-    const pendingFullTabDelegationWatch = await waitFor(async () => {
-      const pendingFullTabDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
-      return pendingFullTabDelegationStore.hermesAsyncDelegationWatchesV1
-        ?.find((watch) => watch.delegationId === FULLTAB_DELEGATION_ID && watch.state === 'pending')
-        || null;
-    });
-    assert.equal(pendingFullTabDelegationWatch.state, 'pending', 'Hermes Web acknowledgement must not settle the delegation watch.');
-    await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_RESULT)}))`), 20_000);
-    const fullTabDelegationStreamsAfter = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
-    assert.equal(fullTabDelegationStreamsAfter, fullTabDelegationStreamsBefore + 1, 'Hermes Web completion must appear without another user send.');
-    assert.ok(mock.getFullTabDelegationHistoryPolls() >= 2, 'Hermes Web must observe acknowledgement-only history before exact completion history.');
-    const completedFullTabDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
-    const completedFullTabDelegationWatch = completedFullTabDelegationStore.hermesAsyncDelegationWatchesV1
-      ?.find((watch) => watch.delegationId === FULLTAB_DELEGATION_ID);
-    assert.equal(completedFullTabDelegationWatch?.state, 'completed');
-    const renderedFullTabDelegationResults = await web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).filter((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_RESULT)})).length`);
-    assert.equal(renderedFullTabDelegationResults, 1, 'Hermes Web must render one canonical completion.');
-    const renderedFullTabDelegationMarkers = await web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).filter((node) => node.textContent.includes('ASYNC DELEGATION')).length`);
-    assert.equal(renderedFullTabDelegationMarkers, 0, 'Hermes Web must hide internal completion markers.');
-    const fullTabContainsPanelResult = await web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(DELEGATION_RESULT)}))`);
-    assert.equal(fullTabContainsPanelResult, false, 'Hermes Web session must not contain the side panel delegation result.');
-    const panelContainsFullTabResult = await panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_RESULT)}))`);
-    assert.equal(panelContainsFullTabResult, false, 'Side panel session must not contain the Hermes Web delegation result.');
-    await saveScreenshot(web, DELEGATION_WEB_SCREENSHOT);
-
     const panelConsoleStart = panel.events.length;
-    const webConsoleStart = web.events.length;
     const panelBaselineType = await panel.evaluate(`(() => ({
       message: Number.parseFloat(getComputedStyle(document.querySelector('.message-content')).fontSize),
       composer: Number.parseFloat(getComputedStyle(document.querySelector('#promptInput')).fontSize),
@@ -1610,129 +1484,13 @@ async function main() {
       '#textZoomDecreaseButton',
       '#textZoomInput',
       '#textZoomIncreaseButton',
-      // The native select is mounted as a branded listbox; its button is the tab stop.
+      // The native selects are mounted as branded listboxes; each button is the
+      // tab stop. Language comes before Font in the Appearance pane
+      // (sidepanel.html), so Tab reaches it first.
+      '#languageSelectButton',
       '#fontProfileSelectButton',
     ], 'Side panel appearance controls');
     await saveScreenshot(panel, READABILITY_PANEL_SCREENSHOT, { captureBeyondViewport: false });
-
-    const webBaselineType = await web.evaluate(`(() => ({
-      message: Number.parseFloat(getComputedStyle(document.querySelector('.web-message-content')).fontSize),
-      composer: Number.parseFloat(getComputedStyle(document.querySelector('#fullTabPrompt')).fontSize),
-    }))()`);
-    await web.evaluate(`document.querySelector('#settingsButton').click()`);
-    await waitFor(() => web.evaluate(`document.querySelector('#settingsDialog')?.open === true`));
-    await web.evaluate(`(() => {
-      const input = document.querySelector('#settingsTextZoomInput');
-      input.value = '113';
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    })()`);
-    const webAt113 = await waitFor(() => web.evaluate(`(() => {
-      const root = document.documentElement;
-      if (root.dataset.hermesTextZoom !== '113' || document.querySelector('#settingsAppearanceSaveStatus')?.textContent !== 'Saved') return null;
-      return {
-        zoom: root.dataset.hermesTextZoom,
-        multiplier: getComputedStyle(root).getPropertyValue('--hermes-text-zoom').trim(),
-        message: Number.parseFloat(getComputedStyle(document.querySelector('.web-message-content')).fontSize),
-        composer: Number.parseFloat(getComputedStyle(document.querySelector('#fullTabPrompt')).fontSize),
-      };
-    })()`));
-    assert.equal(webAt113.multiplier, '1.13');
-    assert.ok(webAt113.message > webBaselineType.message * 1.1, JSON.stringify({ webBaselineType, webAt113 }));
-    assert.ok(webAt113.composer > webBaselineType.composer * 1.1, JSON.stringify({ webBaselineType, webAt113 }));
-    await web.evaluate(`(() => {
-      const input = document.querySelector('#settingsCustomFontFamilyInput');
-      const select = document.querySelector('#settingsFontProfileSelect');
-      input.value = 'Arial';
-      select.value = 'custom-local';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    })()`);
-    await waitFor(() => web.evaluate(`new Promise((resolve) => chrome.storage.local.get('hermesBrowserSettings', (result) => {
-      const stored = result.hermesBrowserSettings || {};
-      resolve(stored.webFontProfile === 'custom-local' && stored.webCustomFontFamily === 'Arial');
-    }))`));
-    const webCustomFont = await waitFor(() => web.evaluate(`(() => {
-      const root = document.documentElement;
-      if (document.querySelector('#settingsFontProfileSelect')?.value !== 'custom-local') return null;
-      return {
-        profile: document.querySelector('#settingsFontProfileSelect').value,
-        customFamily: document.querySelector('#settingsCustomFontFamilyInput').value,
-        fontVariable: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
-        bodyFamily: getComputedStyle(document.body).fontFamily,
-      };
-    })()`));
-    assert.equal(webCustomFont.customFamily, 'Arial');
-    assert.match(webCustomFont.fontVariable, /^"Arial",/);
-    assert.match(webCustomFont.bodyFamily, /^Arial/i);
-    const panelIsolationAfterWeb = await panel.evaluate(`(() => ({
-      zoom: document.documentElement.dataset.hermesTextZoom,
-      profile: document.querySelector('#fontProfileSelect')?.value,
-      fontFamily: getComputedStyle(document.body).fontFamily,
-    }))()`);
-    assert.equal(panelIsolationAfterWeb.zoom, '200');
-    assert.equal(panelIsolationAfterWeb.profile, 'high-legibility');
-    assert.match(panelIsolationAfterWeb.fontFamily, /^Verdana/i);
-
-    await web.call('Page.reload', { ignoreCache: true });
-    await waitFor(() => web.evaluate(`document.readyState === 'complete' && Boolean(document.querySelector('#fullTabPrompt'))`));
-    await waitFor(() => web.evaluate(`(() => (
-      document.documentElement.dataset.hermesTextZoom === '113'
-      && document.querySelector('#settingsFontProfileSelect')?.value === 'custom-local'
-      && document.querySelector('#settingsCustomFontFamilyInput')?.value === 'Arial'
-    ))()`));
-    const webPersisted = await web.evaluate(`(async () => {
-      const root = document.documentElement;
-      const stored = (await chrome.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings || {};
-      return {
-        zoom: root.dataset.hermesTextZoom,
-        multiplier: getComputedStyle(root).getPropertyValue('--hermes-text-zoom').trim(),
-        profile: document.querySelector('#settingsFontProfileSelect')?.value,
-        customFamily: document.querySelector('#settingsCustomFontFamilyInput')?.value,
-        fontVariable: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
-        storedZoom: stored.webTextZoomPercent,
-        storedProfile: stored.webFontProfile,
-        storedCustomFamily: stored.webCustomFontFamily,
-      };
-    })()`);
-    assert.equal(webPersisted.zoom, '113', JSON.stringify(webPersisted));
-    assert.equal(webPersisted.customFamily, 'Arial', JSON.stringify(webPersisted));
-    assert.match(webPersisted.fontVariable, /^"Arial",/);
-    await web.call('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, deviceScaleFactor: 1, mobile: false });
-    await web.evaluate(`document.querySelector('#settingsButton').click()`);
-    await waitFor(() => web.evaluate(`document.querySelector('#settingsDialog')?.open === true`));
-    const webAccessibility = await web.evaluate(`(() => {
-      const controls = [...document.querySelectorAll('#settingsTextZoomPresetGrid button, #settingsTextZoomDecreaseButton, #settingsTextZoomInput, #settingsTextZoomIncreaseButton, #settingsFontProfileSelect, #settingsCustomFontFamilyInput')]
-        .filter((node) => !node.hidden && getComputedStyle(node).display !== 'none');
-      const unnamed = controls.filter((node) => !String(
-        node.getAttribute('aria-label')
-        || node.textContent
-        || [...(node.labels || [])].map((label) => label.textContent).join(' ')
-        || '',
-      ).trim());
-      const ids = [...document.querySelectorAll('[id]')].map((node) => node.id).filter(Boolean);
-      const duplicateIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
-      return {
-        horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        duplicateIds,
-        unnamed: unnamed.map((node) => node.id || node.outerHTML),
-      };
-    })()`);
-    assert.ok(webAccessibility.horizontalOverflow <= 1, JSON.stringify(webAccessibility));
-    assert.deepEqual(webAccessibility.duplicateIds, []);
-    assert.deepEqual(webAccessibility.unnamed, []);
-    await assertSequentialTabReach(web, [
-      '[data-web-text-zoom-percent="90"]',
-      '[data-web-text-zoom-percent="100"]',
-      '[data-web-text-zoom-percent="110"]',
-      '[data-web-text-zoom-percent="125"]',
-      '[data-web-text-zoom-percent="150"]',
-      '[data-web-text-zoom-percent="175"]',
-      '#settingsTextZoomDecreaseButton',
-      '#settingsTextZoomInput',
-      '#settingsTextZoomIncreaseButton',
-      '#settingsFontProfileSelectButton',
-      '#settingsCustomFontFamilyInput',
-    ], 'Hermes Web appearance controls');
-    await saveScreenshot(web, READABILITY_WEB_SCREENSHOT, { captureBeyondViewport: false });
 
     await panel.call('Emulation.setDeviceMetricsOverride', { width: 420, height: 900, deviceScaleFactor: 1, mobile: false });
     await panel.evaluate(`(() => {
@@ -1799,37 +1557,11 @@ async function main() {
     await panel.evaluate(`document.querySelector('.appearance-settings')?.scrollIntoView({ block: 'start' })`);
     await saveScreenshot(panel, READABILITY_PANEL_520_SCREENSHOT, { captureBeyondViewport: false });
 
-    await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
-    await web.evaluate(`(() => {
-      document.querySelector('[data-web-text-zoom-percent="100"]')?.click();
-      const font = document.querySelector('#settingsFontProfileSelect');
-      font.value = 'signature';
-      font.dispatchEvent(new Event('change', { bubbles: true }));
-      document.querySelector('[data-theme="nous"]')?.click();
-      document.querySelector('[data-color-mode="light"]')?.click();
-    })()`);
-    const webAt1440 = await waitFor(() => web.evaluate(`(() => {
-      const root = document.documentElement;
-      const state = {
-        width: innerWidth,
-        height: innerHeight,
-        zoom: root.dataset.hermesTextZoom,
-        profile: document.querySelector('#settingsFontProfileSelect')?.value || '',
-        theme: root.dataset.hermesTheme,
-        mode: root.dataset.hermesMode,
-        horizontalOverflow: root.scrollWidth - root.clientWidth,
-      };
-      return state.width === 1440 && state.height === 960 && state.zoom === '100'
-        && state.profile === 'signature' && state.theme === 'nous' && state.mode === 'light' ? state : null;
-    })()`));
-    assert.ok(webAt1440.horizontalOverflow <= 1, JSON.stringify(webAt1440));
     const liveMatrixStored = await waitFor(() => setup.evaluate(`(async () => {
       const stored = (await chrome.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings || {};
       return stored.textZoomPercent === 150 && stored.fontProfile === 'custom-local'
         && stored.customFontFamily === 'Arial' && stored.appearanceTheme === 'mono'
-        && stored.colorMode === 'dark' && stored.webTextZoomPercent === 100
-        && stored.webFontProfile === 'signature' && stored.webAppearanceTheme === 'nous'
-        && stored.webColorMode === 'light' ? {
+        && stored.colorMode === 'dark' ? {
           panel: {
             zoom: stored.textZoomPercent,
             profile: stored.fontProfile,
@@ -1837,33 +1569,21 @@ async function main() {
             theme: stored.appearanceTheme,
             mode: stored.colorMode,
           },
-          web: {
-            zoom: stored.webTextZoomPercent,
-            profile: stored.webFontProfile,
-            theme: stored.webAppearanceTheme,
-            mode: stored.webColorMode,
-          },
         } : null;
     })()`));
-    await saveScreenshot(web, READABILITY_WEB_1440_SCREENSHOT, { captureBeyondViewport: false });
 
     assert.deepEqual(consoleErrorsSince(panel, panelConsoleStart), []);
-    assert.deepEqual(consoleErrorsSince(web, webConsoleStart), []);
     await panel.evaluate(`document.querySelector('#closeSettingsButton')?.click()`);
-    await web.evaluate(`document.querySelector('#settingsDialog')?.close()`);
     await panel.call('Emulation.setDeviceMetricsOverride', { width: 520, height: 900, deviceScaleFactor: 1, mobile: false });
-    await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
     const panelSessionAfterReadability = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
     let panelSessionIdAfterReadability = panelSessionAfterReadability.hermesBrowserSettings?.sessionId || '';
     assert.match(panelSessionIdAfterReadability, /^hermes-browser-extension-/);
     const readabilityProof = {
-      panel: { baseline: panelBaselineType, at175: panelReadabilityAt175, persisted: panelPersisted, at320: panelAt320, isolatedAfterWeb: panelIsolationAfterWeb },
-      web: { baseline: webBaselineType, at113: webAt113, customFont: webCustomFont, persisted: webPersisted, accessibility: webAccessibility },
-      liveMatrix: { panelAt420, panelAt520, webAt1440, stored: liveMatrixStored },
+      panel: { baseline: panelBaselineType, at175: panelReadabilityAt175, persisted: panelPersisted, at320: panelAt320 },
+      liveMatrix: { panelAt420, panelAt520, stored: liveMatrixStored },
     };
 
     const customThemePanelConsoleStart = panel.events.length;
-    const customThemeWebConsoleStart = web.events.length;
     const customThemeStorageKey = 'hermesBrowserCustomThemesV1';
     const invalidThemeJson = JSON.stringify(CUSTOM_THEME_INVALID_DOCUMENT);
 
@@ -1941,7 +1661,6 @@ async function main() {
     });
     const customThemeId = installedTheme.id;
     assert.equal(installedTheme.record.document.name, 'E2E Forge');
-    assert.equal(installedTheme.settings.webAppearanceTheme, 'nous', 'Panel installation and selection must not change the Web selection.');
 
     await panel.evaluate(`(() => {
       document.querySelector('[data-text-zoom-percent="175"]')?.click();
@@ -1971,8 +1690,6 @@ async function main() {
     assert.match(panelCustomTheme.fontFamily, /^Verdana/);
     assert.ok(panelCustomTheme.horizontalOverflow <= 1, JSON.stringify(panelCustomTheme));
 
-    const webObservedInstalledTheme = await waitFor(() => web.evaluate(`Boolean(document.querySelector('[data-custom-theme-id="${customThemeId}"]'))`));
-    assert.equal(webObservedInstalledTheme, true, 'Hermes Web must observe installation without reload.');
 
     await panel.evaluate(`(() => {
       window.__customThemeExportProof = { created: 0, clicked: 0, revoked: 0 };
@@ -2028,101 +1745,28 @@ async function main() {
     panelSessionIdAfterReadability = panelSessionAfterCustomReload.hermesBrowserSettings?.sessionId || '';
     assert.match(panelSessionIdAfterReadability, /^hermes-browser-extension-/);
 
-    await web.evaluate(`document.querySelector('#settingsButton').click()`);
-    await waitFor(() => web.evaluate(`document.querySelector('#settingsDialog')?.open === true`));
-    await web.evaluate(`(() => {
-      document.querySelector('#settingsCustomThemeManager').open = true;
-      document.querySelector('[data-web-text-zoom-percent="175"]')?.click();
-      const font = document.querySelector('#settingsFontProfileSelect');
-      font.value = 'high-legibility';
-      font.dispatchEvent(new Event('change', { bubbles: true }));
-      document.querySelector('[data-theme="${customThemeId}"]')?.click();
-    })()`);
-    const webCustomTheme = await waitFor(() => web.evaluate(`(async () => {
-      const root = document.documentElement;
-      const stored = (await chrome.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings || {};
-      if (root.dataset.hermesTheme !== ${JSON.stringify(customThemeId)} || stored.webAppearanceTheme !== ${JSON.stringify(customThemeId)}
-        || root.dataset.hermesTextZoom !== '175' || stored.webFontProfile !== 'high-legibility') return null;
-      return {
-        theme: root.dataset.hermesTheme,
-        mode: root.dataset.hermesMode,
-        canvas: getComputedStyle(root).getPropertyValue('--hermes-canvas').trim(),
-        inlineCanvas: root.style.getPropertyValue('--hermes-canvas').trim(),
-        fontFamily: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
-        zoom: root.dataset.hermesTextZoom,
-        panelTheme: stored.appearanceTheme,
-        webTheme: stored.webAppearanceTheme,
-        horizontalOverflow: root.scrollWidth - root.clientWidth,
-        logoForeground: getComputedStyle(document.querySelector('.web-brand'), '::before').backgroundColor,
-        logoMask: getComputedStyle(document.querySelector('.web-brand'), '::before').maskImage || getComputedStyle(document.querySelector('.web-brand'), '::before').webkitMaskImage,
-        baseLogoDisplay: getComputedStyle(document.querySelector('.web-brand-logo-base')).display,
-      };
-    })()`));
-    assert.equal(webCustomTheme.mode, 'light');
-    assert.equal(webCustomTheme.canvas, '#ffffff');
-    assert.equal(webCustomTheme.inlineCanvas, '#ffffff');
-    assert.equal(webCustomTheme.panelTheme, customThemeId);
-    assert.match(webCustomTheme.fontFamily, /^Verdana/);
-    assert.ok(webCustomTheme.horizontalOverflow <= 1, JSON.stringify(webCustomTheme));
-    assert.equal(webCustomTheme.logoForeground, 'rgb(255, 255, 255)');
-    assert.match(webCustomTheme.logoMask, /hermes-web-logo-white-dark\.svg/);
-    assert.equal(webCustomTheme.baseLogoDisplay, 'none');
-    await web.evaluate(`document.querySelector('#settingsCustomThemeManager').scrollIntoView({ block: 'start' })`);
-    await saveScreenshot(web, CUSTOM_THEME_WEB_SCREENSHOT, { captureBeyondViewport: false });
-    await web.evaluate(`document.querySelector('[data-custom-theme-id="${customThemeId}"]').scrollIntoView({ block: 'center' })`);
-    await saveScreenshot(web, CUSTOM_THEME_WEB_CARD_SCREENSHOT, { captureBeyondViewport: false });
-    const customThemeWebMatrix = { 1440: { width: 1440, overflow: webCustomTheme.horizontalOverflow, theme: webCustomTheme.theme, zoom: webCustomTheme.zoom, profile: 'high-legibility' } };
-    await web.call('Emulation.setDeviceMetricsOverride', { width: 1024, height: 960, deviceScaleFactor: 1, mobile: false });
-    await web.evaluate(`document.querySelector('[data-custom-theme-id="${customThemeId}"]').scrollIntoView({ block: 'center' })`);
-    customThemeWebMatrix[1024] = await web.evaluate(`(() => ({
-      width: document.documentElement.clientWidth,
-      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      theme: document.documentElement.dataset.hermesTheme,
-      zoom: document.documentElement.dataset.hermesTextZoom,
-      profile: document.querySelector('#settingsFontProfileSelect')?.value || '',
-    }))()`);
-    assert.equal(customThemeWebMatrix[1024].theme, customThemeId);
-    assert.equal(customThemeWebMatrix[1024].zoom, '175');
-    assert.equal(customThemeWebMatrix[1024].profile, 'high-legibility');
-    assert.ok(customThemeWebMatrix[1024].overflow <= 1, JSON.stringify(customThemeWebMatrix[1024]));
-    await saveScreenshot(web, CUSTOM_THEME_WEB_1024_SCREENSHOT, { captureBeyondViewport: false });
-    await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
-    await web.evaluate(`document.querySelector('#settingsDialog').close()`);
-    await saveScreenshot(web, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, { captureBeyondViewport: false });
-
-    await web.call('Page.reload', { ignoreCache: true });
-    const webCustomPersisted = await waitFor(() => web.evaluate(`(() => {
-      const root = document.documentElement;
-      if (root.dataset.hermesTheme !== ${JSON.stringify(customThemeId)} || root.dataset.hermesTextZoom !== '175') return null;
-      return {
-        theme: root.dataset.hermesTheme,
-        canvas: getComputedStyle(root).getPropertyValue('--hermes-canvas').trim(),
-        profile: document.querySelector('#settingsFontProfileSelect')?.value || '',
-      };
-    })()`));
-    assert.equal(webCustomPersisted.canvas, '#ffffff');
-    assert.equal(webCustomPersisted.profile, 'high-legibility');
-
-    await web.evaluate(`document.querySelector('#settingsButton').click()`);
-    await waitFor(() => web.evaluate(`document.querySelector('#settingsDialog')?.open === true`));
-    await web.evaluate(`document.querySelector('[data-custom-theme-delete="${customThemeId}"]').click()`);
-    await waitFor(() => web.evaluate(`/confirm/i.test(document.querySelector('[data-custom-theme-delete="${customThemeId}"]')?.textContent || '')`));
-    await web.evaluate(`document.querySelector('[data-custom-theme-delete="${customThemeId}"]').click()`);
+    await panel.evaluate(`document.querySelector('#settingsButton').click()`);
+    await waitFor(() => panel.evaluate(`document.querySelector('#settingsDialog')?.hidden === false`));
+    await revealSettingsControl(panel, '#customThemeManager');
+    await panel.evaluate(`document.querySelector('#customThemeManager').open = true`);
+    await panel.evaluate(`document.querySelector('[data-custom-theme-delete="${customThemeId}"]').click()`);
+    await waitFor(() => panel.evaluate(`/confirm/i.test(document.querySelector('[data-custom-theme-delete="${customThemeId}"]')?.textContent || '')`));
+    await panel.evaluate(`document.querySelector('[data-custom-theme-delete="${customThemeId}"]').click()`);
     const deletedThemeFallback = await waitFor(() => setup.evaluate(`(async () => {
       const stored = await chrome.storage.local.get([${JSON.stringify(customThemeStorageKey)}, 'hermesBrowserSettings']);
       const settings = stored.hermesBrowserSettings || {};
       return stored[${JSON.stringify(customThemeStorageKey)}]?.version === 1
         && stored[${JSON.stringify(customThemeStorageKey)}]?.themes?.length === 0
-        && settings.appearanceTheme === 'nous' && settings.webAppearanceTheme === 'nous'
+        && settings.appearanceTheme === 'nous'
         ? { settings }
         : null;
     })()`)).catch(async (error) => {
       const state = await setup.evaluate(`(async () => {
         const stored = await chrome.storage.local.get([${JSON.stringify(customThemeStorageKey)}, 'hermesBrowserSettings']);
-        return { themes: stored[${JSON.stringify(customThemeStorageKey)}]?.themes?.map((theme) => theme.id), appearanceTheme: stored.hermesBrowserSettings?.appearanceTheme, webAppearanceTheme: stored.hermesBrowserSettings?.webAppearanceTheme };
+        return { themes: stored[${JSON.stringify(customThemeStorageKey)}]?.themes?.map((theme) => theme.id), appearanceTheme: stored.hermesBrowserSettings?.appearanceTheme };
       })()`);
-      const ui = await web.evaluate(`(() => { const button = document.querySelector('[data-custom-theme-delete]'); return { present: Boolean(button), text: button?.textContent || '', theme: document.documentElement.dataset.hermesTheme }; })()`);
-      throw new Error(`${error.message}; stored=${JSON.stringify(state)}; web=${JSON.stringify(ui)}`);
+      const ui = await panel.evaluate(`(() => { const button = document.querySelector('[data-custom-theme-delete]'); return { present: Boolean(button), text: button?.textContent || '', theme: document.documentElement.dataset.hermesTheme }; })()`);
+      throw new Error(`${error.message}; stored=${JSON.stringify(state)}; panel=${JSON.stringify(ui)}`);
     });
     const clearedSurfaces = await waitFor(async () => {
       const panelState = await panel.evaluate(`(() => {
@@ -2131,18 +1775,11 @@ async function main() {
           ? { theme: root.dataset.hermesTheme, zoom: root.dataset.hermesTextZoom, profile: document.querySelector('#fontProfileSelect')?.value || '' }
           : null;
       })()`);
-      const webState = await web.evaluate(`(() => {
-        const root = document.documentElement;
-        return root.dataset.hermesTheme === 'nous' && !root.style.getPropertyValue('--hermes-canvas')
-          ? { theme: root.dataset.hermesTheme, zoom: root.dataset.hermesTextZoom, profile: document.querySelector('#settingsFontProfileSelect')?.value || '' }
-          : null;
-      })()`);
-      return panelState && webState ? { panel: panelState, web: webState } : null;
+      return panelState ? { panel: panelState } : null;
     });
     assert.equal(clearedSurfaces.panel.zoom, '175');
     assert.equal(clearedSurfaces.panel.profile, 'high-legibility');
-    assert.equal(clearedSurfaces.web.zoom, '175');
-    assert.equal(clearedSurfaces.web.profile, 'high-legibility');
+
 
     const corruptStore = { version: 99, themes: [{ id: 'custom:corrupt' }] };
     await setup.evaluate(`chrome.storage.local.set({ [${JSON.stringify(customThemeStorageKey)}]: ${JSON.stringify(corruptStore)} })`);
@@ -2155,14 +1792,7 @@ async function main() {
           ? { status, resetVisible: !reset.hidden }
           : null;
       })()`);
-      const webState = await web.evaluate(`(() => {
-        const status = document.querySelector('#settingsCustomThemeImportStatus')?.textContent || '';
-        const reset = document.querySelector('#settingsCustomThemeResetButton');
-        return /corrupt/i.test(status) && reset?.hidden === false && document.documentElement.dataset.hermesTheme === 'nous'
-          ? { status, resetVisible: !reset.hidden }
-          : null;
-      })()`);
-      return panelState && webState ? { panel: panelState, web: webState } : null;
+      return panelState ? { panel: panelState } : null;
     });
     const corruptStoreAfterDisclosure = await setup.evaluate(`chrome.storage.local.get(${JSON.stringify(customThemeStorageKey)})`);
     assert.deepEqual(corruptStoreAfterDisclosure[customThemeStorageKey], corruptStore, 'Corrupt storage must not be overwritten automatically.');
@@ -2256,9 +1886,6 @@ async function main() {
       installed: { id: customThemeId, name: installedTheme.record.document.name },
       panel: panelCustomTheme,
       panelPersisted: panelCustomPersisted,
-      webObservedInstalledTheme,
-      web: webCustomTheme,
-      webPersisted: webCustomPersisted,
       export: exportProof,
       deletedThemeFallback,
       clearedSurfaces,
@@ -2266,66 +1893,15 @@ async function main() {
       corruptStorePreserved: true,
       monoAgentTheme: monoAgentThemeProof,
       agentAuthored: agentThemeProof,
-      matrix: { panel: customThemePanelMatrix, web: customThemeWebMatrix },
+      matrix: { panel: customThemePanelMatrix },
     };
     assert.deepEqual(consoleErrorsSince(panel, customThemePanelConsoleStart), []);
-    assert.deepEqual(consoleErrorsSince(web, customThemeWebConsoleStart), []);
     await panel.evaluate(`(() => {
       document.querySelector('[data-theme="${ASSIST_THEME}"]')?.click();
       document.querySelector('[data-color-mode="${ASSIST_MODE}"]')?.click();
     })()`);
     await waitFor(() => setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings').then(({ hermesBrowserSettings: stored = {} }) => stored.appearanceTheme === ${JSON.stringify(ASSIST_THEME)} && stored.colorMode === ${JSON.stringify(ASSIST_MODE)})`));
 
-    if (ASSIST_THEME === 'nous' && ASSIST_MODE === 'light') {
-      const nousLightSurfaces = await waitFor(() => web.evaluate(`(() => {
-        const list = document.querySelector('#messageList');
-        const composer = document.querySelector('.fulltab-composer');
-        const html = document.documentElement;
-        if (!list || !composer || html.dataset.hermesTheme !== 'nous' || html.dataset.hermesMode !== 'light') return null;
-        list.hidden = false;
-        list.innerHTML = '<article class="web-message assistant"><div class="web-message-role">Hermes</div><div class="web-message-content">Surface QA</div></article><article class="web-message user"><div class="web-message-content">User QA</div><div class="web-message-role">User</div></article>';
-        const style = (selector) => {
-          const node = document.querySelector(selector);
-          return node ? getComputedStyle(node) : null;
-        };
-        const result = {
-          assistant: style('.web-message.assistant')?.backgroundColor || '',
-          user: style('.web-message.user')?.backgroundColor || '',
-          composer: style('.fulltab-composer')?.backgroundColor || '',
-          assistantLayer: style('.web-message.assistant')?.zIndex || '',
-          composerLayer: style('.fulltab-composer')?.zIndex || '',
-          assistantColor: style('.web-message.assistant')?.color || '',
-          userColor: style('.web-message.user')?.color || '',
-        };
-        return result.assistant === 'rgb(255, 255, 255)' && result.composer === 'rgb(255, 255, 255)' ? result : null;
-      })()`));
-      assert.equal(nousLightSurfaces.assistant, 'rgb(255, 255, 255)');
-      assert.equal(nousLightSurfaces.user, 'rgb(255, 255, 255)');
-      assert.equal(nousLightSurfaces.composer, 'rgb(255, 255, 255)');
-      assert.equal(nousLightSurfaces.assistantLayer, '61');
-      assert.equal(nousLightSurfaces.composerLayer, '61');
-      assert.equal(nousLightSurfaces.assistantColor, 'rgb(5, 5, 232)');
-      assert.equal(nousLightSurfaces.userColor, 'rgb(5, 5, 232)');
-      const selectionColor = await web.evaluate(`(() => {
-        const probe = document.createElement('span');
-        probe.textContent = 'selection-probe';
-        probe.style.position = 'absolute';
-        probe.style.left = '-9999px';
-        document.body.appendChild(probe);
-        const range = document.createRange();
-        range.selectNodeContents(probe);
-        const sel = getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-        const styles = getComputedStyle(probe, '::selection');
-        const result = { background: styles.backgroundColor, color: styles.color };
-        sel.removeAllRanges();
-        probe.remove();
-        return result;
-      })()`);
-      assert.deepEqual(selectionColor, { background: 'rgb(237, 255, 69)', color: 'rgb(5, 5, 232)' });
-    }
-    await saveScreenshot(web, TASK_WEB_SCREENSHOT);
 
     const fixtureTarget = await fetchJson(
       `${devtoolsBase}/json/new?${encodeURIComponent(`${mock.baseUrl}/qa-inline`)}`,
@@ -2820,7 +2396,7 @@ async function main() {
     const afterBackground = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
     assert.equal(afterBackground.hermesBrowserSettings.sessionId, panelSessionIdAfterReadability);
     await saveScreenshot(fixture, INLINE_RESULT_SCREENSHOT, { captureBeyondViewport: false });
-    const retainedAssistCreate = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser').at(-1);
+    const retainedAssistCreate = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'api_server').at(-1);
     const retainedAssistSessionId = retainedAssistCreate?.body?.id || retainedAssistCreate?.body?.session_id || '';
     assert.match(retainedAssistSessionId, /^hermes-assist-/);
     await assistClick(fixture, '.result-actions button:last-child');
@@ -2833,18 +2409,37 @@ async function main() {
     assert.ok(openDestinationState.labels.some((label) => label.includes('Browser Extension')));
     assert.ok(openDestinationState.labels.some((label) => label.includes('Hermes Web')));
     await saveScreenshot(fixture, INLINE_OPEN_SESSION_SCREENSHOT, { captureBeyondViewport: false });
+    // Keep the Webapp on the mock server, not the user's local default Webapp.
+    await setup.evaluate(`(async () => {
+      const stored = await chrome.storage.local.get('hermesBrowserSettings');
+      await chrome.storage.local.set({ hermesBrowserSettings: {
+        ...stored.hermesBrowserSettings, hermesWebAddress: ${JSON.stringify(`${mock.baseUrl}/qa-web`)},
+      }});
+    })()`);
+    const tabsBeforeWeb = await setup.evaluate(`chrome.tabs.query({})`);
     await assistClick(fixture, '[data-session-surface="web"]');
     const webNotice = await waitFor(() => assistEvaluate(fixture, `(() => {
       const root = __assistRoot;
       const title = root?.querySelector('.route-title')?.textContent || '';
-      return title.includes('new surface') ? title : null;
+      const state = root?.querySelector('.context span:last-child')?.textContent || '';
+      return title === 'Hermes Web opened' && state === 'COMPLETE' ? { title, state } : null;
     })()`));
-    assert.match(webNotice, /new surface/i);
-    const openedWebSession = await setup.evaluate(`(async () => {
-      const tabs = await chrome.tabs.query({});
-      return tabs.some((item) => String(item.url || '').includes('sourceSurfaceId=inline-assist'));
-    })()`);
-    assert.equal(openedWebSession, false, 'the Hermes Web choice must show the deprecation notice instead of opening a tab');
+    assert.deepEqual(webNotice, { title: 'Hermes Web opened', state: 'COMPLETE' });
+    const openedWebSession = await waitFor(async () => {
+      const tabs = await setup.evaluate(`chrome.tabs.query({})`);
+      return tabs.find((item) => item.url === `${mock.baseUrl}/qa-web/`) || null;
+    });
+    assert.equal(openedWebSession.url, `${mock.baseUrl}/qa-web/`);
+    const tabsAfterWeb = await setup.evaluate(`chrome.tabs.query({})`);
+    const priorTabIds = new Set(tabsBeforeWeb.map((tab) => tab.id));
+    assert.equal(priorTabIds.has(openedWebSession.id), false, 'the configured Webapp opens in a new tab');
+    assert.equal(openedWebSession.active, true, 'the Webapp tab is active');
+    assert.equal(tabsAfterWeb.some((tab) => !priorTabIds.has(tab.id) && /\/app\.html(?:[?#]|$)/.test(String(tab.url || ''))), false,
+      'the Web choice must not open the removed extension app');
+    assert.ok(mock.requests.some((request) => request.method === 'POST'
+      && request.path === `/api/sessions/${retainedAssistSessionId}/chat`), 'the retained Assist session received its chat');
+    const retainedSessions = await fetchJson(`${mock.baseUrl}/api/sessions`, { headers: { Authorization: `Bearer ${TEST_TOKEN}` } });
+    assert.ok(retainedSessions.data.some((session) => session.id === retainedAssistSessionId), 'the Assist session remains in the gateway session list');
 
     await assistClick(fixture, '.close');
     await setup.evaluate(`(async () => {
@@ -2927,7 +2522,7 @@ async function main() {
     const smartRequest = mock.getChatRequest();
     assert.match(String(smartRequest?.message || ''), /Draft the text that belongs in the focused field/);
     assert.match(String(smartRequest?.message || ''), /"page_context":"[^"]+/);
-    const assistCreates = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
+    const assistCreates = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'api_server');
     assert.ok(assistCreates.length >= 2);
     assert.equal(new Set(assistCreates.map((request) => request.body.title)).size, assistCreates.length);
     for (const request of assistCreates) {
@@ -3006,7 +2601,7 @@ async function main() {
 
     await assistClick(fixture, '.close');
     await panel.evaluate(`document.querySelector('#newSessionButton').click()`);
-    await waitFor(() => panel.evaluate(`document.querySelector('#browserIntroHero')?.hidden === true && document.querySelector('#messages')?.textContent === ''`));
+    await waitFor(() => panel.evaluate(`document.querySelector('#messages')?.textContent === ''`));
 
     const rightClickMarker = 'RIGHT_CLICK_E2E_SELECTION_73f9';
     const rightClickQueue = await setup.evaluate(`(async () => {
@@ -3148,7 +2743,7 @@ async function main() {
     await startAssistImprove(fixture, { text: 'Route this draft with the newly selected model.', closeFirst: true });
     const switchedAssistRequests = await waitFor(() => {
       const recent = mock.requests.slice(switchedAssistRequestStart);
-      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
+      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'api_server');
       const chat = recent.find((request) => request.method === 'POST' && /^\/api\/sessions\/[^/]+\/chat$/.test(request.path));
       return create && chat ? { create, chat } : null;
     });
@@ -3240,7 +2835,7 @@ async function main() {
     await startAssistImprove(fixture, { text: 'Draft through an unmodified released Hermes gateway.' });
     const releasedGatewayState = await waitFor(async () => {
       const recent = mock.requests.slice(releasedGatewayRequestStart);
-      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
+      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'api_server');
       const chat = recent.find((request) => request.method === 'POST' && /\/chat$/.test(request.path));
       const state = await assistEvaluate(fixture, `__assistRoot?.querySelector('.context span:last-child')?.textContent || ''`);
       return create && chat && state === 'COMPLETE' ? { create, chat } : null;
@@ -3253,7 +2848,7 @@ async function main() {
       assert.equal(Object.hasOwn(request, 'reasoning_effort'), false);
       assert.equal(Object.hasOwn(request, 'fast'), false);
     }
-    assert.equal(releasedGatewayState.create.body.source, 'hermes_browser');
+    assert.equal(releasedGatewayState.create.body.source, 'api_server');
     assert.match(releasedGatewayState.chat.body.message, /Draft through an unmodified released Hermes gateway/);
 
     await panel.call('Page.reload', { ignoreCache: true });
@@ -3407,7 +3002,7 @@ async function main() {
       extensionId,
       gatewayUrl: mock.baseUrl,
       marketplaceWorkerSpike,
-      marketplaceUi: { panel: marketplacePanelUi, web: marketplaceWebUi },
+      marketplaceUi: { panel: marketplacePanelUi },
       sessionId: panelSessionIdAfterReadability,
       protocol: envelope.protocol,
       accessibility: {
@@ -3426,14 +3021,6 @@ async function main() {
         finalState: completedDelegationWatch.state,
         renderedResults: renderedDelegationResults,
         extraChatSends: delegationStreamsAfter - delegationStreamsBefore - 1,
-      },
-      fullTabDelegationCompletion: {
-        delegationId: FULLTAB_DELEGATION_ID,
-        acknowledgementState: pendingFullTabDelegationWatch.state,
-        historyPolls: mock.getFullTabDelegationHistoryPolls(),
-        finalState: completedFullTabDelegationWatch.state,
-        renderedResults: renderedFullTabDelegationResults,
-        extraChatSends: fullTabDelegationStreamsAfter - fullTabDelegationStreamsBefore - 1,
       },
       wakeHandoff: {
         instrumented: wakeProbeSetup,
@@ -3463,7 +3050,7 @@ async function main() {
       settingsPolish: settingsPolishProof,
       readability: readabilityProof,
       customTheme: customThemeProof,
-      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, SETTINGS_PROFILE_POLISH_SCREENSHOT, SETTINGS_ZOOM_POLISH_SCREENSHOT, SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT, SETTINGS_CONTEXT_EXPANDED_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_WEB_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_WEB_CARD_SCREENSHOT, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, CUSTOM_THEME_WEB_1024_SCREENSHOT, AGENT_THEME_STUDIO_MONO_SCREENSHOT, AGENT_THEME_STUDIO_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
+      screenshots: [TASK_PANEL_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, SETTINGS_PROFILE_POLISH_SCREENSHOT, SETTINGS_ZOOM_POLISH_SCREENSHOT, SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT, SETTINGS_CONTEXT_EXPANDED_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, AGENT_THEME_STUDIO_MONO_SCREENSHOT, AGENT_THEME_STUDIO_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
     }, null, 2));
   } catch (error) {
     const diagnostics = {};
@@ -3506,7 +3093,6 @@ async function main() {
   } finally {
     chatgptFixture?.close();
     fixture?.close();
-    web?.close();
     panel?.close();
     setup?.close();
     killChrome(chrome);

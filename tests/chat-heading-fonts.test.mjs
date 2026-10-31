@@ -2,9 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
-// The chat stylesheets: the side panel's chat (.message-content), and the full-tab chat (.web-message-content)
-// in app.css and in the text zoom sheet that restyles its headings.
-const SHEETS = ['extension/sidepanel.css', 'extension/app.css', 'extension/lib/surface-text-zoom.css'];
+// The chat stylesheets: the side panel's chat (.message-content) and the text zoom sheet that restyles its headings.
+const SHEETS = ['extension/sidepanel.css', 'extension/lib/surface-text-zoom.css'];
 const sheets = Object.fromEntries(await Promise.all(SHEETS.map(async (file) => [
   file,
   (await readFile(new URL(`../${file}`, import.meta.url), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, ''),
@@ -16,7 +15,7 @@ function headingRule(css, profile) {
   return css.match(pattern)?.[1] || '';
 }
 
-test('chat headings follow the chosen font in the signature and Cinzel profiles, on both chat surfaces', () => {
+test('chat headings follow the chosen font in the signature and Cinzel profiles', () => {
   for (const [file, css] of Object.entries(sheets)) {
     for (const profile of ['signature', 'cinzel']) {
       assert.match(headingRule(css, profile), /font-family:\s*var\(--hermes-font-display\);/, `${file}: ${profile} headings`);

@@ -1,4 +1,5 @@
 import { validateBrowserControlUrl } from './browser-control-safety.mjs';
+import { CONTROLLER_SESSION_PENDING, CONTROLLER_UNSUPPORTED_GATEWAY } from './controller-protocol.mjs';
 import { isGatewayAuthRejection, isGatewayControlKeyUnconfigured, isMissingGatewayCredential } from './connection-modes.mjs';
 
 const CONTROL_SCOPES = new Set(['this-tab', 'selected-tabs', 'task-set']);
@@ -98,6 +99,15 @@ export function currentTabLeaseReplacement({ status = {}, activeTab = null, allo
   };
 }
 
+// What the status line says after Hermes refused something for the person's safety, so a result the model alone
+// saw is not a silent failure. Plain sentences with no page details; each is a catalogue message and translates.
+export const CONTROL_NOTES = Object.freeze({
+  screenshot_frame: 'Hermes did not take the screenshot: a frame on this page is on a page it cannot read.',
+  action_frame: 'Hermes did not act there: the spot is inside a frame on a page it cannot read.',
+  screenshot_page: 'Hermes did not take the screenshot: the page moved to one it will not capture.',
+  screenshot_permission: 'Hermes did not take the screenshot: Firefox needs extra permission. Use Allow screenshots on Firefox.',
+});
+
 function baseView(overrides = {}) {
   return {
     state: 'off',
@@ -135,10 +145,41 @@ export function browserControlStatusLine({ title = '', detail = '' } = {}) {
   return /[.!?。！？…]$/.test(head) ? `${head} ${body}` : `${head}. ${body}`;
 }
 
-export function browserControlView({ settings = {}, status = {}, activeTab = null, currentTarget = null } = {}) {
-  if (settings?.browserControlEnabled !== true) return baseView();
+// This Hermes has no extension control. Reached from the advertised capability
+// (REST) or from the gateway's terminal answer to registration (sockets). There
+// is nothing to enable and nothing to reconnect to; the person can only turn a
+// stale "on" back off.
+function unsupportedView({ enabled = false } = {}) {
+  return baseView({
+    state: 'unsupported',
+    tone: 'neutral',
+    title: "Hermes Control isn't available on this Hermes",
+    detail: 'It needs a Hermes with browser extension control.',
+    canEnable: false,
+    canDetach: enabled,
+  });
+}
+
+// `support` is the capability read: 'unsupported' when the gateway answered its
+// capabilities without extension control, otherwise 'supported' or 'unknown'.
+export function browserControlView({ settings = {}, status = {}, activeTab = null, currentTarget = null, support = 'unknown' } = {}) {
+  const enabled = settings?.browserControlEnabled === true;
+  if (support === 'unsupported') return unsupportedView({ enabled });
+  if (!enabled) return baseView();
   if (status?.connected !== true) {
     const failure = status?.lastConnectFailure;
+    if (failure?.reason === CONTROLLER_UNSUPPORTED_GATEWAY) return unsupportedView({ enabled });
+    // Not a fault: the gateway knows a chat only once its first message is sent, and control connects then.
+    if (failure?.reason === CONTROLLER_SESSION_PENDING) {
+      return baseView({
+        state: 'waiting',
+        tone: 'neutral',
+        title: 'Waiting for this chat',
+        detail: "Hermes Control connects after this chat's first message is sent.",
+        canEnable: false,
+        canDetach: true,
+      });
+    }
     let detail = 'Hermes Control is reconnecting. No tab actions can run yet.';
     let canAuthorize = false;
     if (failure?.reason === 'missing_session') {
@@ -264,11 +305,12 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       canDetach: true,
     });
   }
+  const note = Object.hasOwn(CONTROL_NOTES, status?.lastNote?.code) ? CONTROL_NOTES[status.lastNote.code] : '';
   return baseView({
     state: 'ready',
-    tone: 'ok',
+    tone: note ? 'warn' : 'ok',
     title: 'This tab is ready',
-    detail: 'This exact tab is attached. Hermes can operate it on the first controlled turn.',
+    detail: note || 'This exact tab is attached. Hermes can operate it on the first controlled turn.',
     canEnable: false,
     canPause: true,
     canStop: Number(status.pendingCommands) > 0,

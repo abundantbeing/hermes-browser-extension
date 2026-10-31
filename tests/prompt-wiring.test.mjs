@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ReadableStream } from 'node:stream/web';
 import test from 'node:test';
 
 import {
@@ -8,45 +7,11 @@ import {
   dashboardWsGatewayCapabilities,
   normalizeGatewayCapabilities,
 } from '../extension/lib/capabilities.mjs';
-import { readHermesSse } from '../extension/lib/fulltab-runtime.mjs';
 import { PROMPT_EVENT_NAMES } from '../extension/lib/gateway-prompts.mjs';
 import { BROWSER_RUNTIME_EVENT_NAMES } from '../extension/lib/runtime-events.mjs';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const sidepanel = read('extension/sidepanel.js');
-const app = read('extension/app.js');
-
-function sseResponse(text) {
-  const bytes = new TextEncoder().encode(text);
-  return {
-    body: new ReadableStream({
-      start(controller) {
-        controller.enqueue(bytes);
-        controller.close();
-      },
-    }),
-  };
-}
-
-test('the full view stream hands approval and clarify events to the prompt handler', async () => {
-  const prompts = [];
-  const text = [
-    'event: run.started\ndata: {"run_id":"run-1"}\n\n',
-    'event: approval.request\ndata: {"run_id":"run-1","request_id":"r1","execution_generation":2,"command":"ls","choices":["once","deny"]}\n\n',
-    'event: clarify.request\ndata: {"run_id":"run-1","prompt_id":"c1","question":"Q?"}\n\n',
-    'event: approval.settled\ndata: {"run_id":"run-1","prompt_id":"r1"}\n\n',
-    'event: assistant.completed\ndata: {"content":"done"}\n\n',
-    'event: run.completed\ndata: {"run_id":"run-1"}\n\n',
-  ].join('');
-  const answer = await readHermesSse(sseResponse(text), { onPrompt: (type, data) => prompts.push([type, data.request_id || data.prompt_id]) });
-  assert.equal(answer, 'done');
-  assert.deepEqual(prompts, [['approval.request', 'r1'], ['clarify.request', 'c1'], ['approval.settled', 'r1']]);
-});
-
-test('a stream without a prompt handler still reads normally', async () => {
-  const text = 'event: approval.request\ndata: {"run_id":"r","request_id":"x"}\n\nevent: run.completed\ndata: {"run_id":"r"}\n\n';
-  assert.equal(await readHermesSse(sseResponse(text), {}), '');
-});
 
 test('runtime event names and prompt event names agree', () => {
   assert.equal(BROWSER_RUNTIME_EVENT_NAMES.approvalRequested, PROMPT_EVENT_NAMES.approvalRequest);
@@ -84,8 +49,8 @@ test('capabilities expose the run approval route the gateway advertises', () => 
   assert.equal(dashboardWsGatewayCapabilities().runApproval, false, 'WebSocket prompts do not depend on the REST route');
 });
 
-test('both surfaces mount the card and load its stylesheet', () => {
-  for (const [html, label] of [[read('extension/sidepanel.html'), 'sidepanel'], [read('extension/app.html'), 'app']]) {
+test('the side panel mounts the card and loads its stylesheet', () => {
+  for (const [html, label] of [[read('extension/sidepanel.html'), 'sidepanel']]) {
     assert.match(html, /<section id="agentPromptCard" class="agent-prompt-card"[^>]*hidden><\/section>/, label);
     assert.match(html, /lib\/agent-prompt-card\.css/, label);
     assert.equal((html.match(/id="agentPromptCard"/g) || []).length, 1, label);
@@ -121,13 +86,10 @@ test('a REST run is polled for prompts only when status is advertised and the st
   assert.match(sidepanel, /promptPoller\?\.start\(\);/);
   assert.match(sidepanel, /promptPoller\?\.stop\(\);\s*if \(promptRunId\) promptController\.settleScope\('rest', promptRunId\);\s*if \(localSessionStream/);
   assert.match(sidepanel, /if \(isClarifyToolEvent\(tool\)\) promptPoller\?\.poke\(\);/, 'a clarify tool call triggers an early status read');
-  assert.match(app, /if \(isClarifyToolEvent\(tool\)\) promptPoller\?\.poke\(\);/);
-  assert.match(app, /if \(gatewayCapabilities\.runStatus\) \{\s*promptPoller = createRestPromptPoller/);
-  assert.match(app, /promptPoller\?\.start\(\);/);
 });
 
 test('REST answers go to the run routes and carry the prompt id', () => {
-  for (const source of [sidepanel, app]) {
+  for (const source of [sidepanel]) {
     assert.match(source, /\/v1\/runs\/\$\{encodeURIComponent\(entry\.scope\)\}\/\$\{route\}/);
     assert.match(source, /const route = entry\.kind === 'clarify' \? 'clarify' : 'approval';/);
     assert.match(source, /getCapabilities: \(\) => gatewayCapabilities/);
@@ -136,17 +98,14 @@ test('REST answers go to the run routes and carry the prompt id', () => {
 
 test('live gateway session ids are bound to the browser session that owns them', () => {
   assert.match(sidepanel, /promptController\.bindSession\(liveId, storedId\);/);
-  assert.match(app, /promptController\.bindSession\(identity\.liveId, identity\.storedId\);/);
 });
 
 test('a closed chat connection drops its prompts', () => {
   assert.match(sidepanel, /gatewayClient\.on\('close', \(\) => promptController\.dropClient\(gatewayClient\)\);/);
-  assert.match(app, /promptController\.dropClient\(gatewayClient\);/);
 });
 
 test('switching sessions re-evaluates which prompt belongs on screen', () => {
   assert.match(sidepanel, /function updateSessionLabel\(\) \{\s*promptController\.refresh\(\);/);
-  assert.match(app, /function renderSessions\(query = ''\) \{\s*promptController\.refresh\(\);/);
 });
 
 test('nothing in the prompt path can approve on its own', () => {

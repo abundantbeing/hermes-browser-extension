@@ -383,7 +383,7 @@ test('panel: REST delegations carry the voice note in the per-turn system messag
   assert.equal(context.turnSystemMessage({ context: 'User: hi', note: '[Note: voice]' }), 'BASE\n\n[Note: voice]');
   assert.equal((source.match(/turnSystemMessage\(voiceLive\)/g) || []).length, 4, 'every REST chat body uses it');
   assert.match(source, /const voiceParams = voiceLive \? \{ surface: 'voice-live', voice_context: String\(voiceLive\.context \|\| ''\)\.slice\(0, 6_000\) \} : \{\};/);
-  assert.match(between('const submitParams = () => ({', 'client.request(WS_METHODS.promptSubmit'), /\.\.\.voiceParams,/, 'the dashboard socket marks the turn so the gateway adds the voice note');
+  assert.match(between('const submitParams = () => promptSubmitParamsFor(client, {', 'client.request(WS_METHODS.promptSubmit'), /\.\.\.voiceParams,/, 'the dashboard socket marks the turn so the gateway adds the voice note');
 });
 
 test('panel: live voice costs nothing until used, and sits with the other voice controls', () => {

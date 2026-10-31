@@ -1,12 +1,11 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable } from './e2e-chrome-env.mjs';
+import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable, launchChrome } from './e2e-chrome-env.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -103,7 +102,7 @@ const clients = [];
 let chrome;
 let chromeError = '';
 try {
-  chrome = spawn(CHROME, ['--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--disable-background-networking', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--remote-debugging-port=0', `--user-data-dir=${PROFILE}`, `--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`, `chrome-extension://${id}/request-permissions.html`], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+  chrome = launchChrome(CHROME, ['--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--disable-background-networking', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--remote-debugging-port=0', `--user-data-dir=${PROFILE}`, `--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`, `chrome-extension://${id}/request-permissions.html`], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
   chrome.stderr.on('data', data => { chromeError += data; });
   const portFile = path.join(PROFILE, 'DevToolsActivePort');
   await wait(() => existsSync(portFile));
@@ -132,7 +131,7 @@ try {
   await panel.call('Emulation.setDeviceMetricsOverride', { width: 440, height: 900, deviceScaleFactor: 1, mobile: false });
   await wait(() => panel.eval('document.querySelector("#startupScreen")?.hidden && !document.querySelector("#promptInput")?.disabled'));
   await worker.eval(`chrome.tabs.update(${mailTab.id}, {active: true})`);
-  await panel.eval('document.querySelector("#refreshButton").click()');
+  await panel.eval('document.querySelector("#contextPageRefreshButton").click()');
   await wait(() => panel.eval(articleCase ? 'document.querySelector("#contextPreview").innerText.includes("LONG_ARTICLE_START")' : '!document.querySelector("#explicitSiteCaptureWrap").hidden'));
   await panel.eval('document.querySelector("#contextScopeButton").click()');
   await wait(() => panel.eval(`Boolean(document.querySelector('[data-scope-action="pin-tab:${mailTab.id}"]'))`));

@@ -62,7 +62,14 @@ function chromiumApis({ failMethod = '' } = {}) {
           return {};
         }
         if (method === 'Page.getLayoutMetrics') return { cssVisualViewport: { clientWidth: 1000, clientHeight: 800 } };
+        if (method === 'Page.getFrameTree') {
+          // A tab with no child frames unless a test says otherwise.
+          return { frameTree: { frame: { id: 'MAIN' } } };
+        }
         if (method === 'Accessibility.getFullAXTree') {
+          // A child frame is described by its own tree. The shared mock has
+          // nothing to say about one, so it stays empty.
+          if (params.frameId) return { nodes: [] };
           return {
             nodes: [
               { nodeId: '1', backendDOMNodeId: 44, role: { value: 'button' }, name: { value: 'Search' }, ignored: false },
@@ -74,6 +81,9 @@ function chromiumApis({ failMethod = '' } = {}) {
         if (method === 'DOM.getBoxModel') {
           return { model: { content: [10, 20, 30, 20, 30, 40, 10, 40] } };
         }
+        // The frame under a point, and what kind of element is there: an ordinary one in the page itself.
+        if (method === 'DOM.getNodeForLocation') return { frameId: 'MAIN' };
+        if (method === 'DOM.describeNode') return { node: { nodeName: 'DIV' } };
         if (method === 'Page.getNavigationHistory') {
           return { currentIndex: 1, entries: [{ id: 2, url: 'https://example.test/old' }, { id: 3, url: 'https://example.test/start' }] };
         }
@@ -107,6 +117,10 @@ function chromiumApis({ failMethod = '' } = {}) {
     scripting: {
       executeScript: async (details) => {
         calls.push(['executeScript', details.target]);
+        // The real inspect probe always reports focus; this page has nothing focused.
+        if (Array.isArray(details.args) && details.args.includes('inspect')) {
+          return [{ result: { hasUnsavedContent: false, focused: { role: '', name: '', inputType: '' } } }];
+        }
         return [{ result: { hasUnsavedContent: false } }];
       },
     },
@@ -172,6 +186,8 @@ function firefoxApis() {
     scripting: {
       executeScript: async (details) => {
         calls.push(['executeScript', details.target]);
+        // The screenshot's frame probe: the page itself, no frames.
+        if (details.target?.allFrames) return [{ frameId: 0, result: { url: 'https://example.test/start', top: true, frames: 0 } }];
         if (Array.isArray(details.args) && details.args.includes('snapshot')) {
           return [{ result: {
             title: 'Example',
@@ -205,6 +221,7 @@ test('Chromium Phase 6 adapter snapshots AX refs through one persistent session 
   assert.deepEqual(calls.map((call) => call[0] === 'command' ? `${call[0]}:${call[2]}` : call[0]), [
     'attach',
     'command:Accessibility.enable',
+    'command:Page.getFrameTree',
     'command:Accessibility.getFullAXTree',
   ]);
   assert.equal(await adapter.releaseTab(7), true);
@@ -212,6 +229,230 @@ test('Chromium Phase 6 adapter snapshots AX refs through one persistent session 
   // Chrome refuses to detach a tab that is not attached, which is what makes releasing an unattached tab a no-op.
   api.debugger.detach = async () => { throw new Error('Debugger is not attached to the tab with id: 7.'); };
   assert.equal(await adapter.releaseTab(7), false, 'releasing an unattached tab is a no-op');
+});
+
+// --- child frames: a live chat, an embedded player, a comment box --------------------------------------------------
+
+const axNode = (nodeId, role, name, backendDOMNodeId, extra = {}) => ({
+  nodeId: String(nodeId), role: { value: role }, name: { value: name }, ignored: false,
+  ...(backendDOMNodeId ? { backendDOMNodeId } : {}), ...extra,
+});
+const editable = [{ name: 'editable', value: { value: 'plaintext' } }];
+const frameNode = (id, url, childFrames = []) => ({ frame: { id, url }, ...(childFrames.length ? { childFrames } : {}) });
+const frameTreeOf = (...children) => ({ frameTree: { frame: { id: 'MAIN', url: 'https://example.test/start' }, childFrames: children } });
+const mainFrameTree = () => ({
+  nodes: [axNode(1, 'button', 'Search', 44), axNode(2, 'StaticText', 'Public page text')],
+});
+const axFrameIds = (calls) => calls
+  .filter((call) => call[0] === 'command' && call[2] === 'Accessibility.getFullAXTree')
+  .map((call) => call[3]?.frameId || '');
+
+// The adapter with `frames` as the page's frame tree and `trees[frameId]` as each child's accessibility tree.
+function chromiumWithFrames(frames, trees = {}) {
+  const chromium = chromiumApis();
+  chromium.handlers['Page.getFrameTree'] = () => frameTreeOf(...frames);
+  chromium.handlers['Accessibility.getFullAXTree'] = (params) => {
+    if (!params?.frameId) return mainFrameTree();
+    const tree = trees[params.frameId];
+    if (typeof tree === 'function') return tree(params);
+    if (tree instanceof Error) throw tree;
+    return tree || { nodes: [axNode(1, 'StaticText', `Text of ${params.frameId}`), axNode(2, 'button', `Button of ${params.frameId}`, 900)] };
+  };
+  return chromium;
+}
+
+test('Chromium snapshot includes a child frame so framed UI is reachable, and skips a frame that cannot be read', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames(
+    [frameNode('CHAT', 'https://example.test/live_chat?v=1'), frameNode('DEAD', 'https://example.test/gone')],
+    {
+      // A live chat is its own frame: the main frame never holds the composer.
+      CHAT: { nodes: [axNode(1, 'textbox', 'Chat message', 46, { properties: editable }), axNode(2, 'StaticText', 'Live chat text')] },
+      DEAD: new Error('No frame for given id found'),
+    },
+  );
+
+  const adapter = createChromiumCdpAdapter({ browserApi: api });
+  const snapshot = await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.match(snapshot.text, /Public page text/);
+  assert.doesNotMatch(snapshot.text, /Live chat text/, 'the page text and the frames\' text are kept apart');
+  assert.match(snapshot.frameText, /Live chat text/, 'the child frame text reaches the page view');
+  assert.deepEqual(snapshot.nodes.map((node) => [node.role, node.name, node.backendDOMNodeId, node.frameId || '']), [
+    ['button', 'Search', 44, ''],
+    ['textbox', 'Chat message', 46, 'CHAT'],
+  ], 'a child-frame node is ref-able and keeps the CDP id of the frame it came from');
+  assert.deepEqual(axFrameIds(calls), ['', 'CHAT', 'DEAD'],
+    'the main frame and every child frame are described, and an unreadable frame does not fail the snapshot');
+  assert.equal(snapshot.truncated, undefined, 'nothing was cut');
+});
+
+test('Chromium snapshot describes the main frame before it asks for any child frame', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames([frameNode('CHAT', 'https://example.test/live_chat')]);
+
+  await createChromiumCdpAdapter({ browserApi: api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.deepEqual(commandMethods(calls).filter((method) => method.startsWith('Accessibility.getFull') || method === 'Page.getFrameTree'),
+    // The frame tree is read again after the frames, to drop any that moved to a restricted address meanwhile.
+    ['Page.getFrameTree', 'Accessibility.getFullAXTree', 'Accessibility.getFullAXTree', 'Page.getFrameTree']);
+  assert.equal(axFrameIds(calls)[0], '');
+});
+
+test('Chromium snapshot never reads a child frame on a restricted page, or anything inside one', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames([
+    // An allowed page can embed a checkout; that frame is not read, and neither is what it embeds.
+    frameNode('PAY', 'https://example.test/checkout/pay', [frameNode('HELP', 'https://widget.test/help'), frameNode('BLANKIN', 'about:blank')]),
+    frameNode('BANK', 'https://mybank.example/accounts'),
+    frameNode('EXT', 'chrome-extension://abcdef/page.html'),
+    frameNode('DATA', 'data:text/html,hello'),
+    frameNode('BLOB', 'blob:https://example.test/1234'),
+    frameNode('NEW', ''),
+    frameNode('CHAT', 'https://example.test/live_chat?v=1'),
+  ]);
+
+  const adapter = createChromiumCdpAdapter({ browserApi: api });
+  const snapshot = await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.deepEqual(axFrameIds(calls), ['', 'CHAT'], 'only the frame on an ordinary page is asked for its tree');
+  assert.doesNotMatch(JSON.stringify(snapshot), /PAY|BANK|HELP|EXT|DATA|BLOB|BLANKIN|NEW/);
+  assert.match(snapshot.frameText, /Text of CHAT/);
+});
+
+test('Chromium snapshot reads inline frames (srcdoc and scripted blank frames) under their parent\'s rules', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames([
+    frameNode('SRCDOC', 'about:srcdoc'),
+    frameNode('BLANK', 'about:blank'),
+    frameNode('CHAT', 'https://example.test/live_chat', [frameNode('NESTED', 'about:srcdoc')]),
+    // an inline frame inside a restricted page is part of that page
+    frameNode('PAY', 'https://example.test/checkout', [frameNode('PAYBLANK', 'about:blank')]),
+  ]);
+
+  const snapshot = await createChromiumCdpAdapter({ browserApi: api })
+    .execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.deepEqual(axFrameIds(calls), ['', 'SRCDOC', 'BLANK', 'CHAT', 'NESTED']);
+  assert.deepEqual([...new Set(snapshot.nodes.map((node) => node.frameId || ''))], ['', 'SRCDOC', 'BLANK', 'CHAT', 'NESTED']);
+});
+
+test('Chromium snapshot reads at most eight child frames', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames(Array.from({ length: 12 }, (_, index) => frameNode(`F${index}`, `https://example.test/frame-${index}`)));
+
+  await createChromiumCdpAdapter({ browserApi: api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.deepEqual(axFrameIds(calls), ['', ...Array.from({ length: 8 }, (_, index) => `F${index}`)]);
+});
+
+test('Chromium snapshot of a tab that cannot report its frame tree still describes the main frame', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  chromium.handlers['Page.getFrameTree'] = () => { throw new Error('Not allowed'); };
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+
+  const snapshot = await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.match(snapshot.text, /Public page text/);
+  assert.deepEqual(axFrameIds(chromium.calls), ['']);
+});
+
+test('Chromium snapshot stops reading when the person detaches the debugger, and never attaches again to finish', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const frames = [frameNode('ONE', 'https://example.test/one'), frameNode('TWO', 'https://example.test/two'), frameNode('THREE', 'https://example.test/three')];
+
+  // The detach arrives while a child frame's tree is being read, and the in-flight command fails with it.
+  for (const failure of ['Detached while handling command.', 'Some unrelated failure text']) {
+    const chromium = chromiumWithFrames(frames, {
+      ONE: () => { chromium.emitDetach(7, 'canceled_by_user'); throw new Error(failure); },
+    });
+    const detached = [];
+    const adapter = createChromiumCdpAdapter({ browserApi: chromium.api, onDebuggerDetach: (event) => detached.push(event) });
+
+    await assert.rejects(adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() }));
+
+    assert.deepEqual(axFrameIds(chromium.calls), ['', 'ONE'], `no further frame is read after the detach (${failure})`);
+    assert.equal(countCalls(chromium.calls, 'attach'), 1, `the debugger is not attached again (${failure})`);
+    assert.equal(detached.length, 1);
+  }
+});
+
+test('Chromium snapshot does not carry on to the next frame after a detach that lands between two frames', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumWithFrames(
+    [frameNode('ONE', 'https://example.test/one'), frameNode('TWO', 'https://example.test/two')],
+    { ONE: () => { chromium.emitDetach(7, 'replaced_with_devtools'); return { nodes: [axNode(1, 'button', 'One', 51), axNode(2, 'StaticText', 'One text')] }; } },
+  );
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+
+  await assert.rejects(adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() }), { code: 'debugger_detached' });
+
+  assert.deepEqual(axFrameIds(chromium.calls), ['', 'ONE']);
+  assert.equal(countCalls(chromium.calls, 'attach'), 1);
+});
+
+test('Chromium snapshot stops reading frames once its command is cancelled', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const controller = new AbortController();
+  const chromium = chromiumWithFrames(
+    [frameNode('ONE', 'https://example.test/one'), frameNode('TWO', 'https://example.test/two')],
+    { ONE: () => { controller.abort(new Error('Browser control stopped.')); return { nodes: [axNode(1, 'button', 'One', 51), axNode(2, 'StaticText', 'x')] }; } },
+  );
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+
+  await assert.rejects(adapter.execute('browser_snapshot', {}, { scope, signal: controller.signal }), /Browser control stopped/);
+
+  assert.deepEqual(axFrameIds(chromium.calls), ['', 'ONE']);
+});
+
+test('Chromium snapshot reports a child frame cut at its cap as cut, with the true number of controls', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const buttons = (count) => ({ nodes: [axNode(0, 'StaticText', 'Emoji picker'), ...Array.from({ length: count }, (_, index) => axNode(index + 1, 'button', `Emoji ${index}`, 1000 + index))] });
+  for (const full of [false, true]) {
+    const over = chromiumWithFrames([frameNode('BIG', 'https://example.test/emoji')], { BIG: buttons(401) });
+    const snapshot = await createChromiumCdpAdapter({ browserApi: over.api })
+      .execute('browser_snapshot', { full }, { scope, signal: openSignal() });
+
+    assert.equal(snapshot.nodes.filter((node) => node.frameId === 'BIG').length, 400, `the frame keeps 400 controls (full=${full})`);
+    assert.equal(snapshot.truncated, true, `the cut is marked (full=${full})`);
+    assert.equal(snapshot.element_count, 1 + 401, `every control is counted, kept or not (full=${full})`);
+  }
+
+  const exact = chromiumWithFrames([frameNode('BIG', 'https://example.test/emoji')], { BIG: buttons(400) });
+  const whole = await createChromiumCdpAdapter({ browserApi: exact.api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+  assert.equal(whole.truncated, undefined, 'a frame at exactly the cap lost nothing');
+  assert.equal(whole.element_count, 1 + 400);
+});
+
+test('Chromium snapshot keeps room for a child frame\'s text when the page\'s own text is long', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumWithFrames([frameNode('CHAT', 'https://example.test/live_chat')], {
+    CHAT: { nodes: [axNode(1, 'textbox', 'Chat', 46, { properties: editable }), ...Array.from({ length: 30 }, (_, index) => axNode(index + 2, 'StaticText', `chat message ${index}`))] },
+  });
+  const mainTexts = Array.from({ length: 400 }, (_, index) => axNode(index + 10, 'StaticText', `recommended video number ${index} with a long sample title to fill the budget`));
+  const original = chromium.handlers['Accessibility.getFullAXTree'];
+  chromium.handlers['Accessibility.getFullAXTree'] = (params) => (params?.frameId ? original(params) : { nodes: [axNode(1, 'button', 'Search', 44), ...mainTexts] });
+
+  const compactView = await createChromiumCdpAdapter({ browserApi: chromium.api })
+    .execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.ok(compactView.text.length <= 6_000 * 0.7 + 200, `the page's own text stays within its share (${compactView.text.length})`);
+  assert.match(compactView.frameText, /chat message 0/);
+  assert.match(compactView.frameText, /chat message 29/);
+  assert.ok(compactView.nodes.some((node) => node.frameId === 'CHAT' && node.name === 'Chat'));
+});
+
+test('Chromium snapshot without child frames is what it was before they were read', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api } = chromiumApis();
+
+  const snapshot = await createChromiumCdpAdapter({ browserApi: api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.equal('frameText' in snapshot, false);
+  assert.equal('truncated' in snapshot, false);
+  assert.equal(snapshot.element_count, 2);
+  assert.ok(snapshot.nodes.every((node) => !('frameId' in node)));
 });
 
 test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigation, back, and screenshot sequences on one attach', async () => {
@@ -222,6 +463,12 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
   const target = { backendDOMNodeId: 44 };
 
   await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal, target });
+  // Typing resolves the field and checks that focus is still on it.
+  api.debugger.sendCommand = ((original) => async (callTarget, method, params = {}) => {
+    if (method === 'DOM.resolveNode' && params.backendNodeId === 44) { calls.push(['command', callTarget, method, params]); return { object: { objectId: 'object-44' } }; }
+    if (method === 'Runtime.callFunctionOn') { calls.push(['command', callTarget, method, params]); return { result: { value: { held: true, frame: false } } }; }
+    return original(callTarget, method, params);
+  })(api.debugger.sendCommand);
   await adapter.execute('browser_type', { ref: '@e1', text: 'hello' }, { scope, signal, target });
   await adapter.execute('browser_press', { key: 'Enter' }, { scope, signal });
   await adapter.execute('browser_scroll', { direction: 'down' }, { scope, signal });
@@ -230,14 +477,20 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
   const screenshot = await adapter.execute('browser_screenshot', {}, { scope, signal });
 
   assert.deepEqual(commandMethods(calls), [
-    'DOM.enable', 'DOM.scrollIntoViewIfNeeded', 'DOM.getBoxModel', 'DOM.getNodeForLocation', 'DOM.resolveNode',
-    'Runtime.evaluate', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent',
-    'DOM.focus', 'DOM.resolveNode', 'Input.insertText',
+    'DOM.enable', 'DOM.scrollIntoViewIfNeeded', 'DOM.getBoxModel', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'DOM.resolveNode',
+    // The frame under the point is judged again right after the page-script checks (Runtime.evaluate), before the
+    // pointer moves, and before it presses.
+    'Runtime.evaluate', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent',
+    'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent',
+    // Clear the field, check that focus is still on it, insert, then the input and change events.
+    'DOM.focus', 'DOM.resolveNode', 'Runtime.callFunctionOn', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn',
     'Input.dispatchKeyEvent', 'Input.dispatchKeyEvent',
-    'Page.getLayoutMetrics', 'Runtime.evaluate', 'Input.dispatchMouseEvent', 'Runtime.evaluate',
+    // The wheel's point is judged like a click's before the wheel goes out.
+    'Page.getLayoutMetrics', 'Runtime.evaluate', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent', 'Runtime.evaluate',
     'Page.enable', 'Page.navigate',
     'Page.getNavigationHistory', 'Page.navigateToHistoryEntry',
-    'Runtime.evaluate', 'Page.captureScreenshot',
+    // The screenshot reads the page's frames before the capture and again after it.
+    'DOM.getDocument', 'Page.getFrameTree', 'Runtime.evaluate', 'Page.captureScreenshot', 'DOM.getDocument', 'Page.getFrameTree',
   ]);
   const mouse = calls.find((call) => call[0] === 'command' && call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed');
   assert.deepEqual({ x: mouse[3].x, y: mouse[3].y, button: mouse[3].button }, { x: 20, y: 30, button: 'left' });
@@ -316,7 +569,11 @@ test('Chromium adapter does not idle-detach while a command is still running', a
   await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
   const firstIdleTimer = timers.at(-1);
   let finish;
-  chromium.handlers['Accessibility.getFullAXTree'] = () => new Promise((resolve) => { finish = resolve; });
+  chromium.handlers['Accessibility.getFullAXTree'] = (params) => (
+    params?.frameId
+      ? { nodes: [{ nodeId: '1', role: { value: 'StaticText' }, name: { value: 'Frame page text' }, ignored: false }] }
+      : new Promise((resolve) => { finish = resolve; })
+  );
   const pending = adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
   await new Promise((resolve) => setTimeout(resolve, 0));
   const before = timers.length;
@@ -380,6 +637,10 @@ test('Chromium parity primitives hover drag scroll-to modifiers clipped screensh
     chromium.calls.push(['command', target, method, params]);
     if (method === 'DOM.getBoxModel') return { model: { content: [10, 20, 30, 20, 30, 40, 10, 40] } };
     if (method === 'DOM.resolveNode') return { object: { objectId: 'object-44' } };
+    if (method === 'Page.getFrameTree') return { frameTree: { frame: { id: 'MAIN' } } };
+    if (method === 'DOM.getNodeForLocation') return { frameId: 'MAIN' };
+    if (method === 'Page.getLayoutMetrics') return { cssVisualViewport: { pageX: 0, pageY: 0, clientWidth: 1000, clientHeight: 800, scale: 1 } };
+    if (method === 'Runtime.callFunctionOn' && /activeElement/.test(params.functionDeclaration)) return { result: { value: { held: true, frame: false } } };
     if (method === 'Page.captureScreenshot') return { data: 'ZmFrZS1wbmc=' };
     return {};
   };
@@ -586,6 +847,8 @@ test('Phase 6 tab listing redacts restricted leased-tab metadata', async () => {
     title: '(restricted tab)',
     url: '(omitted by privacy guard)',
     favIconUrl: '',
+    // Two windows each have an active tab; the window tells them apart.
+    windowId: 4,
   }]);
 });
 
@@ -597,6 +860,7 @@ test('Phase 6 adapters create and close owned tabs while Chromium alone groups t
   // The agent asking for a foreground tab changes nothing: the new tab opens in the background.
   assert.deepEqual(await chrome.execute('browser_tab_create', { url: 'https://example.test/new', active: true }, context), {
     tab: { id: 9, windowId: 4, active: false, url: 'https://example.test/new' },
+    timedOut: false,
   });
   await chrome.execute('browser_tab_group', { tab_ids: [7, 8] }, context);
   await chrome.execute('browser_tab_ungroup', { tab_ids: [7, 8] }, context);
@@ -619,6 +883,27 @@ test('Phase 6 adapters create and close owned tabs while Chromium alone groups t
   ]);
   await fox.execute('browser_tab_close', { tab_id: 8 }, context);
   await assert.rejects(fox.execute('browser_tab_group', { tab_ids: [7, 8] }, context), /not supported/i);
+});
+
+test('a new tab opens in the window its carrier is in now, and a switch brings that tab\'s window forward', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  const get = chromium.api.tabs.get;
+  // The person dragged the attached tab 7 into window 6 after attaching it in window 4.
+  chromium.api.tabs.get = async (tabId) => (Number(tabId) === 7 ? { ...(await get(7)), windowId: 6 } : get(tabId));
+  chromium.api.windows = {
+    update: async (windowId, changes) => { chromium.calls.push(['windows.update', windowId, changes]); return { id: windowId }; },
+  };
+  const chrome = createChromiumCdpAdapter({ browserApi: chromium.api });
+  const context = { scope, leasedTabIds: [7, 8], ownedTabIds: [7, 8], currentWindowId: 4, signal: new AbortController().signal };
+  const created = await chrome.execute('browser_tab_create', { url: 'https://example.test/new' }, context);
+  assert.equal(created.tab.windowId, 6);
+  await chrome.execute('browser_tab_activate', { tab_id: 8 }, context);
+  assert.deepEqual(chromium.calls.filter((call) => call[0] === 'tabs.create' || call[0].startsWith('windows.') || call[0] === 'tabs.update'), [
+    ['tabs.create', { url: 'https://example.test/new', active: false, windowId: 6 }],
+    ['tabs.update', 8, { active: true }],
+    ['windows.update', 4, { focused: true }],
+  ]);
 });
 
 test('Phase 6 inspection does not inject a page probe into restricted surfaces', async () => {
@@ -670,7 +955,8 @@ test('Firefox Phase 6 adapter runs only the truthful safe WebExtension subset', 
   assert.equal(screenshot.dataUrl, 'data:image/png;base64,ZmFrZQ==');
   assert.equal(tabs.tabs.length, 2);
   assert.deepEqual(calls.map((call) => call[0]), [
-    'executeScript', 'executeScript', 'tabs.update', 'tabs.goBack', 'captureVisibleTab', 'tabs.update',
+    // The screenshot looks at the page's frames before the capture and again after it.
+    'executeScript', 'executeScript', 'tabs.update', 'tabs.goBack', 'executeScript', 'captureVisibleTab', 'executeScript', 'tabs.update',
   ]);
   await assert.rejects(
     adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: new AbortController().signal }),
@@ -739,7 +1025,7 @@ test('Chromium coordinate clicks report no obscured state; their one hit test on
   const { api, calls } = chromiumApis();
   const result = await createChromiumCdpAdapter({ browserApi: api }).execute('browser_click', { x: 25.4, y: 35 }, { scope, signal: openSignal() });
   assert.deepEqual(result, { status: 'clicked' });
-  assert.equal(calls.filter((call) => call[2] === 'DOM.getNodeForLocation').length, 1);
+  assert.equal(calls.filter((call) => call[2] === 'DOM.getNodeForLocation').length, 3, 'the early look, then the last look before the pointer moves and before it presses');
   assert.deepEqual(mouseEvents(calls).map(({ type, buttons }) => [type, buttons]), [
     ['mouseMoved', 0], ['mousePressed', 1], ['mouseReleased', 0],
   ]);
@@ -862,7 +1148,7 @@ test('a ref click whose centre is covered by a new-tab link is sent with the mod
   chromium.handlers['Runtime.callFunctionOn'] = ({ objectId, arguments: args }) => ({ result: { value: !args && objectId === 'object-46' } });
   const adapter = createChromiumCdpAdapter({ browserApi: chromium.api, hostPlatform: 'Linux' });
   assert.deepEqual(await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget }), { status: 'clicked', obscured: true });
-  assert.equal(chromium.calls.filter((call) => call[2] === 'DOM.getNodeForLocation').length, 1, 'one hit test serves both the obscured check and the new-tab check');
+  assert.equal(chromium.calls.filter((call) => call[2] === 'DOM.getNodeForLocation').length, 3, 'the early hit test serves both the obscured check and the new-tab check; two more judge the frame again');
   assert.deepEqual(mouseEvents(chromium.calls).map((event) => [event.type, event.modifiers ?? null]), [
     ['mouseMoved', null], ['mousePressed', 2], ['mouseReleased', 2],
   ]);
@@ -924,22 +1210,25 @@ test('Chromium type clears the field by default and appends only when clear is f
   const { createChromiumCdpAdapter } = await adaptersModule();
   const chromium = chromiumApis();
   chromium.handlers['DOM.resolveNode'] = () => ({ object: { objectId: 'object-44' } });
+  chromium.handlers['Runtime.callFunctionOn'] = (params) => (/activeElement/.test(params.functionDeclaration) ? { result: { value: { held: true, frame: false } } } : {});
   const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
   const context = { scope, signal: openSignal(), target: clickTarget };
 
   assert.deepEqual(await adapter.execute('browser_type', { ref: '@e1', text: 'replacement' }, context), { status: 'typed' });
   assert.deepEqual(commandMethods(chromium.calls).filter((method) => method !== 'DOM.enable'), [
-    'DOM.focus', 'DOM.resolveNode', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn',
+    'DOM.focus', 'DOM.resolveNode', 'Runtime.callFunctionOn', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn',
   ]);
-  const [clear, , events] = chromium.calls.filter((call) => call[2] === 'Runtime.callFunctionOn' || call[2] === 'Input.insertText');
+  // Clear the field, check that focus is still on it, insert, then the input and change events.
+  const [clear, check, , events] = chromium.calls.filter((call) => call[2] === 'Runtime.callFunctionOn' || call[2] === 'Input.insertText');
   assert.match(clear[3].functionDeclaration, /\.select\(\)/);
   assert.match(clear[3].functionDeclaration, /isContentEditable/);
   assert.match(clear[3].functionDeclaration, /selectNodeContents/);
+  assert.match(check[3].functionDeclaration, /activeElement/);
   assert.match(events[3].functionDeclaration, /"input"/);
 
   chromium.calls.length = 0;
   await adapter.execute('browser_type', { ref: '@e1', text: 'more', clear: false }, context);
-  assert.deepEqual(commandMethods(chromium.calls), ['DOM.focus', 'DOM.resolveNode', 'Input.insertText', 'Runtime.callFunctionOn']);
+  assert.deepEqual(commandMethods(chromium.calls), ['DOM.focus', 'DOM.resolveNode', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn']);
   const last = chromium.calls.at(-1);
   assert.match(last[3].functionDeclaration, /"input"/);
   assert.doesNotMatch(JSON.stringify(chromium.calls), /select\(\)/);
@@ -1658,3 +1947,1037 @@ test('Chromium navigate treats a different fragment as a real navigation so hash
   const same = await adapter.execute('browser_navigate', { url: 'https://app.example.test/#/settings' }, { scope, signal: openSignal() });
   assert.equal(same.status, 'already-open');
 });
+
+// A frame that was readable when the page was snapshotted can have moved to a restricted address since. A move to
+// another document destroys the control (a stale_ref), but a same-document move (history.pushState to a checkout
+// path) keeps it, so before an action on a framed control the adapter reads, from the browser's own DOM and not from
+// page script, the documents above the control, and every one of them must be readable.
+function documentTree(chain, nodeId) {
+  // chain: the address of each document from the outermost child frame to the one holding the control.
+  let content = { nodeType: 1, nodeName: 'INPUT', backendNodeId: nodeId };
+  let owner = 100 + chain.length;
+  for (let index = chain.length - 1; index >= 0; index -= 1) {
+    const doc = { nodeType: 9, nodeName: '#document', backendNodeId: 200 + index, documentURL: chain[index], children: [content] };
+    content = { nodeType: 1, nodeName: 'IFRAME', backendNodeId: (owner -= 1), contentDocument: doc };
+  }
+  return { nodeType: 9, nodeName: '#document', backendNodeId: 1, documentURL: 'https://example.test/start', children: [{ nodeType: 1, nodeName: 'BODY', backendNodeId: 2, children: [content] }] };
+}
+function framedApis(chain, nodeId = 5002) {
+  const chromium = chromiumApis();
+  chromium.handlers['DOM.getDocument'] = () => ({ root: documentTree(chain, nodeId) });
+  // The frame tree and the frame under the point agree with the documents: the control's own, innermost frame.
+  let tree = null;
+  for (let index = chain.length - 1; index >= 0; index -= 1) {
+    tree = { frame: { id: `FR${index}`, url: chain[index], urlFragment: '' }, ...(tree ? { childFrames: [tree] } : {}) };
+  }
+  chromium.handlers['Page.getFrameTree'] = () => ({ frameTree: { frame: { id: 'MAIN', url: 'https://example.test/start' }, ...(tree ? { childFrames: [tree] } : {}) } });
+  chromium.handlers['DOM.getNodeForLocation'] = () => ({ frameId: `FR${chain.length - 1}` });
+  chromium.handlers['DOM.getFrameOwner'] = () => ({ backendNodeId: 99 + chain.length });
+  // What page script would answer if it were asked: always something readable.
+  chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: 'https://chat.example.test/live_chat' } });
+  return chromium;
+}
+const framedTarget = { backendDOMNodeId: 5002, frameId: '1' };
+const inputEvents = (calls) => calls.filter((call) => call[2]?.startsWith('Input.'));
+const framedActions = [
+  ['browser_click', { ref: '@f1e2' }],
+  ['browser_type', { ref: '@f1e2', text: 'hello' }],
+  ['browser_fill', { ref: '@f1e2', value: 'hello' }],
+  ['browser_select', { ref: '@f1e2', value: 'a' }],
+  ['browser_hover', { ref: '@f1e2' }],
+  ['browser_scroll_to', { ref: '@f1e2' }],
+  ['browser_screenshot', { ref: '@f1e2' }],
+];
+
+test('Chromium acts on a control in frames that are all still on ordinary pages, inline frames included', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const chain of [
+    ['https://chat.example.test/live_chat'],
+    ['https://chat.example.test/live_chat', 'about:srcdoc'],
+    ['https://chat.example.test/live_chat#room', 'https://widget.example.test/embed', 'about:blank'],
+    ['about:srcdoc'],
+  ]) {
+    const chromium = framedApis(chain);
+    const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+    assert.deepEqual(
+      await adapter.execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+      { status: 'clicked' },
+      chain.join(' > '),
+    );
+    assert.ok(mouseEvents(chromium.calls).length > 0, chain.join(' > '));
+  }
+});
+
+test('Chromium refuses every framed action once the frame has moved to a restricted or unreadable address', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const frameUrl of [
+    'https://chat.example.test/checkout',
+    'https://shop.example.test/payment/card',
+    'https://chat.example.test/live_chat#/checkout',
+    'https://login.example.test/signin?password=1',
+    'chrome://settings/',
+    'chrome-extension://abc/page.html',
+    'chrome-error://chromewebdata/',
+    'data:text/html,<input>',
+    'blob:https://chat.example.test/1',
+    'file:///C:/secret.html',
+    '',
+  ]) {
+    for (const [action, args] of framedActions) {
+      const chromium = framedApis([frameUrl]);
+      const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+      const label = `${action} on ${frameUrl || '(no address)'}`;
+      await assert.rejects(
+        adapter.execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
+        (error) => error?.code === 'restricted_frame',
+        label,
+      );
+      assert.deepEqual(inputEvents(chromium.calls), [], `${label} sent input`);
+      assert.equal(chromium.calls.some((call) => ['DOM.focus', 'Page.captureScreenshot', 'DOM.scrollIntoViewIfNeeded'].includes(call[2])), false, label);
+    }
+  }
+});
+
+test('Chromium refuses a framed control when any frame above it is restricted, an inline frame counting as its parent', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const chain of [
+    ['https://checkout.example.test/checkout', 'https://chat.example.test/live_chat'],
+    ['https://chat.example.test/live_chat', 'https://shop.example.test/payment', 'about:srcdoc'],
+    ['https://chat.example.test/checkout', 'about:srcdoc'],
+    ['https://chat.example.test/checkout', 'about:blank', 'about:srcdoc'],
+    ['chrome://settings/', 'about:srcdoc'],
+  ]) {
+    for (const [action, args] of framedActions) {
+      const chromium = framedApis(chain);
+      const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+      await assert.rejects(
+        adapter.execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
+        (error) => error?.code === 'restricted_frame',
+        `${action} in ${chain.join(' > ')}`,
+      );
+      assert.deepEqual(inputEvents(chromium.calls), []);
+    }
+  }
+});
+
+test('Chromium takes the frame\'s address from the browser, never from script the page can answer for', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = framedApis(['https://chat.example.test/checkout']);
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  await assert.rejects(
+    adapter.execute('browser_type', { ref: '@f1e2', text: 'x' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.equal(chromium.calls.some((call) => call[2] === 'Runtime.callFunctionOn'), false);
+  assert.equal(chromium.calls.some((call) => call[2] === 'DOM.getDocument' && call[3].pierce === true), true);
+});
+
+test('Chromium treats a framed control it cannot place in any document as restricted', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const missing = framedApis(['https://chat.example.test/live_chat'], 9999);
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: missing.api }).execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  const failing = chromiumApis();
+  failing.handlers['DOM.getDocument'] = () => { throw new Error('Target closed'); };
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: failing.api }).execute('browser_type', { ref: '@f1e2', text: 'x' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.deepEqual(inputEvents(failing.calls), []);
+});
+
+test('Chromium refuses a drag whose destination is in a restricted frame', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  const tree = documentTree(['https://chat.example.test/checkout'], 5002);
+  chromium.handlers['DOM.getDocument'] = () => ({ root: tree });
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  await assert.rejects(
+    adapter.execute('browser_drag', { ref: '@e1', to_ref: '@f1e2' }, {
+      scope, signal: openSignal(), target: { backendDOMNodeId: 5001 }, destination: framedTarget,
+    }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.deepEqual(inputEvents(chromium.calls), []);
+});
+
+test('Chromium leaves a control in the page itself to the page check the executor already makes', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget });
+  assert.equal(chromium.calls.some((call) => call[2] === 'DOM.getDocument'), false);
+});
+
+// A pointer action lands on whatever is under the point, which can be in another frame than the control it was
+// aimed at: the frame under the point is judged too, and a control covered by another frame is not clicked.
+const FRAME_OWNERS = { CHAT: 100, PAY: 102, AD: 103, INNER: 104 };
+function pointerApis({ hit, chain = ['https://chat.example.test/live_chat'] } = {}) {
+  const chromium = framedApis(chain);
+  const frame = (id, url, childFrames) => ({ frame: { id, url, ...(id === 'INNER' ? {} : { urlFragment: '' }) }, ...(childFrames ? { childFrames } : {}) });
+  chromium.handlers['Page.getFrameTree'] = () => ({
+    frameTree: frame('MAIN', 'https://example.test/start', [
+      frame('CHAT', 'https://chat.example.test/live_chat'),
+      frame('PAY', 'https://pay.example.test/checkout', [frame('INNER', 'about:srcdoc')]),
+      frame('AD', 'https://ads.example.test/'),
+    ]),
+  });
+  chromium.handlers['DOM.getFrameOwner'] = (params) => ({ backendNodeId: FRAME_OWNERS[params.frameId] });
+  chromium.handlers['DOM.getNodeForLocation'] = () => hit;
+  return chromium;
+}
+const noPointerInput = (calls) => assert.deepEqual(inputEvents(calls), []);
+
+test('Chromium clicks a framed control when the frame under the point is the control\'s own', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = pointerApis({ hit: { backendNodeId: 5002, frameId: 'CHAT' } });
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  assert.deepEqual(
+    await adapter.execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+    { status: 'clicked' },
+  );
+  assert.ok(mouseEvents(chromium.calls).length > 0);
+});
+
+test('Chromium refuses a click whose point lands in a restricted frame, however the click was aimed', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const hit of [
+    { backendNodeId: 77, frameId: 'PAY' },
+    { backendNodeId: 78, frameId: 'INNER' },
+  ]) {
+    const aims = [
+      ['a ref in the page', 'browser_click', { ref: '@e1' }, { backendDOMNodeId: 44 }],
+      ['a ref in a readable frame', 'browser_click', { ref: '@f1e2' }, framedTarget],
+      ['a coordinate', 'browser_click', { x: 25, y: 35 }, undefined],
+    ];
+    for (const [label, action, args, target] of aims) {
+      const chromium = pointerApis({ hit });
+      const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+      await assert.rejects(
+        adapter.execute(action, args, { scope, signal: openSignal(), target }),
+        (error) => error?.code === 'restricted_frame',
+        `${label} landing in ${hit.frameId}`,
+      );
+      noPointerInput(chromium.calls);
+    }
+  }
+});
+
+test('Chromium refuses a click on a control that another frame covers, even a readable one', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const cases = [
+    ['a framed control covered by another readable frame', { ref: '@f1e2' }, framedTarget, { backendNodeId: 90, frameId: 'AD' }],
+    ['a framed control covered by the page itself', { ref: '@f1e2' }, framedTarget, { backendNodeId: 91, frameId: 'MAIN' }],
+    ['a control in the page covered by a readable frame', { ref: '@e1' }, { backendDOMNodeId: 44 }, { backendNodeId: 92, frameId: 'CHAT' }],
+  ];
+  for (const [label, args, target, hit] of cases) {
+    const chromium = pointerApis({ hit });
+    const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+    await assert.rejects(
+      adapter.execute('browser_click', args, { scope, signal: openSignal(), target }),
+      (error) => error?.code === 'restricted_frame' && /covered/.test(error.message),
+      label,
+    );
+    noPointerInput(chromium.calls);
+  }
+});
+
+test('Chromium still clicks a coordinate in a readable frame, and a control in the page that nothing covers', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const inFrame = pointerApis({ hit: { backendNodeId: 90, frameId: 'AD' } });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: inFrame.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+  const inPage = pointerApis({ hit: { backendNodeId: 44, frameId: 'MAIN' } });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: inPage.api }).execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: { backendDOMNodeId: 44 } }),
+    { status: 'clicked' },
+  );
+});
+
+test('Chromium refuses a pointer action whose frame it cannot tell when a restricted frame could be under it, and allows it otherwise', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  // The frame the page embeds is a checkout (its box, in the fake, includes the point): nothing is sent.
+  for (const hit of [{ backendNodeId: 90 }, undefined]) {
+    const framed = pointerApis({ hit, chain: ['https://shop.example.test/checkout'] });
+    if (hit === undefined) framed.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: framed.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+    );
+    noPointerInput(framed.calls);
+  }
+  // A page whose only frame is readable is an ordinary page: the click goes out, whatever the hit test said.
+  for (const hit of [{ backendNodeId: 90 }, undefined]) {
+    const readable = pointerApis({ hit });
+    if (hit === undefined) readable.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+    assert.deepEqual(
+      await createChromiumCdpAdapter({ browserApi: readable.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      { status: 'clicked' },
+    );
+  }
+  const plain = chromiumApis();
+  plain.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+});
+
+test('Chromium refuses to hover or drag when either point lands in a restricted frame, before pressing anything', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const restrictedHit = { backendNodeId: 77, frameId: 'PAY' };
+  const hover = pointerApis({ hit: restrictedHit });
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: hover.api }).execute('browser_hover', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  noPointerInput(hover.calls);
+
+  // Source in the page, destination under a restricted frame: nothing is pressed.
+  const drag = pointerApis({ hit: { backendNodeId: 44, frameId: 'MAIN' } });
+  let calls = 0;
+  drag.handlers['DOM.getNodeForLocation'] = () => (calls++ === 0 ? { backendNodeId: 44, frameId: 'MAIN' } : restrictedHit);
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: drag.api }).execute('browser_drag', { ref: '@e1', to_ref: '@e2' }, {
+      scope, signal: openSignal(), target: { backendDOMNodeId: 44 }, destination: { backendDOMNodeId: 46 },
+    }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.equal(drag.calls.some((call) => call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed'), false);
+});
+
+// A frame Chrome runs in its own process (a cross-site iframe) is not in Page.getFrameTree, and a point over it
+// hits the element that embeds it, in the page's own frame. Real Chrome reports exactly that for a frame from
+// another site: no child frame in the tree, the hit on the IFRAME in the main frame, and an owned frame id that
+// is not in the tree.
+function oopifApis({ owner = 'IFRAME', ownedFrameId = 'OOPIF', inTree = false, treeUrl = 'https://cross.example.test/embed' } = {}) {
+  const chromium = chromiumApis();
+  chromium.handlers['DOM.getNodeForLocation'] = () => ({ backendNodeId: 61, frameId: 'MAIN' });
+  chromium.handlers['DOM.describeNode'] = () => ({ node: { nodeName: owner, frameId: ownedFrameId } });
+  chromium.handlers['Page.getFrameTree'] = () => ({
+    frameTree: {
+      frame: { id: 'MAIN', url: 'https://example.test/start' },
+      ...(inTree ? { childFrames: [{ frame: { id: ownedFrameId, url: treeUrl, urlFragment: '' } }] } : {}),
+    },
+  });
+  return chromium;
+}
+
+test('Chromium refuses a pointer action that lands on a frame in its own process, which the frame tree does not list', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const owner of ['IFRAME', 'FRAME', 'FRAMESET', 'OBJECT', 'EMBED', 'iframe']) {
+    for (const [action, args, target] of [
+      ['browser_click', { x: 25, y: 35 }, undefined],
+      ['browser_click', { ref: '@e1' }, { backendDOMNodeId: 44 }],
+      ['browser_hover', { ref: '@e1' }, { backendDOMNodeId: 44 }],
+      ['browser_drag', { ref: '@e1', to_ref: '@e2' }, { backendDOMNodeId: 44 }],
+    ]) {
+      const chromium = oopifApis({ owner });
+      await assert.rejects(
+        createChromiumCdpAdapter({ browserApi: chromium.api }).execute(action, args, {
+          scope, signal: openSignal(), target, destination: { backendDOMNodeId: 46 },
+        }),
+        (error) => error?.code === 'restricted_frame',
+        `${action} on ${owner}`,
+      );
+      assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent'), false, `${action} on ${owner} sent input`);
+    }
+  }
+  // A frame owner that names no frame at all cannot be judged either.
+  const unnamed = oopifApis({ ownedFrameId: '' });
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: unnamed.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+});
+
+test('Chromium judges the frame an embedding element owns when that frame is in the frame tree', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const readable = oopifApis({ inTree: true });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: readable.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+  for (const treeUrl of ['https://cross.example.test/checkout', 'chrome-error://chromewebdata/', 'data:text/html,x']) {
+    const restricted = oopifApis({ inTree: true, treeUrl });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: restricted.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+      treeUrl,
+    );
+    assert.equal(restricted.calls.some((call) => call[2] === 'Input.dispatchMouseEvent'), false);
+  }
+});
+
+test('Chromium refuses a point it cannot describe', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const describe of [() => { throw new Error('No node with given id found'); }, () => ({})]) {
+    const chromium = oopifApis({ inTree: true });
+    chromium.handlers['DOM.describeNode'] = describe;
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+    );
+  }
+});
+
+test('a failed hit test is refused when any element embeds a frame, including one the frame tree omits', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const withEmbed = (name) => ({
+    nodeType: 9, nodeName: '#document', backendNodeId: 1,
+    children: [{ nodeType: 1, nodeName: 'BODY', backendNodeId: 2, children: [{ nodeType: 1, nodeName: name, backendNodeId: 61 }] }],
+  });
+  for (const name of ['IFRAME', 'OBJECT', 'EMBED', 'FRAME']) {
+    // The frame tree lists nothing (the frame is in its own process); the DOM still has its owner.
+    const chromium = chromiumApis();
+    chromium.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+    chromium.handlers['DOM.getDocument'] = () => ({ root: withEmbed(name) });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+      name,
+    );
+    assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent'), false);
+  }
+  // An embedding element inside a shadow root or an inner document counts too.
+  const nested = chromiumApis();
+  nested.handlers['DOM.getNodeForLocation'] = () => ({});
+  nested.handlers['DOM.getDocument'] = () => ({ root: { nodeName: '#document', children: [{ nodeName: 'DIV', shadowRoots: [{ nodeName: '#shadow-root', children: [{ nodeName: 'IFRAME' }] }] }] } });
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: nested.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  // A DOM that cannot be read is not evidence that there is no frame.
+  const unreadable = chromiumApis();
+  unreadable.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  unreadable.handlers['DOM.getDocument'] = () => { throw new Error('Target closed'); };
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: unreadable.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  // A page with no element that embeds a frame keeps the old behaviour: the click still goes out.
+  const plain = chromiumApis();
+  plain.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  plain.handlers['DOM.getDocument'] = () => ({ root: withEmbed('DIV') });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+});
+
+// The page-script checks before a click (obscured, new tab, hidden) can move things. The frame under the point is
+// judged again as the last step before the pointer moves, and once more before it presses.
+const PAY_HIT = { backendNodeId: 77, frameId: 'PAY' };
+const AD_HIT = { backendNodeId: 90, frameId: 'AD' };
+
+test('Chromium judges the frame under the point again after its page-script checks, before the pointer moves', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const [label, args, target] of [
+    ['a coordinate', { x: 25, y: 35 }, undefined],
+    ['a ref in the page', { ref: '@e1' }, { backendDOMNodeId: 44 }],
+  ]) {
+    const chromium = pointerApis({ hit: label === 'a coordinate' ? AD_HIT : { backendNodeId: 44, frameId: 'MAIN' } });
+    let hit = chromium.handlers['DOM.getNodeForLocation']();
+    chromium.handlers['DOM.getNodeForLocation'] = () => hit;
+    // The page-script check that follows the first look moves a restricted frame under the point.
+    chromium.handlers['Runtime.evaluate'] = () => { hit = PAY_HIT; return {}; };
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', args, { scope, signal: openSignal(), target }),
+      (error) => error?.code === 'restricted_frame',
+      label,
+    );
+    noPointerInput(chromium.calls);
+  }
+});
+
+test('Chromium judges the frame under the point again after the pointer moved and before it presses', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = pointerApis({ hit: AD_HIT });
+  let hit = AD_HIT;
+  chromium.handlers['DOM.getNodeForLocation'] = () => hit;
+  // Moving the pointer runs the page's handlers, which put a restricted frame under it.
+  chromium.handlers['Input.dispatchMouseEvent'] = (params) => { if (params.type === 'mouseMoved') hit = PAY_HIT; return {}; };
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.deepEqual(mouseEvents(chromium.calls).map((event) => event.type), ['mouseMoved'], 'nothing is pressed');
+});
+
+test('Chromium runs no page script between its last frame check and the first pointer event', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  chromium.handlers['DOM.resolveNode'] = () => ({ object: { objectId: 'obj' } });
+  chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: false } });
+  await createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget });
+  const methods = commandMethods(chromium.calls);
+  const firstInput = methods.indexOf('Input.dispatchMouseEvent');
+  const lastScript = Math.max(...['Runtime.evaluate', 'Runtime.callFunctionOn', 'DOM.resolveNode'].map((method) => methods.lastIndexOf(method)));
+  assert.ok(lastScript >= 0 && lastScript < firstInput, 'the page-script checks ran first');
+  assert.deepEqual(
+    methods.slice(lastScript + 1, firstInput),
+    ['DOM.getNodeForLocation', 'Page.getFrameTree'],
+    'only the frame check sits between the last page script and the first pointer event',
+  );
+  const pressed = methods.indexOf('Input.dispatchMouseEvent', firstInput + 1);
+  assert.deepEqual(methods.slice(firstInput + 1, pressed), ['DOM.getNodeForLocation', 'Page.getFrameTree'], 'and again between the move and the press');
+});
+
+test('Chromium judges a drag\'s source again right before it presses, after scrolling to the destination', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = pointerApis({ hit: { backendNodeId: 44, frameId: 'MAIN' } });
+  // Looks at the source, then the destination, then the source again; only that last look finds a restricted
+  // frame (the destination's scroll moved it over the source).
+  let looks = 0;
+  chromium.handlers['DOM.getNodeForLocation'] = () => (++looks < 3 ? { backendNodeId: 44, frameId: 'MAIN' } : PAY_HIT);
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_drag', { ref: '@e1', to_ref: '@e2' }, {
+      scope, signal: openSignal(), target: { backendDOMNodeId: 44 }, destination: { backendDOMNodeId: 46 },
+    }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.equal(looks, 3);
+  assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed'), false);
+});
+
+// The tag list of embedding elements is only a floor: whatever the browser describes as owning a frame or a
+// document is treated as one, so an element added to the platform later (or a custom one) fails closed.
+test('Chromium treats any node the browser describes as owning a frame as a frame owner, whatever its tag', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const described = [
+    ['a fenced frame', { nodeName: 'FENCEDFRAME', frameId: 'OOPIF' }],
+    ['a portal', { nodeName: 'PORTAL' }],
+    ['an unknown tag with a frame id', { nodeName: 'X-WIDGET', frameId: 'OOPIF' }],
+    ['an unknown tag with a content document', { nodeName: 'X-WIDGET', contentDocument: { nodeName: '#document', nodeType: 9 } }],
+    ['a lower-case tag', { nodeName: 'fencedframe', frameId: 'OOPIF' }],
+  ];
+  for (const [label, node] of described) {
+    // Out of process: the owned frame is not in the frame tree.
+    const chromium = oopifApis();
+    chromium.handlers['DOM.describeNode'] = () => ({ node });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+      label,
+    );
+    assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent'), false, label);
+  }
+  // In the frame tree and readable: allowed, whatever the tag.
+  const inTree = oopifApis({ inTree: true });
+  inTree.handlers['DOM.describeNode'] = () => ({ node: { nodeName: 'X-WIDGET', frameId: 'OOPIF' } });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: inTree.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+  // In the frame tree and restricted: refused.
+  const restricted = oopifApis({ inTree: true, treeUrl: 'https://cross.example.test/checkout' });
+  restricted.handlers['DOM.describeNode'] = () => ({ node: { nodeName: 'X-WIDGET', frameId: 'OOPIF' } });
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: restricted.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  // An ordinary node (no frame data) is not an owner.
+  const plain = oopifApis();
+  plain.handlers['DOM.describeNode'] = () => ({ node: { nodeName: 'BUTTON' } });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+});
+
+test('a failed hit test counts a page with a node that carries frame data, or a fenced frame or portal, as having frames', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const bodyWith = (node) => ({ nodeType: 9, nodeName: '#document', backendNodeId: 1, frameId: 'MAIN', children: [{ nodeType: 1, nodeName: 'BODY', backendNodeId: 2, children: [node] }] });
+  for (const [label, node] of [
+    ['a fenced frame', { nodeType: 1, nodeName: 'FENCEDFRAME', backendNodeId: 61 }],
+    ['a portal', { nodeType: 1, nodeName: 'PORTAL', backendNodeId: 61 }],
+    ['a custom tag with a frame id', { nodeType: 1, nodeName: 'X-WIDGET', backendNodeId: 61, frameId: 'OOPIF' }],
+    ['a custom tag with a content document', { nodeType: 1, nodeName: 'X-WIDGET', backendNodeId: 61, contentDocument: { nodeType: 9, nodeName: '#document' } }],
+  ]) {
+    const chromium = chromiumApis();
+    chromium.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+    chromium.handlers['DOM.getDocument'] = () => ({ root: bodyWith(node) });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+      label,
+    );
+  }
+  // The page's own document carries its frame id and is not an embedding node.
+  const plain = chromiumApis();
+  plain.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  plain.handlers['DOM.getDocument'] = () => ({ root: bodyWith({ nodeType: 1, nodeName: 'DIV', backendNodeId: 61 }) });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+});
+
+// A Firefox window with the given tabs; query honours the active and windowId filters the
+// way the real API does, so a test can tell "the leased tab" from "the visible tab".
+function firefoxWindowApis(tabList) {
+  const base = firefoxApis();
+  const tabs = new Map(tabList.map((tab) => [tab.id, { ...tab }]));
+  base.api.tabs.get = async (tabId) => ({ ...tabs.get(tabId) });
+  base.api.tabs.query = async (filter = {}) => [...tabs.values()]
+    .filter((tab) => (filter.active === undefined || Boolean(tab.active) === filter.active)
+      && (filter.windowId === undefined || tab.windowId === filter.windowId))
+    .map((tab) => ({ ...tab }));
+  return { ...base, tabs };
+}
+
+test('Firefox screenshot refuses when the leased tab is not the tab the window shows', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  // The leased tab 8 sits in the background; tab 7 (someone's banking page) is visible.
+  const { api, calls } = firefoxWindowApis([
+    { id: 7, windowId: 4, active: true, title: 'Bank', url: 'https://bank.example/home' },
+    { id: 8, windowId: 4, active: false, title: 'Leased', url: 'https://example.test/leased' },
+  ]);
+  await assert.rejects(
+    createFirefoxWebExtensionAdapter({ browserApi: api }).execute(
+      'browser_screenshot', {}, { scope: { tabId: 8, frameId: 0 }, signal: openSignal() },
+    ),
+    (error) => error?.code === 'not_active_tab' && /not the tab the window is showing/i.test(error.message),
+  );
+  assert.equal(calls.some((call) => call[0] === 'captureVisibleTab'), false, 'never captured the visible tab');
+});
+
+test('Firefox screenshot refuses when the window shows another tab than the one that says it is active', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  const { api, calls } = firefoxWindowApis([
+    { id: 7, windowId: 4, active: true, title: 'Leased', url: 'https://example.test/a' },
+  ]);
+  // The leased tab reports active, but the window's active-tab query names another tab.
+  api.tabs.query = async () => [{ id: 9, windowId: 4, active: true, url: 'https://bank.example/home' }];
+  await assert.rejects(
+    createFirefoxWebExtensionAdapter({ browserApi: api }).execute('browser_screenshot', {}, { scope, signal: openSignal() }),
+    (error) => error?.code === 'not_active_tab',
+  );
+  assert.equal(calls.some((call) => call[0] === 'captureVisibleTab'), false);
+});
+
+test('Firefox screenshot refuses a restricted page and does not capture it', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  const { api, calls } = firefoxWindowApis([
+    { id: 7, windowId: 4, active: true, title: 'Wallet', url: 'https://example.test/account/wallet' },
+  ]);
+  await assert.rejects(
+    createFirefoxWebExtensionAdapter({ browserApi: api }).execute('browser_screenshot', {}, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_page',
+  );
+  assert.equal(calls.some((call) => call[0] === 'captureVisibleTab'), false);
+});
+
+test('Firefox screenshot throws the capture away when the visible tab changed while it was taken', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  for (const change of [
+    (tabs) => { tabs.get(7).active = false; tabs.get(8).active = true; },
+    (tabs) => { tabs.get(7).url = 'https://example.test/checkout'; },
+  ]) {
+    const { api, tabs } = firefoxWindowApis([
+      { id: 7, windowId: 4, active: true, title: 'Leased', url: 'https://example.test/a' },
+      { id: 8, windowId: 4, active: false, title: 'Other', url: 'https://bank.example/home' },
+    ]);
+    api.tabs.captureVisibleTab = async () => { change(tabs); return 'data:image/png;base64,ZmFrZQ=='; };
+    await assert.rejects(
+      createFirefoxWebExtensionAdapter({ browserApi: api }).execute('browser_screenshot', {}, { scope, signal: openSignal() }),
+      (error) => error?.code === 'not_active_tab' || error?.code === 'restricted_page',
+    );
+  }
+});
+
+test('Firefox screenshot still captures the leased tab when it is the visible, readable one', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  const { api, calls } = firefoxWindowApis([
+    { id: 7, windowId: 4, active: true, title: 'Leased', url: 'https://example.test/a' },
+    { id: 8, windowId: 4, active: false, title: 'Other', url: 'https://other.test/' },
+  ]);
+  const shot = await createFirefoxWebExtensionAdapter({ browserApi: api }).execute(
+    'browser_screenshot', {}, { scope, signal: openSignal() },
+  );
+  assert.equal(shot.dataUrl, 'data:image/png;base64,ZmFrZQ==');
+  assert.deepEqual(calls.filter((call) => call[0] === 'captureVisibleTab'), [['captureVisibleTab', 4, { format: 'png' }]]);
+});
+
+// The classifier and the adapter must read a key string the same way: whatever the adapter
+// sends as Enter, as a paste shortcut, or refuses, the classifier must judge accordingly.
+test('browser_press: the classifier and the adapter agree on every key spelling', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await import('../extension/lib/browser-control-safety.mjs');
+  const spellings = [];
+  const spaces = ['', ' ', '\t', ' '];
+  for (const lead of spaces) for (const tail of spaces) {
+    for (const key of ['Enter', 'enter', 'Return', 'v', 'V', 'Insert', 'a', 'Tab']) {
+      for (const mod of ['Control', 'ctrl', 'Meta', 'cmd', 'Shift', 'Alt']) spellings.push({ key: `${mod}${lead}+${tail}${key}` });
+      spellings.push({ key: `${lead}${key}${tail}` });
+      spellings.push({ key: `${lead}${key}${tail}`, modifiers: ['Control'] });
+      spellings.push({ key: `${lead}${key}${tail}`, modifiers: ['Shift'] });
+    }
+  }
+  spellings.push({ key: 'Hyper+Enter' }, { key: '' }, { key: 'Control+' }, { key: 'a', modifiers: ['Hyper'] });
+
+  for (const args of spellings) {
+    const chromium = chromiumApis();
+    let dispatched = null;
+    let refused = false;
+    try {
+      await createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_press', args, { scope, signal: openSignal() });
+      dispatched = chromium.calls.filter((call) => call[2] === 'Input.dispatchKeyEvent').map((call) => call[3])[0];
+    } catch {
+      refused = true;
+    }
+    const decision = classifyBrowserControlAction({ action: 'browser_press', arguments: args, focused: { role: '', name: '', inputType: '' } });
+    const label = JSON.stringify(args);
+    if (refused) {
+      assert.equal(decision.risk, BROWSER_CONTROL_RISKS.BLOCKED, `${label} cannot be sent, so it is blocked`);
+      continue;
+    }
+    const ctrlOrMeta = (dispatched.modifiers & 6) !== 0;
+    const sendsEnter = dispatched.key === 'Enter';
+    const sendsPaste = (ctrlOrMeta && String(dispatched.key).toLowerCase() === 'v')
+      || (dispatched.key === 'Insert' && (dispatched.modifiers & 8) !== 0);
+    if (sendsEnter) assert.equal(decision.reason, 'submission-key', `${label} sends Enter`);
+    else if (sendsPaste) assert.equal(decision.reason, 'clipboard-paste', `${label} sends a paste shortcut`);
+    else assert.equal(decision.risk, BROWSER_CONTROL_RISKS.SAFE, `${label} sends ${dispatched.key}`);
+  }
+});
+
+test('browser_press: page focus passes a key, while focus that cannot be read or sits in a frame passes only Tab', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const press = async (focusRead, key) => {
+    const chromium = chromiumApis();
+    chromium.api.scripting.executeScript = async () => {
+      if (focusRead === 'throws') throw new Error('Cannot access contents of the page');
+      return [{ result: { hasUnsavedContent: false, ...(focusRead ? { focused: focusRead } : {}) } }];
+    };
+    let error = null;
+    try {
+      await createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_press', { key }, { scope, signal: openSignal() });
+    } catch (caught) { error = caught; }
+    return { error, sent: chromium.calls.filter((call) => call[2] === 'Input.dispatchKeyEvent').length };
+  };
+  const page = { role: '', name: '', inputType: '' };
+  assert.deepEqual(await press(page, 'ArrowDown'), { error: null, sent: 2 }, 'the page itself has focus');
+  for (const unknown of ['throws', null, { role: 'frame', name: 'Payment', inputType: '' }, { ...page, inFrame: true }]) {
+    const label = JSON.stringify(unknown);
+    const held = await press(unknown, 'ArrowDown');
+    assert.equal(held.error?.code, 'focus_changed', label);
+    assert.equal(held.sent, 0, `${label}: nothing was sent`);
+    assert.deepEqual(await press(unknown, 'Tab'), { error: null, sent: 2 }, `${label}: Tab still moves focus`);
+    assert.equal((await press(unknown, 'Shift+Tab')).sent, 2, `${label}: Shift+Tab too`);
+    assert.equal((await press(unknown, 'Control+Tab')).sent, 0, `${label}: a modified Tab is not plain Tab`);
+  }
+});
+
+// A page with the given frame owners in its body, as DOM.getDocument (pierce) describes it.
+function pageWithFrames(owners) {
+  return { root: { nodeType: 9, nodeName: '#document', backendNodeId: 1, frameId: 'MAIN', children: [{ nodeType: 1, nodeName: 'BODY', backendNodeId: 2, children: owners }] } };
+}
+const ownerWithDocument = (backendNodeId, documentURL, children = []) => ({
+  nodeType: 1, nodeName: 'IFRAME', backendNodeId, frameId: `F${backendNodeId}`,
+  contentDocument: { nodeType: 9, nodeName: '#document', backendNodeId: backendNodeId + 1000, documentURL, children },
+});
+// A frame in its own process: the owner is in the DOM, its document and frame are not.
+const outOfProcessOwner = (backendNodeId) => ({ nodeType: 1, nodeName: 'IFRAME', backendNodeId, frameId: `OOPIF${backendNodeId}` });
+
+function screenshotChromium(owners, { boxes = {}, secondOwners = null } = {}) {
+  const chromium = chromiumApis();
+  let reads = 0;
+  chromium.handlers['DOM.getDocument'] = () => {
+    reads += 1;
+    return pageWithFrames(reads > 1 && secondOwners ? secondOwners : owners);
+  };
+  chromium.handlers['DOM.getBoxModel'] = ({ backendNodeId }) => {
+    const box = boxes[backendNodeId] ?? (backendNodeId === 44 ? [10, 20, 20, 20] : undefined);
+    if (box === 'none') throw new Error('Could not compute box model.');
+    const [x, y, w, h] = box || [0, 0, 200, 100];
+    return { model: { content: [x, y, x + w, y, x + w, y + h, x, y + h], border: [x, y, x + w, y, x + w, y + h, x, y + h] } };
+  };
+  return chromium;
+}
+const shotRejected = (error) => error?.code === 'restricted_frame' && /screenshot was withheld/i.test(error.message) && /frame/i.test(error.message);
+const didCapture = (chromium) => chromium.calls.some((call) => call[2] === 'Page.captureScreenshot');
+const takeShot = (chromium, args = {}, target = null) => import('../extension/lib/browser-control-browser-adapters.mjs').then(({ createChromiumCdpAdapter }) => (
+  createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_screenshot', args, { scope, signal: openSignal(), target })
+));
+
+test('a viewport screenshot is withheld when the page embeds a restricted frame in view', async () => {
+  for (const [label, owner] of [
+    ['a same-process checkout frame', ownerWithDocument(31, 'https://bank.example/checkout')],
+    ['a frame whose restriction is in the fragment', ownerWithDocument(31, 'https://pay.example/app#/checkout')],
+    ['a browser page frame', ownerWithDocument(31, 'chrome-error://chromewebdata/')],
+    ['a data: frame', ownerWithDocument(31, 'data:text/html,hello')],
+    ['a frame in another process', outOfProcessOwner(31)],
+    ['a restricted frame inside a readable one', ownerWithDocument(31, 'https://ads.example/slot', [ownerWithDocument(32, 'https://bank.example/billing')])],
+  ]) {
+    const chromium = screenshotChromium([owner]);
+    await assert.rejects(takeShot(chromium), shotRejected, label);
+    assert.equal(didCapture(chromium), false, `${label}: the page was never captured`);
+  }
+});
+
+test('a screenshot is still taken when every frame in view is readable, or the restricted one cannot be seen', async () => {
+  const readable = screenshotChromium([ownerWithDocument(31, 'https://ads.example/slot'), ownerWithDocument(33, 'about:srcdoc')]);
+  assert.match((await takeShot(readable)).dataUrl, /^data:image\/png;base64,/);
+
+  // Not rendered at all, or entirely outside the viewport (the fake viewport is 1000 x 800).
+  for (const box of ['none', [0, 5000, 300, 200], [-500, 0, 100, 100]]) {
+    const chromium = screenshotChromium([outOfProcessOwner(31)], { boxes: { 31: box } });
+    assert.match((await takeShot(chromium)).dataUrl, /^data:image\/png;base64,/, JSON.stringify(box));
+  }
+  const plain = screenshotChromium([]);
+  assert.match((await takeShot(plain)).dataUrl, /^data:image\/png;base64,/);
+});
+
+test('a screenshot of one control is withheld only when a restricted frame lies over its clip', async () => {
+  const frames = [ownerWithDocument(31, 'https://bank.example/checkout')];
+  // The control's box (see the fake) is 20 x 20 at 10,20.
+  const over = screenshotChromium(frames, { boxes: { 31: [0, 0, 100, 100] } });
+  await assert.rejects(takeShot(over, {}, { backendDOMNodeId: 44 }), shotRejected);
+  assert.equal(didCapture(over), false);
+  const away = screenshotChromium(frames, { boxes: { 31: [400, 400, 100, 100] } });
+  assert.match((await takeShot(away, {}, { backendDOMNodeId: 44 })).dataUrl, /^data:image\/png;base64,/);
+});
+
+test('a screenshot is withheld when the frames cannot be checked, or one turned restricted while it was taken', async () => {
+  const unreadable = chromiumApis();
+  unreadable.handlers['DOM.getDocument'] = () => { throw new Error('Target closed'); };
+  await assert.rejects(takeShot(unreadable), shotRejected);
+  assert.equal(didCapture(unreadable), false);
+
+  const late = screenshotChromium([ownerWithDocument(31, 'https://ads.example/slot')], {
+    secondOwners: [ownerWithDocument(31, 'https://ads.example/checkout')],
+  });
+  await assert.rejects(takeShot(late), shotRejected);
+  assert.equal(didCapture(late), true, 'it was taken, then thrown away');
+});
+
+test('a ref from a frame that was replaced is stale, not a restricted frame; a node that still exists but cannot be placed stays restricted', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const [action, args] of framedActions) {
+    // The frame the ref came from is gone: its node is in no document, and the browser no longer knows it.
+    const gone = framedApis(['https://chat.example.test/live_chat'], 9999);
+    gone.handlers['DOM.describeNode'] = () => { throw new Error('Could not find node with given id'); };
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: gone.api }).execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
+      (error) => error?.code === 'stale_ref' && /browser_snapshot/.test(error.message),
+      action,
+    );
+    assert.deepEqual(inputEvents(gone.calls), []);
+    // The node exists but no document of the page holds it: still unknown, still refused.
+    const unplaced = framedApis(['https://chat.example.test/live_chat'], 9999);
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: unplaced.api }).execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
+      (error) => error?.code === 'restricted_frame',
+      action,
+    );
+  }
+});
+
+test('a stop between the press and the release still releases the mouse button', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const stopAfter = (type) => {
+    const chromium = chromiumApis();
+    const controller = new AbortController();
+    chromium.handlers['Input.dispatchMouseEvent'] = (params) => {
+      if (params.type === type) controller.abort(new Error('Browser control stopped.'));
+      return {};
+    };
+    return { chromium, controller };
+  };
+
+  const click = stopAfter('mousePressed');
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: click.chromium.api }).execute('browser_click', { ref: '@e1' }, {
+      scope, signal: click.controller.signal, target: clickTarget,
+    }),
+    /stopped/,
+  );
+  let events = mouseEvents(click.chromium.calls);
+  assert.equal(events.at(-1).type, 'mouseReleased');
+  assert.equal(events.filter((event) => event.type === 'mousePressed').length, 1);
+  assert.deepEqual({ x: events.at(-1).x, y: events.at(-1).y, buttons: events.at(-1).buttons }, { x: 20, y: 30, buttons: 0 });
+
+  for (const type of ['mousePressed', 'mouseMoved']) {
+    const drag = stopAfter(type);
+    drag.chromium.handlers['DOM.getBoxModel'] = ({ backendNodeId }) => (backendNodeId === 44
+      ? { model: { content: [10, 20, 30, 20, 30, 40, 10, 40] } }
+      : { model: { content: [110, 20, 130, 20, 130, 40, 110, 40] } });
+    // The mouseMoved that carries a held button is the drag's move to the destination.
+    drag.chromium.handlers['Input.dispatchMouseEvent'] = (params) => {
+      if (params.type === type && (type === 'mousePressed' || params.buttons === 1)) drag.controller.abort(new Error('Browser control stopped.'));
+      return {};
+    };
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: drag.chromium.api }).execute('browser_drag', { ref: '@e1', to_ref: '@e2' }, {
+        scope, signal: drag.controller.signal, target: clickTarget, destination: { backendDOMNodeId: 45 },
+      }),
+      /stopped/,
+      type,
+    );
+    events = mouseEvents(drag.chromium.calls);
+    // The button does not stay down: the drag is let go of off the page (no click on the source, no drop), and the page
+    // is then told no button is down. A click stopped between press and release still releases where it was pressed.
+    const released = events.filter((event) => event.type === 'mouseReleased');
+    assert.equal(released.length, 1, `drag stopped after ${type}`);
+    assert.deepEqual({ button: released[0].button, buttons: released[0].buttons }, { button: 'none', buttons: 0 });
+    assert.equal(released[0].x < 0 && released[0].y < 0, true);
+    assert.deepEqual({ type: events.at(-1).type, buttons: events.at(-1).buttons }, { type: 'mouseMoved', buttons: 0 });
+  }
+
+  // A stop before anything was pressed sends no release.
+  const early = new AbortController();
+  early.abort(new Error('Browser control stopped.'));
+  const idle = chromiumApis();
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: idle.api }).execute('browser_click', { ref: '@e1' }, { scope, signal: early.signal, target: clickTarget }),
+    /stopped/,
+  );
+  assert.deepEqual(mouseEvents(idle.calls), []);
+});
+
+test('a drag presses where the source is after scrolling to the destination, and not on whatever now covers it', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const dragWith = ({ coveredBy = 0 } = {}) => {
+    const chromium = chromiumApis();
+    let sourceReads = 0;
+    chromium.handlers['DOM.getBoxModel'] = ({ backendNodeId }) => {
+      if (backendNodeId === 45) return { model: { content: [110, 20, 130, 20, 130, 40, 110, 40] } };
+      // The source sits at 20,30 until the destination is scrolled to, then 20,330.
+      sourceReads += 1;
+      const dy = sourceReads >= 2 ? 300 : 0;
+      return { model: { content: [10, 20 + dy, 30, 20 + dy, 30, 40 + dy, 10, 40 + dy] } };
+    };
+    chromium.handlers['DOM.getNodeForLocation'] = (params) => ({ backendNodeId: params.y > 300 && coveredBy ? coveredBy : 44, frameId: 'MAIN' });
+    chromium.handlers['DOM.resolveNode'] = ({ backendNodeId }) => ({ object: { objectId: `object-${backendNodeId}` } });
+    chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: false } });
+    return createChromiumCdpAdapter({ browserApi: chromium.api })
+      .execute('browser_drag', { ref: '@e1', to_ref: '@e2' }, { scope, signal: openSignal(), target: clickTarget, destination: { backendDOMNodeId: 45 } })
+      .then((result) => ({ result, chromium }), (error) => ({ error, chromium }));
+  };
+
+  const moved = await dragWith();
+  assert.deepEqual(moved.result, { status: 'dragged' });
+  const events = mouseEvents(moved.chromium.calls);
+  const press = events.find((event) => event.type === 'mousePressed');
+  assert.deepEqual({ x: press.x, y: press.y }, { x: 20, y: 330 }, 'pressed at the source where it is now');
+  const beforePress = events.slice(0, events.indexOf(press));
+  assert.deepEqual({ x: beforePress.at(-1).x, y: beforePress.at(-1).y }, { x: 20, y: 330 }, 'the pointer was moved there first');
+
+  const covered = await dragWith({ coveredBy: 77 });
+  assert.match(covered.error?.message || '', /nothing was pressed/);
+  assert.equal(mouseEvents(covered.chromium.calls).some((event) => event.type === 'mousePressed'), false);
+});
+
+test('a scroll never sends the wheel into a frame Hermes may not read, and scrolls the page itself instead', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const scrollWith = async (hit) => {
+    const chromium = pointerApis({ hit });
+    chromium.handlers['Runtime.evaluate'] = () => ({ result: { value: { scrollX: 0, scrollY: 680, maxY: 4_000, atTop: false, atBottom: false } } });
+    const adapter = createChromiumCdpAdapter({ browserApi: chromium.api, sleep: async () => {} });
+    const result = await adapter.execute('browser_scroll', { direction: 'down' }, { scope, signal: openSignal() });
+    return { result, chromium };
+  };
+  const wheels = (calls) => mouseEvents(calls).filter((event) => event.type === 'mouseWheel');
+  const scrolledByScript = (calls) => calls.some((call) => call[2] === 'Runtime.evaluate' && /scrollBy/.test(call[3]?.expression || ''));
+
+  // The viewport centre is over a checkout frame, or a frame that cannot be told apart: no wheel there.
+  for (const hit of [{ backendNodeId: 77, frameId: 'PAY' }, { backendNodeId: 77, frameId: 'INNER' }, { backendNodeId: 77, frameId: 'UNKNOWN' }]) {
+    const { result, chromium } = await scrollWith(hit);
+    assert.equal(result.status, 'scrolled', JSON.stringify(hit));
+    assert.deepEqual(wheels(chromium.calls), [], `${JSON.stringify(hit)} got a wheel`);
+    assert.equal(scrolledByScript(chromium.calls), true, 'the page still scrolls');
+  }
+  // Over a readable frame, or the page's own content, the wheel goes as before.
+  for (const hit of [{ backendNodeId: 5002, frameId: 'CHAT' }, { backendNodeId: 5, frameId: 'MAIN' }]) {
+    const { chromium } = await scrollWith(hit);
+    assert.equal(wheels(chromium.calls).length, 1, JSON.stringify(hit));
+  }
+});
+
+// Real Chrome can answer DOM.getNodeForLocation with a node and no frame id (a tab in the background, a node
+// the page just re-rendered), or not answer at all. An ordinary click on an ordinary page, whose frames are all
+// readable or nowhere near the point, must still go out; one a restricted frame could receive must not.
+function clickPage({ hit, hitFails = false, owners = [], boxes = {}, describe = null, frames = null }) {
+  const chromium = chromiumApis();
+  const link = { nodeType: 1, nodeName: 'A', backendNodeId: 44 };
+  chromium.handlers['DOM.getDocument'] = () => pageWithFrames([link, ...owners]);
+  chromium.handlers['DOM.getNodeForLocation'] = () => {
+    if (hitFails) throw new Error('No node found at given location');
+    return hit;
+  };
+  // The link is at 20,30. Frame owners are where the test puts them (default: far away).
+  chromium.handlers['DOM.getBoxModel'] = ({ backendNodeId }) => {
+    const [x, y, w, h] = boxes[backendNodeId] || (backendNodeId === 44 ? [10, 20, 20, 20] : [600, 500, 100, 100]);
+    return { model: { content: [x, y, x + w, y, x + w, y + h, x, y + h], border: [x, y, x + w, y, x + w, y + h, x, y + h] } };
+  };
+  if (describe) chromium.handlers['DOM.describeNode'] = describe;
+  if (frames) chromium.handlers['Page.getFrameTree'] = () => ({ frameTree: frames });
+  return chromium;
+}
+const clickLink = (chromium) => adaptersModule().then(({ createChromiumCdpAdapter }) => createChromiumCdpAdapter({ browserApi: chromium.api })
+  .execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget }));
+const pressed = (chromium) => mouseEvents(chromium.calls).some((event) => event.type === 'mousePressed');
+
+test('a click whose hit has no frame id goes out when the node is in the page and its frames are readable', async () => {
+  const readableFrame = ownerWithDocument(31, 'https://ads.example/slot');
+  for (const [label, chromium] of [
+    ['a readable frame elsewhere on the page', clickPage({ hit: { backendNodeId: 44 }, owners: [readableFrame] })],
+    ['a frame in another process far from the point', clickPage({ hit: { backendNodeId: 44 }, owners: [outOfProcessOwner(32)] })],
+    ['no frames at all', clickPage({ hit: { backendNodeId: 44 } })],
+  ]) {
+    assert.deepEqual(await clickLink(chromium), { status: 'clicked' }, label);
+    assert.equal(pressed(chromium), true, label);
+  }
+});
+
+test('a click whose hit has no frame id is refused when the node is in a restricted frame, owns one, or cannot be placed under a restricted frame', async () => {
+  const restricted = ownerWithDocument(31, 'https://bank.example/checkout', [{ nodeType: 1, nodeName: 'BUTTON', backendNodeId: 77 }]);
+  const cases = [
+    ['the hit node is inside a restricted frame', clickPage({ hit: { backendNodeId: 77 }, owners: [restricted] })],
+    ['the hit node is the owner of a frame in another process', clickPage({
+      hit: { backendNodeId: 32 },
+      owners: [outOfProcessOwner(32)],
+      describe: ({ backendNodeId }) => ({ node: backendNodeId === 32 ? { nodeName: 'IFRAME', frameId: 'OOPIF32' } : { nodeName: 'A' } }),
+    })],
+    ['the hit node is in a readable frame but the control is in the page', clickPage({ hit: { backendNodeId: 55 }, owners: [ownerWithDocument(31, 'https://ads.example/slot', [{ nodeType: 1, nodeName: 'DIV', backendNodeId: 55 }])] })],
+  ];
+  for (const [label, chromium] of cases) {
+    await assert.rejects(clickLink(chromium), (error) => error?.code === 'restricted_frame', label);
+    assert.equal(pressed(chromium), false, label);
+  }
+});
+
+test('a click whose hit test failed goes out unless a frame Hermes may not read is over the point', async () => {
+  const fine = clickPage({ hitFails: true, owners: [ownerWithDocument(31, 'https://ads.example/slot'), outOfProcessOwner(32)] });
+  assert.deepEqual(await clickLink(fine), { status: 'clicked' });
+
+  for (const [label, chromium] of [
+    ['a restricted frame over the point', clickPage({ hitFails: true, owners: [ownerWithDocument(31, 'https://bank.example/checkout')], boxes: { 31: [0, 0, 200, 200] } })],
+    ['a frame in another process over the point', clickPage({ hitFails: true, owners: [outOfProcessOwner(32)], boxes: { 32: [0, 0, 200, 200] } })],
+    ['a frame whose box cannot be measured', clickPage({ hitFails: true, owners: [outOfProcessOwner(32)] })],
+  ]) {
+    if (label === 'a frame whose box cannot be measured') {
+      chromiumBoxFails(chromium);
+    }
+    await assert.rejects(clickLink(chromium), (error) => error?.code === 'restricted_frame', label);
+    assert.equal(pressed(chromium), false, label);
+  }
+
+  const unreadable = chromiumApis();
+  unreadable.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  unreadable.handlers['DOM.getDocument'] = () => { throw new Error('Target closed'); };
+  await assert.rejects(clickLink(unreadable), (error) => error?.code === 'restricted_frame');
+  assert.equal(pressed(unreadable), false);
+});
+function chromiumBoxFails(chromium) {
+  const original = chromium.handlers['DOM.getBoxModel'];
+  chromium.handlers['DOM.getBoxModel'] = (params) => {
+    if (params.backendNodeId !== 44) throw new Error('Node does not have a layout object');
+    return original(params);
+  };
+}

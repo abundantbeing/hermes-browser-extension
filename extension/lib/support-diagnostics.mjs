@@ -1,4 +1,5 @@
 import { detectBrowserProduct } from './browser-runtime.mjs';
+import { formatAge } from './capability-status.mjs';
 
 const NOT_AVAILABLE = 'unknown';
 
@@ -39,6 +40,16 @@ function availability(value, { missing = 'missing', available = 'available' } = 
   return value ? available : missing;
 }
 
+const NOT_ADVERTISED = 'not advertised by this gateway';
+
+// One line per capability row: what it is, the evidence state, who said so and
+// how long ago, and the exact reason. The rows are the same ones the panel shows.
+function capabilityRowLine(row) {
+  const via = row.source && row.source !== 'none' ? row.source : 'no evidence yet';
+  const age = Number.isFinite(row.ageMs) ? `, ${formatAge(row.ageMs)} ago` : '';
+  return bullet(row.label, `${row.state} (${via}${age}) - ${row.reason || NOT_AVAILABLE}`);
+}
+
 function safeLine(value = '') {
   return String(value || '')
     .replace(/Bearer\s+[^\s,;]+/gi, 'Bearer [REDACTED_BEARER]')
@@ -65,11 +76,14 @@ export function buildSupportDiagnostics({
   connection = {},
   health = {},
   capabilities = {},
+  capabilityRows = null,
   selectedModel = {},
   contextScope = {},
   lastError = null,
   gatewayDiagnostic = null,
   extractorMode = '',
+  companionContext = '',
+  companionActions = '',
 } = {}) {
   const product = browserProduct || detectBrowserProduct({ userAgent, extensionUrl: extensionOrigin });
   const browserFamily = product.label || browserFamilyFromUserAgent(userAgent);
@@ -82,7 +96,7 @@ export function buildSupportDiagnostics({
   const gatewayOrigin = redactDiagnosticUrl(settings.gatewayUrl || '');
   const warnings = Array.isArray(capabilities.warnings) ? capabilities.warnings : [];
   const lines = [
-    '# Hermes Browser Diagnostics',
+    '# Hermes Browser Extension Diagnostics',
     '',
     '## Extension',
     bullet('Extension version', extensionVersion || buildInfo.version || NOT_AVAILABLE),
@@ -113,16 +127,23 @@ export function buildSupportDiagnostics({
     bullet('Hermes build', health.build || health.commit || NOT_AVAILABLE),
     '',
     '## Runtime capabilities',
-    bullet('Models', availability(capabilities.models)),
-    bullet('Sessions', availability(capabilities.sessions)),
-    bullet('Skills', availability(capabilities.skills)),
-    bullet('Profiles', availability(capabilities.profiles)),
-    bullet('Run events', availability(capabilities.runEvents || capabilities.browserEvents)),
-    bullet('Browser Context Protocol', availability(capabilities.browserContextProvider, { missing: 'missing', available: 'available' })),
-    bullet('Browser context upload', availability(capabilities.browserContextUpload)),
-    bullet('Companion plugin', availability(capabilities.browserCompanionPlugin)),
-    bullet('Plugin actions', availability(capabilities.pluginActions)),
+    ...(Array.isArray(capabilityRows) && capabilityRows.length
+      ? capabilityRows.map(capabilityRowLine)
+      : [
+        bullet('Models', availability(capabilities.models)),
+        bullet('Sessions', availability(capabilities.sessions)),
+        bullet('Skills', availability(capabilities.skills)),
+        bullet('Profiles', availability(capabilities.profiles)),
+        bullet('Run events', availability(capabilities.runEvents || capabilities.browserEvents)),
+        bullet('Browser Context Protocol', availability(capabilities.browserContextProvider !== false, { missing: 'turned off by the gateway', available: 'available (built by this extension)' })),
+        bullet('Browser context upload', availability(capabilities.browserContextUpload, { missing: NOT_ADVERTISED })),
+        bullet('Companion plugin', availability(capabilities.browserCompanionPlugin, { missing: `${NOT_ADVERTISED} (the extension cannot tell whether it is loaded)` })),
+        bullet('Plugin actions', availability(capabilities.pluginActions, { missing: NOT_ADVERTISED })),
+      ]),
     bullet('Browser control', capabilities.browserControl ? 'blocked by read-only policy' : 'disabled'),
+    // Only when the companion plugin's own routes answered: counts and ages, never page data.
+    ...(companionContext ? [bullet('Companion plugin context (this session)', companionContext)] : []),
+    ...(companionActions ? [bullet('Companion plugin actions listed', companionActions)] : []),
     '',
     '## Request context',
     bullet('Selected model', selectedModel.label || selectedModel.id || settings.model || NOT_AVAILABLE),

@@ -2,6 +2,9 @@ import {
   controllerAdapterContractFor,
 } from './browser-controller-adapter.mjs';
 import { isRestrictedUrl, privacySafeTabForPrompt } from './browser-context-protocol.mjs';
+import { resolveKeyPress } from './browser-control-keys.mjs';
+import { controlToolName } from './control-tool-names.mjs';
+import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, frameChainReadable, frameUrlReadable, readableChildFrames } from './browser-control-frames.mjs';
 import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
 const CDP_VERSION = '1.3';
@@ -14,6 +17,10 @@ const DOM_QUIET_MS = 150;
 const DOM_SETTLE_CAP_MS = 1_200;
 const HIDDEN_CAPTURE_TIMEOUT_MS = 5_000;
 const SCROLL_SETTLE_MS = 120;
+// A frame smaller than this in either direction shows nothing worth withholding a screenshot for.
+const MIN_VISIBLE_FRAME_PX = 4;
+// A pointer position outside any page, where a stopped drag is let go of (see pressAndRelease).
+const OFF_PAGE_PX = -50;
 const SCROLL_MIN_PX = 100;
 const SCROLL_MAX_PX = 5_000;
 const SCROLL_VIEWPORT_FRACTION = 0.85;
@@ -27,7 +34,8 @@ const DETACHED_WHILE_HANDLING_RE = /detached while handling/i;
 // a moment before it delivers onDetach; wait this long for the event.
 const DETACH_EVENT_GRACE_MS = 75;
 const STALE_NODE_RE = /could not find node|no node with given id|node with given id|node is detached|does not belong to the document|no node found for given backend id|could not find object/i;
-const STALE_REF_MESSAGE = 'That element is gone \u2014 use the refs in the latest result or call browser_snapshot.';
+// Read when the error is made: the tool's name follows the route control is connected through.
+const staleRefMessage = () => `That element is gone \u2014 use the refs in the latest result or call ${controlToolName('browser_snapshot')}.`;
 const ACTIONABLE_AX_ROLES = new Set([
   'button', 'checkbox', 'combobox', 'dialog', 'gridcell', 'link', 'listbox',
   'menuitem', 'option', 'radio', 'searchbox', 'slider', 'spinbutton', 'switch',
@@ -80,6 +88,19 @@ const SCROLL_NODE_FUNCTION = `function(deltaX, deltaY) {
   }
   window.scrollBy({ left: deltaX, top: deltaY, behavior: 'auto' });
   return false;
+}`;
+// Runs on the field Hermes focused, right before text is inserted: where does focus really sit? The text goes to
+// whatever has focus, and a page's focus handler can send it into a frame or another field.
+const FOCUS_CHECK_FUNCTION = `function() {
+  let active = this.ownerDocument ? this.ownerDocument.activeElement : null;
+  while (active && active.shadowRoot && active.shadowRoot.activeElement) active = active.shadowRoot.activeElement;
+  if (!active) return { held: false, frame: false };
+  let held = false;
+  for (let node = active; node; node = node.parentNode || node.host || null) {
+    if (node === this) { held = true; break; }
+  }
+  const framed = ['IFRAME', 'FRAME', 'OBJECT', 'EMBED', 'FENCEDFRAME'].includes(String(active.tagName || '').toUpperCase());
+  return { held, frame: !held && framed };
 }`;
 const CONTAINS_NODE_FUNCTION = 'function(node) { return this === node || this.contains(node); }';
 // Input.dispatchMouseEvent modifier bits.
@@ -195,7 +216,56 @@ function privacySafeLeasedTabs(tabs = [], leasedTabIds = []) {
   const allowed = new Set(Array.from(leasedTabIds || []).map(Number));
   return tabs
     .filter((tab) => allowed.has(Number(tab?.id)))
-    .map(privacySafeTabForPrompt);
+    // `active` is per window, so the window says which of several active tabs is which.
+    .map((tab) => ({ ...privacySafeTabForPrompt(tab), windowId: Number(tab?.windowId) || null }));
+}
+
+// A switch the person approved brings the tab in front: active in its window, and that window
+// focused, since a tab active in a window behind another is still out of sight.
+async function activateTab(browserApi, tabId) {
+  const activated = await browserApi.tabs.update(tabId, { active: true });
+  const windowId = Number(activated?.windowId);
+  if (windowId && typeof browserApi.windows?.update === 'function') {
+    try {
+      await browserApi.windows.update(windowId, { focused: true });
+    } catch {
+      // The tab is in front in its own window either way.
+    }
+  }
+  return activated;
+}
+
+// Opens a URL in a background tab in the window the carrier tab is in now (the person may have moved
+// it since it was attached), then waits for the page, so the first action on the new tab reads it
+// rather than a blank document. A wait that is cut short still reports the tab, so it is not left
+// open with nothing owning it.
+async function createBackgroundTab(browserApi, waitForLoad, {
+  url, carrierTabId, fallbackWindowId = null, signal,
+}) {
+  let windowId = null;
+  try {
+    windowId = Number((await browserApi.tabs.get(carrierTabId))?.windowId) || null;
+  } catch {
+    // The carrier closed: the window it was attached in, if any.
+  }
+  windowId = windowId || Number(fallbackWindowId) || null;
+  // Hermes never takes the person's view: a tab it opens starts in the background.
+  const tab = await browserApi.tabs.create({ url: String(url || ''), active: false, ...(windowId ? { windowId } : {}) });
+  const createdId = Number(tab?.id);
+  if (!Number.isInteger(createdId) || createdId <= 0) return { tab };
+  let timedOut = false;
+  try {
+    ({ timedOut } = await waitForLoad(createdId, { signal, sawLoading: tab?.status === 'loading' }));
+  } catch {
+    timedOut = true;
+  }
+  let loaded = tab;
+  try {
+    loaded = (await browserApi.tabs.get(createdId)) || tab;
+  } catch {
+    // Closed while loading: report what was opened.
+  }
+  return { tab: loaded, timedOut: timedOut === true };
 }
 
 function tabIdFrom(scope = {}) {
@@ -233,6 +303,15 @@ function hiddenScreenshotError() {
   return codedError(
     'tab_hidden',
     'This tab is in the background, so the screenshot did not finish. Ask the user to bring it to the front with Show tab in Hermes Control, then try again.',
+  );
+}
+
+// Firefox can only photograph the tab its window is showing. When the leased tab is not that
+// tab, a capture would be of someone else's page, so none is taken.
+function notActiveTabError() {
+  return codedError(
+    'not_active_tab',
+    "The leased tab is not the tab the window is showing, so a screenshot would capture a different page and was not taken. Ask the user to bring it to the front with Show tab in Hermes Control, then try again.",
   );
 }
 
@@ -410,54 +489,87 @@ function fieldValueNodeIds(rawNodes = []) {
   return hidden;
 }
 
-function chromiumSnapshot(tree = {}, tab = {}, { full = false } = {}) {
-  const rawNodes = Array.isArray(tree.nodes) ? tree.nodes : [];
-  const valueNodeIds = fieldValueNodeIds(rawNodes);
+// A tab's real UI is often inside a child frame: YouTube's live chat is a separate `live_chat` frame, and a
+// paywall or an embedded app is another. `Accessibility.getFullAXTree` without a frameId only describes the main
+// frame, so `trees` carries one `{ frameId, tree }` per frame read, the main frame first with an empty frameId. A
+// child frame's nodes keep the CDP id of the frame they came from, and the ref store turns it into a stable short
+// key. When child frames are read, part of the text, element and ref budgets is held back for them, so a long page
+// of its own cannot leave a chat composer without a ref or its messages without room.
+function chromiumSnapshot(trees, tab = {}, { full = false } = {}) {
+  const segments = Array.isArray(trees) ? trees : [{ frameId: '', tree: trees }];
   const textLimit = full ? FULL_TEXT_LIMIT : COMPACT_TEXT_LIMIT;
+  const hasFrames = segments.length > 1;
+  const mainTextLimit = hasFrames ? Math.floor(textLimit * (1 - FRAME_TEXT_SHARE)) : textLimit;
   const nodes = [];
   const headings = [];
   const landmarks = [];
-  const text = [];
+  const mainText = [];
+  const frameText = [];
   let textLength = 0;
-  for (const node of rawNodes) {
-    if (!node || node.ignored === true) continue;
-    const role = compact(axValue(node.role), 80).toLowerCase();
-    const name = compact(axValue(node.name), 500);
-    const properties = Array.isArray(node.properties) ? node.properties : [];
-    if (name && ['statictext', 'heading', 'paragraph'].includes(role)
-      && !valueNodeIds.has(String(node.nodeId))
-      && text[text.length - 1] !== name && textLength < textLimit) {
-      text.push(name);
-      textLength += name.length + 1;
+  let elementCount = 0;
+  let cut = false;
+  for (const [index, segment] of segments.entries()) {
+    const frameId = compact(segment?.frameId || '', 160);
+    const segmentNodes = Array.isArray(segment?.tree?.nodes) ? segment.tree.nodes : [];
+    const valueNodeIds = fieldValueNodeIds(segmentNodes);
+    // The main frame may use its share; each child frame an equal part of what is left, so one heavy frame
+    // (an ad, a long chat) leaves room for the next.
+    const allowance = index === 0
+      ? mainTextLimit
+      : textLength + Math.floor((textLimit - textLength) / (segments.length - index));
+    const lines = frameId ? frameText : mainText;
+    let keptInFrame = 0;
+    for (const node of segmentNodes) {
+      if (!node || node.ignored === true) continue;
+      const role = compact(axValue(node.role), 80).toLowerCase();
+      const name = compact(axValue(node.name), 500);
+      const properties = Array.isArray(node.properties) ? node.properties : [];
+      if (name && ['statictext', 'heading', 'paragraph'].includes(role)
+        && !valueNodeIds.has(String(node.nodeId))
+        && lines[lines.length - 1] !== name && textLength < allowance) {
+        lines.push(name);
+        textLength += name.length + 1;
+      }
+      if (name && role === 'heading' && headings.length < MAX_SNAPSHOT_HEADINGS) {
+        const level = Number(axProperty(properties, 'level'));
+        headings.push({ level: Number.isInteger(level) && level >= 1 && level <= 6 ? level : 2, name: name.slice(0, 200) });
+      }
+      if (name && LANDMARK_AX_ROLES.has(role) && landmarks.length < MAX_SNAPSHOT_LANDMARKS) {
+        landmarks.push({ role, name: name.slice(0, 200) });
+      }
+      const backendDOMNodeId = Number(node.backendDOMNodeId);
+      if (!ACTIONABLE_AX_ROLES.has(role) || !Number.isInteger(backendDOMNodeId) || backendDOMNodeId <= 0) continue;
+      // Compact view drops unlabeled images but keeps every input, so an unnamed
+      // password field still gets a ref and the sensitive treatment.
+      if (!full && !name && IMAGE_AX_ROLES.has(role)) continue;
+      // Counted before the per-frame cap, so the true number of controls survives to the page view.
+      elementCount += 1;
+      if (frameId && keptInFrame >= MAX_FRAME_NODES) {
+        cut = true;
+        continue;
+      }
+      keptInFrame += 1;
+      const autocomplete = compact(axProperty(properties, 'autocomplete'), 120);
+      nodes.push({
+        role,
+        name,
+        backendDOMNodeId,
+        ...(autocomplete ? { autocomplete } : {}),
+        ...(frameId ? { frameId } : {}),
+        ...axStateFlags(node, properties, role),
+      });
     }
-    if (name && role === 'heading' && headings.length < MAX_SNAPSHOT_HEADINGS) {
-      const level = Number(axProperty(properties, 'level'));
-      headings.push({ level: Number.isInteger(level) && level >= 1 && level <= 6 ? level : 2, name: name.slice(0, 200) });
-    }
-    if (name && LANDMARK_AX_ROLES.has(role) && landmarks.length < MAX_SNAPSHOT_LANDMARKS) {
-      landmarks.push({ role, name: name.slice(0, 200) });
-    }
-    const backendDOMNodeId = Number(node.backendDOMNodeId);
-    if (!ACTIONABLE_AX_ROLES.has(role) || !Number.isInteger(backendDOMNodeId) || backendDOMNodeId <= 0) continue;
-    // Compact view drops unlabeled images but keeps every input, so an unnamed
-    // password field still gets a ref and the sensitive treatment.
-    if (!full && !name && IMAGE_AX_ROLES.has(role)) continue;
-    const autocomplete = compact(axProperty(properties, 'autocomplete'), 120);
-    nodes.push({
-      role,
-      name,
-      backendDOMNodeId,
-      ...(autocomplete ? { autocomplete } : {}),
-      ...axStateFlags(node, properties, role),
-    });
   }
   return {
     title: compact(tab.title, 500),
     url: compact(tab.url || tab.pendingUrl),
-    text: text.join('\n').slice(0, textLimit),
+    text: mainText.join('\n').slice(0, textLimit),
+    ...(frameText.length ? { frameText: frameText.join('\n').slice(0, textLimit) } : {}),
     nodes,
     headings,
     landmarks,
+    element_count: elementCount,
+    ...(cut ? { truncated: true } : {}),
     full,
   };
 }
@@ -487,86 +599,17 @@ function quadRect(model = {}) {
   };
 }
 
-const KEY_ALIASES = Object.freeze({
-  enter: { key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' },
-  return: { key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' },
-  tab: { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 },
-  escape: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
-  esc: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
-  backspace: { key: 'Backspace', code: 'Backspace', windowsVirtualKeyCode: 8 },
-  delete: { key: 'Delete', code: 'Delete', windowsVirtualKeyCode: 46 },
-  insert: { key: 'Insert', code: 'Insert', windowsVirtualKeyCode: 45 },
-  home: { key: 'Home', code: 'Home', windowsVirtualKeyCode: 36 },
-  end: { key: 'End', code: 'End', windowsVirtualKeyCode: 35 },
-  pageup: { key: 'PageUp', code: 'PageUp', windowsVirtualKeyCode: 33 },
-  pagedown: { key: 'PageDown', code: 'PageDown', windowsVirtualKeyCode: 34 },
-  arrowup: { key: 'ArrowUp', code: 'ArrowUp', windowsVirtualKeyCode: 38 },
-  arrowdown: { key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
-  arrowleft: { key: 'ArrowLeft', code: 'ArrowLeft', windowsVirtualKeyCode: 37 },
-  arrowright: { key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 },
-  space: { key: ' ', code: 'Space', windowsVirtualKeyCode: 32, text: ' ' },
-});
-const MODIFIER_NAMES = Object.freeze({
-  alt: 'alt', option: 'alt', ctrl: 'ctrl', control: 'ctrl', meta: 'meta', cmd: 'meta', command: 'meta', shift: 'shift',
-});
-
-function keyDescriptor(value = '') {
-  const raw = String(value ?? '');
-  if (!compact(raw, 80) && raw !== ' ') throw new Error('A key is required.');
-  const key = raw === ' ' ? raw : compact(raw, 80);
-  const alias = KEY_ALIASES[key.toLowerCase()];
-  if (alias) return { ...alias };
-  if (key.length === 1) {
-    const upper = key.toUpperCase();
-    const alphanumeric = /^[a-z0-9]$/i.test(key);
-    return {
-      key,
-      code: /^[a-z]$/i.test(key) ? `Key${upper}` : (/^[0-9]$/.test(key) ? `Digit${key}` : key),
-      ...(alphanumeric ? { windowsVirtualKeyCode: upper.charCodeAt(0) } : {}),
-      text: key,
-    };
-  }
-  const functionKey = /^f([1-9]|1[0-2])$/i.exec(key);
-  if (functionKey) return { key: key.toUpperCase(), code: key.toUpperCase(), windowsVirtualKeyCode: 111 + Number(functionKey[1]) };
-  return { key, code: key };
-}
-
-// "Control+a", "Meta+a", "Shift+Tab", "Control++": the last part is the key,
-// everything before it is a modifier.
-function parseKeyCombo(value = '') {
-  const raw = String(value ?? '');
-  if (raw === ' ' || !raw.includes('+') || raw.trim() === '+') return { key: raw, modifiers: [] };
-  const parts = raw.split('+');
-  const last = parts.pop();
-  const key = last === '' ? '+' : last;
-  const modifiers = parts.filter(Boolean).map((part) => {
-    const name = MODIFIER_NAMES[compact(part, 20).toLowerCase()];
-    if (!name) throw new Error(`Unsupported key modifier: ${compact(part, 20) || 'missing'}.`);
-    return name;
-  });
-  return { key, modifiers };
-}
-
-function modifierMask(values = []) {
-  const bits = { alt: 1, ctrl: 2, meta: 4, shift: 8 };
-  return [...new Set(Array.isArray(values) ? values : [])]
-    .reduce((mask, value) => mask | (bits[MODIFIER_NAMES[compact(value, 20).toLowerCase()]] || 0), 0);
-}
-
 function keyEventFields(args = {}) {
-  const combo = parseKeyCombo(args.key);
-  const modifiers = modifierMask([
-    ...combo.modifiers,
-    ...(Array.isArray(args.modifiers) ? args.modifiers : []),
-  ]);
-  const descriptor = keyDescriptor(combo.key);
+  const resolved = resolveKeyPress(args);
+  const { descriptor } = resolved;
+  const modifiers = resolved.mask;
   // Characters are typed only without Alt/Ctrl/Meta; otherwise it is a shortcut.
   const typed = (modifiers & 7) === 0 && descriptor.text !== undefined;
   const shiftedLetter = typed && (modifiers & 8) !== 0 && /^[a-z]$/.test(descriptor.text);
   const text = shiftedLetter ? descriptor.text.toUpperCase() : descriptor.text;
   const base = { ...descriptor, ...(shiftedLetter ? { key: text } : {}) };
   delete base.text;
-  const command = modifiers & 4 ? MAC_EDIT_COMMANDS[String(combo.key).toLowerCase()] : '';
+  const command = modifiers & 4 ? MAC_EDIT_COMMANDS[resolved.keyName] : '';
   return {
     down: {
       type: typed ? 'keyDown' : 'rawKeyDown',
@@ -586,20 +629,62 @@ function pointForArgs(args = {}) {
   return { x, y };
 }
 
-function screenshotClip(box = {}, zoom = 1) {
+// What the clip of Page.captureScreenshot means, as measured in Chrome (not as documented):
+// - DOM.getBoxModel answers in CSS px relative to the top left of the visual viewport, and a pinch zoom does not scale
+//   it. The element's place in the document is therefore where the visual viewport is (cssVisualViewport.pageX/pageY)
+//   plus the box, with no division by the pinch scale, whatever the viewport has been panned to.
+// - The clip is read in the page's zoomed px: with a browser zoom of z (cssVisualViewport.zoom) a document rect in CSS px
+//   is multiplied by z. The image is then the clip times `scale` times the device pixel ratio.
+// Returns the element's rect in CSS px of the document (which the frame-overlap check uses) and the clip to send.
+function screenshotClip(box = {}, scale = 1, view = {}) {
   const quad = Array.isArray(box?.model?.content) ? box.model.content.map(Number) : [];
   if (quad.length < 8 || quad.some((value) => !Number.isFinite(value))) throw new Error('The screenshot target has no visible box.');
   const xs = [quad[0], quad[2], quad[4], quad[6]];
   const ys = [quad[1], quad[3], quad[5], quad[7]];
+  const zoom = Number(view.zoom) > 0 && Number.isFinite(Number(view.zoom)) ? Number(view.zoom) : 1;
   const x = Math.min(...xs);
   const y = Math.min(...ys);
-  return {
-    x,
-    y,
-    width: Math.max(1, Math.max(...xs) - x),
-    height: Math.max(1, Math.max(...ys) - y),
-    scale: Math.max(0.25, Math.min(Number(zoom) || 1, 4)),
+  const css = {
+    x: (Number(view.pageX) || 0) + x,
+    y: (Number(view.pageY) || 0) + y,
+    width: Math.max(1 / zoom, Math.max(...xs) - x),
+    height: Math.max(1 / zoom, Math.max(...ys) - y),
   };
+  return {
+    css,
+    clip: {
+      x: css.x * zoom,
+      y: css.y * zoom,
+      width: css.width * zoom,
+      height: css.height * zoom,
+      scale: Math.max(0.25, Math.min(Number(scale) || 1, 4)),
+    },
+  };
+}
+
+// The size a PNG says it is (its IHDR chunk), or null for anything that is not one.
+function pngSize(base64 = '') {
+  try {
+    const head = globalThis.atob(String(base64).slice(0, 32));
+    if (head.length < 24 || head.slice(1, 4) !== 'PNG' || head.slice(12, 16) !== 'IHDR') return null;
+    const word = (at) => ((head.charCodeAt(at) << 24) | (head.charCodeAt(at + 1) << 16) | (head.charCodeAt(at + 2) << 8) | head.charCodeAt(at + 3)) >>> 0;
+    return { width: word(16), height: word(20) };
+  } catch {
+    return null;
+  }
+}
+
+// Whether a captured image is the size of the clip that was asked for: clip x scale, times a device pixel ratio that
+// is the same on both axes (and not below 1). A picture of another size is not the region that was checked.
+function captureMatchesClip(size, clip) {
+  if (!size) return true;
+  const expectedWidth = clip.width * clip.scale;
+  const expectedHeight = clip.height * clip.scale;
+  if (!(size.width > 0 && size.height > 0)) return false;
+  const ratio = size.width / expectedWidth;
+  if (!(ratio >= 0.99 && ratio <= 8)) return false;
+  const slack = 2 + ratio;
+  return Math.abs(size.width - expectedWidth * ratio) <= slack && Math.abs(size.height - expectedHeight * ratio) <= slack;
 }
 
 function scrollDirection(direction = '') {
@@ -619,7 +704,78 @@ function pageProbe(mode, direction = '') {
     });
     const dirtyChecks = [...document.querySelectorAll('input[type="checkbox"], input[type="radio"]')]
       .some((element) => element.checked !== element.defaultChecked);
-    return { hasUnsavedContent: dirtyText || dirtyChecks };
+    // Follow open and closed shadow roots using the extension-only browser APIs.
+    let active = document.activeElement;
+    let shadowKnown = true;
+    const seen = new Set();
+    while (active && active !== document.body && active !== document.documentElement) {
+      if (seen.has(active)) { shadowKnown = false; break; }
+      seen.add(active);
+      let root;
+      try {
+        const domApi = globalThis.chrome?.dom || globalThis.browser?.dom;
+        if (typeof domApi?.openOrClosedShadowRoot === 'function') root = domApi.openOrClosedShadowRoot(active);
+        else if ('openOrClosedShadowRoot' in active) root = active.openOrClosedShadowRoot;
+        else { shadowKnown = false; break; }
+      } catch {
+        shadowKnown = false;
+        break;
+      }
+      if (!root?.activeElement) break;
+      active = root.activeElement;
+    }
+    // Keep identities in the extension's isolated world, never on the DOM. The page itself (nothing focused) has
+    // one too, so a key pressed with no control focused is bound to the page and not to nothing.
+    const identityOf = (node) => {
+      try {
+        const key = '__hermesBrowserFocusIdentities';
+        let state = globalThis[key];
+        if (!state || state.document !== document) {
+          state = { document, nodes: new WeakMap() };
+          globalThis[key] = state;
+        }
+        let identity = state.nodes.get(node) || '';
+        if (!identity) {
+          const bytes = crypto.getRandomValues(new Uint8Array(16));
+          identity = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+          state.nodes.set(node, identity);
+        }
+        return identity;
+      } catch {
+        // No identity means an approval-dependent press must fail closed.
+        return '';
+      }
+    };
+    let focused = { role: '', name: '', inputType: '' };
+    if (active && (active === document.body || active === document.documentElement)) {
+      const identity = identityOf(document);
+      if (identity) focused = { ...focused, identity };
+    }
+    if (active && active !== document.body && active !== document.documentElement) {
+      const tag = String(active.tagName || '').toUpperCase();
+      const inputType = String(active.type || '').toLowerCase();
+      const embeds = ['IFRAME', 'FRAME', 'OBJECT', 'EMBED', 'FENCEDFRAME'].includes(tag);
+      const inputRole = { button: 'button', submit: 'button', reset: 'button', image: 'button', checkbox: 'checkbox', radio: 'radio' }[inputType] || 'textbox';
+      const role = active.getAttribute('role')
+        || (embeds ? 'frame' : ({ A: 'link', BUTTON: 'button', INPUT: inputRole, SELECT: 'combobox', TEXTAREA: 'textbox', SUMMARY: 'button' }[tag]
+          || (active.isContentEditable ? 'textbox' : 'generic')));
+      const labelled = [...(active.labels || [])].map((label) => label.innerText).join(' ');
+      // A button's label is its value; what is typed into any other field is never read, so it cannot reach a card.
+      const labelFromValue = tag === 'INPUT' && ['button', 'submit', 'reset'].includes(inputType) ? active.value : '';
+      const name = String(active.getAttribute('aria-label') || labelled || labelFromValue || (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable ? '' : active.innerText) || active.title || active.alt || active.placeholder || active.name || '')
+        .replace(/\s+/g, ' ').trim().slice(0, 200);
+      const autocomplete = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ? String(active.autocomplete || '').trim().slice(0, 80) : '';
+      const identity = !embeds && shadowKnown ? identityOf(active) : '';
+      focused = {
+        role,
+        name,
+        inputType: tag === 'INPUT' || tag === 'BUTTON' ? inputType : '',
+        ...(autocomplete ? { autocomplete } : {}),
+        ...(embeds ? { inFrame: true } : {}),
+        ...(identity ? { identity } : {}),
+      };
+    }
+    return { hasUnsavedContent: dirtyText || dirtyChecks, focused };
   }
   if (mode === 'scroll') {
     const deltas = {
@@ -668,6 +824,7 @@ async function inspectPage(browserApi, scope, signal, { light = false } = {}) {
   const title = isRestrictedUrl(currentUrl) ? '' : compact(tab?.title, 500);
   if (light || isRestrictedUrl(currentUrl)) return { currentUrl, hasUnsavedContent: false, title };
   let hasUnsavedContent = false;
+  let focused = null;
   if (browserApi.scripting?.executeScript) {
     try {
       const response = await browserApi.scripting.executeScript({
@@ -676,11 +833,75 @@ async function inspectPage(browserApi, scope, signal, { light = false } = {}) {
         args: ['inspect'],
       });
       hasUnsavedContent = response?.[0]?.result?.hasUnsavedContent === true;
+      const read = response?.[0]?.result?.focused;
+      if (read && typeof read === 'object') {
+        focused = {
+          role: compact(read.role, 80),
+          name: compact(read.name, 200),
+          inputType: compact(read.inputType, 40),
+          ...(compact(read.autocomplete, 80) ? { autocomplete: compact(read.autocomplete, 80) } : {}),
+          ...(read.inFrame === true ? { inFrame: true } : {}),
+          ...(/^[a-f0-9]{32}$/.test(read.identity || '') ? { identity: read.identity } : {}),
+        };
+      }
     } catch {
       // Inspection is a conservative enhancement; the action policy still runs.
     }
   }
-  return { currentUrl, hasUnsavedContent, title };
+  return { currentUrl, hasUnsavedContent, title, ...(focused ? { focused } : {}) };
+}
+
+// How a message names a frame: by its host (never a path, query or anything it shows), as a document that is not a
+// web page, or as one that could not be checked.
+function describeFrame(verdict = {}) {
+  const url = String(verdict.url || '').trim();
+  if (!verdict.known || !url) return { kind: 'unknown', host: '' };
+  try {
+    const parsed = new URL(url);
+    if (/^https?:$/.test(parsed.protocol) && parsed.host) return { kind: 'web', host: parsed.host };
+  } catch {
+    // Not an address at all.
+  }
+  return { kind: 'document', host: '' };
+}
+
+// The message for a screenshot that a frame withholds: the frame by its host, what Hermes can still do, and what
+// the person can do. The host only, never a path, query or content.
+function withheldScreenshotMessage(verdict) {
+  const frame = describeFrame(verdict);
+  const lead = frame.kind === 'web'
+    ? `A frame from ${frame.host} on this page is on a page Hermes cannot read, so the screenshot was withheld.`
+    : (frame.kind === 'document'
+      ? 'A frame on this page that is not an ordinary web page (a browser, data or blob document) is in view, so the screenshot was withheld.'
+      : 'A frame on this page could not be checked, so the screenshot was withheld.');
+  return `${lead} Hermes can still read the page text with ${controlToolName('browser_snapshot')}. Scroll the frame out of view, take a screenshot of one element away from it, or ask the person to look at it themselves.`;
+}
+
+// The same for a pointer action that would land inside a frame.
+function pointerFrameMessage(verdict) {
+  const frame = describeFrame(verdict);
+  const where = frame.kind === 'web'
+    ? `a frame from ${frame.host} that is on a page Hermes cannot read`
+    : (frame.kind === 'document'
+      ? 'a frame on this page that is not an ordinary web page'
+      : 'a frame on this page that Hermes could not check');
+  return `Hermes cannot act there: the spot is inside ${where}. Click somewhere else on the page, or ask the person to do it.`;
+}
+
+// Runs in every frame of a Firefox page (scripting.executeScript with allFrames): the frame's own current address,
+// which the page around it cannot read for a cross-origin frame, and, in the page itself, how many of its frames
+// show (a frame under 4 x 4 CSS pixels, one that is not displayed, hidden or transparent does not).
+export function frameProbe() {
+  const isTop = window === window.top;
+  let shown = 0;
+  if (isTop) {
+    for (const element of document.querySelectorAll('iframe,frame')) {
+      const rect = element.getBoundingClientRect();
+      const style = window.getComputedStyle(element);
+      if (rect.width >= 4 && rect.height >= 4 && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0) shown += 1;
+    }
+  }
+  return { url: location.href, top: isTop, frames: shown };
 }
 
 function createChromiumCdpAdapter({
@@ -714,6 +935,11 @@ function createChromiumCdpAdapter({
   const activeOperations = new Map();
   const expectedDetaches = new Map();
   const eventWaiters = new Map();
+  // Counts the times a tab's debugger was let go on purpose (Pause, releasing the tab, Turn off) or taken away
+  // (the Chrome bar's Cancel, DevTools). An operation remembers the count it started under, and one that sees
+  // it move stops instead of attaching again to finish what the person ended.
+  const releaseEpochs = new Map();
+  const bumpReleaseEpoch = (tabId) => releaseEpochs.set(tabId, (releaseEpochs.get(tabId) || 0) + 1);
 
   function requireDebugger() {
     if (!debuggerApi?.attach || !debuggerApi?.sendCommand || !debuggerApi?.detach) {
@@ -781,6 +1007,7 @@ function createChromiumCdpAdapter({
       return;
     }
     dropSession(tabId);
+    bumpReleaseEpoch(tabId);
     onDebuggerDetach({
       tabId,
       reason: compact(reason, 120) || 'unknown',
@@ -872,7 +1099,7 @@ function createChromiumCdpAdapter({
   function mapNodeError(method, error) {
     if ((method.startsWith('DOM.') || method === 'Runtime.callFunctionOn')
       && STALE_NODE_RE.test(String(error?.message || error || ''))) {
-      return codedError('stale_ref', STALE_REF_MESSAGE);
+      return codedError('stale_ref', staleRefMessage());
     }
     return error;
   }
@@ -944,13 +1171,23 @@ function createChromiumCdpAdapter({
     assertNotAborted(signal);
     requireDebugger();
     const tabId = tabIdFrom(scope);
+    const epoch = releaseEpochs.get(tabId) || 0;
+    const stillAttachedByChoice = () => {
+      if ((releaseEpochs.get(tabId) || 0) === epoch) return;
+      throw codedError('debugger_detached', 'The debugger was detached, so Hermes stopped this action.');
+    };
     activeOperations.set(tabId, (activeOperations.get(tabId) || 0) + 1);
     try {
       await ensureSession(tabId);
       assertNotAborted(signal);
-      const send = (method, params = {}) => sendWithRetry(tabId, method, params, signal);
+      stillAttachedByChoice();
+      const send = (method, params = {}) => {
+        stillAttachedByChoice();
+        return sendWithRetry(tabId, method, params, signal);
+      };
       const enable = async (...domains) => {
         for (const domain of domains) {
+          stillAttachedByChoice();
           const session = sessions.get(tabId) || await ensureSession(tabId);
           if (session.enabled.has(domain)) continue;
           // Concurrent first uses share one enable round trip.
@@ -979,13 +1216,61 @@ function createChromiumCdpAdapter({
 
   const { watchLoad, waitForLoad } = createLoadWaiter({ browserApi, now, sleep, subscribe: subscribeTab });
 
+  // Whether Hermes still has a debugger attached to the tab. A command that was running when the person
+  // detached it (the Chrome banner's Cancel, DevTools, Turn off, Pause) must not attach again to go on reading.
+  const attached = (tabId) => sessions.has(tabId) || recovering.has(tabId) || inflight.has(tabId);
+
+  // Whether a failed read ends the whole read: the command was cancelled, or the attachment is gone.
+  const readEnded = (error, signal, tabId) => Boolean(abortError(signal))
+    || !attached(tabId)
+    || NOT_ATTACHED_RE.test(String(error?.message || error || ''))
+    || error?.code === 'debugger_conflict'
+    || error?.code === 'debugger_detached';
+
+  // The accessibility tree of every frame Hermes may read in the tab, the main frame first. Each entry keeps the
+  // CDP id of the frame it came from so its nodes can be ref'd and acted on.
+  async function collectAxTrees({ send, tabId, signal }) {
+    let children = [];
+    try {
+      children = readableChildFrames((await send('Page.getFrameTree'))?.frameTree);
+    } catch (error) {
+      // A tab that cannot report its frame tree still describes its main frame.
+      if (readEnded(error, signal, tabId)) throw error;
+    }
+    const trees = [{ frameId: '', tree: await send('Accessibility.getFullAXTree') }];
+    for (const frame of children) {
+      assertNotAborted(signal);
+      if (!attached(tabId)) throw codedError('debugger_detached', 'The debugger was detached, so Hermes stopped reading the page.');
+      try {
+        const tree = await send('Accessibility.getFullAXTree', { frameId: frame.id });
+        // An empty or trivial child frame (an ad slot, a tracker) adds nothing.
+        if ((Array.isArray(tree?.nodes) ? tree.nodes.length : 0) > 1) trees.push({ frameId: frame.id, tree });
+      } catch (error) {
+        // A frame that vanished or runs out of process is left out; losing the attachment is not that.
+        if (readEnded(error, signal, tabId)) throw error;
+      }
+    }
+    if (trees.length < 2) return trees;
+    // The frames were judged from the tree read before their content, and a frame can have moved to a restricted
+    // address (a checkout path pushed into its history) while it was being read. The tree is read again, and the
+    // content of any frame that is no longer one Hermes may read is dropped. A tree that cannot be read again
+    // keeps no frame: it cannot be shown that they are still allowed.
+    let stillReadable = null;
+    try {
+      stillReadable = new Set(readableChildFrames((await send('Page.getFrameTree'))?.frameTree).map((frame) => frame.id));
+    } catch (error) {
+      if (readEnded(error, signal, tabId)) throw error;
+    }
+    return trees.filter((entry, index) => index === 0 || Boolean(stillReadable?.has(entry.frameId)));
+  }
+
   async function nodeCenter(send, backendNodeId) {
     await send('DOM.scrollIntoViewIfNeeded', { backendNodeId });
     return quadCenter(await send('DOM.getBoxModel', { backendNodeId }));
   }
 
   // Reports whether another element covers the click point, given the node under it
-  // (see nodeAtPoint). A failed check must never block the click, so every error
+  // (see checkedHit). A failed check must never block the click, so every error
   // except cancellation is ignored.
   async function pointIsObscured(send, signal, backendNodeId, hitNodeId) {
     if (!Number.isInteger(hitNodeId) || hitNodeId <= 0 || hitNodeId === backendNodeId) return false;
@@ -1006,20 +1291,442 @@ function createChromiumCdpAdapter({
     }
   }
 
-  // The node under a viewport point, for a coordinate click. Never blocks the click.
-  async function nodeAtPoint(send, signal, point) {
+  // Where a frame stands in the page, from what the browser itself reports (never from page script, which a
+  // page can answer for): the addresses of the documents from the outermost child frame down to it, and the
+  // element that owns the innermost one (0 for the page itself).
+  function frameTreePath(tree, frameId, trail = []) {
+    if (tree?.frame?.id === frameId) return trail;
+    for (const child of Array.isArray(tree?.childFrames) ? tree.childFrames : []) {
+      const found = frameTreePath(child, frameId, [...trail, child.frame]);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // The documents above a node, read from the live DOM including the documents of its frames. A node that is
+  // not in any document of the page (gone, or in a frame that runs in another process) has no path.
+  async function documentPathOfNode(send, backendNodeId) {
+    const document = await send('DOM.getDocument', { depth: -1, pierce: true });
+    const stack = document?.root ? [{ node: document.root, urls: [], owner: 0 }] : [];
+    while (stack.length) {
+      const { node, urls, owner } = stack.pop();
+      if (Number(node?.backendNodeId) === backendNodeId) return { urls, owner };
+      const children = [
+        ...(Array.isArray(node?.children) ? node.children : []),
+        ...(Array.isArray(node?.shadowRoots) ? node.shadowRoots : []),
+        ...(Array.isArray(node?.pseudoElements) ? node.pseudoElements : []),
+        ...(node?.templateContent ? [node.templateContent] : []),
+      ];
+      for (const child of children) stack.push({ node: child, urls, owner });
+      if (node?.contentDocument) {
+        stack.push({
+          node: node.contentDocument,
+          urls: [...urls, String(node.contentDocument.documentURL || '')],
+          owner: Number(node.backendNodeId) || -1,
+        });
+      }
+    }
+    return null;
+  }
+
+  function restrictedFrameError(reason) {
+    return codedError('restricted_frame', reason || 'The frame this control is in is on a page Hermes will not act on.');
+  }
+
+  // Before any action on a control in a child frame: the frame must still be on pages Hermes may act on, and so
+  // must every frame above it. A frame readable when the page was snapshotted can have moved since (a checkout
+  // path pushed into its history keeps its controls), and the executor's probe only describes the page itself.
+  // Returns the element that owns each target's frame (0 for the page itself, undefined for no target), which
+  // the click, hover and drag hit tests compare against what is actually under the pointer.
+  async function assertFramedTargetsReadable(send, enable, signal, { target, destination }) {
+    const owners = {};
+    for (const [key, node] of [['target', target], ['destination', destination]]) {
+      if (!node) continue;
+      owners[key] = 0;
+      if (!node.frameId) continue;
+      const backendNodeId = Number(node.backendDOMNodeId);
+      let path = null;
+      if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
+        await enable('DOM');
+        try {
+          path = await documentPathOfNode(send, backendNodeId);
+        } catch (error) {
+          if (abortError(signal)) throw error;
+        }
+      }
+      // A node that is in no document is either gone (its frame was replaced since the snapshot) or unplaceable.
+      // Gone is a stale ref; anything the browser still knows but cannot place counts as restricted.
+      if (!path && Number.isInteger(backendNodeId) && backendNodeId > 0) {
+        try {
+          await send('DOM.describeNode', { backendNodeId });
+        } catch (error) {
+          if (abortError(signal)) throw error;
+          if (error?.code === 'stale_ref' || STALE_NODE_RE.test(String(error?.message || error || ''))) {
+            throw codedError('stale_ref', staleRefMessage());
+          }
+        }
+      }
+      // Unknown counts as restricted.
+      if (!path || !frameChainReadable(path.urls)) throw restrictedFrameError();
+      owners[key] = path.owner;
+    }
+    return owners;
+  }
+
+  // Elements that embed another document. A frame that Chrome runs in its own process (a cross-site
+  // iframe) is missing from Page.getFrameTree, but its owner element is still in the DOM, so this is the source
+  // that cannot miss one.
+  const FRAME_OWNER_NAMES = new Set(['IFRAME', 'FRAME', 'FRAMESET', 'OBJECT', 'EMBED', 'FENCEDFRAME', 'PORTAL']);
+
+  // Whether the browser describes a node as embedding a document, whatever its tag: the names above are only a
+  // floor, and a node that carries a frame id or a content document of its own is an owner too.
+  function embedsFrame(node) {
+    return FRAME_OWNER_NAMES.has(String(node?.nodeName || '').toUpperCase())
+      || Boolean(node?.frameId) || Boolean(node?.contentDocument);
+  }
+
+  // A frame in its own process has no document in the DOM and no entry in the frame tree, but the browser lists it
+  // as a target of its own with the address it is on. `Target.getTargets` is refused to an extension's debugger
+  // session ("Not allowed"), so the list comes from the extension API, chrome.debugger.getTargets(): the frame
+  // shows there as a target of type "other" whose `id` is the frame id its owner element has in the DOM, with its
+  // real address and no parent. A list that cannot be had (the call is missing, throws, or answers something that
+  // is not a list) leaves every such frame's address unknown, and a frame that is not in it stays unknown.
+  async function crossProcessFrames(signal) {
     try {
-      const hit = await send('DOM.getNodeForLocation', {
+      if (typeof debuggerApi?.getTargets !== 'function') return null;
+      const infos = await debuggerApi.getTargets();
+      assertNotAborted(signal);
+      if (!Array.isArray(infos)) return null;
+      const byId = new Map();
+      for (const info of infos) {
+        if (!info?.id || (info.type !== 'other' && info.type !== 'iframe')) continue;
+        const id = String(info.id);
+        const entry = byId.get(id) || { urls: [] };
+        entry.urls.push(String(info.url || ''));
+        byId.set(id, entry);
+      }
+      return byId;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return null;
+    }
+  }
+
+  // Whether a frame in another process may be read: its own address must be an ordinary page by the policy the page
+  // itself is held to. An address that cannot be had is not readable. (What the frame is nested in is judged from
+  // the document it sits in, which the DOM scan knows: the target list has no parents.) `url` is the first address
+  // that is not readable.
+  function judgeCrossProcessFrame(frameId, targets) {
+    const entry = frameId && targets ? targets.get(frameId) : null;
+    if (!entry) return { readable: false, known: false, url: '' };
+    const bad = entry.urls.find((url) => !frameUrlReadable(url));
+    return bad === undefined ? { readable: true, known: true, url: entry.urls[0] } : { readable: false, known: true, url: bad };
+  }
+
+  const framePathUrls = (path) => path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`);
+
+  // The owner elements of every frame on the page that Hermes may not read (see frameUrlReadable), from the live
+  // DOM, which lists the owners of frames in other processes too. A frame in the same process is judged by its
+  // document's address (the fragment included); one in its own process has no document in the DOM, so it counts
+  // unless the frame tree proves it readable.
+  async function unreadableFrameOwners(send, signal) {
+    const document = await send('DOM.getDocument', { depth: -1, pierce: true });
+    let tree = null;
+    try {
+      tree = (await send('Page.getFrameTree'))?.frameTree || null;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+    }
+    // The browser's own list of frames in other processes, read once and only if a frame needs it.
+    let targets;
+    const crossProcessTargets = async () => {
+      if (targets === undefined) targets = await crossProcessFrames(signal);
+      return targets;
+    };
+    // `blocked` is the verdict of the nearest frame above that Hermes may not read, from the document the owner
+    // sits in: a frame inside such a frame is hidden with it, whatever its own address is, since the page that
+    // embeds it is not one Hermes may read.
+    const owners = [];
+    const stack = document?.root ? [{ node: document.root, blocked: null }] : [];
+    while (stack.length) {
+      const { node, blocked } = stack.pop();
+      let below = blocked;
+      if (Number(node?.nodeType) !== 9 && embedsFrame(node)) {
+        let verdict = { readable: false, known: false, url: '' };
+        if (node.contentDocument) {
+          const url = String(node.contentDocument.documentURL || '');
+          verdict = { readable: frameUrlReadable(url), known: Boolean(url), url };
+        } else {
+          const owned = String(node.frameId || '');
+          const path = owned && tree ? frameTreePath(tree, owned) : null;
+          if (path) {
+            const urls = framePathUrls(path);
+            const bad = urls.find((url) => !frameUrlReadable(url));
+            verdict = { readable: bad === undefined, known: true, url: bad ?? urls.at(-1) ?? '' };
+          } else {
+            verdict = judgeCrossProcessFrame(owned, await crossProcessTargets());
+          }
+        }
+        const effective = blocked || verdict;
+        if (!effective.readable) {
+          owners.push({ id: Number(node.backendNodeId) || 0, verdict: effective });
+          below = effective;
+        }
+      }
+      for (const list of [node?.children, node?.shadowRoots, node?.pseudoElements]) {
+        if (Array.isArray(list)) for (const child of list) stack.push({ node: child, blocked: below });
+      }
+      if (node?.templateContent) stack.push({ node: node.templateContent, blocked: below });
+      if (node?.contentDocument) stack.push({ node: node.contentDocument, blocked: below });
+    }
+    return owners;
+  }
+
+  // Where the visual viewport is in the document, and how big: the part of the page that is in view. Null when the
+  // browser cannot say.
+  async function readViewport(send, signal) {
+    try {
+      const viewport = (await send('Page.getLayoutMetrics'))?.cssVisualViewport;
+      const width = Number(viewport?.clientWidth);
+      const height = Number(viewport?.clientHeight);
+      if (!(width > 0 && height > 0)) return null;
+      return {
+        pageX: Number(viewport?.pageX) || 0,
+        pageY: Number(viewport?.pageY) || 0,
+        scale: Number(viewport?.scale) > 0 ? Number(viewport.scale) : 1,
+        zoom: Number(viewport?.zoom) > 0 ? Number(viewport.zoom) : 1,
+        width,
+        height,
+      };
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return null;
+    }
+  }
+
+  // The part of the document a screenshot covers, in CSS px of the document: the element's rect, or what is in view.
+  // Null when it cannot be told.
+  function screenshotRegion(cssRect, view) {
+    if (cssRect) return { x: cssRect.x, y: cssRect.y, width: cssRect.width, height: cssRect.height };
+    return view ? { x: view.pageX, y: view.pageY, width: view.width, height: view.height } : null;
+  }
+
+  // Whether the element's box overlaps a region of the document. The box is in CSS px relative to the visual viewport,
+  // unscaled by a pinch zoom, which makes it document coordinates through where the viewport is, the same way the
+  // clip is made. An element that is not rendered has no pixels; any other failure to measure it counts as overlapping.
+  async function ownerInDocumentRegion(send, signal, backendNodeId, region, view) {
+    if (!region || !view || !backendNodeId) return true;
+    try {
+      const box = quadRect(await send('DOM.getBoxModel', { backendNodeId }));
+      // A frame under 4 x 4 CSS pixels (a tracker, a beacon) shows nothing.
+      if (box.width < MIN_VISIBLE_FRAME_PX || box.height < MIN_VISIBLE_FRAME_PX) return false;
+      const left = view.pageX + box.x;
+      const top = view.pageY + box.y;
+      return left < region.x + region.width && left + box.width > region.x
+        && top < region.y + region.height && top + box.height > region.y;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return !/could not compute box model/i.test(String(error?.message || ''));
+    }
+  }
+
+  // Whether the browser's own style for the element makes it invisible: not displayed, hidden, or fully transparent.
+  // Read through the CSS domain, which the page's script cannot answer for; any failure to read it is "not hidden".
+  async function ownerHiddenByStyle(send, enable, signal, backendNodeId) {
+    try {
+      await enable('CSS');
+      const nodeId = (await send('DOM.pushNodesByBackendIdsToFrontend', { backendNodeIds: [backendNodeId] }))?.nodeIds?.[0];
+      if (!nodeId) return false;
+      const style = (await send('CSS.getComputedStyleForNode', { nodeId }))?.computedStyle;
+      if (!Array.isArray(style)) return false;
+      const valueOf = (name) => String(style.find((property) => property?.name === name)?.value ?? '').trim().toLowerCase();
+      return valueOf('display') === 'none'
+        || ['hidden', 'collapse'].includes(valueOf('visibility'))
+        || (valueOf('opacity') !== '' && Number(valueOf('opacity')) === 0);
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return false;
+    }
+  }
+
+  // Whether the element's box overlaps the region, so its pixels are in the screenshot. An element that is not
+  // rendered has no pixels; any other failure to measure it counts as overlapping.
+  async function ownerInRegion(send, signal, backendNodeId, region) {
+    if (!region || !backendNodeId) return true;
+    try {
+      const box = quadRect(await send('DOM.getBoxModel', { backendNodeId }));
+      return box.x < region.x + region.width && box.x + box.width > region.x
+        && box.y < region.y + region.height && box.y + box.height > region.y;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return !/could not compute box model/i.test(String(error?.message || ''));
+    }
+  }
+
+  // A screenshot is pixels of the whole page, frames included, so it follows the rule snapshots follow: a frame
+  // Hermes may not read (a payment or sign-in frame) that shows in the captured region withholds the screenshot.
+  // A page whose frames cannot be checked is treated the same way.
+  async function assertScreenshotFramesReadable(send, enable, signal, cssRect) {
+    const withheld = (verdict) => restrictedFrameError(withheldScreenshotMessage(verdict));
+    let owners;
+    try {
+      owners = await unreadableFrameOwners(send, signal);
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      throw withheld({ known: false });
+    }
+    if (!owners.length) return;
+    const view = await readViewport(send, signal);
+    const region = screenshotRegion(cssRect, view);
+    for (const { id, verdict } of owners) {
+      if (!await ownerInDocumentRegion(send, signal, id, region, view)) continue;
+      // Only a frame that shows is withheld for.
+      if (await ownerHiddenByStyle(send, enable, signal, id)) continue;
+      throw withheld(verdict);
+    }
+  }
+
+  // The frame a pointer action would land in, as its owner element (described) says: it must be a frame Hermes may
+  // read. A frame in the frame tree is judged by its address there; one in its own process, which the tree does not
+  // list, by the address the browser reports for it. One whose address cannot be had is refused.
+  async function assertOwnedFrameReadable(send, signal, tree, described) {
+    const owned = String(described.frameId || '');
+    const ownedPath = owned && tree ? frameTreePath(tree, owned) : null;
+    if (ownedPath) {
+      const urls = framePathUrls(ownedPath);
+      const bad = urls.find((url) => !frameUrlReadable(url));
+      if (bad === undefined) return;
+      throw restrictedFrameError(pointerFrameMessage({ known: true, url: bad }));
+    }
+    const verdict = judgeCrossProcessFrame(owned, await crossProcessFrames(signal));
+    if (!verdict.readable) throw restrictedFrameError(pointerFrameMessage(verdict));
+  }
+
+  // The node under a viewport point, which is where a pointer action actually lands. The frame it is in must be
+  // on pages Hermes may act on (a restricted frame laid over the control is such a frame), and for a control
+  // with a known frame it must be the control's own frame, since a click on a covered control lands in
+  // whatever covers it. When the node is itself the element that embeds a frame, the pointer lands inside that
+  // frame, so the frame it owns is judged too, and one that cannot be found in the frame tree (a frame in its
+  // own process) is refused. When the browser names no frame (or no node), the node is placed through the DOM,
+  // and with nothing to place the point is refused only when a frame Hermes may not read could be under it,
+  // or when that cannot be told. Returns the hit node id, or 0 when unknown.
+  async function checkedHit(send, enable, signal, point, expectedOwner) {
+    await enable('DOM');
+    let hit = null;
+    try {
+      hit = await send('DOM.getNodeForLocation', {
         x: Math.round(point.x),
         y: Math.round(point.y),
         includeUserAgentShadowDOM: true,
       });
-      const hitNodeId = Number(hit?.backendNodeId);
-      return Number.isInteger(hitNodeId) && hitNodeId > 0 ? hitNodeId : 0;
     } catch (error) {
       if (abortError(signal)) throw error;
-      return 0;
     }
+    const hitNodeId = Number(hit?.backendNodeId);
+    const hitId = Number.isInteger(hitNodeId) && hitNodeId > 0 ? hitNodeId : 0;
+    let tree = null;
+    try {
+      tree = (await send('Page.getFrameTree'))?.frameTree || null;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+    }
+    const hitFrameId = String(hit?.frameId || '');
+    if (!hitFrameId) {
+      // The browser did not say which frame the point is in (a tab in the background, a node the page just
+      // re-rendered, or no hit at all). Ask the DOM instead of refusing every page that has a frame: a node it
+      // can place is judged by the documents above it, like a control is; with nothing to place, the point is
+      // refused only when a frame Hermes may not read could be under it.
+      let placed = null;
+      if (hitId) {
+        try {
+          placed = await documentPathOfNode(send, hitId);
+        } catch (error) {
+          if (abortError(signal)) throw error;
+        }
+      }
+      if (placed) {
+        let described = null;
+        try {
+          described = (await send('DOM.describeNode', { backendNodeId: hitId }))?.node || null;
+        } catch (error) {
+          if (abortError(signal)) throw error;
+        }
+        if (!described) throw restrictedFrameError('Hermes could not tell what is under that point.');
+        if (embedsFrame(described)) await assertOwnedFrameReadable(send, signal, tree, described);
+        if (!frameChainReadable(placed.urls)) throw restrictedFrameError();
+        if (expectedOwner !== undefined && placed.owner !== expectedOwner) {
+          throw restrictedFrameError('The control is covered by content from another frame.');
+        }
+        return hitId;
+      }
+      let unreadableAtPoint = true;
+      let blocking = null;
+      try {
+        const owners = await unreadableFrameOwners(send, signal);
+        const here = { x: point.x - 0.5, y: point.y - 0.5, width: 1, height: 1 };
+        unreadableAtPoint = false;
+        for (const owner of owners) {
+          if (await ownerInRegion(send, signal, owner.id, here)) {
+            unreadableAtPoint = true;
+            blocking = owner.verdict;
+            break;
+          }
+        }
+      } catch (error) {
+        if (abortError(signal)) throw error;
+        unreadableAtPoint = true;
+      }
+      if (unreadableAtPoint) {
+        throw restrictedFrameError(blocking
+          ? pointerFrameMessage(blocking)
+          : 'Hermes could not tell which frame is under that point, so it did not act there. Try a control elsewhere on the page, or ask the person.');
+      }
+      return hitId;
+    }
+    if (hitId) {
+      let described = null;
+      try {
+        described = (await send('DOM.describeNode', { backendNodeId: hitId }))?.node || null;
+      } catch (error) {
+        if (abortError(signal)) throw error;
+      }
+      if (!described) throw restrictedFrameError('Hermes could not tell what is under that point.');
+      if (embedsFrame(described)) await assertOwnedFrameReadable(send, signal, tree, described);
+    }
+    if (tree?.frame?.id === hitFrameId) {
+      if (expectedOwner !== undefined && expectedOwner !== 0) throw restrictedFrameError('The control is covered by content from another frame.');
+      return hitId;
+    }
+    const path = tree ? frameTreePath(tree, hitFrameId) : null;
+    if (!path || !frameChainReadable(framePathUrls(path))) throw restrictedFrameError();
+    if (expectedOwner !== undefined) {
+      let owner = -1;
+      try {
+        owner = Number((await send('DOM.getFrameOwner', { frameId: hitFrameId }))?.backendNodeId) || -1;
+      } catch (error) {
+        if (abortError(signal)) throw error;
+      }
+      if (owner !== expectedOwner) throw restrictedFrameError('The control is covered by content from another frame.');
+    }
+    return hitId;
+  }
+
+  async function assertFocusHeld(send, objectId) {
+    if (!objectId) throw restrictedFrameError('Hermes could not tell where focus is after selecting that field, so nothing was typed.');
+    // A failing read (the page navigated, the context is gone) fails the command: nothing is typed.
+    const focus = (await send('Runtime.callFunctionOn', {
+      objectId,
+      functionDeclaration: FOCUS_CHECK_FUNCTION,
+      returnByValue: true,
+    }))?.result?.value;
+    if (!focus || typeof focus !== 'object' || typeof focus.held !== 'boolean') {
+      throw restrictedFrameError('Hermes could not tell where focus is after selecting that field, so nothing was typed.');
+    }
+    if (focus.held) return;
+    if (focus.frame === true) {
+      throw restrictedFrameError('Focus moved into an embedded frame after Hermes selected that field, so nothing was typed. Click the field and try again, or ask the person.');
+    }
+    throw codedError('focus_changed', 'Focus moved to a different element than the one Hermes meant to type into, so nothing was typed. Click the field and try again.');
   }
 
   // Whether a click on this node would open a new tab (see clickTargetOpensNewTab).
@@ -1100,7 +1807,7 @@ function createChromiumCdpAdapter({
     });
   }
 
-  async function performScroll({ send, enable }, args, target, signal) {
+  async function performScroll({ send, enable }, args, target, signal, framing = {}) {
     const { axis, sign } = scrollDirection(args.direction);
     let metrics = {};
     try {
@@ -1127,7 +1834,19 @@ function createChromiumCdpAdapter({
     // A hidden tab never produces frames, so Chrome would hold the wheel event
     // until the tab is shown again and the action would hang. Scroll through
     // the page instead.
-    if (await pageIsHidden(send, signal)) {
+    // The wheel is delivered to whatever is under its point, so that point is judged like a click's: a frame
+    // Hermes may not read (or one that cannot be told) under it gets no wheel, and the page is scrolled itself.
+    let wheelAllowed = true;
+    const hidden = await pageIsHidden(send, signal);
+    if (!hidden) {
+      try {
+        await checkedHit(send, enable, signal, point, hasNode ? framing.target : undefined);
+      } catch (error) {
+        if (error?.code !== 'restricted_frame') throw error;
+        wheelAllowed = false;
+      }
+    }
+    if (!wheelAllowed || hidden) {
       await scrollWithoutWheel(send, signal, hasNode ? backendNodeId : 0, deltaX, deltaY);
     } else {
       try {
@@ -1192,15 +1911,61 @@ function createChromiumCdpAdapter({
     });
   }
 
-  async function runWithSession(action, args, scope, signal, target, destination) {
+  // Runs a press and its release. A Stop, a detach or a failure after the button went down must not leave it
+  // down (a drag in progress, a hold-on-mousedown control firing), so the release is sent again, straight to the
+  // browser and without the cancellation check, whenever the normal release did not complete. A release for a
+  // button that is not down does nothing.
+  //
+  // `cancelAway` is for a drag. A release with the left button anywhere is a click on whatever is under it, and a
+  // drag that has started drops wherever it is whatever the release says (Chrome, measured: released at the source
+  // it dropped on the destination). What ends a press with neither is moving the pointer far off the page with the
+  // button held, releasing with no button named (no mouseup, so no click; a native drag is cancelled with a dragend),
+  // and then a move that says no button is down, so the page does not think it still is.
+  async function pressAndRelease(session, position, modifierFields, press, release, { cancelAway = false } = {}) {
+    let down = false;
+    try {
+      down = true;
+      await press();
+      await release();
+      down = false;
+    } finally {
+      if (down) {
+        const mouse = (fields) => rawSend(session.tabId, 'Input.dispatchMouseEvent', { x: OFF_PAGE_PX, y: OFF_PAGE_PX, ...fields }).catch(() => {});
+        if (cancelAway) {
+          await mouse({ type: 'mouseMoved', button: 'left', buttons: 1 });
+          await mouse({ type: 'mouseReleased', button: 'none', buttons: 0, clickCount: 1 });
+          await mouse({ type: 'mouseMoved', button: 'none', buttons: 0 });
+        } else {
+          const at = position?.at || position;
+          await rawSend(session.tabId, 'Input.dispatchMouseEvent', {
+            type: 'mouseReleased', x: at.x, y: at.y, button: 'left', buttons: 0, clickCount: 1, ...modifierFields,
+          }).catch(() => {});
+        }
+      }
+    }
+  }
+
+  // The address the tab has now, refused when it is a page Hermes will not capture.
+  async function screenshotPageAddress(tabId, signal, allowLocalDocuments) {
+    const tab = await browserApi.tabs.get(tabId);
+    assertNotAborted(signal);
+    const url = compact(tab?.url || tab?.pendingUrl, 2_000);
+    if (isRestrictedUrl(url, { allowLocalDocuments })) {
+      throw codedError('restricted_page', 'This page is one Hermes will not capture, so no screenshot was taken or kept.');
+    }
+    return url;
+  }
+
+  async function runWithSession(action, args, scope, signal, target, destination, { allowLocalDocuments = false, expectedFocus = null } = {}) {
     return withSession(scope, signal, async (session) => {
       const { send, enable } = session;
+      const framing = action === 'browser_snapshot' ? {} : await assertFramedTargetsReadable(send, enable, signal, { target, destination });
       if (action === 'browser_snapshot') {
         await enable('Accessibility');
-        const tree = await send('Accessibility.getFullAXTree');
+        const trees = await collectAxTrees({ send, tabId: session.tabId, signal });
         const tab = await browserApi.tabs.get(session.tabId);
         assertNotAborted(signal);
-        return chromiumSnapshot(tree, tab, { full: args.full === true });
+        return chromiumSnapshot(trees, tab, { full: args.full === true });
       }
       if (action === 'browser_click') {
         let point;
@@ -1210,12 +1975,11 @@ function createChromiumCdpAdapter({
         if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
           await enable('DOM');
           point = await nodeCenter(send, backendNodeId);
-          hitNodeId = await nodeAtPoint(send, signal, point);
+          hitNodeId = await checkedHit(send, enable, signal, point, framing.target);
           obscured = await pointIsObscured(send, signal, backendNodeId, hitNodeId);
         } else {
           point = pointForArgs(args);
-          await enable('DOM');
-          hitNodeId = await nodeAtPoint(send, signal, point);
+          hitNodeId = await checkedHit(send, enable, signal, point, undefined);
         }
         // A link that opens a new tab gets the background-tab modifier, so Chrome opens
         // it behind the tab the person is looking at. The click lands on whatever is under
@@ -1226,11 +1990,20 @@ function createChromiumCdpAdapter({
         const modifierFields = modifiers ? { modifiers } : {};
         // Chrome holds a mouseMoved until the next frame, which a hidden tab
         // never draws; the press and release are delivered regardless.
-        if (!await pageIsHidden(send, signal)) {
+        const hidden = await pageIsHidden(send, signal);
+        // The checks above ran page script, which can move things. The frame under the point is judged again as
+        // the last step before the pointer moves, and once more before it presses, with nothing of ours running
+        // in the page in between.
+        await checkedHit(send, enable, signal, point, backendNodeId > 0 ? framing.target : undefined);
+        if (!hidden) {
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point, button: 'none', buttons: 0 });
+          await checkedHit(send, enable, signal, point, backendNodeId > 0 ? framing.target : undefined);
         }
-        await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1, ...modifierFields });
-        await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', buttons: 0, clickCount: 1, ...modifierFields });
+        await pressAndRelease(session, point, modifierFields, async () => {
+          await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1, ...modifierFields });
+        }, async () => {
+          await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', buttons: 0, clickCount: 1, ...modifierFields });
+        });
         return { status: 'clicked', ...(obscured ? { obscured: true } : {}) };
       }
       if (action === 'browser_hover' || action === 'browser_scroll_to' || action === 'browser_drag') {
@@ -1240,14 +2013,32 @@ function createChromiumCdpAdapter({
         const sourcePoint = await nodeCenter(send, sourceNodeId);
         if (action === 'browser_scroll_to') return { status: 'scrolled-to-target' };
         if (await pageIsHidden(send, signal)) throw hiddenTabError();
+        await checkedHit(send, enable, signal, sourcePoint, framing.target);
         await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...sourcePoint, button: 'none', buttons: 0 });
         if (action === 'browser_hover') return { status: 'hovered' };
         const destinationNodeId = Number(destination?.backendDOMNodeId);
         if (!Number.isInteger(destinationNodeId) || destinationNodeId <= 0) throw new Error('The destination ref has no DOM node.');
         const destinationPoint = await nodeCenter(send, destinationNodeId);
-        await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...sourcePoint, button: 'left', buttons: 1, clickCount: 1 });
-        await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
-        await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destinationPoint, button: 'left', buttons: 0, clickCount: 1 });
+        await checkedHit(send, enable, signal, destinationPoint, framing.destination);
+        // Scrolling to the destination can move the source, so its point is read again (without scrolling back,
+        // which could undo the destination's scroll) and judged right before the press. A source that is now
+        // covered by another element is not pressed: the approval was for the source ref, not for what sits there.
+        const pressPoint = quadCenter(await send('DOM.getBoxModel', { backendNodeId: sourceNodeId }));
+        const pressHit = await checkedHit(send, enable, signal, pressPoint, framing.target);
+        if (await pointIsObscured(send, signal, sourceNodeId, pressHit)) {
+          throw new Error('The drag source moved or was covered after scrolling to the destination, so nothing was pressed. Take a new snapshot and try again.');
+        }
+        if (Math.abs(pressPoint.x - sourcePoint.x) > 0.5 || Math.abs(pressPoint.y - sourcePoint.y) > 0.5) {
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...pressPoint, button: 'none', buttons: 0 });
+        }
+        // A drag that is stopped is let go of off the page: no click on the source, no drop on the destination.
+        const held = { at: pressPoint };
+        await pressAndRelease(session, held, {}, async () => {
+          await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...pressPoint, button: 'left', buttons: 1, clickCount: 1 });
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
+        }, async () => {
+          await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destinationPoint, button: 'left', buttons: 0, clickCount: 1 });
+        }, { cancelAway: true });
         return { status: 'dragged' };
       }
       if (action === 'browser_type') {
@@ -1265,6 +2056,9 @@ function createChromiumCdpAdapter({
             returnByValue: true,
           });
         }
+        // The clear above, or the page's own focus handler, may have moved focus. Text goes where focus is, so it
+        // is typed only when that is still the field, and never into a frame or another field.
+        await assertFocusHeld(send, objectId);
         await send('Input.insertText', { text: String(args.text ?? '') });
         if (objectId) {
           await send('Runtime.callFunctionOn', {
@@ -1345,20 +2139,52 @@ function createChromiumCdpAdapter({
         return { status: 'selected' };
       }
       if (action === 'browser_press') {
-        const { down, up } = keyEventFields(args);
+        const frameId = Math.max(0, Number(scope.frameId) || 0);
+        if (frameId !== 0) {
+          throw codedError('focus_changed', 'A key press inside an embedded frame cannot be bound to the focused control, so it was not sent.');
+        }
+        // A key goes where focus is now. An embedded frame's address is not judged here, so only Tab and Shift+Tab,
+        // which move focus and change no value, may go into one; an arrow key would work a payment frame's dropdown.
+        const current = await inspectPage(browserApi, scope, signal);
+        const fields = keyEventFields(args);
+        // Focus that could not be read at all is treated the same: it may be in a frame.
+        const unread = !current?.focused || typeof current.focused !== 'object';
+        const inFrame = unread || current.focused.inFrame === true || current.focused.role === 'frame';
+        if (inFrame && !(fields.down.key === 'Tab' && (fields.down.modifiers & 7) === 0)) {
+          throw codedError('focus_changed', unread
+            ? 'Hermes could not read where focus is, so the key was not sent.'
+            : 'Focus is inside an embedded frame, so the key was not sent.');
+        }
+        if (expectedFocus) {
+          const approved = String(expectedFocus.identity || '');
+          const actual = String(current?.focused?.identity || '');
+          if (!/^[a-f0-9]{32}$/.test(approved) || approved !== actual) {
+            throw codedError('focus_changed', 'Focus moved before the approved key could be sent.');
+          }
+        }
+        const { down, up } = fields;
         await send('Input.dispatchKeyEvent', down);
         await send('Input.dispatchKeyEvent', up);
         return { status: 'pressed' };
       }
-      if (action === 'browser_scroll') return performScroll(session, args, target, signal);
+      if (action === 'browser_scroll') return performScroll(session, args, target, signal, framing);
       if (action === 'browser_screenshot') {
+        // The executor judged the page before the debugger attached; the frame checks and the capture itself take
+        // several round trips, so the tab's own address is read again around the capture.
+        const before = await screenshotPageAddress(session.tabId, signal, allowLocalDocuments);
         let clip;
+        let cssRect;
         const backendNodeId = Number(target?.backendDOMNodeId);
         if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
           await enable('DOM');
           await send('DOM.scrollIntoViewIfNeeded', { backendNodeId });
-          clip = screenshotClip(await send('DOM.getBoxModel', { backendNodeId }), args.zoom);
+          const targetBox = await send('DOM.getBoxModel', { backendNodeId });
+          const view = await readViewport(send, signal);
+          if (!view) throw new Error('Hermes could not tell where the page is scrolled to, so no screenshot was taken. Try again.');
+          ({ clip, css: cssRect } = screenshotClip(targetBox, args.zoom, view));
         }
+        await enable('DOM');
+        await assertScreenshotFramesReadable(send, enable, signal, cssRect);
         const hidden = await pageIsHidden(send, signal);
         const capture = send('Page.captureScreenshot', {
           format: 'png',
@@ -1369,7 +2195,18 @@ function createChromiumCdpAdapter({
         const captured = await (hidden
           ? withTimeout(capture, HIDDEN_CAPTURE_TIMEOUT_MS, () => hiddenScreenshotError(), setTimer, clearTimer)
           : capture);
-        return boundedScreenshot(`data:image/png;base64,${String(captured?.data || '')}`);
+        // A frame can move to a restricted page while the capture runs; the pixels are dropped if so.
+        await assertScreenshotFramesReadable(send, enable, signal, cssRect);
+        // The page can have moved to a restricted address, or to another page, since: the pixels are dropped.
+        const after = await screenshotPageAddress(session.tabId, signal, allowLocalDocuments);
+        if (comparableUrl(after) !== comparableUrl(before)) {
+          throw codedError('page_changed', 'The page changed while the screenshot was taken, so it was discarded. Try again.');
+        }
+        // The picture of one element is the size that was asked for, or it is not the region that was checked.
+        if (clip && !captureMatchesClip(pngSize(captured?.data), clip)) {
+          throw codedError('capture_region_mismatch', 'The screenshot came back at a different size than the element, so it did not match the region Hermes checked and was discarded. Try again, or take a screenshot without a ref.');
+        }
+        return { ...boundedScreenshot(`data:image/png;base64,${String(captured?.data || '')}`), url: after };
       }
       throw new Error(`Action ${action} is not implemented by the Chromium adapter.`);
     });
@@ -1377,6 +2214,7 @@ function createChromiumCdpAdapter({
 
   async function execute(action, args = {}, {
     scope = {}, signal, target = null, destination = null, leasedTabIds = [], ownedTabIds = [], currentWindowId = null,
+    allowLocalDocuments = false, expectedFocus = null,
   } = {}) {
     if (!contract.actions.includes(action)) throw new Error(`Action ${action} is not supported by the Chromium adapter.`);
     assertNotAborted(signal);
@@ -1388,17 +2226,12 @@ function createChromiumCdpAdapter({
     if (action === 'browser_tab_activate') {
       const targetTabId = Number(args.tab_id);
       if (!Number.isInteger(targetTabId) || targetTabId <= 0) throw new Error('A valid tab id is required.');
-      return browserApi.tabs.update(targetTabId, { active: true });
+      return activateTab(browserApi, targetTabId);
     }
     if (action === 'browser_tab_create') {
-      const windowId = Number(currentWindowId) || Number((await browserApi.tabs.get(tabId))?.windowId) || null;
-      const tab = await browserApi.tabs.create({
-        url: String(args.url || ''),
-        // Hermes never takes the person's view: a tab it opens starts in the background.
-        active: false,
-        ...(windowId ? { windowId } : {}),
+      return createBackgroundTab(browserApi, waitForLoad, {
+        url: args.url, carrierTabId: tabId, fallbackWindowId: currentWindowId, signal,
       });
-      return { tab };
     }
     if (action === 'browser_tab_close') {
       const targetTabId = Number(args.tab_id);
@@ -1421,7 +2254,7 @@ function createChromiumCdpAdapter({
     }
     if (action === 'browser_navigate') return navigate(args, scope, signal);
     if (action === 'browser_back') return goBack(scope, signal);
-    return runWithSession(action, args, scope, signal, target, destination);
+    return runWithSession(action, args, scope, signal, target, destination, { allowLocalDocuments, expectedFocus });
   }
 
   // Waits for the page to react to an action. Never throws: any failure is
@@ -1510,6 +2343,7 @@ function createChromiumCdpAdapter({
   async function releaseTab(tabId) {
     const normalized = Number(tabId);
     if (!Number.isInteger(normalized) || normalized <= 0) return false;
+    bumpReleaseEpoch(normalized);
     if (inflight.has(normalized)) await inflight.get(normalized).catch(() => {});
     if (sessions.has(normalized) || detaching.has(normalized)) return detachSession(normalized);
     // Nothing is recorded here, but a service worker that was restarted since
@@ -1540,6 +2374,7 @@ function createChromiumCdpAdapter({
   }
 
   async function releaseAll() {
+    for (const tabId of sessions.keys()) bumpReleaseEpoch(tabId);
     const released = await Promise.all([...sessions.keys()].map((tabId) => detachSession(tabId)));
     return released.filter(Boolean).length;
   }
@@ -1581,6 +2416,36 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
 
   const { waitForLoad } = createLoadWaiter({ browserApi, now, sleep });
 
+  // tabs.captureVisibleTab needs the all-sites host permission, or an activeTab grant that only a user gesture gives, and
+  // a model command is not one. The shipped manifest has no literal <all_urls>, so there the capture is always refused
+  // with "Missing activeTab permission". Whether the permission is there is asked each time (it can be granted later).
+  // A permissions API that cannot answer leaves the capture to decide, and its refusal is mapped below.
+  async function screenshotPermitted() {
+    if (typeof browserApi.permissions?.contains !== 'function') return true;
+    try {
+      return (await browserApi.permissions.contains({ origins: ['<all_urls>'] })) === true;
+    } catch {
+      return true;
+    }
+  }
+
+  function screenshotUnavailableError() {
+    return codedError(
+      'screenshot_unavailable',
+      'Screenshots need extra browser permission in Firefox; use the page text instead (browser_snapshot), or press the Tab screenshot button yourself.',
+    );
+  }
+
+  // The actions the adapter can really do right now: its contract, without the screenshot while Firefox would refuse it,
+  // and what the contract lists but cannot be done, with the reason, for the capability report.
+  async function currentCapabilities() {
+    if (await screenshotPermitted()) return { actions: [...contract.actions], unavailable: [] };
+    return {
+      actions: contract.actions.filter((action) => action !== 'browser_screenshot'),
+      unavailable: [{ action: 'browser_screenshot', reason: 'permission-unavailable' }],
+    };
+  }
+
   // Firefox has no browser_click here (FIREFOX_GAPS: trusted input is unavailable), so
   // the Chromium click path and its new-tab modifier do not apply to this adapter.
   async function script(scope, signal, mode, direction = '') {
@@ -1594,8 +2459,44 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
     return response?.[0]?.result || {};
   }
 
+  // Firefox has no debugger to list frames with, but the scripting API runs a probe in every frame, which answers with
+  // that frame's own address. A frame on a page Hermes will not read withholds the screenshot. So does a page with
+  // more frames showing than answered (one the extension could not run in, so it could not be judged), and so does a
+  // probe that failed: what cannot be checked is not shown. The count is of frames, not of which ones.
+  async function assertFramesReadable(tabId, signal) {
+    const withheld = (verdict) => codedError('restricted_frame', withheldScreenshotMessage(verdict));
+    let results;
+    try {
+      results = await browserApi.scripting.executeScript({ target: { tabId, allFrames: true }, func: frameProbe });
+    } catch (error) {
+      assertNotAborted(signal);
+      throw withheld({ known: false });
+    }
+    assertNotAborted(signal);
+    const entries = (Array.isArray(results) ? results : []).map((entry) => entry?.result).filter((entry) => entry && typeof entry === 'object');
+    const top = entries.find((entry) => entry.top === true);
+    const children = entries.filter((entry) => entry.top !== true);
+    for (const child of children) {
+      const url = String(child.url || '');
+      if (!frameUrlReadable(url)) throw withheld({ known: true, url });
+    }
+    const shown = Number(top?.frames);
+    if (!top || !Number.isFinite(shown) || shown > children.length) throw withheld({ known: false });
+  }
+
+  // The leased tab, only when the window is showing it and its page is one Hermes may read.
+  async function visibleLeasedTab(tabId, allowLocalDocuments = false) {
+    const tab = await browserApi.tabs.get(tabId);
+    const shown = (await browserApi.tabs.query({ active: true, windowId: tab?.windowId }))?.[0];
+    if (!tab?.active || shown?.id !== tabId) throw notActiveTabError();
+    if (isRestrictedUrl(tab.url || '', { allowLocalDocuments })) {
+      throw codedError('restricted_page', 'This page is one Hermes will not capture.');
+    }
+    return tab;
+  }
+
   async function execute(action, args = {}, {
-    scope = {}, signal, leasedTabIds = [], ownedTabIds = [], currentWindowId = null,
+    scope = {}, signal, target = null, leasedTabIds = [], ownedTabIds = [], currentWindowId = null, allowLocalDocuments = false,
   } = {}) {
     if (!contract.actions.includes(action)) throw new Error(`Action ${action} is not supported by the Firefox adapter.`);
     assertNotAborted(signal);
@@ -1609,11 +2510,37 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
       return { status: 'navigated-back' };
     }
     if (action === 'browser_screenshot') {
-      const tab = await browserApi.tabs.get(tabId);
+      // No screenshot of any kind can be taken without the permission: say so before anything else is looked at.
+      if (!(await screenshotPermitted())) throw screenshotUnavailableError();
       assertNotAborted(signal);
-      const dataUrl = await browserApi.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+      // captureVisibleTab can only photograph the whole visible tab, so a screenshot of one element cannot be taken.
+      if (args.ref || target) {
+        throw codedError(
+          'unsupported_for_ref',
+          `Firefox can only capture the whole visible tab, so a screenshot of one element is not available. Call ${controlToolName('browser_screenshot')} without a ref, or read the element with ${controlToolName('browser_snapshot')}.`,
+        );
+      }
+      // captureVisibleTab photographs the WINDOW's active tab, whichever tab that is. The
+      // leased tab must be that tab, on a page Hermes may read, before and after the capture.
+      const before = await visibleLeasedTab(tabId, allowLocalDocuments);
       assertNotAborted(signal);
-      return boundedScreenshot(dataUrl);
+      await assertFramesReadable(tabId, signal);
+      let dataUrl;
+      try {
+        dataUrl = await browserApi.tabs.captureVisibleTab(before.windowId, { format: 'png' });
+      } catch (error) {
+        // The exact refusal Firefox gives when the permission is missing, whether or not it could be asked about first.
+        if (/missing activetab permission|<all_urls>/i.test(String(error?.message || error || ''))) throw screenshotUnavailableError();
+        throw error;
+      }
+      assertNotAborted(signal);
+      const after = await visibleLeasedTab(tabId, allowLocalDocuments).catch(() => null);
+      if (!after || after.url !== before.url) {
+        throw codedError('not_active_tab', 'The tab changed while the screenshot was taken, so it was discarded. Try again.');
+      }
+      // A frame can have moved to a page Hermes will not read while the capture ran: the pixels are dropped.
+      await assertFramesReadable(tabId, signal);
+      return { ...boundedScreenshot(dataUrl), url: after.url };
     }
     if (action === 'browser_tabs') {
       const tabs = await browserApi.tabs.query({});
@@ -1622,17 +2549,12 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
     if (action === 'browser_tab_activate') {
       const targetTabId = Number(args.tab_id);
       if (!Number.isInteger(targetTabId) || targetTabId <= 0) throw new Error('A valid tab id is required.');
-      return browserApi.tabs.update(targetTabId, { active: true });
+      return activateTab(browserApi, targetTabId);
     }
     if (action === 'browser_tab_create') {
-      const windowId = Number(currentWindowId) || Number((await browserApi.tabs.get(tabId))?.windowId) || null;
-      const tab = await browserApi.tabs.create({
-        url: String(args.url || ''),
-        // Hermes never takes the person's view: a tab it opens starts in the background.
-        active: false,
-        ...(windowId ? { windowId } : {}),
+      return createBackgroundTab(browserApi, waitForLoad, {
+        url: args.url, carrierTabId: tabId, fallbackWindowId: currentWindowId, signal,
       });
-      return { tab };
     }
     if (action === 'browser_tab_close') {
       const targetTabId = Number(args.tab_id);
@@ -1668,6 +2590,7 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
 
   return {
     contract,
+    currentCapabilities,
     inspect: ({ tabId, frameId, signal, light } = {}) => inspectPage(browserApi, { tabId, frameId }, signal, { light: light === true }),
     execute,
     settle,

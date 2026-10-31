@@ -4,17 +4,17 @@ import path from 'node:path';
 import test from 'node:test';
 
 import { SUPPORTED_LOCALES } from '../extension/lib/i18n-registry.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8');
 
-test('Sidepanel and Hermes Web expose the same branded native language selector', () => {
+test('Sidepanel exposes the branded native language selector', () => {
   const sidepanel = read('extension/sidepanel.html');
-  const app = read('extension/app.html');
   const css = read('extension/sidepanel.css');
   const languageRule = css.match(/\.language-select\s*\{[^}]*\}/s)?.[0] || '';
 
-  for (const source of [sidepanel, app]) {
+  for (const source of [sidepanel]) {
     assert.match(source, /<select[^>]+data-language-select[^>]*>/);
     assert.match(source, /<option value="en">English<\/option>/);
     assert.match(source, /<option value="zh-CN">简体中文<\/option>/);
@@ -32,26 +32,14 @@ test('Sidepanel and Hermes Web expose the same branded native language selector'
   assert.match(css, /:lang\(zh-CN\) \[data-i18n\][^{]*\{[^}]*letter-spacing:\s*0\.025em/s);
 });
 
-test('Hermes Web settings preserve selector, focus, option, and CJK typography parity', () => {
-  const css = read('extension/app.css');
-  const themes = read('extension/fulltab-themes.css');
-  assert.match(css, /\.web-settings-dialog \.language-select\s*\{[^}]*padding-right:\s*34px[^}]*letter-spacing:\s*0/s);
-  assert.match(css, /\.web-settings-dialog select option\s*\{[^}]*background:\s*var\(--hermes-paper\)[^}]*color:\s*var\(--hermes-ink\)/s);
-  assert.match(css, /\.web-settings-dialog (?:input|select):focus[^}]*box-shadow:\s*0 0 0 2px var\(--hermes-accent\)/s);
-  assert.match(themes, /:lang\(zh-CN\) \.web-settings-dialog \.appearance-row > div:first-child strong[^}]*letter-spacing:\s*0\.025em[^}]*text-transform:\s*none/s);
-});
-
 test('Arabic RTL mirrors the primary composer and mobile navigation', () => {
   const sidepanelCss = read('extension/sidepanel.css');
-  const appCss = read('extension/app.css');
   assert.match(sidepanelCss, /html\[dir="rtl"\]\s+\.composer-wake/);
   assert.match(sidepanelCss, /html\[dir="rtl"\]\s+\.composer-input-wrap\.busy-draft\.can-steer textarea/);
-  assert.match(appCss, /html\[dir="rtl"\]\s+\.session-rail/);
-  assert.match(appCss, /html\[dir="rtl"\]\s+\.web-settings-dialog \.language-select/);
 });
 
 test('CJK, Devanagari, Thai, and Arabic localized copy avoids forced uppercase and tracking', () => {
-  for (const css of [read('extension/sidepanel.css'), read('extension/app.css')]) {
+  for (const css of [read('extension/sidepanel.css')]) {
     assert.match(css, /:lang\(zh-TW\) \[data-i18n\][\s\S]*text-transform:\s*none/);
     assert.match(css, /:lang\(ja\) \[data-i18n\][\s\S]*text-transform:\s*none/);
     assert.match(css, /:lang\(ko\) \[data-i18n\][\s\S]*text-transform:\s*none/);
@@ -76,7 +64,7 @@ test('the shared locale registry is compatible with MV3 extension service worker
 });
 
 test('language option labels are invariant endonyms and accessibility labels are localizable', () => {
-  for (const relativePath of ['extension/sidepanel.html', 'extension/app.html']) {
+  for (const relativePath of ['extension/sidepanel.html']) {
     const source = read(relativePath);
     const select = source.match(/<select[^>]+data-language-select[\s\S]*?<\/select>/)?.[0] || '';
     assert.match(select, /data-i18n-aria-label="settings\.language\.label"/);
@@ -84,8 +72,8 @@ test('language option labels are invariant endonyms and accessibility labels are
   }
 });
 
-test('Sidepanel and Hermes Web populate language options from the shared registry', () => {
-  for (const relativePath of ['extension/sidepanel.js', 'extension/app.js']) {
+test('Sidepanel populates language options from the shared registry', () => {
+  for (const relativePath of ['extension/sidepanel.js']) {
     const source = read(relativePath);
     assert.match(source, /populateLanguageSelect/);
     assert.match(source, /populateLanguageSelect\([^)]*LanguageSelect|populateLanguageSelect\([^)]*languageSelect/);
@@ -98,9 +86,9 @@ test('Sidepanel and Hermes Web populate language options from the shared registr
 test('i18n modules and validator are included in JavaScript and manifest verification', () => {
   const packageJson = JSON.parse(read('package.json'));
   const validator = read('scripts/check-i18n.mjs');
-  assert.match(packageJson.scripts['check:js'], /extension\/lib\/i18n\.mjs/);
-  assert.match(packageJson.scripts['check:js'], /extension\/lib\/i18n-registry\.mjs/);
-  assert.match(packageJson.scripts['check:js'], /scripts\/check-i18n\.mjs/);
+  assert.match(CHECK_JS, /extension\/lib\/i18n\.mjs/);
+  assert.match(CHECK_JS, /extension\/lib\/i18n-registry\.mjs/);
+  assert.match(CHECK_JS, /scripts\/check-i18n\.mjs/);
   assert.match(packageJson.scripts['check:manifest'], /check:i18n|check-i18n|generate-browser-locales/);
   assert.match(validator, /loadLocaleMessages, SUPPORTED_LOCALES/);
   assert.match(validator, /for \(const locale of SUPPORTED_LOCALES\)/);

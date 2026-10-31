@@ -120,3 +120,44 @@ test('canonical Bot Chat resolution confirms absence only for an empty roster wi
 
   assert.equal(result, null);
 });
+
+// --- across routes: the Hermes Web socket, then the bot's own gateway routes ----------------------
+
+test('a Bot Chat the session-authority socket cannot see is found on the bot gateway routes', async () => {
+  const { resolveBotChatAcrossRoutes } = await import('../extension/lib/bot-canonical-session.mjs');
+  const row = { profileName: 'riku' };
+  const desktopChat = { id: '20260831_194941_f5d063', title: 'Bot Chat', source: 'desktop' };
+  // The reported case: the socket's title lookup answers nothing for a Desktop-made chat.
+  const result = await resolveBotChatAcrossRoutes(row, { socketList: async () => ({ sessions: [] }), restList: async () => [desktopChat] });
+  assert.equal(result.canonical.durableId, desktopChat.id);
+  assert.equal(result.transport, 'rest');
+  // The roster already knows the chat, so the socket's empty answer throws: still found over REST.
+  const known = { profileName: 'riku', canonical: { id: desktopChat.id } };
+  const viaRoster = await resolveBotChatAcrossRoutes(known, { socketList: async () => ({ sessions: [] }), restList: async () => [desktopChat] });
+  assert.equal(viaRoster.canonical.durableId, desktopChat.id);
+  assert.ok(viaRoster.socketError, 'the socket error is kept for the log');
+});
+
+test('the socket wins when it can see the Bot Chat, and nothing is created unless every route found none', async () => {
+  const { resolveBotChatAcrossRoutes } = await import('../extension/lib/bot-canonical-session.mjs');
+  const row = { profileName: 'saix' };
+  let restAsked = 0;
+  const viaSocket = await resolveBotChatAcrossRoutes(row, {
+    socketList: async () => ({ sessions: [{ id: 's1', title: 'Bot Chat' }] }),
+    restList: async () => { restAsked += 1; return []; },
+  });
+  assert.deepEqual([viaSocket.canonical.durableId, viaSocket.transport, restAsked], ['s1', 'dashboard-ws', 0]);
+  // A new bot: both routes positively find none.
+  const none = await resolveBotChatAcrossRoutes(row, { socketList: async () => ({ sessions: [] }), restList: async () => [] });
+  assert.deepEqual([none.canonical, none.transport], [null, 'dashboard-ws']);
+  // No socket: REST alone decides.
+  const restOnly = await resolveBotChatAcrossRoutes(row, { restList: async () => [{ id: 'r1', title: 'Bot Chat' }] });
+  assert.deepEqual([restOnly.canonical.durableId, restOnly.transport], ['r1', 'rest']);
+  // Both routes fail: it throws (the socket error first), so the caller never forks a new chat.
+  await assert.rejects(
+    resolveBotChatAcrossRoutes(row, { socketList: async () => { throw new Error('socket down'); }, restList: async () => { throw new Error('rest down'); } }),
+    /socket down/,
+  );
+  // The roster knows a chat neither route can confirm: it throws instead of creating one.
+  await assert.rejects(resolveBotChatAcrossRoutes({ profileName: 'saix', canonical: { id: 'gone' } }, { socketList: async () => ({ sessions: [] }), restList: async () => [] }));
+});

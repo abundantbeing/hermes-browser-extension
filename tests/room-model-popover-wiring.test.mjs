@@ -77,9 +77,10 @@ test('room bindings are persisted in settings and the runtime re-applies them pe
   assert.match(hook, /setMemberModel\(/, 'the hook re-sends the session-scoped switch');
   assert.match(hook, /result\?\.state !== 'ok'/, 'the hook only continues on a verified switch');
   assert.match(hook, /throw error/, 'an unverified binding fails the member turn instead of answering on the wrong model');
-  const runtime = source.slice(source.indexOf('createBotGroupRuntime({'), source.indexOf('activeGroupRuntime = groupRuntime;'));
+  const runtime = source.slice(source.indexOf('const runtimeHooks = {'), source.indexOf('activeGroupRuntime = groupRuntime;'));
   assert.match(runtime, /beforeMemberTurn:/, 'the hook is wired into the room runtime');
   assert.match(runtime, /applyRoomMemberModelBeforeTurn\(/, 'the runtime hook calls the re-apply guard');
+  assert.match(runtime, /createBotGroupRuntime\(\{ client: connection\.client, \.\.\.runtimeHooks \}\)/, 'the client-driven runtime gets every hook');
 });
 
 test('room member identity is applied in the popover rows and locales carry the strings', () => {

@@ -129,8 +129,8 @@ test('cached provider catalogs are still eligible for live canonical enrichment'
   assert.equal(discovery.shouldEnrichCanonicalProviderCatalog('fallback'), false);
 });
 
-test('both Browser model surfaces enrich the live registry with the canonical Hermes catalog', () => {
-  for (const file of ['extension/sidepanel.js', 'extension/app.js']) {
+test('the side panel enriches the live registry with the canonical Hermes catalog', () => {
+  for (const file of ['extension/sidepanel.js']) {
     const source = read(file);
     assert.match(source, /discoverCanonicalProviderCatalog/);
     assert.match(source, /shouldEnrichCanonicalProviderCatalog/);

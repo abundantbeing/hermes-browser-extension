@@ -13,6 +13,7 @@
 
 import createDOMPurify from './vendor/purify.es.mjs';
 import { escapeHtml, renderMarkdown } from './common.mjs';
+import { renderAdaptiveMarkdown, renderPlainResponse } from './adaptive-ui.mjs';
 
 let purifyInstance = null;
 
@@ -59,4 +60,22 @@ export function renderMarkdownSafe(value = '') {
   const instance = getPurifier();
   if (!instance) return escapeHtml(value);
   return instance.sanitize(renderMarkdown(value), SANITIZE_OPTIONS);
+}
+
+/**
+ * Render an assistant reply in the chosen response style, sanitized.
+ * Rich text is exactly renderMarkdownSafe; Vivid UI adds validated Hermes
+ * Adaptive UI blocks; Plain text drops Markdown formatting. `streaming: false`
+ * marks a settled reply, so an open Vivid block is read as it stands; left
+ * out, an open block is treated as still arriving.
+ * @param {string} value reply text (untrusted)
+ * @param {{ style?: string, labels?: object, streaming?: boolean }} options
+ * @returns {string} sanitized HTML
+ */
+export function renderResponseSafe(value = '', { style = 'rich', labels, streaming = true } = {}) {
+  if (style !== 'vivid' && style !== 'plain') return renderMarkdownSafe(value);
+  const instance = getPurifier();
+  if (!instance) return escapeHtml(value);
+  const html = style === 'vivid' ? renderAdaptiveMarkdown(value, { labels, streaming }) : renderPlainResponse(value);
+  return instance.sanitize(html, SANITIZE_OPTIONS);
 }

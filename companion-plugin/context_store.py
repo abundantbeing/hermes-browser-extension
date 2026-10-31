@@ -13,7 +13,9 @@ from collections import OrderedDict
 from copy import deepcopy
 from dataclasses import dataclass, field
 import hashlib
+import hmac
 import json
+import re
 import secrets
 import threading
 from time import time
@@ -28,11 +30,33 @@ DEFAULT_MAX_ENTRIES = 100
 DEFAULT_MAX_ENTRIES_PER_PRINCIPAL = 10
 DEFAULT_MAX_EVENTS = 200
 DEFAULT_RECEIPT_LIMIT = 8
+# An uploaded envelope waits for the owning session's next reference turn for as
+# long as a stored record lives; one slot per session, a few sessions at most.
+DEFAULT_UPLOAD_TTL_SECONDS = 300.0
+DEFAULT_MAX_UPLOAD_SESSIONS = 20
 _DURABLE_RECEIPTS_KEY = "receipts_v1"
 _MAX_BCP_TURN_CHARS = 64_000
 _MAX_IDENTIFIER_CHARS = 256
 
 _UNAVAILABLE = {"available": False, "reason": "Browser context unavailable."}
+
+# Browser-supplied metadata that is copied into diagnostics, receipts and the
+# journal must look like an opaque identifier: a UUID, a hex hash or a short
+# slug.  The extension redacts the whole envelope before sending it, but this
+# plugin does not rely on that: anything with spaces, URL punctuation, redaction
+# placeholders or a well-known credential prefix is dropped instead of being
+# persisted or shown to the agent.
+_OPAQUE_UUID = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+_OPAQUE_HEX = re.compile(r"[0-9a-fA-F]{8,128}")
+_OPAQUE_SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:\-]{0,63}")
+_CREDENTIAL_SHAPE = re.compile(
+    r"(?i)^(?:(?:sk|pk|rk|api|key|tok|token|secret|pass|pwd|bearer|basic|auth)[-_.:]"
+    r"|gh[pousr]_|github_pat_|xox[abprs]-|akia[0-9a-z]{8}|asia[0-9a-z]{8}|eyj[a-z0-9_-]{6})"
+)
+
+# Per-process salt: owner correlation values shown to the agent cannot be
+# brute-forced back into a private session id, yet stay stable within a run.
+_FINGERPRINT_SALT = secrets.token_bytes(16)
 
 
 @dataclass(frozen=True)
@@ -82,7 +106,14 @@ def _is_string_list(value: Any) -> bool:
 
 
 def _bounded_identifier(value: Any, limit: int = 160) -> str:
-    return value[:limit] if isinstance(value, str) else ""
+    """Return ``value`` only when it is a short opaque token, else ``""``."""
+    if not isinstance(value, str) or not value or len(value) > limit:
+        return ""
+    if _OPAQUE_UUID.fullmatch(value) or _OPAQUE_HEX.fullmatch(value):
+        return value
+    if _OPAQUE_SLUG.fullmatch(value) and not _CREDENTIAL_SHAPE.match(value):
+        return value
+    return ""
 
 
 def _unknown_control() -> dict[str, Any]:
@@ -101,9 +132,12 @@ def _normalize_browser_control(value: Any) -> dict[str, Any]:
     """Retain only validated historical control metadata from an untrusted turn."""
     if not isinstance(value, dict):
         return _unknown_control()
+    availability = value.get("availability")
+    if value.get("route") == "extension-controller" and availability == "unsupported":
+        # The gateway has no extension control; no exclusivity rule rides on this state.
+        return {**_unknown_control(), "availability": "unsupported"}
     if value.get("route") != "extension-controller" or value.get("isolated_fallback") != "forbidden":
         return _unknown_control()
-    availability = value.get("availability")
     if availability == "unavailable":
         return {**_unknown_control(), "availability": "unavailable"}
     if availability == "not_requested":
@@ -185,6 +219,8 @@ def parse_bcp_v2_turn(text: str) -> dict[str, Any] | None:
     scope = payload["contextScope"].get("mode", "unknown")
     if not isinstance(scope, str):
         return None
+    context_hash = _bounded_identifier(context_hash, 80)
+    scope = _bounded_identifier(scope, 80) or "unknown"
 
     # json.loads already created only JSON-safe values. Deep-copy so a caller
     # cannot mutate a cached payload after this function returns.
@@ -194,16 +230,46 @@ def parse_bcp_v2_turn(text: str) -> dict[str, Any] | None:
         "provenance": {
             "protocol": BCP_TURN_PROTOCOL_ID,
             "delivery": "full",
-            "context_hash": context_hash[:80],
+            "context_hash": context_hash,
         },
-        "payload_hash": context_hash[:80],
-        "scope": scope[:80] or "unknown",
+        "payload_hash": context_hash,
+        "scope": scope,
     }
+
+
+def parse_bcp_v2_reference(text: str) -> str | None:
+    """Return the context hash of a valid BCP v2 *reference* turn, else ``None``.
+
+    A reference turn carries no payload, only the hash of context the extension
+    sent earlier.  The hash is what lets an uploaded envelope be adopted for the
+    turn: a turn that names the same hash asked for exactly that context.
+    """
+    raw = str(text or "")
+    if not raw or len(raw) > _MAX_BCP_TURN_CHARS:
+        return None
+    try:
+        envelope = json.loads(raw)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    if not _is_plain_dict(envelope) or envelope.get("protocol") != BCP_TURN_PROTOCOL_ID:
+        return None
+    browser_context = envelope.get("browser_context")
+    receipt = envelope.get("source_receipt")
+    if not _is_plain_dict(browser_context) or not _is_plain_dict(receipt):
+        return None
+    if receipt.get("protocol") != BCP_TURN_PROTOCOL_ID or receipt.get("version") != 2:
+        return None
+    if browser_context.get("delivery") != "reference" or receipt.get("delivery") != "reference":
+        return None
+    named = _bounded_identifier(browser_context.get("context_hash"), 80)
+    if not named or named != _bounded_identifier(receipt.get("context_hash"), 80):
+        return None
+    return named
 
 
 def _principal_fingerprint(owner: ContextOwner) -> str:
     """Return a diagnostic-safe owner correlation value, never a raw ID."""
-    return hashlib.sha256(owner.principal_id.encode("utf-8")).hexdigest()[:16]
+    return hmac.new(_FINGERPRINT_SALT, owner.principal_id.encode("utf-8"), hashlib.sha256).hexdigest()[:16]
 
 
 def _owner_fingerprint(owner: ContextOwner) -> str:
@@ -233,6 +299,15 @@ class BrowserContextRecord:
 
 
 @dataclass
+class _UploadedContext:
+    """One validated envelope waiting for its session's next reference turn."""
+
+    normalized: dict[str, Any]
+    created_at: float
+    expires_at: float
+
+
+@dataclass
 class _StoredEvent:
     name: str
     data: dict[str, Any]
@@ -248,14 +323,47 @@ class BrowserContextStore:
     max_entries: int = DEFAULT_MAX_ENTRIES
     max_entries_per_principal: int = DEFAULT_MAX_ENTRIES_PER_PRINCIPAL
     max_events: int = DEFAULT_MAX_EVENTS
+    upload_ttl_seconds: float = DEFAULT_UPLOAD_TTL_SECONDS
+    max_upload_sessions: int = DEFAULT_MAX_UPLOAD_SESSIONS
     clock: Callable[[], float] = time
     _records: OrderedDict[str, BrowserContextRecord] = field(default_factory=OrderedDict, init=False, repr=False)
     _events: list[_StoredEvent] = field(default_factory=list, init=False, repr=False)
+    _uploads: OrderedDict[tuple[str, str, str], _UploadedContext] = field(default_factory=OrderedDict, init=False, repr=False)
     _durable_state: Any = field(default=None, init=False, repr=False)
     _durable_receipts_enabled: bool = field(default=False, init=False, repr=False)
     _receipt_limit: int = field(default=DEFAULT_RECEIPT_LIMIT, init=False, repr=False)
     _journal: Optional[BrowserContextJournal] = field(default=None, init=False, repr=False)
     _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
+    _stop: threading.Event = field(default_factory=threading.Event, init=False, repr=False)
+    _expiry: threading.Thread = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self._expiry = threading.Thread(
+            target=self._expire_loop,
+            name="browser-context-expiry",
+            daemon=True,
+        )
+        self._expiry.start()
+
+    def _expire_loop(self) -> None:
+        while not self._stop.wait(0.05):
+            with self._lock:
+                now = self._now()
+                self._prune_expired_locked(now)
+                self._prune_uploads_locked(now)
+
+    def close(self) -> None:
+        """Drop cached payloads and stop the idle expiry worker."""
+        self._stop.set()
+        self._expiry.join(timeout=1)
+        with self._lock:
+            for record in self._records.values():
+                record.payload = None
+            for upload in self._uploads.values():
+                if isinstance(upload.normalized, dict):
+                    upload.normalized["payload"] = None
+            self._records.clear()
+            self._uploads.clear()
 
     def _now(self) -> float:
         return float(self.clock())
@@ -379,6 +487,10 @@ class BrowserContextStore:
         normalized = parse_bcp_v2_turn(text)
         if normalized is None:
             return dict(_UNAVAILABLE)
+        return self._store_normalized(normalized, owner)
+
+    def _store_normalized(self, normalized: dict[str, Any], owner: ContextOwner) -> dict[str, Any]:
+        """Bind one already-validated payload to the trusted ``owner``."""
         now = self._now()
         ttl = max(0.0, float(self.ttl_seconds))
         record = BrowserContextRecord(
@@ -404,6 +516,110 @@ class BrowserContextStore:
             )
             self._record_journal_locked(record, owner, now)
             return self._metadata(record)
+
+    # -- Side-channel upload (the extension's HTTP route) ------------------
+    #
+    # An upload names a session, not an execution owner: the owner tuple needs a
+    # turn and task id that only Hermes' hooks know.  So the validated envelope
+    # waits in a bounded session-and-hash shelf and is bound to an owner only when a
+    # trusted hook sees a reference turn for that same session naming the same
+    # context hash.  Tools still reach it only through the owner-scoped record,
+    # the opaque context id and the one-shot lease.
+
+    def _prune_uploads_locked(self, now: float) -> None:
+        for session_id, upload in list(self._uploads.items()):
+            if upload.expires_at <= now:
+                upload.normalized["payload"] = None
+                del self._uploads[session_id]
+
+    def put_session_upload(self, session_id: Any, text: str) -> dict[str, Any]:
+        """Validate one uploaded BCP v2 full-context envelope for ``session_id``.
+
+        Returns metadata only (never the payload), or the unavailable answer when
+        the session id is unusable or the envelope is not a valid full turn.
+        """
+        session = _trusted_identifier(session_id)
+        normalized = parse_bcp_v2_turn(text) if session else None
+        if normalized is None or not normalized["payload_hash"]:
+            return dict(_UNAVAILABLE)
+        now = self._now()
+        ttl = max(0.0, float(self.upload_ttl_seconds))
+        upload = _UploadedContext(normalized=normalized, created_at=now, expires_at=now + ttl)
+        with self._lock:
+            self._prune_uploads_locked(now)
+            self._uploads[(session, normalized["payload_hash"], secrets.token_hex(16))] = upload
+            while len(self._uploads) > max(1, int(self.max_upload_sessions)):
+                _oldest, dropped = self._uploads.popitem(last=False)
+                dropped.normalized["payload"] = None
+            return {
+                "available": True,
+                "protocol": normalized["provenance"]["protocol"],
+                "payload_hash": normalized["payload_hash"],
+                "scope": normalized["scope"],
+                "created_at": upload.created_at,
+                "expires_at": upload.expires_at,
+            }
+
+    def adopt_upload_for_owner(self, text: str, owner: ContextOwner) -> dict[str, Any]:
+        """Bind a waiting upload to ``owner`` when this turn names its hash.
+
+        ``text`` is the trusted current user message.  Only a valid reference
+        turn whose context hash equals the upload's, in the same session the
+        hook reports, adopts it; anything else leaves the shelf untouched.
+        """
+        named = parse_bcp_v2_reference(text)
+        if named is None:
+            return dict(_UNAVAILABLE)
+        now = self._now()
+        with self._lock:
+            self._prune_uploads_locked(now)
+            key = next((key for key in self._uploads if key[0] == owner.session_id and key[1] == named), None)
+            if key is None:
+                return dict(_UNAVAILABLE)
+            upload = self._uploads.pop(key)
+            normalized = upload.normalized
+        return self._store_normalized(normalized, owner)
+
+    def session_status(self, session_id: Any) -> dict[str, Any]:
+        """Counts, ages and the hash of what is held for one session. Metadata only."""
+        session = _trusted_identifier(session_id)
+        now = self._now()
+        held: list[BrowserContextRecord] = []
+        consumed = 0
+        pending: dict[str, Any] = {"present": False}
+        with self._lock:
+            self._prune_expired_locked(now)
+            self._prune_uploads_locked(now)
+            if session:
+                for record in self._records.values():
+                    if record.owner.session_id != session:
+                        continue
+                    if record.consumed or record.payload is None:
+                        consumed += 1
+                    else:
+                        held.append(record)
+                upload = next((upload for key, upload in reversed(self._uploads.items()) if key[0] == session), None)
+                if upload is not None:
+                    pending = {
+                        "present": True,
+                        "payload_hash": upload.normalized["payload_hash"],
+                        "scope": upload.normalized["scope"],
+                        "age_ms": max(0, int((now - upload.created_at) * 1000)),
+                        "expires_in_ms": max(0, int((upload.expires_at - now) * 1000)),
+                    }
+        newest = max(held, key=lambda record: record.created_at) if held else None
+        oldest = min(held, key=lambda record: record.created_at) if held else None
+        return {
+            "held": len(held),
+            "consumed": consumed,
+            "payload_hash": newest.payload_hash if newest else "",
+            "scope": newest.scope if newest else "",
+            "newest_age_ms": max(0, int((now - newest.created_at) * 1000)) if newest else None,
+            "oldest_age_ms": max(0, int((now - oldest.created_at) * 1000)) if oldest else None,
+            "expires_in_ms": max(0, int((newest.expires_at - now) * 1000)) if newest else None,
+            "pending_upload": pending,
+            "live": False,
+        }
 
     def status_for_owner(self, owner: ContextOwner) -> dict[str, Any]:
         """Return current-owner metadata only; this never consumes payload."""

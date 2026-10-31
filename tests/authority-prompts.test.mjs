@@ -20,7 +20,6 @@ import { createPendingControlsPoller, createPromptController } from '../extensio
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const sidepanel = read('extension/sidepanel.js');
-const app = read('extension/app.js');
 
 // A browser closes a socket from the outside asynchronously: close() returns
 // first, the 'close' event follows. A fake that emits it inline hides every
@@ -129,8 +128,8 @@ test('a socket that drops tells the owner once, and a later close() does not rep
   assert.equal(closed, 1, 'close() on an already-dropped client has nothing left to withdraw');
 });
 
-test('both surfaces hand their connections a closed() hook, so closing from this side withdraws the cards', () => {
-  for (const source of [sidepanel, app]) {
+test('the side panel hands its connections a closed() hook, so closing from this side withdraws the cards', () => {
+  for (const source of [sidepanel]) {
     assert.match(source, /closed: \(client\) => promptController\.dropClient\(client\),/);
     assert.match(source, /event: \(type, event, client\) => promptController\.ingestAuthorityEvent\(type, event, \{ client \}\),/);
     assert.match(source, /prompts: \(prompts, context\) => promptController\.ingestAuthorityPrompts\(prompts, context\),/);
@@ -179,8 +178,8 @@ test('run status ends the poll once the run is over', async () => {
   assert.equal(reads, 2);
 });
 
-test('both surfaces stop their prompt poll on a terminal run status', () => {
-  for (const source of [sidepanel, app]) assert.match(source, /isTerminal: isRunStatusTerminal,/);
+test('the side panel stops its prompt poll on a terminal run status', () => {
+  for (const source of [sidepanel]) assert.match(source, /isTerminal: isRunStatusTerminal,/);
 });
 
 // ---- session-authority prompts ----------------------------------------------------------------
@@ -422,13 +421,10 @@ test('an answer for a prompt whose connection is gone is refused, not sent anywh
 test('a turn that ends, by Stop or otherwise, withdraws the authority prompts it left open', () => {
   const panelSettle = sidepanel.match(/async function settleActiveRunTerminal\(\) \{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(panelSettle, /promptController\.settleScope\('ws-authority', endedLiveSessionId\)/);
-  assert.match(panelSettle, /activeDashboardWsConnection\?\.wsSessionId/);
-  const webSettle = app.match(/async function settleWebRunTerminal\(\) \{[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(webSettle, /promptController\.settleScope\('ws-authority', endedLiveSessionId\)/);
-  assert.match(webSettle, /dashboardLiveSessionId/);
+  // The run's own session, not whichever session is selected when it settles (D11).
+  assert.match(panelSettle, /liveIdForRunSettle\(settledRunControl, activeDashboardWsConnection\)/);
   // Settling comes after the terminal guard: a run still being confirmed keeps its prompts.
   assert.ok(panelSettle.indexOf('RUN_CONTROL_PHASES.TERMINAL') < panelSettle.indexOf('settleScope'));
-  assert.ok(webSettle.indexOf('RUN_CONTROL_PHASES.TERMINAL') < webSettle.indexOf('settleScope'));
 });
 
 // ---- what is approved is what is shown ---------------------------------------------------------
@@ -559,8 +555,8 @@ test('the poll tells its reader when each read was sent', async () => {
   poller.stop();
 });
 
-test('both surfaces pass the read time on to the controller', () => {
-  for (const source of [sidepanel, app]) {
+test('the side panel passes the read time on to the controller', () => {
+  for (const source of [sidepanel]) {
     assert.match(source, /onStatus: \(payload, \{ requestedAt \} = \{\}\) => \{\s*if \(isCurrent\(\)\) promptController\.ingestRunStatus\(getRunId\(\), payload, \{ sessionId, requestedAt \}\);/);
   }
 });

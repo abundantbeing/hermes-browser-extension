@@ -14,6 +14,7 @@ import {
   establishGatewaySession,
   gatewayWebSocketProtocols,
   normalizeGatewayHistoryMessages,
+  promptSubmitParamsFor,
   remoteSessionIdentity,
   remoteStoredSessionIdForGateway,
   runtimeModelFromSessionStatus,
@@ -291,7 +292,7 @@ test('gateway session reconnect resumes the durable id and routes follow-up RPCs
     id: createFrame.id,
     result: { session_id: 'live-A', stored_session_id: 'stored-A' },
   });
-  assert.deepEqual(await creating, { action: 'created', liveId: 'live-A', storedId: 'stored-A', profile: '' });
+  assert.deepEqual(await creating, { action: 'created', liveId: 'live-A', storedId: 'stored-A', profile: '', runtime: null });
 
   first.close();
 
@@ -317,7 +318,7 @@ test('gateway session reconnect resumes the durable id and routes follow-up RPCs
     id: resumeFrame.id,
     result: { session_id: 'live-B', resumed: 'stored-A', session_key: 'stored-A' },
   });
-  assert.deepEqual(await resuming, { action: 'resumed', liveId: 'live-B', storedId: 'stored-A', profile: '' });
+  assert.deepEqual(await resuming, { action: 'resumed', liveId: 'live-B', storedId: 'stored-A', profile: '', runtime: null });
 
   const followUp = second.request(WS_METHODS.sessionHistory, { session_id: 'live-B' });
   const historyFrame = JSON.parse(FakeWebSocket.last.sent.at(-1));
@@ -334,14 +335,9 @@ test('sidepanel reconnect wiring persists the durable id and resumes only on the
   assert.match(source, /connection\.wsStoredSessionId\s*=\s*storedId/);
 });
 
-test('both Browser surfaces normalize Cloud history before rendering it', () => {
-  const appSource = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+test('the side panel normalizes Cloud history before rendering it', () => {
   const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 
-  assert.match(
-    appSource,
-    /function dashboardHistoryMessages\(payload = \{\}\) \{\s*return normalizeGatewayHistoryMessages\(payload\);\s*\}/,
-  );
   assert.match(
     sidepanelSource,
     /const contextMessages = normalizeGatewayHistoryMessages\(result\)[\s\S]*?content: message\.content/,
@@ -458,8 +454,20 @@ test('session.list params match the upstream SessionListParams contract (no offs
   assert.deepEqual(buildSessionListParams({ profile: undefined }), { limit: 200, profile: '' });
   const allowed = new Set(['profile', 'title', 'limit', 'include_hidden']);
   for (const key of Object.keys(buildSessionListParams({ limit: 5, profile: 'p' }))) assert.ok(allowed.has(key), `${key} is not an upstream session.list field`);
+});
 
-  const app = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  assert.match(app, /request\(WS_METHODS\.sessionList, buildSessionListParams\(/);
-  assert.doesNotMatch(app, /sessionList,\s*\{[^}]*offset/);
+test('prompt.submit on a session authority carries a submission id and no display_text', () => {
+  const authority = { readyPayload: { session_authority: true } };
+  const params = promptSubmitParamsFor(authority, { session_id: 's1', text: 'full prompt', display_text: 'typed', surface: 'voice-live' }, 'turn-1');
+  assert.deepEqual(params, { session_id: 's1', text: 'full prompt', surface: 'voice-live', submission_id: 'turn-1' });
+  const minted = promptSubmitParamsFor(authority, { session_id: 's1', text: 'hi' });
+  assert.equal(typeof minted.submission_id, 'string');
+  assert.ok(minted.submission_id.length > 0, 'a submit with no id given still gets one');
+  assert.equal(promptSubmitParamsFor(authority, { session_id: 's1', text: 'hi', submission_id: 'kept' }, 'other').submission_id, 'kept');
+});
+
+test('prompt.submit on a legacy dashboard socket is sent unchanged', () => {
+  const params = { session_id: 's1', text: 'full prompt', display_text: 'typed' };
+  assert.equal(promptSubmitParamsFor({ readyPayload: {} }, params, 'turn-1'), params);
+  assert.equal(promptSubmitParamsFor(null, params, 'turn-1'), params);
 });

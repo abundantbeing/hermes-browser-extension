@@ -1,3 +1,5 @@
+import { DEFAULT_SETTINGS } from './common.mjs';
+
 const DEFAULT_STEP_ORDER = Object.freeze([
   'settings',
   'gateway',
@@ -91,7 +93,9 @@ export function reduceStartupReadiness(state = initialStartupReadiness(), event 
   return withReadyFlag(next);
 }
 
-export function selectedModelReadiness({ settings = {}, availableModels = [], activeSessionRuntime = {} } = {}) {
+// `draftSession` is true while the bound session id is a draft the gateway has
+// not been asked to create (the default placeholder id or an extension draft).
+export function selectedModelReadiness({ settings = {}, availableModels = [], activeSessionRuntime = {}, draftSession = false } = {}) {
   const modelId = settings.model || '';
   const selected = availableModels.find((model) => model.id === modelId || model.rawModelId === modelId);
   if (selected) {
@@ -113,6 +117,25 @@ export function selectedModelReadiness({ settings = {}, availableModels = [], ac
       },
     };
   }
+  // The gateway resolves its own default alias, and catalogs built from the
+  // startup cache never list it: that is a valid choice, not a missing model.
+  const pinned = settings.extensionPreferredModel;
+  if (modelId && (modelId === DEFAULT_SETTINGS.model || (pinned?.gatewayDefault === true && pinned?.modelId === modelId))) {
+    return {
+      status: 'ready',
+      detail: 'Using the gateway default model; Hermes reports the one that runs.',
+      selectedModel: { id: modelId, rawModelId: modelId, provider: '', gatewayAlias: true, gatewayDefault: true },
+    };
+  }
+  // A pick made before the first message has no session to lock against yet;
+  // the first message creates the session and Hermes confirms it then.
+  if (draftSession && modelId) {
+    return {
+      status: 'observed',
+      detail: 'Selected for this draft; Hermes confirms it when the first message saves the session.',
+      selectedModel: { id: modelId, rawModelId: modelId, provider: pinned?.provider || '' },
+    };
+  }
   return { status: 'error', detail: 'No selected model is available yet.', selectedModel: null };
 }
 
@@ -131,6 +154,7 @@ export function deriveStartupView(state = initialStartupReadiness()) {
     visible: !state.ready,
     ready: Boolean(state.ready),
     phase: state.phase || 'boot',
+    errored,
     title: state.ready
       ? 'Hermes Browser ready'
       : setupNeeded

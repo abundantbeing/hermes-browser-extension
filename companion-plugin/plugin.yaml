@@ -1,13 +1,26 @@
-name: hermes-browser-companion
+name: hermes-browser-extension
 kind: standalone
-version: 0.3.4
+version: 0.4.0
 manifest_version: 2
 api_version: 1
 description: >-
-  Hermes Browser companion plugin — caches browser context from conversations
-  and exposes it to the agent via tools and lifecycle hooks. Fail-soft: when
-  no browser context is available, all tools gracefully report unavailable.
+  The Hermes side of the Hermes Browser Extension. Gives the agent the browser
+  context the extension sends with a turn, and carries Hermes Control: the
+  agent working in the person's own browser tabs through the extension (tab_*
+  tools, across several tabs at once). Fail-soft: when no browser context or
+  browser is attached, every tool reports unavailable.
 author: Iruzen (iruzen-dono)
+license: MIT
+homepage: https://github.com/abundantbeing/hermes-browser-extension
+tags: [browser, browser-extension, tabs, context]
+# Tested on the 0.22 runtime; a SemVer floor, never newer than a shipped release.
+requires_hermes: ">=0.22"
+
+# No privileged host surface is requested: the plugin registers its own
+# tools (it overrides no built-in tool), makes no host-owned LLM
+# call, acts on no chat platform and reads no credential. Declaring nothing
+# is the truthful `capabilities:` block, so the consent screen stays empty.
+capabilities: []
 
 provides_tools:
   - browser_context_status
@@ -17,6 +30,26 @@ provides_tools:
   - browser_control_status
   - browser_context_journal
   - browser_text_utility
+  - tab_back
+  - tab_batch
+  - tab_click
+  - tab_drag
+  - tab_fill
+  - tab_hover
+  - tab_navigate
+  - tab_press
+  - tab_screenshot
+  - tab_scroll
+  - tab_scroll_to
+  - tab_select
+  - tab_snapshot
+  - tab_activate
+  - tab_close
+  - tab_create
+  - tab_group
+  - tab_ungroup
+  - tab_list
+  - tab_type
 
 config_schema:
   durable_receipts:

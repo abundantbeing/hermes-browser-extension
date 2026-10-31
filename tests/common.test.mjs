@@ -295,12 +295,10 @@ test('messageDisplayText renders only typed BCP v2 human_input and rejects looka
   assert.equal(common.messageDisplayText('user', lookalike), lookalike);
 });
 
-test('sidepanel and Hermes Web share the display-only Browser request formatter', () => {
+test('sidepanel uses the display-only Browser request formatter', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 
   assert.match(sidepanel, /messageDisplayText\(role, content \|\| ''\)/);
-  assert.match(web, /messageDisplayText\(role, rawText\)/);
 });
 
 test('requiresForeignSessionConfirmation protects only unapproved non-Browser sessions', () => {
@@ -394,7 +392,7 @@ test('startup exposes one-click connection testing and Cloud reconnect uses the 
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 
   assert.match(html, /id="settingsButton"[\s\S]*id="startupTestConnectionButton"/);
-  assert.match(html, /id="startupTestConnectionButton"[^>]*>\s*TEST CONNECTION\s*</);
+  assert.match(html, /id="startupTestConnectionButton"[^>]*><svg[^>]*data-icon="cellular-signal-3"[\s\S]*?<span class="settings-connection-test-label sr-only"[^>]*>TEST CONNECTION<\/span><\/button>/);
   assert.match(css, /body\.startup-active \.startup-actions #startupTestConnectionButton/);
   assert.doesNotMatch(css, /--startup-settings-top/);
   assert.match(source, /startupTestConnectionButton:\s*\$\('#startupTestConnectionButton'\)/);
@@ -407,52 +405,13 @@ test('startup exposes one-click connection testing and Cloud reconnect uses the 
   assert.doesNotMatch(source, /Open the signed-in Hermes Cloud agent in the active tab, then choose Connect to Hermes/);
 });
 
-test('Hey Hermes hands one exactly-once wake turn to both Browser surfaces through their existing prompt seams', () => {
+test('Hey Hermes hands one exactly-once wake turn to the side panel through its existing prompt seam', () => {
   const sidepanelHtml = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const webHtml = readFileSync(new URL('../extension/app.html', import.meta.url), 'utf8');
-  const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 
   assert.match(sidepanelHtml, /id="wakeButton"/);
   assert.match(sidepanel, /consumeWakeTurn\(message\.turn\)/);
   assert.match(sidepanel, /WAKE_MESSAGES\.turnReply/);
-  assert.match(webHtml, /id="wakeButton"/);
-  assert.match(web, /WAKE_MESSAGES/);
-  assert.match(web, /WAKE_STORAGE_KEYS/);
-  assert.match(web, /async function consumeWakeTurn/);
-  assert.match(web, /await sendPrompt\(text\)/);
-  assert.match(web, /WAKE_MESSAGES\.turnReply/);
-  assert.match(web, /changes\[WAKE_STORAGE_KEYS\.turn\]/);
-  assert.match(web, /if \(!wakeTurnIsFresh\(turn\)\) \{\s*await browserApi\.storage\.local\.remove\(WAKE_STORAGE_KEYS\.turn\);/);
-});
-
-test('Hermes Web Cloud handoff uses the same signed-in dashboard ticket transport instead of a read-only dead end', () => {
-  const source = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /Live dashboard handoff is next/);
-  assert.match(source, /mintWsTicket/);
-  assert.match(source, /isTrustedDashboardOrigin/);
-  assert.match(source, /isTrustedDashboardOrigin\(settings\.trustedDashboardOrigin, desiredOrigin\)/);
-  assert.match(source, /dashboardConnection\?\.origin === desiredOrigin/);
-  assert.match(source, /Number\(dashboardConnection\?\.tabId\) === tabId/);
-  assert.match(source, /createGatewayClient/);
-  assert.match(source, /establishGatewaySession/);
-  assert.match(source, /WS_METHODS\.sessionList/);
-  assert.match(source, /WS_METHODS\.promptSubmit/);
-  const establish = source.match(/async function establishDashboardSession[\s\S]*?\n\}/)?.[0] || '';
-  assert.ok(establish.indexOf('buildSessionModelSwitchRequest') < establish.indexOf('WS_METHODS.sessionStatus'), 'Hermes Web must apply the selected session model before acknowledging and persisting runtime truth');
-  const select = source.match(/async function selectModel[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(select, /usesDashboardTicketTransport\(\)/);
-  assert.ok(select.indexOf('buildSessionModelSwitchRequest') < select.indexOf('WS_METHODS.sessionStatus'));
-  assert.match(select, /cloudSwitchAccepted = true/);
-  assert.match(select, /if \(cloudSwitchAccepted\)[\s\S]*Cloud model rollback/);
-  assert.match(source, /const forThisSession = \(event\) => matchesDashboardSessionEvent\(event, sessionIds\);/);
-  assert.match(source, /WS_EVENTS\.error, \(event\) => \{\s*if \(!forThisSession\(event\)\) return;/);
-  assert.match(source, /let dashboardTurnSessionId = '';/);
-  assert.match(source, /sessionHistory, \{ session_id: dashboardTurnSessionId \}/);
-  assert.doesNotMatch(source, /sessionHistory, \{ session_id: dashboardLiveSessionId \}/);
-  assert.match(source, /dashboardLiveSessionId = '';/);
-  assert.match(source, /if \(!dashboardLiveSessionId\) await establishDashboardSession\(activeSessionId\);/);
-  assert.match(source, /settings = \{ \.\.\.settings, webSessionId: activeSessionId, webSessionTitle: title \};/);
 });
 
 test('saving unrelated settings preserves an explicit browser-local wake preference', () => {
@@ -749,9 +708,17 @@ test('remote gateway diagnostic detects dashboard SSO, API auth, and CORS setup 
   const cors = classifyRemoteGatewaySetup({
     url: 'http://tailnet-host:8642',
     error: 'TypeError: Failed to fetch because CORS origin is blocked',
+    origin: 'moz-extension://8c1f',
   });
   assert.equal(cors.kind, 'cors');
   assert.match(cors.detail, /API_SERVER_CORS_ORIGINS/);
+  assert.match(cors.detail, /Add moz-extension:\/\/8c1f to/, 'the origin of this install, not a Chrome placeholder');
+
+  // A bare network failure is the network (wrong address, host down, TLS), not CORS: it falls
+  // through to the generic, network-shaped troubleshooting.
+  for (const error of ['TypeError: Failed to fetch', 'NetworkError when attempting to fetch resource.', 'Load failed']) {
+    assert.equal(classifyRemoteGatewaySetup({ url: 'http://100.64.0.9:8642', error }).kind, 'unknown', error);
+  }
 });
 
 test('connection diagnostics can represent connected-but-degraded optional failures', () => {
@@ -1115,6 +1082,29 @@ test('model selection stays local while the active Browser draft is unsaved', ()
     lockSync.indexOf('isUnsavedBrowserDraftSession') < lockSync.indexOf('const rollbackScope'),
     'unsaved drafts must stay pending before the hard-failure rollback path',
   );
+});
+
+test('a runtime that does not name the serving provider or model has not confirmed the requested pair', () => {
+  const requested = { provider: 'nous', model: 'x-ai/grok-4.5' };
+  const modelOnly = modelRuntimeAckState({ requested, runtime: { model: 'x-ai/grok-4.5' } });
+  assert.equal(modelOnly.state, 'pending');
+  assert.match(modelOnly.detail, /but not the provider/);
+  const providerOnly = modelRuntimeAckState({ requested, runtime: { provider: 'nous' } });
+  assert.equal(providerOnly.state, 'pending');
+  assert.match(providerOnly.detail, /but not the model/);
+  assert.equal(modelRuntimeAckState({ requested, runtime: { provider: 'nous', model: 'x-ai/grok-4.5' } }).state, 'confirmed');
+  // Nothing was asked of the provider, so a model-only answer is complete.
+  assert.equal(modelRuntimeAckState({ requested: { provider: '', model: 'gpt-5.5' }, runtime: { model: 'gpt-5.5' } }).state, 'confirmed');
+  // A different provider serving the same model is still a mismatch, not a pending.
+  assert.equal(modelRuntimeAckState({ requested, runtime: { provider: 'openai', model: 'x-ai/grok-4.5' } }).state, 'mismatch');
+});
+
+test('the side panel does not call a model lock accepted when the runtime reports a different model', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const block = source.slice(source.indexOf("setStatus('warn', 'Model lock pending', `${requestedDetail"));
+  const mismatchAt = block.indexOf("if (ack.state === 'mismatch')");
+  const acceptedAt = block.indexOf("setStatus('ok', 'Hermes model lock accepted'");
+  assert.ok(mismatchAt > 0 && acceptedAt > mismatchAt, 'the mismatch check comes before the accepted claim');
 });
 
 test('model runtime ack helper distinguishes pending confirmed and mismatch states', () => {
@@ -1653,7 +1643,11 @@ test('speech silent-start watchdog treats started-but-mute recognition as a fail
 
 test('connect and startup sync Hermes models, sessions, skills, and profiles from the gateway', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(source, /await loadModels\(\{ quiet: true \}\);\s*await loadSkills\(\{ quiet: true \}\);\s*await loadProfiles\(\{ quiet: true \}\);\s*await loadSessions\(\{ quiet: true \}\);\s*await initializeSessionForPanelOpen\(\{ focus: false \}\);/s);
+  // Both the connect path and Settings Save re-read the catalogs in this order. Connecting always
+  // binds the session; Save binds it only when the connection identity changed (an unrelated Save
+  // used to swap the viewed session for a fresh draft; tests/settings-save-session.test.mjs).
+  assert.match(source, /await loadModels\(\{ quiet: true \}\);\s*await loadSkills\(\{ quiet: true \}\);\s*await loadProfiles\(\{ quiet: true \}\);\s*await loadSessions\(\{ quiet: true \}\);\s*if \(saved\?\.connectionIdentityChanged === true\) await initializeSessionForPanelOpen\(\{ focus: false \}\);/s);
+  assert.match(source, /bindSession: async \(\) => \{\s*await initializeSessionForPanelOpen\(\{ focus: false \}\);/);
   // Models no longer load from /v1/models REST: the recovered source uses
   // WS model discovery (discoverModelsFromRegistry / discoverModelsFromDashboard).
   assert.match(source, /WS_METHODS\.modelsList|discoverModelsFromRegistry\(|discoverModelsFromDashboard\(/);
@@ -3038,21 +3032,16 @@ test('sidepanel CSS constrains narrow panel overflow and keeps Hermes scrollbars
   assert.doesNotMatch(scrollbarBlock, /repeating-linear-gradient/, 'scrollbars should not use the mistaken textured replacement');
 });
 
-test('refresh page context button animates while refreshContext is running', () => {
+test('composer has no refresh button; the context popover owns the manual refresh', () => {
   const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
-  assert.match(html, /id="refreshButton"[\s\S]*?<svg class="refresh-glyph"[^>]*viewBox="0 0 24 24"/);
-  assert.match(css, /@keyframes hermesRefreshSpin/);
-  assert.match(css, /\.icon-refresh\.is-refreshing/);
-  assert.match(css, /\.icon-refresh\.is-refreshing\s+\.refresh-glyph\s*\{[^}]*animation:\s*hermesRefreshSpin/s);
-  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?\.icon-refresh\.is-refreshing\s+\.refresh-glyph\s*\{[^}]*animation:\s*none/s);
-  assert.doesNotMatch(css, /\.icon-refresh\.is-refreshing::before/);
-  assert.doesNotMatch(css, /\.icon-refresh\.is-refreshing\s*\{[^}]*font-size:\s*0/s);
-  assert.match(source, /const REFRESH_BUTTON_MIN_BUSY_MS = 520/);
-  assert.match(source, /await waitForRefreshButtonSpin\(startedAt\)/);
-  assert.match(source, /function setRefreshButtonBusy\(busy\)/);
-  assert.match(source, /refreshButton\.addEventListener\('click',[\s\S]*?refreshContextWithSpin\(\)/);
+  assert.doesNotMatch(html, /id="refreshButton"/);
+  assert.doesNotMatch(css, /\.icon-refresh/);
+  assert.doesNotMatch(css, /hermesRefreshSpin/);
+  assert.doesNotMatch(source, /refreshButton|REFRESH_BUTTON_MIN_BUSY_MS|waitForRefreshButtonSpin|setRefreshButtonBusy|refreshContextWithSpin/);
+  assert.match(html, /<section id="contextPopover"[\s\S]*?id="contextPageRefreshButton"/);
+  assert.match(source, /els\.contextPageRefreshButton\?\.addEventListener\('click',[\s\S]*?refreshContextFromUser\(\)/);
 });
 
 test('browser session auto-name helpers identify default titles and summarize first turn', () => {
@@ -3339,6 +3328,8 @@ test('context controls are capability gated and recommend compaction near the co
     compactRecommended: true,
     label: 'Compact context',
   });
+  assert.equal(contextControlState({ capabilities: { sessionCompactCanonical: true }, percentUsed: 72 }).canCompact, true, 'a session-authority dashboard compacts through session.mutate');
+  assert.equal(contextControlState({ capabilities: { sessionCompactCanonical: true }, percentUsed: 72 }).compactRecommended, true);
   assert.deepEqual(contextControlState({ capabilities: { sessionContext: true }, percentUsed: 72 }), {
     canInspect: true,
     canCompact: false,
@@ -3361,7 +3352,8 @@ test('context controls are capability gated and recommend compaction near the co
 
 test('sidepanel passes context accounting source into context status copy', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(source, /contextControlState\(\{ capabilities: gatewayCapabilities, percentUsed: meter\.percent, contextSource: accounting\.source \}\)/);
+  // The percent is the context card's (Hermes's reading when it has one), the panel estimate otherwise.
+  assert.match(source, /contextControlState\(\{ capabilities: gatewayCapabilities, percentUsed: contextView\.percent \?\? meter\.percent, contextSource: accounting\.source \}\)/);
 });
 
 test('sidepanel adopts rotated session id returned by native context compaction', () => {
@@ -4209,7 +4201,8 @@ test('composer plus, command pill, and topbar new-session icons are SVG-centered
   const newSession = html.match(/<button[^>]*id="newSessionButton"[\s\S]*?<\/button>/)?.[0] || '';
   assert.match(newSession, /<svg[\s\S]*?class="new-session-icon"[\s\S]*?viewBox="0 0 24 24"/, 'topbar new-session must use a real SVG plus, not a baseline-riding text glyph');
   assert.doesNotMatch(newSession, />\+</, 'new-session must not render a bare + text glyph');
-  assert.match(css, /\.icon-button \.new-session-icon\s*\{\s*width:\s*18px;[\s\S]*?height:\s*18px;/, 'new-session icon must be visibly larger than the 16px utility icons');
+  assert.match(css, /\.icon-button svg\s*\{\s*display:\s*block;\s*width:\s*16px;\s*height:\s*16px;\s*\}/, 'topbar icons share the 16px pixel-icon size');
+  assert.doesNotMatch(css, /\.icon-button \.new-session-icon\s*\{/, 'new-session plus must not override the shared 16px pixel-icon size');
   assert.match(
     css,
     /#newSessionButton:hover,\s*#newSessionButton:focus-visible\s*\{\s*background:\s*var\(--hermes-primary-bg,\s*var\(--hermes-ink\)\);\s*color:\s*var\(--hermes-primary-fg,\s*var\(--hermes-paper\)\);\s*border-color:\s*var\(--hermes-primary-fg,\s*var\(--hermes-paper\)\);\s*\}/,
@@ -4218,12 +4211,13 @@ test('composer plus, command pill, and topbar new-session icons are SVG-centered
   const attach = html.match(/<button[^>]*id="attachMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
   assert.match(attach, /<svg[\s\S]*?viewBox="0 0 24 24"/, 'composer attach plus must be a real SVG, not a text glyph');
   assert.doesNotMatch(attach, />\+</, 'composer attach must not render a bare + text glyph');
-  assert.match(css, /\.attach-menu-button\.composer-plus svg\s*\{\s*display:\s*block;\s*width:\s*14px;\s*height:\s*14px;\s*\}/, 'composer plus SVG must be block-centered at 14px');
+  assert.match(css, /\.attach-menu-button\.composer-plus svg\s*\{\s*display:\s*block;\s*width:\s*16px;\s*height:\s*16px;\s*\}/, 'composer plus SVG must be block-centered at 16px');
   assert.match(css, /\.attach-menu-button\.composer-plus\s*\{[^}]*padding:\s*0;/s, 'composer plus must not use a bottom-padding baseline hack');
   const command = html.match(/<button[^>]*id="commandMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
-  assert.match(command, /<span aria-hidden="true">\/<\/span><strong[\s\S]*?commands<\/strong>/, 'command pill keeps its accessible slash + label structure');
-  assert.match(css, /\.composer-command\s*\{[^}]*height:\s*22px;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;/s, 'command pill must center its content vertically and horizontally');
-  assert.doesNotMatch(css, /\.composer-command span\s*\{[^}]*transform:\s*translateY/, 'command pill slash must not rely on a translateY glyph hack');
+  assert.match(command, /data-icon="terminal"/, 'commands button shows the vendored terminal glyph beside Hermes Control');
+  assert.doesNotMatch(html, /class="composer-command"/, 'the slash-commands chip is gone from the composer field');
+  assert.match(css, /\.composer-actions \.composer-commands-button\s*\{[^}]*width:\s*36px;/s, 'commands button is a 36px icon button in the action row');
+  assert.doesNotMatch(css, /\.composer-command\b/, 'the slash-commands chip styles are gone');
 });
 
 test('side-panel Agent Theme Studio uses the validated theme pipeline and polished equal-size actions', () => {
@@ -4377,7 +4371,8 @@ test('settings header owns the animated connection test control', () => {
   assert.equal((html.match(/id="testConnectionButton"/g) || []).length, 1);
   assert.match(html, /settings-header-actions[\s\S]*?testConnectionButton[\s\S]*?closeSettingsButton/);
   assert.match(html, /settings-connection-test-icon/);
-  assert.match(css, /\.settings-connection-test\.is-testing \.settings-connection-test-icon[\s\S]*?animation:\s*settings-connection-orbit/);
+  assert.match(css, /\.settings-connection-test\.is-testing \.settings-connection-test-icon[\s\S]*?animation:\s*settings-connection-climb/);
+  assert.doesNotMatch(css, /settings-connection-orbit/, 'the signal bars climb while testing; they never spin');
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?settings-connection-test/);
   assert.match(source, /function setTestConnectionBusy\(busy\)/);
   assert.match(source, /setTestConnectionButtonLabel\('TESTING'\)/);
@@ -4409,6 +4404,31 @@ test('Connected agent section copy clarifies the scan is remote-dashboard-inappl
   assert.match(html, /Remote[\s\S]*?dashboard mode Dashboard Attach connects over the dashboard[\s\S]*?WebSocket/i);
 });
 
+test('REST sessions are created under a source the gateway runs turns on', async () => {
+  const { restSessionCreateSource, REST_TURN_SOURCES } = await import('../extension/lib/session-materialization.mjs');
+  const common = await import('../extension/lib/common.mjs');
+  // Since Oct 2026 Hermes refuses every REST turn on a session stored as hermes_browser
+  // and refuses to relabel it, so the side panel must never create one.
+  assert.equal(restSessionCreateSource('hermes_browser'), 'api_server');
+  assert.equal(restSessionCreateSource('desktop'), 'api_server');
+  assert.equal(restSessionCreateSource(''), 'api_server');
+  assert.equal(restSessionCreateSource(undefined), 'api_server');
+  assert.equal(restSessionCreateSource('api_server'), 'api_server');
+  assert.equal(restSessionCreateSource(' Bot_Room '), 'bot_room');
+  assert.equal(common.REST_TURN_SOURCES, REST_TURN_SOURCES);
+  // The id, not the stored source, marks them as the Browser's (side panel and Hermes Assist).
+  assert.equal(common.isHermesBrowserOwnedSession({ id: 'hermes-browser-extension-20261019-abc123', source: 'api_server' }), true);
+  assert.equal(common.isHermesBrowserOwnedSession({ id: 'hermes-assist-mf3k2-0123456789ab', source: 'api_server' }), true);
+  assert.equal(common.isHermesBrowserOwnedSession({ id: 'telegram-42', source: 'api_server' }), false);
+  // Every side panel REST create uses it (first send, new chat, Hermes Assist).
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const creates = sidepanel.split("apiFetch('/api/sessions', {").slice(1).map((rest) => rest.slice(0, 400))
+    .filter((body) => !body.includes("source: 'hermes_browser_bg'")); // /bg dispatch: never takes a turn here
+  assert.equal(creates.length, 2);
+  for (const body of creates) assert.match(body, /source: restSessionCreateSource\(settings\.sessionSource\)/);
+  assert.match(sidepanel, /createBody: \(\) => \(\{[^}]*source: restSessionCreateSource\(settings\.sessionSource\)/);
+});
+
 test('restTurnSourceRepair relabels sessions the gateway would refuse to run a REST turn on', async () => {
   const { restTurnSourceRepair } = await import('../extension/lib/common.mjs');
   assert.deepEqual(restTurnSourceRepair({ id: 'a', source: 'hermes_browser' }), { source: 'api_server' });
@@ -4417,4 +4437,95 @@ test('restTurnSourceRepair relabels sessions the gateway would refuse to run a R
   assert.equal(restTurnSourceRepair({ id: 'a', source: 'bot_room' }), null);
   assert.equal(restTurnSourceRepair({}), null);
   assert.equal(restTurnSourceRepair(null), null);
+});
+
+test('a provider-less REST session row keeps the provider of the same model already chosen', async () => {
+  const { resolveAcknowledgedSessionModelBinding } = await import('../extension/lib/common.mjs');
+  const row = { modelId: 'gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: '' };
+  const chosen = { modelId: 'gemini-local::gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: 'gemini-local' };
+  // The reported case: no stored binding for a new chat yet; the row lost the provider, so the next
+  // turn went out with none and the gateway paired the Gemini model with its default Claude provider.
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: row, currentBinding: chosen }).provider, 'gemini-local');
+  // A stored binding still wins, and a row that names its provider is still acknowledged as is.
+  const stored = { modelId: 'x::y', rawModelId: 'y', provider: 'x' };
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: row, storedBinding: stored, currentBinding: chosen }).provider, 'x');
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionProvider: 'openai', sessionBinding: { ...row, provider: 'openai' }, currentBinding: chosen }).provider, 'openai');
+  // A different model on the row is never given the chosen model's provider.
+  const other = { modelId: 'claude-haiku-5-5', rawModelId: 'claude-haiku-5-5', provider: '' };
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: other, currentBinding: chosen }).provider, '');
+});
+
+test('a stored session binding that lost its provider borrows it from the panel choice of the same model', async () => {
+  const { resolveAcknowledgedSessionModelBinding } = await import('../extension/lib/common.mjs');
+  const providerless = { modelId: 'gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: '' };
+  const chosen = { modelId: 'custom:gemini-local::gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: 'custom:gemini-local' };
+  // The reported session: its stored binding was already provider-less, so a stored binding winning was not enough.
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: providerless, storedBinding: providerless, currentBinding: chosen }).provider, 'custom:gemini-local');
+  // A stored binding with its own provider is never overridden.
+  const stored = { modelId: 'nous::gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: 'nous' };
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: providerless, storedBinding: stored, currentBinding: chosen }).provider, 'nous');
+});
+
+test('the sole catalog provider of a model is found only when it is unambiguous', async () => {
+  const { soleCatalogProviderForModel } = await import('../extension/lib/common.mjs');
+  const catalog = [
+    { id: 'custom:gemini-local::gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: 'custom:gemini-local' },
+    { id: 'gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: '', gatewayAlias: true },
+    { id: 'a::shared', rawModelId: 'shared', provider: 'a' },
+    { id: 'b::shared', rawModelId: 'shared', provider: 'b' },
+  ];
+  assert.equal(soleCatalogProviderForModel(catalog, 'gemini-3.8-flash-high'), 'custom:gemini-local', 'an alias row does not count');
+  assert.equal(soleCatalogProviderForModel(catalog, 'shared'), '', 'two providers: no guess');
+  assert.equal(soleCatalogProviderForModel(catalog, 'missing'), '');
+  assert.equal(soleCatalogProviderForModel(catalog, ''), '');
+});
+
+test('a turn never leaves without a provider the catalog can name, and Stop opens its socket first', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const slug = source.slice(source.indexOf('function currentModelProviderSlug()'), source.indexOf('\n}\n', source.indexOf('function currentModelProviderSlug()')));
+  assert.match(slug, /soleCatalogProviderForModel\(availableModels, currentModelRequestId\(\)\)/);
+  assert.match(slug, /gatewayAlias === true[\s\S]*?return '';/, 'a gateway alias is left to the gateway');
+  assert.match(source, /currentBinding: currentEffectiveModelBinding\(''\),/);
+  const stop = source.slice(source.indexOf('async function stopCurrentTurn()'), source.indexOf('const watched = attach ||', source.indexOf('async function stopCurrentTurn()')));
+  assert.match(stop, /liveSessionRows\.get\(viewedSessionId\)\?\.live === true[\s\S]*?await ensureActiveDashboardWsConnection\(\)/);
+});
+
+test('a Bot Chat keeps its source on a REST turn; other foreign sessions are still relabelled', async () => {
+  const { restTurnSourceRepair } = await import('../extension/lib/common.mjs');
+  assert.equal(restTurnSourceRepair({ session: { source: 'desktop', title: 'Bot Chat' } }), null);
+  assert.equal(restTurnSourceRepair({ source: 'desktop', title: 'Bot Chat #2', root_title: 'Bot Chat' }), null);
+  assert.deepEqual(restTurnSourceRepair({ source: 'desktop', title: 'Notes' }), { source: 'api_server' });
+});
+
+test('a gateway address typed without a scheme gets one instead of failing every request', async () => {
+  const { withGatewayScheme } = await import('../extension/lib/common.mjs');
+  assert.equal(withGatewayScheme('box.tailnet.ts.net:8642'), 'http://box.tailnet.ts.net:8642');
+  assert.equal(withGatewayScheme(' localhost:8642 '), 'http://localhost:8642');
+  assert.equal(withGatewayScheme('192.168.1.20:8642/v1'), 'http://192.168.1.20:8642/v1');
+  assert.equal(withGatewayScheme('agent.example.com:443'), 'https://agent.example.com:443');
+  assert.equal(withGatewayScheme('hermes.example.com', { secure: true }), 'https://hermes.example.com');
+  // The key travels in the clear only on a private network: a public host gets https://.
+  assert.equal(withGatewayScheme('agent.example.com:8642'), 'https://agent.example.com:8642');
+  assert.equal(withGatewayScheme('203.0.113.9:8642'), 'https://203.0.113.9:8642');
+  assert.equal(withGatewayScheme('172.32.0.1:8642'), 'https://172.32.0.1:8642');
+  for (const host of ['10.0.0.5:8642', '172.16.4.2:8642', '100.101.2.3:8642', '169.254.9.9:8642', '[::1]:8642',
+    '[fd12::5]:8642', 'nas:8642', 'nas.local:8642', 'pi.lan:8642', 'box.home.arpa', '127.0.0.1:8642']) {
+    assert.equal(withGatewayScheme(host), `http://${host}`, host);
+  }
+  // Anything that already names a scheme, and an empty field, are left as typed.
+  for (const kept of ['http://127.0.0.1:8642', 'https://agent.example.com', 'HTTPS://Agent.example.com', '']) {
+    assert.equal(withGatewayScheme(kept), kept);
+  }
+  const panel = await import('node:fs').then((fs) => fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8'));
+  assert.match(panel, /const rawGatewayUrl = withGatewayScheme\(els\.gatewayUrlInput\.value/);
+  assert.match(panel, /typedUrl: withGatewayScheme\(els\.gatewayUrlInput\?\.value/);
+});
+
+test('renderMarkdown makes one character bold, struck or underscored, and keeps neighbours apart', () => {
+  assert.match(renderMarkdown('There are **3** letter r in it.'), /There are <strong>3<\/strong> letter r/);
+  assert.match(renderMarkdown('Price ~~5~~ 4'), /<del>5<\/del> 4/);
+  assert.match(renderMarkdown('**a** and **b**'), /<strong>a<\/strong> and <strong>b<\/strong>/);
+  assert.match(renderMarkdown('A **bold** word.'), /<strong>bold<\/strong>/);
+  assert.doesNotMatch(renderMarkdown('2 ** 3 is 8'), /<strong>/);
 });

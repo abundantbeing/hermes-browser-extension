@@ -182,8 +182,8 @@ test('translated labels and disabled state remain accessible', () => {
   assert.deepEqual(ctx.commits, []);
 });
 
-test('both existing picker surfaces mount the shared native control and stylesheet', () => {
-  for (const surface of ['sidepanel', 'app']) {
+test('the side panel picker mounts the shared native control and stylesheet', () => {
+  for (const surface of ['sidepanel']) {
     const js = readFileSync(new URL(`../extension/${surface}.js`, import.meta.url), 'utf8');
     const html = readFileSync(new URL(`../extension/${surface}.html`, import.meta.url), 'utf8');
     assert.ok(/import\s*\{[^}]*\bcreateEffortControl\b[^}]*\}\s*from\s*['"]\.\/lib\/effort-control\.mjs['"]/.test(js), `${surface} imports the shared effort control`);

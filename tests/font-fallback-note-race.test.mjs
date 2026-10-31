@@ -5,7 +5,6 @@ import vm from 'node:vm';
 
 for (const [surface, noteKey, counter] of [
   ['sidepanel', 'signatureFontFallbackNote', 'signatureNoteProbeId'],
-  ['app', 'settingsSignatureFontFallbackNote', 'webSignatureNoteProbeId'],
 ]) {
   test(`${surface} non-signature selection invalidates a pending font probe`, async () => {
     const source = readFileSync(new URL(`../extension/${surface}.js`, import.meta.url), 'utf8');

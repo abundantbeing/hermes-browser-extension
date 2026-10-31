@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Відкрити розширення Hermes Browser",
+    "message": "Відкрити Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Відкрити бічну панель Hermes Browser",
+    "message": "Відкрити бічну панель Hermes Browser Extension",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -34,6 +34,102 @@
   "runtime_a11y_subagent_status": {
     "message": "Стан субагентів Hermes",
     "description": "Runtime interface message a11y.subagent_status"
+  },
+  "runtime_account_hint": {
+    "message": "Той самий вхід, що й у мобільному застосунку Hermes. Він відкриває «Проєкти», авторитет сесій, стискання контексту та повний список ботів на шлюзі, який вимагає вхід, без запуску будь-чого. «Вийти» видаляє його в цьому браузері.",
+    "description": "Runtime interface message account.hint"
+  },
+  "runtime_account_label": {
+    "message": "Обліковий запис Hermes",
+    "description": "Runtime interface message account.label"
+  },
+  "runtime_account_notice_exchange_rejected": {
+    "message": "Шлюз відхилив код входу. Повторіть спробу.",
+    "description": "Runtime interface message account.notice.exchange_rejected"
+  },
+  "runtime_account_notice_failed": {
+    "message": "Вхід не завершено. Повторіть спробу.",
+    "description": "Runtime interface message account.notice.failed"
+  },
+  "runtime_account_notice_no_permission": {
+    "message": "Для входу потрібен ваш дозвіл, щоб Hermes Browser Extension бачило, де закінчується вікно входу. Виберіть «Увійти» ще раз і дозвольте.",
+    "description": "Runtime interface message account.notice.no_permission"
+  },
+  "runtime_account_notice_no_window": {
+    "message": "Цей браузер не зміг відкрити вікно входу.",
+    "description": "Runtime interface message account.notice.no_window"
+  },
+  "runtime_account_notice_provider_denied": {
+    "message": "Вхід не було підтверджено. Повторіть спробу.",
+    "description": "Runtime interface message account.notice.provider_denied"
+  },
+  "runtime_account_notice_session_expired": {
+    "message": "Сесію вашого облікового запису Hermes завершено. Увійдіть знову.",
+    "description": "Runtime interface message account.notice.session_expired"
+  },
+  "runtime_account_notice_state_mismatch": {
+    "message": "Цей вхід не відповідав запиту й був відкинутий. Повторіть спробу.",
+    "description": "Runtime interface message account.notice.state_mismatch"
+  },
+  "runtime_account_notice_timeout": {
+    "message": "Вхід не завершився вчасно. Повторіть спробу.",
+    "description": "Runtime interface message account.notice.timeout"
+  },
+  "runtime_account_notice_unavailable": {
+    "message": "Зараз не вдається зв'язатися зі шлюзом. Ваш вхід збережено; повторіть трохи згодом.",
+    "description": "Runtime interface message account.notice.unavailable"
+  },
+  "runtime_account_sign_in": {
+    "message": "Увійти з обліковим записом Hermes",
+    "description": "Runtime interface message account.sign_in"
+  },
+  "runtime_account_sign_in_needed": {
+    "message": "Цьому шлюзу потрібен вхід з вашим обліковим записом Hermes. Відкрийте «Налаштування» > «Підключення» та виберіть «Увійти з обліковим записом Hermes».",
+    "description": "Runtime interface message account.sign_in_needed"
+  },
+  "runtime_account_sign_out": {
+    "message": "Вийти",
+    "description": "Runtime interface message account.sign_out"
+  },
+  "runtime_account_signed_in_as": {
+    "message": "Ви увійшли як {name} ({provider})",
+    "description": "Runtime interface message account.signed_in_as"
+  },
+  "runtime_account_signed_in_generic": {
+    "message": "Вхід з обліковим записом Hermes виконано",
+    "description": "Runtime interface message account.signed_in_generic"
+  },
+  "runtime_account_signed_in_title": {
+    "message": "Вхід у Hermes виконано",
+    "description": "Runtime interface message account.signed_in_title"
+  },
+  "runtime_account_status_checking": {
+    "message": "Перевіряємо, чи приймає цей шлюз вхід з обліковим записом Hermes.",
+    "description": "Runtime interface message account.status_checking"
+  },
+  "runtime_account_status_signed_out": {
+    "message": "Вхід не виконано. Цей шлюз вимагає вхід з обліковим записом Hermes.",
+    "description": "Runtime interface message account.status_signed_out"
+  },
+  "runtime_account_status_waiting": {
+    "message": "Чекаємо, поки ви завершите вхід у вікні, що відкрилося.",
+    "description": "Runtime interface message account.status_waiting"
+  },
+  "runtime_account_unavailable_no_native_flow": {
+    "message": "Цей шлюз вимагає вхід, але не підтримує вхід для застосунків. Оновіть Hermes до версії, яка його підтримує.",
+    "description": "Runtime interface message account.unavailable.no_native_flow"
+  },
+  "runtime_account_unavailable_no_origin": {
+    "message": "Для входу з обліковим записом Hermes потрібен шлюз за https або локальний шлюз, захищений входом.",
+    "description": "Runtime interface message account.unavailable.no_origin"
+  },
+  "runtime_account_unavailable_not_gated": {
+    "message": "Цей шлюз відкритий на цьому комп'ютері й не вимагає входу, тож облікового запису Hermes тут використовувати не потрібно. «Проєкти» забезпечує сполучення з Hermes Browser Extension або власний вхід Hermes Web.",
+    "description": "Runtime interface message account.unavailable.not_gated"
+  },
+  "runtime_account_unavailable_unreachable": {
+    "message": "Не вдалося зв'язатися з цим шлюзом, щоб перевірити вхід.",
+    "description": "Runtime interface message account.unavailable.unreachable"
   },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
@@ -380,15 +476,31 @@
     "description": "Runtime interface message bot_mode.density_compact"
   },
   "runtime_bot_mode_dialog_label": {
-    "message": "Режим бота Hermes Browser",
+    "message": "Режим бота",
     "description": "Runtime interface message bot_mode.dialog_label"
+  },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "Попередні повідомлення з {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "Не вдалося завантажити попередні повідомлення. Ви все ще можете відкрити «{title}» у Regular Sessions.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "Завантаження попередніх повідомлень…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes відклав ваш попередній чат із {name} під назвою «{title}» і почав цей, тож {name} не бачить тут цих повідомлень.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
   },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"
   },
   "runtime_bot_mode_enable_label": {
-    "message": "Увімкнути режим бота Hermes Browser",
+    "message": "Увімкнути режим бота",
     "description": "Runtime interface message bot_mode.enable_label"
   },
   "runtime_bot_mode_face_blobatar": {
@@ -438,6 +550,14 @@
   "runtime_bot_mode_group_create": {
     "message": "Виберіть принаймні одного агента для цього групового чату.",
     "description": "Runtime interface message bot_mode.group_create"
+  },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes не відповів, тож це повідомлення, можливо, вже в нього. Перевірте кімнату, перш ніж надсилати його знову.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Ваше повідомлення знову в полі введення. Якщо надіслати його без змін протягом 10 хвилин, воно не буде опубліковане двічі.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
   },
   "runtime_bot_mode_group_field_members": {
     "message": "Виберіть агентів, які беруть участь у цьому груповому чаті.",
@@ -504,7 +624,7 @@
     "description": "Runtime interface message bot_mode.leave_confirm"
   },
   "runtime_bot_mode_leave_detail": {
-    "message": "Створення нової сесії поверне вас до звичайного робочого простору Hermes Browser.",
+    "message": "Створення нової сесії поверне вас до звичайного робочого простору.",
     "description": "Runtime interface message bot_mode.leave_detail"
   },
   "runtime_bot_mode_leave_kicker": {
@@ -558,10 +678,6 @@
   "runtime_bot_mode_off_hint_sidepanel": {
     "message": "Типово вимкнено. Використовується поточний підключений екземпляр Hermes.",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
-  },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "Типово вимкнено. Обмежено поточним підключеним екземпляром Hermes.",
-    "description": "Runtime interface message bot_mode.off_hint_web"
   },
   "runtime_bot_mode_open_chat": {
     "message": "Відкрити Bot Chat",
@@ -632,16 +748,20 @@
     "description": "Runtime interface message bot_mode.return_to_sessions"
   },
   "runtime_bot_mode_return_to_sessions_title": {
-    "message": "Return to regular Hermes Browser sessions",
+    "message": "Повернутися до ваших звичайних сесій",
     "description": "Runtime interface message bot_mode.return_to_sessions_title"
   },
   "runtime_bot_mode_roster_label": {
     "message": "Агенти Hermes",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "Агенти Hermes Web",
-    "description": "Runtime interface message bot_mode.roster_label_web"
+  "runtime_bot_mode_roster_names_only": {
+    "message": "Для фото профілів і повних відомостей про ботів потрібна панель Hermes або вхід на цьому шлюзі.",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "Відкрити налаштування підключення",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
   },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
@@ -666,10 +786,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "Увімкне додатковий список профілів і канонічну навігацію Bot Chat у цьому браузері.",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "Увімкне додаткову панель агентів і канонічну навігацію Bot Chat у цьому браузері.",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "Агенти та режим бота",
@@ -931,6 +1047,10 @@
     "message": "Запустіть або виберіть сеанс Hermes, перш ніж вмикати Керування Hermes.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "Керування Hermes недоступне в цьому Hermes. Потрібен Hermes із керуванням через розширення браузера.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "Застосовує вибрану область до вкладок, якими може керувати Hermes.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1007,6 +1127,22 @@
     "message": "Chromium надає цьому розширенню доступ до налагоджувача під час встановлення або оновлення. Hermes використовує налагоджувач лише на вкладках, які ви підключаєте, ніколи не виводить вікно браузера на передній план і блокує облікові дані, MFA, платіжні поля та секретний текст.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes не виконав дію там: ця точка всередині фрейму на сторінці, яку Hermes не може читати.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes не зробив знімок екрана: фрейм на цій сторінці розташований на сторінці, яку Hermes не може читати.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes не зробив знімок екрана: сторінка перейшла на сторінку, яку Hermes не знімає.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes не зробив знімок: Firefox потребує додаткового дозволу. Скористайтеся «Дозволити знімки екрана у Firefox».",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Пауза",
     "description": "Runtime interface message browser_control.pause"
@@ -1078,6 +1214,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Готово",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_state_waiting": {
+    "message": "Очікування",
+    "description": "Runtime interface message browser_control.state_waiting"
   },
   "runtime_browser_control_status_on": {
     "message": "Увімкнено",
@@ -1151,9 +1291,405 @@
     "message": "Вимкнути",
     "description": "Runtime interface message browser_control.turn_off"
   },
+  "runtime_browser_control_unsupported": {
+    "message": "Керування Hermes недоступне в цьому Hermes",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "Потрібен Hermes із керуванням через розширення браузера.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
+  },
   "runtime_browser_control_waiting": {
     "message": "Очікування на Hermes.",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "Керування Hermes під'єднається після надсилання першого повідомлення в цьому чаті.",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "Очікування цього чату",
+    "description": "Runtime interface message browser_control.waiting_title"
+  },
+  "runtime_capability_feature_approvalEvents": {
+    "message": "Події підтвердження",
+    "description": "Runtime interface message capability.feature.approvalEvents"
+  },
+  "runtime_capability_feature_audioTranscription": {
+    "message": "Транскрипція голосу",
+    "description": "Runtime interface message capability.feature.audioTranscription"
+  },
+  "runtime_capability_feature_auth": {
+    "message": "Автентифікація",
+    "description": "Runtime interface message capability.feature.auth"
+  },
+  "runtime_capability_feature_browserCompanionPlugin": {
+    "message": "Плагін Hermes Browser Extension",
+    "description": "Runtime interface message capability.feature.browserCompanionPlugin"
+  },
+  "runtime_capability_feature_browserContextProvider": {
+    "message": "Browser Context Protocol",
+    "description": "Runtime interface message capability.feature.browserContextProvider"
+  },
+  "runtime_capability_feature_browserContextStatus": {
+    "message": "Статус контексту браузера",
+    "description": "Runtime interface message capability.feature.browserContextStatus"
+  },
+  "runtime_capability_feature_browserContextUpload": {
+    "message": "Завантаження контексту браузера",
+    "description": "Runtime interface message capability.feature.browserContextUpload"
+  },
+  "runtime_capability_feature_browserPairing": {
+    "message": "Сполучення браузера",
+    "description": "Runtime interface message capability.feature.browserPairing"
+  },
+  "runtime_capability_feature_health": {
+    "message": "Стан",
+    "description": "Runtime interface message capability.feature.health"
+  },
+  "runtime_capability_feature_imageSessionAttach": {
+    "message": "Вкладення зображення (сеанс)",
+    "description": "Runtime interface message capability.feature.imageSessionAttach"
+  },
+  "runtime_capability_feature_imageUpload": {
+    "message": "Завантаження зображень (HTTP)",
+    "description": "Runtime interface message capability.feature.imageUpload"
+  },
+  "runtime_capability_feature_mediaRead": {
+    "message": "Читання збережених зображень",
+    "description": "Runtime interface message capability.feature.mediaRead"
+  },
+  "runtime_capability_feature_models": {
+    "message": "Моделі",
+    "description": "Runtime interface message capability.feature.models"
+  },
+  "runtime_capability_feature_pluginActions": {
+    "message": "Дії плагіна",
+    "description": "Runtime interface message capability.feature.pluginActions"
+  },
+  "runtime_capability_feature_profiles": {
+    "message": "Профілі",
+    "description": "Runtime interface message capability.feature.profiles"
+  },
+  "runtime_capability_feature_projects": {
+    "message": "Проєкти",
+    "description": "Runtime interface message capability.feature.projects"
+  },
+  "runtime_capability_feature_runs": {
+    "message": "Runs API",
+    "description": "Runtime interface message capability.feature.runs"
+  },
+  "runtime_capability_feature_runSteer": {
+    "message": "Керування запуском",
+    "description": "Runtime interface message capability.feature.runSteer"
+  },
+  "runtime_capability_feature_sessionAuthority": {
+    "message": "Повноваження сеансу",
+    "description": "Runtime interface message capability.feature.sessionAuthority"
+  },
+  "runtime_capability_feature_sessionCompress": {
+    "message": "Стиснення контексту",
+    "description": "Runtime interface message capability.feature.sessionCompress"
+  },
+  "runtime_capability_feature_sessionContext": {
+    "message": "Статус контексту",
+    "description": "Runtime interface message capability.feature.sessionContext"
+  },
+  "runtime_capability_feature_sessionModelLock": {
+    "message": "Блокування моделі на сеанс",
+    "description": "Runtime interface message capability.feature.sessionModelLock"
+  },
+  "runtime_capability_feature_sessions": {
+    "message": "Сеанси",
+    "description": "Runtime interface message capability.feature.sessions"
+  },
+  "runtime_capability_feature_skills": {
+    "message": "Навички",
+    "description": "Runtime interface message capability.feature.skills"
+  },
+  "runtime_capability_meta_checked": {
+    "message": "Перевірено {age}",
+    "description": "Runtime interface message capability.meta.checked"
+  },
+  "runtime_capability_meta_never": {
+    "message": "Ніколи не перевірялося",
+    "description": "Runtime interface message capability.meta.never"
+  },
+  "runtime_capability_meta_source": {
+    "message": "Джерело: {source}",
+    "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_account_sign_in": {
+    "message": "Цей шлюз вимагає вхід з обліковим записом Hermes. Увійдіть у «Налаштування» > «Підключення», щоб відкрити його сокет сесії.",
+    "description": "Runtime interface message capability.reason.account_sign_in"
+  },
+  "runtime_capability_reason_advertised": {
+    "message": "Оголошено цим шлюзом.",
+    "description": "Runtime interface message capability.reason.advertised"
+  },
+  "runtime_capability_reason_advertised_off": {
+    "message": "Цей шлюз оголошує її вимкненою.",
+    "description": "Runtime interface message capability.reason.advertised_off"
+  },
+  "runtime_capability_reason_authority_compress": {
+    "message": "Стиснення виконується як session.mutate з операцією compress, яку обслуговує шлюз із повноваженнями сеансу.",
+    "description": "Runtime interface message capability.reason.authority_compress"
+  },
+  "runtime_capability_reason_authority_ready": {
+    "message": "gateway.ready повідомляє про повноваження сеансу.",
+    "description": "Runtime interface message capability.reason.authority_ready"
+  },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Шлюз відхилив сполучений токен (HTTP {status}), тому плагін не вдалося перевірити.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Цей шлюз не надає ані маршруту статусу, ані читабельного списку наборів інструментів, тому розширення не може визначити, чи завантажено допоміжний плагін. Це не означає, що його немає.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Шлюз відповів HTTP {status}, тому плагін не вдалося перевірити.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Не вдалося зв'язатися зі шлюзом{detail}, тому плагін не вдалося перевірити.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Допоміжний плагін завантажено з {presentCount} з {expectedCount} інструментів, але він не обслуговує маршрут статусу, тож це застаріла копія. Перевстановіть плагін для цього профілю та перезапустіть шлюз.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Токен шлюзу недоступний, тому плагін не перевірявся.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Не завантажено на цьому шлюзі: маршруту статусу немає, і допоміжний набір інструментів не вказано. Плагін не встановлено, не увімкнено для цього профілю або шлюз відтоді не перезапускали. Виконайте `hermes plugins list` для профілю.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Завантажено: версія {version}, профіль {profile}, інструментів: {toolCount}.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Завантажено: версія {version}, профіль {profile}, інструментів: {toolCount}. Цей шлюз не зміг підтвердити, чи ввімкнено його набір інструментів для сервера API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Завантажено застарілу копію цього плагіна під попередньою назвою hermes-browser-companion. Видаліть її (`hermes plugins remove hermes-browser-companion`), установіть hermes-browser-extension для цього профілю та перезапустіть шлюз.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
+  },
+  "runtime_capability_reason_companion_route": {
+    "message": "Доступно через плагін-компаньйон (версія {version}), який надає цей маршрут на цьому шлюзі. У самому Hermes такого маршруту немає.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Завантажено (версія {version}), але бракує інструментів: {missing}. Перевстановіть плагін для цього профілю та перезапустіть шлюз.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Завантажено, але його набір інструментів вимкнено для сервера API. Увімкніть його командою `hermes tools` або вилучіть із agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Завантажено, але це версія {version}, а це розширення очікує {expected}. Перевстановіть плагін для цього профілю та перезапустіть шлюз.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
+  "runtime_capability_reason_connection_closed": {
+    "message": "З'єднання закрито. Останнє підтвердження {age}. Показано, але не використовується для виконання чогось.",
+    "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_context_socket": {
+    "message": "Прочитано через сокет сесії Hermes: використання сесії та розбивка за категоріями за збереженим ідентифікатором сесії.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Надається панеллю керування Hermes на цьому комп'ютері, яка прийняла вхід, що зберігається в цій панелі. API шлюзу цей маршрут не оголошує.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
+  },
+  "runtime_capability_reason_extension_side": {
+    "message": "Створюється й надсилається цим розширенням усередині запиту. Не залежить від маршруту шлюзу.",
+    "description": "Runtime interface message capability.reason.extension_side"
+  },
+  "runtime_capability_reason_identity_changed": {
+    "message": "З'єднання, обліковий запис або профіль змінилися. Ще не перевірено знову.",
+    "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Вставлені зображення готуються через сокет сесії Hermes (image.attach_bytes), а чат читає їх за шляхом.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
+  },
+  "runtime_capability_reason_legacy_assumed": {
+    "message": "Припущено, бо /health відповів із токеном. /v1/capabilities був недоступний, тому це не підтверджено.",
+    "description": "Runtime interface message capability.reason.legacy_assumed"
+  },
+  "runtime_capability_reason_legacy_gateway": {
+    "message": "Цей шлюз не має /v1/capabilities, тому розширення не бачить, що він пропонує.",
+    "description": "Runtime interface message capability.reason.legacy_gateway"
+  },
+  "runtime_capability_reason_legacy_ws_compress": {
+    "message": "Цей шлюз панелі не має повноважень сеансу, тож стисненням займається попередній session.compress.",
+    "description": "Runtime interface message capability.reason.legacy_ws_compress"
+  },
+  "runtime_capability_reason_method_not_found": {
+    "message": "Шлюз відповів «method not found» (-32601) на {method}.",
+    "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Для цього з'єднання ще не відкрито сокет сесії Hermes. Стан контексту з'явиться тут, коли він відкриється.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_record": {
+    "message": "Ще не перевірено.",
+    "description": "Runtime interface message capability.reason.no_record"
+  },
+  "runtime_capability_reason_no_session_authority": {
+    "message": "gateway.ready не повідомив про повноваження сеансу.",
+    "description": "Runtime interface message capability.reason.no_session_authority"
+  },
+  "runtime_capability_reason_not_advertised": {
+    "message": "Не оголошено цим шлюзом.",
+    "description": "Runtime interface message capability.reason.not_advertised"
+  },
+  "runtime_capability_reason_not_advertised_plugin": {
+    "message": "Не оголошено цим шлюзом. Hermes Browser Extension не може визначити, чи завантажено супутній плагін, тож це не означає, що його немає.",
+    "description": "Runtime interface message capability.reason.not_advertised_plugin"
+  },
+  "runtime_capability_reason_not_connected": {
+    "message": "WebSocket панелі ще не передав gateway.ready.",
+    "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "У цій версії Hermes немає такого маршруту, тож вмикати нічого. Контекст сторінки натомість передається разом із кожним повідомленням.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
+  },
+  "runtime_capability_reason_operation_ok": {
+    "message": "Спрацювало востаннє, коли його використовували.",
+    "description": "Runtime interface message capability.reason.operation_ok"
+  },
+  "runtime_capability_reason_operation_refused": {
+    "message": "Hermes відхилив останню спробу: {detail}.",
+    "description": "Runtime interface message capability.reason.operation_refused"
+  },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Чат на цьому з'єднанні працює через REST API. Вставлені зображення прикріплюються до живої сесії, коли чат працює через WebSocket панелі, як у сесії режиму бота або іменованого профілю.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Чат на цьому з'єднанні працює через REST API, і сокет сесії Hermes не відкритий, тому вставлені зображення йдуть через завантаження панелі або залишаються вбудованими.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
+  },
+  "runtime_capability_reason_rest_no_compress": {
+    "message": "Це з'єднання сягає лише REST API, який не оголошує маршрут стиснення. Для стиснення потрібен WebSocket панелі з повноваженнями сеансу.",
+    "description": "Runtime interface message capability.reason.rest_no_compress"
+  },
+  "runtime_capability_reason_rest_only": {
+    "message": "Це з'єднання сягає лише REST API. Потрібен WebSocket панелі.",
+    "description": "Runtime interface message capability.reason.rest_only"
+  },
+  "runtime_capability_reason_revoked": {
+    "message": "Вимкнено: {detail}.",
+    "description": "Runtime interface message capability.reason.revoked"
+  },
+  "runtime_capability_reason_stale": {
+    "message": "Останнє підтвердження {age}. Показано стару відповідь, але вона не використовується для виконання чогось.",
+    "description": "Runtime interface message capability.reason.stale"
+  },
+  "runtime_capability_reason_token_present": {
+    "message": "Є токен або контекст автентифікації. Ця перевірка не довела, що він дійсний.",
+    "description": "Runtime interface message capability.reason.token_present"
+  },
+  "runtime_capability_reason_ws_connected": {
+    "message": "WebSocket панелі Hermes підключено.",
+    "description": "Runtime interface message capability.reason.ws_connected"
+  },
+  "runtime_capability_reason_ws_contract": {
+    "message": "Частина контракту WebSocket панелі. Цей шлюз не оголошує її окремо.",
+    "description": "Runtime interface message capability.reason.ws_contract"
+  },
+  "runtime_capability_reason_ws_not_reported": {
+    "message": "WebSocket панелі цього не повідомляє, а це з'єднання не читає /v1/capabilities.",
+    "description": "Runtime interface message capability.reason.ws_not_reported"
+  },
+  "runtime_capability_source_derived": {
+    "message": "виведено зі з'єднання",
+    "description": "Runtime interface message capability.source.derived"
+  },
+  "runtime_capability_source_extension": {
+    "message": "це розширення",
+    "description": "Runtime interface message capability.source.extension"
+  },
+  "runtime_capability_source_method_not_found": {
+    "message": "відмова від Hermes",
+    "description": "Runtime interface message capability.source.method_not_found"
+  },
+  "runtime_capability_source_none": {
+    "message": "поки немає підтверджень",
+    "description": "Runtime interface message capability.source.none"
+  },
+  "runtime_capability_source_operation": {
+    "message": "остання спроба",
+    "description": "Runtime interface message capability.source.operation"
+  },
+  "runtime_capability_source_probe": {
+    "message": "перевірка",
+    "description": "Runtime interface message capability.source.probe"
+  },
+  "runtime_capability_source_revocation": {
+    "message": "вимкнено",
+    "description": "Runtime interface message capability.source.revocation"
+  },
+  "runtime_capability_state_available": {
+    "message": "Доступно",
+    "description": "Runtime interface message capability.state.available"
+  },
+  "runtime_capability_state_blocked": {
+    "message": "Заблоковано",
+    "description": "Runtime interface message capability.state.blocked"
+  },
+  "runtime_capability_state_cached": {
+    "message": "У кеші",
+    "description": "Runtime interface message capability.state.cached"
+  },
+  "runtime_capability_state_degraded": {
+    "message": "Обмежено",
+    "description": "Runtime interface message capability.state.degraded"
+  },
+  "runtime_capability_state_unknown": {
+    "message": "Невідомо",
+    "description": "Runtime interface message capability.state.unknown"
+  },
+  "runtime_capability_state_unsupported": {
+    "message": "Не підтримується",
+    "description": "Runtime interface message capability.state.unsupported"
+  },
+  "runtime_capability_summary_all": {
+    "message": "Усі перевірені тут функції використовуються.",
+    "description": "Runtime interface message capability.summary.all"
+  },
+  "runtime_capability_summary_some": {
+    "message": "Функції, що не використовуються в цьому з'єднанні: {count}",
+    "description": "Runtime interface message capability.summary.some"
+  },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Ваше повідомлення чекає в черзі цього чату. Відповідь з’явиться тут, щойно буде готова, тож надсилати його знову не потрібно.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
+  "runtime_chat_jump_to_latest": {
+    "message": "До останнього",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "{count} нового повідомлення",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "До останнього, {count} нового повідомлення",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes міг видалити цей хід, а ваше нове повідомлення не надіслано. Тепер розмова показує те, що є в Hermes, а ваш текст повернувся в поле введення.",
+    "description": "Runtime interface message chat.rewind_unsent"
   },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
@@ -1247,9 +1783,109 @@
     "message": "Використовується",
     "description": "Runtime interface message common.using"
   },
-  "runtime_composer_attach": {
-    "message": "＋ Прикріпити",
-    "description": "Runtime interface message composer.attach"
+  "runtime_compact_button": {
+    "message": "Стиснути контекст",
+    "description": "Runtime interface message compact.button"
+  },
+  "runtime_compact_button_recommended": {
+    "message": "Рекомендується стиснення",
+    "description": "Runtime interface message compact.button_recommended"
+  },
+  "runtime_compact_result_aborted": {
+    "message": "Hermes не зміг скласти підсумок сеансу, тож нічого не замінено.",
+    "description": "Runtime interface message compact.result.aborted"
+  },
+  "runtime_compact_result_blocked": {
+    "message": "Hermes зараз не стискатиме цей сеанс ({reason}).",
+    "description": "Runtime interface message compact.result.blocked"
+  },
+  "runtime_compact_result_busy": {
+    "message": "Hermes відмовив, бо сеанс зайнятий. Нічого не змінено.",
+    "description": "Runtime interface message compact.result.busy"
+  },
+  "runtime_compact_result_busy_compressing": {
+    "message": "Hermes уже стискає цей сеанс.",
+    "description": "Runtime interface message compact.result.busy_compressing"
+  },
+  "runtime_compact_result_busy_turn": {
+    "message": "У цьому сеансі триває хід. Зупиніть його перед стисненням. Нічого не надіслано.",
+    "description": "Runtime interface message compact.result.busy_turn"
+  },
+  "runtime_compact_result_compacted": {
+    "message": "Hermes стиснув цей сеанс, і повторне читання це підтверджує. {detail}",
+    "description": "Runtime interface message compact.result.compacted"
+  },
+  "runtime_compact_result_denied": {
+    "message": "Hermes відмовив у стисненні для цього облікового запису або профілю.",
+    "description": "Runtime interface message compact.result.denied"
+  },
+  "runtime_compact_result_failed": {
+    "message": "Hermes не завершив стиснення. {detail}",
+    "description": "Runtime interface message compact.result.failed"
+  },
+  "runtime_compact_result_indeterminate": {
+    "message": "Відповідь втрачено, а сеанс пішов далі. Можливо, Hermes його стиснув; повторно нічого не надсилалося.",
+    "description": "Runtime interface message compact.result.indeterminate"
+  },
+  "runtime_compact_result_noop": {
+    "message": "Сеанс уже достатньо короткий, щоб залишитися цілим. Нічого не змінено.",
+    "description": "Runtime interface message compact.result.noop"
+  },
+  "runtime_compact_result_not_committed": {
+    "message": "Відповідь втрачено, а Hermes показує сеанс без змін. Натисніть «Стиснути» ще раз, щоб надіслати той самий запит.",
+    "description": "Runtime interface message compact.result.not_committed"
+  },
+  "runtime_compact_result_not_sent": {
+    "message": "Не вдалося зв'язатися з Hermes, щоб спершу прочитати сеанс. Нічого не надіслано.",
+    "description": "Runtime interface message compact.result.not_sent"
+  },
+  "runtime_compact_result_rotated": {
+    "message": "Сеанс зберігає свій id; Hermes продовжує його в новому збереженому сегменті.",
+    "description": "Runtime interface message compact.result.rotated"
+  },
+  "runtime_compact_result_stale": {
+    "message": "Сеанс змінювався під час стиснення двічі поспіль. Нічого не змінено. Спробуйте ще раз.",
+    "description": "Runtime interface message compact.result.stale"
+  },
+  "runtime_compact_result_unconfirmed": {
+    "message": "Hermes прийняв стиснення, але повторне читання сеансу його не підтвердило. Оновіть, перш ніж покладатися на результат.",
+    "description": "Runtime interface message compact.result.unconfirmed"
+  },
+  "runtime_compact_status_no_session": {
+    "message": "Відкрийте або створіть сеанс перед стисненням.",
+    "description": "Runtime interface message compact.status.no_session"
+  },
+  "runtime_compact_status_ready": {
+    "message": "Замінити старі повідомлення підсумком, щоб звільнити місце.",
+    "description": "Runtime interface message compact.status.ready"
+  },
+  "runtime_compact_status_running": {
+    "message": "Зупиніть активний запуск перед стисненням цього сеансу.",
+    "description": "Runtime interface message compact.status.running"
+  },
+  "runtime_compact_status_unavailable": {
+    "message": "Стиснення недоступне: {reason}",
+    "description": "Runtime interface message compact.status.unavailable"
+  },
+  "runtime_compact_title_failed": {
+    "message": "Не вдалося стиснути контекст",
+    "description": "Runtime interface message compact.title.failed"
+  },
+  "runtime_compact_title_noop": {
+    "message": "Нічого стискати",
+    "description": "Runtime interface message compact.title.noop"
+  },
+  "runtime_compact_title_ok": {
+    "message": "Контекст стиснуто",
+    "description": "Runtime interface message compact.title.ok"
+  },
+  "runtime_compact_title_unavailable": {
+    "message": "Стиснення контексту недоступне",
+    "description": "Runtime interface message compact.title.unavailable"
+  },
+  "runtime_compact_working": {
+    "message": "Стиснення…",
+    "description": "Runtime interface message compact.working"
   },
   "runtime_composer_chat_label": {
     "message": "ЧАТ",
@@ -1287,13 +1923,45 @@
     "message": "для ручного налаштування.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "Перевірка {title} за адресою {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Підключено до Hermes, але є попередження середовища виконання. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Налаштування вручну досі доступне в налаштуваннях.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "Пошук {title} за адресою {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Автоматичне сполучення доступне лише для локального шлюзу на loopback-адресі. Віддалені підключення API потребують явно налаштованих URL і токена; підключення до панелі використовують Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. Натисніть «Підключитися до Hermes» або скористайтеся налаштуванням вручну.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Локальний сервер Hermes API",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Віддалений сервер Hermes API",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Віддалена панель Hermes",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "не налаштовано",
     "description": "Runtime interface message connection.not_configured_short"
-  },
-  "runtime_connection_unknown_transport": {
-    "message": "невідомий транспорт",
-    "description": "Runtime interface message connection.unknown_transport"
   },
   "runtime_context_consent_share_detail": {
     "message": "Лише чат, доки ви явно не схвалите саме це підключення. Згода ізольована за адресою, обліковим записом, профілем і контролером браузера.",
@@ -1307,9 +1975,21 @@
     "message": "Долучена вкладка",
     "description": "Runtime interface message context.attached_tab"
   },
-  "runtime_context_browser_tab_handoff": {
-    "message": "Передача вкладки браузера {tabId}",
-    "description": "Runtime interface message context.browser_tab_handoff"
+  "runtime_context_card_no_socket": {
+    "message": "Це з'єднання не має сокета сесії Hermes, тому розбивку за категоріями прочитати не можна.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes не тримає цю сесію на своєму сокеті сесії, тому не зміг виміряти категорії.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes ще не повідомив розбивку за категоріями для цієї сесії.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Увійдіть з обліковим записом Hermes у «Налаштування» > «Підключення», щоб побачити розбивку цієї сесії за категоріями.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Стежити за активною вкладкою",
@@ -1492,7 +2172,7 @@
     "description": "Runtime interface message custom_theme.validation_errors"
   },
   "runtime_diagnostic_api_authorization_health_detail": {
-    "message": "Перевірка стану відповіла, але захищені маршрути Browser/моделей потребують Authorization: Bearer *** Вставте ключ API або браузерний токен з обмеженою областю дії в Налаштування.",
+    "message": "Перевірка стану відповіла, але захищені маршрути розширення та моделей потребують Authorization: Bearer *** Вставте ключ API або браузерний токен з обмеженою областю дії в Налаштування.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
   },
   "runtime_diagnostic_api_authorization_title": {
@@ -1504,7 +2184,7 @@
     "description": "Runtime interface message diagnostic.api_rejected_detail"
   },
   "runtime_diagnostic_auth_detail": {
-    "message": "Hermes API відхилив запит. Перевірте токен Browser API в Налаштуваннях і переконайтеся, що він відповідає запущеному шлюзу Hermes.",
+    "message": "Hermes API відхилив запит. Перевірте токен API в Налаштуваннях розширення і переконайтеся, що він відповідає запущеному шлюзу Hermes.",
     "description": "Runtime interface message diagnostic.auth_detail"
   },
   "runtime_diagnostic_auth_title": {
@@ -1512,11 +2192,11 @@
     "description": "Runtime interface message diagnostic.auth_title"
   },
   "runtime_diagnostic_auth_user": {
-    "message": "Токен Hermes API було відхилено. Оновіть токен у Налаштуваннях Browser, а потім підключіться знову.",
+    "message": "Токен Hermes API було відхилено. Оновіть токен у Налаштуваннях розширення, а потім підключіться знову.",
     "description": "Runtime interface message diagnostic.auth_user"
   },
   "runtime_diagnostic_cors_extension_detail": {
-    "message": "Browser не зміг підключитися до Hermes API з цього джерела розширення. Додайте chrome-extension://<extension-id> до API_SERVER_CORS_ORIGINS на віддаленому хості.",
+    "message": "Розширення не змогло підключитися до Hermes API зі свого джерела. Додайте chrome-extension://<extension-id> до API_SERVER_CORS_ORIGINS на віддаленому хості.",
     "description": "Runtime interface message diagnostic.cors_extension_detail"
   },
   "runtime_diagnostic_cors_title": {
@@ -1524,7 +2204,7 @@
     "description": "Runtime interface message diagnostic.cors_title"
   },
   "runtime_diagnostic_dashboard_url_detail": {
-    "message": "Це схоже на кінцеву точку Hermes Dashboard SSO. Для режиму Browser API потрібен URL сервера Hermes API на :8642 та Authorization: Bearer ***",
+    "message": "Це схоже на кінцеву точку Hermes Dashboard SSO. Для режиму API розширення потрібен URL сервера Hermes API на :8642 та Authorization: Bearer ***",
     "description": "Runtime interface message diagnostic.dashboard_url_detail"
   },
   "runtime_diagnostic_dashboard_url_title": {
@@ -1540,7 +2220,7 @@
     "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
   },
   "runtime_diagnostic_network_detail": {
-    "message": "Browser не зміг підключитися до Hermes API. Перевірте URL шлюзу, маршрутизацію брандмауера/VPN і налаштування CORS/джерела для цього розширення.",
+    "message": "Розширення не змогло підключитися до Hermes API. Перевірте URL шлюзу, маршрутизацію брандмауера/VPN і налаштування CORS/джерела для цього розширення.",
     "description": "Runtime interface message diagnostic.network_detail"
   },
   "runtime_diagnostic_network_title": {
@@ -1548,7 +2228,7 @@
     "description": "Runtime interface message diagnostic.network_title"
   },
   "runtime_diagnostic_network_user": {
-    "message": "Browser не зміг підключитися до Hermes, оскільки запит завершився збоєм на рівні мережі/CORS.",
+    "message": "Розширення не змогло підключитися до Hermes, оскільки запит завершився збоєм на рівні мережі/CORS.",
     "description": "Runtime interface message diagnostic.network_user"
   },
   "runtime_diagnostic_remote_setup_title": {
@@ -1568,7 +2248,7 @@
     "description": "Runtime interface message diagnostic.route_title"
   },
   "runtime_diagnostic_route_user": {
-    "message": "Це середовище виконання Hermes ще не надає запитаний маршрут Browser.",
+    "message": "Це середовище виконання Hermes ще не надає запитаний маршрут розширення.",
     "description": "Runtime interface message diagnostic.route_user"
   },
   "runtime_diagnostic_runtime_exception_detail": {
@@ -1580,7 +2260,7 @@
     "description": "Runtime interface message diagnostic.runtime_exception_title"
   },
   "runtime_diagnostic_runtime_exception_user": {
-    "message": "У висхідному Hermes Agent виявлено стек викликів шлюзу Hermes. Browser може залишатися підключеним; перевірте журнали Hermes і виконайте `hermes computer-use doctor`, якщо computer_use/cua-driver з’являється у стеку викликів.",
+    "message": "У висхідному Hermes Agent виявлено стек викликів шлюзу Hermes. Розширення може залишатися підключеним; перевірте журнали Hermes і виконайте `hermes computer-use doctor`, якщо computer_use/cua-driver з’являється у стеку викликів.",
     "description": "Runtime interface message diagnostic.runtime_exception_user"
   },
   "runtime_diagnostics_surface": {
@@ -1659,13 +2339,129 @@
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
   },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "Відкрито з {source}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
+  "runtime_firefox_screenshots_allow": {
+    "message": "Дозволити знімки екрана у Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
   },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "Відкрито з {source} у вкладці браузера {tabId}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox не надав дозвіл.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes може робити знімки підключеної вкладки в тих самих межах безпеки, що й решта Hermes Control. Дозвіл можна скасувати будь-коли.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Щоб Hermes міг зробити знімок вкладки, Firefox потребує додаткового дозволу. Hermes просить його лише після вашого натискання «Дозволити»; до того він читає текст сторінки.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "Не вдалося змінити дозвіл на знімки екрана: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Знімки екрана у Firefox дозволено.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Більше не дозволяти знімки екрана",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "Дозвіл на знімки екрана скасовано.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Знімки екрана моделі у Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
+  },
+  "runtime_gateway_queue_cancel": {
+    "message": "Скасувати хід",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "Не вдалося скасувати хід у черзі: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
+  "runtime_gateway_queue_discard": {
+    "message": "Відкинути",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Не вдалося відкинути втрачений хід: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "Змінити",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "Залишити оригінал",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "Не вдалося зберегти зміну: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "Змінити повідомлення в черзі",
+    "description": "Runtime interface message gateway_queue.edit_label"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Хід втрачено під час перезапуску",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes перезапустився під час виконання цього ходу. Його не можна ні завершити, ні безпечно повторити, а ходи в черзі за ним чекають, поки ви його не відкинете. Ваше повідомлення лишається в історії, тож ви можете надіслати його знову.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "У черзі Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "Зберегти",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "Цей Hermes не пропонує цього для даного ходу.",
+    "description": "Runtime interface message gateway_queue.unsupported"
+  },
+  "runtime_haui_ask_hint": {
+    "message": "Вставляє це запитання в поле повідомлення",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "Створення подання…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "Скопійовано",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "Копіювати",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "Відкривається в новій вкладці",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_unreadable": {
+    "message": "Показано текстом: цю картку не вдалося відобразити.",
+    "description": "Runtime interface message haui.unreadable"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "Показати як графік",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "Графік",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "Таблиця",
+    "description": "Runtime interface message haui.view_table"
   },
   "runtime_image_generated": {
     "message": "Згенероване зображення",
@@ -1736,11 +2532,11 @@
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Відкрити розширення Hermes Browser",
+    "message": "Відкрити Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Відкрити бічну панель Hermes Browser",
+    "message": "Відкрити бічну панель Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -1819,6 +2615,162 @@
     "message": "Непідтримуваний формат архіву",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "Налаштувати Hermes",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "Назад",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_connect_body": {
+    "message": "Підключіть цю панель до свого агента Hermes. Підтвердьте спарювання, якщо ваш Hermes його підтримує, або скористайтеся ручним налаштуванням з його адресою та ключем API. Тоді Hermes бачитиме сторінку, на якій ви перебуваєте, і відповідатиме тут.",
+    "description": "Runtime interface message onboarding.connect.body"
+  },
+  "runtime_onboarding_connect_connected": {
+    "message": "Підключено до Hermes",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "Підключити пізніше",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "Ще не підключено",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes на іншому комп’ютері, сервері або в Hermes Cloud? Виберіть ручне налаштування, щоб налаштувати це підключення.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "Підключитися до Hermes",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "Спробуйте перший запит",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "Шрифт панелі та відповідей Hermes.",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "Виберіть шрифт",
+    "description": "Runtime interface message onboarding.font.title"
+  },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser Extension використовуватиме її всюди. Пізніше її можна змінити в налаштуваннях.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "Запропоновано за налаштуваннями браузера: {language}. Виберіть іншу, якщо хочете; пізніше її можна змінити в налаштуваннях.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "Виберіть мову",
+    "description": "Runtime interface message onboarding.language.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "Де розташовуються ваші повідомлення та відповіді Hermes.",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "Оберіть макет чату",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "Далі",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "Час завантаження (с)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "На цій сторінці вирізняються три речі.",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "Вона завантажується вдвічі швидше",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "Вона робить менше запитів",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "Її бандл менший",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "Стисло перекажи цю сторінку",
+    "description": "Runtime interface message onboarding.preview.user"
+  },
+  "runtime_onboarding_skip": {
+    "message": "Пропустити",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "Почати розмову",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "Крок {current} з {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "Як Hermes оформлює свої відповіді.",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "Оберіть стиль відповідей",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "Кольори для бічної панелі та повної вкладки.",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "Оберіть тему",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
+  "runtime_onboarding_welcome_body": {
+    "message": "Давайте все налаштуємо. Це займе близько хвилини.",
+    "description": "Runtime interface message onboarding.welcome.body"
+  },
+  "runtime_onboarding_welcome_greeting": {
+    "message": "Ласкаво просимо",
+    "description": "Runtime interface message onboarding.welcome.greeting"
+  },
+  "runtime_onboarding_welcome_skip": {
+    "message": "Пропустити налаштування",
+    "description": "Runtime interface message onboarding.welcome.skip"
+  },
+  "runtime_onboarding_welcome_start": {
+    "message": "Почати",
+    "description": "Runtime interface message onboarding.welcome.start"
+  },
+  "runtime_onboarding_welcome_title": {
+    "message": "Ласкаво просимо до Hermes Browser",
+    "description": "Runtime interface message onboarding.welcome.title"
+  },
+  "runtime_pairing_approve_below": {
+    "message": "Підтвердьте підключення нижче.",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "Сполучення відхилено.",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Підтвердити підключення до Hermes",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "Відкрити на вкладці",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "Дозвіл на мікрофон не надано.\n\n{error}\n\nНатисніть «Відкрити налаштування мікрофона», установіть «Дозволити мікрофон» для Hermes Browser Extension, поверніться сюди та повторіть спробу.",
     "description": "Runtime interface message permissions.not_granted"
@@ -1887,12 +2839,632 @@
     "message": "Використовується {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
   },
+  "runtime_projects_back": {
+    "message": "Назад",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "Скасувати",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_add_folder": {
+    "message": "Додати папку",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "Додати",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
+  "runtime_projects_create_creating": {
+    "message": "Створення…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "Проєкт {name} створено.",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "Проєкт {name} створено. Вашу ідею можна зберегти в IDEA.md.",
+    "description": "Runtime interface message projects.create.done_idea"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "Введіть назву проєкту.",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "Ця тека вже належить проєкту {project}.",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "Використайте абсолютний шлях на хості шлюзу: він починається з похилої риси, літери диска або ~.",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "Введіть теку проєкту на хості шлюзу.",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_folders": {
+    "message": "Папки",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "Ідея (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "Не вдалося згенерувати ідею. {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "Згенерувати ідею",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "Генерація…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "Необов’язково. Після створення проєкту в його першій папці відкриється сеанс із готовим текстом, щоб Hermes зберіг його як IDEA.md.",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "Про що цей проєкт? Короткий опис в один рядок і кілька цілей.",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
+  "runtime_projects_create_name": {
+    "message": "Назва проєкту",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "Папок ще немає. Додайте папку, у якій працює цей проєкт.",
+    "description": "Runtime interface message projects.create.no_folders"
+  },
+  "runtime_projects_create_path": {
+    "message": "Тека на хості шлюзу",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "Цей шлях розташований на комп’ютері, де працює Hermes ({host}), а не на цьому комп’ютері. Знайдіть його в огляді або введіть шлях.",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "основна",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "Прибрати {folder}",
+    "description": "Runtime interface message projects.create.remove_folder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "Створити проєкт",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "шлюз",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "Новий проєкт",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "Використати «{name}»",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "Проєкт із назвою {name} уже існує ({folder}). Проєкти розрізняються за текою, але іншу назву легше відрізнити.",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "Закрити",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "Проєкт об’єднує сеанси, що працюють у теці на машині, де запущено Hermes. Створіть перший, щоб почати.",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "Проєктів ще немає",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "З’єднання з Hermes втрачено.",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes не зміг виконати запит.",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes відхилив це значення.",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes відповів так, що це розширення не розуміє відповідь.",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes не повернув проєкт, який його просили створити.",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "Цього проєкту більше немає.",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "Цей профіль більше недоступний на шлюзі.",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes не відповів вчасно.",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "У проєктах виникла проблема",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "Тека на хості шлюзу:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "Знайдені теки",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "Головна",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "Проєкти",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "Не зберігати",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "Відкрийте сеанс у {folder} з готовою ідеєю. Надішліть її, і Hermes запише там IDEA.md.",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "Вашу ідею ще не збережено",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "Створи в поточній папці файл IDEA.md із точно таким текстом, як нижче, і більше нічого не змінюй.\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "Зберегти як IDEA.md",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "Сеанс відкрито в {name}. Надішліть повідомлення, щоб зберегти IDEA.md.",
+    "description": "Runtime interface message projects.idea.started"
+  },
+  "runtime_projects_loading": {
+    "message": "Завантаження проєктів…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "Завантаження сеансів цього проєкту…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "Перенести",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "Перенести {title} до проєкту",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "Перенести до проєкту",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "Сеанс уже в {cwd}.",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes відхилив перенесення, бо сеанс зайнятий. Зачекайте завершення ходу або зупиніть його й повторіть.",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes відхилив перенесення, бо сеанс стискається. Повторіть, коли це завершиться.",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "Перевірити ще раз",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "Перевірити теку",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "Запит до Hermes…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "Тим часом сеанс було змінено чимось іншим, тому перенесення не застосовано.",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "поточний",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "Поточна тека:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes не дозволив це перенесення для вашого входу чи профілю.",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "Перенести до",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "Перенесено. Hermes повідомляє, що тека сеансу — {cwd}.",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "Перенесення сеансу змінює його робочий простір і може змінити теку, в якій виконуються його команди. Сеанс належить до проєкту через свою теку; у цьому браузері нічого не зберігається.",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes не зміг перенести сеанс. {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "Ця тека належить проєкту {name}.",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "Ця тека не входить до жодного проєкту, тому сеанс з’явиться в розділі «Головна».",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "Тека на хості шлюзу",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "З’єднання перервалося до підтвердження Hermes. Перенесення могло відбутися або ні, тож перевірте ще раз, перш ніж щось переносити.",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "Ця тека не є каталогом на хості шлюзу Hermes.",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "Усе одно попросити Hermes перенести",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "У цьому сеансі триває хід",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "Перенесення змінює теку, в якій виконуються його команди, а Hermes відхиляє перенесення, поки хід активний. Поки що нічого не змінено.",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "Перенесення…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes ще не застосував перенесення. Перевірте ще раз, щоб прочитати сеанс; перенесення повторюється лише якщо нічого не застосовано.",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "Не вдалося прочитати Hermes, тому нічого не надіслано.",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "Інша тека…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "Перенесення сеансу до теки, що не входить до жодного проєкту, виводить його з проєкту.",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "Використайте абсолютний шлях на хості шлюзу: він починається з похилої риси, літери диска або ~.",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "Введіть теку на хості шлюзу.",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "Сеанс",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "Сеанс змінився під час перенесення, тому нічого не перенесено. Відкрийте перенесення знову, щоб використати його останній стан.",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "Перенести до {name}",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "Перенесення до проєкту",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes прийняв перенесення, але теку сеансу прочитано як {cwd}, а не ту, яку ви просили. Перевірте сеанс, перш ніж покладатися на нього.",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "Новий проєкт",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "Новий сеанс у цьому проєкті",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "Запускає сеанс, що працює в теці цього проєкту.",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "Не вдалося запустити сеанс у цьому проєкті. {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes не запустив сеанс.",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "Новий сеанс у {name}",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "Жоден проєкт не відповідає вашому пошуку.",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "Огляд папок…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "Вибрати цю папку",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "Папка:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "Папка за замовчуванням",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "Тут немає папок.",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "Не вдалося прочитати цю папку. {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "Фільтр папок",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "Перейти",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "Папки на комп’ютері, де працює Hermes ({host}), а не на цьому комп’ютері.",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "Домашня",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "Читання папок…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "Шлях до папки",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "Почати з",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "Виберіть папку",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "Показано перші {count} папок. Введіть текст у фільтр, щоб знайти решту.",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "Або введіть шлях",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "Цей шлюз зараз не може показати свої папки. Натомість введіть шлях до папки нижче.",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "На рівень вище",
+    "description": "Runtime interface message projects.picker.up"
+  },
+  "runtime_projects_reason_code": {
+    "message": "Причина: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "Оновити проєкти",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "Повторити",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "Профіль {profile} на {host}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "Пошук проєктів",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "Пошук серед сеансів цього проєкту",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} сеансу",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "Запустіть сеанс вище або перенесіть сюди наявний із розділу «Нещодавні».",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "У цьому проєкті ще немає сеансів",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "Жоден сеанс цього проєкту не відповідає вашому пошуку.",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "Сеанси",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "Вигляд сеансів",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "Проєкти",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "Нещодавні",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_account_sign_in": {
+    "message": "Для «Проєктів» на цьому шлюзі потрібен вхід з обліковим записом Hermes. Натисніть «Увійти з обліковим записом Hermes» і повторіть спробу.",
+    "description": "Runtime interface message projects.unavailable.account_sign_in"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "Підключений шлюз Hermes відповів «method not found» (-32601) на {method}.",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "Цей шлюз Hermes не оголосив повноважень над сеансами, тому проєкти та перенесення сеансів недоступні. Оновіть Hermes до збірки з канонічними змінами сеансів.",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "Проєкти недоступні, доки не підключено WebSocket панелі Hermes.",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "«Нещодавні» й надалі працюють.",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "Для проєктів потрібен WebSocket панелі Hermes. Це з’єднання сягає лише REST API.",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "Проєкти тут недоступні",
+    "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web вимкнено на цьому шлюзі, тому «Проєкти» не мають сокета сесії. Установіть webapp.enabled у true в config.yaml, виконайте hermes gateway restart і спробуйте ще раз.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
+  },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Для проєктів потрібен вхід у Hermes Web. Один раз відкрийте Hermes Web (виконайте hermes webapp) і повторіть спробу.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "Бульбашки з обох боків",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "Ви і Hermes, кожен у своїй бульбашці, як у месенджері.",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "Де повідомлення розташовуються в чаті.",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "Макет чату",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "Лише бульбашка користувача",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "Ваші повідомлення в бульбашці, відповіді Hermes — звичайним текстом.",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "Пройти початкове налаштування знову",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Знову виберіть крок за кроком тему, стиль відповідей і вигляд чату.",
+    "description": "Runtime interface message responses.setup_again_description"
+  },
+  "runtime_responses_style_description": {
+    "message": "Як Hermes оформлює свої відповіді.",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "Стиль відповідей",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "Простий текст",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "Лише слова, без оформлення.",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "Форматований текст",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "Оформлений Markdown: заголовки, списки та код.",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "Картки, таблиці й графіки, коли вони корисні.",
+    "description": "Runtime interface message responses.style.vivid_hint"
+  },
   "runtime_run_release": {
     "message": "Release",
     "description": "Runtime interface message run.release"
   },
   "runtime_run_release_detail": {
-    "message": "Browser released the composer without Hermes confirming the stop. Check the session before sending another message.",
+    "message": "Розширення звільнило поле введення без підтвердження зупинки від Hermes. Перевірте сеанс, перш ніж надсилати ще одне повідомлення.",
     "description": "Runtime interface message run.release_detail"
   },
   "runtime_run_stop": {
@@ -1908,48 +3480,44 @@
     "description": "Runtime interface message run.stop_controller_toast"
   },
   "runtime_run_stop_controller_unreachable": {
-    "message": "Browser could not reach Hermes Control to cancel pending browser actions.",
+    "message": "Розширенню не вдалося зв’язатися з Керуванням Hermes, щоб скасувати очікувані дії браузера.",
     "description": "Runtime interface message run.stop_controller_unreachable"
   },
   "runtime_run_stop_unconfirmed_no_run_id": {
-    "message": "Hermes has not reported a run id for this turn, so Browser cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.",
+    "message": "Hermes не повідомив ідентифікатор запуску для цього ходу, тому розширення не може підтвердити, що запуск зупинено. Модуль запису сеансу та повідомлення в черзі залишаються утриманими, доки Hermes не підтвердить кінцевий стан.",
     "description": "Runtime interface message run.stop_unconfirmed_no_run_id"
   },
   "runtime_run_stop_unconfirmed_title": {
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "Швидкий режим {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}. Змініть модель і параметри середовища виконання.",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "Параметри середовища виконання",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "Параметри середовища виконання: {summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "Міркування {effort}",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "Міркування вимкнено",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "Міркування {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "Копіювати ідентифікатор сеансу для {title}",
     "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_legacy_continue_copy": {
+    "message": "Продовжити в копії",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes не вдалося скопіювати цей чат, тому ваше повідомлення не надіслано. Розпочніть новий чат, щоб продовжити. Ваше повідомлення залишилося в полі введення.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "Копіювання чату…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "Розпочати новий чат",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "Цей чат розпочала старіша версія Hermes Browser Extension, і цей шлюз більше не приймає в ньому нові повідомлення. Ваше повідомлення не надіслано. Можна продовжити в копії чату.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "Цей чат розпочала старіша версія Hermes Browser Extension, і цей шлюз більше не приймає в ньому нові повідомлення. Тут його не можна скопіювати, тому розпочніть новий чат. Ваше повідомлення залишилося в полі введення.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
@@ -1959,10 +3527,6 @@
     "message": "＋ Новий сеанс Hermes Browser Extension",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "Відкриття {title}",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -1971,13 +3535,17 @@
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
   },
-  "runtime_session_rail_save_failed": {
-    "message": "Не вдалося зберегти панель сеансу: {error}",
-    "description": "Runtime interface message session.rail_save_failed"
-  },
   "runtime_session_rename_named": {
     "message": "Перейменувати сеанс {title}",
     "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_session_replay_truncated": {
+    "message": "Історію було обрізано, завантажую знову",
+    "description": "Runtime interface message session.replay.truncated"
+  },
+  "runtime_session_row_model": {
+    "message": "Модель: {model}",
+    "description": "Runtime interface message session.row_model"
   },
   "runtime_settings_back_to_top": {
     "message": "Нагору",
@@ -2019,6 +3587,10 @@
     "message": "Категорії",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "Назад до категорій",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "Шлюз, профіль агента і те, як цей браузер зв'язується з Hermes.",
     "description": "Runtime interface message settings.categories.connections.summary"
@@ -2036,7 +3608,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Усе, що вміє Hermes Browser, згруповано за призначенням.",
+    "message": "Усе, що вміє Hermes Browser Extension, згруповано за призначенням.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -2074,6 +3646,30 @@
   "runtime_settings_categories_voice_title": {
     "message": "Голос і активація",
     "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_context_depth_full": {
+    "message": "Повністю",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "Найбільше вмісту сторінки",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "Мінімум",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "Виділення і короткий уривок",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "Звичайно",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "Гарне значення за замовчуванням",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
   },
   "runtime_settings_custom_theme_help": {
     "message": "Додайте теми: перегляньте теми VS Code, імпортуйте файл теми або попросіть агента створити її. Встановлені теми з'являться в сітці вище.",
@@ -2195,6 +3791,62 @@
     "message": "· публічна альфа-версія / завантажити розпаковане",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Не збережено: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Вигляд, агенти, а також перемикачі дозволів і середовища виконання застосовуються одразу. Усе інше застосовується після натискання «Зберегти».",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Порти агентів мають бути числами від 1 до 65535, розділеними комами.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Збережено. Hermes підключено.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Збережено, але зв’язатися з Hermes не вдалося: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Ці адреси джерел моделей недійсні: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "Автоматично",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "Субтитри YouTube, потім сторінка",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "Власний",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "Ваш власний сервіс",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "Ніколи не завантажувати розшифровки",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "Розшифровки YouTube",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "URL сервісу",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "Hermes додає ID відео до цієї адреси.",
+    "description": "Runtime interface message settings.transcript.url_hint"
+  },
   "runtime_status_connection_not_responding": {
     "message": "{summary} не відповідає. Запустіть Hermes Desktop/Gateway, а потім підключіться знову.",
     "description": "Runtime interface message status.connection_not_responding"
@@ -2224,7 +3876,7 @@
     "description": "Runtime interface message status.profile_selected_restart"
   },
   "runtime_status_profile_switch_unavailable": {
-    "message": "{error}. Browser використовуватиме поточний запущений профіль Hermes.",
+    "message": "{error}. Розширення використовуватиме поточний запущений профіль Hermes.",
     "description": "Runtime interface message status.profile_switch_unavailable"
   },
   "runtime_tasks_summary": {
@@ -2300,7 +3952,7 @@
     "description": "Runtime interface message ui.adjust"
   },
   "runtime_ui_adjust_extension_text_without_changing_browser_zoom": {
-    "message": "Adjust text across Hermes Browser surfaces without changing browser zoom.",
+    "message": "Налаштуйте текст у всьому розширенні без зміни масштабу браузера.",
     "description": "Runtime interface message ui.adjust.extension.text.without.changing.browser.zoom"
   },
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
@@ -2632,11 +4284,11 @@
     "description": "Runtime interface message ui.browser.local.fallback"
   },
   "runtime_ui_browser_update_review": {
-    "message": "Огляд оновлення Browser",
+    "message": "Огляд оновлення розширення",
     "description": "Runtime interface message ui.browser.update.review"
   },
   "runtime_ui_browser_updates": {
-    "message": "Оновлення браузера",
+    "message": "Оновлення розширення",
     "description": "Runtime interface message ui.browser.updates"
   },
   "runtime_ui_build": {
@@ -2728,7 +4380,7 @@
     "description": "Runtime interface message ui.checking"
   },
   "runtime_ui_checking_browser_main": {
-    "message": "Перевірка основного браузера…",
+    "message": "Перевірка основної гілки розширення…",
     "description": "Runtime interface message ui.checking.browser.main"
   },
   "runtime_ui_checking_hermes": {
@@ -2784,7 +4436,7 @@
     "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
   },
   "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
-    "message": "Виберіть, де цей сеанс Browser досягає Hermes.",
+    "message": "Виберіть, де розширення досягає Hermes.",
     "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
   },
   "runtime_ui_choose_where_to_send": {
@@ -2792,7 +4444,7 @@
     "description": "Runtime interface message ui.choose.where.to.send"
   },
   "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
-    "message": "Виберіть, який профіль агента Hermes має використовувати Browser, коли локальний шлюз відкриває профілі.",
+    "message": "Виберіть, який профіль агента Hermes має використовувати розширення, коли локальний шлюз відкриває профілі.",
     "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
   },
   "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
@@ -2804,7 +4456,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Деякі браузери блокують захоплення мікрофона всередині бічних панелей розширень. Ця видима вкладка розширення записує з того самого джерела розширення Hermes, коли Hermes STT доступний, або використовує резервне мовлення браузера, коли підключене середовище виконання не надає аудіотранскрипцію.",
+    "message": "Деякі браузери блокують захоплення мікрофона всередині бічних панелей розширень. Ця видима вкладка розширення записує з того самого джерела, що й Hermes Browser Extension, коли Hermes STT доступний, або використовує резервне мовлення браузера, коли підключене середовище виконання не надає аудіотранскрипцію.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -3380,7 +5032,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "Не вдалося перенести сеанс веб-переглядача",
+    "message": "Не вдалося перенести сеанс",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -3887,37 +5539,33 @@
     "message": "Група",
     "description": "Runtime interface message ui.group"
   },
-  "runtime_ui_group_presence_all_replied": {
-    "message": "Усі відповіли",
-    "description": "Runtime interface message ui.group.presence.all.replied"
+  "runtime_ui_group_working_many": {
+    "message": "{first}, {second} і ще {count} працюють…",
+    "description": "Runtime interface message ui.group.working.many"
   },
-  "runtime_ui_group_presence_done_failed": {
-    "message": "Готово · {count} не змогли відповісти",
-    "description": "Runtime interface message ui.group.presence.done.failed"
+  "runtime_ui_group_working_three": {
+    "message": "{first}, {second} і {third} працюють…",
+    "description": "Runtime interface message ui.group.working.three"
   },
-  "runtime_ui_group_presence_done_passed": {
-    "message": "Готово · {count} пропустили",
-    "description": "Runtime interface message ui.group.presence.done.passed"
+  "runtime_ui_group_working_two": {
+    "message": "{first} і {second} працюють…",
+    "description": "Runtime interface message ui.group.working.two"
   },
-  "runtime_ui_group_presence_reply_fail": {
-    "message": "{replied} відповіли, {failed} не зміг",
-    "description": "Runtime interface message ui.group.presence.reply.fail"
+  "runtime_ui_group_working_typing": {
+    "message": "Друкує…",
+    "description": "Runtime interface message ui.group.working.typing"
   },
-  "runtime_ui_group_presence_replying": {
-    "message": "{name} відповідає",
-    "description": "Runtime interface message ui.group.presence.replying"
+  "runtime_ui_group_working_using": {
+    "message": "Використовує {tool}…",
+    "description": "Runtime interface message ui.group.working.using"
   },
-  "runtime_ui_group_presence_typing": {
-    "message": "{name} пише",
-    "description": "Runtime interface message ui.group.presence.typing"
+  "runtime_ui_group_working_working": {
+    "message": "Працює…",
+    "description": "Runtime interface message ui.group.working.working"
   },
-  "runtime_ui_group_presence_using": {
-    "message": "{name} використовує {tool}",
-    "description": "Runtime interface message ui.group.presence.using"
-  },
-  "runtime_ui_group_presence_waiting": {
-    "message": "{count} очікують",
-    "description": "Runtime interface message ui.group.presence.waiting"
+  "runtime_ui_group_working_wrapping": {
+    "message": "Завершує…",
+    "description": "Runtime interface message ui.group.working.wrapping"
   },
   "runtime_ui_handing_update_to_hermes": {
     "message": "Передача оновлення для Hermes",
@@ -4512,7 +6160,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Доступ до мікрофона заблоковано для Hermes Browser.",
+    "message": "Доступ до мікрофона заблоковано для Hermes Browser Extension.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -4604,7 +6252,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "Новий браузерний чат",
+    "message": "Новий чат",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -4668,7 +6316,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "Тут не зберігається аудіо. Дозвіл дозволяє Hermes Browser записувати ваш голос, лише коли ви натискаєте кнопку мікрофона.",
+    "message": "Тут не зберігається аудіо. Дозвіл дозволяє Hermes Browser Extension записувати ваш голос, лише коли ви натискаєте кнопку мікрофона.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -4868,15 +6516,15 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Відкрийте точний сеанс на бічній панелі Hermes Browser.",
+    "message": "Відкрийте точний сеанс на бічній панелі Hermes Browser Extension.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Відкрийте бічну панель розширення Hermes на панелі інструментів веб-переглядача.",
+    "message": "Відкрийте бічну панель Hermes Browser Extension на панелі інструментів веб-переглядача.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
-    "message": "Відкрийте збережений сеанс допомоги на бічній панелі Browser або в Hermes Web.",
+    "message": "Відкрийте збережений сеанс допомоги на бічній панелі розширення або в Hermes Web.",
     "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
   },
   "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
@@ -4912,7 +6560,7 @@
     "description": "Runtime interface message ui.optional"
   },
   "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
-    "message": "Лише необов’язкове виявлення: Browser перевіряє кожну кінцеву точку OpenAI-compatible `/v1/models` і показує збіги в засобі вибору моделі. Маршрутизація під час виконання все ще надходить із підключеного шлюзу Hermes.",
+    "message": "Лише необов’язкове виявлення: розширення перевіряє кожну кінцеву точку OpenAI-compatible `/v1/models` і показує збіги в засобі вибору моделі. Маршрутизація під час виконання все ще надходить із підключеного шлюзу Hermes.",
     "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
   },
   "runtime_ui_options": {
@@ -5088,7 +6736,7 @@
     "description": "Runtime interface message ui.profile.api.unavailable"
   },
   "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
-    "message": "Профіль API недоступний. Браузер використовуватиме зараз запущений профіль шлюзу Hermes.",
+    "message": "Профіль API недоступний. Розширення використовуватиме зараз запущений профіль шлюзу Hermes.",
     "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
   },
   "runtime_ui_profile_ff4fc027": {
@@ -5446,14 +7094,6 @@
   "runtime_ui_room_model_note": {
     "message": "Зміни моделі застосовуються лише до цієї кімнати.",
     "description": "Runtime interface message ui.room.model.note"
-  },
-  "runtime_ui_room_next": {
-    "message": "наступний",
-    "description": "Runtime interface message ui.room.next"
-  },
-  "runtime_ui_room_passed": {
-    "message": "пропустив",
-    "description": "Runtime interface message ui.room.passed"
   },
   "runtime_ui_room_profile_default": {
     "message": "Профіль за замовчуванням",
@@ -5848,7 +7488,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "Розпочати новий сеанс браузера",
+    "message": "Розпочати новий чат",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -6100,7 +7740,7 @@
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
-    "message": "Цей шлюз ще не відкриває /v1/capabilities. Спеціальні для веб-переглядача маршрути залишатимуться в резервному режимі.",
+    "message": "Цей шлюз ще не відкриває /v1/capabilities. Специфічні для розширення маршрути залишатимуться в резервному режимі.",
     "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
   },
   "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
@@ -6116,12 +7756,16 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "Цю модель було виявлено з настроюваної кінцевої точки, але Hermes має відкрити її через підключене середовище виконання, перш ніж веб-переглядач зможе направляти запити до неї.",
+    "message": "Цю модель було виявлено з настроюваної кінцевої точки, але Hermes має відкрити її через підключене середовище виконання, перш ніж розширення зможе направляти запити до неї.",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "Цей запит прив’язано до вибраного сеансу Browser.",
+    "message": "Цей запит прив’язано до вибраного сеансу.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_thoughts": {
+    "message": "Роздуми",
+    "description": "Runtime interface message ui.thoughts"
   },
   "runtime_ui_time": {
     "message": "час",
@@ -6268,11 +7912,11 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "Використовуйте поточний сеанс активної вкладки, створіть новий сеанс браузера або запустіть окремо.",
+    "message": "Використовуйте поточний сеанс активної вкладки, розпочніть новий чат або запустіть окремо.",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Використовуйте ту саму палітру та мову chrome, що й Hermes Browser.",
+    "message": "Використовуйте ту саму палітру та мову chrome, що й Hermes Browser Extension.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -6552,7 +8196,7 @@
     "description": "Runtime interface message voice.permission_blocked"
   },
   "runtime_voice_settings_load_failed": {
-    "message": "Не вдалося завантажити налаштування Hermes Browser.\n\n{error}",
+    "message": "Не вдалося завантажити налаштування розширення.\n\n{error}",
     "description": "Runtime interface message voice.settings_load_failed"
   },
   "runtime_voice_speech_recognition_error": {
@@ -6583,16 +8227,116 @@
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
   },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
+  "runtime_webapp_assist_detail": {
+    "message": "Відкрийте застосунок Hermes Web у новій вкладці.",
+    "description": "Runtime interface message webapp.assist_detail"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
+  "runtime_webapp_copy_command": {
+    "message": "Копіювати команду",
+    "description": "Runtime interface message webapp.copy_command"
   },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
+  "runtime_webapp_dialog_body": {
+    "message": "Шлюз надає Hermes Web, коли його ввімкнено. На комп’ютері, де працює Hermes, виконайте ці команди.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web недоступний",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Прочитати посібник із Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Hermes Web відкрито. Увійдіть на цій сторінці з обліковим записом панелі керування.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Hermes Web відкрито. На цьому комп’ютері один раз виконайте hermes webapp, щоб увійти. Вкладка залишиться в обліковому записі.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web відкрито. На цьому комп’ютері один раз виконайте hermes webapp, щоб увійти. Після цього Hermes Browser Extension зберігає вхід цього браузера до його закриття.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web відкрито, вхід уже виконано.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "На Hermes, що спарюється з Hermes Browser Extension, вхід до Hermes Web, проєктів і профілів ботів виконується за вас, нічого запускати не треба. Інакше панель зберігає вхід до Hermes Web у цьому браузері до його закриття після одного hermes webapp. hermes webapp --sign-out завершує його.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Зберігати вхід у Hermes Web із панелі",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Не вдалося відкрити Hermes Web",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Відкрити Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Hermes Web відкрито",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_opening_detail": {
+    "message": "Виконується вхід у ваш Hermes Webapp. Це займе кілька секунд.",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "Усе одно показати",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web завантажується довше, ніж зазвичай. Можливо, він ще запускається.",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_state": {
+    "message": "Виконується вхід",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Ще завантажується",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Відкриваємо Hermes Web",
+    "description": "Runtime interface message webapp.opening_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "Адреса Hermes Web у налаштуваннях не є дійсною адресою http або https.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "Це віддалене підключення, тож перевіряти нічого. Вкажіть адресу Hermes Web у налаштуваннях.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "Браузер не дозволив Hermes Browser Extension звертатися до цієї адреси:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "За цією адресою ніхто не відповів:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "Для локального підключення залиште порожнім, і http://127.0.0.1:9120 використовуватиметься автоматично. Для віддаленого шлюзу вкажіть адресу, за якою він надає Hermes Web.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Адреса Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Для Hermes Web потрібен вхід. Один раз виконайте hermes webapp на цьому комп’ютері й повторіть спробу.",
+    "description": "Runtime interface message webapp.sign_in_needed"
+  },
+  "runtime_webapp_try_again": {
+    "message": "Перевірити знову",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

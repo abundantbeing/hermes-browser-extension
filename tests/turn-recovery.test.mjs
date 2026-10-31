@@ -13,7 +13,6 @@ const {
 } = turnRecovery;
 
 const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-const appSource = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 
 test('accepted stream failures recover instead of retrying the turn', () => {
   assert.equal(classifyTurnRecovery({ requestAccepted: true }), 'recover');
@@ -204,43 +203,27 @@ test('recovery polling stays open for slow accepted turns and never replays the 
   assert.ok(policy.maxDurationMs >= 120_000, 'the recovery window must stay open for slow image turns');
   assert.ok(policy.delayMs <= turnRecovery.ACCEPTED_TURN_RECOVERY_MAX_DELAY_MS, 'the poll gap stays bounded');
   assert.equal(policy.shouldContinue, true);
-  // Neither surface passes a short attempts/delay budget to the recovery poller.
+  // The side panel passes no short attempts/delay budget to the recovery poller.
   assert.match(sidepanelSource, /recoverAcceptedTurn\(prompt, preparedAttachments, \{ signal: activeAbortController\.signal \}\)/);
   assert.doesNotMatch(sidepanelSource, /recoverAcceptedTurn\([^)]*attempts\s*=/);
-  assert.match(appSource, /recoverAcceptedWebTurn\(prompt, \{ signal: activeAbortController\.signal \}\)/);
-  assert.doesNotMatch(appSource, /recoverAcceptedWebTurn\([^)]*attempts\s*=/);
 });
 
-test('terminal error paths dispose the diffusion placeholder on both surfaces', () => {
+test('terminal error paths dispose the diffusion placeholder', () => {
   // Side panel: the streaming updater owns an explicit dispose and the turn
   // catch calls it everywhere the stream ends without a final flush.
   assert.match(sidepanelSource, /function dispose\(\) \{[\s\S]*?setToolActivity\(node, null\);/);
-  assert.match(sidepanelSource, /return \{\s*get node\(\) \{ return node; \},\s*captureViewState,\s*rebind,\s*update: updateText,\s*updateText,\s*updateTool,\s*flush,\s*dispose,\s*\};/);
+  assert.match(sidepanelSource, /return \{\s*get node\(\) \{ return node; \},\s*captureViewState,\s*rebind,\s*update: updateText,\s*updateText,\s*updateTool,\s*updateReasoning,\s*get reasoningText\(\) \{ return reasoning\.text; \},\s*flush,\s*dispose,\s*\};/);
   assert.match(sidepanelSource, /if \(error\?\.requestAccepted !== true\) \{\s*\n\s*streamPacer\?\.flush\?\.\(\);\s*\n\s*streamView\?\.dispose\?\.\(\);\s*\n\s*\}/);
   assert.match(sidepanelSource, /if \(contextRecovery\) \{[\s\S]*?streamView\?\.dispose\?\.\(\);/);
-  // Hermes Web: the live-run diffusion card is cleared on the rejected-request
-  // and context-recovery error branches, not only on stop/recovery paths.
-  const webRequestFailureStart = appSource.indexOf('const requestFailure = turnRequestFailureState(error)');
-  const webRequestFailureSegment = appSource.slice(webRequestFailureStart, webRequestFailureStart + 700);
-  assert.match(webRequestFailureSegment, /clearLiveRun\(\);/);
-  const webContextStart = appSource.indexOf('const contextRecovery = sessionContextFailureRecovery(error, gatewayCapabilities)');
-  const webContextSegment = appSource.slice(webContextStart, webContextStart + 260);
-  assert.match(webContextSegment, /clearLiveRun\(\);/);
 });
 
-test('both surfaces re-fetch the open session history after terminal reconcile', () => {
+test('the side panel re-fetches the open session history after terminal reconcile', () => {
   // Side panel: after settleActiveRunTerminal, a race-guarded quiet refresh
   // re-reads the session history so late image/tool results are not missing.
   assert.match(sidepanelSource, /await settleActiveRunTerminal\(\);[\s\S]*?void refreshActiveSessionHistoryQuietly\(runControlGeneration\)\.catch/);
   assert.match(sidepanelSource, /async function refreshActiveSessionHistoryQuietly\(expectedGeneration = runControlGeneration\)/);
   assert.match(sidepanelSource, /isUnsavedBrowserDraftSession\(\{ sessionId, sessions: availableSessions \}\)\) return false;/);
   assert.match(sidepanelSource, /return commitFetchedSessionMessages\(result, \{ sessionId \}\);/);
-  // Hermes Web: same discipline after settleWebRunTerminal, on both the REST
-  // and dashboard transports.
-  assert.match(appSource, /await settleWebRunTerminal\(\);[\s\S]*?void refreshWebActiveSessionHistoryQuietly\(runControlGeneration\)\.catch/);
-  assert.match(appSource, /async function refreshWebActiveSessionHistoryQuietly\(expectedGeneration = runControlGeneration\)/);
-  assert.match(appSource, /preserveUserImageAttachments\(refreshed, activeMessages\)/);
-  assert.match(appSource, /WS_METHODS\.sessionHistory,\s*\{\s*session_id: sessionId,\s*profile: settings\.activeProfile \|\| ''/);
 });
 
 test('recovery does not return an assistant from before the matching user turn', () => {
@@ -288,30 +271,14 @@ test('side panel wires compression exhaustion into bounded compact-or-new-sessio
   assert.match(sidepanelSource, /retryTurn/);
 });
 
-test('Hermes Web preserves the failed draft and uses the same acknowledged context recovery contract', () => {
-  assert.match(appSource, /sessionContextFailureRecovery\(error, gatewayCapabilities\)/);
-  assert.match(appSource, /await compactActiveSessionContext\(\{[\s\S]{0,160}automaticRecovery:\s*true/);
-  assert.match(appSource, /retryTurn/);
-});
-
-test('Hermes Web recovers accepted local stream turns without replaying and preserves generated image sources', () => {
-  assert.match(appSource, /async function recoverAcceptedWebTurn/);
-  assert.match(appSource, /acceptedTurnRecoveryPolicy/);
-  assert.match(appSource, /resolvedGeneratedImageSourcesFromMessages/);
-  assert.match(appSource, /requestAccepted/);
-  assert.match(appSource, /revealSources/);
-});
-
-test('both Browser surfaces preserve provider-rejected drafts without marking Hermes unreachable', () => {
+test('the side panel preserves provider-rejected drafts without marking Hermes unreachable', () => {
   assert.match(sidepanelSource, /hermesRequestError\(\{[\s\S]{0,180}status:\s*response\.status[\s\S]{0,180}body:\s*text/);
-  const sidepanelRejectionStart = sidepanelSource.lastIndexOf('const requestFailure = turnRequestFailureState(error)');
+  const sidepanelRejectionStart = sidepanelSource.lastIndexOf('const requestFailure = preGatewayChatFailureState(error)');
   const sidepanelRejectionBranch = sidepanelSource.slice(sidepanelRejectionStart, sidepanelSource.indexOf('const diagnostic = classifyGatewayError(error,', sidepanelRejectionStart));
   assert.match(sidepanelRejectionBranch, /Gateway remains connected/);
   assert.match(sidepanelRejectionBranch, /streamView\.update/);
   assert.doesNotMatch(sidepanelRejectionBranch, /addMessage\('system'/);
   assert.match(sidepanelSource, /classifyTurnRecovery\(streamError\)[\s\S]{0,120}=== 'reject'/);
-  assert.match(appSource, /hermesRequestError\(\{[\s\S]{0,180}status:\s*response\.status[\s\S]{0,180}body:\s*await response\.text\(\)/);
-  assert.match(appSource, /turnRequestFailureState\(error\)[\s\S]{0,700}renderConnectionTruth\(\{\s*status:\s*'online'\s*\}\)/);
 });
 
 test('fallback REST and dashboard WS transports retain typed provider failures', () => {
@@ -333,12 +300,6 @@ test('fallback REST and dashboard WS transports retain typed provider failures',
   assert.match(sidepanelDashboard, /WS_EVENTS\.messageComplete[\s\S]*hermesGatewayTurnError/);
   assert.match(sidepanelDashboard, /WS_EVENTS\.error[\s\S]*hermesGatewayTurnError/);
 
-  const webDashboardStart = appSource.indexOf('async function streamDashboardPrompt');
-  const webCapabilitiesStart = appSource.indexOf('async function loadGatewayCapabilities');
-  const webDashboard = appSource.slice(webDashboardStart, webCapabilitiesStart);
-  assert.match(webDashboard, /WS_EVENTS\.messageComplete[\s\S]*hermesGatewayTurnError/);
-  assert.match(webDashboard, /WS_EVENTS\.error[\s\S]*hermesGatewayTurnError/);
-
   const streamCatchStart = sidepanelSource.indexOf('} catch (streamError) {', sidepanelSource.indexOf('async function askHermes'));
   const streamCatchEnd = sidepanelSource.indexOf('const finalAnswer', streamCatchStart);
   const streamCatch = sidepanelSource.slice(streamCatchStart, streamCatchEnd);
@@ -356,6 +317,12 @@ test('display_text rejection from a strict-contract core is recognised and retri
   assert.equal(turnRecovery.isDisplayTextRejection(new Error('invalid params for prompt.submit: truncate_before_row_id: Extra inputs')), false);
   assert.equal(turnRecovery.isDisplayTextRejection(new Error('Dashboard connection closed mid-turn.')), false);
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  // A session authority's canonical dispatcher: 4001 invalid_params with the refused keys in data.fields.
+  const canonical = Object.assign(new Error('invalid_params'), { code: 4001, rpcCode: 4001, data: { reason: 'invalid_params', fields: ['display_text'] } });
+  assert.equal(turnRecovery.isDisplayTextRejection(canonical), true);
+  const truncateOnly = Object.assign(new Error('invalid_params'), { code: 4001, data: { reason: 'invalid_params', fields: ['truncate_before_row_id', 'confirm_truncate'] } });
+  assert.equal(turnRecovery.isDisplayTextRejection(truncateOnly), false, 'a refusal for other keys is not retried without display_text');
+  assert.equal(turnRecovery.isDisplayTextRejection(Object.assign(new Error('invalid_params'), { code: 4001, data: { reason: 'invalid_params' } })), false);
   // The refusal is remembered per gateway (not as a page-wide flag), and only a
   // submit that carried display_text is retried without it.
   assert.match(source, /Object\.hasOwn\(firstSubmit, 'display_text'\)[\s\S]{0,120}isDisplayTextRejection\(error\)/);

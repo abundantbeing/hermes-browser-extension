@@ -27,8 +27,14 @@ test('the bot settings status line is escaped before it reaches innerHTML', () =
   assert.doesNotMatch(sidepanelSource, /role="status">\$\{roomStatusText\}/);
 });
 
-test('context breakdown rows escape their labels', () => {
-  assert.match(sidepanelSource, /<dt>\$\{escapeHtml\(label\)\}<\/dt>\s*<dd title="\$\{part\.enabled/);
+test('context breakdown rows never reach innerHTML', () => {
+  // Labels and values are set as text, so a gateway or page string cannot inject markup.
+  const rows = sidepanelSource.slice(sidepanelSource.indexOf('function renderContextDefinitionRows('), sidepanelSource.indexOf('function contextUsageNode('));
+  assert.match(rows, /term\.textContent = label;/);
+  assert.match(rows, /detail\.textContent = value;/);
+  assert.doesNotMatch(rows, /innerHTML/);
+  const card = sidepanelSource.slice(sidepanelSource.indexOf('function renderContextUsageCard('), sidepanelSource.indexOf('\nobserveComposerPopovers();'));
+  assert.doesNotMatch(card, /innerHTML/, 'the context card is built with textContent');
   assert.doesNotMatch(sidepanelSource, /<dt>\$\{label\}<\/dt>/);
 });
 

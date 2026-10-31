@@ -1,4 +1,5 @@
 import { sanitizeToolPreview } from './common.mjs';
+import { isReasoningPseudoTool } from './turn-activity.mjs';
 
 // Compact classic faces stay inline inside the existing thinking card.
 export const CLASSIC_THINKING_FACES = Object.freeze([
@@ -9,9 +10,12 @@ export function classicThinkingFace(step = 0) {
 }
 
 export function mergeToolCallActivity(calls = [], activity = {}) {
-  const next = [...calls];
   const id = activity.activityId || activity.tool_call_id || '';
   const name = activity.rawName || activity.tool_name || activity.name || 'Hermes tool';
+  // Hermes sends a model step's reasoning as a "_thinking" progress row; it is
+  // shown as reasoning, never counted as a tool.
+  if (isReasoningPseudoTool(name)) return calls;
+  const next = [...calls];
   let index = id ? next.findIndex(call => (call.activityId || call.tool_call_id) === id) : -1;
   const done = ['completed', 'failed', 'done', 'error'].includes(activity.status) || activity.type === 'tool.complete';
   if (index < 0 && done) {
@@ -50,6 +54,25 @@ export function createToolCallGroup({ document, calls = [], running = false, ope
   root.append(summary, list);
   updateToolCallGroup(root, { calls, running, translate, formatCountLabel });
   return root;
+}
+
+// The turn's length beside the tool count ("Used 3 tools · 14s"): live while
+// it runs, final once it ends. '' removes it. Kept apart from
+// updateToolCallGroup so a tick never touches the list.
+export function setToolCallGroupTime(root, label = '') {
+  const summary = root?.querySelector?.(':scope > summary');
+  if (!summary) return;
+  let time = summary.querySelector('.tool-call-group-time');
+  if (!label) {
+    time?.remove();
+    return;
+  }
+  if (!time) {
+    time = root.ownerDocument.createElement('span');
+    time.className = 'tool-call-group-time';
+    summary.querySelector('.tool-call-group-title')?.after(time);
+  }
+  if (time.textContent !== label) time.textContent = label;
 }
 
 // Update existing disclosure nodes. Never replace them on a tool event or

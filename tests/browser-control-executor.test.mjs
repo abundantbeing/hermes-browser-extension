@@ -316,6 +316,34 @@ test('Phase 6 advertised screenshot and tab actions stay inside worker-owned lea
   ]);
 });
 
+test('a close names the tab it closes, and its approval cannot be spent on a different tab', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const calls = [];
+  const approvals = createBrowserControlApprovalStore();
+  const titles = new Map([[7, 'Command tab'], [8, 'Quarterly report']]);
+  const adapter = fullAdapter(async (action, args) => {
+    calls.push({ action, tabId: args.tab_id ?? null });
+    return { status: 'tab-closed' };
+  });
+  adapter.contract.actions.push('browser_tab_close');
+  adapter.inspect = async ({ tabId }) => ({ currentUrl: 'https://example.test/start', hasUnsavedContent: false, title: titles.get(tabId) || '' });
+  const executor = createBrowserControlExecutor({ adapter, approvals, refs: createBrowserControlRefStore(), now: () => 5_000 });
+
+  // The command rides on tab 7 and closes tab 8: the card says which tab goes.
+  const closing = executor.execute(frame('browser_tab_close', { tab_id: 8 }, { command_id: 'close-8' }), {
+    scope, leasedTabIds: [7, 8], ownedTabIds: [7, 8],
+  });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const [pending] = approvals.pending();
+  assert.equal(pending.reason, 'Close the tab "Quarterly report"?');
+  assert.equal(pending.binding, 'tab:8');
+  assert.equal(approvals.grant({ ...pending, binding: 'tab:9' }).ok, false);
+  assert.deepEqual(calls, [], 'nothing closes before the grant');
+  approvals.grant(pending);
+  assert.equal((await closing).ok, true);
+  assert.deepEqual(calls, [{ action: 'browser_tab_close', tabId: 8 }]);
+});
+
 test('a tab switch names the tab it switches to, and its approval cannot be spent on a different tab', async () => {
   const { createBrowserControlExecutor } = await executorModule();
   const calls = [];
@@ -481,4 +509,21 @@ test('Phase 6 keeps the stale_ref, navigation_failed and tab_hidden codes adapte
   assert.equal((await executor.execute(frame('browser_click', { ref: '@e1' }), { scope })).error.code, 'command_error');
   failure = new Error('plain failure');
   assert.equal((await executor.execute(frame('browser_scroll', { direction: 'down' }), { scope })).error.code, 'command_error');
+});
+
+test('a screenshot the adapter withheld keeps its code: not_active_tab and restricted_page reach the model', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  let failure = null;
+  const executor = createBrowserControlExecutor({
+    adapter: fullAdapter(async () => { throw failure; }),
+    approvals: createBrowserControlApprovalStore(),
+    refs: createBrowserControlRefStore(),
+    now: () => 5_000,
+  });
+  for (const code of ['not_active_tab', 'restricted_page']) {
+    failure = Object.assign(new Error(`withheld: ${code}`), { code });
+    const result = await executor.execute(frame('browser_screenshot'), { scope, leasedTabIds: [7] });
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, code);
+  }
 });

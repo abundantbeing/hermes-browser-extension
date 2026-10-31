@@ -490,6 +490,9 @@
   }
 
   function position() {
+    // No field is targeted and nothing is showing: this runs for every scroll
+    // event of every scroller on the page, so do not touch the DOM for it.
+    if (!target && launcher.hidden && panel.hidden) return;
     if (!target || assistSettings.inlineAssistEnabled === false) {
       suspendPanelForScroll();
       return;
@@ -719,13 +722,13 @@
     activeView = { name: 'routing', args: [session] };
     contextDetail.textContent = translateUiText(session.hasActiveSession
       ? `Active chat · ${Number(session.messageCount || 0) || 'existing'} messages`
-      : 'No active Browser chat');
+      : 'No active chat');
     contextState.textContent = translateUiText('CHOOSE');
     contextState.className = '';
     const title = make('h2', 'route-title', 'Where should Hermes work?');
     const note = make('p', 'note', 'Hermes will never replace or switch an existing conversation without this choice.');
     const routes = [
-      { num: '01', route: policy.routes.CURRENT, title: 'Continue current chat', detail: session.hasActiveSession ? `Add this request to “${session.title || 'current Browser chat'}”.` : 'No active Browser chat is available.', disabled: !session.hasActiveSession },
+      { num: '01', route: policy.routes.CURRENT, title: 'Continue current chat', detail: session.hasActiveSession ? `Add this request to “${session.title || 'current chat'}”.` : 'No active chat is available.', disabled: !session.hasActiveSession },
       { num: '02', route: policy.routes.NEW, title: 'Start new Assist session', detail: 'Create and open a new Hermes Assist session.' },
       { num: '03', route: policy.routes.BACKGROUND, title: 'Run in background', detail: 'Keep the current chat visible. Return the result to this field.', tag: 'New session · Inline assist', recommended: true },
     ];
@@ -791,7 +794,7 @@
     const wrap = make('div', 'working');
     const mark = make('i', 'working-mark');
     const title = make('h2', 'route-title', 'Hermes is drafting');
-    const copy = make('p', 'status', pending?.route === policy.routes.BACKGROUND ? 'Your current conversation stays visible.' : 'This request is bound to the selected Browser session.');
+    const copy = make('p', 'status', pending?.route === policy.routes.BACKGROUND ? 'Your current conversation stays visible.' : 'This request is bound to the selected session.');
     wrap.append(mark, title, copy);
     setBody(wrap);
   }
@@ -966,10 +969,10 @@
     contextState.textContent = translateUiText('CHOOSE');
     contextState.className = '';
     const title = make('h2', 'route-title', 'Where should this session open?');
-    const note = make('p', 'note', 'Open the retained Assist session in the Browser side panel or in Hermes Web.');
+    const note = make('p', 'note', 'Open the retained Assist session in the extension side panel or in Hermes Web.');
     const options = [
-      { num: '01', surface: 'sidepanel', title: 'Browser Extension', detail: 'Open the exact session in the Hermes Browser side panel.', recommended: true },
-      { num: '02', surface: 'web', title: 'Hermes Web', detail: 'Open the exact session in the full Hermes Web workspace.' },
+      { num: '01', surface: 'sidepanel', title: 'Browser Extension', detail: 'Open the exact session in the Hermes Browser Extension side panel.', recommended: true },
+      { num: '02', surface: 'web', title: 'Hermes Web', detail: 'Open the Hermes Web app in a new browser tab.' },
     ].map((option) => {
       const routeButton = button(`route${option.recommended ? ' recommended' : ''}`, '');
       routeButton.dataset.sessionSurface = option.surface;
@@ -977,14 +980,6 @@
       copy.append(make('strong', '', option.title), make('small', '', option.detail));
       routeButton.append(make('span', 'route-num', option.num), copy, make('span', 'arrow', '→'));
       routeButton.addEventListener('click', trustedOnly(() => {
-        if (option.surface === 'web') {
-          setBody(
-            make('h2', 'route-title', 'A new surface is being worked on'),
-            make('p', 'note', 'This choice no longer opens Hermes Web. A new surface is being worked on.'),
-            back,
-          );
-          return;
-        }
         openResultSession(option.surface);
       }));
       return routeButton;
@@ -1002,12 +997,64 @@
       surface: surface === 'web' ? 'web' : 'sidepanel',
     }).catch((error) => ({ ok: false, reason: error?.message || String(error) }));
     if (!response?.ok) {
-      renderFailure(response?.reason || 'Hermes could not open that retained session.');
+      if (response?.webapp) renderWebappUnavailable(response);
+      else renderFailure(response?.reason || 'Hermes could not open that retained session.');
+      return;
+    }
+    if (surface === 'web' && response.hint) {
+      renderWebappOpened(response.hint);
       return;
     }
     hidePanel();
     pending = null;
     resetResult();
+  }
+
+  // Hermes Web is the Webapp the user's own gateway serves. When it cannot be opened the
+  // background says why; the commands are the same three the side panel's dialog offers.
+  function renderWebappUnavailable(response) {
+    activeView = { name: 'webapp-unavailable', args: [response] };
+    contextState.textContent = translateUiText('BLOCKED');
+    const reasons = {
+      'needs-address': 'This connection is remote, so there is no address to try. Enter the Hermes Web address in Settings.',
+      'invalid-address': 'The Hermes Web address in Settings is not a valid http or https address.',
+      'permission-denied': 'The browser did not allow the Hermes Browser Extension to reach this address:',
+      unreachable: 'Nothing answered at this address:',
+    };
+    const nodes = [
+      make('h2', 'route-title', 'Hermes Web is not available'),
+      make('p', 'note', 'Your gateway serves Hermes Web once it is turned on. On the computer that runs Hermes, run these commands.'),
+      make('p', 'note', reasons[response?.webapp] || reasons.unreachable),
+    ];
+    if (response?.address && ['unreachable', 'permission-denied'].includes(response.webapp)) {
+      nodes.push(makeRaw('div', 'preview', String(response.address)));
+    }
+    nodes.push(makeRaw('div', 'preview', ['hermes config set webapp.enabled true', 'hermes gateway restart', 'hermes webapp'].join('\n')));
+    const back = button('action', 'Back to result');
+    back.addEventListener('click', trustedOnly(() => renderResult()));
+    setBody(...nodes, back);
+  }
+
+  function renderWebappOpened(hint) {
+    activeView = { name: 'webapp-opened', args: [hint] };
+    contextState.textContent = translateUiText('COMPLETE');
+    const done = button('action', 'Close');
+    done.addEventListener('click', trustedOnly(() => {
+      hidePanel();
+      pending = null;
+      resetResult();
+    }));
+    setBody(
+      make('h2', 'route-title', 'Hermes Web opened'),
+      make('p', 'note', hint === 'signed-in'
+        ? 'Hermes Web opened, already signed in.'
+        : hint === 'local-kept'
+          ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. After that, the Hermes Browser Extension keeps this browser signed in until you close it.'
+          : hint === 'local'
+            ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. The tab stays signed in.'
+            : 'Hermes Web opened. Sign in on that page with your dashboard account.'),
+      done,
+    );
   }
 
   function onFocus(event) {
@@ -1083,6 +1130,8 @@
     else if (activeView.name === 'failure') renderFailure(...activeView.args);
     else if (activeView.name === 'result') renderResult(...activeView.args);
     else if (activeView.name === 'open-session') renderOpenSessionChoices();
+    else if (activeView.name === 'webapp-unavailable') renderWebappUnavailable(...activeView.args);
+    else if (activeView.name === 'webapp-opened') renderWebappOpened(...activeView.args);
     else renderAssist();
   }
 

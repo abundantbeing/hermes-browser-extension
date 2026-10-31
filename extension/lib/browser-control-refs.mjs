@@ -1,3 +1,5 @@
+import { FRAME_ELEMENT_SHARE } from './browser-control-frames.mjs';
+
 const SENSITIVE_DESCRIPTOR_RE = /(?:password|passwd|passcode|one.?time|otp|verification.?code|security.?code|two.?factor|2fa|credit.?card|card.?number|cvv|cvc|expiry|payment|billing|api.?(?:key|token)|access.?token|auth.?token|session.?token|secret|private.?key|seed.?phrase|recovery.?phrase|wallet)/i;
 
 function compact(value, limit = 300) {
@@ -39,8 +41,30 @@ function sensitiveNode(node = {}) {
   ].map((value) => compact(value)).join(' '));
 }
 
+// The frame a node came from, as the snapshot named it (the CDP id of the child frame), or '' for the main
+// frame. A frame id of 0 also means the main frame.
 function frameKeyFor(node = {}) {
-  return node.frameId === undefined || node.frameId === null ? '' : compact(node.frameId, 160);
+  const frame = node.frameId === undefined || node.frameId === null ? '' : compact(node.frameId, 160);
+  return frame === '0' ? '' : frame;
+}
+
+// Child frames named per document. A frame keeps its short key for as long as the document lives, whatever
+// frames come and go around it, so the ref of a control in it does not change when an unrelated ad frame leaves.
+const MAX_FRAME_KEYS = 64;
+
+// Which nodes get a ref when there are more than the limit allows. The page's own controls come first, but
+// when child frames contribute controls a share of the refs is held back for them, so a long page cannot leave
+// a chat composer in a child frame without one. Input order is kept.
+function selectNodes(input, limit) {
+  if (input.length <= limit) return input;
+  const framed = input.filter((node) => frameKeyFor(node)).length;
+  if (!framed) return input.slice(0, limit);
+  const own = input.length - framed;
+  const framedKept = Math.min(framed, Math.max(Math.min(framed, Math.floor(limit * FRAME_ELEMENT_SHARE)), limit - own));
+  const ownKept = Math.min(own, limit - framedKept);
+  let ownSeen = 0;
+  let framedSeen = 0;
+  return input.filter((node) => (frameKeyFor(node) ? framedSeen++ < framedKept : ownSeen++ < ownKept));
 }
 
 // Identity of a node across re-snapshots of the same document: its backend DOM
@@ -55,13 +79,11 @@ function nodeIdentity(node = {}, seen = new Map()) {
   return `${base}\u0000${occurrence}`;
 }
 
-function publicNode(node = {}, number) {
+function publicNode(node = {}, number, frameKey = '') {
   const sensitive = sensitiveNode(node);
   const backendDOMNodeId = Number(node.backendDOMNodeId);
-  const frameId = frameKeyFor(node) || null;
-  const prefix = frameId && frameId !== '0' && frameId !== 0
-    ? `@f${String(frameId).replace(/^f/i, '')}e`
-    : '@e';
+  const frameId = frameKey || null;
+  const prefix = frameId ? `@f${frameId}e` : '@e';
   return {
     ref: `${prefix}${number}`,
     role: compact(node.role || 'generic', 80),
@@ -99,9 +121,22 @@ export function createBrowserControlRefStore({
     const previous = documents.get(key);
     const known = previous?.numbers || new Map();
     let next = previous?.next || 1;
+    const frameKeys = new Map(previous?.frameKeys || []);
+    let nextFrame = previous?.nextFrame || 1;
     const seen = new Map();
     const numbers = new Map();
-    const visible = input.slice(0, refLimit).map((node) => {
+    const visible = selectNodes(input, refLimit).map((node) => {
+      const frame = frameKeyFor(node);
+      let frameKey = '';
+      if (frame) {
+        frameKey = frameKeys.get(frame) || '';
+        if (!frameKey) {
+          frameKey = String(nextFrame);
+          nextFrame += 1;
+          frameKeys.set(frame, frameKey);
+          if (frameKeys.size > MAX_FRAME_KEYS) frameKeys.delete(frameKeys.keys().next().value);
+        }
+      }
       const identity = nodeIdentity(node, seen);
       let number = known.get(identity);
       if (number === undefined || numbers.has(identity)) {
@@ -109,11 +144,11 @@ export function createBrowserControlRefStore({
         next += 1;
       }
       if (!numbers.has(identity)) numbers.set(identity, number);
-      return publicNode(node, number);
+      return publicNode(node, number, frameKey);
     });
     const byRef = new Map(visible.map((node) => [node.ref, node]));
     documents.delete(key);
-    documents.set(key, { scope, byRef, numbers, next });
+    documents.set(key, { scope, byRef, numbers, next, frameKeys, nextFrame });
     while (documents.size > documentLimit) documents.delete(documents.keys().next().value);
     return {
       ok: true,

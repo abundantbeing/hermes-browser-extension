@@ -1,0 +1,31 @@
+# Hermes Browser Extension review rules
+
+These apply to review of `abundantbeing/hermes-browser-extension`.
+
+## Architecture
+
+- The MV3 background service worker owns control, sessions and transport. The side panel and the full-tab app are UI clients and must not assume they hold authority.
+- Firefox and Chromium are separate capability sets: `sidebarAction` is not `sidePanel`, and `debugger` is Chromium-only. A feature gated on one must never bleed into the other.
+- Browser tabs, page text, extracted content and content-script messages are untrusted input. Privileged actions need scoped authorization bound to the exact target.
+- A controller lease binds profile, session, tab, document generation and approval identity. Rebinding any one of those invalidates the lease.
+- The gateway reaps detached runtimes, so any background history fetch resumes the durable session first and then reads history. Never treat a stored session id as a live one.
+
+## Safety and security
+
+- No secrets in source, fixtures, logs, review comments or docs. Test fixtures must not look like real tokens.
+- Everything that crosses into a page or another origin is validated: URL scheme, origin, redirect target and message shape.
+- Stop, cancel and interrupt must not claim success without acknowledgement, and must not resubmit an uncertain turn.
+- Approval prompts are bound to the resolved target. Changing the target after approval starts is a defect, not a race to tolerate.
+
+## Quality bar
+
+- A fix names its root cause and covers the sibling code path with the same flaw.
+- New behavior needs a test that fails before the change. Source-regex tests do not prove runtime behavior.
+- Missing CI is not a defect. Do not ask for paid GitHub Actions.
+- Generated bundles, lockfiles and locale catalogs are reviewed as changed keys, not translated meaning.
+
+## Review output
+
+- Report a defect only when the changed code demonstrably causes it. Quote the evidence.
+- Separate blocking findings from non-blocking suggestions.
+- Do not restate the diff and do not pad with style preferences.

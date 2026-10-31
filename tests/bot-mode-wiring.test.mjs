@@ -5,19 +5,16 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-const [sidepanelHtml, sidepanelCss, sidepanelSource, appHtml, appCss, appSource, commonSource] = await Promise.all([
+const [sidepanelHtml, sidepanelCss, sidepanelSource, commonSource] = await Promise.all([
   read('extension/sidepanel.html'),
   read('extension/sidepanel.css'),
   read('extension/sidepanel.js'),
-  read('extension/app.html'),
-  read('extension/app.css'),
-  read('extension/app.js'),
   read('extension/lib/common.mjs'),
 ]);
 
 test('Bot Mode is off by default and has no visible Agent Deck product wording', () => {
   assert.match(commonSource, /botModeEnabled:\s*false/);
-  for (const source of [sidepanelHtml, sidepanelSource, appHtml, appSource]) {
+  for (const source of [sidepanelHtml, sidepanelSource]) {
     assert.doesNotMatch(source, /Agent Deck/i);
   }
 });
@@ -42,8 +39,12 @@ test('Remote API-only connections do not probe or retry for a Dashboard roster',
 
   assert.ok(retrySource.indexOf(remoteApiGuard) >= 0);
   assert.ok(retrySource.indexOf(remoteApiGuard) < retrySource.indexOf('setTimeout('));
-  assert.ok(loaderSource.indexOf(remoteApiGuard) >= 0);
-  assert.ok(loaderSource.indexOf(remoteApiGuard) < loaderSource.indexOf('ensureProfileWsConnection('));
+  // The loader's guard also stands aside for a held Hermes account sign-in on the remote gateway's own origin
+  // (viaAccountRemote); with none held it is the guard it always was, and it still runs before any dashboard code.
+  const loaderGuard = 'if (isRemoteMode() && !isRemoteWsMode() && !viaAccountRemote)';
+  assert.ok(loaderSource.indexOf(loaderGuard) >= 0);
+  assert.ok(loaderSource.indexOf('connectProfileViaAccount(') < loaderSource.indexOf(loaderGuard));
+  assert.ok(loaderSource.indexOf(loaderGuard) < loaderSource.indexOf('ensureProfileWsConnection('));
   assert.match(loaderSource, /return \{ status: 'degraded', detail: botModeRosterNote \};/);
   assert.match(loaderSource, /return \{ status: 'ready', detail: count === 1/);
   assert.match(sidepanelSource, /loadProfiles: async \(\) => loadProfiles\(\{ quiet: true \}\)/);
@@ -69,24 +70,10 @@ test('side panel exposes an opt-in Bot Mode settings control and roster overlay'
   assert.doesNotMatch(sidepanelSource, /apiFetch\(['"]\/v1\/profiles\/active/);
 });
 
-test('Hermes Web exposes an Agents rail backed by the shared Bot Mode domain', () => {
-  for (const id of ['agentsRailButton', 'botModeRail', 'webBotModeSearch', 'webBotModeRoster', 'settingsBotModeEnabled']) {
-    assert.match(appHtml, new RegExp(`id=["']${id}["']`));
-  }
-  assert.match(appCss, /\.bot-mode-rail/);
-  // The web rail keeps using the shared Bot Mode domain: rows are split into
-  // agent profiles and group chats by splitBotRosterRows.
-  assert.match(appSource, /splitBotRosterRows/);
-  assert.match(appSource, /WS_METHODS\.profilesList/);
-});
-
-test('both Browser surfaces pass explicit profiles on list, history, create, and resume', () => {
-  assert.match(sidepanelSource, /WS_METHODS\.sessionList,\s*\{[^}]*profile:/s);
+test('the side panel passes explicit profiles on list, history, create, and resume', () => {
+  assert.match(sidepanelSource, /WS_METHODS\.sessionList,\s*(?:sessionListParamsFor\([^,]+,\s*)?\{[^}]*profile:/s);
   assert.match(sidepanelSource, /WS_METHODS\.sessionHistory,\s*\{[^}]*profile:/s);
   assert.match(sidepanelSource, /establishGatewaySession\(\{[^}]*profile:/s);
-  assert.match(appSource, /WS_METHODS\.sessionList,\s*(?:buildSessionListParams\(\s*)?\{[^}]*profile:/s);
-  assert.match(appSource, /WS_METHODS\.sessionHistory,\s*\{[^}]*profile:/s);
-  assert.match(appSource, /establishGatewaySession\(\{[^}]*profile:/s);
 });
 
 test('Bot Mode deck footer carries Edit Profile and New Agent beside the primary open action', () => {
@@ -328,7 +315,7 @@ test('canonical Bot and group chats bind history, sends, and model switching to 
   assert.ok(askHermesBody, 'askHermes body is present');
   assert.match(askHermesBody, /const dashboardTransport = usesDashboardWsChatTransport\(\);/);
   assert.match(askHermesBody, /activeRunControl = beginRunControl\(\{ transport: dashboardTransport \? 'dashboard-ws' : 'rest' \}\)/);
-  assert.match(askHermesBody, /if \(dashboardTransport\) \{[\s\S]*?const dashboardConnection = await ensureActiveDashboardWsConnection\(\);[\s\S]*?await ensureRemoteWsSession\(dashboardConnection\);[\s\S]*?\} else \{\s*await ensureHermesSession\(\);/);
+  assert.match(askHermesBody, /if \(dashboardTransport\) \{[\s\S]*?const dashboardConnection = await ensureActiveDashboardWsConnection\(\);[\s\S]*?await ensureRemoteWsSession\(dashboardConnection\);[\s\S]*?\} else \{\s*ensuredSessionRoutes = \{ sessionId: String\(settings\.sessionId \|\| ''\)\.trim\(\), value: await ensureHermesSession\(\) \};/);
   assert.match(sidepanelSource, /async function sendSteerText[\s\S]*?if \(usesDashboardWsChatTransport\(\)\) \{/);
   assert.match(sidepanelSource, /async function reconcileActiveRunTerminal[\s\S]*?const dashboardTransport = usesDashboardWsChatTransport\(\)/);
   assert.match(sidepanelSource, /async function stopCurrentTurn[\s\S]*?const dashboardTransport = usesDashboardWsChatTransport\(\)[\s\S]*?if \(dashboardTransport\) \{/);
@@ -344,7 +331,8 @@ test('the model catalog survives agent switches via the profile-union cache', ()
 
 test('streaming renders with prefix-stable patches, sticky autoscroll, and agent headers', () => {
   assert.match(sidepanelSource, /function patchRenderedMessageContent/);
-  assert.match(sidepanelSource, /patchRenderedMessageContent\(element, renderMarkdownSafe\(content \|\| ''\)\)/);
+  // Replies render in the chosen response style (Rich text is renderMarkdownSafe).
+  assert.match(sidepanelSource, /patchRenderedMessageContent\(element, renderResponseSafe\(content \|\| '', \{ style, labels: adaptiveUiLabels\(\), streaming \}\)\)/);
   assert.match(sidepanelSource, /function isMessageStreamNearBottom/);
   assert.match(sidepanelSource, /function scrollMessageStreamToBottom/);
   assert.match(sidepanelSource, /assistantMessageRoleLabel/);
@@ -353,9 +341,9 @@ test('streaming renders with prefix-stable patches, sticky autoscroll, and agent
   assert.doesNotMatch(sidepanelCss, /\.bot-mode-engaged \.message\.(?:assistant|user)/);
 });
 
-test('group chats are separated from agent profiles on both Browser surfaces', () => {
+test('group chats are separated from agent profiles in the side panel', () => {
   // Rosters split into agents + group chats; synced launch-room never counts as a profile.
-  for (const source of [sidepanelSource, appSource]) {
+  for (const source of [sidepanelSource]) {
     assert.match(source, /splitBotRosterRows/);
     assert.match(source, /botModeGroupChats|webBotModeGroupChats/);
     assert.match(source, /CANONICAL_FALLBACK_PROFILES/);
@@ -363,7 +351,7 @@ test('group chats are separated from agent profiles on both Browser surfaces', (
   }
   // The synced group list stays separate from the agent roster. The selected
   // room uses the profile-scoped runtime bridge rather than a read-only guard.
-  for (const source of [sidepanelSource, appSource]) {
+  for (const source of [sidepanelSource]) {
     assert.doesNotMatch(source, /BOT_GROUP_CHATS_STORAGE_KEY/);
     assert.doesNotMatch(source, /createGroupChatDraft/);
     assert.doesNotMatch(source, /sourceId === 'device'/);
@@ -381,35 +369,6 @@ test('group chats are separated from agent profiles on both Browser surfaces', (
   assert.match(sidepanelSource, /Group chat opened/);
   assert.doesNotMatch(sidepanelSource, /Group chat is read only/);
   assert.doesNotMatch(sidepanelSource, /function openBotGroupChat[\s\S]{0,900}openHermesSession/);
-  // Web rail parity: toggle + synced group list + the same live runtime bridge.
-  for (const id of ['webBotModeViewAgents', 'webBotModeViewGroups', 'webBotModeGroupList']) {
-    assert.match(appHtml, new RegExp(`id=["']${id}["']`));
-  }
-  assert.doesNotMatch(appHtml, /webBotModeNewGroupButton|webBotModeGroupForm/);
-  assert.match(appSource, /function setWebBotModeView/);
-  assert.match(appSource, /function renderWebBotModeGroupChats/);
-  assert.match(appSource, /function sendActiveWebGroupMessage/);
-  assert.match(appSource, /createBotGroupRuntime/);
-  assert.match(appSource, /persistGroupProjectionAppend/);
-  assert.match(appSource, /Group chat opened/);
-  assert.doesNotMatch(appSource, /read-only synced projection/);
-});
-
-test('Hermes Web profile opening distinguishes successful history hydration from failure', () => {
-  assert.match(appSource, /async function openSession\(sessionId, \{ keepLoading = false \} = \{\}/);
-  assert.match(appSource, /if \(!keepLoading\) hideRuntimeLoadingState\(\);\s*return true;/);
-  assert.match(appSource, /const opened = await openSession\(row\.canonical\.durableId\)/);
-  assert.match(appSource, /if \(opened === true\) return opened;/);
-  assert.doesNotMatch(appSource, /if \(row\.canonical\.status === 'ready'\) return openSession\(row\.canonical\.durableId\);/);
-});
-
-test('Hermes Web uses the shared iMessage bubble contract and projection author labels', () => {
-  assert.match(appCss, /\.web-message\.user[\s\S]*?border-radius:\s*18px 18px 4px 18px/);
-  assert.match(appCss, /\.web-message\.assistant[\s\S]*?border-radius:\s*18px 18px 18px 4px/);
-  assert.match(appCss, /\.web-message\.user[\s\S]*?background:\s*var\(--hermes-blue/);
-  assert.match(appCss, /\.web-message\.user \.web-message-role\s*\{\s*display:\s*none/);
-  assert.match(appSource, /message\.roleLabel/);
-  assert.match(appSource, /message\.roleLabel \|\| 'Hermes'/);
 });
 
 test('the shared message renderer is the universal iMessage-style bubble layer', () => {
@@ -460,7 +419,9 @@ test('Bot Mode renders agent welcome intro with Collapse font and avatar', () =>
 
 test('opening a bot resumes the confirmed canonical Bot Chat and never forks on lookup failure', () => {
   const openBody = sidepanelSource.match(/async function openBotProfile\([\s\S]*?(?=\nasync function )/)?.[0] || '';
-  assert.match(openBody, /resolveCanonicalBotSession\(row,/);
+  assert.match(openBody, /resolveBotChatAcrossRoutes\(row, \{/);
+  assert.match(openBody, /restList: \(params\) => listBotChatRowsViaGateway\(params\.profile\)/);
+  assert.match(openBody, /opened !== true && transport === 'dashboard-ws'[\s\S]*?openBotChat\('rest'\)/, 'a Bot Chat the socket cannot resume opens on the gateway routes');
   assert.match(openBody, /session\.list/);
   assert.match(openBody, /limit: 200/);
   assert.match(openBody, /id: canonical\.durableId/);
@@ -508,4 +469,24 @@ test('the profile switch menu pins its mode header above the scrolling list', ()
   assert.match(sidepanelCss, /\.profile-switch-modes \{[\s\S]*?flex: 0 0 auto/);
   assert.match(sidepanelCss, /\.profile-switch-options \{[\s\S]*?overflow-y: auto/);
   assert.match(sidepanelCss, /\.profile-switch-menu \{[\s\S]*?overflow: hidden/);
+});
+
+test('a Bot Chat created over REST sends only its title and source', () => {
+  // A session authority mints the bot's own Bot Chat only for the body `hermes peer dm` sends. An id
+  // or any other field leaves a plain API row that the first delivery moves aside, empty.
+  const start = sidepanelSource.indexOf('async function createHermesBrowserSession(');
+  const restCreate = sidepanelSource.slice(sidepanelSource.indexOf("apiFetch('/api/sessions', {", start), start + 12000);
+  assert.match(sidepanelSource.slice(start, start + 12000), /const botChat = source === 'hermes_bot_mode';\s*const sessionId = botChat \? '' : makeBrowserSessionId\(\);/);
+  assert.match(restCreate, /JSON\.stringify\(botChat \? \{ title, source: restSessionCreateSource\(settings\.sessionSource\) \} : \{\s*id: sessionId,/);
+  // Without an id of its own the panel binds the id Hermes returns, or stops.
+  assert.match(restCreate, /\(sessionId \? \{ id: sessionId,[^}]*\} : null\);\s*if \(!session\) throw new Error\('Hermes did not return the new Bot Chat\.'\);/);
+});
+
+test("a bot's own-key 401 names the profile and the .env line instead of a bare status", async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const lookup = panel.slice(panel.indexOf('async function listBotChatRowsViaGateway('), panel.indexOf('\n}\n', panel.indexOf('async function listBotChatRowsViaGateway(')));
+  const hint = lookup.indexOf("response.status === 401 && name !== 'default'");
+  assert.ok(hint > 0 && hint < lookup.indexOf('Bot Chat lookup failed'), 'checked before the generic failure');
+  assert.match(lookup, /only with \$\{name\}'s own API_SERVER_KEY/);
 });

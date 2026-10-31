@@ -333,7 +333,7 @@ test('serializes normalized documents stably and produces re-importable JSON', (
   assert.deepEqual(normalizeThemeDocument(reparsed), normalized);
   assert.throws(
     () => serializeThemeDocument({ ...normalized, css: 'body { display: none }' }),
-    /invalid Hermes Browser theme document/i,
+    /invalid Hermes Browser Extension theme document/i,
   );
   const reordered = reverseObjectKeys(normalized);
   assert.deepEqual(JSON.parse(serializeThemeDocument(reordered)), reparsed, 'storage key ordering must not affect canonical serialization');

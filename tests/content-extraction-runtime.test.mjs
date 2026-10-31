@@ -9,6 +9,7 @@ import {
   renderContentExtractorRuntime,
   writeContentExtractorRuntime,
 } from '../scripts/build-content-runtime.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 import {
   EXTRACTION_SCHEMA,
   EXTRACTION_VERSION,
@@ -71,7 +72,7 @@ test('build scripts generate the classic runtime before copying extension files'
 
   assert.match(build, /writeContentExtractorRuntime/);
   assert.match(firefox, /writeContentExtractorRuntime/);
-  assert.match(packageJson.scripts['check:js'], /check:content-runtime/);
+  assert.match(CHECK_JS, /check:content-runtime/);
   assert.equal(packageJson.scripts['check:content-runtime'], 'node scripts/build-content-runtime.mjs --check');
 });
 

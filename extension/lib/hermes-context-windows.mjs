@@ -31,6 +31,9 @@ export const DISPLAY_CONTEXT_ALIASES = Object.freeze({
   'opus-4.6': 1_000_000,
   'sonnet-4.6': 1_000_000,
   'sonnet-4-6': 1_000_000,
+  // Not in Hermes Agent's table yet; its sibling gpt-5.6-terra / gpt-6.1-sol rows are 1.05M. A guess of last resort:
+  // a window the gateway reports for this model replaces it.
+  'gpt-6.1-terra': 1_050_000,
   'grok-4.7': 500_000,
   'grok-4-7': 500_000,
   // StepFun. Hermes Agent's DEFAULT_CONTEXT_LENGTHS has no `step` key at all,

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
+import { CONTROLLER_SESSION_PENDING } from '../extension/lib/controller-protocol.mjs';
 import { createControllerConnector } from '../extension/lib/controller-connector.mjs';
 
 const IDENTITY = Object.freeze({
@@ -107,14 +109,15 @@ test('local and VPS connector registers with Bearer auth then uses a credential-
   await settle();
 
   assert.equal(requests.length, 1);
-  assert.equal(requests[0].url, 'http://127.0.0.1:8642/v1/browser-control/register');
+  // A named profile is addressed with /p/<profile>; the gateway does not route on the header alone.
+  assert.equal(requests[0].url, 'http://127.0.0.1:8642/p/work/v1/browser-control/register');
   assert.equal(requests[0].options.headers.Authorization, ['Bearer', accessValue].join(' '));
   assert.equal(requests[0].options.headers['X-Hermes-Profile'], 'work');
   assert.equal(requests[0].options.redirect, 'error');
   assert.equal(JSON.parse(requests[0].options.body).session_id, 'stored-session-fixture');
 
   const socket = FakeSocket.instances[0];
-  assert.equal(socket.url, 'ws://127.0.0.1:8642/v1/browser-control/ws');
+  assert.equal(socket.url, 'ws://127.0.0.1:8642/p/work/v1/browser-control/ws');
   assert.equal(socket.url.includes('ticket='), false);
   assert.deepEqual(socket.protocols, [
     'hermes-browser-control-v1',
@@ -140,6 +143,38 @@ test('local and VPS connector registers with Bearer auth then uses a credential-
   assert.deepEqual(lastJson(socket), { method: 'browser.controller.result', params: { command_id: 'local-command', ok: true } });
   socket.close();
   assert.equal(closes.length, 1);
+});
+
+test('an open control socket sends a heartbeat on its own, so the service worker and the socket stay up', async () => {
+  FakeSocket.instances = [];
+  const fetchImpl = async () => jsonResponse(201, { ticket: 'api-ticket-fixture', ticket_expires_in_seconds: 30, ws_path: '/v1/browser-control/ws' });
+  const connector = createControllerConnector({ fetchImpl, WebSocketImpl: FakeSocket, keepAliveMs: 15 });
+  const frames = [];
+  const connecting = connector.connect({
+    settings: { connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: ['fixture', 'access', 'value'].join('-') },
+    identity: IDENTITY,
+    onFrame: (frame) => frames.push(frame),
+    onClose: () => {},
+  });
+  await settle();
+  const socket = FakeSocket.instances[0];
+  socket.open();
+  await connecting;
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  const keepalives = socket.sent.map((raw) => JSON.parse(raw))
+    .filter((frame) => frame.method === 'browser.controller.heartbeat' && /^keepalive-/.test(frame.params.nonce));
+  assert.ok(keepalives.length >= 2, `a heartbeat every interval while open (got ${keepalives.length})`);
+  // The gateway's answer is not a command for the worker.
+  socket.message({ method: 'browser.controller.heartbeat', params: { nonce: keepalives[0].params.nonce, ok: true } });
+  assert.deepEqual(frames, []);
+  socket.close();
+  const sentAtClose = socket.sent.length;
+  await new Promise((resolve) => setTimeout(resolve, 45));
+  assert.equal(socket.sent.length, sentAtClose, 'nothing is sent after the socket closed');
+  // Chromium stops an idle service worker after 30 seconds, so the default must come well inside that.
+  const source = readFileSync(new URL('../extension/lib/controller-connector.mjs', import.meta.url), 'utf8');
+  const interval = Number(source.match(/const DEFAULT_KEEPALIVE_MS = ([\d_]+);/)?.[1]?.replaceAll('_', ''));
+  assert.ok(interval > 0 && interval <= 25_000, `keepalive ${interval} ms`);
 });
 
 test('local API registration POST is bounded by the connector timeout', async () => {
@@ -271,146 +306,89 @@ test('Cloud connector uses trusted dashboard mint, credential-free gateway subpr
   assert.deepEqual(await sendingResult, { accepted: true });
 });
 
-test('local API connector materializes a ghost session on browser_control_session_forbidden and retries', async () => {
+test('a session the gateway does not know yet is "not ready": nothing is created, nothing spins, and the next attempt can succeed', async () => {
   FakeSocket.instances = [];
   const requests = [];
-  let registerCalls = 0;
+  let exists = false;
   const fetchImpl = async (url, options) => {
-    requests.push({ url, options });
+    requests.push({ url, method: options?.method || 'GET' });
     if (url.endsWith('/v1/browser-control/register')) {
-      registerCalls += 1;
-      if (registerCalls === 1) {
-        return jsonResponse(403, {
-          error: {
-            message: 'Browser control may register only for an existing server session.',
-            code: 'browser_control_session_forbidden',
-          },
-        });
-      }
-      return jsonResponse(201, {
-        ticket: 'api-ticket-after-materialize',
-        ticket_expires_in_seconds: 30,
-        ws_path: '/v1/browser-control/ws',
-      });
-    }
-    if (url.endsWith('/api/sessions')) {
-      const body = JSON.parse(options.body);
-      assert.equal(body.id, 'stored-session-fixture');
-      assert.equal(body.source, 'hermes_browser');
-      return jsonResponse(201, { session: { id: body.id } });
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  };
-  const connector = createControllerConnector({ fetchImpl, WebSocketImpl: FakeSocket });
-  const connecting = connector.connect({
-    settings: {
-      connectionTransport: 'local-api',
-      gatewayUrl: 'http://127.0.0.1:8642',
-      apiKey: 'fixture-key',
-      sessionTitle: 'Hermes Browser Extension · fixture',
-      sessionSource: 'hermes_browser',
-    },
-    identity: IDENTITY,
-  });
-  await settle();
-
-  assert.equal(registerCalls, 2, 'register must be retried after materializing the session');
-  assert.equal(requests.length, 3);
-  assert.equal(requests[1].url, 'http://127.0.0.1:8642/api/sessions');
-  assert.equal(requests[1].options.method, 'POST');
-  assert.equal(requests[2].url, 'http://127.0.0.1:8642/v1/browser-control/register');
-  assert.equal(JSON.parse(requests[2].options.body).session_id, 'stored-session-fixture');
-
-  const socket = FakeSocket.instances[0];
-  assert.equal(socket.url, 'ws://127.0.0.1:8642/v1/browser-control/ws');
-  assert.deepEqual(socket.protocols, [
-    'hermes-browser-control-v1',
-    'hermes-browser-control-ticket.api-ticket-after-materialize',
-  ]);
-  socket.open();
-  const connection = await connecting;
-  assert.ok(connection.send, 'connection must resolve after the retried register');
-});
-
-test('ghost-session materialization uses a title the gateway cannot collide on', async () => {
-  FakeSocket.instances = [];
-  const sessionCreates = [];
-  let registerCalls = 0;
-  const fetchImpl = async (url, options) => {
-    if (url.endsWith('/v1/browser-control/register')) {
-      registerCalls += 1;
-      if (registerCalls === 1) {
-        return jsonResponse(403, {
+      return exists
+        ? jsonResponse(201, { ticket: 'api-ticket-after-first-turn', ticket_expires_in_seconds: 30, ws_path: '/v1/browser-control/ws' })
+        : jsonResponse(403, {
           error: { message: 'Browser control may register only for an existing server session.', code: 'browser_control_session_forbidden' },
         });
-      }
-      return jsonResponse(201, {
-        ticket: 'api-ticket-title-unique',
-        ticket_expires_in_seconds: 30,
-        ws_path: '/v1/browser-control/ws',
-      });
-    }
-    if (url.endsWith('/api/sessions')) {
-      const body = JSON.parse(options.body);
-      sessionCreates.push(body);
-      // The gateway enforces per-title uniqueness and still refuses the first
-      // attempt in this fixture, so the retry must pick a different title.
-      return sessionCreates.length === 1
-        ? jsonResponse(400, { error: { message: 'Title already in use by session hermes-browser-extension', code: 'invalid_title' } })
-        : jsonResponse(201, { session: { id: body.id } });
     }
     throw new Error(`Unexpected request: ${url}`);
   };
   const connector = createControllerConnector({ fetchImpl, WebSocketImpl: FakeSocket });
-  const connecting = connector.connect({
-    settings: {
-      connectionTransport: 'local-api',
-      gatewayUrl: 'http://127.0.0.1:8642',
-      apiKey: ['fixture', 'access', 'value'].join('-'),
-      sessionTitle: 'Hermes Browser Extension',
-      sessionSource: 'hermes_browser',
-    },
-    identity: IDENTITY,
-  });
+  const settings = {
+    connectionTransport: 'local-api',
+    gatewayUrl: 'http://127.0.0.1:8642',
+    apiKey: 'fixture-key',
+    sessionTitle: 'Hermes Browser Extension · fixture',
+    sessionSource: 'hermes_browser',
+  };
+  await assert.rejects(
+    connector.connect({ settings, identity: IDENTITY }),
+    (error) => error.code === CONTROLLER_SESSION_PENDING && /does not exist on the gateway yet/.test(error.message),
+  );
+  assert.deepEqual(requests, [{ url: 'http://127.0.0.1:8642/v1/browser-control/register', method: 'POST' }],
+    'one register, no session create, no retry loop of its own');
+  assert.equal(FakeSocket.instances.length, 0);
+
+  // The panel's first turn creates the session; the next attempt registers.
+  exists = true;
+  const connecting = connector.connect({ settings, identity: IDENTITY });
   await settle();
-
-  assert.equal(sessionCreates.length, 2, 'an invalid_title refusal must be retried with a unique title');
-  assert.notEqual(sessionCreates[0].title, 'Hermes Browser Extension', 'the bare default title collides with the extension session');
-  assert.match(sessionCreates[0].title, /stored-session-fixture/);
-  assert.notEqual(sessionCreates[0].title, sessionCreates[1].title);
-  assert.equal(registerCalls, 2, 'register is retried once the session exists');
-
-  const socket = FakeSocket.instances[0];
-  socket.open();
-  const connection = await connecting;
-  assert.ok(connection.send, 'connection must resolve after the retried register');
+  FakeSocket.instances[0].open();
+  assert.ok((await connecting).send);
+  assert.ok(requests.every((request) => !request.url.endsWith('/api/sessions')), 'the controller never creates a session');
 });
 
-test('local API connector fails when the ghost-session materialize POST is refused', async () => {
-  FakeSocket.instances = [];
-  let registerCalls = 0;
-  const fetchImpl = async (url) => {
-    if (url.endsWith('/v1/browser-control/register')) {
-      registerCalls += 1;
-      return jsonResponse(403, {
-        error: { message: 'Browser control may register only for an existing server session.', code: 'browser_control_session_forbidden' },
-      });
-    }
-    if (url.endsWith('/api/sessions')) return jsonResponse(401, { error: { message: 'Invalid key' } });
-    throw new Error(`Unexpected request: ${url}`);
-  };
-  const connector = createControllerConnector({ fetchImpl, WebSocketImpl: FakeSocket });
-  await assert.rejects(connector.connect({
-    settings: {
-      connectionTransport: 'local-api',
-      gatewayUrl: 'http://127.0.0.1:8642',
-      apiKey: 'fixture-key',
-      sessionTitle: 'Hermes Browser Extension · fixture',
-      sessionSource: 'hermes_browser',
-    },
-    identity: IDENTITY,
-  }), /Browser control may register only for an existing server session/);
-  assert.equal(registerCalls, 1, 'no register retry when materialization fails');
+test('the controller never creates a session, whatever the refusal', async () => {
+  for (const status of [400, 401, 403, 409, 500]) {
+    const urls = [];
+    const connector = createControllerConnector({
+      fetchImpl: async (url) => {
+        urls.push(url);
+        return jsonResponse(status, { error: { message: `refused ${status}`, code: 'browser_control_session_forbidden' } });
+      },
+      WebSocketImpl: FakeSocket,
+    });
+    await assert.rejects(connector.connect({
+      settings: { connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'fixture-key' },
+      identity: IDENTITY,
+    }));
+    assert.equal(urls.some((url) => url.includes('/api/sessions')), false, String(status));
+  }
+});
+
+test('the controller registers at the default address without a profile, and at /p/<profile> with one', async () => {
+  for (const [activeProfile, expected] of [
+    [undefined, 'http://127.0.0.1:8642/v1/browser-control/register'],
+    ['', 'http://127.0.0.1:8642/v1/browser-control/register'],
+    ['luxord', 'http://127.0.0.1:8642/p/luxord/v1/browser-control/register'],
+    ['bot name', 'http://127.0.0.1:8642/p/bot%20name/v1/browser-control/register'],
+  ]) {
+    FakeSocket.instances = [];
+    const urls = [];
+    const connector = createControllerConnector({
+      fetchImpl: async (url) => {
+        urls.push(url);
+        return jsonResponse(201, { ticket: 'api-ticket-fixture', ws_path: '/v1/browser-control/ws' });
+      },
+      WebSocketImpl: FakeSocket,
+    });
+    const connecting = connector.connect({
+      settings: { connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'fixture-key', activeProfile },
+      identity: IDENTITY,
+    });
+    await settle();
+    assert.deepEqual(urls, [expected], String(activeProfile));
+    FakeSocket.instances[0].open();
+    await connecting;
+  }
 });
 
 test('Cloud connector fails closed when dashboard trust does not match the configured origin', async () => {

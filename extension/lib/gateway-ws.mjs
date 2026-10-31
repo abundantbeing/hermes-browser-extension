@@ -14,6 +14,7 @@ import { extractHistoryMediaAttachments } from './image-render.mjs';
 export const WS_METHODS = Object.freeze({
   sessionCreate: 'session.create',
   sessionResume: 'session.resume',
+  sessionDetach: 'session.detach',
   sessionList: 'session.list',
   sessionHistory: 'session.history',
   sessionInfo: 'session.info',
@@ -40,6 +41,10 @@ export const WS_METHODS = Object.freeze({
   sessionSteer: 'session.steer',
   promptBtw: 'prompt.btw',
   contextBreakdown: 'session.context_breakdown',
+  // Live usage snapshot: context occupancy, compressions, cache hits. The same
+  // payload the gateway pushes as the `session.usage` event while a turn runs.
+  sessionUsage: 'session.usage',
+  sessionStats: 'session.stats',
   imageAttachBytes: 'image.attach_bytes',
   subagentList: 'subagent.list',
   subagentSteer: 'subagent.steer',
@@ -176,6 +181,134 @@ export function remoteStoredSessionIdForGateway(binding, gatewayUrl = '') {
   return storedSessionId;
 }
 
+// A session-authority gateway (Hermes Web, Cloud, an account-signed gateway) takes session.create on its
+// canonical contract (tui_gateway/contracts/canonical_sessions.py CanonicalCreateParams: a closed key set,
+// the same mapping Desktop's prepareCreate applies). The source is a surface name, effort travels as
+// `reasoning`, the fast toggle as `service_tier`, and a request id makes a retried create return the same
+// session. Any other key or source is refused as invalid_params. A legacy dashboard socket keeps the wider
+// legacy keys.
+const CANONICAL_CREATE_KEYS = Object.freeze([
+  'request_id', 'source', 'cwd', 'model', 'provider', 'toolsets', 'reasoning', 'profile', 'title', 'hidden',
+  'follow_profile_config', 'service_tier', 'cwd_explicit',
+]);
+
+function newCreateRequestId() {
+  try {
+    if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  } catch {
+    // Fall through to the time-based id.
+  }
+  return `hbe-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+export function buildCanonicalSessionCreateParams(input = {}) {
+  const { reasoning_effort: effort, fast, service_tier: pickedTier, ...rest } = input && typeof input === 'object' ? input : {};
+  const params = { ...rest };
+  let tier = '';
+  if (typeof pickedTier === 'string' && pickedTier) tier = pickedTier;
+  else if (fast === true) tier = 'priority';
+  else if (fast === false) tier = 'normal';
+  if (typeof effort === 'string' && effort) params.reasoning = effort;
+  if (tier) params.service_tier = tier;
+  if (typeof params.cwd_explicit !== 'boolean') delete params.cwd_explicit;
+  if (params.follow_profile_config !== true) delete params.follow_profile_config;
+  if (params.hidden !== true) delete params.hidden;
+  const out = {};
+  for (const key of CANONICAL_CREATE_KEYS) {
+    const value = params[key];
+    if (value === undefined || value === null || value === '') continue;
+    out[key] = value;
+  }
+  out.request_id = typeof params.request_id === 'string' && params.request_id ? params.request_id : newCreateRequestId();
+  out.source = 'gui';
+  return out;
+}
+
+/**
+ * The session.list params for a picker on this socket. A session authority's session.list lists only
+ * live sessions unless asked for the stored ones; a title lookup takes no scope there (it already
+ * reads stored rows). Unchanged on any other socket, whose session.list refuses an unknown key.
+ */
+export function sessionListParamsFor(client, params = {}) {
+  if (client?.readyPayload?.session_authority !== true || 'title' in params || 'scope' in params) return params;
+  return { ...params, scope: 'stored' };
+}
+
+/** The session.create params this socket accepts: canonical on a session authority, unchanged otherwise. */
+export function sessionCreateParamsFor(client, params = {}) {
+  return client?.readyPayload?.session_authority === true ? buildCanonicalSessionCreateParams(params) : params;
+}
+
+const SNAPSHOT_EFFORTS = new Set(['minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra']);
+
+/**
+ * What a session.resume snapshot (or a session.info event) says the session runs with: its model and
+ * provider, and its reasoning level and Fast mode as model options. `reasoning_effort` is the level,
+ * 'none' with thinking off, or '' when the session sets none of its own (it runs at its profile's
+ * level, which the snapshot does not name). Options are reported only for a level the panel can
+ * show; null when the snapshot names neither a model nor such a level.
+ */
+export function sessionRuntimeFromSnapshot(snapshot) {
+  const info = snapshot?.info && typeof snapshot.info === 'object' ? snapshot.info : null;
+  if (!info) return null;
+  const model = String(info.model || '').trim();
+  const provider = String(info.provider || '').trim();
+  const effort = String(info.reasoning_effort || '').trim().toLowerCase();
+  let modelOptions = null;
+  if (effort === 'none' || SNAPSHOT_EFFORTS.has(effort)) {
+    const tier = typeof info.service_tier === 'string' ? info.service_tier.trim().toLowerCase() : '';
+    modelOptions = {
+      reasoning: { enabled: effort !== 'none', effort: effort === 'none' ? '' : effort },
+      fast: typeof info.fast === 'boolean' ? info.fast : tier === 'priority' || tier === 'fast',
+    };
+  }
+  if (!model && !modelOptions) return null;
+  return { model, provider, modelOptions };
+}
+
+/**
+ * What a chat opened over REST runs with. The gateway's REST routes never report a session's reasoning
+ * level or route, but a session-authority socket held beside them does: the viewer attaches read-only
+ * with session.resume (no history, no runtime started), reads the snapshot and leaves with
+ * session.detach. Null without such a socket, or when the gateway refuses the read. Never throws.
+ */
+export async function readSessionRuntimeViaSocket(client, sessionId, { timeoutMs = 8_000 } = {}) {
+  if (!client?.request || client.readyState !== 1 || client.readyPayload?.session_authority !== true) return null;
+  const stored = String(sessionId || '').trim();
+  if (!stored) return null;
+  let live = stored;
+  let subscriptionId = '';
+  try {
+    const snapshot = await client.request(WS_METHODS.sessionResume, { session_id: stored, omit_messages: true }, { timeoutMs });
+    live = String(snapshot?.session_id || '').trim() || stored;
+    subscriptionId = String(snapshot?.subscription_id || '').trim();
+    return sessionRuntimeFromSnapshot(snapshot);
+  } catch {
+    return null;
+  } finally {
+    if (subscriptionId) {
+      try { await client.request(WS_METHODS.sessionDetach, { session_id: live, subscription_id: subscriptionId }, { timeoutMs }); } catch { /* the viewer leaves with the socket anyway */ }
+    }
+  }
+}
+
+/** A fresh id for one turn's prompt.submit; keep it for every resend of that turn. */
+export function newPromptSubmissionId() {
+  return newCreateRequestId();
+}
+
+/**
+ * The prompt.submit params this socket accepts. A session authority admits a turn only under a
+ * `submission_id` (its retry key: without one it answers a bare invalid_params), and `display_text`
+ * is no key of its closed set. A legacy dashboard socket refuses `submission_id`, so its params are
+ * unchanged.
+ */
+export function promptSubmitParamsFor(client, params = {}, submissionId = '') {
+  if (client?.readyPayload?.session_authority !== true) return params;
+  const { display_text: _displayText, ...rest } = params;
+  return { ...rest, submission_id: rest.submission_id || submissionId || newPromptSubmissionId() };
+}
+
 export async function establishGatewaySession({ client, storedSessionId = '', createParams = {}, profile = '' } = {}) {
   if (!client?.request) throw new Error('Hermes gateway client is required.');
   const requestedId = String(storedSessionId || '').trim();
@@ -186,10 +319,12 @@ export async function establishGatewaySession({ client, storedSessionId = '', cr
         session_id: requestedId,
         ...(requestedProfile ? { profile: requestedProfile } : {}),
       })
-    : await client.request(WS_METHODS.sessionCreate, {
+    // A session authority's canonical session.create has a closed key set (reasoning, not
+    // reasoning_effort; service_tier, not fast) and refuses anything else with invalid_params.
+    : await client.request(WS_METHODS.sessionCreate, sessionCreateParamsFor(client, {
         ...createParams,
         ...(requestedProfile ? { profile: requestedProfile } : {}),
-      });
+      }));
   const { liveId, storedId, profile: acknowledgedProfile } = remoteSessionIdentity(result, requestedId);
   // Requests still waiting on this session when it was resumed (the frame went
   // to a connection that was gone) are handed over as if they had just arrived.
@@ -203,7 +338,7 @@ export async function establishGatewaySession({ client, storedSessionId = '', cr
   // A session authority lists the approvals and questions still waiting on the
   // session in its snapshot; they are the same prompts its events announce.
   if (Array.isArray(result?.prompts) && result.prompts.length) client.deliverPrompts?.(result.prompts, liveId);
-  return { action, liveId, storedId, profile: acknowledgedProfile };
+  return { action, liveId, storedId, profile: acknowledgedProfile, runtime: sessionRuntimeFromSnapshot(result) };
 }
 
 export function buildDashboardWsUrl(baseUrl, ticket) {
@@ -391,15 +526,25 @@ export async function readSessionExecutionGeneration(client, sessionId, { stored
 }
 
 /**
- * Interrupt a gateway session with its execution generation. A stale
- * generation is re-read and retried once; a gateway that rejects the params
- * falls back to `restFallback` (REST stop by run id) when one is supplied.
- * Anything else throws so the caller keeps the run in its unconfirmed state.
+ * Interrupt a gateway session, fenced by an execution generation.
+ *
+ * `expectedGeneration` is the generation of the run the person chose to stop, recorded when that
+ * run was admitted. It is sent as is, with no read of the current generation first. A gateway that
+ * refuses it as `stale_generation` is saying that run already ended (a newer run may be live): the
+ * result is `{ ended: true }`, nothing was interrupted, and it is never retried onto the newer run.
+ *
+ * Without it the generation is unknown. The current one is read just before sending (and re-read
+ * once on `stale_generation`), which only protects the read-to-send window: that Stop is
+ * best-effort (`bestEffort: true`) and may land on a newer run.
+ *
+ * A gateway that rejects the params falls back to `restFallback` (REST stop by run id) when one is
+ * supplied. Anything else throws so the caller keeps the run in its unconfirmed state.
  */
 export async function interruptGatewaySession({
   client,
   sessionId,
   storedSessionId = '',
+  expectedGeneration = null,
   withTimeout = (operation) => operation(),
   restFallback = null,
 } = {}) {
@@ -423,9 +568,19 @@ export async function interruptGatewaySession({
     if (typeof restFallback !== 'function') throw error;
     return { via: 'rest', generation: null, retried: false, result: await restFallback() };
   };
+  const known = integerGeneration(expectedGeneration);
+  if (known !== null) {
+    try {
+      return { via: 'ws', generation: known, retried: false, bestEffort: false, ended: false, result: await send(known) };
+    } catch (error) {
+      if (isStaleGenerationError(error)) return { via: 'ws', generation: known, retried: false, bestEffort: false, ended: true, result: null };
+      if (isInvalidParamsError(error)) return fallBack(error);
+      throw error;
+    }
+  }
   let generation = await read();
   try {
-    return { via: 'ws', generation, retried: false, result: await send(generation) };
+    return { via: 'ws', generation, retried: false, bestEffort: true, result: await send(generation) };
   } catch (error) {
     if (isInvalidParamsError(error)) return fallBack(error);
     if (!isStaleGenerationError(error)) throw error;
@@ -433,7 +588,7 @@ export async function interruptGatewaySession({
     if (fresh === null) throw error;
     generation = fresh;
     try {
-      return { via: 'ws', generation, retried: true, result: await send(generation) };
+      return { via: 'ws', generation, retried: true, bestEffort: true, result: await send(generation) };
     } catch (retryError) {
       if (isInvalidParamsError(retryError)) return fallBack(retryError);
       throw retryError;
@@ -474,13 +629,21 @@ export function isUnknownMethodError(error) {
  * read from the resume snapshot. Anything unreadable throws, so a caller waiting
  * for Stop to land keeps the run held instead of assuming it ended.
  */
+// Session-authority sockets that answered -32601 to session.status: it is not asked again on them
+// (an attached view reads the status on every roster poll).
+const statusNotServedClients = new WeakSet();
+
 export async function readGatewaySessionStatus(client, sessionId, { storedSessionId = '' } = {}) {
   const target = String(sessionId || '').trim();
   if (!client?.request || !target) throw new Error('A live Hermes session is required to read its status.');
-  try {
-    return await client.request(WS_METHODS.sessionStatus, { session_id: target });
-  } catch (error) {
-    if (client.readyPayload?.session_authority !== true || !isUnknownMethodError(error)) throw error;
+  const authority = client.readyPayload?.session_authority === true;
+  if (!(authority && statusNotServedClients.has(client))) {
+    try {
+      return await client.request(WS_METHODS.sessionStatus, { session_id: target });
+    } catch (error) {
+      if (!authority || !isUnknownMethodError(error)) throw error;
+      statusNotServedClients.add(client);
+    }
   }
   const stored = String(storedSessionId || target).trim();
   const listed = await client.request(WS_METHODS.sessionActiveList, { current_session_id: stored });
@@ -573,6 +736,9 @@ export function createGatewayClient({
   serverRequests = null,
   heartbeatIntervalMs = GATEWAY_HEARTBEAT_INTERVAL_MS,
   heartbeatDeadlineMs = GATEWAY_HEARTBEAT_DEADLINE_MS,
+  // Optional {load() -> {epoch, watermarks}, save({epoch, watermarks})}: replay state that outlives this
+  // client (the panel builds a new client for every reconnect). Without it nothing changes.
+  replayStore = null,
 } = {}) {
   const SocketCtor = WebSocketImpl || (typeof WebSocket !== 'undefined' ? WebSocket : null);
   const serverRequestHandler = typeof serverRequests?.handle === 'function' ? serverRequests : null;
@@ -589,6 +755,36 @@ export function createGatewayClient({
   let replayEpoch = '';
   let replayInFlight = false;
   let replayHold = null;
+  // Marks a previous client left behind are only believed once this gateway's epoch is known to match.
+  let seededFromStore = false;
+  const WATERMARK_CAP = replayStore ? 64 : Number.POSITIVE_INFINITY;
+
+  function persistReplay() {
+    if (!replayStore?.save) return;
+    try {
+      replayStore.save({ epoch: replayEpoch, watermarks: Object.fromEntries(lastSeenSeq) });
+    } catch {
+      /* the store is a convenience; replay still works from memory */
+    }
+  }
+
+  function markSeen(sessionId, seq) {
+    lastSeenSeq.delete(sessionId);
+    lastSeenSeq.set(sessionId, seq);
+    while (lastSeenSeq.size > WATERMARK_CAP) lastSeenSeq.delete(lastSeenSeq.keys().next().value);
+  }
+
+  const seed = replayStore?.load?.();
+  if (seed?.epoch && seed.watermarks && typeof seed.watermarks === 'object') {
+    for (const [sessionId, seq] of Object.entries(seed.watermarks)) {
+      const number = Number(seq);
+      if (sessionId && Number.isFinite(number) && number > 0) markSeen(sessionId, Math.floor(number));
+    }
+    if (lastSeenSeq.size) {
+      replayEpoch = String(seed.epoch);
+      seededFromStore = true;
+    }
+  }
 
   function emit(type, event) {
     for (const handler of listeners.get(type) || []) {
@@ -723,7 +919,15 @@ export function createGatewayClient({
         connectAttempt = null;
         clearTimeout(attempt.timer);
         readyPayload = frame.payload;
-        adoptReplayEpoch(String(frame.payload?.replay_epoch || ''));
+        const readyEpoch = String(frame.payload?.replay_epoch || '');
+        // A gateway that names no epoch cannot vouch for marks left by an earlier client.
+        if (seededFromStore && !readyEpoch) {
+          lastSeenSeq.clear();
+          replayEpoch = '';
+        }
+        seededFromStore = false;
+        adoptReplayEpoch(readyEpoch);
+        persistReplay();
         // Sent before the connect promise settles, so it precedes every request
         // the caller makes next on this socket.
         if (serverRequestHandler) advertiseServerRequests();
@@ -747,6 +951,7 @@ export function createGatewayClient({
     if (!epoch || replayEpoch === epoch) return;
     if (replayEpoch) lastSeenSeq.clear();
     replayEpoch = epoch;
+    persistReplay();
   }
 
   function dispatchIfNewer(event = {}) {
@@ -755,7 +960,9 @@ export function createGatewayClient({
     if (sessionId && Number.isFinite(seq)) {
       const previous = lastSeenSeq.get(sessionId) || 0;
       if (seq <= previous) return;
-      lastSeenSeq.set(sessionId, seq);
+      if (replayStore) markSeen(sessionId, seq);
+      else lastSeenSeq.set(sessionId, seq);
+      persistReplay();
     }
     emit(event.type, {
       type: event.type,
@@ -794,6 +1001,13 @@ export function createGatewayClient({
           });
         }
         if (result?.truncated === true) {
+          // The owner reloads history for the hole, so the mark moves past it: the next reconnect does
+          // not report the same hole again.
+          const latest = Number(result?.latest_seq);
+          if (replayStore && Number.isFinite(latest) && latest > (lastSeenSeq.get(sessionId) || 0)) {
+            markSeen(sessionId, Math.floor(latest));
+            persistReplay();
+          }
           emit('session.replay.truncated', {
             type: 'session.replay.truncated',
             sessionId,

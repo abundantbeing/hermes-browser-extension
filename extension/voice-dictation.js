@@ -28,6 +28,7 @@ import {
 } from './lib/model-discovery.mjs';
 import { discoverLocalDashboardBaseUrl, readCachedRosterUrl } from './lib/desktop-roster.mjs';
 import { getBrowserApi } from './lib/browser-api.mjs';
+import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
 import { browserMicrophoneSettingsUrl, browserSpeechCloudFallbackAllowed, detectBrowserProduct } from './lib/browser-runtime.mjs';
 
 const browserApi = getBrowserApi();
@@ -65,6 +66,19 @@ const VOICE_AUDIO_MIME_TYPES = Object.freeze([
 ]);
 
 let settings = { ...DEFAULT_SETTINGS };
+// The Hermes Web sign-in the panel holds (storage.session, this browser run only) stands in for the
+// token a legacy dashboard injects into its page; the Webapp injects none. Read only, same origin only.
+const webappCredentials = createWebappCredentialStore({
+  storageSession: browserApi?.storage?.session,
+  isEnabled: () => keepSignedInEnabled(settings),
+});
+async function dashboardTokenFor(baseUrl = '') {
+  try {
+    return await webappCredentials.tokenFor(baseUrl, '');
+  } catch {
+    return '';
+  }
+}
 let capabilities = { ...DEFAULT_GATEWAY_CAPABILITIES };
 let recorder = null;
 let stream = null;
@@ -316,6 +330,7 @@ async function transcribeVoiceRecording(blob) {
       profile: settings.activeProfile,
       dataUrl,
       mimeType: blob.type || 'audio/webm',
+      dashboardToken: await dashboardTokenFor(baseUrl),
     });
     if (!result.ok) {
       const error = new Error(dashboardVoiceFailureMessage(result));
@@ -554,7 +569,7 @@ async function dashboardSttReachable() {
   let ok = false;
   try {
     const baseUrl = await resolveVoicePageDashboardBaseUrl();
-    ok = Boolean(baseUrl) && Boolean(await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }));
+    ok = Boolean(baseUrl) && Boolean(await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500, dashboardToken: await dashboardTokenFor(baseUrl) }));
   } catch {
     ok = false;
   }

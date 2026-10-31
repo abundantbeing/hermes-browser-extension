@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-const [panel, app, panelHtml, appHtml, draft, image] = await Promise.all([
-  'extension/sidepanel.js', 'extension/app.js', 'extension/sidepanel.html', 'extension/app.html',
+const [panel, panelHtml, draft, image] = await Promise.all([
+  'extension/sidepanel.js', 'extension/sidepanel.html',
   'extension/lib/composer-draft.mjs', 'extension/lib/image-render.mjs',
 ].map(path => readFile(new URL('../' + path, import.meta.url), 'utf8')));
 
-test('both surfaces retain original files and render Open/Download alongside existing images', () => {
-  for (const source of [panel, app]) {
+test('the side panel retains original files and render Open/Download alongside existing images', () => {
+  for (const source of [panel]) {
     assert.match(source, /createUserFileAttachment\(file\)/);
     assert.match(source, /appendUserFileAttachments\(/);
     assert.match(source, /appendUserImageAttachments\(/);
@@ -17,20 +17,16 @@ test('both surfaces retain original files and render Open/Download alongside exi
     assert.match(source, /fileHistoryRestoreGeneration/);
   }
   assert.doesNotMatch(panel, /attached as metadata only/);
-  assert.doesNotMatch(app, /text: text\.slice\(0, 120_000\)/);
 });
 
 test('generic staging precedes WS submission and failure preserves the draft without sending metadata', () => {
-  for (const source of [panel, app]) {
+  for (const source of [panel]) {
     assert.match(source, /stageUserFiles\(/);
     assert.match(source, /rememberUserFileAttachments\(/);
     assert.match(source, /error\?\.attachmentFailure/);
     assert.match(source, /attachments = \[\.\.\.turnAttachments\]/);
     assert.match(source, /attachments\.upload_unavailable/);
   }
-  const attempt = app.slice(app.indexOf('async function streamDashboardPromptAttempt'), app.indexOf('async function loadGatewayCapabilities'));
-  assert.ok(attempt.indexOf('await stageUserFiles') < attempt.indexOf('WS_METHODS.promptSubmit'));
-  assert.match(attempt, /stageUserFiles[\s\S]*?catch \(error\) \{\s*finish\(reject, error\);\s*return;/);
 });
 
 test('draft and history reconciliation retain generic blob refs without removing image support', () => {
@@ -39,8 +35,8 @@ test('draft and history reconciliation retain generic blob refs without removing
   assert.match(image, /normalizeUserImageAttachments\(message\.attachments\)/);
 });
 
-test('shared file styling loads in both pages and local media is permitted without remote scripts', () => {
-  for (const html of [panelHtml, appHtml]) assert.match(html, /lib\/user-file-attachments\.css/);
+test('shared file styling loads in the side panel and local media is permitted without remote scripts', () => {
+  assert.match(panelHtml, /lib\/user-file-attachments\.css/);
   assert.match(panelHtml, /media-src 'self' blob:/);
   assert.doesNotMatch(panelHtml, /script-src[^;]*blob:/);
 });

@@ -7,7 +7,8 @@ export function createMessageThreadUi({
   ResizeObserver = globalThis.ResizeObserver,
   requestFrame = (callback) => (globalThis.requestAnimationFrame || ((fn) => fn()))(callback),
   locale = () => undefined, translate = (text) => text, now = () => Date.now(),
-  canRewind = () => false, replyLabelFor = () => '', onCopy, onEdit, onRestore, onReply, onDayDivider,
+  canRewind = () => false, replyLabelFor = () => '', durationLabelFor = () => '',
+  onCopy, onEdit, onRestore, onReply, onDayDivider,
 } = {}) {
   let pinnedRow = null;
   let previousTs = null;
@@ -43,9 +44,12 @@ export function createMessageThreadUi({
     const rail = buildMessageRail({
       document, role: record.role, ts: normalizeMessageTimestamp(record.ts, { now: now() }),
       now: now(), locale: locale(), translate,
-      showTime: record.role === 'user' || room,
+      // A reply's time is when it finished, so it joins the rail once the
+      // stream ends; the rail keeps its height either way, so nothing jumps.
+      showTime: !streaming,
       canEdit: rewind, canRestore: rewind,
       replyLabel: room && record.role === 'assistant' ? replyLabelFor(record) : '',
+      durationLabel: !streaming && record.role === 'assistant' ? durationLabelFor(record) : '',
       onReply: () => onReply?.(record, node),
       onCopy: () => onCopy?.(record, node),
       onEdit: () => onEdit?.(row, record),
@@ -129,8 +133,15 @@ export function createMessageThreadUi({
   function setStreaming(row, streaming) {
     const entry = rows.get(row);
     if (!entry) return;
+    const finished = entry.streaming && !streaming;
     entry.streaming = Boolean(streaming);
-    setRailCopyEnabled(row.querySelector(':scope > .message-rail'), !entry.streaming);
+    if (!finished) {
+      setRailCopyEnabled(row.querySelector(':scope > .message-rail'), !entry.streaming);
+      return;
+    }
+    // A live reply has no stored time yet: it finished now.
+    if (normalizeMessageTimestamp(entry.record.ts, { now: now() }) === null) entry.record.ts = now();
+    renderRail(entry);
   }
   function dispose() {
     reset();

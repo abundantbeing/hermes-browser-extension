@@ -5,20 +5,18 @@ import { readFileSync } from 'node:fs';
 const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const sidepanelHtml = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
 const sidepanelCss = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
-const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-const fulltabHtml = readFileSync(new URL('../extension/app.html', import.meta.url), 'utf8');
 const background = readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8');
 const common = readFileSync(new URL('../extension/lib/common.mjs', import.meta.url), 'utf8');
 
-test('Side Panel and Hermes Web expose one scoped browser-context consent control', () => {
-  for (const html of [sidepanelHtml, fulltabHtml]) {
+test('Side Panel exposes one scoped browser-context consent control', () => {
+  for (const html of [sidepanelHtml]) {
     assert.match(html, /id="browserContextConsentControl"/);
     assert.match(html, /id="browserContextConsentInput"/);
     assert.match(html, /id="browserContextConsentIdentity"/);
     assert.match(html, /Share page context with this connection/);
     assert.match(html, /Chat only until you approve this exact connection/);
   }
-  for (const source of [sidepanel, fulltab]) {
+  for (const source of [sidepanel]) {
     assert.match(source, /context-consent\.mjs/);
     assert.match(source, /browserContextConsentLedger/);
     assert.match(source, /currentContextConsentIdentity/);
@@ -27,7 +25,6 @@ test('Side Panel and Hermes Web expose one scoped browser-context consent contro
   }
   assert.match(common, /browserContextConsentLedger/);
   assert.doesNotMatch(sidepanel, /shareBrowserContext/);
-  assert.doesNotMatch(fulltab, /shareBrowserContext/);
 });
 
 test('the Side Panel applies the final consent gate after every turn-time scope override', () => {
@@ -74,14 +71,13 @@ test('non-loopback Remote API is consent-gated as strictly as Cloud and dashboar
 });
 
 test('identity, endpoint, profile, and credential switches re-evaluate consent instead of inheriting a global bit', () => {
-  for (const source of [sidepanel, fulltab]) {
+  for (const source of [sidepanel]) {
     assert.match(source, /contextConsentIdentity\(\{/);
     assert.match(source, /activeProfile/);
     assert.match(source, /connectionTransport/);
     assert.match(source, /browserApi\.runtime\.id/);
   }
   assert.match(sidepanel, /refreshContextConsentPrincipal/);
-  assert.match(fulltab, /refreshContextConsentPrincipal/);
 });
 
 test('inline and right-click background paths apply the final consent gate at transmission-time serialization', () => {
@@ -112,8 +108,8 @@ test('inline and right-click background paths apply the final consent gate at tr
   assert.match(sidepanel, /serializePreparedContextMenuTurn\(turn, browserControl\)/);
 });
 
-test('consent decisions are stored separately and synchronized across both surfaces', () => {
-  for (const source of [sidepanel, fulltab]) {
+test('consent decisions are stored separately and synchronized through storage changes', () => {
+  for (const source of [sidepanel]) {
     assert.match(source, /CONTEXT_CONSENT_STORAGE_KEY/);
     assert.match(source, /persistContextConsentDecision/);
     assert.match(source, /browserApi\.storage\.onChanged/);

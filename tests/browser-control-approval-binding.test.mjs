@@ -41,7 +41,7 @@ function fixture() {
   const calls = [];
   const adapter = {
     contract: { enabled: true, actions: ['browser_click', 'browser_drag', 'browser_press', 'browser_snapshot'] },
-    inspect: async () => ({ currentUrl: 'https://example.test/editor', hasUnsavedContent: false }),
+    inspect: async () => ({ currentUrl: 'https://example.test/editor', hasUnsavedContent: false, focused: { role: 'textbox', name: 'Message', inputType: 'text', identity: '0123456789abcdef0123456789abcdef' } }),
     async execute(action, args, context) {
       if (action === 'browser_snapshot') return { title: 'After', url: 'https://example.test/editor', text: '', nodes: NODES };
       calls.push({ action, args, target: context.target?.name });

@@ -144,38 +144,6 @@ test('sidepanel auto-naming persists through the shared rename path and cannot c
   assert.match(persist, /console\.warn\('\[Hermes Browser\] Auto-name skipped:'/);
 });
 
-test('full-tab rename uses the same editor and prefers the session.title RPC', () => {
-  const app = read('app.js');
-  const css = read('app.css');
-
-  assert.doesNotMatch(app, /promptRenameHermesWebSession/);
-  for (const name of ['openWebSessionRenameEditor', 'renderWebSessionRenameEditor', 'submitWebSessionRename', 'renameHermesWebSessionTitle']) {
-    const body = functionBody(app, name);
-    assert.ok(body.length > 0, `${name} must exist`);
-    assert.doesNotMatch(body, /window\.prompt/, `${name} must not open a native prompt`);
-  }
-
-  assert.match(app, /form\.className = 'session-row-rename-form';/);
-  assert.match(app, /input\.className = 'session-row-rename-input';/);
-  assert.match(app, /save\.textContent = translateUiText\('Save'\);/);
-  assert.match(app, /cancel\.textContent = translateUiText\('Cancel'\);/);
-  assert.match(app, /event\.key === 'Escape'[\s\S]{0,160}closeWebSessionRenameEditor\(\)/);
-  assert.match(app, /openWebSessionRenameEditor\(session\)/);
-
-  const rename = functionBody(app, 'renameHermesWebSessionTitle');
-  assert.match(rename, /connection\.client\.request\(WS_METHODS\.sessionTitle, \{ session_id: liveId, title: cleanTitle \}\)/);
-  assert.match(rename, /method: 'PATCH'/, 'REST stays as the non-live fallback');
-
-  const submit = functionBody(app, 'submitWebSessionRename');
-  assert.match(submit, /applyWebSessionTitleLocally\(sessionId, nextTitle\)/);
-  assert.match(submit, /applyWebSessionTitleLocally\(sessionId, previousTitle\)/);
-  assert.match(submit, /Could not rename session/);
-
-  assert.match(css, /\.session-row-rename-form \{/);
-  assert.match(css, /\.session-row-rename-input \{/);
-  assert.match(css, /\.session-row-rename-status \{/);
-});
-
 test('dashboardSessionUrl builds the profile-scoped session PATCH URL', () => {
   assert.equal(dashboardSessionUrl('https://host.ts.net', 'abc/1', ''), 'https://host.ts.net/api/sessions/abc%2F1');
   assert.equal(
@@ -293,4 +261,48 @@ test('renameSessionViaTab reports no_dashboard_tab instead of guessing a transpo
     title: 'X',
   });
   assert.deepEqual(result, { ok: false, reason: 'no_dashboard_tab', origin: 'https://host.ts.net' });
+});
+
+test('a dashboard rename carries the fence Hermes requires: a request id and the revision it read', async () => {
+  const original = globalThis.fetch;
+  const calls = [];
+  try {
+    globalThis.fetch = async (url, options = {}) => {
+      calls.push({ url: String(url), options });
+      if (String(url).includes('/mutation-snapshot')) {
+        return { ok: true, status: 200, json: async () => ({ session_id: 's1', exists: true, runtime_revision: 7, runtime_generation: 2 }) };
+      }
+      if (String(url).includes('/api/sessions/')) {
+        return { ok: true, status: 200, json: async () => ({ ok: true, title: 'Renamed' }) };
+      }
+      return { ok: true, status: 200, text: async () => 'window.__HERMES_SESSION_TOKEN__ = "tok-1"' };
+    };
+    const result = await renameSessionInPage({ baseUrl: 'https://host.ts.net', sessionId: 's1', title: 'Renamed', profile: 'work' });
+    assert.deepEqual(result, { ok: true, title: 'Renamed' });
+    const snapshot = calls.find((call) => call.url.includes('/mutation-snapshot'));
+    assert.equal(snapshot.url, 'https://host.ts.net/api/sessions/s1/mutation-snapshot?profile=work');
+    assert.equal(snapshot.options.headers['X-Hermes-Session-Token'], 'tok-1');
+    const body = JSON.parse(calls.find((call) => call.options.method === 'PATCH').options.body);
+    assert.equal(body.expected_revision, 7);
+    assert.equal(body.expected_generation, 2);
+    assert.match(body.request_id, /^[0-9a-f-]{32,36}$/);
+    assert.equal(body.title, 'Renamed');
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('sessionMutationFence: the snapshot revision and a request id, nothing for an older Hermes', async () => {
+  const { sessionMutationFence } = await import('../extension/lib/dashboard-bridge.mjs');
+  assert.deepEqual(sessionMutationFence({ runtime_revision: 3, runtime_generation: 1 }, 'r-1'),
+    { request_id: 'r-1', expected_revision: 3, expected_generation: 1 });
+  assert.deepEqual(sessionMutationFence({ runtime_revision: 0, runtime_generation: null }, 'r-1'),
+    { request_id: 'r-1', expected_revision: 0 });
+  for (const snapshot of [null, {}, { runtime_revision: -1 }, { runtime_revision: '3' }]) {
+    assert.deepEqual(sessionMutationFence(snapshot, 'r-1'), {});
+  }
+  const panel = await import('node:fs').then((fs) => fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8'));
+  const local = panel.slice(panel.indexOf('async function renameSessionViaDashboardRest('), panel.indexOf('function sessionRenameFailureMessage('));
+  assert.match(local, /\/mutation-snapshot\$\{query\}/);
+  assert.match(local, /\.\.\.sessionMutationFence\(snapshot\)/);
 });

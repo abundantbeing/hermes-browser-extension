@@ -5,7 +5,7 @@ import test from 'node:test';
 import { APPEARANCE_THEMES, normalizeAppearanceTheme, resolveInlineAssistTheme } from '../extension/lib/appearance-themes.mjs';
 import { contrastRatio } from '../extension/lib/custom-themes.mjs';
 
-const layers = ['sidepanel-themes.css', 'fulltab-themes.css'].map((file) => ({
+const layers = ['sidepanel-themes.css'].map((file) => ({
   file,
   css: readFileSync(new URL(`../extension/${file}`, import.meta.url), 'utf8'),
 }));

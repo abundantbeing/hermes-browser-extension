@@ -12,13 +12,20 @@
 // `window.__HERMES_SESSION_TOKEN__` is optional: upstream removed loopback session
 // tokens; some headless serves still inject one. /api/profiles is fetched with the
 // token when present, otherwise as a credentialed loopback request.
+//
+// The gateway's Webapp (`webapp.enabled: true`, 9120 by default) answers /api/status the
+// same open way, but it answers /api/profiles 401 without its own credential and injects no
+// token into its page. It is not a usable dashboard until the caller holds that credential
+// (lib/webapp-credential.mjs). Discovery tells the two apart, adopts the Webapp only with a
+// credential the Webapp accepts, and otherwise reports it and moves on, so the roster still
+// loads from the gateway's own routes.
 
 export const DESKTOP_ROSTER_URL_STORAGE_KEY = 'hermesDesktopRosterUrl';
 export const LAST_KNOWN_ROSTER_STORAGE_KEY = 'hermesLastKnownRoster';
 const DESKTOP_ROSTER_URL_TTL_MS = 24 * 60 * 60 * 1000;
 const LAST_KNOWN_ROSTER_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
-export const COMMON_DASHBOARD_PORTS = [1297, 22784, 9119];
+export const COMMON_DASHBOARD_PORTS = [1297, 22784, 9119, 9120];
 
 const SCAN_PROBE_TIMEOUT_MS = 600;
 const DASHBOARD_STATUS_PROBE_TIMEOUT_MS = 2_000;
@@ -98,7 +105,47 @@ function remainingProbeTimeout(deadlineAt, maximumMs) {
   return Math.max(0, Math.min(maximumMs, deadlineAt - Date.now()));
 }
 
-async function isDesktopDashboard(
+// What answers at a candidate address.
+//   'dashboard'  a Hermes dashboard this panel can read (open, token-injecting, or sign-in gated)
+//   'webapp'     the gateway's Webapp listener: open /api/status, 401 on an uncredentialed
+//                /api/profiles, and no injected token
+//   ''           not Hermes
+async function probeProfilesStatus(baseUrl, fetchFn, timeoutMs, token = '') {
+  const url = dashboardProfilesUrl(baseUrl).replace(/\?include_sessions=true$/, '');
+  if (!url || timeoutMs <= 0) return 0;
+  try {
+    const response = await fetchWithTimeout(fetchFn, url, {
+      method: 'GET',
+      headers: { Accept: 'application/json', ...(token ? { 'X-Hermes-Session-Token': token } : {}) },
+      cache: 'no-store',
+    }, timeoutMs);
+    return Number(response?.status) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function classifyOpenStatusListener(baseUrl, fetchFn, headers, deadlineAt) {
+  const profilesTimeoutMs = remainingProbeTimeout(deadlineAt, SCAN_PROBE_TIMEOUT_MS);
+  if (!profilesTimeoutMs) return 'dashboard';
+  if ((await probeProfilesStatus(baseUrl, fetchFn, profilesTimeoutMs)) !== 401) return 'dashboard';
+  // A token-injecting dashboard also refuses an uncredentialed read; its page hands over the token.
+  const rootTimeoutMs = remainingProbeTimeout(deadlineAt, SCAN_PROBE_TIMEOUT_MS);
+  if (!rootTimeoutMs) return 'webapp';
+  try {
+    const response = await fetchWithTimeout(fetchFn, baseUrl, {
+      method: 'GET',
+      headers: { Accept: 'text/html', ...headers },
+      cache: 'no-store',
+    }, rootTimeoutMs);
+    if (response.ok && extractDashboardSessionToken(await response.text())) return 'dashboard';
+  } catch {
+    /* an unreadable page cannot hand over a token */
+  }
+  return 'webapp';
+}
+
+export async function classifyDashboardCandidate(
   baseUrl,
   fetchFn = globalThis.fetch?.bind(globalThis),
   headers = {},
@@ -109,25 +156,38 @@ async function isDesktopDashboard(
     const statusTimeoutMs = remainingProbeTimeout(deadlineAt, SCAN_PROBE_TIMEOUT_MS);
     if (statusTimeoutMs) {
       const payload = await fetchDashboardStatus(baseUrl, fetchFn, statusTimeoutMs);
-      if (isHermesDashboardStatus(payload)) return true;
+      if (isHermesDashboardStatus(payload)) {
+        if (payload.auth_required === true) return 'dashboard';
+        return await classifyOpenStatusListener(baseUrl, fetchFn, headers, deadlineAt);
+      }
     }
-    if (!allowHtmlFallback) return false;
+    if (!allowHtmlFallback) return '';
     const rootTimeoutMs = remainingProbeTimeout(deadlineAt, SCAN_PROBE_TIMEOUT_MS);
-    if (!rootTimeoutMs) return false;
+    if (!rootTimeoutMs) return '';
     const response = await fetchWithTimeout(fetchFn, baseUrl, {
       method: 'GET',
       headers: { Accept: 'text/html', ...headers },
       cache: 'no-store',
     }, rootTimeoutMs);
-    if (!response.ok) return false;
+    if (!response.ok) return '';
     const html = await response.text();
-    if (extractDashboardSessionToken(html)) return true;
+    if (extractDashboardSessionToken(html)) return 'dashboard';
     const gatedTimeoutMs = remainingProbeTimeout(deadlineAt, DASHBOARD_STATUS_PROBE_TIMEOUT_MS);
-    if (!gatedTimeoutMs) return false;
-    return Boolean(await fetchAuthenticatedDashboardStatus(baseUrl, fetchFn, gatedTimeoutMs));
+    if (!gatedTimeoutMs) return '';
+    return (await fetchAuthenticatedDashboardStatus(baseUrl, fetchFn, gatedTimeoutMs)) ? 'dashboard' : '';
   } catch {
-    return false;
+    return '';
   }
+}
+
+// Whether the Webapp at this address accepts this credential: one cheap authenticated read.
+// 'rejected' means it answered 401 or 403 (the credential was replaced by a sign-out); anything
+// else that fails (a timeout, a restart in progress) is not a verdict on the credential.
+async function probeWebappCredential(baseUrl, fetchFn, deadlineAt, token) {
+  const timeoutMs = remainingProbeTimeout(deadlineAt, DASHBOARD_STATUS_PROBE_TIMEOUT_MS);
+  const status = await probeProfilesStatus(baseUrl, fetchFn, timeoutMs, token);
+  if (status >= 200 && status < 300) return 'accepted';
+  return status === 401 || status === 403 ? 'rejected' : 'unknown';
 }
 
 
@@ -140,6 +200,9 @@ export async function discoverLocalDashboardBaseUrl({
   cachedUrl = '',
   cachedAt: _cachedAt = 0,
   candidateUrls = [],
+  webappUrl = '',
+  webappCredentialFor = null,
+  onWebapp = null,
   gatewayUrl = 'http://127.0.0.1:8642',
   apiKey = '',
   fetchFn = globalThis.fetch?.bind(globalThis),
@@ -160,7 +223,27 @@ export async function discoverLocalDashboardBaseUrl({
       const parsed = new URL(candidate);
       if (!['http:', 'https:'].includes(parsed.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname) || parsed.username || parsed.password) return '';
     } catch { return ''; }
-    return (await isDesktopDashboard(candidate, fetchFn, {}, deadlineAt, { allowHtmlFallback: true })) ? candidate : '';
+    const kind = await classifyDashboardCandidate(candidate, fetchFn, {}, deadlineAt, { allowHtmlFallback: true });
+    if (kind === 'dashboard') return candidate;
+    if (kind !== 'webapp') return '';
+    // The gateway's Webapp: usable only with the credential it signed this browser in with.
+    const origin = new URL(candidate).origin;
+    let verdict = 'none';
+    let token = '';
+    try {
+      token = String((await webappCredentialFor?.(origin)) || '').trim();
+    } catch {
+      token = '';
+    }
+    if (token) verdict = await probeWebappCredential(candidate, fetchFn, deadlineAt, token);
+    if (typeof onWebapp === 'function') {
+      try {
+        onWebapp({ origin, url: candidate, credential: verdict });
+      } catch {
+        /* a listener must not break discovery */
+      }
+    }
+    return verdict === 'accepted' ? candidate : '';
   };
 
   const gatewayBase = String(gatewayUrl || '').trim().replace(/\/+$/, '');
@@ -189,13 +272,14 @@ export async function discoverLocalDashboardBaseUrl({
     }
   }
 
+  const originOrEmpty = (value) => { try { return new URL(value).origin; } catch { return ''; } };
   const namedCandidates = [
-    ...((Array.isArray(candidateUrls) ? candidateUrls : []).map((value) => { try { return new URL(value).origin; } catch { return ''; } })),
+    ...((Array.isArray(candidateUrls) ? candidateUrls : []).map(originOrEmpty)),
     String(explicitUrl || '').trim().replace(/\/+$/, ''),
     String(cachedUrl || '').trim().replace(/\/+$/, ''),
-    'http://127.0.0.1:1297',
-    'http://127.0.0.1:22784',
-    'http://127.0.0.1:9119',
+    // The user's own Hermes Web address, when it is a loopback origin the gateway serves.
+    webappUrl ? originOrEmpty(webappUrl) : '',
+    ...COMMON_DASHBOARD_PORTS.map((port) => `http://127.0.0.1:${port}`),
   ];
   for (const candidate of namedCandidates) {
     const found = await tryCandidate(candidate);
@@ -222,7 +306,8 @@ function rosterFromStatusProfiles(payload) {
 
 const LOOPBACK_FETCH = { credentials: 'omit', cache: 'no-store' };
 
-export async function fetchRosterFromDashboard({ baseUrl = '', fetchFn = globalThis.fetch?.bind(globalThis) } = {}) {
+// `token` is the credential to use when the page injects none (the Webapp's, held by the caller).
+export async function fetchRosterFromDashboard({ baseUrl = '', fetchFn = globalThis.fetch?.bind(globalThis), token: heldToken = '' } = {}) {
   const dashboardUrl = String(baseUrl || '').trim().replace(/\/+$/, '');
   if (!dashboardUrl) throw new Error('no-dashboard-url');
   const rootResponse = await fetchWithTimeout(fetchFn, dashboardUrl, {
@@ -232,7 +317,7 @@ export async function fetchRosterFromDashboard({ baseUrl = '', fetchFn = globalT
   }, 2500);
   if (!rootResponse.ok) throw new Error(`dashboard-root-${rootResponse.status}`);
   const html = await rootResponse.text();
-  const token = extractDashboardSessionToken(html);
+  const token = extractDashboardSessionToken(html) || String(heldToken || '').trim();
   if (!token) {
     const authenticatedStatus = await fetchAuthenticatedDashboardStatus(dashboardUrl, fetchFn, 2500);
     if (authenticatedStatus) throw new Error('dashboard-authentication-required');

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { manifestAssumptionsFor } from '../scripts/manifest-profiles.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const PHASE6_MODULES = [
   'extension/lib/browser-control-browser-adapters.mjs',
@@ -15,22 +16,22 @@ const PHASE6_MODULES = [
 
 test('Phase 6 control modules and debugger permission ship in VERSION 0.3.0', () => {
   const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(packageJson.version, '0.3.4');
+  assert.equal(packageJson.version, '0.4.0');
   for (const file of PHASE6_MODULES) {
     assert.match(
-      packageJson.scripts['check:js'],
+      CHECK_JS,
       new RegExp(`node --check ${file.replaceAll('.', '\\.')}`),
       `check:js must gate ${file}`,
     );
   }
   for (const manifestPath of ['extension/manifest.json', 'manifest.json']) {
     const manifest = JSON.parse(readFileSync(new URL(`../${manifestPath}`, import.meta.url), 'utf8'));
-    assert.equal(manifest.version, '0.3.4');
+    assert.equal(manifest.version, '0.4.0');
     assert.equal(manifest.permissions.includes('debugger'), true);
   }
   assert.equal(
     packageJson.scripts['test:e2e:browser-control'],
-    'npm run build && node tests/e2e-phase6-browser-control.mjs && node tests/e2e-phase6-browser-control-reconnect.mjs && node tests/e2e-phase6-agent-route.mjs && node tests/e2e-phase6-youtube-like.mjs',
+    'npm run build && node tests/e2e-phase6-browser-control.mjs && node tests/e2e-phase6-browser-control-reconnect.mjs && node tests/e2e-phase6-agent-route.mjs && node tests/e2e-phase6-child-frames.mjs && node tests/e2e-phase6-youtube-like.mjs',
   );
   assert.equal(
     packageJson.scripts['test:e2e:browser-control:reconnect'],
@@ -39,6 +40,10 @@ test('Phase 6 control modules and debugger permission ship in VERSION 0.3.0', ()
   assert.equal(
     packageJson.scripts['test:e2e:browser-control:agent-route'],
     'npm run build && node tests/e2e-phase6-agent-route.mjs',
+  );
+  assert.equal(
+    packageJson.scripts['test:e2e:browser-control:child-frames'],
+    'npm run build && node tests/e2e-phase6-child-frames.mjs',
   );
   assert.equal(
     packageJson.scripts['test:e2e:browser-control:youtube'],

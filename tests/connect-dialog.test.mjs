@@ -1,0 +1,135 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import test from 'node:test';
+import vm from 'node:vm';
+import { parseHTML } from 'linkedom';
+
+const read = (file) => fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+const html = read('extension/sidepanel.html');
+const css = read('extension/sidepanel.css');
+const js = read('extension/sidepanel.js');
+
+test('Connect to Hermes is a dismissible pop-up, not a card in the chat', () => {
+  const { document } = parseHTML(html);
+  const panel = document.getElementById('connectPanel');
+  assert.equal(panel.getAttribute('role'), 'dialog');
+  assert.equal(panel.getAttribute('aria-modal'), 'true');
+  assert.equal(panel.getAttribute('aria-labelledby'), 'connectPanelTitle');
+  assert.ok(panel.hasAttribute('hidden'));
+  const close = document.getElementById('connectPanelCloseButton');
+  assert.equal(close.getAttribute('data-i18n-aria-label'), 'ui.close');
+  assert.ok(close.querySelector('svg[data-icon="close"]'));
+  assert.ok(panel.querySelector('#connectButton'), 'the pairing action stays');
+  assert.ok(panel.querySelector('#manualSettingsButton'), 'manual setup stays');
+  assert.ok(panel.querySelector('#connectStatus'));
+  assert.equal(panel.querySelector('[data-i18n="ui.public.setup"]'), null, 'no PUBLIC SETUP eyebrow');
+  assert.equal(panel.querySelectorAll('ol > li').length, 3, 'the same steps, tightened');
+  assert.notEqual(panel.parentElement.id, 'messages');
+});
+
+test('the pop-up floats over the panel and never shows under the startup screen or setup', () => {
+  assert.match(css, /\.connect-panel \{[^}]*position: fixed;[^}]*inset: 0;/s);
+  assert.match(css, /\.connect-panel\[hidden\],\s*\.connect-panel\.is-dismissed,\s*body\.startup-active \.connect-panel,\s*body\.onboarding-active \.connect-panel \{ display: none; \}/);
+  assert.doesNotMatch(css, /\.empty-state,\s*\.connect-panel \{/, 'no longer drawn as a chat card');
+});
+
+test('connection state still decides whether Connect is needed; the pop-up only changes how it shows', () => {
+  assert.match(js, /els\.connectPanel\.hidden = connected;/);
+  const bind = js.match(/function bindConnectDialog\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(bind, /connectPanelCloseButton\?\.addEventListener\('click', dismissConnectDialog\)/, 'X closes it');
+  assert.match(bind, /event\.key === 'Escape' && connectDialogShowing\(\)/, 'Escape closes it');
+  assert.match(bind, /event\.target === els\.connectPanel\) dismissConnectDialog\(\)/, 'the backdrop closes it');
+  assert.match(bind, /if \(nowNeeded && !needed\) \{\s*connectDialogDismissed = false;/, 'a dropped connection or dead token brings it back');
+  assert.match(bind, /if \(onboardingFlow\?\.isOpen\) onboardingFlow\.render\(\);/, "setup's Connect step follows the live state");
+  assert.match(bind, /els\.sendButton\?\.addEventListener\('click', \(event\) => \{\s*if \(isConnected\(\) \|\| isRemoteWsMode\(\)\) return;\s*event\.preventDefault\(\);\s*openConnectDialog\(\);/, '"Connect first" opens it');
+});
+
+test('a send while unpaired opens the pop-up instead of focusing a hidden button', () => {
+  const ask = js.match(/async function askHermes\([\s\S]*?\n\}/)?.[0] || '';
+  const unpaired = ask.match(/if \(!isConnected\(\)\) \{[\s\S]*?return false;\n {2}\}/)?.[0] || '';
+  assert.match(unpaired, /openConnectDialog\(\);/);
+  assert.doesNotMatch(unpaired, /els\.connectButton\.focus\(\)/);
+  assert.match(js, /"Connect first" stays live and\n {4}\/\/ opens the connect pop-up/);
+  assert.match(js, /if \(!isConnected\(\) && !document\.body\.classList\.contains\('startup-active'\)\) els\.sendButton\.disabled = false;/);
+});
+
+test('the startup dock and Manual setup keep their own way to connect', () => {
+  assert.match(js, /els\.startupConnectButton\?\.addEventListener\('click', \(\) => \{\s*connectToHermes\(\)/);
+  assert.match(js, /els\.manualSettingsButton\.addEventListener\('click', openSettingsDialog\)/);
+});
+
+function dialogFunctions() {
+  const grab = (name) => {
+    const start = js.indexOf(`function ${name}(`);
+    assert.ok(start >= 0, `${name} exists`);
+    return js.slice(start, js.indexOf('\n}\n', start) + 3);
+  };
+  return ['connectDialogShowing', 'renderConnectDialog', 'connectDialogEditableFocus', 'connectDialogCoveredByModal', 'focusConnectDialogWhenIdle'].map(grab).join('\n');
+}
+
+function dialogHarness({ active, dismissed = false, hidden = false, bodyClasses = [], modals = [] }) {
+  const focused = [];
+  const connectButton = { focus: (options) => focused.push(['connect', options?.preventScroll]) };
+  const els = {
+    connectPanel: { hidden, classList: { toggle() {} }, contains: (node) => node === connectButton },
+    connectButton,
+    onboardingFlow: { hidden: true },
+  };
+  const body = { classList: { contains: (name) => bodyClasses.includes(name) } };
+  const context = {
+    els,
+    document: { body, activeElement: active === 'body' ? body : active, querySelectorAll: () => modals },
+    connectDialogDismissed: dismissed,
+    connectDialogReturnFocus: null,
+  };
+  vm.createContext(context);
+  vm.runInContext(dialogFunctions(), context);
+  vm.runInContext('focusConnectDialogWhenIdle()', context);
+  return { focused, returnFocus: context.connectDialogReturnFocus };
+}
+
+test('a pop-up that appears on its own takes focus only when nobody is typing', () => {
+  const composer = { tagName: 'TEXTAREA', isContentEditable: false };
+  const typed = dialogHarness({ active: composer });
+  assert.deepEqual(typed.focused, [], 'the composer keeps the keys');
+  assert.equal(typed.returnFocus, null);
+  for (const element of [{ tagName: 'INPUT' }, { tagName: 'SELECT' }, { tagName: 'DIV', isContentEditable: true }]) {
+    assert.deepEqual(dialogHarness({ active: element }).focused, [], `${element.tagName} keeps focus`);
+  }
+  const idle = dialogHarness({ active: 'body' });
+  assert.deepEqual(idle.focused, [['connect', true]], 'nothing focused: the pop-up is where the keyboard goes');
+  assert.equal(idle.returnFocus, null, 'there was nothing to go back to');
+  const button = { tagName: 'BUTTON', isContentEditable: false };
+  const onButton = dialogHarness({ active: button });
+  assert.deepEqual(onButton.focused, [['connect', true]]);
+  assert.equal(onButton.returnFocus, button, 'closing it puts focus back where it was');
+});
+
+test('the focus move never happens when the pop-up is not actually showing', () => {
+  assert.deepEqual(dialogHarness({ active: 'body', dismissed: true }).focused, []);
+  assert.deepEqual(dialogHarness({ active: 'body', hidden: true }).focused, []);
+  assert.deepEqual(dialogHarness({ active: 'body', bodyClasses: ['onboarding-active'] }).focused, [], 'not under setup');
+  assert.deepEqual(dialogHarness({ active: 'body', bodyClasses: ['startup-active'] }).focused, [], 'not under the startup screen');
+});
+
+test('the observer that brings the pop-up back calls the idle-focus helper; explicit opens still focus unconditionally', () => {
+  const bind = js.match(/function bindConnectDialog\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(bind, /if \(nowNeeded && !needed\) \{\s*connectDialogDismissed = false;\s*renderConnectDialog\(\);\s*focusConnectDialogWhenIdle\(\);\s*\}/);
+  const open = js.match(/function openConnectDialog\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(open, /els\.connectButton\?\.focus\(\{ preventScroll: true \}\);/, 'a press on Connect first, a send or New session still moves focus in');
+});
+
+test('an open Settings dialog or other modal keeps the focus: the returning pop-up is painted under it', () => {
+  const modal = (extra = {}) => ({ hidden: false, getAttribute: () => null, ...extra });
+  const settingsButton = { tagName: 'BUTTON', isContentEditable: false };
+  const covered = dialogHarness({ active: settingsButton, modals: [modal()] });
+  assert.deepEqual(covered.focused, [], 'focus stays on the Settings button');
+  assert.equal(covered.returnFocus, null, 'and nothing is remembered to go back to');
+  assert.deepEqual(dialogHarness({ active: 'body', modals: [modal()] }).focused, [], 'even when nothing is focused, the modal still owns the keyboard');
+  // Hidden ones, the pop-up itself and a closed update dialog (hidden plus aria-hidden) do not count.
+  const after = (modals) => dialogHarness({ active: settingsButton, modals }).focused;
+  assert.deepEqual(after([modal({ hidden: true })]), [['connect', true]], 'a closed dialog does not block it');
+  assert.deepEqual(after([modal({ hidden: false, getAttribute: (name) => (name === 'aria-hidden' ? 'true' : null) })]), [['connect', true]]);
+  assert.deepEqual(after([]), [['connect', true]], 'no modal: it takes focus as before');
+  assert.match(js, /querySelectorAll\?\.\('\[role="dialog"\]\[aria-modal="true"\], dialog\[open\]'\)/, 'every aria-modal dialog and an open native dialog');
+});

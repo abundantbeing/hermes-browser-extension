@@ -1,0 +1,19 @@
+/* pixelarticons 2.4.2 (assets/icons/pixel), inlined as svg[data-icon]. Shared by
+   the side panel, the full view and voice dictation. Edges snap to device pixels
+   so the 24-unit art stays sharp at 16px instead of blurring between pixels. */
+svg[data-icon] { shape-rendering: crispEdges; }
+
+/* Optical balance. Most glyphs ink 18-22 of the 24 units; these sit outside that
+   band. The cog drops to 0.75 so its 2-unit strokes land on whole pixels at 1x
+   and 2x. Upscales stay at 1.1: more thickens strokes once edges snap.
+   `scale` and `translate` compose with transform animations and leave the 16px
+   layout box alone. */
+svg[data-icon="settings-cog"] { scale: 0.75; }
+svg[data-icon="book-open"] { scale: 0.84; }
+svg[data-icon="plus"],
+svg[data-icon="close"],
+svg[data-icon="check"] { scale: 1.1; }
+
+/* Two glyphs sit one unit off the grid centre. */
+svg[data-icon="book-open"] { translate: 0 -3.5%; }
+svg[data-icon="pause"] { translate: 4.17% 0; }

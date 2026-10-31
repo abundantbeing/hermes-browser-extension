@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Otwórz rozszerzenie Hermes Browser",
+    "message": "Otwórz Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Otwórz panel boczny Hermes Browser",
+    "message": "Otwórz panel boczny Hermes Browser Extension",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -34,6 +34,102 @@
   "runtime_a11y_subagent_status": {
     "message": "Status subagentów Hermes",
     "description": "Runtime interface message a11y.subagent_status"
+  },
+  "runtime_account_hint": {
+    "message": "To samo logowanie, którego używa aplikacja Hermes na telefon. Otwiera Projekty, autorytet sesji, kompaktowanie kontekstu i pełną listę botów na bramie, która wymaga logowania, bez uruchamiania czegokolwiek. Wylogowanie usuwa je z tej przeglądarki.",
+    "description": "Runtime interface message account.hint"
+  },
+  "runtime_account_label": {
+    "message": "Konto Hermes",
+    "description": "Runtime interface message account.label"
+  },
+  "runtime_account_notice_exchange_rejected": {
+    "message": "Brama odrzuciła kod logowania. Spróbuj ponownie.",
+    "description": "Runtime interface message account.notice.exchange_rejected"
+  },
+  "runtime_account_notice_failed": {
+    "message": "Logowanie nie zostało zakończone. Spróbuj ponownie.",
+    "description": "Runtime interface message account.notice.failed"
+  },
+  "runtime_account_notice_no_permission": {
+    "message": "Logowanie wymaga Twojej zgody, aby Hermes Browser Extension mogło zobaczyć, gdzie kończy się okno logowania. Wybierz ponownie „Zaloguj” i zezwól.",
+    "description": "Runtime interface message account.notice.no_permission"
+  },
+  "runtime_account_notice_no_window": {
+    "message": "Ta przeglądarka nie mogła otworzyć okna logowania.",
+    "description": "Runtime interface message account.notice.no_window"
+  },
+  "runtime_account_notice_provider_denied": {
+    "message": "Logowanie nie zostało zatwierdzone. Spróbuj ponownie.",
+    "description": "Runtime interface message account.notice.provider_denied"
+  },
+  "runtime_account_notice_session_expired": {
+    "message": "Sesja konta Hermes się zakończyła. Zaloguj się ponownie.",
+    "description": "Runtime interface message account.notice.session_expired"
+  },
+  "runtime_account_notice_state_mismatch": {
+    "message": "To logowanie nie pasowało do tego żądania i zostało odrzucone. Spróbuj ponownie.",
+    "description": "Runtime interface message account.notice.state_mismatch"
+  },
+  "runtime_account_notice_timeout": {
+    "message": "Logowanie nie zakończyło się na czas. Spróbuj ponownie.",
+    "description": "Runtime interface message account.notice.timeout"
+  },
+  "runtime_account_notice_unavailable": {
+    "message": "Nie można teraz połączyć się z bramą. Logowanie zostaje zachowane; spróbuj za chwilę.",
+    "description": "Runtime interface message account.notice.unavailable"
+  },
+  "runtime_account_sign_in": {
+    "message": "Zaloguj się kontem Hermes",
+    "description": "Runtime interface message account.sign_in"
+  },
+  "runtime_account_sign_in_needed": {
+    "message": "Ta brama wymaga logowania kontem Hermes. Otwórz Ustawienia > Połączenia i wybierz „Zaloguj się kontem Hermes”.",
+    "description": "Runtime interface message account.sign_in_needed"
+  },
+  "runtime_account_sign_out": {
+    "message": "Wyloguj",
+    "description": "Runtime interface message account.sign_out"
+  },
+  "runtime_account_signed_in_as": {
+    "message": "Zalogowano jako {name} ({provider})",
+    "description": "Runtime interface message account.signed_in_as"
+  },
+  "runtime_account_signed_in_generic": {
+    "message": "Zalogowano kontem Hermes",
+    "description": "Runtime interface message account.signed_in_generic"
+  },
+  "runtime_account_signed_in_title": {
+    "message": "Zalogowano w Hermes",
+    "description": "Runtime interface message account.signed_in_title"
+  },
+  "runtime_account_status_checking": {
+    "message": "Sprawdzanie, czy ta brama przyjmuje logowanie kontem Hermes.",
+    "description": "Runtime interface message account.status_checking"
+  },
+  "runtime_account_status_signed_out": {
+    "message": "Nie zalogowano. Ta brama wymaga logowania kontem Hermes.",
+    "description": "Runtime interface message account.status_signed_out"
+  },
+  "runtime_account_status_waiting": {
+    "message": "Czekam, aż skończysz logowanie w otwartym oknie.",
+    "description": "Runtime interface message account.status_waiting"
+  },
+  "runtime_account_unavailable_no_native_flow": {
+    "message": "Ta brama wymaga logowania, ale nie oferuje logowania dla aplikacji. Zaktualizuj Hermes do wersji, która je oferuje.",
+    "description": "Runtime interface message account.unavailable.no_native_flow"
+  },
+  "runtime_account_unavailable_no_origin": {
+    "message": "Logowanie kontem Hermes wymaga bramy https albo lokalnej chronionej logowaniem.",
+    "description": "Runtime interface message account.unavailable.no_origin"
+  },
+  "runtime_account_unavailable_not_gated": {
+    "message": "Ta brama jest otwarta na tym komputerze i nie wymaga logowania, więc nie ma tu konta Hermes do użycia. Projekty obsługuje zamiast tego parowanie z Hermes Browser Extension lub własne logowanie Hermes Web.",
+    "description": "Runtime interface message account.unavailable.not_gated"
+  },
+  "runtime_account_unavailable_unreachable": {
+    "message": "Nie udało się połączyć z tą bramą, aby sprawdzić logowanie.",
+    "description": "Runtime interface message account.unavailable.unreachable"
   },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
@@ -380,15 +476,31 @@
     "description": "Runtime interface message bot_mode.density_compact"
   },
   "runtime_bot_mode_dialog_label": {
-    "message": "Tryb botów Hermes Browser",
+    "message": "Tryb botów",
     "description": "Runtime interface message bot_mode.dialog_label"
+  },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "Wcześniejsze wiadomości z {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "Nie udało się wczytać wcześniejszych wiadomości. Nadal możesz otworzyć „{title}” w Regular Sessions.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "Wczytywanie wcześniejszych wiadomości…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes odłożył Twój wcześniejszy czat z {name} jako „{title}” i rozpoczął ten, więc {name} nie widzi tutaj tych wiadomości.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
   },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"
   },
   "runtime_bot_mode_enable_label": {
-    "message": "Włącz tryb botów w Hermes Browser",
+    "message": "Włącz tryb botów",
     "description": "Runtime interface message bot_mode.enable_label"
   },
   "runtime_bot_mode_face_blobatar": {
@@ -438,6 +550,14 @@
   "runtime_bot_mode_group_create": {
     "message": "Wybierz co najmniej jednego agenta dla tego czatu grupowego.",
     "description": "Runtime interface message bot_mode.group_create"
+  },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes nie odpowiedział, więc może już mieć tę wiadomość. Sprawdź pokój, zanim wyślesz ją ponownie.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Twoja wiadomość wróciła do pola tekstowego. Wysłana ponownie bez zmian w ciągu 10 minut nie zostanie opublikowana dwa razy.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
   },
   "runtime_bot_mode_group_field_members": {
     "message": "Wybierz agentów biorących udział w tym czacie grupowym.",
@@ -504,7 +624,7 @@
     "description": "Runtime interface message bot_mode.leave_confirm"
   },
   "runtime_bot_mode_leave_detail": {
-    "message": "Rozpoczęcie nowej sesji przywróci Cię do zwykłego obszaru roboczego Hermes Browser.",
+    "message": "Rozpoczęcie nowej sesji przywróci Cię do zwykłego obszaru roboczego.",
     "description": "Runtime interface message bot_mode.leave_detail"
   },
   "runtime_bot_mode_leave_kicker": {
@@ -558,10 +678,6 @@
   "runtime_bot_mode_off_hint_sidepanel": {
     "message": "Domyślnie wyłączone. Używa aktualnie połączonej instancji Hermes.",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
-  },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "Domyślnie wyłączone. Ograniczone do aktualnie połączonej instancji Hermes.",
-    "description": "Runtime interface message bot_mode.off_hint_web"
   },
   "runtime_bot_mode_open_chat": {
     "message": "Otwórz Bot Chat",
@@ -632,16 +748,20 @@
     "description": "Runtime interface message bot_mode.return_to_sessions"
   },
   "runtime_bot_mode_return_to_sessions_title": {
-    "message": "Return to regular Hermes Browser sessions",
+    "message": "Wróć do swoich zwykłych sesji",
     "description": "Runtime interface message bot_mode.return_to_sessions_title"
   },
   "runtime_bot_mode_roster_label": {
     "message": "Agenci Hermes",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "Agenci Hermes Web",
-    "description": "Runtime interface message bot_mode.roster_label_web"
+  "runtime_bot_mode_roster_names_only": {
+    "message": "Zdjęcia profilowe i pełne dane botów wymagają panelu Hermes lub zalogowania się w tej bramie.",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "Otwórz ustawienia połączenia",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
   },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
@@ -666,10 +786,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "Włącza opcjonalną listę profili i kanoniczną nawigację Bot Chat w tej przeglądarce.",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "Włącza opcjonalny panel agentów i kanoniczną nawigację Bot Chat w tej przeglądarce.",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "Agenci i tryb botów",
@@ -931,6 +1047,10 @@
     "message": "Przed włączeniem Sterowania Hermes uruchom lub wybierz sesję Hermes.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "Sterowanie Hermes nie jest dostępne w tym Hermes. Wymaga Hermes ze sterowaniem przez rozszerzenie przeglądarki.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "Stosuje wybrany zakres do kart, którymi Hermes może sterować.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1007,6 +1127,22 @@
     "message": "Chromium przyznaje temu rozszerzeniu dostęp do debuggera podczas instalacji lub aktualizacji. Hermes używa debuggera tylko na kartach, które podłączysz, nigdy nie przenosi okna przeglądarki na pierwszy plan i blokuje dane logowania, kody MFA, pola płatności oraz tekst poufny.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes nie wykonał tam działania: to miejsce leży w ramce na stronie, której Hermes nie może odczytać.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes nie zrobił zrzutu ekranu: ramka na tej stronie znajduje się na stronie, której Hermes nie może odczytać.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes nie zrobił zrzutu ekranu: strona przeszła na stronę, której Hermes nie przechwytuje.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes nie zrobił zrzutu ekranu: Firefox wymaga dodatkowego uprawnienia. Użyj opcji Zezwól na zrzuty ekranu w przeglądarce Firefox.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Wstrzymaj",
     "description": "Runtime interface message browser_control.pause"
@@ -1078,6 +1214,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Gotowe",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_state_waiting": {
+    "message": "Oczekuje",
+    "description": "Runtime interface message browser_control.state_waiting"
   },
   "runtime_browser_control_status_on": {
     "message": "Włączone",
@@ -1151,9 +1291,405 @@
     "message": "Wyłącz",
     "description": "Runtime interface message browser_control.turn_off"
   },
+  "runtime_browser_control_unsupported": {
+    "message": "Sterowanie Hermes nie jest dostępne w tym Hermes",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "Wymaga Hermes ze sterowaniem przez rozszerzenie przeglądarki.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
+  },
   "runtime_browser_control_waiting": {
     "message": "Oczekiwanie na Hermesa.",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "Sterowanie Hermes połączy się po wysłaniu pierwszej wiadomości w tym czacie.",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "Czeka na ten czat",
+    "description": "Runtime interface message browser_control.waiting_title"
+  },
+  "runtime_capability_feature_approvalEvents": {
+    "message": "Zdarzenia zatwierdzeń",
+    "description": "Runtime interface message capability.feature.approvalEvents"
+  },
+  "runtime_capability_feature_audioTranscription": {
+    "message": "Transkrypcja głosu",
+    "description": "Runtime interface message capability.feature.audioTranscription"
+  },
+  "runtime_capability_feature_auth": {
+    "message": "Uwierzytelnianie",
+    "description": "Runtime interface message capability.feature.auth"
+  },
+  "runtime_capability_feature_browserCompanionPlugin": {
+    "message": "Wtyczka Hermes Browser Extension",
+    "description": "Runtime interface message capability.feature.browserCompanionPlugin"
+  },
+  "runtime_capability_feature_browserContextProvider": {
+    "message": "Browser Context Protocol",
+    "description": "Runtime interface message capability.feature.browserContextProvider"
+  },
+  "runtime_capability_feature_browserContextStatus": {
+    "message": "Stan kontekstu przeglądarki",
+    "description": "Runtime interface message capability.feature.browserContextStatus"
+  },
+  "runtime_capability_feature_browserContextUpload": {
+    "message": "Wysyłanie kontekstu przeglądarki",
+    "description": "Runtime interface message capability.feature.browserContextUpload"
+  },
+  "runtime_capability_feature_browserPairing": {
+    "message": "Parowanie przeglądarki",
+    "description": "Runtime interface message capability.feature.browserPairing"
+  },
+  "runtime_capability_feature_health": {
+    "message": "Stan",
+    "description": "Runtime interface message capability.feature.health"
+  },
+  "runtime_capability_feature_imageSessionAttach": {
+    "message": "Załącznik obrazu (sesja)",
+    "description": "Runtime interface message capability.feature.imageSessionAttach"
+  },
+  "runtime_capability_feature_imageUpload": {
+    "message": "Wysyłanie obrazów (HTTP)",
+    "description": "Runtime interface message capability.feature.imageUpload"
+  },
+  "runtime_capability_feature_mediaRead": {
+    "message": "Odczyt zapisanych obrazów",
+    "description": "Runtime interface message capability.feature.mediaRead"
+  },
+  "runtime_capability_feature_models": {
+    "message": "Modele",
+    "description": "Runtime interface message capability.feature.models"
+  },
+  "runtime_capability_feature_pluginActions": {
+    "message": "Akcje wtyczki",
+    "description": "Runtime interface message capability.feature.pluginActions"
+  },
+  "runtime_capability_feature_profiles": {
+    "message": "Profile",
+    "description": "Runtime interface message capability.feature.profiles"
+  },
+  "runtime_capability_feature_projects": {
+    "message": "Projekty",
+    "description": "Runtime interface message capability.feature.projects"
+  },
+  "runtime_capability_feature_runs": {
+    "message": "Runs API",
+    "description": "Runtime interface message capability.feature.runs"
+  },
+  "runtime_capability_feature_runSteer": {
+    "message": "Sterowanie przebiegiem",
+    "description": "Runtime interface message capability.feature.runSteer"
+  },
+  "runtime_capability_feature_sessionAuthority": {
+    "message": "Autorytet sesji",
+    "description": "Runtime interface message capability.feature.sessionAuthority"
+  },
+  "runtime_capability_feature_sessionCompress": {
+    "message": "Kompaktowanie kontekstu",
+    "description": "Runtime interface message capability.feature.sessionCompress"
+  },
+  "runtime_capability_feature_sessionContext": {
+    "message": "Stan kontekstu",
+    "description": "Runtime interface message capability.feature.sessionContext"
+  },
+  "runtime_capability_feature_sessionModelLock": {
+    "message": "Blokada modelu na sesję",
+    "description": "Runtime interface message capability.feature.sessionModelLock"
+  },
+  "runtime_capability_feature_sessions": {
+    "message": "Sesje",
+    "description": "Runtime interface message capability.feature.sessions"
+  },
+  "runtime_capability_feature_skills": {
+    "message": "Skille",
+    "description": "Runtime interface message capability.feature.skills"
+  },
+  "runtime_capability_meta_checked": {
+    "message": "Sprawdzono {age}",
+    "description": "Runtime interface message capability.meta.checked"
+  },
+  "runtime_capability_meta_never": {
+    "message": "Nigdy nie sprawdzano",
+    "description": "Runtime interface message capability.meta.never"
+  },
+  "runtime_capability_meta_source": {
+    "message": "Źródło: {source}",
+    "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_account_sign_in": {
+    "message": "Ta brama wymaga logowania kontem Hermes. Zaloguj się w Ustawienia > Połączenia, aby otworzyć jej gniazdo sesji.",
+    "description": "Runtime interface message capability.reason.account_sign_in"
+  },
+  "runtime_capability_reason_advertised": {
+    "message": "Ogłoszone przez tę bramę.",
+    "description": "Runtime interface message capability.reason.advertised"
+  },
+  "runtime_capability_reason_advertised_off": {
+    "message": "Ta brama ogłasza to jako wyłączone.",
+    "description": "Runtime interface message capability.reason.advertised_off"
+  },
+  "runtime_capability_reason_authority_compress": {
+    "message": "Kompaktowanie działa jako session.mutate z operacją compress, którą obsługuje brama z autorytetem sesji.",
+    "description": "Runtime interface message capability.reason.authority_compress"
+  },
+  "runtime_capability_reason_authority_ready": {
+    "message": "gateway.ready zgłasza autorytet sesji.",
+    "description": "Runtime interface message capability.reason.authority_ready"
+  },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Brama odrzuciła sparowany token (HTTP {status}), więc wtyczki nie można było sprawdzić.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Ta brama nie udostępnia trasy statusu ani czytelnej listy zestawów narzędzi, więc rozszerzenie nie może stwierdzić, czy wtyczka towarzysząca jest załadowana. Nie oznacza to, że jej brakuje.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Brama odpowiedziała HTTP {status}, więc wtyczki nie można było sprawdzić.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Nie udało się połączyć z bramą{detail}, więc wtyczki nie można było sprawdzić.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Wtyczka towarzysząca jest załadowana z {presentCount} z {expectedCount} narzędzi, ale nie obsługuje trasy statusu, więc to starsza kopia. Zainstaluj ją ponownie dla tego profilu i uruchom ponownie bramę.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Brak dostępnego tokenu bramy, więc wtyczka nie została sprawdzona.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Nie załadowano na tej bramie: brak trasy statusu i nie ma na liście zestawu narzędzi towarzyszącego. Wtyczka nie jest zainstalowana, nie jest włączona dla tego profilu albo brama nie została od tego czasu uruchomiona ponownie. Uruchom `hermes plugins list` dla profilu.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Załadowano: wersja {version}, profil {profile}, narzędzia: {toolCount}.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Załadowano: wersja {version}, profil {profile}, narzędzia: {toolCount}. Ta brama nie mogła potwierdzić, czy jej zestaw narzędzi jest włączony dla serwera API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Załadowana jest starsza kopia tej wtyczki pod poprzednią nazwą hermes-browser-companion. Usuń ją (`hermes plugins remove hermes-browser-companion`), zainstaluj hermes-browser-extension dla tego profilu i uruchom ponownie bramę.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
+  },
+  "runtime_capability_reason_companion_route": {
+    "message": "Dostępne przez wtyczkę towarzyszącą (wersja {version}), która udostępnia tę trasę na tej bramie. Sam Hermes nie ma takiej trasy.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Załadowano (wersja {version}), ale brakuje narzędzi: {missing}. Zainstaluj ją ponownie dla tego profilu i uruchom ponownie bramę.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Załadowano, ale jej zestaw narzędzi jest wyłączony dla serwera API. Włącz go poleceniem `hermes tools` lub usuń z agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Załadowano, ale to wersja {version}, a to rozszerzenie oczekuje wersji {expected}. Zainstaluj ją ponownie dla tego profilu i uruchom ponownie bramę.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
+  "runtime_capability_reason_connection_closed": {
+    "message": "Połączenie zostało zamknięte. Ostatnio potwierdzono {age}. Pokazane, ale nieużywane do wykonywania czegokolwiek.",
+    "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_context_socket": {
+    "message": "Odczytano przez gniazdo sesji Hermes: użycie sesji i podział na kategorie, według zapisanego identyfikatora sesji.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Obsługiwane przez panel Hermes na tym komputerze, który zaakceptował logowanie przechowywane przez ten panel. API bramy tego nie ogłasza.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
+  },
+  "runtime_capability_reason_extension_side": {
+    "message": "Tworzone i wysyłane przez to rozszerzenie w prompcie. Nie zależy od trasy bramy.",
+    "description": "Runtime interface message capability.reason.extension_side"
+  },
+  "runtime_capability_reason_identity_changed": {
+    "message": "Połączenie, konto lub profil się zmieniło. Jeszcze nie sprawdzono ponownie.",
+    "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Wklejone obrazy są przygotowywane przez gniazdo sesji Hermes (image.attach_bytes), a czat odczytuje je po ścieżce.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
+  },
+  "runtime_capability_reason_legacy_assumed": {
+    "message": "Założono, bo /health odpowiedziało z tokenem. /v1/capabilities było niedostępne, więc nie jest to potwierdzone.",
+    "description": "Runtime interface message capability.reason.legacy_assumed"
+  },
+  "runtime_capability_reason_legacy_gateway": {
+    "message": "Ta brama nie ma /v1/capabilities, więc rozszerzenie nie widzi, co oferuje.",
+    "description": "Runtime interface message capability.reason.legacy_gateway"
+  },
+  "runtime_capability_reason_legacy_ws_compress": {
+    "message": "Ta brama panelu nie ma autorytetu sesji, więc kompaktowaniem zajmuje się starsze session.compress.",
+    "description": "Runtime interface message capability.reason.legacy_ws_compress"
+  },
+  "runtime_capability_reason_method_not_found": {
+    "message": "Brama odpowiedziała „method not found” (-32601) dla {method}.",
+    "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Dla tego połączenia nie jest jeszcze otwarte gniazdo sesji Hermes. Stan kontekstu zostanie tu odczytany, gdy jedno się otworzy.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_record": {
+    "message": "Jeszcze nie sprawdzono.",
+    "description": "Runtime interface message capability.reason.no_record"
+  },
+  "runtime_capability_reason_no_session_authority": {
+    "message": "gateway.ready nie zgłosiło autorytetu sesji.",
+    "description": "Runtime interface message capability.reason.no_session_authority"
+  },
+  "runtime_capability_reason_not_advertised": {
+    "message": "Nieogłoszone przez tę bramę.",
+    "description": "Runtime interface message capability.reason.not_advertised"
+  },
+  "runtime_capability_reason_not_advertised_plugin": {
+    "message": "Nieogłoszone przez tę bramę. Hermes Browser Extension nie może stwierdzić, czy wtyczka towarzysząca jest załadowana, więc nie oznacza to, że jej brakuje.",
+    "description": "Runtime interface message capability.reason.not_advertised_plugin"
+  },
+  "runtime_capability_reason_not_connected": {
+    "message": "WebSocket panelu nie dostarczył jeszcze gateway.ready.",
+    "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Ta wersja Hermes nie ma takiej trasy, więc nie ma czego włączać. Kontekst strony jest zamiast tego dołączany do każdej wiadomości.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
+  },
+  "runtime_capability_reason_operation_ok": {
+    "message": "Zadziałało przy ostatnim użyciu.",
+    "description": "Runtime interface message capability.reason.operation_ok"
+  },
+  "runtime_capability_reason_operation_refused": {
+    "message": "Hermes odmówił ostatniej próbie: {detail}.",
+    "description": "Runtime interface message capability.reason.operation_refused"
+  },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Czat na tym połączeniu działa przez REST API. Wklejone obrazy dołączają się do aktywnej sesji, gdy czat działa przez WebSocket pulpitu, tak jak sesja trybu Bot lub profilu o nazwie.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Czat na tym połączeniu działa przez REST API i nie jest otwarte żadne gniazdo sesji Hermes, więc wklejone obrazy używają przesyłania przez pulpit albo zostają w treści.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
+  },
+  "runtime_capability_reason_rest_no_compress": {
+    "message": "To połączenie sięga tylko do REST API, które nie ogłasza trasy kompaktowania. Kompaktowanie wymaga WebSocket panelu z autorytetem sesji.",
+    "description": "Runtime interface message capability.reason.rest_no_compress"
+  },
+  "runtime_capability_reason_rest_only": {
+    "message": "To połączenie sięga tylko do REST API. Potrzebny jest WebSocket panelu.",
+    "description": "Runtime interface message capability.reason.rest_only"
+  },
+  "runtime_capability_reason_revoked": {
+    "message": "Wyłączone: {detail}.",
+    "description": "Runtime interface message capability.reason.revoked"
+  },
+  "runtime_capability_reason_stale": {
+    "message": "Ostatnio potwierdzono {age}. Stara odpowiedź jest pokazana, ale nieużywana do wykonywania czegokolwiek.",
+    "description": "Runtime interface message capability.reason.stale"
+  },
+  "runtime_capability_reason_token_present": {
+    "message": "Jest token lub kontekst uwierzytelniania. To sprawdzenie nie wykazało, że jest ważny.",
+    "description": "Runtime interface message capability.reason.token_present"
+  },
+  "runtime_capability_reason_ws_connected": {
+    "message": "WebSocket panelu Hermes jest połączony.",
+    "description": "Runtime interface message capability.reason.ws_connected"
+  },
+  "runtime_capability_reason_ws_contract": {
+    "message": "Część kontraktu WebSocket panelu. Ta brama nie ogłasza tego osobno.",
+    "description": "Runtime interface message capability.reason.ws_contract"
+  },
+  "runtime_capability_reason_ws_not_reported": {
+    "message": "WebSocket panelu tego nie zgłasza, a to połączenie nie czyta /v1/capabilities.",
+    "description": "Runtime interface message capability.reason.ws_not_reported"
+  },
+  "runtime_capability_source_derived": {
+    "message": "wywnioskowano z połączenia",
+    "description": "Runtime interface message capability.source.derived"
+  },
+  "runtime_capability_source_extension": {
+    "message": "to rozszerzenie",
+    "description": "Runtime interface message capability.source.extension"
+  },
+  "runtime_capability_source_method_not_found": {
+    "message": "odmowa ze strony Hermes",
+    "description": "Runtime interface message capability.source.method_not_found"
+  },
+  "runtime_capability_source_none": {
+    "message": "brak jeszcze dowodów",
+    "description": "Runtime interface message capability.source.none"
+  },
+  "runtime_capability_source_operation": {
+    "message": "ostatnia próba",
+    "description": "Runtime interface message capability.source.operation"
+  },
+  "runtime_capability_source_probe": {
+    "message": "sprawdzenie",
+    "description": "Runtime interface message capability.source.probe"
+  },
+  "runtime_capability_source_revocation": {
+    "message": "wyłączone",
+    "description": "Runtime interface message capability.source.revocation"
+  },
+  "runtime_capability_state_available": {
+    "message": "Dostępne",
+    "description": "Runtime interface message capability.state.available"
+  },
+  "runtime_capability_state_blocked": {
+    "message": "Zablokowane",
+    "description": "Runtime interface message capability.state.blocked"
+  },
+  "runtime_capability_state_cached": {
+    "message": "W pamięci podręcznej",
+    "description": "Runtime interface message capability.state.cached"
+  },
+  "runtime_capability_state_degraded": {
+    "message": "Ograniczone",
+    "description": "Runtime interface message capability.state.degraded"
+  },
+  "runtime_capability_state_unknown": {
+    "message": "Nieznane",
+    "description": "Runtime interface message capability.state.unknown"
+  },
+  "runtime_capability_state_unsupported": {
+    "message": "Nieobsługiwane",
+    "description": "Runtime interface message capability.state.unsupported"
+  },
+  "runtime_capability_summary_all": {
+    "message": "Każda sprawdzona tu funkcja jest używana.",
+    "description": "Runtime interface message capability.summary.all"
+  },
+  "runtime_capability_summary_some": {
+    "message": "Funkcje nieużywane przy tym połączeniu: {count}",
+    "description": "Runtime interface message capability.summary.some"
+  },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Twoja wiadomość czeka w kolejce tego czatu. Odpowiedź pojawi się tutaj, gdy będzie gotowa, więc nie musisz wysyłać jej ponownie.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
+  "runtime_chat_jump_to_latest": {
+    "message": "Przejdź do najnowszych",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "{count} nowej wiadomości",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "Przejdź do najnowszych, {count} nowej wiadomości",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes mógł usunąć tę turę, a Twoja nowa wiadomość nie została wysłana. Rozmowa pokazuje teraz to, co ma Hermes, a Twój tekst wrócił do pola wpisywania.",
+    "description": "Runtime interface message chat.rewind_unsent"
   },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
@@ -1247,9 +1783,109 @@
     "message": "Używa",
     "description": "Runtime interface message common.using"
   },
-  "runtime_composer_attach": {
-    "message": "+ Załącz",
-    "description": "Runtime interface message composer.attach"
+  "runtime_compact_button": {
+    "message": "Skompaktuj kontekst",
+    "description": "Runtime interface message compact.button"
+  },
+  "runtime_compact_button_recommended": {
+    "message": "Zalecane kompaktowanie",
+    "description": "Runtime interface message compact.button_recommended"
+  },
+  "runtime_compact_result_aborted": {
+    "message": "Hermes nie mógł podsumować sesji, więc nic nie zastąpiono.",
+    "description": "Runtime interface message compact.result.aborted"
+  },
+  "runtime_compact_result_blocked": {
+    "message": "Hermes nie skompaktuje teraz tej sesji ({reason}).",
+    "description": "Runtime interface message compact.result.blocked"
+  },
+  "runtime_compact_result_busy": {
+    "message": "Hermes odmówił, bo sesja jest zajęta. Nic nie zmieniono.",
+    "description": "Runtime interface message compact.result.busy"
+  },
+  "runtime_compact_result_busy_compressing": {
+    "message": "Hermes już kompaktuje tę sesję.",
+    "description": "Runtime interface message compact.result.busy_compressing"
+  },
+  "runtime_compact_result_busy_turn": {
+    "message": "W tej sesji trwa tura. Zatrzymaj ją przed kompaktowaniem. Nic nie wysłano.",
+    "description": "Runtime interface message compact.result.busy_turn"
+  },
+  "runtime_compact_result_compacted": {
+    "message": "Hermes skompaktował tę sesję, a ponowny odczyt to potwierdza. {detail}",
+    "description": "Runtime interface message compact.result.compacted"
+  },
+  "runtime_compact_result_denied": {
+    "message": "Hermes odmówił kompaktowania dla tego konta lub profilu.",
+    "description": "Runtime interface message compact.result.denied"
+  },
+  "runtime_compact_result_failed": {
+    "message": "Hermes nie dokończył kompaktowania. {detail}",
+    "description": "Runtime interface message compact.result.failed"
+  },
+  "runtime_compact_result_indeterminate": {
+    "message": "Odpowiedź zaginęła, a sesja poszła dalej. Hermes mógł ją skompaktować; nic nie wysłano ponownie.",
+    "description": "Runtime interface message compact.result.indeterminate"
+  },
+  "runtime_compact_result_noop": {
+    "message": "Sesja jest już dość krótka, by zostać w całości. Nic nie zmieniono.",
+    "description": "Runtime interface message compact.result.noop"
+  },
+  "runtime_compact_result_not_committed": {
+    "message": "Odpowiedź zaginęła, a Hermes pokazuje sesję bez zmian. Naciśnij Skompaktuj ponownie, aby wysłać to samo żądanie.",
+    "description": "Runtime interface message compact.result.not_committed"
+  },
+  "runtime_compact_result_not_sent": {
+    "message": "Nie można było połączyć się z Hermes, aby najpierw odczytać sesję. Nic nie wysłano.",
+    "description": "Runtime interface message compact.result.not_sent"
+  },
+  "runtime_compact_result_rotated": {
+    "message": "Sesja zachowuje swój id; Hermes kontynuuje ją w nowym zapisanym segmencie.",
+    "description": "Runtime interface message compact.result.rotated"
+  },
+  "runtime_compact_result_stale": {
+    "message": "Sesja zmieniła się podczas kompaktowania, dwa razy z rzędu. Nic nie zmieniono. Spróbuj ponownie.",
+    "description": "Runtime interface message compact.result.stale"
+  },
+  "runtime_compact_result_unconfirmed": {
+    "message": "Hermes przyjął kompaktowanie, ale ponowny odczyt sesji tego nie potwierdził. Odśwież, zanim na tym polegasz.",
+    "description": "Runtime interface message compact.result.unconfirmed"
+  },
+  "runtime_compact_status_no_session": {
+    "message": "Otwórz lub utwórz sesję przed kompaktowaniem.",
+    "description": "Runtime interface message compact.status.no_session"
+  },
+  "runtime_compact_status_ready": {
+    "message": "Zastąp starsze wiadomości podsumowaniem, aby zwolnić miejsce.",
+    "description": "Runtime interface message compact.status.ready"
+  },
+  "runtime_compact_status_running": {
+    "message": "Zatrzymaj aktywny przebieg przed kompaktowaniem tej sesji.",
+    "description": "Runtime interface message compact.status.running"
+  },
+  "runtime_compact_status_unavailable": {
+    "message": "Kompaktowanie niedostępne: {reason}",
+    "description": "Runtime interface message compact.status.unavailable"
+  },
+  "runtime_compact_title_failed": {
+    "message": "Kompaktowanie kontekstu nie powiodło się",
+    "description": "Runtime interface message compact.title.failed"
+  },
+  "runtime_compact_title_noop": {
+    "message": "Nie ma czego kompaktować",
+    "description": "Runtime interface message compact.title.noop"
+  },
+  "runtime_compact_title_ok": {
+    "message": "Kontekst skompaktowany",
+    "description": "Runtime interface message compact.title.ok"
+  },
+  "runtime_compact_title_unavailable": {
+    "message": "Kompaktowanie kontekstu niedostępne",
+    "description": "Runtime interface message compact.title.unavailable"
+  },
+  "runtime_compact_working": {
+    "message": "Kompaktowanie…",
+    "description": "Runtime interface message compact.working"
   },
   "runtime_composer_chat_label": {
     "message": "CHAT",
@@ -1287,13 +1923,45 @@
     "message": "do ręcznej konfiguracji.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "Sprawdzanie: {title} pod adresem {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Połączono z Hermes, ale z ostrzeżeniem środowiska uruchomieniowego. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Konfiguracja ręczna jest nadal dostępna w ustawieniach.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "Wyszukiwanie: {title} pod adresem {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Automatyczne parowanie jest dostępne tylko dla lokalnej bramy pod adresem loopback. Zdalne połączenia API wymagają jawnie skonfigurowanego adresu URL i tokenu; połączenia z pulpitem używają Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. Kliknij Połącz się z Hermes lub użyj konfiguracji ręcznej.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Lokalny serwer Hermes API",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Zdalny serwer Hermes API",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Zdalny pulpit Hermes",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "nieskonfigurowany",
     "description": "Runtime interface message connection.not_configured_short"
-  },
-  "runtime_connection_unknown_transport": {
-    "message": "nieznany transport",
-    "description": "Runtime interface message connection.unknown_transport"
   },
   "runtime_context_consent_share_detail": {
     "message": "Tylko czat, dopóki nie zatwierdzisz dokładnie tego połączenia. Zgoda jest oddzielona według punktu końcowego, konta, profilu i kontrolera przeglądarki.",
@@ -1307,9 +1975,21 @@
     "message": "Dołączona zakładka",
     "description": "Runtime interface message context.attached_tab"
   },
-  "runtime_context_browser_tab_handoff": {
-    "message": "Przekazanie karty przeglądarki {tabId}",
-    "description": "Runtime interface message context.browser_tab_handoff"
+  "runtime_context_card_no_socket": {
+    "message": "To połączenie nie ma gniazda sesji Hermes, więc podziału na kategorie nie można odczytać.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes nie przechowuje tej sesji na swoim gnieździe sesji, więc nie mógł zmierzyć kategorii.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes nie zgłosił jeszcze podziału na kategorie dla tej sesji.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Zaloguj się kontem Hermes w Ustawienia > Połączenia, aby odczytać podział na kategorie tej sesji.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Śledź aktywną kartę",
@@ -1492,7 +2172,7 @@
     "description": "Runtime interface message custom_theme.validation_errors"
   },
   "runtime_diagnostic_api_authorization_health_detail": {
-    "message": "Usługa kontroli stanu odpowiedziała, ale chronione trasy Browser/modeli wymagają Authorization: Bearer ***. Wklej klucz API lub token przeglądarki o ograniczonym zakresie w Ustawieniach.",
+    "message": "Usługa kontroli stanu odpowiedziała, ale chronione trasy rozszerzenia i modeli wymagają Authorization: Bearer ***. Wklej klucz API lub token przeglądarki o ograniczonym zakresie w Ustawieniach.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
   },
   "runtime_diagnostic_api_authorization_title": {
@@ -1504,7 +2184,7 @@
     "description": "Runtime interface message diagnostic.api_rejected_detail"
   },
   "runtime_diagnostic_auth_detail": {
-    "message": "Hermes API odrzucił żądanie. Sprawdź token Browser API w Ustawieniach i upewnij się, że pasuje do uruchomionej bramy Hermes.",
+    "message": "Hermes API odrzucił żądanie. Sprawdź token API w Ustawieniach rozszerzenia i upewnij się, że pasuje do uruchomionej bramy Hermes.",
     "description": "Runtime interface message diagnostic.auth_detail"
   },
   "runtime_diagnostic_auth_title": {
@@ -1512,11 +2192,11 @@
     "description": "Runtime interface message diagnostic.auth_title"
   },
   "runtime_diagnostic_auth_user": {
-    "message": "Token Hermes API został odrzucony. Zaktualizuj token w Ustawieniach Browser, a następnie połącz się ponownie.",
+    "message": "Token Hermes API został odrzucony. Zaktualizuj token w Ustawieniach rozszerzenia, a następnie połącz się ponownie.",
     "description": "Runtime interface message diagnostic.auth_user"
   },
   "runtime_diagnostic_cors_extension_detail": {
-    "message": "Browser nie mógł połączyć się z Hermes API z tego źródła rozszerzenia. Dodaj chrome-extension://<extension-id> do API_SERVER_CORS_ORIGINS na zdalnym hoście.",
+    "message": "Rozszerzenie nie mogło połączyć się z Hermes API z własnego źródła. Dodaj chrome-extension://<extension-id> do API_SERVER_CORS_ORIGINS na zdalnym hoście.",
     "description": "Runtime interface message diagnostic.cors_extension_detail"
   },
   "runtime_diagnostic_cors_title": {
@@ -1524,7 +2204,7 @@
     "description": "Runtime interface message diagnostic.cors_title"
   },
   "runtime_diagnostic_dashboard_url_detail": {
-    "message": "Wygląda to na punkt końcowy Hermes Dashboard SSO. Tryb Browser API wymaga URL serwera Hermes API na :8642 oraz Authorization: Bearer ***",
+    "message": "Wygląda to na punkt końcowy Hermes Dashboard SSO. Tryb API rozszerzenia wymaga URL serwera Hermes API na :8642 oraz Authorization: Bearer ***",
     "description": "Runtime interface message diagnostic.dashboard_url_detail"
   },
   "runtime_diagnostic_dashboard_url_title": {
@@ -1540,7 +2220,7 @@
     "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
   },
   "runtime_diagnostic_network_detail": {
-    "message": "Browser nie mógł połączyć się z Hermes API. Sprawdź URL bramy, trasowanie zapory/VPN oraz ustawienia CORS/źródła dla tego rozszerzenia.",
+    "message": "Rozszerzenie nie mogło połączyć się z Hermes API. Sprawdź URL bramy, trasowanie zapory/VPN oraz ustawienia CORS/źródła dla tego rozszerzenia.",
     "description": "Runtime interface message diagnostic.network_detail"
   },
   "runtime_diagnostic_network_title": {
@@ -1548,7 +2228,7 @@
     "description": "Runtime interface message diagnostic.network_title"
   },
   "runtime_diagnostic_network_user": {
-    "message": "Browser nie mógł połączyć się z Hermes, ponieważ żądanie nie powiodło się w warstwie sieci/CORS.",
+    "message": "Rozszerzenie nie mogło połączyć się z Hermes, ponieważ żądanie nie powiodło się w warstwie sieci/CORS.",
     "description": "Runtime interface message diagnostic.network_user"
   },
   "runtime_diagnostic_remote_setup_title": {
@@ -1568,7 +2248,7 @@
     "description": "Runtime interface message diagnostic.route_title"
   },
   "runtime_diagnostic_route_user": {
-    "message": "To środowisko Hermes nie udostępnia jeszcze żądanej trasy Browser.",
+    "message": "To środowisko Hermes nie udostępnia jeszcze żądanej trasy rozszerzenia.",
     "description": "Runtime interface message diagnostic.route_user"
   },
   "runtime_diagnostic_runtime_exception_detail": {
@@ -1580,7 +2260,7 @@
     "description": "Runtime interface message diagnostic.runtime_exception_title"
   },
   "runtime_diagnostic_runtime_exception_user": {
-    "message": "Wykryto ślad stosu bramy Hermes w nadrzędnym Hermes Agent. Browser może pozostać połączony; sprawdź logi Hermes i uruchom `hermes computer-use doctor`, jeśli computer_use/cua-driver pojawia się w śladzie stosu.",
+    "message": "Wykryto ślad stosu bramy Hermes w nadrzędnym Hermes Agent. Rozszerzenie może pozostać połączone; sprawdź logi Hermes i uruchom `hermes computer-use doctor`, jeśli computer_use/cua-driver pojawia się w śladzie stosu.",
     "description": "Runtime interface message diagnostic.runtime_exception_user"
   },
   "runtime_diagnostics_surface": {
@@ -1659,13 +2339,129 @@
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
   },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "Otworzono z {source}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
+  "runtime_firefox_screenshots_allow": {
+    "message": "Zezwól na zrzuty ekranu w przeglądarce Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
   },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "Otworzono z {source} na karcie przeglądarki {tabId}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox nie przyznał uprawnienia.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes może robić zrzuty ekranu podłączonej karty w tych samych granicach bezpieczeństwa co reszta Hermes Control. Uprawnienie możesz cofnąć w dowolnym momencie.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Firefox wymaga dodatkowego uprawnienia, aby Hermes mógł zrobić zrzut ekranu karty. Hermes prosi o nie tylko po kliknięciu Zezwól; do tego czasu czyta tekst strony.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "Nie udało się zmienić uprawnienia do zrzutów ekranu: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Zrzuty ekranu są dozwolone w przeglądarce Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Przestań zezwalać na zrzuty ekranu",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "Uprawnienie do zrzutów ekranu zostało cofnięte.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Zrzuty ekranu modelu w przeglądarce Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
+  },
+  "runtime_gateway_queue_cancel": {
+    "message": "Anuluj turę",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "Nie udało się anulować tury w kolejce: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
+  "runtime_gateway_queue_discard": {
+    "message": "Odrzuć",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Nie udało się odrzucić utraconej tury: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "Edytuj",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "Zachowaj oryginał",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "Nie udało się zapisać zmiany: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "Edytuj wiadomość w kolejce",
+    "description": "Runtime interface message gateway_queue.edit_label"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Tura utracona podczas restartu",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes uruchomił się ponownie w trakcie tej tury. Nie można jej dokończyć ani bezpiecznie powtórzyć, a tury czekające za nią czekają, aż ją odrzucisz. Twoja wiadomość pozostaje w transkrypcji, więc możesz wysłać ją ponownie.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "W kolejce w Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "Zapisz",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "Ten Hermes nie oferuje tego dla tej tury.",
+    "description": "Runtime interface message gateway_queue.unsupported"
+  },
+  "runtime_haui_ask_hint": {
+    "message": "Wstawia to pytanie do pola wiadomości",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "Tworzenie widoku…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "Skopiowano",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "Kopiuj",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "Otwiera się w nowej karcie",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_unreadable": {
+    "message": "Pokazano jako tekst: nie udało się narysować tej karty.",
+    "description": "Runtime interface message haui.unreadable"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "Pokaż jako wykres",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "Wykres",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "Tabela",
+    "description": "Runtime interface message haui.view_table"
   },
   "runtime_image_generated": {
     "message": "Wygenerowany obraz",
@@ -1736,11 +2532,11 @@
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Otwórz rozszerzenie Hermes Browser",
+    "message": "Otwórz Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Otwórz panel boczny Hermes Browser",
+    "message": "Otwórz panel boczny Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -1819,12 +2615,168 @@
     "message": "Nieobsługiwany format archiwum",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "Skonfiguruj Hermesa",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "Wstecz",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_connect_body": {
+    "message": "Połącz ten panel ze swoim agentem Hermes. Zatwierdź parowanie, jeśli Twój Hermes je oferuje, albo użyj konfiguracji ręcznej z jego adresem i kluczem API. Wtedy Hermes zobaczy stronę, na której jesteś, i odpowie tutaj.",
+    "description": "Runtime interface message onboarding.connect.body"
+  },
+  "runtime_onboarding_connect_connected": {
+    "message": "Połączono z Hermes",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "Połącz później",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "Jeszcze nie połączono",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes na innym komputerze, serwerze lub w Hermes Cloud? Wybierz konfigurację ręczną, aby skonfigurować to połączenie.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "Połącz z Hermes",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "Wypróbuj pierwszy prompt",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "Krój pisma panelu i odpowiedzi Hermes.",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "Wybierz czcionkę",
+    "description": "Runtime interface message onboarding.font.title"
+  },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser Extension będzie go używać wszędzie. Możesz go później zmienić w Ustawieniach.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "Sugestia na podstawie przeglądarki: {language}. Wybierz inny, jeśli wolisz; możesz go później zmienić w Ustawieniach.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "Wybierz swój język",
+    "description": "Runtime interface message onboarding.language.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "Gdzie znajdują się Twoje wiadomości i odpowiedzi Hermesa.",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "Wybierz układ czatu",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "Dalej",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "Czas ładowania (s)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "Na tej stronie wyróżniają się trzy rzeczy.",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "Ładuje się dwa razy szybciej",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "Wysyła mniej żądań",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "Jej pakiet jest mniejszy",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "Podsumuj tę stronę",
+    "description": "Runtime interface message onboarding.preview.user"
+  },
+  "runtime_onboarding_skip": {
+    "message": "Pomiń",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "Zacznij rozmowę",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "Krok {current} z {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "Jak Hermes wyświetla swoje odpowiedzi.",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "Wybierz styl odpowiedzi",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "Kolory panelu bocznego i pełnej karty.",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "Wybierz motyw",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
+  "runtime_onboarding_welcome_body": {
+    "message": "Skonfigurujmy go. Zajmie to około minuty.",
+    "description": "Runtime interface message onboarding.welcome.body"
+  },
+  "runtime_onboarding_welcome_greeting": {
+    "message": "Witaj",
+    "description": "Runtime interface message onboarding.welcome.greeting"
+  },
+  "runtime_onboarding_welcome_skip": {
+    "message": "Pomiń konfigurację",
+    "description": "Runtime interface message onboarding.welcome.skip"
+  },
+  "runtime_onboarding_welcome_start": {
+    "message": "Zaczynajmy",
+    "description": "Runtime interface message onboarding.welcome.start"
+  },
+  "runtime_onboarding_welcome_title": {
+    "message": "Witaj w Hermes Browser",
+    "description": "Runtime interface message onboarding.welcome.title"
+  },
+  "runtime_pairing_approve_below": {
+    "message": "Zatwierdź połączenie poniżej.",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "Parowanie zostało odrzucone.",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Zatwierdź połączenie z Hermes",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "Otwórz w karcie",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "Nie przyznano pozwolenia na korzystanie z mikrofonu.\n\n{error}\n\nKliknij Otwórz ustawienia mikrofonu, ustaw Mikrofon na Zezwalaj na Hermes Browser Extension, wróć tutaj i spróbuj ponownie.",
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Stan uprawnień do mikrofonu: {state}. Jeśli Twoja przeglądarka wyświetla to jako zablokowane, otwórz ustawienia mikrofonu i ustaw Mikrofon na Zezwalaj na Hermes Browser Extension .",
+    "message": "Stan uprawnień do mikrofonu: {state}. Jeśli Twoja przeglądarka wyświetla to jako zablokowane, otwórz ustawienia mikrofonu i ustaw Mikrofon na Zezwalaj na Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -1887,12 +2839,632 @@
     "message": "Używa {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
   },
+  "runtime_projects_back": {
+    "message": "Wstecz",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "Anuluj",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_add_folder": {
+    "message": "Dodaj folder",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "Dodaj",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
+  "runtime_projects_create_creating": {
+    "message": "Tworzenie…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "Utworzono projekt {name}.",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "Utworzono projekt {name}. Twój pomysł jest gotowy do zapisania jako IDEA.md.",
+    "description": "Runtime interface message projects.create.done_idea"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "Wpisz nazwę projektu.",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "Ten folder już należy do projektu {project}.",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "Użyj ścieżki bezwzględnej na hoście bramy: zaczyna się od ukośnika, litery dysku lub ~.",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "Wpisz folder projektu na hoście bramy.",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_folders": {
+    "message": "Foldery",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "Pomysł (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "Nie udało się wygenerować pomysłu. {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "Wygeneruj pomysł",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "Generowanie…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "Opcjonalne. Po utworzeniu projektu otworzy się sesja w jego pierwszym folderze z gotowym tekstem, aby Hermes zapisał go jako IDEA.md.",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "O czym jest ten projekt? Jednowierszowe podsumowanie i kilka celów.",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
+  "runtime_projects_create_name": {
+    "message": "Nazwa projektu",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "Brak folderów. Dodaj folder, w którym pracuje ten projekt.",
+    "description": "Runtime interface message projects.create.no_folders"
+  },
+  "runtime_projects_create_path": {
+    "message": "Folder na hoście bramy",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "Ta ścieżka znajduje się na maszynie, na której działa Hermes ({host}), a nie na tym komputerze. Wyszukaj ją lub wpisz ścieżkę.",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "główny",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "Usuń {folder}",
+    "description": "Runtime interface message projects.create.remove_folder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "Utwórz projekt",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "brama",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "Nowy projekt",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "Użyj „{name}”",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "Projekt o nazwie {name} już istnieje ({folder}). Projekty rozróżnia się po folderze, ale inna nazwa jest łatwiejsza do odróżnienia.",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "Zamknij",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "Projekt grupuje sesje działające w folderze na komputerze, na którym działa Hermes. Utwórz pierwszy, aby zacząć.",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "Brak projektów",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "Połączenie z Hermes zostało utracone.",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes nie mógł dokończyć żądania.",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes odrzucił tę wartość.",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes odpowiedział czymś, czego to rozszerzenie nie rozumie.",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes nie zwrócił projektu, który miał utworzyć.",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "Ten projekt już nie istnieje.",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "Ten profil nie jest już dostępny w bramie.",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes nie odpowiedział na czas.",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "Projekty napotkały problem",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "Folder na hoście bramy:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "Wykryte foldery",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "Start",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "Projekty",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "Nie zapisuj",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "Otwórz sesję w {folder} z gotowym pomysłem. Wyślij go, a Hermes zapisze tam IDEA.md.",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "Twój pomysł nie został jeszcze zapisany",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "Utwórz w bieżącym folderze plik o nazwie IDEA.md z dokładnie poniższym tekstem i niczego poza tym nie zmieniaj.\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "Zapisz jako IDEA.md",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "Otwarto sesję w {name}. Wyślij wiadomość, aby zapisać IDEA.md.",
+    "description": "Runtime interface message projects.idea.started"
+  },
+  "runtime_projects_loading": {
+    "message": "Wczytywanie projektów…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "Wczytywanie sesji tego projektu…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "Przenieś",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "Przenieś {title} do projektu",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "Przenieś do projektu",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "Sesja już jest w {cwd}.",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes odrzucił przeniesienie, bo sesja jest zajęta. Poczekaj, aż tura się skończy, albo ją zatrzymaj, i spróbuj ponownie.",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes odrzucił przeniesienie, bo sesja jest kompaktowana. Spróbuj ponownie po zakończeniu.",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "Sprawdź ponownie",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "Sprawdź folder",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "Pytanie Hermes…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "W międzyczasie sesję zmieniło coś innego, więc przeniesienie nie zostało zastosowane.",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "bieżący",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "Bieżący folder:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes nie zezwolił na to przeniesienie dla Twojego logowania lub profilu.",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "Przenieś do",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "Przeniesiono. Hermes podaje folder sesji jako {cwd}.",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "Przeniesienie sesji zmienia jej przestrzeń roboczą i może zmienić folder, w którym działają jej polecenia. Sesja należy do projektu ze względu na swój folder; nic nie jest zapisywane w tej przeglądarce.",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes nie mógł przenieść sesji. {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "Ten folder należy do projektu {name}.",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "Ten folder nie należy do żadnego projektu, więc sesja pojawi się w sekcji Start.",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "Folder na hoście bramy",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "Połączenie zerwało się, zanim Hermes potwierdził. Przeniesienie mogło się odbyć lub nie, więc sprawdź ponownie, zanim cokolwiek przeniesiesz.",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "Ten folder nie jest katalogiem na hoście bramy Hermes.",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "Poproś Hermes o przeniesienie mimo to",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "W tej sesji trwa tura",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "Przeniesienie zmienia folder, w którym działają jej polecenia, a Hermes odrzuca przeniesienie, dopóki tura jest aktywna. Nic jeszcze nie zmieniono.",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "Przenoszenie…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes jeszcze nie zastosował przeniesienia. Sprawdź ponownie, aby odczytać sesję; przeniesienie jest ponawiane tylko wtedy, gdy nic nie zastosowano.",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "Nie udało się odczytać Hermes, więc nic nie wysłano.",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "Inny folder…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "Przeniesienie sesji do folderu, który nie należy do żadnego projektu, wyjmuje ją z jej projektu.",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "Użyj ścieżki bezwzględnej na hoście bramy: zaczyna się od ukośnika, litery dysku lub ~.",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "Wpisz folder na hoście bramy.",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "Sesja",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "Sesja zmieniła się podczas przenoszenia, więc nic nie zostało przeniesione. Otwórz przenoszenie ponownie, aby użyć jej najnowszego stanu.",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "Przenieś do {name}",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "Przenieś do projektu",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes przyjął przeniesienie, ale folder sesji odczytano jako {cwd}, a nie ten, o który prosiłeś. Sprawdź sesję, zanim jej zaufasz.",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "Nowy projekt",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "Nowa sesja w tym projekcie",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "Uruchamia sesję działającą w folderze tego projektu.",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "Nie udało się uruchomić sesji w tym projekcie. {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes nie uruchomił sesji.",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "Nowa sesja w projekcie {name}",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "Żaden projekt nie pasuje do wyszukiwania.",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "Przeglądaj foldery…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "Wybierz ten folder",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "Folder:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "Folder domyślny",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "Brak folderów.",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "Nie udało się odczytać tego folderu. {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "Filtruj foldery",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "Przejdź",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "Foldery na maszynie, na której działa Hermes ({host}), a nie na tym komputerze.",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "Katalog domowy",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "Odczytywanie folderów…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "Ścieżka folderu",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "Zacznij od",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "Wybierz folder",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "Wyświetlono pierwsze {count} folderów. Wpisz w filtrze, aby znaleźć resztę.",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "Albo wpisz ścieżkę",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "Ta brama nie może teraz wyświetlić swoich folderów. Wpisz zamiast tego ścieżkę folderu poniżej.",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "Poziom wyżej",
+    "description": "Runtime interface message projects.picker.up"
+  },
+  "runtime_projects_reason_code": {
+    "message": "Powód: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "Odśwież projekty",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "Spróbuj ponownie",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "Profil {profile} na {host}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "Szukaj projektów",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "Szukaj w sesjach tego projektu",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} sesji",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "Uruchom jedną powyżej albo przenieś tu istniejącą sesję z Ostatnich.",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "Brak sesji w tym projekcie",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "Żadna sesja w tym projekcie nie pasuje do wyszukiwania.",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "Sesje",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "Widok sesji",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "Projekty",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "Ostatnie",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_account_sign_in": {
+    "message": "Projekty wymagają na tej bramie logowania kontem Hermes. Użyj „Zaloguj się kontem Hermes” i spróbuj ponownie.",
+    "description": "Runtime interface message projects.unavailable.account_sign_in"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "Połączona brama Hermes odpowiedziała „method not found” (-32601) dla {method}.",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "Ta brama Hermes nie ogłosiła autorytetu sesji, więc projekty i przenoszenie sesji są niedostępne. Zaktualizuj Hermes do wersji z kanonicznymi zmianami sesji.",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "Projekty są niedostępne, dopóki WebSocket panelu Hermes nie zostanie połączony.",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "Ostatnie nadal działają.",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "Projekty wymagają WebSocketu panelu Hermes. To połączenie dociera tylko do REST API.",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "Projekty nie są tu dostępne",
+    "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web jest wyłączony na tej bramie, więc Projekty nie mają gniazda sesji. Ustaw webapp.enabled na true w config.yaml, uruchom hermes gateway restart i spróbuj ponownie.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
+  },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Projekty wymagają logowania do Hermes Web. Otwórz Hermes Web raz (uruchom hermes webapp) i spróbuj ponownie.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "Dymki po obu stronach",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "Ty i Hermes w osobnych dymkach, jak w komunikatorze.",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "Gdzie wiadomości znajdują się w czacie.",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "Układ czatu",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "Tylko dymek użytkownika",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "Twoje wiadomości w dymku, a odpowiedzi Hermesa jako zwykły tekst.",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "Uruchom ponownie konfigurację początkową",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Wybierz ponownie krok po kroku motyw, styl odpowiedzi i układ czatu.",
+    "description": "Runtime interface message responses.setup_again_description"
+  },
+  "runtime_responses_style_description": {
+    "message": "Jak Hermes wyświetla swoje odpowiedzi.",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "Styl odpowiedzi",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "Zwykły tekst",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "Same słowa, bez formatowania.",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "Tekst sformatowany",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "Sformatowany Markdown: nagłówki, listy i kod.",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "Karty, tabele i wykresy, gdy są pomocne.",
+    "description": "Runtime interface message responses.style.vivid_hint"
+  },
   "runtime_run_release": {
     "message": "Release",
     "description": "Runtime interface message run.release"
   },
   "runtime_run_release_detail": {
-    "message": "Browser released the composer without Hermes confirming the stop. Check the session before sending another message.",
+    "message": "Rozszerzenie zwolniło pole wiadomości bez potwierdzenia zatrzymania przez Hermes. Sprawdź sesję przed wysłaniem kolejnej wiadomości.",
     "description": "Runtime interface message run.release_detail"
   },
   "runtime_run_stop": {
@@ -1908,48 +3480,44 @@
     "description": "Runtime interface message run.stop_controller_toast"
   },
   "runtime_run_stop_controller_unreachable": {
-    "message": "Browser could not reach Hermes Control to cancel pending browser actions.",
+    "message": "Rozszerzenie nie mogło połączyć się ze Sterowaniem Hermes, aby anulować oczekujące akcje przeglądarki.",
     "description": "Runtime interface message run.stop_controller_unreachable"
   },
   "runtime_run_stop_unconfirmed_no_run_id": {
-    "message": "Hermes has not reported a run id for this turn, so Browser cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.",
+    "message": "Hermes nie zgłosił identyfikatora uruchomienia dla tej tury, więc rozszerzenie nie może potwierdzić, że uruchomienie zostało zatrzymane. Moduł zapisu sesji i wiadomości w kolejce pozostają wstrzymane, dopóki Hermes nie potwierdzi stanu końcowego.",
     "description": "Runtime interface message run.stop_unconfirmed_no_run_id"
   },
   "runtime_run_stop_unconfirmed_title": {
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "Tryb szybki {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}. Zmień opcje modelu i środowiska wykonawczego.",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "Opcje środowiska wykonawczego",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "Opcje środowiska wykonawczego: {summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "{effort} rozumowanie",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "Myślenie wyłączone",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "Myślenie {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "Skopiuj identyfikator sesji dla {title}",
     "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_legacy_continue_copy": {
+    "message": "Kontynuuj w kopii",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes nie mógł skopiować tego czatu, więc Twoja wiadomość nie została wysłana. Rozpocznij nowy czat, aby kontynuować. Twoja wiadomość nadal jest w polu.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "Kopiowanie czatu…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "Rozpocznij nowy czat",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "Ten czat został rozpoczęty przez starszą wersję Hermes Browser Extension, a ta brama nie przyjmuje już w nim nowych wiadomości. Twoja wiadomość nie została wysłana. Możesz kontynuować w kopii czatu.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "Ten czat został rozpoczęty przez starszą wersję Hermes Browser Extension, a ta brama nie przyjmuje już w nim nowych wiadomości. Nie można go tu skopiować, więc rozpocznij nowy czat, aby kontynuować. Twoja wiadomość nadal jest w polu.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
@@ -1959,10 +3527,6 @@
     "message": "+ Nowa sesja Hermes Browser Extension",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "Otwieranie {title}",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -1971,13 +3535,17 @@
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
   },
-  "runtime_session_rail_save_failed": {
-    "message": "Zapisanie listy sesji nie powiodło się: {error}",
-    "description": "Runtime interface message session.rail_save_failed"
-  },
   "runtime_session_rename_named": {
     "message": "Zmień nazwę sesji {title}",
     "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_session_replay_truncated": {
+    "message": "Historia została obcięta, ponowne wczytywanie",
+    "description": "Runtime interface message session.replay.truncated"
+  },
+  "runtime_session_row_model": {
+    "message": "Model: {model}",
+    "description": "Runtime interface message session.row_model"
   },
   "runtime_settings_back_to_top": {
     "message": "Do góry",
@@ -2019,6 +3587,10 @@
     "message": "Kategorie",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "Wróć do kategorii",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "Brama, profil agenta i sposób, w jaki ta przeglądarka łączy się z Hermes.",
     "description": "Runtime interface message settings.categories.connections.summary"
@@ -2036,7 +3608,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Wszystko, co potrafi Hermes Browser, pogrupowane według przeznaczenia.",
+    "message": "Wszystko, co potrafi Hermes Browser Extension, pogrupowane według przeznaczenia.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -2074,6 +3646,30 @@
   "runtime_settings_categories_voice_title": {
     "message": "Głos i aktywacja",
     "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_context_depth_full": {
+    "message": "Pełna",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "Największa treść strony",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "Minimalna",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "Zaznaczenie i krótki fragment",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "Normalna",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "Dobre ustawienie domyślne",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
   },
   "runtime_settings_custom_theme_help": {
     "message": "Dodaj więcej motywów: przeglądaj motywy VS Code, zaimportuj plik motywu lub poproś agenta o zaprojektowanie własnego. Zainstalowane motywy pojawią się w siatce powyżej.",
@@ -2195,6 +3791,62 @@
     "message": "· publiczna alfa / wczytaj rozpakowane rozszerzenie",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Nie zapisano: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Wygląd, agenci oraz przełączniki uprawnień i środowiska uruchomieniowego działają od razu po zmianie. Wszystko inne zaczyna działać po naciśnięciu Zapisz.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Porty agentów muszą być liczbami od 1 do 65535, oddzielonymi przecinkami.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Zapisano. Hermes jest połączony.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Zapisano, ale nie udało się połączyć z Hermes: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Te adresy źródeł modeli są nieprawidłowe: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "Automatycznie",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "Napisy YouTube, potem strona",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "Własna",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "Twoja własna usługa",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "Nigdy nie pobieraj transkrypcji",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "Transkrypcje YouTube",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "URL usługi",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "Hermes dodaje identyfikator filmu do tego adresu.",
+    "description": "Runtime interface message settings.transcript.url_hint"
+  },
   "runtime_status_connection_not_responding": {
     "message": "{summary} nie odpowiada. Uruchom Hermes Desktop/Gateway, a następnie połącz się ponownie.",
     "description": "Runtime interface message status.connection_not_responding"
@@ -2224,7 +3876,7 @@
     "description": "Runtime interface message status.profile_selected_restart"
   },
   "runtime_status_profile_switch_unavailable": {
-    "message": "{error}. Browser użyje aktualnie uruchomionego profilu Hermes.",
+    "message": "{error}. Rozszerzenie użyje aktualnie uruchomionego profilu Hermes.",
     "description": "Runtime interface message status.profile_switch_unavailable"
   },
   "runtime_tasks_summary": {
@@ -2300,7 +3952,7 @@
     "description": "Runtime interface message ui.adjust"
   },
   "runtime_ui_adjust_extension_text_without_changing_browser_zoom": {
-    "message": "Adjust text across Hermes Browser surfaces without changing browser zoom.",
+    "message": "Dostosuj tekst w całym rozszerzeniu bez zmiany powiększenia przeglądarki.",
     "description": "Runtime interface message ui.adjust.extension.text.without.changing.browser.zoom"
   },
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
@@ -2632,11 +4284,11 @@
     "description": "Runtime interface message ui.browser.local.fallback"
   },
   "runtime_ui_browser_update_review": {
-    "message": "Recenzja aktualizacji przeglądarki",
+    "message": "Recenzja aktualizacji rozszerzenia",
     "description": "Runtime interface message ui.browser.update.review"
   },
   "runtime_ui_browser_updates": {
-    "message": "Aktualizacje przeglądarki",
+    "message": "Aktualizacje rozszerzenia",
     "description": "Runtime interface message ui.browser.updates"
   },
   "runtime_ui_build": {
@@ -2728,7 +4380,7 @@
     "description": "Runtime interface message ui.checking"
   },
   "runtime_ui_checking_browser_main": {
-    "message": "Sprawdzam główną przeglądarkę…",
+    "message": "Sprawdzam gałąź main rozszerzenia…",
     "description": "Runtime interface message ui.checking.browser.main"
   },
   "runtime_ui_checking_hermes": {
@@ -2784,7 +4436,7 @@
     "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
   },
   "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
-    "message": "Wybierz sposób połączenia tej sesji przeglądarki z Hermes.",
+    "message": "Wybierz sposób połączenia rozszerzenia z Hermes.",
     "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
   },
   "runtime_ui_choose_where_to_send": {
@@ -2792,7 +4444,7 @@
     "description": "Runtime interface message ui.choose.where.to.send"
   },
   "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
-    "message": "Wybierz profil agenta Hermes, którego przeglądarka powinna używać, gdy brama lokalna udostępnia profile.",
+    "message": "Wybierz profil agenta Hermes, którego rozszerzenie powinno używać, gdy brama lokalna udostępnia profile.",
     "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
   },
   "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
@@ -2804,7 +4456,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Niektóre przeglądarki blokują przechwytywanie mikrofonu na bocznych paskach rozszerzeń. Ta widoczna karta rozszerzenia nagrywa z tego samego źródła rozszerzenia Hermes, gdy dostępne jest Hermes STT, lub wykorzystuje zastępczą mowę przeglądarki, gdy podłączone środowisko wykonawcze nie udostępnia transkrypcji audio.",
+    "message": "Niektóre przeglądarki blokują przechwytywanie mikrofonu na bocznych paskach rozszerzeń. Ta widoczna karta rozszerzenia nagrywa z tego samego źródła co Hermes Browser Extension, gdy dostępne jest Hermes STT, lub wykorzystuje zastępczą mowę przeglądarki, gdy podłączone środowisko wykonawcze nie udostępnia transkrypcji audio.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -3380,7 +5032,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "Nie można przeprowadzić migracji sesji przeglądarki",
+    "message": "Nie można przeprowadzić migracji sesji",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -3887,37 +5539,33 @@
     "message": "Grupa",
     "description": "Runtime interface message ui.group"
   },
-  "runtime_ui_group_presence_all_replied": {
-    "message": "Wszyscy odpowiedzieli",
-    "description": "Runtime interface message ui.group.presence.all.replied"
+  "runtime_ui_group_working_many": {
+    "message": "{first}, {second} i jeszcze {count} pracują…",
+    "description": "Runtime interface message ui.group.working.many"
   },
-  "runtime_ui_group_presence_done_failed": {
-    "message": "Gotowe · {count} nie mogło odpowiedzieć",
-    "description": "Runtime interface message ui.group.presence.done.failed"
+  "runtime_ui_group_working_three": {
+    "message": "{first}, {second} i {third} pracują…",
+    "description": "Runtime interface message ui.group.working.three"
   },
-  "runtime_ui_group_presence_done_passed": {
-    "message": "Gotowe · {count} spasowało",
-    "description": "Runtime interface message ui.group.presence.done.passed"
+  "runtime_ui_group_working_two": {
+    "message": "{first} i {second} pracują…",
+    "description": "Runtime interface message ui.group.working.two"
   },
-  "runtime_ui_group_presence_reply_fail": {
-    "message": "{replied} odpowiedziało, {failed} nie mógł",
-    "description": "Runtime interface message ui.group.presence.reply.fail"
+  "runtime_ui_group_working_typing": {
+    "message": "Pisze…",
+    "description": "Runtime interface message ui.group.working.typing"
   },
-  "runtime_ui_group_presence_replying": {
-    "message": "{name} odpowiada",
-    "description": "Runtime interface message ui.group.presence.replying"
+  "runtime_ui_group_working_using": {
+    "message": "Używa {tool}…",
+    "description": "Runtime interface message ui.group.working.using"
   },
-  "runtime_ui_group_presence_typing": {
-    "message": "{name} pisze",
-    "description": "Runtime interface message ui.group.presence.typing"
+  "runtime_ui_group_working_working": {
+    "message": "Pracuje…",
+    "description": "Runtime interface message ui.group.working.working"
   },
-  "runtime_ui_group_presence_using": {
-    "message": "{name} używa {tool}",
-    "description": "Runtime interface message ui.group.presence.using"
-  },
-  "runtime_ui_group_presence_waiting": {
-    "message": "{count} oczekuje",
-    "description": "Runtime interface message ui.group.presence.waiting"
+  "runtime_ui_group_working_wrapping": {
+    "message": "Kończy…",
+    "description": "Runtime interface message ui.group.working.wrapping"
   },
   "runtime_ui_handing_update_to_hermes": {
     "message": "Przekazanie aktualizacji do Hermes",
@@ -4512,7 +6160,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Dostęp do mikrofonu jest zablokowany dla Hermes Browser.",
+    "message": "Dostęp do mikrofonu jest zablokowany dla Hermes Browser Extension.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -4604,7 +6252,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "Nowy czat w przeglądarce",
+    "message": "Nowy czat",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -4668,7 +6316,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "Tutaj nie jest zapisywany żaden dźwięk. Zezwolenie pozwala Hermes Browser nagrywać Twój głos tylko po kliknięciu przycisku mikrofonu.",
+    "message": "Tutaj nie jest zapisywany żaden dźwięk. Zezwolenie pozwala Hermes Browser Extension nagrywać Twój głos tylko po kliknięciu przycisku mikrofonu.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -4868,15 +6516,15 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Otwórz odpowiednią sesję w panelu bocznym Hermes Browser.",
+    "message": "Otwórz odpowiednią sesję w panelu bocznym Hermes Browser Extension.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Otwórz boczny panel rozszerzenia Hermes z paska narzędzi przeglądarki.",
+    "message": "Otwórz boczny panel Hermes Browser Extension z paska narzędzi przeglądarki.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
-    "message": "Otwórz zachowaną sesję Assist w bocznym panelu przeglądarki lub w Hermes Web.",
+    "message": "Otwórz zachowaną sesję Assist w panelu bocznym rozszerzenia lub w Hermes Web.",
     "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
   },
   "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
@@ -4912,7 +6560,7 @@
     "description": "Runtime interface message ui.optional"
   },
   "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
-    "message": "Tylko wykrywanie opcjonalne: przeglądarka sonduje każdy punkt końcowy `/v1/models` zgodny z OpenAI i pokazuje dopasowania w selektorze modeli. Routing w czasie wykonywania nadal pochodzi z podłączonej bramy Hermes.",
+    "message": "Tylko wykrywanie opcjonalne: rozszerzenie sonduje każdy punkt końcowy `/v1/models` zgodny z OpenAI i pokazuje dopasowania w selektorze modeli. Routing w czasie wykonywania nadal pochodzi z podłączonej bramy Hermes.",
     "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
   },
   "runtime_ui_options": {
@@ -5060,7 +6708,7 @@
     "description": "Runtime interface message ui.preview.copy.only"
   },
   "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
-    "message": "Tryb podglądu: wczytaj tę stronę z zainstalowanego rozszerzenia Hermes Browser, aby używać połączonych ustawień Hermes i dyktowania głosowego.",
+    "message": "Tryb podglądu: wczytaj tę stronę z zainstalowanego Hermes Browser Extension, aby używać połączonych ustawień Hermes i dyktowania głosowego.",
     "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
   },
   "runtime_ui_previous": {
@@ -5088,7 +6736,7 @@
     "description": "Runtime interface message ui.profile.api.unavailable"
   },
   "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
-    "message": "Profil API niedostępny. Przeglądarka użyje aktualnie działającego profilu bramy Hermes.",
+    "message": "Profil API niedostępny. Rozszerzenie użyje aktualnie działającego profilu bramy Hermes.",
     "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
   },
   "runtime_ui_profile_ff4fc027": {
@@ -5446,14 +7094,6 @@
   "runtime_ui_room_model_note": {
     "message": "Zmiany modelu dotyczą tylko tego pokoju.",
     "description": "Runtime interface message ui.room.model.note"
-  },
-  "runtime_ui_room_next": {
-    "message": "następny",
-    "description": "Runtime interface message ui.room.next"
-  },
-  "runtime_ui_room_passed": {
-    "message": "spasował",
-    "description": "Runtime interface message ui.room.passed"
   },
   "runtime_ui_room_profile_default": {
     "message": "Domyślny profil",
@@ -5848,7 +7488,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "Rozpocznij nową sesję przeglądarki",
+    "message": "Rozpocznij nowy czat",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -6100,7 +7740,7 @@
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
-    "message": "Ta brama nie udostępnia jeszcze /v1/capabilities. Trasy specyficzne dla przeglądarki pozostaną w trybie awaryjnym.",
+    "message": "Ta brama nie udostępnia jeszcze /v1/capabilities. Trasy specyficzne dla rozszerzenia pozostaną w trybie awaryjnym.",
     "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
   },
   "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
@@ -6116,12 +7756,16 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "Ten model został wykryty z niestandardowego punktu końcowego, ale Hermes musi go udostępnić w połączonym środowisku wykonawczym, zanim przeglądarka będzie mogła kierować do niego żądania.",
+    "message": "Ten model został wykryty z niestandardowego punktu końcowego, ale Hermes musi go udostępnić w połączonym środowisku wykonawczym, zanim rozszerzenie będzie mogło kierować do niego żądania.",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "To żądanie jest powiązane z wybraną sesją przeglądarki.",
+    "message": "To żądanie jest powiązane z wybraną sesją.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_thoughts": {
+    "message": "Przemyślenia",
+    "description": "Runtime interface message ui.thoughts"
   },
   "runtime_ui_time": {
     "message": "Czas",
@@ -6268,11 +7912,11 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "Użyj bieżącej sesji aktywnej karty, utwórz nową sesję przeglądarki lub uruchom ją osobno.",
+    "message": "Użyj bieżącej sesji aktywnej karty, rozpocznij nowy czat lub uruchom ją osobno.",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Użyj tej samej palety i języka chrome co Hermes Browser.",
+    "message": "Użyj tej samej palety i języka chrome co Hermes Browser Extension.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -6552,7 +8196,7 @@
     "description": "Runtime interface message voice.permission_blocked"
   },
   "runtime_voice_settings_load_failed": {
-    "message": "Nie można załadować ustawień Hermes Browser.\n\n{error}",
+    "message": "Nie można załadować ustawień rozszerzenia.\n\n{error}",
     "description": "Runtime interface message voice.settings_load_failed"
   },
   "runtime_voice_speech_recognition_error": {
@@ -6583,16 +8227,116 @@
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
   },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
+  "runtime_webapp_assist_detail": {
+    "message": "Otwórz aplikację Hermes Web w nowej karcie.",
+    "description": "Runtime interface message webapp.assist_detail"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
+  "runtime_webapp_copy_command": {
+    "message": "Kopiuj polecenie",
+    "description": "Runtime interface message webapp.copy_command"
   },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
+  "runtime_webapp_dialog_body": {
+    "message": "Brama udostępnia Hermes Web po jego włączeniu. Na komputerze, na którym działa Hermes, uruchom te polecenia.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web jest niedostępny",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Przeczytaj przewodnik po Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Otwarto Hermes Web. Zaloguj się na tej stronie kontem z panelu.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Otwarto Hermes Web. Na tym komputerze uruchom raz hermes webapp, aby się zalogować. Karta pozostanie zalogowana.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Otwarto Hermes Web. Na tym komputerze uruchom raz hermes webapp, aby się zalogować. Potem Hermes Browser Extension utrzymuje logowanie tej przeglądarki do jej zamknięcia.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Otwarto Hermes Web, już zalogowany.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "W Hermesie, który paruje się z Hermes Browser Extension, Hermes Web, Projekty i profile botów logują się za Ciebie, bez uruchamiania czegokolwiek. W przeciwnym razie panel zachowuje logowanie Hermes Web tej przeglądarki do jej zamknięcia, po jednym hermes webapp. hermes webapp --sign-out je kończy.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Utrzymuj logowanie do Hermes Web z poziomu panelu",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Nie udało się otworzyć Hermes Web",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Otwórz Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Otwarto Hermes Web",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_opening_detail": {
+    "message": "Logowanie do Twojej aplikacji Hermes Webapp. To potrwa kilka sekund.",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "Pokaż mimo to",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Wczytywanie Hermes Web trwa dłużej niż zwykle. Być może jeszcze się uruchamia.",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_state": {
+    "message": "Logowanie",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Nadal się wczytuje",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Otwieranie Hermes Web",
+    "description": "Runtime interface message webapp.opening_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "Adres Hermes Web w Ustawieniach nie jest prawidłowym adresem http ani https.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "To połączenie jest zdalne, więc nie ma adresu do sprawdzenia. Wpisz adres Hermes Web w Ustawieniach.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "Przeglądarka nie zezwoliła Hermes Browser Extension na dostęp do tego adresu:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "Nic nie odpowiedziało pod tym adresem:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "Przy połączeniu lokalnym zostaw puste, aby automatycznie użyć http://127.0.0.1:9120 jako adresu. Dla bramy zdalnej wpisz adres, pod którym udostępnia ona Hermes Web.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Adres Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web wymaga logowania. Uruchom raz hermes webapp na tym komputerze i spróbuj ponownie.",
+    "description": "Runtime interface message webapp.sign_in_needed"
+  },
+  "runtime_webapp_try_again": {
+    "message": "Sprawdź ponownie",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "Ekstensi Hermes Browser",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Buka ekstensi Hermes Browser",
+    "message": "Buka Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Buka bilah samping Hermes Browser",
+    "message": "Buka bilah samping Hermes Browser Extension",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -34,6 +34,102 @@
   "runtime_a11y_subagent_status": {
     "message": "Status subagen Hermes",
     "description": "Runtime interface message a11y.subagent_status"
+  },
+  "runtime_account_hint": {
+    "message": "Masuk yang sama dengan yang dipakai aplikasi ponsel Hermes. Ini membuka Proyek, otoritas sesi, pemadatan konteks, dan daftar bot lengkap pada gateway yang meminta masuk, tanpa menjalankan apa pun. Keluar menghapusnya dari browser ini.",
+    "description": "Runtime interface message account.hint"
+  },
+  "runtime_account_label": {
+    "message": "Akun Hermes",
+    "description": "Runtime interface message account.label"
+  },
+  "runtime_account_notice_exchange_rejected": {
+    "message": "Gateway menolak kode masuk. Coba lagi.",
+    "description": "Runtime interface message account.notice.exchange_rejected"
+  },
+  "runtime_account_notice_failed": {
+    "message": "Proses masuk tidak selesai. Coba lagi.",
+    "description": "Runtime interface message account.notice.failed"
+  },
+  "runtime_account_notice_no_permission": {
+    "message": "Masuk memerlukan izin Anda agar Hermes Browser Extension dapat melihat di mana jendela masuk berakhir. Pilih “Masuk” lagi dan izinkan.",
+    "description": "Runtime interface message account.notice.no_permission"
+  },
+  "runtime_account_notice_no_window": {
+    "message": "Browser ini tidak dapat membuka jendela masuk.",
+    "description": "Runtime interface message account.notice.no_window"
+  },
+  "runtime_account_notice_provider_denied": {
+    "message": "Proses masuk tidak disetujui. Coba lagi.",
+    "description": "Runtime interface message account.notice.provider_denied"
+  },
+  "runtime_account_notice_session_expired": {
+    "message": "Sesi akun Hermes Anda telah berakhir. Masuk lagi.",
+    "description": "Runtime interface message account.notice.session_expired"
+  },
+  "runtime_account_notice_state_mismatch": {
+    "message": "Proses masuk itu tidak cocok dengan permintaan ini sehingga dibuang. Coba lagi.",
+    "description": "Runtime interface message account.notice.state_mismatch"
+  },
+  "runtime_account_notice_timeout": {
+    "message": "Proses masuk tidak selesai tepat waktu. Coba lagi.",
+    "description": "Runtime interface message account.notice.timeout"
+  },
+  "runtime_account_notice_unavailable": {
+    "message": "Gateway tidak dapat dijangkau saat ini. Sesi masuk Anda tetap disimpan; coba lagi sebentar lagi.",
+    "description": "Runtime interface message account.notice.unavailable"
+  },
+  "runtime_account_sign_in": {
+    "message": "Masuk dengan akun Hermes Anda",
+    "description": "Runtime interface message account.sign_in"
+  },
+  "runtime_account_sign_in_needed": {
+    "message": "Gateway ini memerlukan masuk dengan akun Hermes Anda. Buka Pengaturan > Koneksi dan pilih “Masuk dengan akun Hermes Anda”.",
+    "description": "Runtime interface message account.sign_in_needed"
+  },
+  "runtime_account_sign_out": {
+    "message": "Keluar",
+    "description": "Runtime interface message account.sign_out"
+  },
+  "runtime_account_signed_in_as": {
+    "message": "Masuk sebagai {name} ({provider})",
+    "description": "Runtime interface message account.signed_in_as"
+  },
+  "runtime_account_signed_in_generic": {
+    "message": "Masuk dengan akun Hermes Anda",
+    "description": "Runtime interface message account.signed_in_generic"
+  },
+  "runtime_account_signed_in_title": {
+    "message": "Sudah masuk ke Hermes",
+    "description": "Runtime interface message account.signed_in_title"
+  },
+  "runtime_account_status_checking": {
+    "message": "Memeriksa apakah gateway ini menerima masuk dengan akun Hermes.",
+    "description": "Runtime interface message account.status_checking"
+  },
+  "runtime_account_status_signed_out": {
+    "message": "Belum masuk. Gateway ini meminta masuk dengan akun Hermes.",
+    "description": "Runtime interface message account.status_signed_out"
+  },
+  "runtime_account_status_waiting": {
+    "message": "Menunggu Anda menyelesaikan proses masuk di jendela yang terbuka.",
+    "description": "Runtime interface message account.status_waiting"
+  },
+  "runtime_account_unavailable_no_native_flow": {
+    "message": "Gateway ini meminta masuk tetapi tidak menyediakan masuk untuk aplikasi. Perbarui Hermes ke versi yang menyediakannya.",
+    "description": "Runtime interface message account.unavailable.no_native_flow"
+  },
+  "runtime_account_unavailable_no_origin": {
+    "message": "Masuk dengan akun Hermes memerlukan gateway https, atau gateway lokal yang dilindungi proses masuk.",
+    "description": "Runtime interface message account.unavailable.no_origin"
+  },
+  "runtime_account_unavailable_not_gated": {
+    "message": "Gateway ini terbuka di komputer ini dan tidak meminta masuk, jadi tidak ada akun Hermes yang dipakai di sini. Pemasangan dengan Hermes Browser Extension, atau masuk milik Hermes Web sendiri, mencakup Proyek sebagai gantinya.",
+    "description": "Runtime interface message account.unavailable.not_gated"
+  },
+  "runtime_account_unavailable_unreachable": {
+    "message": "Tidak dapat menjangkau gateway ini untuk memeriksa proses masuk.",
+    "description": "Runtime interface message account.unavailable.unreachable"
   },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
@@ -380,15 +476,31 @@
     "description": "Runtime interface message bot_mode.density_compact"
   },
   "runtime_bot_mode_dialog_label": {
-    "message": "Mode Bot Hermes Browser",
+    "message": "Mode Bot",
     "description": "Runtime interface message bot_mode.dialog_label"
+  },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "Pesan sebelumnya dengan {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "Pesan sebelumnya tidak dapat dimuat. Anda masih dapat membuka “{title}” dari Regular Sessions.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "Memuat pesan sebelumnya…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes memindahkan obrolan Anda sebelumnya dengan {name} ke samping sebagai “{title}” dan memulai obrolan ini, jadi {name} tidak melihat pesan-pesan ini di sini.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
   },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"
   },
   "runtime_bot_mode_enable_label": {
-    "message": "Aktifkan Mode Bot Hermes Browser",
+    "message": "Aktifkan Mode Bot",
     "description": "Runtime interface message bot_mode.enable_label"
   },
   "runtime_bot_mode_face_blobatar": {
@@ -438,6 +550,14 @@
   "runtime_bot_mode_group_create": {
     "message": "Pilih setidaknya satu agen untuk obrolan grup ini.",
     "description": "Runtime interface message bot_mode.group_create"
+  },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes tidak menjawab, jadi mungkin pesan ini sudah diterimanya. Periksa ruang sebelum mengirimnya lagi.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Pesan Anda kembali ke kotak tulis. Jika dikirim lagi tanpa perubahan dalam 10 menit, pesan tidak diposting dua kali.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
   },
   "runtime_bot_mode_group_field_members": {
     "message": "Pilih agen yang ikut serta dalam obrolan grup ini.",
@@ -504,7 +624,7 @@
     "description": "Runtime interface message bot_mode.leave_confirm"
   },
   "runtime_bot_mode_leave_detail": {
-    "message": "Memulai sesi ekstensi baru akan membawa Anda kembali ke ruang kerja Hermes Browser reguler.",
+    "message": "Memulai sesi ekstensi baru akan membawa Anda kembali ke ruang kerja reguler Anda.",
     "description": "Runtime interface message bot_mode.leave_detail"
   },
   "runtime_bot_mode_leave_kicker": {
@@ -558,10 +678,6 @@
   "runtime_bot_mode_off_hint_sidepanel": {
     "message": "Nonaktif secara default. Menggunakan instans Hermes yang saat ini terhubung.",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
-  },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "Nonaktif secara default. Terbatas pada instans Hermes yang saat ini terhubung.",
-    "description": "Runtime interface message bot_mode.off_hint_web"
   },
   "runtime_bot_mode_open_chat": {
     "message": "Buka Bot Chat",
@@ -632,16 +748,20 @@
     "description": "Runtime interface message bot_mode.return_to_sessions"
   },
   "runtime_bot_mode_return_to_sessions_title": {
-    "message": "Return to regular Hermes Browser sessions",
+    "message": "Kembali ke sesi reguler Anda",
     "description": "Runtime interface message bot_mode.return_to_sessions_title"
   },
   "runtime_bot_mode_roster_label": {
     "message": "Agen Hermes",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "Agen Hermes Web",
-    "description": "Runtime interface message bot_mode.roster_label_web"
+  "runtime_bot_mode_roster_names_only": {
+    "message": "Foto profil dan detail lengkap bot memerlukan dasbor Hermes atau login di gateway ini.",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "Buka pengaturan koneksi",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
   },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
@@ -666,10 +786,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "Mengaktifkan daftar profil opsional dan navigator Bot Chat kanonis untuk browser ini.",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "Mengaktifkan rel agen opsional dan navigasi Bot Chat kanonis di browser ini.",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "Agen & Mode Bot",
@@ -931,6 +1047,10 @@
     "message": "Mulai atau pilih sesi Hermes sebelum mengaktifkan Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "Kontrol Hermes tidak tersedia di Hermes ini. Diperlukan Hermes dengan kontrol ekstensi browser.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "Terapkan cakupan yang dipilih ke tab yang dapat dikendalikan Hermes.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1007,6 +1127,22 @@
     "message": "Chromium memberi ekstensi ini akses debugger saat dipasang atau diperbarui. Hermes hanya menggunakan debugger pada tab yang Anda hubungkan, tidak pernah memunculkan jendela browser, dan memblokir kredensial, MFA, kolom pembayaran, dan teks rahasia.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes tidak bertindak di sana: titik itu berada di dalam bingkai pada halaman yang tidak dapat dibaca Hermes.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes tidak mengambil tangkapan layar: sebuah bingkai di halaman ini berada di halaman yang tidak dapat dibaca Hermes.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes tidak mengambil tangkapan layar: halaman berpindah ke halaman yang tidak ditangkap Hermes.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes tidak mengambil tangkapan layar: Firefox memerlukan izin tambahan. Gunakan Izinkan tangkapan layar di Firefox.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Jeda",
     "description": "Runtime interface message browser_control.pause"
@@ -1078,6 +1214,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Siap",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_state_waiting": {
+    "message": "Menunggu",
+    "description": "Runtime interface message browser_control.state_waiting"
   },
   "runtime_browser_control_status_on": {
     "message": "Aktif",
@@ -1151,9 +1291,405 @@
     "message": "Nonaktifkan",
     "description": "Runtime interface message browser_control.turn_off"
   },
+  "runtime_browser_control_unsupported": {
+    "message": "Kontrol Hermes tidak tersedia di Hermes ini",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "Diperlukan Hermes dengan kontrol ekstensi browser.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
+  },
   "runtime_browser_control_waiting": {
     "message": "Menunggu Hermes",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "Kontrol Hermes terhubung setelah pesan pertama obrolan ini terkirim.",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "Menunggu obrolan ini",
+    "description": "Runtime interface message browser_control.waiting_title"
+  },
+  "runtime_capability_feature_approvalEvents": {
+    "message": "Peristiwa persetujuan",
+    "description": "Runtime interface message capability.feature.approvalEvents"
+  },
+  "runtime_capability_feature_audioTranscription": {
+    "message": "Transkripsi suara",
+    "description": "Runtime interface message capability.feature.audioTranscription"
+  },
+  "runtime_capability_feature_auth": {
+    "message": "Autentikasi",
+    "description": "Runtime interface message capability.feature.auth"
+  },
+  "runtime_capability_feature_browserCompanionPlugin": {
+    "message": "Plugin Hermes Browser Extension",
+    "description": "Runtime interface message capability.feature.browserCompanionPlugin"
+  },
+  "runtime_capability_feature_browserContextProvider": {
+    "message": "Browser Context Protocol",
+    "description": "Runtime interface message capability.feature.browserContextProvider"
+  },
+  "runtime_capability_feature_browserContextStatus": {
+    "message": "Status konteks browser",
+    "description": "Runtime interface message capability.feature.browserContextStatus"
+  },
+  "runtime_capability_feature_browserContextUpload": {
+    "message": "Unggah konteks browser",
+    "description": "Runtime interface message capability.feature.browserContextUpload"
+  },
+  "runtime_capability_feature_browserPairing": {
+    "message": "Pemasangan browser",
+    "description": "Runtime interface message capability.feature.browserPairing"
+  },
+  "runtime_capability_feature_health": {
+    "message": "Kesehatan",
+    "description": "Runtime interface message capability.feature.health"
+  },
+  "runtime_capability_feature_imageSessionAttach": {
+    "message": "Lampiran gambar (sesi)",
+    "description": "Runtime interface message capability.feature.imageSessionAttach"
+  },
+  "runtime_capability_feature_imageUpload": {
+    "message": "Unggah gambar (HTTP)",
+    "description": "Runtime interface message capability.feature.imageUpload"
+  },
+  "runtime_capability_feature_mediaRead": {
+    "message": "Pembacaan gambar tersimpan",
+    "description": "Runtime interface message capability.feature.mediaRead"
+  },
+  "runtime_capability_feature_models": {
+    "message": "Model",
+    "description": "Runtime interface message capability.feature.models"
+  },
+  "runtime_capability_feature_pluginActions": {
+    "message": "Aksi plugin",
+    "description": "Runtime interface message capability.feature.pluginActions"
+  },
+  "runtime_capability_feature_profiles": {
+    "message": "Profil",
+    "description": "Runtime interface message capability.feature.profiles"
+  },
+  "runtime_capability_feature_projects": {
+    "message": "Proyek",
+    "description": "Runtime interface message capability.feature.projects"
+  },
+  "runtime_capability_feature_runs": {
+    "message": "Runs API",
+    "description": "Runtime interface message capability.feature.runs"
+  },
+  "runtime_capability_feature_runSteer": {
+    "message": "Pengarahan run",
+    "description": "Runtime interface message capability.feature.runSteer"
+  },
+  "runtime_capability_feature_sessionAuthority": {
+    "message": "Otoritas sesi",
+    "description": "Runtime interface message capability.feature.sessionAuthority"
+  },
+  "runtime_capability_feature_sessionCompress": {
+    "message": "Pemadatan konteks",
+    "description": "Runtime interface message capability.feature.sessionCompress"
+  },
+  "runtime_capability_feature_sessionContext": {
+    "message": "Status konteks",
+    "description": "Runtime interface message capability.feature.sessionContext"
+  },
+  "runtime_capability_feature_sessionModelLock": {
+    "message": "Kunci model per sesi",
+    "description": "Runtime interface message capability.feature.sessionModelLock"
+  },
+  "runtime_capability_feature_sessions": {
+    "message": "Sesi",
+    "description": "Runtime interface message capability.feature.sessions"
+  },
+  "runtime_capability_feature_skills": {
+    "message": "Skill",
+    "description": "Runtime interface message capability.feature.skills"
+  },
+  "runtime_capability_meta_checked": {
+    "message": "Diperiksa {age}",
+    "description": "Runtime interface message capability.meta.checked"
+  },
+  "runtime_capability_meta_never": {
+    "message": "Belum pernah diperiksa",
+    "description": "Runtime interface message capability.meta.never"
+  },
+  "runtime_capability_meta_source": {
+    "message": "Sumber: {source}",
+    "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_account_sign_in": {
+    "message": "Gateway ini meminta masuk dengan akun Hermes. Masuk dari Pengaturan > Koneksi untuk membuka soket sesinya.",
+    "description": "Runtime interface message capability.reason.account_sign_in"
+  },
+  "runtime_capability_reason_advertised": {
+    "message": "Diumumkan oleh gateway ini.",
+    "description": "Runtime interface message capability.reason.advertised"
+  },
+  "runtime_capability_reason_advertised_off": {
+    "message": "Gateway ini mengumumkannya sebagai nonaktif.",
+    "description": "Runtime interface message capability.reason.advertised_off"
+  },
+  "runtime_capability_reason_authority_compress": {
+    "message": "Pemadatan berjalan sebagai session.mutate dengan operasi compress, yang dilayani gateway dengan otoritas sesi.",
+    "description": "Runtime interface message capability.reason.authority_compress"
+  },
+  "runtime_capability_reason_authority_ready": {
+    "message": "gateway.ready melaporkan otoritas sesi.",
+    "description": "Runtime interface message capability.reason.authority_ready"
+  },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Gateway menolak token yang dipasangkan (HTTP {status}), sehingga plugin tidak dapat diperiksa.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Gateway ini tidak menyediakan rute status maupun daftar toolset yang dapat dibaca, jadi ekstensi tidak dapat memastikan apakah plugin pendamping dimuat. Ini tidak berarti plugin tersebut hilang.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Gateway merespons dengan HTTP {status}, sehingga plugin tidak dapat diperiksa.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Gateway tidak dapat dihubungi{detail}, sehingga plugin tidak dapat diperiksa.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Plugin pendamping dimuat dengan {presentCount} dari {expectedCount} alat, tetapi tidak menyediakan rute status, jadi ini salinan lama. Instal ulang untuk profil ini lalu mulai ulang gateway.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Tidak ada token gateway yang tersedia, sehingga plugin tidak diperiksa.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Tidak dimuat di gateway ini: rute status tidak ada dan tidak ada toolset pendamping yang terdaftar. Plugin belum terinstal, belum diaktifkan untuk profil ini, atau gateway belum dimulai ulang sejak itu. Jalankan `hermes plugins list` untuk profil ini.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Dimuat: versi {version}, profil {profile}, {toolCount} alat.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Dimuat: versi {version}, profil {profile}, {toolCount} alat. Gateway ini tidak dapat memastikan apakah toolset-nya aktif untuk server API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "Salinan lama plugin ini dimuat dengan nama sebelumnya, hermes-browser-companion. Hapus salinan itu (`hermes plugins remove hermes-browser-companion`), instal hermes-browser-extension untuk profil ini, lalu mulai ulang gateway.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
+  },
+  "runtime_capability_reason_companion_route": {
+    "message": "Tersedia melalui plugin pendamping (versi {version}), yang menyediakan rute ini di gateway ini. Hermes sendiri tidak memiliki rute seperti itu.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Dimuat (versi {version}), tetapi alat berikut tidak ada: {missing}. Instal ulang untuk profil ini lalu mulai ulang gateway.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Dimuat, tetapi toolset-nya dinonaktifkan untuk server API. Aktifkan dengan `hermes tools` atau hapus dari agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Dimuat, tetapi versinya {version} dan ekstensi ini membutuhkan {expected}. Instal ulang untuk profil ini lalu mulai ulang gateway.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
+  "runtime_capability_reason_connection_closed": {
+    "message": "Koneksi ditutup. Terakhir dikonfirmasi {age}. Ditampilkan, tidak dipakai untuk menjalankan apa pun.",
+    "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_context_socket": {
+    "message": "Dibaca lewat soket sesi Hermes: penggunaan sesi dan rincian kategori, dengan id sesi yang tersimpan.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Disajikan oleh dasbor Hermes di komputer ini, yang menerima sign-in yang disimpan panel ini. API gateway tidak mengiklankannya.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
+  },
+  "runtime_capability_reason_extension_side": {
+    "message": "Dibuat dan dikirim oleh ekstensi ini di dalam prompt. Tidak bergantung pada rute gateway.",
+    "description": "Runtime interface message capability.reason.extension_side"
+  },
+  "runtime_capability_reason_identity_changed": {
+    "message": "Koneksi, akun, atau profil berubah. Belum diperiksa lagi.",
+    "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Gambar yang ditempel disiapkan lewat soket sesi Hermes (image.attach_bytes), dan chat membacanya lewat path.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
+  },
+  "runtime_capability_reason_legacy_assumed": {
+    "message": "Diasumsikan karena /health menjawab dengan token. /v1/capabilities tidak tersedia, jadi ini belum dikonfirmasi.",
+    "description": "Runtime interface message capability.reason.legacy_assumed"
+  },
+  "runtime_capability_reason_legacy_gateway": {
+    "message": "Gateway ini tidak punya /v1/capabilities, jadi ekstensi tidak bisa melihat apa yang ditawarkannya.",
+    "description": "Runtime interface message capability.reason.legacy_gateway"
+  },
+  "runtime_capability_reason_legacy_ws_compress": {
+    "message": "Gateway dasbor ini tidak punya otoritas sesi, jadi session.compress lama yang menangani pemadatan.",
+    "description": "Runtime interface message capability.reason.legacy_ws_compress"
+  },
+  "runtime_capability_reason_method_not_found": {
+    "message": "Gateway menjawab \"method not found\" (-32601) untuk {method}.",
+    "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Belum ada soket sesi Hermes yang terbuka untuk koneksi ini. Status konteks akan dibaca di sini setelah satu terbuka.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_record": {
+    "message": "Belum diperiksa.",
+    "description": "Runtime interface message capability.reason.no_record"
+  },
+  "runtime_capability_reason_no_session_authority": {
+    "message": "gateway.ready tidak melaporkan otoritas sesi.",
+    "description": "Runtime interface message capability.reason.no_session_authority"
+  },
+  "runtime_capability_reason_not_advertised": {
+    "message": "Tidak diumumkan oleh gateway ini.",
+    "description": "Runtime interface message capability.reason.not_advertised"
+  },
+  "runtime_capability_reason_not_advertised_plugin": {
+    "message": "Tidak diumumkan oleh gateway ini. Hermes Browser Extension tidak dapat mengetahui apakah plugin pendamping dimuat, jadi ini tidak berarti plugin itu hilang.",
+    "description": "Runtime interface message capability.reason.not_advertised_plugin"
+  },
+  "runtime_capability_reason_not_connected": {
+    "message": "WebSocket dasbor belum mengirim gateway.ready.",
+    "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Versi Hermes ini tidak memiliki rute tersebut, jadi tidak ada yang perlu diaktifkan. Konteks halaman dikirim bersama setiap pesan.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
+  },
+  "runtime_capability_reason_operation_ok": {
+    "message": "Berhasil saat terakhir digunakan.",
+    "description": "Runtime interface message capability.reason.operation_ok"
+  },
+  "runtime_capability_reason_operation_refused": {
+    "message": "Hermes menolak percobaan terakhir: {detail}.",
+    "description": "Runtime interface message capability.reason.operation_refused"
+  },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Chat pada koneksi ini berjalan lewat REST API. Gambar yang ditempel dilampirkan ke sesi aktif saat chat berjalan lewat WebSocket dasbor, seperti sesi Mode Bot atau profil bernama.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Chat pada koneksi ini berjalan lewat REST API dan tidak ada soket sesi Hermes yang terbuka, jadi gambar yang ditempel memakai unggahan dasbor atau tetap inline.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
+  },
+  "runtime_capability_reason_rest_no_compress": {
+    "message": "Koneksi ini hanya menjangkau REST API, yang tidak mengumumkan rute pemadatan. Pemadatan membutuhkan WebSocket dasbor dengan otoritas sesi.",
+    "description": "Runtime interface message capability.reason.rest_no_compress"
+  },
+  "runtime_capability_reason_rest_only": {
+    "message": "Koneksi ini hanya menjangkau REST API. WebSocket dasbor diperlukan.",
+    "description": "Runtime interface message capability.reason.rest_only"
+  },
+  "runtime_capability_reason_revoked": {
+    "message": "Dimatikan: {detail}.",
+    "description": "Runtime interface message capability.reason.revoked"
+  },
+  "runtime_capability_reason_stale": {
+    "message": "Terakhir dikonfirmasi {age}. Jawaban lama ditampilkan, tidak dipakai untuk menjalankan apa pun.",
+    "description": "Runtime interface message capability.reason.stale"
+  },
+  "runtime_capability_reason_token_present": {
+    "message": "Ada token atau konteks autentikasi. Pemeriksaan ini belum membuktikan bahwa itu valid.",
+    "description": "Runtime interface message capability.reason.token_present"
+  },
+  "runtime_capability_reason_ws_connected": {
+    "message": "WebSocket dasbor Hermes terhubung.",
+    "description": "Runtime interface message capability.reason.ws_connected"
+  },
+  "runtime_capability_reason_ws_contract": {
+    "message": "Bagian dari kontrak WebSocket dasbor. Gateway ini tidak mengumumkannya secara terpisah.",
+    "description": "Runtime interface message capability.reason.ws_contract"
+  },
+  "runtime_capability_reason_ws_not_reported": {
+    "message": "WebSocket dasbor tidak melaporkannya, dan koneksi ini tidak membaca /v1/capabilities.",
+    "description": "Runtime interface message capability.reason.ws_not_reported"
+  },
+  "runtime_capability_source_derived": {
+    "message": "disimpulkan dari koneksi",
+    "description": "Runtime interface message capability.source.derived"
+  },
+  "runtime_capability_source_extension": {
+    "message": "ekstensi ini",
+    "description": "Runtime interface message capability.source.extension"
+  },
+  "runtime_capability_source_method_not_found": {
+    "message": "penolakan dari Hermes",
+    "description": "Runtime interface message capability.source.method_not_found"
+  },
+  "runtime_capability_source_none": {
+    "message": "belum ada bukti",
+    "description": "Runtime interface message capability.source.none"
+  },
+  "runtime_capability_source_operation": {
+    "message": "percobaan terakhir",
+    "description": "Runtime interface message capability.source.operation"
+  },
+  "runtime_capability_source_probe": {
+    "message": "sebuah pemeriksaan",
+    "description": "Runtime interface message capability.source.probe"
+  },
+  "runtime_capability_source_revocation": {
+    "message": "dimatikan",
+    "description": "Runtime interface message capability.source.revocation"
+  },
+  "runtime_capability_state_available": {
+    "message": "Tersedia",
+    "description": "Runtime interface message capability.state.available"
+  },
+  "runtime_capability_state_blocked": {
+    "message": "Diblokir",
+    "description": "Runtime interface message capability.state.blocked"
+  },
+  "runtime_capability_state_cached": {
+    "message": "Tersimpan (cache)",
+    "description": "Runtime interface message capability.state.cached"
+  },
+  "runtime_capability_state_degraded": {
+    "message": "Menurun",
+    "description": "Runtime interface message capability.state.degraded"
+  },
+  "runtime_capability_state_unknown": {
+    "message": "Tidak diketahui",
+    "description": "Runtime interface message capability.state.unknown"
+  },
+  "runtime_capability_state_unsupported": {
+    "message": "Tidak didukung",
+    "description": "Runtime interface message capability.state.unsupported"
+  },
+  "runtime_capability_summary_all": {
+    "message": "Setiap fitur yang diperiksa di sini sedang digunakan.",
+    "description": "Runtime interface message capability.summary.all"
+  },
+  "runtime_capability_summary_some": {
+    "message": "Fitur yang tidak digunakan pada koneksi ini: {count}",
+    "description": "Runtime interface message capability.summary.some"
+  },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Pesan Anda sedang menunggu di antrean obrolan ini. Balasan akan muncul di sini saat sudah siap, jadi tidak perlu mengirimnya lagi.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
+  "runtime_chat_jump_to_latest": {
+    "message": "Lompat ke terbaru",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "{count} pesan baru",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "Lompat ke terbaru, {count} pesan baru",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes mungkin telah menghapus giliran ini, dan pesan baru Anda tidak terkirim. Percakapan kini menampilkan apa yang dimiliki Hermes, dan teks Anda kembali ke kotak penulisan.",
+    "description": "Runtime interface message chat.rewind_unsent"
   },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
@@ -1247,9 +1783,109 @@
     "message": "Menggunakan",
     "description": "Runtime interface message common.using"
   },
-  "runtime_composer_attach": {
-    "message": "＋ Lampirkan",
-    "description": "Runtime interface message composer.attach"
+  "runtime_compact_button": {
+    "message": "Padatkan konteks",
+    "description": "Runtime interface message compact.button"
+  },
+  "runtime_compact_button_recommended": {
+    "message": "Pemadatan disarankan",
+    "description": "Runtime interface message compact.button_recommended"
+  },
+  "runtime_compact_result_aborted": {
+    "message": "Hermes tidak dapat meringkas sesi, jadi tidak ada yang diganti.",
+    "description": "Runtime interface message compact.result.aborted"
+  },
+  "runtime_compact_result_blocked": {
+    "message": "Hermes tidak akan memadatkan sesi ini sekarang ({reason}).",
+    "description": "Runtime interface message compact.result.blocked"
+  },
+  "runtime_compact_result_busy": {
+    "message": "Hermes menolak karena sesi sedang sibuk. Tidak ada yang diubah.",
+    "description": "Runtime interface message compact.result.busy"
+  },
+  "runtime_compact_result_busy_compressing": {
+    "message": "Hermes sudah memadatkan sesi ini.",
+    "description": "Runtime interface message compact.result.busy_compressing"
+  },
+  "runtime_compact_result_busy_turn": {
+    "message": "Ada giliran yang sedang berjalan di sesi ini. Hentikan sebelum memadatkan. Tidak ada yang dikirim.",
+    "description": "Runtime interface message compact.result.busy_turn"
+  },
+  "runtime_compact_result_compacted": {
+    "message": "Hermes memadatkan sesi ini dan pembacaan ulang membenarkannya. {detail}",
+    "description": "Runtime interface message compact.result.compacted"
+  },
+  "runtime_compact_result_denied": {
+    "message": "Hermes menolak pemadatan untuk akun atau profil ini.",
+    "description": "Runtime interface message compact.result.denied"
+  },
+  "runtime_compact_result_failed": {
+    "message": "Hermes tidak menyelesaikan pemadatan. {detail}",
+    "description": "Runtime interface message compact.result.failed"
+  },
+  "runtime_compact_result_indeterminate": {
+    "message": "Jawaban hilang dan sesi sudah berubah. Hermes mungkin sudah memadatkannya; tidak ada yang dikirim ulang.",
+    "description": "Runtime interface message compact.result.indeterminate"
+  },
+  "runtime_compact_result_noop": {
+    "message": "Sesi sudah cukup pendek untuk dipertahankan utuh. Tidak ada yang diubah.",
+    "description": "Runtime interface message compact.result.noop"
+  },
+  "runtime_compact_result_not_committed": {
+    "message": "Jawaban hilang, dan Hermes menunjukkan sesi tidak berubah. Tekan Padatkan lagi untuk mengirim permintaan yang sama.",
+    "description": "Runtime interface message compact.result.not_committed"
+  },
+  "runtime_compact_result_not_sent": {
+    "message": "Hermes tidak dapat dijangkau untuk membaca sesi terlebih dahulu. Tidak ada yang dikirim.",
+    "description": "Runtime interface message compact.result.not_sent"
+  },
+  "runtime_compact_result_rotated": {
+    "message": "Sesi tetap memakai id-nya; Hermes melanjutkannya di segmen tersimpan yang baru.",
+    "description": "Runtime interface message compact.result.rotated"
+  },
+  "runtime_compact_result_stale": {
+    "message": "Sesi berubah saat dipadatkan, dua kali berturut-turut. Tidak ada yang diubah. Coba lagi.",
+    "description": "Runtime interface message compact.result.stale"
+  },
+  "runtime_compact_result_unconfirmed": {
+    "message": "Hermes menerima pemadatan, tetapi pembacaan ulang sesi tidak membenarkannya. Segarkan sebelum mengandalkannya.",
+    "description": "Runtime interface message compact.result.unconfirmed"
+  },
+  "runtime_compact_status_no_session": {
+    "message": "Buka atau buat sesi sebelum memadatkan.",
+    "description": "Runtime interface message compact.status.no_session"
+  },
+  "runtime_compact_status_ready": {
+    "message": "Ganti pesan lama dengan ringkasan untuk membebaskan ruang.",
+    "description": "Runtime interface message compact.status.ready"
+  },
+  "runtime_compact_status_running": {
+    "message": "Hentikan run yang aktif sebelum memadatkan sesi ini.",
+    "description": "Runtime interface message compact.status.running"
+  },
+  "runtime_compact_status_unavailable": {
+    "message": "Pemadatan tidak tersedia: {reason}",
+    "description": "Runtime interface message compact.status.unavailable"
+  },
+  "runtime_compact_title_failed": {
+    "message": "Pemadatan konteks gagal",
+    "description": "Runtime interface message compact.title.failed"
+  },
+  "runtime_compact_title_noop": {
+    "message": "Tidak ada yang dipadatkan",
+    "description": "Runtime interface message compact.title.noop"
+  },
+  "runtime_compact_title_ok": {
+    "message": "Konteks dipadatkan",
+    "description": "Runtime interface message compact.title.ok"
+  },
+  "runtime_compact_title_unavailable": {
+    "message": "Pemadatan konteks tidak tersedia",
+    "description": "Runtime interface message compact.title.unavailable"
+  },
+  "runtime_compact_working": {
+    "message": "Memadatkan…",
+    "description": "Runtime interface message compact.working"
   },
   "runtime_composer_chat_label": {
     "message": "MENGOBROL",
@@ -1287,13 +1923,45 @@
     "message": "untuk pengaturan manual.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "Memeriksa {title} di {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Terhubung ke Hermes dengan peringatan runtime. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Pengaturan manual masih tersedia di pengaturan.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "Mencari {title} di {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Pemasangan otomatis hanya tersedia untuk gateway lokal pada alamat loopback. Koneksi API jarak jauh memerlukan URL dan token yang dikonfigurasi secara eksplisit, sedangkan koneksi dasbor menggunakan Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. Klik Hubungkan ke Hermes atau gunakan Pengaturan manual.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Server API Hermes lokal",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Server API Hermes jarak jauh",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Dasbor Hermes jarak jauh",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "belum dikonfigurasi",
     "description": "Runtime interface message connection.not_configured_short"
-  },
-  "runtime_connection_unknown_transport": {
-    "message": "transport tidak dikenal",
-    "description": "Runtime interface message connection.unknown_transport"
   },
   "runtime_context_consent_share_detail": {
     "message": "Hanya chat sampai Anda menyetujui koneksi yang tepat ini. Persetujuan dipisahkan berdasarkan endpoint, akun, profil, dan pengontrol Browser.",
@@ -1307,9 +1975,21 @@
     "message": "Tab terlampir",
     "description": "Runtime interface message context.attached_tab"
   },
-  "runtime_context_browser_tab_handoff": {
-    "message": "Serah terima tab browser {tabId}",
-    "description": "Runtime interface message context.browser_tab_handoff"
+  "runtime_context_card_no_socket": {
+    "message": "Koneksi ini tidak memiliki soket sesi Hermes, jadi rincian kategori tidak bisa dibaca.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes tidak menyimpan sesi ini di soket sesinya, jadi tidak bisa mengukur kategorinya.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes belum melaporkan rincian kategori untuk sesi ini.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Masuk dengan akun Hermes Anda di Pengaturan > Koneksi untuk membaca rincian kategori sesi ini.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Ikuti tab aktif",
@@ -1492,7 +2172,7 @@
     "description": "Runtime interface message custom_theme.validation_errors"
   },
   "runtime_diagnostic_api_authorization_health_detail": {
-    "message": "Pemeriksaan kesehatan merespons, tetapi rute Browser/model yang dilindungi memerlukan Authorization: Bearer *** Tempel kunci API atau token browser dengan cakupan tertentu di Pengaturan.",
+    "message": "Pemeriksaan kesehatan merespons, tetapi rute ekstensi dan model yang dilindungi memerlukan Authorization: Bearer *** Tempel kunci API atau token browser dengan cakupan tertentu di Pengaturan.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
   },
   "runtime_diagnostic_api_authorization_title": {
@@ -1504,7 +2184,7 @@
     "description": "Runtime interface message diagnostic.api_rejected_detail"
   },
   "runtime_diagnostic_auth_detail": {
-    "message": "Hermes API menolak permintaan. Periksa token Browser API di Pengaturan dan pastikan token tersebut cocok dengan gateway Hermes yang sedang berjalan.",
+    "message": "Hermes API menolak permintaan. Periksa token API di Pengaturan ekstensi dan pastikan token tersebut cocok dengan gateway Hermes yang sedang berjalan.",
     "description": "Runtime interface message diagnostic.auth_detail"
   },
   "runtime_diagnostic_auth_title": {
@@ -1512,11 +2192,11 @@
     "description": "Runtime interface message diagnostic.auth_title"
   },
   "runtime_diagnostic_auth_user": {
-    "message": "Token Hermes API ditolak. Perbarui token Pengaturan Browser, lalu sambungkan kembali.",
+    "message": "Token Hermes API ditolak. Perbarui token di Pengaturan ekstensi, lalu sambungkan kembali.",
     "description": "Runtime interface message diagnostic.auth_user"
   },
   "runtime_diagnostic_cors_extension_detail": {
-    "message": "Browser tidak dapat menjangkau Hermes API dari asal ekstensi ini. Tambahkan chrome-extension://<extension-id> ke API_SERVER_CORS_ORIGINS pada host jarak jauh.",
+    "message": "Ekstensi tidak dapat menjangkau Hermes API dari asalnya sendiri. Tambahkan chrome-extension://<extension-id> ke API_SERVER_CORS_ORIGINS pada host jarak jauh.",
     "description": "Runtime interface message diagnostic.cors_extension_detail"
   },
   "runtime_diagnostic_cors_title": {
@@ -1524,7 +2204,7 @@
     "description": "Runtime interface message diagnostic.cors_title"
   },
   "runtime_diagnostic_dashboard_url_detail": {
-    "message": "Ini tampaknya merupakan endpoint SSO Hermes Dashboard. Mode Browser API memerlukan URL server Hermes API pada :8642 serta Authorization: Bearer ***",
+    "message": "Ini tampaknya merupakan endpoint SSO Hermes Dashboard. Mode API ekstensi memerlukan URL server Hermes API pada :8642 serta Authorization: Bearer ***",
     "description": "Runtime interface message diagnostic.dashboard_url_detail"
   },
   "runtime_diagnostic_dashboard_url_title": {
@@ -1540,7 +2220,7 @@
     "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
   },
   "runtime_diagnostic_network_detail": {
-    "message": "Browser tidak dapat menjangkau Hermes API. Periksa URL gateway, perutean firewall/VPN, serta pengaturan CORS/asalan untuk ekstensi ini.",
+    "message": "Ekstensi tidak dapat menjangkau Hermes API. Periksa URL gateway, perutean firewall/VPN, serta pengaturan CORS/asalan untuk ekstensi ini.",
     "description": "Runtime interface message diagnostic.network_detail"
   },
   "runtime_diagnostic_network_title": {
@@ -1548,7 +2228,7 @@
     "description": "Runtime interface message diagnostic.network_title"
   },
   "runtime_diagnostic_network_user": {
-    "message": "Browser tidak dapat menjangkau Hermes karena permintaan gagal pada lapisan jaringan/CORS.",
+    "message": "Ekstensi tidak dapat menjangkau Hermes karena permintaan gagal pada lapisan jaringan/CORS.",
     "description": "Runtime interface message diagnostic.network_user"
   },
   "runtime_diagnostic_remote_setup_title": {
@@ -1556,7 +2236,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "Browser Extension tidak dapat mengklasifikasikan respons gateway jarak jauh ini.",
+    "message": "Hermes Browser Extension tidak dapat mengklasifikasikan respons gateway jarak jauh ini.",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -1568,7 +2248,7 @@
     "description": "Runtime interface message diagnostic.route_title"
   },
   "runtime_diagnostic_route_user": {
-    "message": "Runtime Hermes ini belum mengekspos rute Browser yang diminta.",
+    "message": "Runtime Hermes ini belum mengekspos rute ekstensi yang diminta.",
     "description": "Runtime interface message diagnostic.route_user"
   },
   "runtime_diagnostic_runtime_exception_detail": {
@@ -1580,7 +2260,7 @@
     "description": "Runtime interface message diagnostic.runtime_exception_title"
   },
   "runtime_diagnostic_runtime_exception_user": {
-    "message": "Traceback gateway Hermes terdeteksi di dalam Hermes Agent hulu. Browser dapat tetap terhubung; periksa log Hermes dan jalankan `hermes computer-use doctor` jika computer_use/cua-driver muncul dalam traceback.",
+    "message": "Traceback gateway Hermes terdeteksi di dalam Hermes Agent hulu. Ekstensi dapat tetap terhubung; periksa log Hermes dan jalankan `hermes computer-use doctor` jika computer_use/cua-driver muncul dalam traceback.",
     "description": "Runtime interface message diagnostic.runtime_exception_user"
   },
   "runtime_diagnostics_surface": {
@@ -1659,13 +2339,129 @@
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
   },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "Dibuka dari {source}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
+  "runtime_firefox_screenshots_allow": {
+    "message": "Izinkan tangkapan layar di Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
   },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "Dibuka dari {source} pada tab browser {tabId}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox tidak memberikan izin.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes dapat mengambil tangkapan layar tab yang terhubung, dengan batas keamanan yang sama seperti bagian Hermes Control lainnya. Anda dapat mencabut izin kapan saja.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Firefox memerlukan izin tambahan sebelum Hermes dapat mengambil tangkapan layar tab. Hermes memintanya hanya saat Anda mengklik Izinkan; sampai saat itu ia membaca teks halaman.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "Tidak dapat mengubah izin tangkapan layar: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Tangkapan layar diizinkan di Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Berhenti mengizinkan tangkapan layar",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "Izin tangkapan layar telah dicabut.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Tangkapan layar model di Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
+  },
+  "runtime_gateway_queue_cancel": {
+    "message": "Batalkan giliran",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "Tidak dapat membatalkan giliran dalam antrean: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
+  "runtime_gateway_queue_discard": {
+    "message": "Buang",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Tidak dapat membuang giliran yang hilang: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "Edit",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "Pertahankan yang asli",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "Tidak dapat menyimpan perubahan: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "Edit pesan dalam antrean",
+    "description": "Runtime interface message gateway_queue.edit_label"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Giliran hilang saat memulai ulang",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes dimulai ulang saat giliran ini berjalan. Giliran ini tidak dapat diselesaikan atau diulang dengan aman, dan giliran yang antre di belakangnya menunggu sampai Anda membuangnya. Pesan Anda tetap ada di transkrip agar bisa dikirim ulang.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Antre di Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "Simpan",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "Hermes ini tidak menyediakannya untuk giliran ini.",
+    "description": "Runtime interface message gateway_queue.unsupported"
+  },
+  "runtime_haui_ask_hint": {
+    "message": "Memasukkan pertanyaan ini ke kotak pesan",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "Membuat tampilan…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "Disalin",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "Salin",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "Dibuka di tab baru",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_unreadable": {
+    "message": "Ditampilkan sebagai teks: kartu ini tidak dapat digambar.",
+    "description": "Runtime interface message haui.unreadable"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "Lihat sebagai grafik",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "Grafik",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "Tabel",
+    "description": "Runtime interface message haui.view_table"
   },
   "runtime_image_generated": {
     "message": "Gambar yang dihasilkan",
@@ -1728,7 +2524,7 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "Ekstensi Hermes Browser",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
@@ -1736,11 +2532,11 @@
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Buka ekstensi Hermes Browser",
+    "message": "Buka Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Buka bilah samping Hermes Browser",
+    "message": "Buka bilah samping Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -1819,12 +2615,168 @@
     "message": "Format arsip tidak didukung",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "Siapkan Hermes",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "Kembali",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_connect_body": {
+    "message": "Hubungkan panel ini ke agen Hermes Anda. Setujui pemasangan jika Hermes Anda menyediakannya, atau gunakan penyiapan manual dengan alamat dan kunci API-nya. Setelah itu Hermes dapat melihat halaman yang Anda buka dan menjawab di sini.",
+    "description": "Runtime interface message onboarding.connect.body"
+  },
+  "runtime_onboarding_connect_connected": {
+    "message": "Terhubung ke Hermes",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "Hubungkan nanti",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "Belum terhubung",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes di komputer lain, server, atau Hermes Cloud? Pilih Penyiapan manual untuk menyiapkan koneksi itu.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "Hubungkan ke Hermes",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "Coba prompt pertama",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "Jenis huruf untuk panel dan balasan Hermes.",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "Pilih font",
+    "description": "Runtime interface message onboarding.font.title"
+  },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser Extension akan memakainya di mana-mana. Anda dapat mengubahnya nanti di Pengaturan.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "Disarankan dari browser Anda: {language}. Pilih bahasa lain jika Anda mau; Anda dapat mengubahnya nanti di Pengaturan.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "Pilih bahasa Anda",
+    "description": "Runtime interface message onboarding.language.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "Letak pesan Anda dan balasan Hermes.",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "Pilih tata letak chat",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "Berikutnya",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "Waktu muat (dtk)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "Tiga hal menonjol di halaman ini.",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "Dimuat dua kali lebih cepat",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "Membuat lebih sedikit permintaan",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "Bundelnya lebih kecil",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "Ringkas halaman ini",
+    "description": "Runtime interface message onboarding.preview.user"
+  },
+  "runtime_onboarding_skip": {
+    "message": "Lewati",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "Mulai mengobrol",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "Langkah {current} dari {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "Cara Hermes menampilkan balasannya.",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "Pilih gaya respons",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "Warna untuk panel samping dan tab penuh.",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "Pilih tema",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
+  "runtime_onboarding_welcome_body": {
+    "message": "Mari kita siapkan. Hanya butuh sekitar satu menit.",
+    "description": "Runtime interface message onboarding.welcome.body"
+  },
+  "runtime_onboarding_welcome_greeting": {
+    "message": "Selamat datang",
+    "description": "Runtime interface message onboarding.welcome.greeting"
+  },
+  "runtime_onboarding_welcome_skip": {
+    "message": "Lewati pengaturan",
+    "description": "Runtime interface message onboarding.welcome.skip"
+  },
+  "runtime_onboarding_welcome_start": {
+    "message": "Mulai",
+    "description": "Runtime interface message onboarding.welcome.start"
+  },
+  "runtime_onboarding_welcome_title": {
+    "message": "Selamat datang di Hermes Browser",
+    "description": "Runtime interface message onboarding.welcome.title"
+  },
+  "runtime_pairing_approve_below": {
+    "message": "Setujui koneksi di bawah ini.",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "Pemasangan ditolak.",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Setujui koneksi Hermes",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "Buka di tab",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "Izin mikrofon tidak diberikan.\n\n{error}\n\nKlik Buka pengaturan mikrofon, atur Mikrofon ke Izinkan untuk Hermes Browser Extension, kembali ke sini, dan coba lagi.",
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Status izin mikrofon: {state}. Jika browser Anda menampilkan ini sebagai diblokir, buka pengaturan mikrofon dan setel Mikrofon ke Izinkan untuk Hermes Browser Extension .",
+    "message": "Status izin mikrofon: {state}. Jika browser Anda menampilkan ini sebagai diblokir, buka pengaturan mikrofon dan setel Mikrofon ke Izinkan untuk Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -1887,12 +2839,632 @@
     "message": "Menggunakan {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
   },
+  "runtime_projects_back": {
+    "message": "Kembali",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "Batal",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_add_folder": {
+    "message": "Tambah folder",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "Tambah",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
+  "runtime_projects_create_creating": {
+    "message": "Membuat…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "Proyek {name} dibuat.",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "Proyek {name} dibuat. Idemu siap disimpan sebagai IDEA.md.",
+    "description": "Runtime interface message projects.create.done_idea"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "Masukkan nama proyek.",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "Folder itu sudah menjadi bagian dari proyek {project}.",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "Gunakan path absolut di host gateway: diawali garis miring, huruf drive, atau ~.",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "Masukkan folder proyek di host gateway.",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_folders": {
+    "message": "Folder",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "Ide (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "Tidak dapat membuat ide. {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "Buat ide",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "Membuat…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "Opsional. Setelah proyek dibuat, sesi terbuka di folder pertamanya dengan teks ini siap agar Hermes menyimpannya sebagai IDEA.md.",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "Tentang apa proyek ini? Ringkasan satu baris dan beberapa tujuan.",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
+  "runtime_projects_create_name": {
+    "message": "Nama proyek",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "Belum ada folder. Tambahkan folder tempat proyek ini bekerja.",
+    "description": "Runtime interface message projects.create.no_folders"
+  },
+  "runtime_projects_create_path": {
+    "message": "Folder di host gateway",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "Jalur ini ada di mesin yang menjalankan Hermes ({host}), bukan di komputer ini. Telusuri atau ketik jalurnya.",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "utama",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "Hapus {folder}",
+    "description": "Runtime interface message projects.create.remove_folder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "Buat proyek",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "gateway",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "Proyek baru",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "Gunakan \"{name}\"",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "Proyek bernama {name} sudah ada ({folder}). Proyek dibedakan menurut folder, tetapi nama yang berbeda lebih mudah dibedakan.",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "Tutup",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "Proyek mengelompokkan sesi yang berjalan di dalam folder pada mesin tempat Hermes berjalan. Buat satu untuk memulai.",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "Belum ada proyek",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "Koneksi ke Hermes terputus.",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes tidak dapat menyelesaikan permintaan.",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes menolak nilai itu.",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes menjawab dengan sesuatu yang tidak dipahami ekstensi ini.",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes tidak mengembalikan proyek yang diminta untuk dibuat.",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "Proyek itu sudah tidak ada.",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "Profil ini tidak lagi tersedia di gateway.",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes tidak menjawab tepat waktu.",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "Proyek mengalami masalah",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "Folder di host gateway:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "Folder terdeteksi",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "Beranda",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "Proyek",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "Jangan simpan",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "Buka sesi di {folder} dengan ide yang sudah siap. Kirim, lalu Hermes menulis IDEA.md di sana.",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "Idemu belum disimpan",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "Buat berkas bernama IDEA.md di folder saat ini dengan teks persis seperti di bawah, dan jangan ubah hal lain.\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "Simpan sebagai IDEA.md",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "Sesi dibuka di {name}. Kirim pesan untuk menyimpan IDEA.md.",
+    "description": "Runtime interface message projects.idea.started"
+  },
+  "runtime_projects_loading": {
+    "message": "Memuat proyek…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "Memuat sesi proyek ini…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "Pindahkan",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "Pindahkan {title} ke proyek",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "Pindahkan ke proyek",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "Sesi sudah berada di {cwd}.",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes menolak pemindahan karena sesi sedang sibuk. Tunggu giliran selesai, atau hentikan, lalu coba lagi.",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes menolak pemindahan karena sesi sedang dipadatkan. Coba lagi setelah selesai.",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "Periksa lagi",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "Periksa folder",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "Bertanya ke Hermes…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "Sementara itu sesi diubah oleh hal lain, jadi pemindahan tidak diterapkan.",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "saat ini",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "Folder saat ini:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes tidak mengizinkan pemindahan ini untuk login atau profil Anda.",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "Pindahkan ke",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "Dipindahkan. Hermes melaporkan folder sesi sebagai {cwd}.",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "Memindahkan sesi mengubah ruang kerjanya dan dapat mengubah folder tempat perintahnya berjalan. Sesi termasuk dalam proyek karena foldernya; tidak ada yang disimpan di browser ini.",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes tidak dapat memindahkan sesi. {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "Folder ini milik proyek {name}.",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "Folder ini tidak ada di proyek mana pun, jadi sesi akan muncul di Beranda.",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "Folder di host gateway",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "Koneksi terputus sebelum Hermes mengonfirmasi. Pemindahan mungkin sudah terjadi atau belum, jadi periksa lagi sebelum memindahkan apa pun.",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "Folder itu bukan direktori di host gateway Hermes.",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "Tetap minta Hermes memindahkannya",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "Sebuah giliran sedang berjalan di sesi ini",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "Memindahkannya mengubah folder tempat perintahnya berjalan, dan Hermes menolak pemindahan selama giliran aktif. Belum ada yang diubah.",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "Memindahkan…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes belum menerapkan pemindahan. Periksa lagi untuk membaca sesi; pemindahan diulang hanya jika tidak ada yang diterapkan.",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "Hermes tidak dapat dibaca, jadi tidak ada yang dikirim.",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "Folder lain…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "Memindahkan sesi ke folder yang tidak ada di proyek mana pun akan mengeluarkannya dari proyeknya.",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "Gunakan path absolut di host gateway: diawali garis miring, huruf drive, atau ~.",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "Masukkan folder di host gateway.",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "Sesi",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "Sesi berubah saat dipindahkan, jadi tidak ada yang dipindahkan. Buka pemindahan lagi untuk memakai keadaan terbarunya.",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "Pindahkan ke {name}",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "Pindahkan ke proyek",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes menerima pemindahan, tetapi folder sesi terbaca sebagai {cwd}, bukan yang Anda minta. Periksa sesi sebelum mengandalkannya.",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "Proyek baru",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "Sesi baru di proyek ini",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "Memulai sesi yang berjalan di folder proyek ini.",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "Tidak dapat memulai sesi di proyek ini. {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes tidak memulai sesi.",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "Sesi baru di {name}",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "Tidak ada proyek yang cocok dengan pencarian Anda.",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "Telusuri folder…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "Pilih folder ini",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "Folder:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "Folder default",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "Tidak ada folder di sini.",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "Tidak dapat membaca folder ini. {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "Saring folder",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "Buka",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "Folder di mesin yang menjalankan Hermes ({host}), bukan di komputer ini.",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "Beranda",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "Membaca folder…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "Jalur folder",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "Mulai dari",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "Pilih folder",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "Menampilkan {count} folder pertama. Ketik di filter untuk menemukan sisanya.",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "Atau ketik jalur",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "Gateway ini tidak dapat menampilkan daftar foldernya saat ini. Ketik jalur folder di bawah.",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "Naik satu tingkat",
+    "description": "Runtime interface message projects.picker.up"
+  },
+  "runtime_projects_reason_code": {
+    "message": "Alasan: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "Segarkan proyek",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "Coba lagi",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "Profil {profile} di {host}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "Cari proyek",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "Cari di sesi proyek ini",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} sesi",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "Mulai satu di atas, atau pindahkan sesi yang ada ke sini dari Terbaru.",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "Belum ada sesi di proyek ini",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "Tidak ada sesi di proyek ini yang cocok dengan pencarian Anda.",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "Sesi",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "Tampilan sesi",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "Proyek",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "Terbaru",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_account_sign_in": {
+    "message": "Proyek memerlukan masuk dengan akun Hermes pada gateway ini. Gunakan “Masuk dengan akun Hermes Anda”, lalu coba lagi.",
+    "description": "Runtime interface message projects.unavailable.account_sign_in"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "Gateway Hermes yang terhubung menjawab \"method not found\" (-32601) untuk {method}.",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "Gateway Hermes ini tidak mengumumkan otoritas sesi, sehingga proyek dan pemindahan sesi tidak tersedia. Perbarui Hermes ke versi dengan mutasi sesi kanonis.",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "Proyek tidak tersedia sampai WebSocket dasbor Hermes terhubung.",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "Terbaru masih berfungsi.",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "Proyek memerlukan WebSocket dasbor Hermes. Koneksi ini hanya menjangkau REST API.",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "Proyek tidak tersedia di sini",
+    "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web dimatikan di gateway ini, jadi Proyek tidak punya soket sesi. Setel webapp.enabled ke true di config.yaml, jalankan hermes gateway restart, lalu coba lagi.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
+  },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Proyek memerlukan sesi masuk Hermes Web. Buka Hermes Web sekali (jalankan hermes webapp), lalu coba lagi.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "Balon di kedua sisi",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "Anda dan Hermes masing-masing dalam balon, seperti aplikasi pesan.",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "Letak pesan dalam chat.",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "Tata letak chat",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "Hanya balon pengguna",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "Pesan Anda dalam balon, balasan Hermes berupa teks mengalir.",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "Jalankan lagi penyiapan awal",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Pilih lagi tema, gaya respons, dan tata letak obrolan langkah demi langkah.",
+    "description": "Runtime interface message responses.setup_again_description"
+  },
+  "runtime_responses_style_description": {
+    "message": "Cara Hermes menampilkan balasannya.",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "Gaya respons",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "Teks polos",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "Hanya kata-kata, tanpa format.",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "Teks kaya",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "Markdown terformat: judul, daftar, dan kode.",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "Kartu, tabel, dan grafik jika membantu.",
+    "description": "Runtime interface message responses.style.vivid_hint"
+  },
   "runtime_run_release": {
     "message": "Release",
     "description": "Runtime interface message run.release"
   },
   "runtime_run_release_detail": {
-    "message": "Browser released the composer without Hermes confirming the stop. Check the session before sending another message.",
+    "message": "Ekstensi melepaskan kotak pesan tanpa Hermes mengonfirmasi penghentian. Periksa sesi sebelum mengirim pesan lain.",
     "description": "Runtime interface message run.release_detail"
   },
   "runtime_run_stop": {
@@ -1908,48 +3480,44 @@
     "description": "Runtime interface message run.stop_controller_toast"
   },
   "runtime_run_stop_controller_unreachable": {
-    "message": "Browser could not reach Hermes Control to cancel pending browser actions.",
+    "message": "Ekstensi tidak dapat menjangkau Hermes Control untuk membatalkan tindakan browser yang tertunda.",
     "description": "Runtime interface message run.stop_controller_unreachable"
   },
   "runtime_run_stop_unconfirmed_no_run_id": {
-    "message": "Hermes has not reported a run id for this turn, so Browser cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.",
+    "message": "Hermes belum melaporkan ID eksekusi untuk giliran ini, jadi ekstensi tidak dapat memastikan eksekusi telah berhenti. Penulis sesi dan pesan dalam antrean tetap ditahan sampai Hermes mengonfirmasi status akhir.",
     "description": "Runtime interface message run.stop_unconfirmed_no_run_id"
   },
   "runtime_run_stop_unconfirmed_title": {
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "Mode cepat {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}. Ubah model dan opsi runtime.",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "Opsi runtime",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "Opsi runtime: {summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "Penalaran {effort}",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "Matikan pemikiran",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "Pemikiran {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "Salin ID sesi untuk {title}",
     "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_legacy_continue_copy": {
+    "message": "Lanjutkan di salinan",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes tidak dapat menyalin obrolan ini, jadi pesan Anda tidak terkirim. Mulai obrolan baru untuk melanjutkan. Pesan Anda masih ada di kotak.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "Menyalin obrolan…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "Mulai obrolan baru",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "Obrolan ini dimulai oleh versi lama Hermes Browser Extension, dan gateway ini tidak lagi menerima pesan baru di dalamnya. Pesan Anda tidak terkirim. Anda dapat melanjutkan di salinan obrolan.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "Obrolan ini dimulai oleh versi lama Hermes Browser Extension, dan gateway ini tidak lagi menerima pesan baru di dalamnya. Obrolan ini tidak dapat disalin di sini, jadi mulai obrolan baru untuk melanjutkan. Pesan Anda masih ada di kotak.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
@@ -1959,10 +3527,6 @@
     "message": "＋ Sesi Hermes Browser Extension baru",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "Membuka {title}",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -1971,13 +3535,17 @@
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
   },
-  "runtime_session_rail_save_failed": {
-    "message": "Gagal menyimpan rel sesi: {error}",
-    "description": "Runtime interface message session.rail_save_failed"
-  },
   "runtime_session_rename_named": {
     "message": "Ganti nama sesi {title}",
     "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_session_replay_truncated": {
+    "message": "Riwayat terpotong, memuat ulang",
+    "description": "Runtime interface message session.replay.truncated"
+  },
+  "runtime_session_row_model": {
+    "message": "Model: {model}",
+    "description": "Runtime interface message session.row_model"
   },
   "runtime_settings_back_to_top": {
     "message": "Kembali ke atas",
@@ -2019,6 +3587,10 @@
     "message": "Kategori",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "Kembali ke kategori",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "Gateway, profil agen, dan cara browser ini menjangkau Hermes.",
     "description": "Runtime interface message settings.categories.connections.summary"
@@ -2036,7 +3608,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Semua yang bisa dilakukan Hermes Browser, dikelompokkan menurut fungsinya.",
+    "message": "Semua yang bisa dilakukan Hermes Browser Extension, dikelompokkan menurut fungsinya.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -2074,6 +3646,30 @@
   "runtime_settings_categories_voice_title": {
     "message": "Suara & pemicu",
     "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_context_depth_full": {
+    "message": "Penuh",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "Muatan halaman terbesar",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "Minimal",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "Pilihan dan kutipan singkat",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "Normal",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "Bawaan yang baik",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
   },
   "runtime_settings_custom_theme_help": {
     "message": "Tambahkan tema: jelajahi tema VS Code, impor file tema, atau minta agen merancang satu. Tema yang terpasang muncul di kisi di atas.",
@@ -2195,6 +3791,62 @@
     "message": "· alpha publik / beban dibongkar",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Tidak tersimpan: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Tampilan, agen, serta sakelar izin dan runtime berlaku saat Anda mengubahnya. Semua yang lain berlaku saat Anda menekan Simpan.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Port agen harus berupa angka dari 1 sampai 65535, dipisahkan koma.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Tersimpan. Hermes terhubung.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Tersimpan, tetapi Hermes tidak dapat dijangkau: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Alamat sumber model ini tidak valid: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "Otomatis",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "Teks YouTube, lalu halaman",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "Kustom",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "Layanan Anda sendiri",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "Jangan pernah ambil transkrip",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "Transkrip YouTube",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "URL layanan",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "Hermes menambahkan ID video ke alamat ini.",
+    "description": "Runtime interface message settings.transcript.url_hint"
+  },
   "runtime_status_connection_not_responding": {
     "message": "{summary} tidak merespons. Mulai Hermes Desktop/Gateway, lalu sambungkan kembali.",
     "description": "Runtime interface message status.connection_not_responding"
@@ -2224,7 +3876,7 @@
     "description": "Runtime interface message status.profile_selected_restart"
   },
   "runtime_status_profile_switch_unavailable": {
-    "message": "{error}. Browser akan menggunakan profil Hermes yang sedang berjalan.",
+    "message": "{error}. Ekstensi akan menggunakan profil Hermes yang sedang berjalan.",
     "description": "Runtime interface message status.profile_switch_unavailable"
   },
   "runtime_tasks_summary": {
@@ -2300,7 +3952,7 @@
     "description": "Runtime interface message ui.adjust"
   },
   "runtime_ui_adjust_extension_text_without_changing_browser_zoom": {
-    "message": "Adjust text across Hermes Browser surfaces without changing browser zoom.",
+    "message": "Sesuaikan teks di seluruh ekstensi tanpa mengubah zoom browser.",
     "description": "Runtime interface message ui.adjust.extension.text.without.changing.browser.zoom"
   },
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
@@ -2632,11 +4284,11 @@
     "description": "Runtime interface message ui.browser.local.fallback"
   },
   "runtime_ui_browser_update_review": {
-    "message": "Tinjauan pembaruan peramban",
+    "message": "Tinjauan pembaruan ekstensi",
     "description": "Runtime interface message ui.browser.update.review"
   },
   "runtime_ui_browser_updates": {
-    "message": "Pembaruan peramban",
+    "message": "Pembaruan ekstensi",
     "description": "Runtime interface message ui.browser.updates"
   },
   "runtime_ui_build": {
@@ -2728,7 +4380,7 @@
     "description": "Runtime interface message ui.checking"
   },
   "runtime_ui_checking_browser_main": {
-    "message": "Memeriksa Browser utama…",
+    "message": "Memeriksa cabang utama ekstensi…",
     "description": "Runtime interface message ui.checking.browser.main"
   },
   "runtime_ui_checking_hermes": {
@@ -2784,7 +4436,7 @@
     "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
   },
   "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
-    "message": "Pilih di mana sesi Browser ini mencapai Hermes.",
+    "message": "Pilih di mana ekstensi menjangkau Hermes.",
     "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
   },
   "runtime_ui_choose_where_to_send": {
@@ -2792,7 +4444,7 @@
     "description": "Runtime interface message ui.choose.where.to.send"
   },
   "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
-    "message": "Pilih profil agen Hermes mana yang harus digunakan Browser ketika gateway lokal mengekspos profil.",
+    "message": "Pilih profil agen Hermes mana yang harus digunakan ekstensi ketika gateway lokal mengekspos profil.",
     "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
   },
   "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
@@ -2804,7 +4456,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Beberapa browser memblokir pengambilan mikrofon di dalam sidebar ekstensi. Tab ekstensi yang terlihat ini merekam dari asal ekstensi Hermes yang sama ketika Hermes STT tersedia, atau menggunakan penggantian ucapan browser ketika runtime yang terhubung tidak mengekspos transkripsi audio.",
+    "message": "Beberapa browser memblokir pengambilan mikrofon di dalam sidebar ekstensi. Tab ekstensi yang terlihat ini merekam dari asal yang sama dengan Hermes Browser Extension ketika Hermes STT tersedia, atau menggunakan penggantian ucapan browser ketika runtime yang terhubung tidak mengekspos transkripsi audio.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -3380,7 +5032,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "Tidak dapat memigrasikan sesi Browser",
+    "message": "Tidak dapat memigrasikan sesi",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -3887,37 +5539,33 @@
     "message": "Kelompok",
     "description": "Runtime interface message ui.group"
   },
-  "runtime_ui_group_presence_all_replied": {
-    "message": "Semua sudah membalas",
-    "description": "Runtime interface message ui.group.presence.all.replied"
+  "runtime_ui_group_working_many": {
+    "message": "{first}, {second}, dan {count} lainnya sedang bekerja…",
+    "description": "Runtime interface message ui.group.working.many"
   },
-  "runtime_ui_group_presence_done_failed": {
-    "message": "Selesai · {count} tidak dapat membalas",
-    "description": "Runtime interface message ui.group.presence.done.failed"
+  "runtime_ui_group_working_three": {
+    "message": "{first}, {second}, dan {third} sedang bekerja…",
+    "description": "Runtime interface message ui.group.working.three"
   },
-  "runtime_ui_group_presence_done_passed": {
-    "message": "Selesai · {count} melewati",
-    "description": "Runtime interface message ui.group.presence.done.passed"
+  "runtime_ui_group_working_two": {
+    "message": "{first} dan {second} sedang bekerja…",
+    "description": "Runtime interface message ui.group.working.two"
   },
-  "runtime_ui_group_presence_reply_fail": {
-    "message": "{replied} membalas, {failed} tidak dapat",
-    "description": "Runtime interface message ui.group.presence.reply.fail"
+  "runtime_ui_group_working_typing": {
+    "message": "Sedang mengetik…",
+    "description": "Runtime interface message ui.group.working.typing"
   },
-  "runtime_ui_group_presence_replying": {
-    "message": "{name} sedang membalas",
-    "description": "Runtime interface message ui.group.presence.replying"
+  "runtime_ui_group_working_using": {
+    "message": "Memakai {tool}…",
+    "description": "Runtime interface message ui.group.working.using"
   },
-  "runtime_ui_group_presence_typing": {
-    "message": "{name} sedang mengetik",
-    "description": "Runtime interface message ui.group.presence.typing"
+  "runtime_ui_group_working_working": {
+    "message": "Sedang bekerja…",
+    "description": "Runtime interface message ui.group.working.working"
   },
-  "runtime_ui_group_presence_using": {
-    "message": "{name} sedang menggunakan {tool}",
-    "description": "Runtime interface message ui.group.presence.using"
-  },
-  "runtime_ui_group_presence_waiting": {
-    "message": "{count} menunggu",
-    "description": "Runtime interface message ui.group.presence.waiting"
+  "runtime_ui_group_working_wrapping": {
+    "message": "Menyelesaikan…",
+    "description": "Runtime interface message ui.group.working.wrapping"
   },
   "runtime_ui_handing_update_to_hermes": {
     "message": "Menyerahkan pembaruan ke Hermes",
@@ -3964,11 +5612,11 @@
     "description": "Runtime interface message ui.hermes.browser"
   },
   "runtime_ui_hermes_browser_bb83b5a0": {
-    "message": "BROWSER HERMES",
+    "message": "HERMES BROWSER",
     "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
   },
   "runtime_ui_hermes_browser_extension": {
-    "message": "EKSTENSI BROWSER HERMES",
+    "message": "HERMES BROWSER EXTENSION",
     "description": "Runtime interface message ui.hermes.browser.extension"
   },
   "runtime_ui_hermes_browser_extension_connected": {
@@ -3988,7 +5636,7 @@
     "description": "Runtime interface message ui.hermes.browser.local.sidecar"
   },
   "runtime_ui_hermes_browser_update_channel": {
-    "message": "BROWSER HERMES / SALURAN PEMBARUAN",
+    "message": "HERMES BROWSER / SALURAN PEMBARUAN",
     "description": "Runtime interface message ui.hermes.browser.update.channel"
   },
   "runtime_ui_hermes_chat_actions": {
@@ -4512,7 +6160,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Akses mikrofon diblokir untuk Hermes Browser.",
+    "message": "Akses mikrofon diblokir untuk Hermes Browser Extension.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -4604,7 +6252,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "Obrolan Peramban Baru",
+    "message": "Obrolan baru",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -4668,7 +6316,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "Tidak ada audio yang disimpan di sini. Izin tersebut hanya memungkinkan Hermes Browser merekam suara Anda saat Anda mengeklik tombol mikrofon.",
+    "message": "Tidak ada audio yang disimpan di sini. Izin tersebut hanya memungkinkan Hermes Browser Extension merekam suara Anda saat Anda mengeklik tombol mikrofon.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -4868,15 +6516,15 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Buka sesi persisnya di panel samping Hermes Browser.",
+    "message": "Buka sesi persisnya di panel samping Hermes Browser Extension.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Buka panel samping ekstensi Hermes dari toolbar browser Anda.",
+    "message": "Buka panel samping Hermes Browser Extension dari toolbar browser Anda.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
-    "message": "Buka sesi Assist yang disimpan di panel samping Browser atau di Hermes Web.",
+    "message": "Buka sesi Assist yang disimpan di panel samping ekstensi atau di Hermes Web.",
     "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
   },
   "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
@@ -4912,7 +6560,7 @@
     "description": "Runtime interface message ui.optional"
   },
   "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
-    "message": "Hanya penemuan opsional: Browser memeriksa setiap titik akhir OpenAI-compatible `/v1/models` dan menampilkan kecocokan di pemilih model. Perutean runtime masih berasal dari gateway Hermes yang terhubung.",
+    "message": "Hanya penemuan opsional: ekstensi memeriksa setiap titik akhir OpenAI-compatible `/v1/models` dan menampilkan kecocokan di pemilih model. Perutean runtime masih berasal dari gateway Hermes yang terhubung.",
     "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
   },
   "runtime_ui_options": {
@@ -5088,7 +6736,7 @@
     "description": "Runtime interface message ui.profile.api.unavailable"
   },
   "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
-    "message": "Profil API tidak tersedia. Browser akan menggunakan profil gateway Hermes yang sedang berjalan.",
+    "message": "Profil API tidak tersedia. Ekstensi akan menggunakan profil gateway Hermes yang sedang berjalan.",
     "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
   },
   "runtime_ui_profile_ff4fc027": {
@@ -5446,14 +7094,6 @@
   "runtime_ui_room_model_note": {
     "message": "Perubahan model hanya berlaku untuk ruangan ini.",
     "description": "Runtime interface message ui.room.model.note"
-  },
-  "runtime_ui_room_next": {
-    "message": "berikutnya",
-    "description": "Runtime interface message ui.room.next"
-  },
-  "runtime_ui_room_passed": {
-    "message": "melewati",
-    "description": "Runtime interface message ui.room.passed"
   },
   "runtime_ui_room_profile_default": {
     "message": "Default profil",
@@ -5848,7 +7488,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "Mulai sesi Browser baru",
+    "message": "Mulai obrolan baru",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -6100,7 +7740,7 @@
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
-    "message": "Gerbang ini belum mengekspos /v1/capabilities. Rute khusus browser akan tetap berada dalam mode fallback.",
+    "message": "Gerbang ini belum mengekspos /v1/capabilities. Rute khusus ekstensi akan tetap berada dalam mode fallback.",
     "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
   },
   "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
@@ -6116,12 +7756,16 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "Model ini ditemukan dari titik akhir kustom, namun Hermes harus mengeksposnya melalui runtime yang terhubung sebelum Browser dapat merutekan permintaan ke model tersebut.",
+    "message": "Model ini ditemukan dari titik akhir kustom, namun Hermes harus mengeksposnya melalui runtime yang terhubung sebelum ekstensi dapat merutekan permintaan ke model tersebut.",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "Permintaan ini terikat pada sesi Browser yang dipilih.",
+    "message": "Permintaan ini terikat pada sesi yang dipilih.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_thoughts": {
+    "message": "Pemikiran",
+    "description": "Runtime interface message ui.thoughts"
   },
   "runtime_ui_time": {
     "message": "Waktu",
@@ -6268,11 +7912,11 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "Gunakan sesi tab aktif saat ini, buat sesi Browser baru, atau jalankan secara terpisah.",
+    "message": "Gunakan sesi tab aktif saat ini, mulai obrolan baru, atau jalankan secara terpisah.",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Gunakan palet dan bahasa chrome yang sama dengan Hermes Browser.",
+    "message": "Gunakan palet dan bahasa chrome yang sama dengan Hermes Browser Extension.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -6552,7 +8196,7 @@
     "description": "Runtime interface message voice.permission_blocked"
   },
   "runtime_voice_settings_load_failed": {
-    "message": "Tidak dapat memuat pengaturan Hermes Browser.\n\n{error}",
+    "message": "Tidak dapat memuat pengaturan ekstensi.\n\n{error}",
     "description": "Runtime interface message voice.settings_load_failed"
   },
   "runtime_voice_speech_recognition_error": {
@@ -6583,16 +8227,116 @@
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
   },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
+  "runtime_webapp_assist_detail": {
+    "message": "Buka aplikasi Hermes Web di tab browser baru.",
+    "description": "Runtime interface message webapp.assist_detail"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
+  "runtime_webapp_copy_command": {
+    "message": "Salin perintah",
+    "description": "Runtime interface message webapp.copy_command"
   },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
+  "runtime_webapp_dialog_body": {
+    "message": "Gateway Anda menyajikan Hermes Web setelah diaktifkan. Di komputer yang menjalankan Hermes, jalankan perintah berikut.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web tidak tersedia",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Baca panduan Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Hermes Web terbuka. Masuk di halaman itu dengan akun dasbor Anda.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Hermes Web terbuka. Di komputer ini, jalankan hermes webapp sekali untuk masuk. Tab tetap masuk.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web terbuka. Di komputer ini, jalankan hermes webapp sekali untuk masuk. Setelah itu, Hermes Browser Extension menjaga browser ini tetap masuk sampai ditutup.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web terbuka dan sudah masuk.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "Pada Hermes yang dapat dipasangkan dengan Hermes Browser Extension, Hermes Web, Proyek, dan profil bot masuk untuk Anda tanpa perlu menjalankan apa pun. Jika tidak, panel menyimpan login Hermes Web browser ini sampai Anda menutup browser, setelah satu kali hermes webapp. hermes webapp --sign-out mengakhirinya.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Biarkan Hermes Web tetap masuk dari panel",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Hermes Web tidak dapat dibuka",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Buka Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Hermes Web terbuka",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_opening_detail": {
+    "message": "Sedang memasukkan Anda ke Hermes Webapp. Ini memakan waktu beberapa detik.",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "Tampilkan saja",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web memuat lebih lama dari biasanya. Mungkin masih dimulai.",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_state": {
+    "message": "Sedang masuk",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Masih memuat",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Membuka Hermes Web",
+    "description": "Runtime interface message webapp.opening_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "Alamat Hermes Web di Pengaturan bukan alamat http atau https yang valid.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "Koneksi ini jarak jauh, jadi tidak ada alamat yang bisa dicoba. Masukkan alamat Hermes Web di Pengaturan.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "Browser tidak mengizinkan Hermes Browser Extension menjangkau alamat ini:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "Tidak ada yang menjawab di alamat ini:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "Kosongkan untuk koneksi lokal agar http://127.0.0.1:9120 dipakai otomatis. Untuk gateway jarak jauh, masukkan alamat tempat gateway menyajikan Hermes Web.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Alamat Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web memerlukan sesi masuknya. Jalankan hermes webapp sekali di komputer ini, lalu coba lagi.",
+    "description": "Runtime interface message webapp.sign_in_needed"
+  },
+  "runtime_webapp_try_again": {
+    "message": "Periksa lagi",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

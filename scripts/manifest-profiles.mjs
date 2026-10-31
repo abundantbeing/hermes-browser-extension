@@ -26,6 +26,8 @@ const MANIFEST_PROFILES = Object.freeze({
     removedManifestKeys: Object.freeze(['side_panel', 'minimum_chrome_version']),
     removedPermissions: Object.freeze(['debugger', 'offscreen', 'sidePanel']),
     removedOptionalPermissions: Object.freeze(['audioCapture']),
+    // tabs.captureVisibleTab needs all-sites access on Firefox. It is asked for from a click, never at install.
+    optionalHostPermissions: Object.freeze(['<all_urls>']),
     requiresMacOS: false,
     directBuildSupported: true,
   }),

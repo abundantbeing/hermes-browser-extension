@@ -158,7 +158,7 @@ const PROMPT_COMMANDS = Object.freeze([
   },
 ]);
 
-/** Native operations shared by the side panel and Hermes Web surfaces. */
+/** Native operations the side panel runs itself instead of sending slash text as a prompt. */
 export const NATIVE_COMMANDS = Object.freeze([
   { name: 'help', aliases: ['commands'], description: 'Show the Browser command catalog.', category: 'Agent', icon: '?', requiresInput: false, action: 'command-help' },
   { name: 'sessions', aliases: ['history'], description: 'Open the synced Hermes session list.', category: 'Session', icon: '☰', requiresInput: false, action: 'session-list' },
@@ -175,11 +175,7 @@ export const NATIVE_COMMANDS = Object.freeze([
   { name: 'queue', description: 'Queue a message after the active run.', category: 'Run', icon: '≡', requiresInput: true, action: 'queue-message' },
   { name: 'skills', description: 'Open installed Hermes skills.', category: 'Agent', icon: '✦', requiresInput: false, action: 'skill-list' },
   { name: 'quit', aliases: ['exit'], description: 'Quit an interactive Hermes client.', category: 'Agent', icon: '×', requiresInput: false, action: 'unsupported', unsupportedReason: 'Browser surfaces stay attached to the browser; close the side panel or tab to leave.' },
-  { name: 'refresh', description: 'Refresh synced Hermes sessions.', category: 'Session', icon: '↻', requiresInput: false, action: 'refresh-sessions', surfaces: ['fulltab'] },
-  { name: 'context', description: 'Open context-window details.', category: 'Runtime', icon: '◫', requiresInput: false, action: 'context-window', surfaces: ['fulltab'] },
-  { name: 'activity', description: 'Open live tool activity.', category: 'Runtime', icon: '⌁', requiresInput: false, action: 'activity', surfaces: ['fulltab'] },
-  { name: 'attach', aliases: ['files'], description: 'Open the file attachment picker.', category: 'Agent', icon: '+', requiresInput: false, action: 'attach-files', surfaces: ['fulltab'] },
-  { name: 'settings', description: 'Open Hermes Web settings.', category: 'Runtime', icon: '⚙', requiresInput: false, action: 'settings', surfaces: ['fulltab'] },
+  { name: 'refresh', description: 'Refresh the page context.', category: 'Session', icon: '↻', requiresInput: false, action: 'refresh' },
 ]);
 
 export const BUILTIN_COMMANDS = Object.freeze([

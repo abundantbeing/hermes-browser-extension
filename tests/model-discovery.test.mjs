@@ -240,8 +240,8 @@ test('gateway virtual model merge keeps the live default, avoids duplicate route
   assert.equal(merged.find((model) => model.rawModelId === 'deepseek-v4-pro')?.provider, 'deepseek');
 });
 
-test('both Browser surfaces merge only live gateway aliases into provider-aware catalogs', () => {
-  for (const relativePath of ['../extension/sidepanel.js', '../extension/app.js']) {
+test('the side panel merges only live gateway aliases into provider-aware catalogs', () => {
+  for (const relativePath of ['../extension/sidepanel.js']) {
     const source = readFileSync(new URL(relativePath, import.meta.url), 'utf8');
     assert.match(source, /discoverGatewayVirtualModels\(\{/);
     assert.match(source, /mergeVirtualModelRows\(\{/);

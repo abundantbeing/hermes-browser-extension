@@ -1,4 +1,6 @@
 import { redactSensitiveText } from './browser-context-protocol.mjs';
+import { FRAME_ELEMENT_SHARE, FRAME_TEXT_SHARE } from './browser-control-frames.mjs';
+import { controlToolName } from './control-tool-names.mjs';
 
 // Character budgets for the rendered page view. Post-action results stay small
 // because every action carries one; an explicit snapshot may be larger.
@@ -21,6 +23,9 @@ const NAME_MAX_CHARS = 120;
 const HEADING_MAX_CHARS = 120;
 const EXCERPT_LINE_MAX_CHARS = 600;
 const FULL_EXCERPT_LINE_MAX_CHARS = 5_000;
+const FRAME_TEXT_HEADER = '[text inside embedded frames]';
+// The heading, its line break, and the blank line that separates the section from the text before it.
+const FRAME_SECTION_OVERHEAD = FRAME_TEXT_HEADER.length + 3;
 
 function compact(value, limit = 300) {
   return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, limit);
@@ -126,19 +131,34 @@ export function renderControlSnapshot(snapshot = {}, { maxChars = SNAPSHOT_VIEW_
   const sectionReserve = Math.min(SECTION_RESERVE_MAX, Math.floor(limit * SECTION_RESERVE_FRACTION));
   const elementBudget = limit - sectionReserve - HINT_RESERVE_CHARS;
 
+  // The page's own elements are listed first, then those inside child frames. When there are child-frame
+  // elements, part of the list is held back for them, so a long page cannot push a live chat's composer out
+  // of the view the model reads first.
+  const own = nodes.filter((node) => !node.frameId);
+  const framed = nodes.filter((node) => node.frameId);
+  const framedLines = framed.map(elementLine);
+  const framedWanted = framedLines.reduce((sum, line) => sum + line.length + 1, 0);
+  const framedReserve = Math.min(framedWanted, Math.floor(elementBudget * FRAME_ELEMENT_SHARE));
+
   const shown = [];
   const refs = [];
   let used = 0;
-  for (const node of nodes) {
-    const line = elementLine(node);
-    if (used + line.length + 1 > elementBudget) break;
+  const list = (node, line, budget) => {
+    if (used + line.length + 1 > budget) return false;
     shown.push(line);
     refs.push(safeRef(node, node.sensitive === true ? 'Sensitive field' : redactedLine(node.name, NAME_MAX_CHARS)));
     used += line.length + 1;
+    return true;
+  };
+  for (const node of own) {
+    if (!list(node, elementLine(node), elementBudget - framedReserve)) break;
+  }
+  for (const [index, node] of framed.entries()) {
+    if (!list(node, framedLines[index], elementBudget)) break;
   }
   const omitted = elementCount - shown.length;
   const hint = omitted > 0
-    ? `… ${omitted} more element${omitted === 1 ? '' : 's'} — ${fullText ? 'scroll to reveal more' : 'scroll or call browser_snapshot with full=true'}`
+    ? `… ${omitted} more element${omitted === 1 ? '' : 's'} — ${fullText ? 'scroll to reveal more' : `scroll or call ${controlToolName('browser_snapshot')} with full=true`}`
     : '';
   const elementBlock = shown.length
     ? [...shown, ...(hint ? [hint] : [])].join('\n')
@@ -155,10 +175,26 @@ export function renderControlSnapshot(snapshot = {}, { maxChars = SNAPSHOT_VIEW_
   const excerptBudget = fullText
     ? remaining - headingChars
     : Math.min(remaining - headingChars, Math.max(MIN_VIEW_CHARS, Math.floor(limit * EXCERPT_FRACTION)));
-  const excerpt = excerptText(snapshot?.text, skip, excerptBudget, fullText ? FULL_EXCERPT_LINE_MAX_CHARS : EXCERPT_LINE_MAX_CHARS);
+  const lineLimit = fullText ? FULL_EXCERPT_LINE_MAX_CHARS : EXCERPT_LINE_MAX_CHARS;
+  // Text of child frames (a live chat's messages) is read after the page's own, under its own heading, with a
+  // share of the excerpt held back for it so a long page cannot leave it no room.
+  const frameSource = typeof snapshot?.frameText === 'string' ? snapshot.frameText : '';
+  const frameLength = frameSource ? compact(frameSource, excerptBudget + 1).length : 0;
+  const frameReserve = frameSource ? Math.min(frameLength + FRAME_SECTION_OVERHEAD, Math.floor(excerptBudget * FRAME_TEXT_SHARE)) : 0;
+  const excerpt = excerptText(snapshot?.text, skip, excerptBudget - frameReserve, lineLimit);
+  const frameRoom = excerptBudget - excerpt.text.length - FRAME_SECTION_OVERHEAD;
+  // A text that fits is shown whole, however short the room: excerptText would otherwise drop a short remainder.
+  const frameExcerpt = frameSource
+    ? excerptText(frameSource, skip, frameRoom >= frameLength ? Math.max(frameRoom, 40) : frameRoom, lineLimit)
+    : { text: '', cut: false };
 
-  let text = [elementBlock, headings.join('\n'), excerpt.text].filter(Boolean).join('\n\n');
-  let truncated = omitted > 0 || excerpt.cut || snapshot?.truncated === true;
+  let text = [
+    elementBlock,
+    headings.join('\n'),
+    excerpt.text,
+    frameExcerpt.text ? `${FRAME_TEXT_HEADER}\n${frameExcerpt.text}` : '',
+  ].filter(Boolean).join('\n\n');
+  let truncated = omitted > 0 || excerpt.cut || frameExcerpt.cut || snapshot?.truncated === true;
   if (text.length > limit) {
     text = `${text.slice(0, limit - 1)}…`;
     truncated = true;

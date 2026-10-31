@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "إضافة Hermes Browser",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
-    "message": "إضافة Hermes",
+    "message": "Hermes Ext",
     "description": "Hermes Browser extensionShortName"
   },
   "extensionDescription": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "افتح إضافة Hermes Browser",
+    "message": "افتح Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "افتح الشريط الجانبي لـ Hermes Browser",
+    "message": "افتح الشريط الجانبي لـ Hermes Browser Extension",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -34,6 +34,102 @@
   "runtime_a11y_subagent_status": {
     "message": "حالة الوكلاء الفرعيين في Hermes",
     "description": "Runtime interface message a11y.subagent_status"
+  },
+  "runtime_account_hint": {
+    "message": "تسجيل الدخول نفسه الذي يستخدمه تطبيق Hermes للهاتف. يفتح المشاريع وسلطة الجلسة وضغط السياق وقائمة الروبوتات الكاملة على بوابة تطلب تسجيل الدخول، دون تشغيل أي شيء. تسجيل الخروج يزيله من هذا المتصفح.",
+    "description": "Runtime interface message account.hint"
+  },
+  "runtime_account_label": {
+    "message": "حساب Hermes",
+    "description": "Runtime interface message account.label"
+  },
+  "runtime_account_notice_exchange_rejected": {
+    "message": "رفضت البوابة رمز تسجيل الدخول. حاول مرة أخرى.",
+    "description": "Runtime interface message account.notice.exchange_rejected"
+  },
+  "runtime_account_notice_failed": {
+    "message": "لم يكتمل تسجيل الدخول. حاول مرة أخرى.",
+    "description": "Runtime interface message account.notice.failed"
+  },
+  "runtime_account_notice_no_permission": {
+    "message": "يحتاج تسجيل الدخول إلى إذنك كي يرى Hermes Browser Extension أين تنتهي نافذة تسجيل الدخول. اختر «تسجيل الدخول» مرة أخرى واسمح بذلك.",
+    "description": "Runtime interface message account.notice.no_permission"
+  },
+  "runtime_account_notice_no_window": {
+    "message": "تعذّر على هذا المتصفح فتح نافذة تسجيل الدخول.",
+    "description": "Runtime interface message account.notice.no_window"
+  },
+  "runtime_account_notice_provider_denied": {
+    "message": "لم تتم الموافقة على تسجيل الدخول. حاول مرة أخرى.",
+    "description": "Runtime interface message account.notice.provider_denied"
+  },
+  "runtime_account_notice_session_expired": {
+    "message": "انتهت جلسة حساب Hermes الخاص بك. سجّل الدخول مرة أخرى.",
+    "description": "Runtime interface message account.notice.session_expired"
+  },
+  "runtime_account_notice_state_mismatch": {
+    "message": "لم يطابق تسجيل الدخول هذا الطلب فتم تجاهله. حاول مرة أخرى.",
+    "description": "Runtime interface message account.notice.state_mismatch"
+  },
+  "runtime_account_notice_timeout": {
+    "message": "لم يكتمل تسجيل الدخول في الوقت المناسب. حاول مرة أخرى.",
+    "description": "Runtime interface message account.notice.timeout"
+  },
+  "runtime_account_notice_unavailable": {
+    "message": "تعذّر الوصول إلى البوابة الآن. تم الاحتفاظ بتسجيل دخولك؛ حاول مرة أخرى بعد قليل.",
+    "description": "Runtime interface message account.notice.unavailable"
+  },
+  "runtime_account_sign_in": {
+    "message": "سجّل الدخول بحساب Hermes الخاص بك",
+    "description": "Runtime interface message account.sign_in"
+  },
+  "runtime_account_sign_in_needed": {
+    "message": "تحتاج هذه البوابة إلى تسجيل دخولك بحساب Hermes. افتح الإعدادات > الاتصالات واختر «سجّل الدخول بحساب Hermes الخاص بك».",
+    "description": "Runtime interface message account.sign_in_needed"
+  },
+  "runtime_account_sign_out": {
+    "message": "تسجيل الخروج",
+    "description": "Runtime interface message account.sign_out"
+  },
+  "runtime_account_signed_in_as": {
+    "message": "تم تسجيل الدخول باسم {name} ({provider})",
+    "description": "Runtime interface message account.signed_in_as"
+  },
+  "runtime_account_signed_in_generic": {
+    "message": "تم تسجيل الدخول بحساب Hermes الخاص بك",
+    "description": "Runtime interface message account.signed_in_generic"
+  },
+  "runtime_account_signed_in_title": {
+    "message": "تم تسجيل الدخول إلى Hermes",
+    "description": "Runtime interface message account.signed_in_title"
+  },
+  "runtime_account_status_checking": {
+    "message": "جارٍ التحقق مما إذا كانت هذه البوابة تقبل تسجيل الدخول بحساب Hermes.",
+    "description": "Runtime interface message account.status_checking"
+  },
+  "runtime_account_status_signed_out": {
+    "message": "لم يتم تسجيل الدخول. تطلب هذه البوابة تسجيل الدخول بحساب Hermes.",
+    "description": "Runtime interface message account.status_signed_out"
+  },
+  "runtime_account_status_waiting": {
+    "message": "في انتظار إنهائك تسجيل الدخول في النافذة التي فُتحت.",
+    "description": "Runtime interface message account.status_waiting"
+  },
+  "runtime_account_unavailable_no_native_flow": {
+    "message": "تطلب هذه البوابة تسجيل الدخول لكنها لا توفّر تسجيل الدخول للتطبيقات. حدّث Hermes إلى إصدار يوفّره.",
+    "description": "Runtime interface message account.unavailable.no_native_flow"
+  },
+  "runtime_account_unavailable_no_origin": {
+    "message": "يحتاج تسجيل الدخول بحساب Hermes إلى بوابة https أو بوابة محلية محمية بتسجيل الدخول.",
+    "description": "Runtime interface message account.unavailable.no_origin"
+  },
+  "runtime_account_unavailable_not_gated": {
+    "message": "هذه البوابة مفتوحة على هذا الكمبيوتر ولا تطلب تسجيل الدخول، لذا لا يوجد حساب Hermes لاستخدامه هنا. يغطي الاقتران بـ Hermes Browser Extension أو تسجيل دخول Hermes Web نفسه المشاريع بدلًا من ذلك.",
+    "description": "Runtime interface message account.unavailable.not_gated"
+  },
+  "runtime_account_unavailable_unreachable": {
+    "message": "تعذّر الوصول إلى هذه البوابة للتحقق من تسجيل الدخول.",
+    "description": "Runtime interface message account.unavailable.unreachable"
   },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
@@ -380,15 +476,31 @@
     "description": "Runtime interface message bot_mode.density_compact"
   },
   "runtime_bot_mode_dialog_label": {
-    "message": "وضع البوت في Hermes Browser",
+    "message": "وضع البوت",
     "description": "Runtime interface message bot_mode.dialog_label"
+  },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "رسائل سابقة مع {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "تعذّر تحميل الرسائل السابقة. لا يزال بإمكانك فتح “{title}” من Regular Sessions.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "جارٍ تحميل الرسائل السابقة…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "نقل Hermes محادثتك السابقة مع {name} جانبًا باسم “{title}” وبدأ هذه المحادثة، لذلك لا يرى {name} هذه الرسائل هنا.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
   },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"
   },
   "runtime_bot_mode_enable_label": {
-    "message": "تفعيل وضع البوت في Hermes Browser",
+    "message": "تفعيل وضع البوت",
     "description": "Runtime interface message bot_mode.enable_label"
   },
   "runtime_bot_mode_face_blobatar": {
@@ -438,6 +550,14 @@
   "runtime_bot_mode_group_create": {
     "message": "اختر وكيلاً واحداً على الأقل لمجموعة الدردشة هذه.",
     "description": "Runtime interface message bot_mode.group_create"
+  },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "لم يردّ Hermes، لذا ربما وصلته هذه الرسالة بالفعل. تحقّق من الغرفة قبل إرسالها مرة أخرى.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "رسالتك عادت إلى مربع الكتابة. إذا أُرسلت مرة أخرى دون تغيير خلال 10 دقائق، فلن تُنشر مرتين.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
   },
   "runtime_bot_mode_group_field_members": {
     "message": "اختر الوكلاء الذين يشاركون في مجموعة الدردشة هذه.",
@@ -504,7 +624,7 @@
     "description": "Runtime interface message bot_mode.leave_confirm"
   },
   "runtime_bot_mode_leave_detail": {
-    "message": "بدء جلسة جديدة سيعيدك إلى مساحة عمل Hermes Browser العادية.",
+    "message": "بدء جلسة جديدة في الإضافة سيعيدك إلى مساحة عملك العادية.",
     "description": "Runtime interface message bot_mode.leave_detail"
   },
   "runtime_bot_mode_leave_kicker": {
@@ -558,10 +678,6 @@
   "runtime_bot_mode_off_hint_sidepanel": {
     "message": "متوقف افتراضيًا. يستخدم مثيل Hermes المتصل حاليًا.",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
-  },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "متوقف افتراضيًا. مقيّد بمثيل Hermes المتصل حاليًا.",
-    "description": "Runtime interface message bot_mode.off_hint_web"
   },
   "runtime_bot_mode_open_chat": {
     "message": "افتح Bot Chat",
@@ -632,16 +748,20 @@
     "description": "Runtime interface message bot_mode.return_to_sessions"
   },
   "runtime_bot_mode_return_to_sessions_title": {
-    "message": "Return to regular Hermes Browser sessions",
+    "message": "العودة إلى جلساتك المعتادة",
     "description": "Runtime interface message bot_mode.return_to_sessions_title"
   },
   "runtime_bot_mode_roster_label": {
     "message": "وكلاء Hermes",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "وكلاء Hermes Web",
-    "description": "Runtime interface message bot_mode.roster_label_web"
+  "runtime_bot_mode_roster_names_only": {
+    "message": "صور الملفات الشخصية وتفاصيل الروبوت الكاملة تتطلب لوحة تحكم Hermes أو تسجيل الدخول إلى هذه البوابة.",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "فتح إعدادات الاتصال",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
   },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
@@ -666,10 +786,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "يشغّل قائمة الملفات التعريفية الاختيارية ومستكشف Bot Chat القياسي لهذا المتصفح.",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "يفعّل شريط الوكلاء الاختياري والتنقل القياسي في Bot Chat على هذا المتصفح.",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "الوكلاء ووضع البوت",
@@ -931,6 +1047,10 @@
     "message": "ابدأ جلسة Hermes أو اختر واحدة قبل تشغيل Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "تحكم Hermes غير متاح في هذا الـ Hermes. يتطلب Hermes يدعم التحكم عبر إضافة المتصفح.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "طبّق النطاق المختار على التبويبات التي يستطيع Hermes التحكم فيها.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1007,6 +1127,22 @@
     "message": "يمنح Chromium هذه الإضافة وصول المصحح عند تثبيتها أو تحديثها. يستخدم Hermes المصحح فقط على التبويبات التي ترفقها، ولا يُحضر نافذة المتصفح إلى الواجهة أبدًا، ويحظر بيانات الاعتماد ورموز MFA وحقول الدفع والنصوص السرية.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "لم ينفّذ Hermes إجراءً هناك: الموضع داخل إطار في صفحة لا يستطيع Hermes قراءتها.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "لم يلتقط Hermes لقطة الشاشة: إطار في هذه الصفحة موجود على صفحة لا يستطيع Hermes قراءتها.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "لم يلتقط Hermes لقطة الشاشة: انتقلت الصفحة إلى صفحة لا يلتقطها Hermes.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "لم يلتقط Hermes الصورة: يحتاج Firefox إلى إذن إضافي. استخدم «السماح بلقطات الشاشة في Firefox».",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "إيقاف مؤقت",
     "description": "Runtime interface message browser_control.pause"
@@ -1078,6 +1214,10 @@
   "runtime_browser_control_state_ready": {
     "message": "جاهز",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_state_waiting": {
+    "message": "بانتظار",
+    "description": "Runtime interface message browser_control.state_waiting"
   },
   "runtime_browser_control_status_on": {
     "message": "تشغيل",
@@ -1151,9 +1291,405 @@
     "message": "إيقاف",
     "description": "Runtime interface message browser_control.turn_off"
   },
+  "runtime_browser_control_unsupported": {
+    "message": "تحكم Hermes غير متاح في هذا الـ Hermes",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "يتطلب Hermes يدعم التحكم عبر إضافة المتصفح.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
+  },
   "runtime_browser_control_waiting": {
     "message": "في انتظار Hermes",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "يتصل تحكم Hermes بعد إرسال أول رسالة في هذه الدردشة.",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "في انتظار هذه الدردشة",
+    "description": "Runtime interface message browser_control.waiting_title"
+  },
+  "runtime_capability_feature_approvalEvents": {
+    "message": "أحداث الموافقة",
+    "description": "Runtime interface message capability.feature.approvalEvents"
+  },
+  "runtime_capability_feature_audioTranscription": {
+    "message": "تفريغ الصوت",
+    "description": "Runtime interface message capability.feature.audioTranscription"
+  },
+  "runtime_capability_feature_auth": {
+    "message": "المصادقة",
+    "description": "Runtime interface message capability.feature.auth"
+  },
+  "runtime_capability_feature_browserCompanionPlugin": {
+    "message": "إضافة Hermes Browser Extension",
+    "description": "Runtime interface message capability.feature.browserCompanionPlugin"
+  },
+  "runtime_capability_feature_browserContextProvider": {
+    "message": "Browser Context Protocol",
+    "description": "Runtime interface message capability.feature.browserContextProvider"
+  },
+  "runtime_capability_feature_browserContextStatus": {
+    "message": "حالة سياق المتصفح",
+    "description": "Runtime interface message capability.feature.browserContextStatus"
+  },
+  "runtime_capability_feature_browserContextUpload": {
+    "message": "رفع سياق المتصفح",
+    "description": "Runtime interface message capability.feature.browserContextUpload"
+  },
+  "runtime_capability_feature_browserPairing": {
+    "message": "اقتران المتصفح",
+    "description": "Runtime interface message capability.feature.browserPairing"
+  },
+  "runtime_capability_feature_health": {
+    "message": "الحالة",
+    "description": "Runtime interface message capability.feature.health"
+  },
+  "runtime_capability_feature_imageSessionAttach": {
+    "message": "إرفاق صورة (جلسة)",
+    "description": "Runtime interface message capability.feature.imageSessionAttach"
+  },
+  "runtime_capability_feature_imageUpload": {
+    "message": "رفع الصور (HTTP)",
+    "description": "Runtime interface message capability.feature.imageUpload"
+  },
+  "runtime_capability_feature_mediaRead": {
+    "message": "قراءة الصور المخزنة",
+    "description": "Runtime interface message capability.feature.mediaRead"
+  },
+  "runtime_capability_feature_models": {
+    "message": "النماذج",
+    "description": "Runtime interface message capability.feature.models"
+  },
+  "runtime_capability_feature_pluginActions": {
+    "message": "إجراءات الإضافة",
+    "description": "Runtime interface message capability.feature.pluginActions"
+  },
+  "runtime_capability_feature_profiles": {
+    "message": "الملفات الشخصية",
+    "description": "Runtime interface message capability.feature.profiles"
+  },
+  "runtime_capability_feature_projects": {
+    "message": "المشاريع",
+    "description": "Runtime interface message capability.feature.projects"
+  },
+  "runtime_capability_feature_runs": {
+    "message": "Runs API",
+    "description": "Runtime interface message capability.feature.runs"
+  },
+  "runtime_capability_feature_runSteer": {
+    "message": "توجيه التشغيل",
+    "description": "Runtime interface message capability.feature.runSteer"
+  },
+  "runtime_capability_feature_sessionAuthority": {
+    "message": "سلطة الجلسة",
+    "description": "Runtime interface message capability.feature.sessionAuthority"
+  },
+  "runtime_capability_feature_sessionCompress": {
+    "message": "ضغط السياق",
+    "description": "Runtime interface message capability.feature.sessionCompress"
+  },
+  "runtime_capability_feature_sessionContext": {
+    "message": "حالة السياق",
+    "description": "Runtime interface message capability.feature.sessionContext"
+  },
+  "runtime_capability_feature_sessionModelLock": {
+    "message": "قفل النموذج لكل جلسة",
+    "description": "Runtime interface message capability.feature.sessionModelLock"
+  },
+  "runtime_capability_feature_sessions": {
+    "message": "الجلسات",
+    "description": "Runtime interface message capability.feature.sessions"
+  },
+  "runtime_capability_feature_skills": {
+    "message": "المهارات",
+    "description": "Runtime interface message capability.feature.skills"
+  },
+  "runtime_capability_meta_checked": {
+    "message": "جرى الفحص {age}",
+    "description": "Runtime interface message capability.meta.checked"
+  },
+  "runtime_capability_meta_never": {
+    "message": "لم يُفحص قط",
+    "description": "Runtime interface message capability.meta.never"
+  },
+  "runtime_capability_meta_source": {
+    "message": "المصدر: {source}",
+    "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_account_sign_in": {
+    "message": "تطلب هذه البوابة تسجيل الدخول بحساب Hermes. سجّل الدخول من الإعدادات > الاتصالات لفتح مقبس الجلسة الخاص بها.",
+    "description": "Runtime interface message capability.reason.account_sign_in"
+  },
+  "runtime_capability_reason_advertised": {
+    "message": "أعلنت عنه هذه البوابة.",
+    "description": "Runtime interface message capability.reason.advertised"
+  },
+  "runtime_capability_reason_advertised_off": {
+    "message": "تعلن هذه البوابة أنه متوقف.",
+    "description": "Runtime interface message capability.reason.advertised_off"
+  },
+  "runtime_capability_reason_authority_compress": {
+    "message": "يعمل الضغط كعملية session.mutate بالعملية compress، وتخدمها بوابة ذات سلطة جلسة.",
+    "description": "Runtime interface message capability.reason.authority_compress"
+  },
+  "runtime_capability_reason_authority_ready": {
+    "message": "يُبلغ gateway.ready عن سلطة الجلسة.",
+    "description": "Runtime interface message capability.reason.authority_ready"
+  },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "رفضت البوابة الرمز المقترن (HTTP {status})، لذلك تعذر فحص الإضافة.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "لا تقدم هذه البوابة مسار حالة ولا قائمة مجموعات أدوات قابلة للقراءة، لذلك لا تستطيع الإضافة معرفة ما إذا كانت الإضافة المساعدة محمّلة. هذا لا يعني أنها مفقودة.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "ردت البوابة برمز HTTP {status}، لذلك تعذر فحص الإضافة.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "تعذر الوصول إلى البوابة{detail}، لذلك تعذر فحص الإضافة.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "الإضافة المساعدة محمّلة مع {presentCount} من أصل {expectedCount} أدوات، لكنها لا تقدم مسار الحالة، لذلك فهي نسخة قديمة. أعد تثبيتها لهذا الملف الشخصي وأعد تشغيل البوابة.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "لا يتوفر رمز للبوابة، لذلك لم يتم فحص الإضافة.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "غير محمّلة على هذه البوابة: مسار الحالة غير موجود ولا توجد مجموعة أدوات مساعدة مدرجة. إما أنها غير مثبتة، أو غير مفعّلة لهذا الملف الشخصي، أو لم تُعد البوابة تشغيلها منذ ذلك الحين. شغّل `hermes plugins list` لهذا الملف الشخصي.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "تم التحميل: الإصدار {version}، الملف الشخصي {profile}، عدد الأدوات {toolCount}.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "تم التحميل: الإصدار {version}، الملف الشخصي {profile}، عدد الأدوات {toolCount}. لم تتمكن هذه البوابة من التأكد مما إذا كانت مجموعة أدواتها مفعّلة لخادم API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "نسخة أقدم من هذه الإضافة محمّلة باسمها السابق hermes-browser-companion. أزلها (`hermes plugins remove hermes-browser-companion`)، وثبّت hermes-browser-extension لهذا الملف الشخصي، وأعد تشغيل البوابة.",
+    "description": "Runtime interface message capability.reason.companion_renamed"
+  },
+  "runtime_capability_reason_companion_route": {
+    "message": "متاح عبر إضافة المرافق (الإصدار {version})، التي تقدّم هذا المسار على هذه البوابة. لا يوفّر Hermes نفسه هذا المسار.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "تم التحميل (الإصدار {version})، لكن الأدوات التالية مفقودة: {missing}. أعد تثبيته لهذا الملف الشخصي وأعد تشغيل البوابة.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "تم التحميل، لكن مجموعة أدواتها موقوفة لخادم API. فعّلها بالأمر `hermes tools` أو أزلها من agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "تم التحميل، لكن إصداره {version} وهذه الإضافة تتوقع {expected}. أعد تثبيته لهذا الملف الشخصي وأعد تشغيل البوابة.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
+  "runtime_capability_reason_connection_closed": {
+    "message": "أُغلق الاتصال. آخر تأكيد {age}. يُعرض ولا يُستخدم لتشغيل أي شيء.",
+    "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_context_socket": {
+    "message": "قُرئ عبر مقبس جلسة Hermes: استخدام الجلسة وتفصيل الفئات، بالمعرّف المحفوظ للجلسة.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "يقدمه لوحة تحكم Hermes على هذا الكمبيوتر، والتي قبلت تسجيل الدخول الذي تحتفظ به هذه اللوحة. لا تعلن واجهة API الخاصة بالبوابة عنه.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
+  },
+  "runtime_capability_reason_extension_side": {
+    "message": "تبنيه وترسله هذه الإضافة داخل الموجّه. لا يعتمد على أي مسار في البوابة.",
+    "description": "Runtime interface message capability.reason.extension_side"
+  },
+  "runtime_capability_reason_identity_changed": {
+    "message": "تغيّر الاتصال أو الحساب أو الملف الشخصي. لم يُفحص مجددًا بعد.",
+    "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "تُجهَّز الصور الملصقة عبر مقبس جلسة Hermes (image.attach_bytes)، وتقرؤها المحادثة من مسارها.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
+  },
+  "runtime_capability_reason_legacy_assumed": {
+    "message": "افتراض لأن /health ردّ برمز. لم يكن /v1/capabilities متاحًا، لذا لم يتأكد ذلك.",
+    "description": "Runtime interface message capability.reason.legacy_assumed"
+  },
+  "runtime_capability_reason_legacy_gateway": {
+    "message": "لا تملك هذه البوابة /v1/capabilities، لذا لا ترى الإضافة ما تقدمه.",
+    "description": "Runtime interface message capability.reason.legacy_gateway"
+  },
+  "runtime_capability_reason_legacy_ws_compress": {
+    "message": "لا تملك بوابة اللوحة هذه سلطة جلسة، لذا يتولى session.compress القديم عملية الضغط.",
+    "description": "Runtime interface message capability.reason.legacy_ws_compress"
+  },
+  "runtime_capability_reason_method_not_found": {
+    "message": "ردّت البوابة بـ \"method not found\" (-32601) على {method}.",
+    "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "لا يوجد مقبس جلسة Hermes مفتوح لهذا الاتصال بعد. ستُقرأ حالة السياق هنا بمجرد فتح أحدها.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_record": {
+    "message": "لم يُفحص بعد.",
+    "description": "Runtime interface message capability.reason.no_record"
+  },
+  "runtime_capability_reason_no_session_authority": {
+    "message": "لم يُبلغ gateway.ready عن سلطة الجلسة.",
+    "description": "Runtime interface message capability.reason.no_session_authority"
+  },
+  "runtime_capability_reason_not_advertised": {
+    "message": "لم تعلن عنه هذه البوابة.",
+    "description": "Runtime interface message capability.reason.not_advertised"
+  },
+  "runtime_capability_reason_not_advertised_plugin": {
+    "message": "لم تعلن عنه هذه البوابة. لا يستطيع Hermes Browser Extension معرفة ما إذا كانت الإضافة المرافقة محمّلة، لذا لا يعني هذا أنها مفقودة.",
+    "description": "Runtime interface message capability.reason.not_advertised_plugin"
+  },
+  "runtime_capability_reason_not_connected": {
+    "message": "لم يسلّم WebSocket اللوحة gateway.ready بعد.",
+    "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "لا تحتوي نسخة Hermes هذه على هذا المسار، لذلك لا يوجد شيء لتفعيله. يُرسل سياق الصفحة ضمن كل رسالة بدلاً من ذلك.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
+  },
+  "runtime_capability_reason_operation_ok": {
+    "message": "نجح في آخر مرة استُخدم فيها.",
+    "description": "Runtime interface message capability.reason.operation_ok"
+  },
+  "runtime_capability_reason_operation_refused": {
+    "message": "رفض Hermes المحاولة الأخيرة: {detail}.",
+    "description": "Runtime interface message capability.reason.operation_refused"
+  },
+  "runtime_capability_reason_rest_chat": {
+    "message": "تعمل المحادثة على هذا الاتصال عبر REST API. تُرفق الصور الملصقة بجلسة حيّة عندما تعمل المحادثة عبر WebSocket للوحة التحكم، كما تفعل جلسة وضع الروبوت أو الملف المسمّى.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "تعمل المحادثة على هذا الاتصال عبر REST API ولا يوجد مقبس جلسة Hermes مفتوح، لذا تستخدم الصور الملصقة رفع لوحة التحكم أو تبقى مضمّنة.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
+  },
+  "runtime_capability_reason_rest_no_compress": {
+    "message": "يصل هذا الاتصال إلى REST API فقط، وهو لا يعلن عن مسار للضغط. يحتاج الضغط إلى WebSocket اللوحة مع سلطة الجلسة.",
+    "description": "Runtime interface message capability.reason.rest_no_compress"
+  },
+  "runtime_capability_reason_rest_only": {
+    "message": "يصل هذا الاتصال إلى REST API فقط. يلزم WebSocket اللوحة.",
+    "description": "Runtime interface message capability.reason.rest_only"
+  },
+  "runtime_capability_reason_revoked": {
+    "message": "متوقف: {detail}.",
+    "description": "Runtime interface message capability.reason.revoked"
+  },
+  "runtime_capability_reason_stale": {
+    "message": "آخر تأكيد {age}. تُعرض إجابة قديمة ولا تُستخدم لتشغيل أي شيء.",
+    "description": "Runtime interface message capability.reason.stale"
+  },
+  "runtime_capability_reason_token_present": {
+    "message": "يوجد رمز أو سياق مصادقة. لم يُثبت هذا الفحص صلاحيته.",
+    "description": "Runtime interface message capability.reason.token_present"
+  },
+  "runtime_capability_reason_ws_connected": {
+    "message": "اتصال WebSocket للوحة تحكم Hermes قائم.",
+    "description": "Runtime interface message capability.reason.ws_connected"
+  },
+  "runtime_capability_reason_ws_contract": {
+    "message": "جزء من عقد WebSocket اللوحة. لا تعلن عنه هذه البوابة منفصلًا.",
+    "description": "Runtime interface message capability.reason.ws_contract"
+  },
+  "runtime_capability_reason_ws_not_reported": {
+    "message": "لا يُبلغ WebSocket اللوحة عن هذا، ولا يقرأ هذا الاتصال /v1/capabilities.",
+    "description": "Runtime interface message capability.reason.ws_not_reported"
+  },
+  "runtime_capability_source_derived": {
+    "message": "مستنتج من الاتصال",
+    "description": "Runtime interface message capability.source.derived"
+  },
+  "runtime_capability_source_extension": {
+    "message": "هذه الإضافة",
+    "description": "Runtime interface message capability.source.extension"
+  },
+  "runtime_capability_source_method_not_found": {
+    "message": "رفض من Hermes",
+    "description": "Runtime interface message capability.source.method_not_found"
+  },
+  "runtime_capability_source_none": {
+    "message": "لا يوجد دليل بعد",
+    "description": "Runtime interface message capability.source.none"
+  },
+  "runtime_capability_source_operation": {
+    "message": "المحاولة الأخيرة",
+    "description": "Runtime interface message capability.source.operation"
+  },
+  "runtime_capability_source_probe": {
+    "message": "فحص",
+    "description": "Runtime interface message capability.source.probe"
+  },
+  "runtime_capability_source_revocation": {
+    "message": "متوقف",
+    "description": "Runtime interface message capability.source.revocation"
+  },
+  "runtime_capability_state_available": {
+    "message": "متاح",
+    "description": "Runtime interface message capability.state.available"
+  },
+  "runtime_capability_state_blocked": {
+    "message": "محظور",
+    "description": "Runtime interface message capability.state.blocked"
+  },
+  "runtime_capability_state_cached": {
+    "message": "مخزَّن مؤقتًا",
+    "description": "Runtime interface message capability.state.cached"
+  },
+  "runtime_capability_state_degraded": {
+    "message": "متدهور",
+    "description": "Runtime interface message capability.state.degraded"
+  },
+  "runtime_capability_state_unknown": {
+    "message": "غير معروف",
+    "description": "Runtime interface message capability.state.unknown"
+  },
+  "runtime_capability_state_unsupported": {
+    "message": "غير مدعوم",
+    "description": "Runtime interface message capability.state.unsupported"
+  },
+  "runtime_capability_summary_all": {
+    "message": "كل ميزة جرى فحصها هنا قيد الاستخدام.",
+    "description": "Runtime interface message capability.summary.all"
+  },
+  "runtime_capability_summary_some": {
+    "message": "ميزات غير مستخدمة في هذا الاتصال: {count}",
+    "description": "Runtime interface message capability.summary.some"
+  },
+  "runtime_chat_bot_reply_queued": {
+    "message": "رسالتك تنتظر في قائمة انتظار هذه المحادثة. سيظهر الرد هنا عندما يكون جاهزًا، فلا حاجة إلى إرسالها مرة أخرى.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
+  "runtime_chat_jump_to_latest": {
+    "message": "الانتقال إلى الأحدث",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "{count} رسالة جديدة",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "الانتقال إلى الأحدث، {count} رسالة جديدة",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
+  "runtime_chat_rewind_unsent": {
+    "message": "ربما أزال Hermes هذا الدور ولم يتم إرسال رسالتك الجديدة. يعرض السجل الآن ما لدى Hermes، وقد عاد نصك إلى مربع الكتابة.",
+    "description": "Runtime interface message chat.rewind_unsent"
   },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
@@ -1247,9 +1783,109 @@
     "message": "قيد الاستخدام",
     "description": "Runtime interface message common.using"
   },
-  "runtime_composer_attach": {
-    "message": "＋ إرفاق",
-    "description": "Runtime interface message composer.attach"
+  "runtime_compact_button": {
+    "message": "اضغط السياق",
+    "description": "Runtime interface message compact.button"
+  },
+  "runtime_compact_button_recommended": {
+    "message": "يُنصح بالضغط",
+    "description": "Runtime interface message compact.button_recommended"
+  },
+  "runtime_compact_result_aborted": {
+    "message": "لم يتمكن Hermes من تلخيص الجلسة، لذلك لم يُستبدل شيء.",
+    "description": "Runtime interface message compact.result.aborted"
+  },
+  "runtime_compact_result_blocked": {
+    "message": "لن يضغط Hermes هذه الجلسة الآن ({reason}).",
+    "description": "Runtime interface message compact.result.blocked"
+  },
+  "runtime_compact_result_busy": {
+    "message": "رفض Hermes لأن الجلسة مشغولة. لم يتغير شيء.",
+    "description": "Runtime interface message compact.result.busy"
+  },
+  "runtime_compact_result_busy_compressing": {
+    "message": "يضغط Hermes هذه الجلسة بالفعل.",
+    "description": "Runtime interface message compact.result.busy_compressing"
+  },
+  "runtime_compact_result_busy_turn": {
+    "message": "هناك دور قيد التشغيل في هذه الجلسة. أوقفه قبل الضغط. لم يُرسل شيء.",
+    "description": "Runtime interface message compact.result.busy_turn"
+  },
+  "runtime_compact_result_compacted": {
+    "message": "ضغط Hermes هذه الجلسة وتؤكد إعادة القراءة ذلك. {detail}",
+    "description": "Runtime interface message compact.result.compacted"
+  },
+  "runtime_compact_result_denied": {
+    "message": "رفض Hermes الضغط لهذا الحساب أو الملف الشخصي.",
+    "description": "Runtime interface message compact.result.denied"
+  },
+  "runtime_compact_result_failed": {
+    "message": "لم يُكمل Hermes الضغط. {detail}",
+    "description": "Runtime interface message compact.result.failed"
+  },
+  "runtime_compact_result_indeterminate": {
+    "message": "ضاعت الإجابة وتقدمت الجلسة. ربما ضغطها Hermes؛ ولم يُرسل شيء مجددًا.",
+    "description": "Runtime interface message compact.result.indeterminate"
+  },
+  "runtime_compact_result_noop": {
+    "message": "الجلسة قصيرة بما يكفي للإبقاء عليها كاملة. لم يتغير شيء.",
+    "description": "Runtime interface message compact.result.noop"
+  },
+  "runtime_compact_result_not_committed": {
+    "message": "ضاعت الإجابة، ويُظهر Hermes الجلسة دون تغيير. اضغط «ضغط» مرة أخرى لإرسال الطلب نفسه.",
+    "description": "Runtime interface message compact.result.not_committed"
+  },
+  "runtime_compact_result_not_sent": {
+    "message": "تعذّر الوصول إلى Hermes لقراءة الجلسة أولًا. لم يُرسل شيء.",
+    "description": "Runtime interface message compact.result.not_sent"
+  },
+  "runtime_compact_result_rotated": {
+    "message": "تحتفظ الجلسة بمعرّفها؛ ويواصلها Hermes في مقطع مخزَّن جديد.",
+    "description": "Runtime interface message compact.result.rotated"
+  },
+  "runtime_compact_result_stale": {
+    "message": "تغيّرت الجلسة أثناء الضغط مرتين متتاليتين. لم يتغير شيء. حاول مرة أخرى.",
+    "description": "Runtime interface message compact.result.stale"
+  },
+  "runtime_compact_result_unconfirmed": {
+    "message": "قبل Hermes الضغط، لكن إعادة قراءة الجلسة لم تؤكده. حدّث قبل الاعتماد عليه.",
+    "description": "Runtime interface message compact.result.unconfirmed"
+  },
+  "runtime_compact_status_no_session": {
+    "message": "افتح جلسة أو أنشئ واحدة قبل الضغط.",
+    "description": "Runtime interface message compact.status.no_session"
+  },
+  "runtime_compact_status_ready": {
+    "message": "استبدل الرسائل الأقدم بملخص لتوفير مساحة.",
+    "description": "Runtime interface message compact.status.ready"
+  },
+  "runtime_compact_status_running": {
+    "message": "أوقف التشغيل النشط قبل ضغط هذه الجلسة.",
+    "description": "Runtime interface message compact.status.running"
+  },
+  "runtime_compact_status_unavailable": {
+    "message": "الضغط غير متاح: {reason}",
+    "description": "Runtime interface message compact.status.unavailable"
+  },
+  "runtime_compact_title_failed": {
+    "message": "فشل ضغط السياق",
+    "description": "Runtime interface message compact.title.failed"
+  },
+  "runtime_compact_title_noop": {
+    "message": "لا شيء للضغط",
+    "description": "Runtime interface message compact.title.noop"
+  },
+  "runtime_compact_title_ok": {
+    "message": "تم ضغط السياق",
+    "description": "Runtime interface message compact.title.ok"
+  },
+  "runtime_compact_title_unavailable": {
+    "message": "ضغط السياق غير متاح",
+    "description": "Runtime interface message compact.title.unavailable"
+  },
+  "runtime_compact_working": {
+    "message": "جارٍ الضغط…",
+    "description": "Runtime interface message compact.working"
   },
   "runtime_composer_chat_label": {
     "message": "محادثة",
@@ -1287,13 +1923,45 @@
     "message": "للإعداد اليدوي.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "جارٍ فحص {title} على {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "تم الاتصال بـ Hermes مع تحذير في وقت التشغيل. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} لا يزال الإعداد اليدوي متاحًا في الإعدادات.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "جارٍ البحث عن {title} على {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "الاقتران التلقائي متاح فقط لبوابة محلية على عنوان الحلقة الراجعة (loopback). تتطلب اتصالات API عن بُعد عنوان URL ورمزًا مُعدَّين صراحةً، بينما تستخدم اتصالات لوحة القيادة Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. انقر على «تواصل مع Hermes» أو استخدم «الإعداد اليدوي».",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "خادم Hermes API محلي",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "خادم Hermes API عن بُعد",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "لوحة قيادة Hermes عن بُعد",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "غير مكوَّن",
     "description": "Runtime interface message connection.not_configured_short"
-  },
-  "runtime_connection_unknown_transport": {
-    "message": "نقل غير معروف",
-    "description": "Runtime interface message connection.unknown_transport"
   },
   "runtime_context_consent_share_detail": {
     "message": "الدردشة فقط حتى توافق على هذا الاتصال المحدد. تُعزل الموافقة حسب نقطة النهاية والحساب والملف الشخصي ووحدة تحكم المتصفح.",
@@ -1307,9 +1975,21 @@
     "message": "علامة التبويب المرفقة",
     "description": "Runtime interface message context.attached_tab"
   },
-  "runtime_context_browser_tab_handoff": {
-    "message": "تسليم علامة تبويب المتصفح {tabId}",
-    "description": "Runtime interface message context.browser_tab_handoff"
+  "runtime_context_card_no_socket": {
+    "message": "ليس لهذا الاتصال مقبس جلسة Hermes، لذا لا يمكن قراءة تفصيل الفئات.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "لا يحتفظ Hermes بهذه الجلسة على مقبس الجلسة الخاص به، لذا تعذّر قياس الفئات.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "لم يبلّغ Hermes بعد عن تفصيل الفئات لهذه الجلسة.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "سجّل الدخول بحساب Hermes من الإعدادات > الاتصالات لقراءة تفصيل الفئات لهذه الجلسة.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "اتبع علامة التبويب النشطة",
@@ -1492,7 +2172,7 @@
     "description": "Runtime interface message custom_theme.validation_errors"
   },
   "runtime_diagnostic_api_authorization_health_detail": {
-    "message": "استجاب فحص الصحة، لكن المسارات المحمية للمتصفح/النموذج تتطلب Authorization: Bearer ***. الصق مفتاح API أو رمز المتصفح المحدد النطاق في الإعدادات.",
+    "message": "استجاب فحص الصحة، لكن المسارات المحمية للإضافة والنموذج تتطلب Authorization: Bearer ***. الصق مفتاح API أو رمز المتصفح المحدد النطاق في الإعدادات.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
   },
   "runtime_diagnostic_api_authorization_title": {
@@ -1504,7 +2184,7 @@
     "description": "Runtime interface message diagnostic.api_rejected_detail"
   },
   "runtime_diagnostic_auth_detail": {
-    "message": "رفض Hermes API الطلب. تحقق من رمز المتصفح API في الإعدادات وتأكد من مطابقته لبوابة Hermes قيد التشغيل.",
+    "message": "رفض Hermes API الطلب. تحقق من رمز API في إعدادات الإضافة وتأكد من مطابقته لبوابة Hermes قيد التشغيل.",
     "description": "Runtime interface message diagnostic.auth_detail"
   },
   "runtime_diagnostic_auth_title": {
@@ -1512,11 +2192,11 @@
     "description": "Runtime interface message diagnostic.auth_title"
   },
   "runtime_diagnostic_auth_user": {
-    "message": "تم رفض رمز Hermes API. حدِّث رمز إعدادات المتصفح، ثم أعد الاتصال.",
+    "message": "تم رفض رمز Hermes API. حدِّث الرمز في إعدادات الإضافة، ثم أعد الاتصال.",
     "description": "Runtime interface message diagnostic.auth_user"
   },
   "runtime_diagnostic_cors_extension_detail": {
-    "message": "لم يتمكن المتصفح من الوصول إلى Hermes API من أصل هذا الامتداد. أضف chrome-extension://<extension-id> إلى API_SERVER_CORS_ORIGINS على المضيف البعيد.",
+    "message": "لم تتمكن الإضافة من الوصول إلى Hermes API من أصلها الخاص. أضف chrome-extension://<extension-id> إلى API_SERVER_CORS_ORIGINS على المضيف البعيد.",
     "description": "Runtime interface message diagnostic.cors_extension_detail"
   },
   "runtime_diagnostic_cors_title": {
@@ -1524,7 +2204,7 @@
     "description": "Runtime interface message diagnostic.cors_title"
   },
   "runtime_diagnostic_dashboard_url_detail": {
-    "message": "يبدو هذا كنقطة نهاية لوحة قيادة Hermes SSO. يتطلب وضع المتصفح API عنوان URL لخادم Hermes API على :8642 بالإضافة إلى Authorization: Bearer ***",
+    "message": "يبدو هذا كنقطة نهاية لوحة قيادة Hermes SSO. يتطلب وضع API في الإضافة عنوان URL لخادم Hermes API على :8642 بالإضافة إلى Authorization: Bearer ***",
     "description": "Runtime interface message diagnostic.dashboard_url_detail"
   },
   "runtime_diagnostic_dashboard_url_title": {
@@ -1540,7 +2220,7 @@
     "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
   },
   "runtime_diagnostic_network_detail": {
-    "message": "لم يتمكن المتصفح من الوصول إلى Hermes API. تحقق من عنوان URL للبوابة، وتوجيه جدار الحماية/VPN، وإعدادات CORS/الأصل لهذا الامتداد.",
+    "message": "لم تتمكن الإضافة من الوصول إلى Hermes API. تحقق من عنوان URL للبوابة، وتوجيه جدار الحماية/VPN، وإعدادات CORS/الأصل لهذه الإضافة.",
     "description": "Runtime interface message diagnostic.network_detail"
   },
   "runtime_diagnostic_network_title": {
@@ -1548,7 +2228,7 @@
     "description": "Runtime interface message diagnostic.network_title"
   },
   "runtime_diagnostic_network_user": {
-    "message": "لم يتمكن المتصفح من الوصول إلى Hermes لأن الطلب فشل في طبقة الشبكة/CORS.",
+    "message": "لم تتمكن الإضافة من الوصول إلى Hermes لأن الطلب فشل في طبقة الشبكة/CORS.",
     "description": "Runtime interface message diagnostic.network_user"
   },
   "runtime_diagnostic_remote_setup_title": {
@@ -1556,7 +2236,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "تعذر على امتداد المتصفح تصنيف استجابة البوابة البعيدة هذه.",
+    "message": "تعذر على Hermes Browser Extension تصنيف استجابة البوابة البعيدة هذه.",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -1568,7 +2248,7 @@
     "description": "Runtime interface message diagnostic.route_title"
   },
   "runtime_diagnostic_route_user": {
-    "message": "لا يكشف وقت تشغيل Hermes هذا عن مسار المتصفح المطلوب بعد.",
+    "message": "لا يكشف وقت تشغيل Hermes هذا عن مسار الإضافة المطلوب بعد.",
     "description": "Runtime interface message diagnostic.route_user"
   },
   "runtime_diagnostic_runtime_exception_detail": {
@@ -1580,7 +2260,7 @@
     "description": "Runtime interface message diagnostic.runtime_exception_title"
   },
   "runtime_diagnostic_runtime_exception_user": {
-    "message": "تم اكتشاف أثر تتبع بوابة Hermes داخل Hermes Agent الأصلي. يمكن للمتصفح البقاء متصلاً؛ تحقق من سجلات Hermes وشغّل `hermes computer-use doctor` إذا ظهر computer_use/cua-driver في أثر التتبع.",
+    "message": "تم اكتشاف أثر تتبع بوابة Hermes داخل Hermes Agent الأصلي. يمكن للإضافة البقاء متصلة؛ تحقق من سجلات Hermes وشغّل `hermes computer-use doctor` إذا ظهر computer_use/cua-driver في أثر التتبع.",
     "description": "Runtime interface message diagnostic.runtime_exception_user"
   },
   "runtime_diagnostics_surface": {
@@ -1659,13 +2339,129 @@
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
   },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "تم الفتح من {source}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
+  "runtime_firefox_screenshots_allow": {
+    "message": "السماح بلقطات الشاشة في Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
   },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "تم الفتح من {source} على علامة تبويب المتصفح {tabId}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  "runtime_firefox_screenshots_denied": {
+    "message": "لم يمنح Firefox الإذن.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "يمكن لـ Hermes التقاط صور للتبويب المرفق ضمن حدود الأمان نفسها لبقية Hermes Control. يمكنك سحب الإذن في أي وقت.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "يحتاج Firefox إلى إذن إضافي قبل أن يتمكن Hermes من التقاط صورة للتبويب. لا يطلبه Hermes إلا عند النقر على السماح؛ وحتى ذلك الحين يقرأ نص الصفحة بدلًا من ذلك.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "تعذّر تغيير إذن لقطات الشاشة: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "لقطات الشاشة مسموح بها في Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "إيقاف السماح بلقطات الشاشة",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "تمت إزالة إذن لقطات الشاشة.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "لقطات الشاشة للنموذج في Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
+  },
+  "runtime_gateway_queue_cancel": {
+    "message": "إلغاء الدور",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "تعذّر إلغاء الدور في قائمة الانتظار: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
+  "runtime_gateway_queue_discard": {
+    "message": "تجاهل",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "تعذّر تجاهل الدور المفقود: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "تعديل",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "إبقاء الأصل",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "تعذّر حفظ التعديل: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "تعديل الرسالة في قائمة الانتظار",
+    "description": "Runtime interface message gateway_queue.edit_label"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "فُقد الدور أثناء إعادة التشغيل",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "أُعيد تشغيل Hermes أثناء تنفيذ هذا الدور. لا يمكن إكماله ولا تكراره بأمان، وتنتظر الأدوار الموجودة خلفه حتى تتجاهله. تبقى رسالتك في السجل لتتمكن من إعادة إرسالها.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "في قائمة الانتظار على Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "حفظ",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "لا يوفر Hermes هذا الخيار لهذا الدور.",
+    "description": "Runtime interface message gateway_queue.unsupported"
+  },
+  "runtime_haui_ask_hint": {
+    "message": "يضع هذا السؤال في مربع الرسالة",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "جارٍ إنشاء العرض…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "تم النسخ",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "نسخ",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "يُفتح في تبويب جديد",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_unreadable": {
+    "message": "معروضة كنص: تعذّر رسم هذه البطاقة.",
+    "description": "Runtime interface message haui.unreadable"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "عرض كمخطط",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "مخطط",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "جدول",
+    "description": "Runtime interface message haui.view_table"
   },
   "runtime_image_generated": {
     "message": "صورة مولّدة",
@@ -1728,19 +2524,19 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "إضافة Hermes Browser",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
-    "message": "إضافة Hermes",
+    "message": "Hermes Ext",
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "افتح إضافة Hermes Browser",
+    "message": "افتح Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "افتح الشريط الجانبي لـ Hermes Browser",
+    "message": "افتح الشريط الجانبي لـ Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -1819,12 +2615,168 @@
     "message": "تنسيق الأرشيف غير معتمد",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "إعداد Hermes",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "رجوع",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_connect_body": {
+    "message": "اربط هذه اللوحة بوكيل Hermes الخاص بك. وافق على الإقران إذا كان Hermes لديك يتيحه، أو استخدم الإعداد اليدوي مع عنوانه ومفتاح API. بعد ذلك يرى Hermes الصفحة التي تتصفحها ويرد هنا.",
+    "description": "Runtime interface message onboarding.connect.body"
+  },
+  "runtime_onboarding_connect_connected": {
+    "message": "متصل بـ Hermes",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "الاتصال لاحقًا",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "لم يتم الاتصال بعد",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "هل يعمل Hermes على جهاز آخر أو خادم أو Hermes Cloud؟ اختر الإعداد اليدوي لإعداد هذا الاتصال.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "الاتصال بـ Hermes",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "جرّب أول طلب",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "الخط المستخدم في اللوحة وفي ردود Hermes.",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "اختر خطًا",
+    "description": "Runtime interface message onboarding.font.title"
+  },
+  "runtime_onboarding_language_body": {
+    "message": "ستستخدمها Hermes Browser Extension في كل مكان. يمكنك تغييرها لاحقًا من الإعدادات.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "مقترحة من متصفحك: {language}. اختر لغة أخرى إن شئت، ويمكنك تغييرها لاحقًا من الإعدادات.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "اختر لغتك",
+    "description": "Runtime interface message onboarding.language.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "مكان رسائلك وردود Hermes.",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "اختر تخطيط المحادثة",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "التالي",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "زمن التحميل (ث)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "ثلاثة أمور تبرز في هذه الصفحة.",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "تُحمَّل أسرع بمرتين",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "تُرسل طلبات أقل",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "حزمتها أصغر",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "لخّص هذه الصفحة",
+    "description": "Runtime interface message onboarding.preview.user"
+  },
+  "runtime_onboarding_skip": {
+    "message": "تخطي",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "ابدأ المحادثة",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "الخطوة {current} من {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "كيف يعرض Hermes ردوده.",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "اختر أسلوب الردود",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "ألوان الشريط الجانبي والصفحة الكاملة.",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "اختر سمة",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
+  "runtime_onboarding_welcome_body": {
+    "message": "لنقم بإعداده معًا. يستغرق الأمر دقيقة تقريبًا.",
+    "description": "Runtime interface message onboarding.welcome.body"
+  },
+  "runtime_onboarding_welcome_greeting": {
+    "message": "مرحبًا",
+    "description": "Runtime interface message onboarding.welcome.greeting"
+  },
+  "runtime_onboarding_welcome_skip": {
+    "message": "تخطي الإعداد",
+    "description": "Runtime interface message onboarding.welcome.skip"
+  },
+  "runtime_onboarding_welcome_start": {
+    "message": "ابدأ",
+    "description": "Runtime interface message onboarding.welcome.start"
+  },
+  "runtime_onboarding_welcome_title": {
+    "message": "مرحبًا بك في Hermes Browser",
+    "description": "Runtime interface message onboarding.welcome.title"
+  },
+  "runtime_pairing_approve_below": {
+    "message": "وافق على الاتصال أدناه.",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "تم رفض الاقتران.",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "الموافقة على اتصال Hermes",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "فتح في علامة تبويب",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "لم يتم منح إذن الميكروفون.\n\n{error}\n\nانقر فوق فتح إعدادات الميكروفون، واضبط الميكروفون على السماح لـ Hermes Browser Extension، ثم ارجع إلى هنا وحاول مرة أخرى.",
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "حالة إذن الميكروفون: {state}. إذا أظهر متصفحك أن هذا محظور، فافتح إعدادات الميكروفون واضبط الميكروفون على السماح بـ Hermes Browser Extension .",
+    "message": "حالة إذن الميكروفون: {state}. إذا أظهر متصفحك أن هذا محظور، فافتح إعدادات الميكروفون واضبط الميكروفون على السماح بـ Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -1887,12 +2839,632 @@
     "message": "قيد الاستخدام: {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
   },
+  "runtime_projects_back": {
+    "message": "رجوع",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "إلغاء",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_add_folder": {
+    "message": "إضافة مجلد",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "إضافة",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
+  "runtime_projects_create_creating": {
+    "message": "جارٍ الإنشاء…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "تم إنشاء المشروع {name}.",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "تم إنشاء المشروع {name}. فكرتك جاهزة للحفظ في IDEA.md.",
+    "description": "Runtime interface message projects.create.done_idea"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "أدخل اسم المشروع.",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "ذلك المجلد يخص المشروع {project} بالفعل.",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "استخدم مسارًا مطلقًا على مضيف البوابة: يبدأ بشرطة مائلة أو حرف محرك أقراص أو ~.",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "أدخل مجلد المشروع على مضيف البوابة.",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_folders": {
+    "message": "المجلدات",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "الفكرة (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "تعذّر توليد فكرة. {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "توليد فكرة",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "جارٍ التوليد…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "اختياري. بعد إنشاء المشروع تُفتح جلسة في أول مجلد له والنص جاهز ليحفظه Hermes في IDEA.md.",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "ما موضوع هذا المشروع؟ ملخص من سطر واحد وبضعة أهداف.",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
+  "runtime_projects_create_name": {
+    "message": "اسم المشروع",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "لا توجد مجلدات بعد. أضف المجلد الذي يعمل فيه هذا المشروع.",
+    "description": "Runtime interface message projects.create.no_folders"
+  },
+  "runtime_projects_create_path": {
+    "message": "المجلد على مضيف البوابة",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "هذا المسار على الجهاز الذي يشغّل Hermes ({host}) وليس على هذا الكمبيوتر. تصفّح للوصول إليه أو اكتب المسار.",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "أساسي",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "إزالة {folder}",
+    "description": "Runtime interface message projects.create.remove_folder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "إنشاء المشروع",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "البوابة",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "مشروع جديد",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "استخدم \"{name}\"",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "يوجد مشروع باسم {name} بالفعل ({folder}). تتميّز المشاريع بمجلداتها، لكن الاسم المختلف أسهل في التمييز.",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "إغلاق",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "يجمع المشروع الجلسات التي تعمل داخل مجلد على الجهاز الذي يشغّل Hermes. أنشئ مشروعًا للبدء.",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "لا توجد مشاريع بعد",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "انقطع الاتصال بـ Hermes.",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "تعذّر على Hermes إكمال الطلب.",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "رفض Hermes تلك القيمة.",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "ردّ Hermes بما لا تفهمه هذه الإضافة.",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "لم يُرجع Hermes المشروع الذي طُلب منه إنشاؤه.",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "لم يعد ذلك المشروع موجودًا.",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "لم يعد هذا الملف الشخصي متاحًا على البوابة.",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "لم يرد Hermes في الوقت المناسب.",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "واجهت المشاريع مشكلة",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "المجلد على مضيف البوابة:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "المجلدات المكتشفة",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "الرئيسية",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "المشاريع",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "عدم الحفظ",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "افتح جلسة في {folder} وفكرتك جاهزة. أرسلها ليكتب Hermes الملف IDEA.md هناك.",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "فكرتك لم تُحفظ بعد",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "أنشئ ملفًا باسم IDEA.md في المجلد الحالي بالنص التالي تمامًا، ولا تغيّر أي شيء آخر.\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "حفظ في IDEA.md",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "فُتحت جلسة في {name}. أرسل الرسالة لحفظ IDEA.md.",
+    "description": "Runtime interface message projects.idea.started"
+  },
+  "runtime_projects_loading": {
+    "message": "جارٍ تحميل المشاريع…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "جارٍ تحميل جلسات هذا المشروع…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "نقل",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "نقل {title} إلى مشروع",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "النقل إلى مشروع",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "الجلسة موجودة بالفعل في {cwd}.",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "رفض Hermes النقل لأن الجلسة مشغولة. انتظر حتى ينتهي الدور أو أوقفه ثم حاول مرة أخرى.",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "رفض Hermes النقل لأن الجلسة قيد الضغط. حاول مرة أخرى بعد انتهاء ذلك.",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "افحص مرة أخرى",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "فحص المجلد",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "جارٍ سؤال Hermes…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "غيّر شيء آخر الجلسة في هذه الأثناء، لذا لم يُطبَّق النقل.",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "الحالي",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "المجلد الحالي:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "لم يسمح Hermes بهذا النقل لتسجيل دخولك أو ملفك الشخصي.",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "النقل إلى",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "تم النقل. أفاد Hermes بأن مجلد الجلسة هو {cwd}.",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "نقل الجلسة يغيّر مساحة عملها وقد يغيّر المجلد الذي تعمل فيه أوامرها. تنتمي الجلسة إلى مشروع بسبب مجلدها؛ ولا يُخزَّن شيء في هذا المتصفح.",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "تعذّر على Hermes نقل الجلسة. {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "هذا المجلد ينتمي إلى المشروع {name}.",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "هذا المجلد لا ينتمي إلى أي مشروع، لذا ستظهر الجلسة ضمن الرئيسية.",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "المجلد على مضيف البوابة",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "انقطع الاتصال قبل أن يؤكد Hermes. ربما حدث النقل وربما لا، لذا افحص مرة أخرى قبل نقل أي شيء.",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "ذلك المجلد ليس دليلًا على مضيف بوابة Hermes.",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "اطلب من Hermes النقل على أي حال",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "هناك دور قيد التشغيل في هذه الجلسة",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "النقل يغيّر المجلد الذي تعمل فيه أوامرها، ويرفض Hermes النقل ما دام الدور نشطًا. لم يتغيّر شيء بعد.",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "جارٍ النقل…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "لم يطبّق Hermes النقل بعد. افحص مرة أخرى لقراءة الجلسة؛ لا يُعاد النقل إلا إذا لم يُطبَّق شيء.",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "تعذّرت قراءة Hermes، لذا لم يُرسل شيء.",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "مجلد آخر…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "نقل جلسة إلى مجلد لا ينتمي إلى أي مشروع يُخرجها من مشروعها.",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "استخدم مسارًا مطلقًا على مضيف البوابة: يبدأ بشرطة مائلة أو حرف محرك أقراص أو ~.",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "أدخل مجلدًا على مضيف البوابة.",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "الجلسة",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "تغيّرت الجلسة أثناء نقلها، لذا لم يُنقل شيء. افتح النقل مرة أخرى لاستخدام أحدث حالة لها.",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "النقل إلى {name}",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "النقل إلى مشروع",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "قبل Hermes النقل، لكن مجلد الجلسة قُرئ على أنه {cwd} وليس المجلد الذي طلبته. افحص الجلسة قبل الاعتماد عليها.",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "مشروع جديد",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "جلسة جديدة في هذا المشروع",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "يبدأ جلسة تعمل في مجلد هذا المشروع.",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "تعذّر بدء جلسة في هذا المشروع. {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "لم يبدأ Hermes الجلسة.",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "جلسة جديدة في {name}",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "لا توجد مشاريع تطابق بحثك.",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "تصفح المجلدات…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "اختيار هذا المجلد",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "المجلد:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "المجلد الافتراضي",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "لا توجد مجلدات هنا.",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "تعذّرت قراءة هذا المجلد. {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "تصفية المجلدات",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "انتقال",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "المجلدات على الجهاز الذي يشغّل Hermes ({host}) وليس على هذا الكمبيوتر.",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "الرئيسي",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "جارٍ قراءة المجلدات…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "مسار المجلد",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "ابدأ من",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "اختيار مجلد",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "عرض أول {count} مجلدًا. اكتب في المرشح للعثور على الباقي.",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "أو اكتب مسارًا",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "لا يستطيع هذا البوابة سرد مجلداتها الآن. اكتب مسار المجلد في الأسفل بدلًا من ذلك.",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "مستوى واحد للأعلى",
+    "description": "Runtime interface message projects.picker.up"
+  },
+  "runtime_projects_reason_code": {
+    "message": "السبب: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "تحديث المشاريع",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "إعادة المحاولة",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "الملف الشخصي {profile} على {host}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "ابحث في المشاريع",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "ابحث في جلسات هذا المشروع",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} جلسة",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "ابدأ جلسة من الأعلى، أو انقل جلسة موجودة إلى هنا من الأحدث.",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "لا توجد جلسات في هذا المشروع بعد",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "لا توجد جلسات في هذا المشروع تطابق بحثك.",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "الجلسات",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "عرض الجلسات",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "المشاريع",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "الأحدث",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_account_sign_in": {
+    "message": "تحتاج المشاريع إلى تسجيل الدخول بحساب Hermes على هذه البوابة. استخدم «سجّل الدخول بحساب Hermes الخاص بك» ثم حاول مرة أخرى.",
+    "description": "Runtime interface message projects.unavailable.account_sign_in"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "ردّت بوابة Hermes المتصلة بـ \"method not found\" (-32601) على {method}.",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "لم تعلن بوابة Hermes هذه عن سلطة الجلسات، لذا فالمشاريع ونقل الجلسات غير متاحَين. حدّث Hermes إلى إصدار يدعم تغييرات الجلسات القياسية.",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "المشاريع غير متاحة حتى يتصل WebSocket للوحة تحكم Hermes.",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "ما زال قسم الأحدث يعمل.",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "تحتاج المشاريع إلى WebSocket للوحة تحكم Hermes. هذا الاتصال يصل إلى REST API فقط.",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "المشاريع غير متاحة هنا",
+    "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web متوقف على هذه البوابة، لذا لا يملك قسم المشاريع مقبس جلسة. اضبط webapp.enabled على true في config.yaml، ثم شغّل hermes gateway restart وحاول مرة أخرى.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
+  },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "تحتاج المشاريع إلى تسجيل الدخول في Hermes Web. افتح Hermes Web مرة واحدة (شغّل hermes webapp) ثم حاول مجددًا.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "فقاعات على الجانبين",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "رسالتك ورسالة Hermes كلتاهما في فقاعة، كتطبيقات المراسلة.",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "أين تظهر الرسائل في المحادثة.",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "تخطيط المحادثة",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "فقاعة للمستخدم فقط",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "رسائلك داخل فقاعة، وردود Hermes نص متدفق.",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "تشغيل الإعداد الأولي مرة أخرى",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "مرّ مجددًا على السمة ونمط الردود وتخطيط المحادثة.",
+    "description": "Runtime interface message responses.setup_again_description"
+  },
+  "runtime_responses_style_description": {
+    "message": "كيف يعرض Hermes ردوده.",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "أسلوب الردود",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "نص عادي",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "الكلمات فقط دون تنسيق.",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "نص منسّق",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "Markdown منسّق: عناوين وقوائم وشيفرة.",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "بطاقات وجداول ومخططات عند الحاجة.",
+    "description": "Runtime interface message responses.style.vivid_hint"
+  },
   "runtime_run_release": {
     "message": "Release",
     "description": "Runtime interface message run.release"
   },
   "runtime_run_release_detail": {
-    "message": "Browser released the composer without Hermes confirming the stop. Check the session before sending another message.",
+    "message": "حرّرت الإضافة مربع الكتابة دون أن يؤكد Hermes الإيقاف. تحقق من الجلسة قبل إرسال رسالة أخرى.",
     "description": "Runtime interface message run.release_detail"
   },
   "runtime_run_stop": {
@@ -1908,48 +3480,44 @@
     "description": "Runtime interface message run.stop_controller_toast"
   },
   "runtime_run_stop_controller_unreachable": {
-    "message": "Browser could not reach Hermes Control to cancel pending browser actions.",
+    "message": "لم تتمكن الإضافة من الوصول إلى Hermes Control لإلغاء إجراءات المتصفح المعلقة.",
     "description": "Runtime interface message run.stop_controller_unreachable"
   },
   "runtime_run_stop_unconfirmed_no_run_id": {
-    "message": "Hermes has not reported a run id for this turn, so Browser cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.",
+    "message": "لم يُبلغ Hermes عن معرّف تشغيل لهذه الدورة، لذا لا تستطيع الإضافة تأكيد توقف التشغيل. يبقى كاتب الجلسة والرسائل في قائمة الانتظار محتجزَين إلى أن يؤكد Hermes حالة نهائية.",
     "description": "Runtime interface message run.stop_unconfirmed_no_run_id"
   },
   "runtime_run_stop_unconfirmed_title": {
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "الوضع السريع {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}. غيّر النموذج وخيارات التشغيل.",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "خيارات التشغيل",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "خيارات التشغيل: {summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "استدلال {effort}",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "التفكير متوقف",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "التفكير {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "نسخ معرّف الجلسة لـ {title}",
     "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_legacy_continue_copy": {
+    "message": "المتابعة في نسخة",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "تعذر على Hermes نسخ هذه المحادثة، لذلك لم يتم إرسال رسالتك. ابدأ محادثة جديدة للمتابعة. رسالتك ما زالت في المربع.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "جارٍ نسخ المحادثة…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "بدء محادثة جديدة",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "بدأت هذه المحادثة نسخة أقدم من Hermes Browser Extension، ولم تعد هذه البوابة تقبل رسائل جديدة فيها. لم يتم إرسال رسالتك. يمكنك المتابعة في نسخة من المحادثة.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "بدأت هذه المحادثة نسخة أقدم من Hermes Browser Extension، ولم تعد هذه البوابة تقبل رسائل جديدة فيها. لا يمكن نسخها هنا، لذا ابدأ محادثة جديدة للمتابعة. رسالتك ما زالت في المربع.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
@@ -1959,10 +3527,6 @@
     "message": "+ جلسة Hermes Browser Extension جديدة",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "جارٍ فتح {title}",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -1971,13 +3535,17 @@
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
   },
-  "runtime_session_rail_save_failed": {
-    "message": "فشل حفظ مسار الجلسة: {error}",
-    "description": "Runtime interface message session.rail_save_failed"
-  },
   "runtime_session_rename_named": {
     "message": "إعادة تسمية الجلسة {title}",
     "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_session_replay_truncated": {
+    "message": "تم اقتطاع السجل، جارٍ إعادة التحميل",
+    "description": "Runtime interface message session.replay.truncated"
+  },
+  "runtime_session_row_model": {
+    "message": "النموذج: {model}",
+    "description": "Runtime interface message session.row_model"
   },
   "runtime_settings_back_to_top": {
     "message": "العودة إلى الأعلى",
@@ -2019,6 +3587,10 @@
     "message": "الفئات",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "العودة إلى الفئات",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "البوابة وملف الوكيل وكيف يصل هذا المتصفح إلى Hermes.",
     "description": "Runtime interface message settings.categories.connections.summary"
@@ -2036,7 +3608,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "كل ما يستطيع Hermes Browser فعله، مجمّعًا حسب الغرض.",
+    "message": "كل ما يستطيع Hermes Browser Extension فعله، مجمّعًا حسب الغرض.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -2074,6 +3646,30 @@
   "runtime_settings_categories_voice_title": {
     "message": "الصوت والتنبيه",
     "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_context_depth_full": {
+    "message": "كامل",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "أكبر قدر من محتوى الصفحة",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "أدنى",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "التحديد ومقتطف قصير",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "عادي",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "خيار افتراضي جيد",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
   },
   "runtime_settings_custom_theme_help": {
     "message": "أضف المزيد من السمات: تصفّح سمات VS Code أو استورد ملف سمة أو اطلب من وكيل تصميم سمة. تظهر السمات المثبّتة في الشبكة أعلاه.",
@@ -2195,6 +3791,62 @@
     "message": "· ألفا العامة / تحميل تفكيكها",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "لم يتم الحفظ: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "المظهر والوكلاء ومفاتيح الأذونات ووقت التشغيل تُطبَّق فور تغييرها. أما بقية الإعدادات فتُطبَّق عند الضغط على «حفظ».",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "يجب أن تكون منافذ الوكلاء أرقامًا من 1 إلى 65535، مفصولة بفواصل.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "تم الحفظ. Hermes متصل.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "تم الحفظ، لكن تعذّر الوصول إلى Hermes: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "عناوين مصادر النماذج هذه غير صالحة: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "تلقائي",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "ترجمات YouTube، ثم الصفحة",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "مخصص",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "خدمتك الخاصة",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "عدم جلب النصوص أبدًا",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "نصوص YouTube",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "عنوان URL للخدمة",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "يضيف Hermes معرّف الفيديو إلى هذا العنوان.",
+    "description": "Runtime interface message settings.transcript.url_hint"
+  },
   "runtime_status_connection_not_responding": {
     "message": "{summary} لا يستجيب. ابدأ Hermes Desktop/Gateway، ثم أعد الاتصال.",
     "description": "Runtime interface message status.connection_not_responding"
@@ -2224,7 +3876,7 @@
     "description": "Runtime interface message status.profile_selected_restart"
   },
   "runtime_status_profile_switch_unavailable": {
-    "message": "{error}. سيستخدم المتصفح ملف تعريف Hermes قيد التشغيل حاليًا.",
+    "message": "{error}. ستستخدم الإضافة ملف تعريف Hermes قيد التشغيل حاليًا.",
     "description": "Runtime interface message status.profile_switch_unavailable"
   },
   "runtime_tasks_summary": {
@@ -2300,7 +3952,7 @@
     "description": "Runtime interface message ui.adjust"
   },
   "runtime_ui_adjust_extension_text_without_changing_browser_zoom": {
-    "message": "Adjust text across Hermes Browser surfaces without changing browser zoom.",
+    "message": "اضبط النص في أنحاء الإضافة دون تغيير تكبير المتصفح.",
     "description": "Runtime interface message ui.adjust.extension.text.without.changing.browser.zoom"
   },
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
@@ -2632,11 +4284,11 @@
     "description": "Runtime interface message ui.browser.local.fallback"
   },
   "runtime_ui_browser_update_review": {
-    "message": "مراجعة تحديث المتصفح",
+    "message": "مراجعة تحديث الإضافة",
     "description": "Runtime interface message ui.browser.update.review"
   },
   "runtime_ui_browser_updates": {
-    "message": "تحديثات المتصفح",
+    "message": "تحديثات الإضافة",
     "description": "Runtime interface message ui.browser.updates"
   },
   "runtime_ui_build": {
@@ -2728,7 +4380,7 @@
     "description": "Runtime interface message ui.checking"
   },
   "runtime_ui_checking_browser_main": {
-    "message": "جارٍ التحقق من المتصفح الرئيسي…",
+    "message": "جارٍ التحقق من الفرع الرئيسي للإضافة…",
     "description": "Runtime interface message ui.checking.browser.main"
   },
   "runtime_ui_checking_hermes": {
@@ -2784,7 +4436,7 @@
     "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
   },
   "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
-    "message": "اختر المكان الذي تصل فيه جلسة المتصفح هذه إلى Hermes.",
+    "message": "اختر المكان الذي تصل فيه الإضافة إلى Hermes.",
     "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
   },
   "runtime_ui_choose_where_to_send": {
@@ -2792,7 +4444,7 @@
     "description": "Runtime interface message ui.choose.where.to.send"
   },
   "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
-    "message": "اختر ملف تعريف وكيل Hermes الذي يجب أن يستخدمه المتصفح عندما تكشف البوابة المحلية عن ملفات التعريف.",
+    "message": "اختر ملف تعريف وكيل Hermes الذي يجب أن تستخدمه الإضافة عندما تكشف البوابة المحلية عن ملفات التعريف.",
     "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
   },
   "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
@@ -2804,7 +4456,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "تمنع بعض المتصفحات التقاط الميكروفون داخل الأشرطة الجانبية الملحقة. تسجل علامة تبويب الامتداد المرئية هذه من نفس أصل امتداد Hermes عندما يكون Hermes STT متاحًا، أو تستخدم احتياطي كلام المتصفح عندما لا يكشف وقت التشغيل المتصل عن النسخ الصوتي.",
+    "message": "تمنع بعض المتصفحات التقاط الميكروفون داخل الأشرطة الجانبية الملحقة. تسجل علامة تبويب الامتداد المرئية هذه من نفس أصل Hermes Browser Extension عندما يكون Hermes STT متاحًا، أو تستخدم احتياطي كلام المتصفح عندما لا يكشف وقت التشغيل المتصل عن النسخ الصوتي.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -3380,7 +5032,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "تعذر ترحيل جلسة المتصفح",
+    "message": "تعذر ترحيل الجلسة",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -3887,37 +5539,33 @@
     "message": "مجموعة",
     "description": "Runtime interface message ui.group"
   },
-  "runtime_ui_group_presence_all_replied": {
-    "message": "ردّ الجميع",
-    "description": "Runtime interface message ui.group.presence.all.replied"
+  "runtime_ui_group_working_many": {
+    "message": "{first} و{second} و{count} آخرون يعملون…",
+    "description": "Runtime interface message ui.group.working.many"
   },
-  "runtime_ui_group_presence_done_failed": {
-    "message": "تم · تعذّر على {count} الردّ",
-    "description": "Runtime interface message ui.group.presence.done.failed"
+  "runtime_ui_group_working_three": {
+    "message": "{first} و{second} و{third} يعملون…",
+    "description": "Runtime interface message ui.group.working.three"
   },
-  "runtime_ui_group_presence_done_passed": {
-    "message": "تم · تخطّى {count}",
-    "description": "Runtime interface message ui.group.presence.done.passed"
+  "runtime_ui_group_working_two": {
+    "message": "{first} و{second} يعملان…",
+    "description": "Runtime interface message ui.group.working.two"
   },
-  "runtime_ui_group_presence_reply_fail": {
-    "message": "{replied} ردوا، {failed} لم يتمكن",
-    "description": "Runtime interface message ui.group.presence.reply.fail"
+  "runtime_ui_group_working_typing": {
+    "message": "يكتب…",
+    "description": "Runtime interface message ui.group.working.typing"
   },
-  "runtime_ui_group_presence_replying": {
-    "message": "{name} يردّ",
-    "description": "Runtime interface message ui.group.presence.replying"
+  "runtime_ui_group_working_using": {
+    "message": "يستخدم {tool}…",
+    "description": "Runtime interface message ui.group.working.using"
   },
-  "runtime_ui_group_presence_typing": {
-    "message": "{name} يكتب",
-    "description": "Runtime interface message ui.group.presence.typing"
+  "runtime_ui_group_working_working": {
+    "message": "يعمل…",
+    "description": "Runtime interface message ui.group.working.working"
   },
-  "runtime_ui_group_presence_using": {
-    "message": "{name} يستخدم {tool}",
-    "description": "Runtime interface message ui.group.presence.using"
-  },
-  "runtime_ui_group_presence_waiting": {
-    "message": "{count} في الانتظار",
-    "description": "Runtime interface message ui.group.presence.waiting"
+  "runtime_ui_group_working_wrapping": {
+    "message": "جارٍ الإنهاء…",
+    "description": "Runtime interface message ui.group.working.wrapping"
   },
   "runtime_ui_handing_update_to_hermes": {
     "message": "تسليم التحديث إلى Hermes",
@@ -4512,7 +6160,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "تم حظر الوصول إلى الميكروفون لـ Hermes Browser.",
+    "message": "تم حظر الوصول إلى الميكروفون لـ Hermes Browser Extension.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -4604,7 +6252,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "دردشة متصفح جديدة",
+    "message": "دردشة جديدة",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -4668,7 +6316,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "لا يتم حفظ أي صوت هنا. يتيح الإذن لـ Hermes Browser تسجيل صوتك فقط عند النقر فوق زر الميكروفون.",
+    "message": "لا يتم حفظ أي صوت هنا. يتيح الإذن لـ Hermes Browser Extension تسجيل صوتك فقط عند النقر فوق زر الميكروفون.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -4868,15 +6516,15 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "افتح الجلسة المحددة في اللوحة الجانبية Hermes Browser.",
+    "message": "افتح الجلسة المحددة في اللوحة الجانبية لـ Hermes Browser Extension.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "افتح اللوحة الجانبية لامتداد Hermes من شريط أدوات المتصفح الخاص بك.",
+    "message": "افتح اللوحة الجانبية لـ Hermes Browser Extension من شريط أدوات المتصفح الخاص بك.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
-    "message": "افتح جلسة Assist المحتفَظ بها في اللوحة الجانبية للمتصفح أو في Hermes Web.",
+    "message": "افتح جلسة Assist المحتفَظ بها في اللوحة الجانبية للإضافة أو في Hermes Web.",
     "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
   },
   "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
@@ -4912,7 +6560,7 @@
     "description": "Runtime interface message ui.optional"
   },
   "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
-    "message": "الاكتشاف الاختياري فقط: يقوم المتصفح باستكشاف كل نقطة نهاية OpenAI-compatible `/v1/models` ويعرض التطابقات في منتقي النماذج. لا يزال توجيه وقت التشغيل يأتي من بوابة Hermes المتصلة.",
+    "message": "الاكتشاف الاختياري فقط: تقوم الإضافة باستكشاف كل نقطة نهاية OpenAI-compatible `/v1/models` وتعرض التطابقات في منتقي النماذج. لا يزال توجيه وقت التشغيل يأتي من بوابة Hermes المتصلة.",
     "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
   },
   "runtime_ui_options": {
@@ -5088,7 +6736,7 @@
     "description": "Runtime interface message ui.profile.api.unavailable"
   },
   "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
-    "message": "الملف التعريفي API غير متاح. سيستخدم المتصفح ملف تعريف بوابة Hermes قيد التشغيل حاليًا.",
+    "message": "الملف التعريفي API غير متاح. ستستخدم الإضافة ملف تعريف بوابة Hermes قيد التشغيل حاليًا.",
     "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
   },
   "runtime_ui_profile_ff4fc027": {
@@ -5446,14 +7094,6 @@
   "runtime_ui_room_model_note": {
     "message": "تنطبق تغييرات الطراز على هذه الغرفة فقط.",
     "description": "Runtime interface message ui.room.model.note"
-  },
-  "runtime_ui_room_next": {
-    "message": "التالي",
-    "description": "Runtime interface message ui.room.next"
-  },
-  "runtime_ui_room_passed": {
-    "message": "تخطّى",
-    "description": "Runtime interface message ui.room.passed"
   },
   "runtime_ui_room_profile_default": {
     "message": "افتراضي الملف الشخصي",
@@ -5848,7 +7488,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "ابدأ جلسة متصفح جديدة",
+    "message": "بدء محادثة جديدة",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -6100,7 +7740,7 @@
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
-    "message": "لم تكشف هذه البوابة عن /v1/capabilities حتى الآن. ستبقى المسارات الخاصة بالمتصفح في الوضع الاحتياطي.",
+    "message": "لم تكشف هذه البوابة عن /v1/capabilities حتى الآن. ستبقى المسارات الخاصة بالإضافة في الوضع الاحتياطي.",
     "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
   },
   "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
@@ -6116,12 +7756,16 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "تم اكتشاف هذا النموذج من نقطة نهاية مخصصة، ولكن يجب على Hermes الكشف عنه خلال وقت التشغيل المتصل قبل أن يتمكن المتصفح من توجيه الطلبات إليه.",
+    "message": "تم اكتشاف هذا النموذج من نقطة نهاية مخصصة، ولكن يجب على Hermes الكشف عنه خلال وقت التشغيل المتصل قبل أن تتمكن الإضافة من توجيه الطلبات إليه.",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "يرتبط هذا الطلب بجلسة المتصفح المحددة.",
+    "message": "يرتبط هذا الطلب بالجلسة المحددة.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_thoughts": {
+    "message": "الأفكار",
+    "description": "Runtime interface message ui.thoughts"
   },
   "runtime_ui_time": {
     "message": "وقت",
@@ -6268,11 +7912,11 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "استخدم الجلسة الحالية لعلامة التبويب النشطة، أو أنشئ جلسة متصفح جديدة، أو قم بتشغيلها بشكل منفصل.",
+    "message": "استخدم الجلسة الحالية لعلامة التبويب النشطة، أو ابدأ محادثة جديدة، أو قم بتشغيلها بشكل منفصل.",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "استخدم نفس لوحة الألوان ولغة الكروم مثل Hermes Browser.",
+    "message": "استخدم نفس لوحة الألوان ولغة الكروم مثل Hermes Browser Extension.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -6552,7 +8196,7 @@
     "description": "Runtime interface message voice.permission_blocked"
   },
   "runtime_voice_settings_load_failed": {
-    "message": "Could not load Hermes Browser settings.\n\n{error}",
+    "message": "تعذر تحميل إعدادات الإضافة.\n\n{error}",
     "description": "Runtime interface message voice.settings_load_failed"
   },
   "runtime_voice_speech_recognition_error": {
@@ -6583,16 +8227,116 @@
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
   },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
+  "runtime_webapp_assist_detail": {
+    "message": "افتح تطبيق Hermes Web في علامة تبويب جديدة.",
+    "description": "Runtime interface message webapp.assist_detail"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
+  "runtime_webapp_copy_command": {
+    "message": "نسخ الأمر",
+    "description": "Runtime interface message webapp.copy_command"
   },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
+  "runtime_webapp_dialog_body": {
+    "message": "تقدّم البوابة Hermes Web بمجرد تشغيله. على الكمبيوتر الذي يشغّل Hermes، نفّذ هذه الأوامر.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web غير متاح",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "اقرأ دليل Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "تم فتح Hermes Web. سجّل الدخول في تلك الصفحة بحساب لوحة التحكم.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "تم فتح Hermes Web. على هذا الكمبيوتر، شغّل hermes webapp مرة واحدة لتسجيل الدخول. تبقى علامة التبويب مسجّلة الدخول.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_hint_local_kept": {
+    "message": "تم فتح Hermes Web. على هذا الكمبيوتر، شغّل hermes webapp مرة واحدة لتسجيل الدخول. بعد ذلك يُبقي Hermes Browser Extension هذا المتصفح مسجّل الدخول حتى تغلقه.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "تم فتح Hermes Web وهو مسجّل الدخول بالفعل.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "مع Hermes الذي يقترن بـ Hermes Browser Extension، يتم تسجيل دخولك إلى Hermes Web والمشاريع وملفات الروبوتات دون أي أمر تشغّله. وإلا فيحتفظ اللوح بتسجيل دخول Hermes Web لهذا المتصفح حتى تغلقه، بعد تشغيل hermes webapp مرة واحدة. الأمر hermes webapp --sign-out ينهيه.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "إبقاء Hermes Web مسجّل الدخول من اللوحة",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "تعذّر فتح Hermes Web",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "فتح Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "تم فتح Hermes Web",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_opening_detail": {
+    "message": "نسجّل دخولك إلى تطبيق Hermes Webapp. يستغرق ذلك بضع ثوانٍ.",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "اعرضه على أي حال",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "يستغرق تحميل Hermes Web وقتًا أطول من المعتاد. ربما لا يزال قيد التشغيل.",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_state": {
+    "message": "جارٍ تسجيل الدخول",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "لا يزال قيد التحميل",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "جارٍ فتح Hermes Web",
+    "description": "Runtime interface message webapp.opening_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "عنوان Hermes Web في الإعدادات ليس عنوان http أو https صالحًا.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "هذا الاتصال بعيد، فلا يوجد عنوان لتجربته. أدخل عنوان Hermes Web في الإعدادات.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "لم يسمح المتصفح لـ Hermes Browser Extension بالوصول إلى هذا العنوان:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "لم يستجب أي شيء على هذا العنوان:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "اتركه فارغًا في الاتصال المحلي لاستخدام http://127.0.0.1:9120 تلقائيًا. في البوابة البعيدة، أدخل العنوان الذي تقدّم منه Hermes Web.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "عنوان Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "يحتاج Hermes Web إلى تسجيل الدخول. شغّل hermes webapp مرة واحدة على هذا الكمبيوتر ثم حاول مجددًا.",
+    "description": "Runtime interface message webapp.sign_in_needed"
+  },
+  "runtime_webapp_try_again": {
+    "message": "تحقّق مرة أخرى",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

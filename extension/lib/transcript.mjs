@@ -75,6 +75,38 @@ export function providerUrlForVideo(provider = '', videoId = '') {
   }
 }
 
+// Settings shows the stored provider as one of three choices. The stored
+// value stays what the background fetch reads: 'default' (YouTube's caption
+// feed, then the page's own transcript panel), 'off', or an http(s) URL.
+export const TRANSCRIPT_MODES = Object.freeze(['default', 'off', 'custom']);
+
+function isTranscriptServiceUrl(value = '') {
+  try {
+    const url = new URL(String(value || '').trim());
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+/** The settings choice and URL field for a stored provider value. */
+export function transcriptModeFromProvider(provider = 'default') {
+  const raw = String(provider || '').trim();
+  if (raw.toLowerCase() === 'off') return { mode: 'off', url: '' };
+  if (isTranscriptServiceUrl(raw)) return { mode: 'custom', url: raw };
+  return { mode: 'default', url: '' };
+}
+
+/**
+ * The provider value to store for a settings choice. A custom choice needs an
+ * http(s) address the background can fetch; without one it stays automatic.
+ */
+export function transcriptProviderFromMode(mode = 'default', url = '') {
+  if (mode === 'off') return 'off';
+  if (mode === 'custom' && isTranscriptServiceUrl(url)) return String(url).trim();
+  return 'default';
+}
+
 function decodeXmlText(value = '') {
   return String(value || '')
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')

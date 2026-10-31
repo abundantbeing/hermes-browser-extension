@@ -44,6 +44,9 @@ export function createWakeBackgroundController({
   openPanel,
   gatewayClientFactory = createGatewayClient,
   fetchFn = globalThis.fetch?.bind(globalThis),
+  // The Hermes Web sign-in the extension holds (lib/webapp-credential.mjs). With the Webapp on, the
+  // dashboard is its listener and injects no page token; this stands in for it.
+  webappCredentials = null,
 } = {}) {
   let currentSettings = normalizeWakeWordSettings({});
   let state = publicState({ state: 'off', mode: 'off' });
@@ -185,7 +188,24 @@ export function createWakeBackgroundController({
     }
     const minted = await mintLocalTicket(baseUrl).catch((error) => ({ ok: false, reason: error?.message || String(error) }));
     if (minted.ok && minted.ticket) return { ok: true, name: 'ticket', value: minted.ticket };
+    const webapp = await webappCredential();
+    if (webapp.ok) return webapp;
     return { ok: false, reason: minted.reason || 'dashboard-auth-unavailable' };
+  }
+
+  // The held Hermes Web sign-in: a one-use socket ticket for the Webapp's own /api/ws. The sign-in
+  // itself never reaches a URL. { ok, name: 'ticket', value, baseUrl } or { ok: false }.
+  async function webappCredential() {
+    try {
+      const held = await webappCredentials?.held?.();
+      if (!held?.origin) return { ok: false };
+      const target = { origin: held.origin, basePath: held.basePath || '', baseUrl: `${held.origin}${held.basePath || ''}` };
+      const minted = await webappCredentials.mintSocketTicket(target, { socket: 'gateway' });
+      if (minted?.ok && minted.ticket) return { ok: true, name: 'ticket', value: minted.ticket, baseUrl: target.baseUrl };
+    } catch {
+      /* no usable sign-in: the caller reports the dashboard as unavailable */
+    }
+    return { ok: false };
   }
 
   async function resumeNative() {
@@ -272,9 +292,9 @@ export function createWakeBackgroundController({
     if (!(await localGatewayIsActive())) {
       return { ok: false, reason: NATIVE_WAKE_LOCAL_ONLY_DETAIL };
     }
-    const baseUrl = LOCAL_DASHBOARD_URL;
-    const credential = await localDashboardCredential(baseUrl);
+    const credential = await localDashboardCredential(LOCAL_DASHBOARD_URL);
     if (!credential.ok) return { ok: false, reason: credential.reason || 'dashboard-auth-unavailable' };
+    const baseUrl = credential.baseUrl || LOCAL_DASHBOARD_URL;
     const client = gatewayClientFactory({
       clientName: 'hermes-browser-wake',
       clientVersion: runtimeVersion(chromeApi),

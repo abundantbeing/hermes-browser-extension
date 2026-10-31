@@ -1,0 +1,40 @@
+/* The cover for the gateway's Hermes Web hand-off pages (hermes-web-launch.js sets the attribute before the page
+   paints). Quiet: Hermes Web's own starting background (web/src/index.css --background-base), nothing else.
+   Page: the extension's opening page, framed over everything. Notice: the gateway's own message, readable. */
+
+html[data-hermes-browser-cover] {
+  background: #041c1c !important;
+  color-scheme: dark;
+}
+
+html[data-hermes-browser-cover] body {
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+html[data-hermes-browser-cover="quiet"] #status,
+html[data-hermes-browser-cover="page"] #status {
+  visibility: hidden !important;
+}
+
+html[data-hermes-browser-cover="page"] > iframe.hermes-browser-cover-frame {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  border: 0 !important;
+  z-index: 2147483647 !important;
+  background: #f6f7fb !important;
+}
+
+html[data-hermes-browser-cover="notice"] #status {
+  visibility: visible !important;
+  box-sizing: border-box;
+  max-width: 46ch;
+  margin: 32vh auto 0 !important;
+  padding: 0 16px;
+  color: #e6f1ef !important;
+  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  text-align: center;
+}

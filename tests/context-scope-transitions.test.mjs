@@ -7,6 +7,7 @@ import {
   contextScopeFromTab,
   normalizeContextScope,
 } from '../extension/lib/context-scope.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 import {
   createRevisionGate,
   resetContextScope,
@@ -145,7 +146,7 @@ test('sidepanel async scope publication is revision-guarded at storage and captu
   const loadStart = source.indexOf('async function loadMessagesForActiveScope');
   const loadEnd = source.indexOf('\nasync function saveMessagesForActiveScope', loadStart);
   const refreshStart = source.indexOf('async function refreshContext(options');
-  const refreshEnd = source.indexOf('\nfunction setRefreshButtonBusy', refreshStart);
+  const refreshEnd = source.indexOf('\nfunction setContextPageRefreshBusy', refreshStart);
   const loadRegion = source.slice(loadStart, loadEnd);
   const refreshRegion = source.slice(refreshStart, refreshEnd);
   assert.match(loadRegion, /scopeRevision/);
@@ -241,8 +242,7 @@ test('pinning a stale menu row fails closed instead of reusing a closed tab snap
 
 test('check:js syntax-checks the transition helper', async () => {
   const { readFile } = await import('node:fs/promises');
-  const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.match(packageJson.scripts['check:js'], /node --check extension\/lib\/context-scope-transition\.mjs/);
+  assert.match(CHECK_JS, /node --check extension\/lib\/context-scope-transition\.mjs/);
 });
 
 test('conversation snapshots restore non-pinned identity without copying connection secrets', () => {
@@ -274,4 +274,30 @@ test('conversation snapshots restore non-pinned identity without copying connect
   assert.equal(restored.settings.sessionId, 'global-session');
   assert.equal(restored.activeSessionRuntime.sessionId, 'global-session');
   assert.equal(restored.transport, 'dashboard-ws');
+});
+
+test('a running chat this panel made over REST opens over REST; only the roster ever falls back to it', async () => {
+  const { chooseOpenSessionTransport } = await import('../extension/lib/context-scope-transition.mjs');
+  // The reported case: a REST connection, a hermes-browser-extension-* chat whose turn is still running.
+  assert.deepEqual(chooseOpenSessionTransport({ activeTransport: 'rest', liveOnRoster: true, restMadeChat: true }), { dashboard: false, restFallback: false });
+  // A running session from elsewhere (Desktop, CLI) is attached over the socket, and REST takes over if the socket cannot.
+  assert.deepEqual(chooseOpenSessionTransport({ activeTransport: 'rest', liveOnRoster: true }), { dashboard: true, restFallback: true });
+  // A panel already chatting over the socket keeps it, and a socket failure stays a failure there.
+  assert.deepEqual(chooseOpenSessionTransport({ activeTransport: 'dashboard-ws', liveOnRoster: true, restMadeChat: true }), { dashboard: true, restFallback: false });
+  // Bot Mode and Remote socket mode need the socket; no REST fallback there.
+  assert.deepEqual(chooseOpenSessionTransport({ activeTransport: 'rest', botTransport: true, liveOnRoster: true }), { dashboard: true, restFallback: false });
+  assert.deepEqual(chooseOpenSessionTransport({ activeTransport: 'rest', remoteWsMode: true, liveOnRoster: true, restMadeChat: true }), { dashboard: true, restFallback: false });
+  // Idle sessions and explicit REST opens stay REST.
+  assert.deepEqual(chooseOpenSessionTransport({ activeTransport: 'rest' }), { dashboard: false, restFallback: false });
+  assert.deepEqual(chooseOpenSessionTransport({ activeTransport: 'dashboard-ws', forceRest: true }), { dashboard: false, restFallback: false });
+});
+
+test('the picker opens a session through the transport choice and falls back to REST instead of failing', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const start = source.indexOf('async function openHermesSession(');
+  const body = source.slice(start, source.indexOf('\nasync function attachLiveSessionIfRunning', start));
+  assert.match(body, /chooseOpenSessionTransport\(\{[\s\S]*?restMadeChat: isSidePanelSessionId\(session\.id\),/);
+  assert.match(body, /if \(openTransport\.restFallback\) \{[\s\S]*?dashboardTransport = false;/);
+  assert.match(body, /\n {2}if \(!dashboardTransport\) \{\n/, 'the REST open runs after a fallback too');
 });

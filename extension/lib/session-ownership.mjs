@@ -41,6 +41,16 @@ export function foreignSessionSourceLabel(session = {}) {
   return known[source] || label || 'another Hermes surface';
 }
 
+// Ids the side panel's surfaces mint: its own chats and Hermes Assist drafts
+// (background.js assistSessionId). Over the API server these sessions are stored
+// as api_server, so the id is what marks them as the Browser's.
+export function isSidePanelSessionId(sessionId = '') {
+  const id = normalized(sessionId);
+  return id === 'hermes-browser-extension'
+    || id.startsWith('hermes-browser-extension-')
+    || id.startsWith('hermes-assist-');
+}
+
 export function sessionOwnedBySurface(session = {}, expectedSource = '') {
   const value = sessionObject(session);
   const sessionId = normalized(value.id);
@@ -49,9 +59,7 @@ export function sessionOwnedBySurface(session = {}, expectedSource = '') {
   if (!sessionId || !expected) return false;
   if (source === expected || source === 'hermes_bot_mode' || source === 'bot_mode') return true;
   if (sessionId.startsWith('canonical_') || sessionId.startsWith('bot_') || sessionId.startsWith('room-')) return true;
-  if (expected === SESSION_SURFACE_SOURCES.SIDE_PANEL) {
-    return sessionId === 'hermes-browser-extension' || sessionId.startsWith('hermes-browser-extension-');
-  }
+  if (expected === SESSION_SURFACE_SOURCES.SIDE_PANEL) return isSidePanelSessionId(sessionId);
   if (expected === SESSION_SURFACE_SOURCES.FULL_TAB) {
     return sessionId.startsWith('hermes-web-');
   }
@@ -80,12 +88,12 @@ export function sessionOwnershipNotice({ session = {}, expectedSource = '' } = {
       : `It already contains ${count} messages.`;
   const newChatLabel = normalized(expectedSource) === SESSION_SURFACE_SOURCES.FULL_TAB
     ? 'New Hermes Web chat'
-    : 'New Browser chat';
+    : 'New chat';
   return Object.freeze({
     sourceLabel,
     messageCount: count,
     title: `${sourceLabel} session selected`,
-    detail: `${countDetail} Two Browser surfaces writing the same session can overwrite or reorder transcript updates. Start a new chat, or continue here intentionally.`,
+    detail: `${countDetail} Two apps writing to the same session can overwrite or reorder each other’s updates. Start a new chat, or continue here intentionally.`,
     newChatLabel,
     continueLabel: `Continue in ${sourceLabel}`,
   });

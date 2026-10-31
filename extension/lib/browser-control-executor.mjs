@@ -2,6 +2,7 @@ import {
   BROWSER_CONTROL_RISKS,
   classifyBrowserControlAction,
 } from './browser-control-safety.mjs';
+import { isNavigationKey, resolveKeyPress } from './browser-control-keys.mjs';
 import { redactSensitiveText } from './browser-context-protocol.mjs';
 import { redactSensitiveTextWithCount } from './content-extraction-core.mjs';
 import { hasCredentialBearingUrl } from './redaction.mjs';
@@ -35,7 +36,7 @@ const POST_ACTION_ACTIONS = new Set([
 ]);
 // Probes that only need the tab URL, not the unsaved-content page script.
 const URL_ONLY_PROBE_ACTIONS = new Set(['browser_snapshot', 'browser_scroll', 'browser_screenshot', 'browser_back']);
-const APPROVALS_RECHECK_ACTIONS = new Set(['browser_click', 'browser_drag', 'browser_press', 'browser_type']);
+const APPROVALS_RECHECK_ACTIONS = new Set(['browser_click', 'browser_drag', 'browser_fill', 'browser_press', 'browser_select', 'browser_type']);
 // The broker cancels a command at 30 s; the approval wait must end first.
 const APPROVAL_WAIT_CAP_MS = 28_000;
 const APPROVAL_TIMEOUT_MESSAGE = 'Waiting for your approval in the Hermes panel timed out.';
@@ -62,16 +63,29 @@ const BATCH_STEP_RESERVE_MS = 2_000;
 const BATCH_FATAL_CODES = new Set([
   'approval_denied', 'approval_cancelled', 'approval_timeout', 'approval_required', 'approval_replayed',
   'approval_mismatch', 'domain_changed', 'stale_document', 'scope_mismatch', 'cancelled',
-  'deadline_exceeded', 'deadline_expired', 'controller_paused',
+  'deadline_exceeded', 'deadline_expired', 'controller_paused', 'focus_changed',
 ]);
 
 // Adapter errors that carry a model-actionable code keep it; everything else
 // is reported as a generic command_error.
-const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden']);
+const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden', 'restricted_frame', 'not_active_tab', 'restricted_page', 'page_changed', 'focus_changed', 'unsupported_for_ref', 'capture_region_mismatch', 'screenshot_unavailable']);
+
+// What the model is told when a request is refused outright, so it can explain it or ask the person to take over.
+// A reason with no entry here is reported as its own name.
+const BLOCKED_MESSAGES = Object.freeze({
+  'sensitive-credential-field': 'Hermes does not type into password or credential fields. Ask the person to enter it themselves.',
+  'sensitive-payment-field': 'Hermes does not type into payment or card fields. Ask the person to enter it themselves.',
+  'sensitive-mfa-field': 'Hermes does not type into one-time-code or verification fields. Ask the person to enter it themselves.',
+  'sensitive-field': 'Hermes does not type into sensitive fields. Ask the person to enter it themselves.',
+});
 
 const APPROVAL_MESSAGES = Object.freeze({
   'cross-origin-unsaved-content': 'Leave this page while unsaved content may be present?',
   'submission-key': 'Press Enter to submit the current form or message?',
+  'activation-key': 'Press Space? It may activate whatever has focus on the page.',
+  'framed-focus': 'Press this key inside an embedded frame on the page?',
+  'unknown-focus': 'Press this key? Hermes could not tell what has focus on the page.',
+  'opaque-focus': 'Press this key? Hermes cannot tell what the focused element does with it.',
   'clipboard-paste': 'Paste your clipboard into this page?',
   'consequential-action': 'Run this consequential browser action?',
   'coordinate-click': 'Click these exact viewport coordinates?',
@@ -127,6 +141,56 @@ function tabSwitchLabel(title, url) {
   return host ? truncatedTabTitle(host) : '';
 }
 
+// The key a press names, as the person reads it: Space for the space character, modifiers first.
+function pressKeyLabel(args = {}) {
+  const raw = String(args?.key ?? '');
+  const key = raw === ' ' ? 'Space' : tabTitleText(raw).slice(0, 30);
+  const listed = Array.isArray(args?.modifiers) ? args.modifiers.map((value) => tabTitleText(value).slice(0, 12)).filter(Boolean) : [];
+  const label = [...listed, key].filter(Boolean).join('+');
+  return label || 'this key';
+}
+
+// The focused element as the card names it: its label, then its role. '' when focus could not be read.
+function focusedLabel(focused) {
+  if (!focused || typeof focused !== 'object') return '';
+  const name = truncatedTabTitle(focused.name).slice(0, 80);
+  const role = tabTitleText(focused.role).slice(0, 30);
+  if (name && role) return `"${name}" (${role})`;
+  if (name) return `"${name}"`;
+  return role ? `a ${role}` : '';
+}
+
+// A key press asks about the element it would reach, not about "this action": the person sees the key and what has
+// focus. A reason with no wording here keeps the generic card text.
+function pressApprovalReason(reason, args, focused) {
+  const key = pressKeyLabel(args);
+  const label = focusedLabel(focused);
+  if (reason === 'consequential-action' && label) return `Press ${key} while ${label} has focus? It acts like clicking it.`;
+  if (reason === 'framed-focus') return label ? `Press ${key} inside the embedded frame ${label} on the page?` : `Press ${key} inside an embedded frame on the page?`;
+  if (reason === 'opaque-focus' && label) return `Press ${key} while ${label} has focus? Hermes cannot tell what that element does with it.`;
+  if (reason === 'unknown-focus') return `Press ${key}? Hermes could not tell what has focus on the page.`;
+  return '';
+}
+
+// Whether the element that has focus is still the one the person was asked about.
+function sameFocus(before, after) {
+  const known = (value) => Boolean(value) && typeof value === 'object';
+  if (!known(before) || !known(after)) return false;
+  return /^[a-f0-9]{32}$/.test(before.identity || '') && before.identity === after.identity
+    && ['role', 'name', 'inputType', 'autocomplete'].every((field) => compact(before[field], 200) === compact(after[field], 200))
+    && (before.inFrame === true) === (after.inFrame === true);
+}
+
+// Tab, Escape, arrows and the page keys write nothing and are judged the same wherever focus is, so they are
+// not held to the focus that was read: a page whose focus cannot be identified (an embedded frame) still takes them.
+function isNavigationPress(args) {
+  try {
+    return isNavigationKey(resolveKeyPress(args));
+  } catch {
+    return false;
+  }
+}
+
 const TIMED_OUT = Symbol('timed-out');
 
 function withTimeout(promise, ms) {
@@ -148,7 +212,8 @@ function pickResultValue(value = null) {
   return value;
 }
 
-function safeNetworkUrl(value = '') {
+// A URL as a result may carry it: bounded, a credential-bearing one cut to its origin, secrets redacted.
+export function safeNetworkUrl(value = '') {
   const url = compact(value, 2_000);
   if (!url) return '';
   if (hasCredentialBearingUrl(url)) {
@@ -255,13 +320,18 @@ export function approvalBindingFields(action, args, target, destination) {
     const parts = [];
     if (refs.length) parts.push(`ref:${refs.join('>')}`);
     if (Number.isFinite(Number(args.x)) && Number.isFinite(Number(args.y))) parts.push(`point:${Number(args.x)},${Number(args.y)}`);
-    // A switch is bound to the tab it switches to, so a grant covers that tab only.
-    if (action === 'browser_tab_activate') parts.push(`tab:${Number(args.tab_id)}`);
+    // A switch or a close is bound to the tab it names, so a grant covers that tab only.
+    if (action === 'browser_tab_activate' || action === 'browser_tab_close') parts.push(`tab:${Number(args.tab_id)}`);
     if (parts.length) fields.binding = parts.join(' ');
   }
   const material = approvalValueMaterial(action, args);
   if (material !== null) fields.valueHash = fingerprint(material);
   return fields;
+}
+
+function focusAsTarget(focused) {
+  if (!focused || typeof focused !== 'object') return null;
+  return { role: focused.role, name: focused.name };
 }
 
 function batchStepAction(value) {
@@ -323,9 +393,11 @@ function safeResultTitle(value = '') {
 function safeSnapshotResult(value = {}, refResult = {}, { maxChars, fullText = false } = {}) {
   const view = renderControlSnapshot({
     text: value.text,
+    frameText: value.frameText,
     headings: value.headings,
     refs: Array.isArray(refResult.refs) ? refResult.refs : [],
-    element_count: Array.isArray(value.nodes) ? value.nodes.length : 0,
+    // The browser may know of more controls than it returned (a child frame cut at its cap).
+    element_count: Math.max(Array.isArray(value.nodes) ? value.nodes.length : 0, Math.floor(Number(value.element_count)) || 0),
     truncated: Boolean(value.truncated || refResult.truncated),
   }, { maxChars, fullText });
   return {
@@ -388,7 +460,9 @@ function sanitizedActionResult(action, value) {
       id: Number(tab.id),
       windowId: Number(tab.windowId),
       active: tab.active === true,
-      url: compact(tab.url, 2_000),
+      url: safeResultUrl(tab.url || tab.pendingUrl),
+      // Still loading when the wait ran out: the first action on it may find the page not ready yet.
+      ...(value?.timedOut === true ? { loading: true } : {}),
     } };
   }
   if (action === 'browser_tab_group') return { status: 'tabs-grouped', groupId: Number(value?.groupId) };
@@ -410,6 +484,8 @@ function sanitizedActionResult(action, value) {
       tabs: Array.isArray(value?.tabs) ? value.tabs.slice(0, 100).map((tab) => ({
         id: Number(tab?.id),
         active: tab?.active === true,
+        // `active` is per window: two windows each have an active tab.
+        ...(Number(tab?.windowId) > 0 ? { windowId: Number(tab.windowId) } : {}),
         title: compact(tab?.title, 500),
         url: compact(tab?.url, 2_000),
       })).filter((tab) => Number.isInteger(tab.id) && tab.id > 0) : [],
@@ -618,6 +694,16 @@ export function createBrowserControlExecutor({
           state.snapshot_error = 'snapshot_timeout';
           return state;
         }
+        // The page was judged before the debugger attached and the page settled, so it can have moved to a
+        // restricted address since. The address the snapshot was read under decides, and a restricted one
+        // discards everything read.
+        if (restrictedPageUrl(raw?.url, allowLocalDocuments)) {
+          state.snapshot_error = 'restricted_page';
+          state.url = safeResultUrl(pageOrigin(raw.url));
+          delete state.title;
+          refs.invalidateTab(scope.tabId);
+          return state;
+        }
         // The generation may have moved while the snapshot ran; refs must be
         // minted under the one the next command will carry.
         const mintGeneration = readDocumentGeneration(generation);
@@ -675,8 +761,9 @@ export function createBrowserControlExecutor({
     // The approval card names the tab a switch would bring forward, read through the
     // adapter. Without a readable title the generic wording stands; either way the
     // approval is bound to the tab id, not to this text.
-    async function tabSwitchReason(args) {
-      const generic = APPROVAL_MESSAGES['tab-activate'];
+    // A switch or a close names the tab it is about: the card is shown on whichever tab carries the
+    // command, which need not be the one switched to or closed.
+    async function namedTabReason(args, generic, ask) {
       const targetTabId = Number(args.tab_id);
       if (typeof adapter.inspect !== 'function' || !Number.isInteger(targetTabId) || targetTabId <= 0) return generic;
       try {
@@ -684,10 +771,18 @@ export function createBrowserControlExecutor({
           tabId: targetTabId, frameId: 0, signal: controller.signal, light: true,
         });
         const label = tabSwitchLabel(info?.title, info?.currentUrl);
-        return label ? `Switch your view to "${label}"?` : generic;
+        return label ? ask(label) : generic;
       } catch {
         return generic;
       }
+    }
+
+    function tabSwitchReason(args) {
+      return namedTabReason(args, APPROVAL_MESSAGES['tab-activate'], (label) => `Switch your view to "${label}"?`);
+    }
+
+    function tabCloseReason(args) {
+      return namedTabReason(args, APPROVAL_MESSAGES['tab-close'], (label) => `Close the tab "${label}"?`);
     }
 
     // One action under the full rule set: ref resolution, page probe,
@@ -741,11 +836,16 @@ export function createBrowserControlExecutor({
         target: target || {},
         currentUrl: pageState.currentUrl,
         hasUnsavedContent: pageState.hasUnsavedContent === true,
+        // A key press goes to whatever has focus, so the probe's reading of it is judged.
+        ...(action === 'browser_press' ? { focused: pageState.focused } : {}),
         developerMode: boundedDeveloperMode,
         allowLocalDocuments: Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments),
       });
       if (policy.risk === BROWSER_CONTROL_RISKS.BLOCKED) {
-        return errorOutcome('sensitive_action_blocked', policy.reason || 'This action is blocked.');
+        return errorOutcome(
+          'sensitive_action_blocked',
+          policy.message || BLOCKED_MESSAGES[policy.reason] || policy.reason || 'This action is blocked.',
+        );
       }
       if (policy.risk === BROWSER_CONTROL_RISKS.APPROVAL) {
         const approval = {
@@ -756,14 +856,19 @@ export function createBrowserControlExecutor({
           leaseId: commandScope.leaseId,
           leaseGeneration: commandScope.leaseGeneration,
           tabId: commandScope.tabId,
+          frameId: Math.max(0, Number(scope.frameId) || 0),
           // The document the action will run on: a batch that navigated has moved on
           // from the generation the command arrived with, and the grant checks this one.
           documentGeneration: scope.documentGeneration,
           action,
           state: 'paused',
-          ...approvalBindingFields(action, args, target, destination),
+          // A key press has no ref; what it is bound to is the element that has focus when it is asked about.
+          ...approvalBindingFields(action, args, action === 'browser_press' ? focusAsTarget(pageState.focused) : target, destination),
+          ...(action === 'browser_press' && pageState.focused?.identity ? { binding: `focus:${pageState.focused.identity}` } : {}),
         };
-        let approvalReason = APPROVAL_MESSAGES[policy.reason] || 'This browser action requires approval.';
+        let approvalReason = (action === 'browser_press' && pressApprovalReason(policy.reason, args, pageState.focused))
+          || APPROVAL_MESSAGES[policy.reason]
+          || 'This browser action requires approval.';
         if (step) approvalReason = `Step ${step.number} of ${step.total}: ${approvalReason}`;
         let approvalDetail = '';
         if (action === 'browser_evaluate') {
@@ -773,8 +878,8 @@ export function createBrowserControlExecutor({
         }
         let consumed = approvals.consume(approval);
         if (!consumed.ok) {
-          if (action === 'browser_tab_activate') {
-            approvalReason = await tabSwitchReason(args);
+          if (action === 'browser_tab_activate' || action === 'browser_tab_close') {
+            approvalReason = await (action === 'browser_tab_activate' ? tabSwitchReason(args) : tabCloseReason(args));
             // A cancel that landed during the title read must not leave a request behind.
             if (controller.signal.aborted) {
               return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');
@@ -814,8 +919,10 @@ export function createBrowserControlExecutor({
         if (!consumed.ok) return errorOutcome('approval_required', policy.reason || 'This action requires approval.');
       }
 
-      // One probe per action; only a human approval wait leaves room for the page to change.
-      if (waitedForApproval && typeof adapter.inspect === 'function' && APPROVALS_RECHECK_ACTIONS.has(action)) {
+      // Recheck after a wait, and also for a pre-existing key-press grant. This is
+      // not atomic with the later browser input dispatch.
+      if ((waitedForApproval || (action === 'browser_press' && policy.risk === BROWSER_CONTROL_RISKS.APPROVAL))
+        && typeof adapter.inspect === 'function' && APPROVALS_RECHECK_ACTIONS.has(action)) {
         const current = await adapter.inspect({
           tabId: scope.tabId,
           frameId: scope.frameId,
@@ -824,11 +931,24 @@ export function createBrowserControlExecutor({
         if (controller.signal.aborted) {
           return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');
         }
+        // A key goes to whatever has focus when it is sent, and the card named what had it when it was asked.
+        if (action === 'browser_press' && !sameFocus(pageState.focused, current.focused)) {
+          return errorOutcome('focus_changed', 'Focus moved to a different element while waiting for your approval, so the key was not pressed. Ask again if it is still wanted.');
+        }
         const beforeOrigin = pageOrigin(pageState.currentUrl);
         const currentOrigin = pageOrigin(current.currentUrl);
         if (!beforeOrigin || !currentOrigin || beforeOrigin !== currentOrigin) {
           return errorOutcome('domain_changed', 'The page origin changed before the action could run.');
         }
+        // The same origin can still have moved to a path the policy refuses (a pushState to /checkout), and the
+        // approval was for the page as it was, so the whole policy is applied to where the page is now.
+        if (restrictedPageUrl(current.currentUrl, Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments))) {
+          return errorOutcome('domain_changed', 'The page moved to one Hermes will not act on while waiting for your approval, so the action did not run.');
+        }
+      }
+
+      if (action === 'browser_press' && policy.risk === BROWSER_CONTROL_RISKS.APPROVAL && typeof adapter.inspect !== 'function') {
+        return errorOutcome('focus_changed', 'Focus could not be verified, so the key was not pressed.');
       }
 
       // Phase 8 privileged pre-execution gates: raw CDP method policy and
@@ -865,6 +985,8 @@ export function createBrowserControlExecutor({
         leasedTabIds: [...ownedTabs],
         ownedTabIds: [...controllerOwnedTabs],
         currentWindowId: Number(currentWindowId) || null,
+        allowLocalDocuments: Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments),
+        ...(action === 'browser_press' && pageState.focused && !isNavigationPress(args) ? { expectedFocus: pageState.focused } : {}),
         ...(artifact ? { artifact } : {}),
       });
       if (controller.signal.aborted) return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');
@@ -969,6 +1091,12 @@ export function createBrowserControlExecutor({
       }
 
       if (action === 'browser_snapshot') {
+        // Same as after an action: the page was judged before it was read, and the address it was read
+        // under decides. A page that became restricted meanwhile is dropped, not described.
+        if (restrictedPageUrl(value?.url, Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments))) {
+          refs.invalidateTab(scope.tabId);
+          return errorOutcome('sensitive_action_blocked', 'The page moved to one Hermes will not read, so nothing was read from it.');
+        }
         const full = args.full === true;
         const minted = refs.replace({ ...scope, nodes: Array.isArray(value?.nodes) ? value.nodes : [] });
         if (!minted.ok) return errorOutcome(minted.error, 'Could not bind snapshot refs.');
@@ -986,6 +1114,10 @@ export function createBrowserControlExecutor({
         };
       }
       if (action === 'browser_screenshot') {
+        // Judged like a snapshot: the address the pixels were taken under decides, and a restricted one drops them.
+        if (restrictedPageUrl(value?.url, Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments))) {
+          return errorOutcome('restricted_page', 'The page moved to one Hermes will not capture, so the screenshot was discarded.');
+        }
         const dataUrl = String(value?.dataUrl || '');
         if (!dataUrl.startsWith('data:image/png;base64,') || dataUrl.length > MAX_INLINE_SCREENSHOT_CHARS) {
           return errorOutcome('screenshot_too_large', 'The screenshot exceeds the inline Phase 6 transport cap.');

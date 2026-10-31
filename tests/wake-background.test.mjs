@@ -219,12 +219,10 @@ test('the real extension background routes atomic wake claims into the controlle
   assert.match(routedTypes, /WAKE_MESSAGES\.claimTurn/);
 });
 
-test('both Hermes surfaces immediately acknowledge a delivered wake turn', () => {
+test('the side panel immediately acknowledges a delivered wake turn', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const app = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 
   assert.match(sidepanel, /sendResponse\?\.\(\{ ok: true, accepted: true, surface: SURFACE_KINDS\.SIDE_PANEL \}\)/);
-  assert.match(app, /sendResponse\?\.\(\{ ok: true, accepted: true, surface: SURFACE_KINDS\.FULL_TAB \}\)/);
 });
 
 test('wake reply resumes local listener when spoken replies are disabled', async () => {

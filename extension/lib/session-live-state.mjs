@@ -145,6 +145,8 @@ function classifyStatus(value = '') {
   const norm = normalizeStatusText(value);
   if (!norm) return null;
   if (STOPPING_STATUSES.has(norm)) return { state: 'running', label: 'Stopping' };
+  // Admitted but the agent has not started: both gateways emit it, and the turn exists.
+  if (norm === 'starting') return { state: 'running', label: 'Starting' };
   if (WAITING_STATUSES.has(norm)) {
     const label = norm === 'waiting_for_approval' ? 'Waiting for approval'
       : (norm === 'queued' || norm === 'pending') ? 'Queued'

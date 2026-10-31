@@ -1,8 +1,9 @@
 /**
  * Phase 5 controller transport connector
  *
- * Local/VPS: authenticated registration POST, then a dedicated credential-free
- * controller WebSocket whose one-shot ticket is carried only as a subprotocol.
+ * Local/VPS: authenticated registration POST (Hermes core's route, else the
+ * companion plugin's), then a dedicated credential-free controller WebSocket
+ * whose one-shot ticket is carried only as a subprotocol.
  *
  * Cloud/dashboard: mint a first-party dashboard ticket from the explicitly
  * trusted tab, connect to a credential-free Gateway endpoint with ticket
@@ -13,8 +14,12 @@
 import {
   CONTROLLER_HEARTBEAT_METHOD,
   CONTROLLER_METHODS,
+  CONTROLLER_ROUTES,
+  CONTROLLER_SESSION_PENDING,
+  CONTROLLER_UNSUPPORTED_GATEWAY,
   CONTROLLER_TRANSPORT_FAMILIES,
   controllerRegistrationFor,
+  controllerSocketPath,
   controllerWebSocketProtocols,
   controllerWebSocketUrl,
 } from './controller-protocol.mjs';
@@ -23,6 +28,7 @@ import {
   createGatewayClient,
   establishGatewaySession,
   gatewayWebSocketProtocols,
+  isUnknownMethodError,
 } from './gateway-ws.mjs';
 import {
   isTrustedDashboardOrigin,
@@ -39,19 +45,49 @@ const CLOUD_TRANSPORTS = new Set([
   CONNECTION_TRANSPORTS.REMOTE_DASHBOARD,
 ]);
 const DEFAULT_CONNECT_TIMEOUT_MS = 15_000;
+// Chromium stops an extension service worker after 30 seconds without events, and a socket message is the
+// event that keeps it running; the gateway answers a heartbeat with one. The once-a-minute heartbeat alarm
+// alone let the worker stop, and the control socket with it, for half of every minute.
+const DEFAULT_KEEPALIVE_MS = 20_000;
 
 function asError(error, fallback) {
   return error instanceof Error ? error : new Error(String(error || fallback));
+}
+
+// A gateway without extension control answers the register route with 404 (or
+// 405 when the path matches a different verb) and the register RPC with
+// method-not-found. Neither changes on retry, so both are terminal. On the API
+// transports that holds only once both routes (Hermes core's and the companion
+// plugin's) have answered so.
+function unsupportedGatewayError(detail, status) {
+  const error = new Error(detail);
+  error.code = CONTROLLER_UNSUPPORTED_GATEWAY;
+  if (status !== undefined) error.status = status;
+  return error;
+}
+
+function unsupportedRegisterError(status) {
+  return unsupportedGatewayError(`This Hermes does not support Hermes Control (HTTP ${status}).`, status);
+}
+
+function isUnsupportedRegisterStatus(status) {
+  return Number(status) === 404 || Number(status) === 405;
 }
 
 function normalizedTransport(settings = {}) {
   return String(settings?.connectionTransport || '').trim();
 }
 
+// The profile the connection is for: it addresses the register and the socket (/p/<profile>)
+// and is sent as a header too.
+function activeProfileOf(settings = {}) {
+  return String(settings?.activeProfile || '').trim();
+}
+
 function apiHeaders(settings = {}) {
   const apiKey = String(settings?.apiKey || '').trim();
   if (!apiKey) throw new Error('Controller API registration requires an API credential.');
-  const profile = String(settings?.activeProfile || '').trim();
+  const profile = activeProfileOf(settings);
   const authorization = ['Bearer', apiKey].join(' ');
   return {
     'Content-Type': 'application/json',
@@ -76,12 +112,14 @@ function openControllerSocket({
   onFrame,
   onClose,
   timeoutMs,
+  keepAliveMs = DEFAULT_KEEPALIVE_MS,
 }) {
   if (!WebSocketImpl) return Promise.reject(new Error('WebSocket is unavailable for controller transport.'));
   return new Promise((resolve, reject) => {
     let settled = false;
     let socket;
     let heartbeatSequence = 0;
+    let keepAlive = null;
     const pendingHeartbeats = new Map();
     const timer = setTimeout(() => {
       if (settled) return;
@@ -103,6 +141,15 @@ function openControllerSocket({
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      // Fire and forget: the reply is the point, and a socket that stopped answering is found by the alarm's checked heartbeat.
+      if (keepAliveMs > 0) {
+        keepAlive = setInterval(() => {
+          if (socket.readyState !== 1) return;
+          heartbeatSequence += 1;
+          try { socket.send(JSON.stringify({ method: CONTROLLER_HEARTBEAT_METHOD, params: { nonce: `keepalive-${heartbeatSequence}` } })); } catch { /* the close event reports it */ }
+        }, keepAliveMs);
+        keepAlive?.unref?.();
+      }
       resolve({
         async send(frame) {
           if (socket.readyState !== 1) throw new Error('Controller WebSocket is not open.');
@@ -147,6 +194,8 @@ function openControllerSocket({
       // not replaced by a generic browser error event.
     });
     socket.addEventListener('close', (event) => {
+      clearInterval(keepAlive);
+      keepAlive = null;
       for (const pending of pendingHeartbeats.values()) {
         clearTimeout(pending.timer);
         pending.reject(new Error('Controller WebSocket closed during heartbeat.'));
@@ -170,12 +219,66 @@ export function createControllerConnector({
   scriptingApi = null,
   mintDashboardTicket = mintWsTicket,
   connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS,
+  keepAliveMs = DEFAULT_KEEPALIVE_MS,
 } = {}) {
+  // One registration against one gateway route (Hermes core's or the companion
+  // plugin's). Resolves to the ticket and the socket path to open; a 404 or 405 is
+  // that route's own terminal unsupported_gateway result, so the caller can try the
+  // other route before giving up.
+  async function registerOnRoute({ route, family, baseUrl, identity, settings, signal }) {
+    const descriptor = controllerRegistrationFor({ family, baseUrl, identity, route, profile: activeProfileOf(settings) });
+    const response = await fetchImpl(descriptor.registrationUrl, {
+      method: 'POST',
+      headers: apiHeaders(settings),
+      body: JSON.stringify(descriptor.payload),
+      redirect: 'error',
+      cache: 'no-store',
+      signal,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (isUnsupportedRegisterStatus(response.status)) throw unsupportedRegisterError(response.status);
+      // The gateway refuses a ticket for a session it does not know
+      // (browser_control_session_forbidden). A local draft's id is minted
+      // client-side and the panel's first turn creates it; the controller never
+      // creates a session (that left an empty one in the person's list on every
+      // panel open). It reports "not ready" and tries again on the normal backoff.
+      if (payload?.error?.code === 'browser_control_session_forbidden') {
+        const pending = new Error('This chat does not exist on the gateway yet; Hermes Control connects once its first message has been sent.');
+        pending.code = CONTROLLER_SESSION_PENDING;
+        throw pending;
+      }
+      const message = String(payload?.error?.message || payload?.detail || '').trim();
+      throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
+    }
+    const ticket = String(payload?.ticket || '').trim();
+    if (!ticket) throw new Error('Controller registration did not return a ticket.');
+    return { ticket, socketPath: controllerSocketPath(route, payload?.ws_path), route };
+  }
+
+  // Hermes core's route first. A Hermes without extension control in core answers
+  // it 404 or 405, and the companion plugin carries the same protocol on its own
+  // route, so try that before declaring the gateway unsupported.
+  async function registerOnAnyRoute(options) {
+    try {
+      return await registerOnRoute({ ...options, route: CONTROLLER_ROUTES.core });
+    } catch (coreError) {
+      if (coreError?.code !== CONTROLLER_UNSUPPORTED_GATEWAY) throw coreError;
+      try {
+        return await registerOnRoute({ ...options, route: CONTROLLER_ROUTES.plugin });
+      } catch (pluginError) {
+        if (pluginError?.code !== CONTROLLER_UNSUPPORTED_GATEWAY) throw pluginError;
+        throw unsupportedGatewayError(`${coreError.message} The Hermes Browser Extension plugin's control route is not available on it either (HTTP ${pluginError.status}).`);
+      }
+    }
+  }
+
   async function connectApi({ settings, identity, onFrame, onClose }) {
     if (typeof fetchImpl !== 'function') throw new Error('Fetch is unavailable for controller registration.');
     const family = normalizedTransport(settings);
     const baseUrl = String(settings?.gatewayUrl || '').trim();
-    const descriptor = controllerRegistrationFor({ family, baseUrl, identity });
+    // Throws on a malformed identity or base URL before any request is made.
+    controllerRegistrationFor({ family, baseUrl, identity, profile: activeProfileOf(settings) });
     const controller = new AbortController();
     let timeoutId = null;
     const timeout = new Promise((_, reject) => {
@@ -185,131 +288,27 @@ export function createControllerConnector({
         reject(error);
       }, connectTimeoutMs);
     });
-    let response;
-    let payload;
+    let registered;
     try {
-      ({ response, payload } = await Promise.race([
-        (async () => {
-          const registrationResponse = await fetchImpl(descriptor.registrationUrl, {
-            method: 'POST',
-            headers: apiHeaders(settings),
-            body: JSON.stringify(descriptor.payload),
-            redirect: 'error',
-            cache: 'no-store',
-            signal: controller.signal,
-          });
-          const registrationPayload = await registrationResponse.json().catch(() => ({}));
-          return { response: registrationResponse, payload: registrationPayload };
-        })(),
+      registered = await Promise.race([
+        registerOnAnyRoute({ family, baseUrl, identity, settings, signal: controller.signal }),
         timeout,
-      ]));
+      ]);
     } finally {
       if (timeoutId !== null) clearTimeout(timeoutId);
     }
-    if (!response.ok) {
-      const message = String(payload?.error?.message || payload?.detail || '').trim();
-      // The gateway refuses to mint a controller ticket for a session it does
-      // not know (browser_control_session_forbidden). Local drafts mint their
-      // session id client-side before the first turn materializes it
-      // server-side, so recover by creating the session and retrying once.
-      // Without this the reconnect loop would spin forever on a ghost id.
-      if (payload?.error?.code === 'browser_control_session_forbidden'
-        && API_TRANSPORTS.has(family)
-        && String(identity?.hermesSessionId || '').trim()) {
-        const materialized = await materializeDraftSession({
-          fetchImpl,
-          baseUrl,
-          sessionId: String(identity.hermesSessionId).trim(),
-          title: String(settings?.sessionTitle || 'Hermes Browser Extension'),
-          source: String(settings?.sessionSource || 'hermes_browser'),
-          headers: apiHeaders(settings),
-          signal: controller.signal,
-        });
-        if (materialized) {
-          const retryResponse = await fetchImpl(descriptor.registrationUrl, {
-            method: 'POST',
-            headers: apiHeaders(settings),
-            body: JSON.stringify(descriptor.payload),
-            redirect: 'error',
-            cache: 'no-store',
-            signal: controller.signal,
-          });
-          const retryPayload = await retryResponse.json().catch(() => ({}));
-          if (retryResponse.ok) {
-            response = retryResponse;
-            payload = retryPayload;
-          } else {
-            const retryMessage = String(retryPayload?.error?.message || retryPayload?.detail || '').trim();
-            throw new Error(retryMessage || `Controller registration failed (HTTP ${retryResponse.status}).`);
-          }
-        } else {
-          throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
-        }
-      } else {
-        throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
-      }
-    }
-    const ticket = String(payload?.ticket || '').trim();
-    if (!ticket) throw new Error('Controller registration did not return a ticket.');
 
-    return openControllerSocket({
+    const connection = await openControllerSocket({
       WebSocketImpl,
-      url: controllerWebSocketUrl(baseUrl),
-      protocols: controllerWebSocketProtocols(ticket),
+      url: controllerWebSocketUrl(baseUrl, registered.socketPath, activeProfileOf(settings)),
+      protocols: controllerWebSocketProtocols(registered.ticket),
       onFrame,
       onClose,
       timeoutMs: connectTimeoutMs,
+      keepAliveMs,
     });
-  }
-
-  /**
-   * Create the draft session server-side so the controller can register
-   * against it. Mirrors the panel's ensureHermesSession() materialization.
-   * Returns true when the session now exists (created or already present).
-   *
-   * The gateway enforces unique session titles, and the plain default title is
-   * already owned by the extension's own long-lived session — a create with it
-   * is refused with invalid_title, which used to leave the controller unable to
-   * register forever. The session id is unique, so embed it in the title and
-   * retry once with a timestamped title if the gateway still refuses.
-   */
-  async function materializeDraftSession({
-    fetchImpl,
-    baseUrl,
-    sessionId,
-    title,
-    source,
-    headers,
-    signal,
-  }) {
-    const createUrl = `${String(baseUrl).replace(/\/+$/, '')}/api/sessions`;
-    const baseTitle = String(title || '').trim() || 'Hermes Browser Extension';
-    const uniqueTitle = baseTitle.includes(sessionId)
-      ? baseTitle.slice(0, 120)
-      : `${baseTitle} · ${sessionId}`.slice(0, 120);
-    const create = async (candidateTitle) => {
-      const response = await fetchImpl(createUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ id: sessionId, title: candidateTitle, source }),
-        redirect: 'error',
-        cache: 'no-store',
-        signal,
-      });
-      const payload = await response.json().catch(() => ({}));
-      return { response, payload };
-    };
-    try {
-      const { response, payload } = await create(uniqueTitle);
-      if (response.ok || response.status === 409) return true;
-      if (payload?.error?.code === 'invalid_title') {
-        const { response: retryResponse } = await create(`${baseTitle} · ${sessionId} · ${Date.now()}`.slice(0, 120));
-        return retryResponse.ok || retryResponse.status === 409;
-      }
-      return false;
-    } catch {
-      return false;
-    }
+    // The route decides the names the model's control tools have (control-tool-names.mjs).
+    return { ...connection, route: registered.route };
   }
 
   async function connectCloud({ settings, identity, onFrame, onClose }) {
@@ -379,7 +378,14 @@ export function createControllerConnector({
         baseUrl,
         identity: liveIdentity,
       });
-      await client.request(registration.method, registration.params);
+      try {
+        await client.request(registration.method, registration.params);
+      } catch (error) {
+        if (isUnknownMethodError(error)) {
+          throw unsupportedGatewayError('This Hermes does not support Hermes Control (register method not found).');
+        }
+        throw error;
+      }
     } catch (error) {
       unsubscribeCommand?.();
       unsubscribeCancel?.();

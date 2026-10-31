@@ -92,6 +92,12 @@ if (Array.isArray(sourceManifest.optional_permissions)) {
   if (!sourceManifest.optional_permissions.length) delete sourceManifest.optional_permissions;
 }
 
+// Firefox needs all-sites access for the model's tab screenshot. Optional only: the panel asks for it from a click
+// (Settings, or the strip where a screenshot was refused), and it is never an install-time permission.
+if (firefoxProfile.optionalHostPermissions?.length) {
+  sourceManifest.optional_host_permissions = [...firefoxProfile.optionalHostPermissions];
+}
+
 // Add Firefox-specific settings
 sourceManifest.browser_specific_settings = {
   gecko: {

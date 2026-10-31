@@ -35,7 +35,7 @@ function fixture() {
   let sideEffects = 0;
   const adapter = {
     contract: { enabled: true, actions: ['browser_press'] },
-    async inspect() { return { currentUrl: 'https://example.test/editor', hasUnsavedContent: false }; },
+    async inspect() { return { currentUrl: 'https://example.test/editor', hasUnsavedContent: false, focused: { role: 'textbox', name: 'Message', inputType: 'text', identity: '0123456789abcdef0123456789abcdef' } }; },
     async execute() { sideEffects += 1; return { status: 'typed' }; },
   };
   const executor = createBrowserControlExecutor({ adapter, approvals, refs });
@@ -63,9 +63,13 @@ test('Phase 6 approval-required command waits in-flight, exposes minimal request
     leaseGeneration: 7,
     tabId: 55,
     documentGeneration: 4,
+    frameId: 0,
     action: 'browser_press',
     state: 'paused',
     reason: 'Press Enter to submit the current form or message?',
+    binding: 'focus:0123456789abcdef0123456789abcdef',
+    targetRole: 'textbox',
+    targetName: 'Message',
     valueHash: shown.valueHash,
   }]);
 
@@ -78,8 +82,12 @@ test('Phase 6 approval-required command waits in-flight, exposes minimal request
     leaseGeneration: 7,
     tabId: 55,
     documentGeneration: 4,
+    frameId: 0,
     action: 'browser_press',
     state: 'paused',
+    binding: 'focus:0123456789abcdef0123456789abcdef',
+    targetRole: 'textbox',
+    targetName: 'Message',
     valueHash: shown.valueHash,
   });
   assert.equal(granted.ok, true);
@@ -95,8 +103,12 @@ test('Phase 6 approval-required command waits in-flight, exposes minimal request
     leaseGeneration: 7,
     tabId: 55,
     documentGeneration: 4,
+    frameId: 0,
     action: 'browser_press',
     state: 'paused',
+    binding: 'focus:0123456789abcdef0123456789abcdef',
+    targetRole: 'textbox',
+    targetName: 'Message',
     valueHash: shown.valueHash,
   }).ok, false);
 });
@@ -119,6 +131,7 @@ test('Phase 6 approval wait rejects mismatched grants and aborts without side ef
     leaseGeneration: 7,
     tabId: 55,
     documentGeneration: 4,
+    frameId: 0,
     action: 'browser_press',
     state: 'paused',
   }).ok, false);

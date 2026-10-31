@@ -91,64 +91,28 @@ test('native command aliases resolve to the same deterministic operation', () =>
   assert.equal(parseBrowserCommand('/history')?.command.action, 'session-list');
 });
 
-test('Browser surfaces execute native run controls instead of sending slash text as prompts', () => {
+test('The side panel executes native run controls instead of sending slash text as prompts', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 
   assert.match(sidepanel, /executeNativeBrowserCommand/);
   assert.match(sidepanel, /action === 'steer-run'/);
   assert.match(sidepanel, /action === 'stop-run'/);
   assert.match(sidepanel, /WS_METHODS\.sessionInterrupt/);
-  assert.match(fulltab, /executeNativeBrowserCommand/);
-  assert.match(fulltab, /action === 'steer-run'/);
-  assert.match(fulltab, /action === 'stop-run'/);
-  assert.match(fulltab, /\/v1\/runs\/\$\{encodeURIComponent\(stopRunId\)\}\/stop/);
 });
 
-test('full-tab steer uses session.steer for Dashboard runs and capability-gates REST runs', () => {
-  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  const start = fulltab.indexOf('async function sendWebSteerText');
-  const end = fulltab.indexOf('\nasync function stopActiveRun', start);
-  assert.ok(start >= 0 && end > start, 'full-tab should expose one bounded steer transport helper');
-  const block = fulltab.slice(start, end);
-  assert.match(block, /usesDashboardTicketTransport\(\)/);
-  assert.match(block, /WS_METHODS\.sessionSteer/);
-  assert.match(block, /gatewayCapabilities\.runSteer/);
-  assert.match(block, /runSteerFailureState/);
-});
-
-test('native full-tab commands never fall through as model prompts when attachments are staged', () => {
-  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  const start = fulltab.indexOf("els.composer.addEventListener('submit'");
-  const end = fulltab.indexOf("els.prompt.addEventListener('keydown'", start);
-  assert.ok(start >= 0 && end > start, 'full-tab composer submit handler should be bounded');
-  const block = fulltab.slice(start, end);
-  assert.match(block, /browserCommand\?\.kind === 'native'/);
-  assert.doesNotMatch(block, /browserCommand\?\.kind === 'native'\s*&&\s*!attachments\.length/);
-});
-
-test('/queue preserves staged attachments on both Browser surfaces', () => {
+test('/queue preserves staged attachments in the side panel', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
   const sideStart = sidepanel.indexOf('async function executeNativeBrowserCommand');
   const sideEnd = sidepanel.indexOf('\nconst VOICE_AUDIO_MIME_TYPES', sideStart);
-  const webStart = fulltab.indexOf('async function executeNativeBrowserCommand');
-  const webEnd = fulltab.indexOf('\nasync function runWebCommand', webStart);
   assert.match(sidepanel.slice(sideStart, sideEnd), /queuedTurn = \{ text: userInput, attachments: \[\.\.\.attachments\]/);
   assert.match(sidepanel.slice(sideStart, sideEnd), /clearAttachments\(\)/);
-  assert.match(fulltab.slice(webStart, webEnd), /queuedTurn = \{ text: userInput, attachments: \[\.\.\.attachments\], sessionId: String\(activeSessionId \|\| ''\)\.trim\(\) \}/);
-  assert.match(fulltab.slice(webStart, webEnd), /renderAttachments\(\)/);
 });
 
 test('Stop reports an unconfirmed runtime stop instead of silently swallowing control failures', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
   const sideStart = sidepanel.indexOf('async function stopCurrentTurn');
   const sideEnd = sidepanel.indexOf('\nfunction browserCommandsForSurface', sideStart);
-  const webStart = fulltab.indexOf('async function stopActiveRun');
-  const webEnd = fulltab.indexOf('\nfunction renderToolEvent', webStart);
   assert.match(sidepanel.slice(sideStart, sideEnd), /Runtime stop unconfirmed/);
-  assert.match(fulltab.slice(webStart, webEnd), /Runtime stop unconfirmed/);
 });
 
 test('resolveCommandPrompt appends user input without losing command context', () => {

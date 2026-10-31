@@ -84,13 +84,9 @@ test('assistant selection payload only intercepts a non-collapsed selection insi
   }), null);
 });
 
-test('side panel and full view both install the clean assistant copy handler', () => {
+test('side panel installs the clean assistant copy handler', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const fullView = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  for (const source of [sidepanel, fullView]) {
-    assert.match(source, /writeAssistantClipboardEvent/);
-    assert.match(source, /addEventListener\('copy'/);
-  }
+  assert.match(sidepanel, /writeAssistantClipboardEvent/);
+  assert.match(sidepanel, /addEventListener\('copy'/);
   assert.match(sidepanel, /assistantSelector: '\.message\.assistant'/);
-  assert.match(fullView, /assistantSelector: '\.web-message\.assistant'/);
 });

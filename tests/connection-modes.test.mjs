@@ -170,7 +170,9 @@ test('automatic API pairing is loopback-only and enforced by the side-panel conn
   }), false);
   const connectBody = sidepanelSource.match(/async function connectApiWithPairing\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
   assert.match(connectBody, /automaticApiPairingAllowed\(settings\)/);
-  assert.match(connectBody, /Automatic pairing is available only for a loopback Local gateway/);
+  assert.match(connectBody, /t\('connect\.status\.loopback_only'\)/, 'the refusal is said from the catalog');
+  const english = readFileSync(new URL('../extension/lib/locales/en.mjs', import.meta.url), 'utf8');
+  assert.match(english, /"connect\.status\.loopback_only": "Automatic pairing is available only for a loopback Local gateway\./);
 });
 
 test('a completed pairing rebinds the controller instead of leaving it on stale settings', () => {

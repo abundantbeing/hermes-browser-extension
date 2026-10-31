@@ -20,7 +20,6 @@ import { WS_METHODS, interruptGatewaySession, readGatewaySessionStatus } from '.
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const sidepanel = read('extension/sidepanel.js');
-const app = read('extension/app.js');
 
 // ---- Stop confirmation ---------------------------------------------------------------
 
@@ -132,9 +131,8 @@ test('only an authority gateway, and only for an unknown method, falls back; eve
   await assert.rejects(readGatewaySessionStatus(authority, ''), /live Hermes session/);
 });
 
-test('both surfaces confirm a dashboard Stop through the status reader', () => {
+test('the side panel confirms a dashboard Stop through the status reader', () => {
   assert.match(sidepanel, /readGatewaySessionStatus\(connection\.client, sessionId, \{ storedSessionId: connection\.wsStoredSessionId \}\)/);
-  assert.match(app, /readGatewaySessionStatus\(connection\.client, dashboardStatusSessionId, \{ storedSessionId: activeSessionId \}\)/);
 });
 
 // ---- a Stop that never learned a run id ---------------------------------------------------
@@ -160,13 +158,10 @@ test('the lifecycle holds an unconfirmed Stop that has no run id, and only that 
   assert.equal(canReleaseUnconfirmedRun(null), false);
 });
 
-test('Release exists on both surfaces, runs only from its button, and is declared in every locale', () => {
+test('Release exists on the side panel, runs only from its button, and is declared in every locale', () => {
   assert.match(read('extension/sidepanel.html'), /<button id="releaseRunButton" type="button" data-i18n="run\.release" hidden>/);
-  assert.match(read('extension/app.html'), /<button id="webReleaseRunButton" type="button" data-i18n="run\.release" hidden>/);
   assert.match(sidepanel, /els\.releaseRunButton\?\.addEventListener\('click', \(\) => \{ void releaseUnconfirmedRun\(\); \}\);/);
-  assert.match(app, /els\.webReleaseRunButton\?\.addEventListener\('click', \(\) => \{ void releaseUnconfirmedWebRun\(\); \}\);/);
   assert.equal((sidepanel.match(/releaseUnconfirmedRun\(\)/g) || []).length, 2, 'declared and bound, never called anywhere else');
-  assert.equal((app.match(/releaseUnconfirmedWebRun\(\)/g) || []).length, 2);
   const release = sidepanel.match(/async function releaseUnconfirmedRun\(\) \{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(release, /if \(!canReleaseUnconfirmedRun\(activeRunControl\)\) return false;/);
   for (const locale of ['en', 'de', 'ja', 'zh-CN', 'pt-BR']) {

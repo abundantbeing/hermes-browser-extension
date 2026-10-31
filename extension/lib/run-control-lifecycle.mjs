@@ -21,7 +21,7 @@ export const RUN_UNCONFIRMED_REASONS = Object.freeze({
 });
 
 const RUN_UNCONFIRMED_DETAIL = Object.freeze({
-  [RUN_UNCONFIRMED_REASONS.RUN_ID_UNKNOWN]: 'Hermes has not reported a run id for this turn, so Browser cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.',
+  [RUN_UNCONFIRMED_REASONS.RUN_ID_UNKNOWN]: 'Hermes has not reported a run id for this turn, so the extension cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.',
 });
 
 const TERMINAL = new Set(Object.values(RUN_TERMINAL_STATUSES));
@@ -43,7 +43,45 @@ export function beginRunControl({ runId = '', transport = '', now = Date.now() }
     stopRequestedAt: 0,
     terminalAt: 0,
     detail: '',
+    // The execution generation the gateway admitted this run under (session authority only). Stop is
+    // fenced with it, so it can never be applied to a newer run. Null until the gateway says.
+    executionGeneration: null,
   });
+}
+
+/**
+ * Record the generation the run was admitted under. Set once: the run keeps the generation it
+ * started with, and anything that is not a non-negative integer is not a generation.
+ */
+export function withRunGeneration(state, generation) {
+  if (!state || Number.isInteger(state.executionGeneration)) return state;
+  if (!Number.isInteger(generation) || generation < 0) return state;
+  return freeze({ ...state, executionGeneration: generation });
+}
+
+/**
+ * Record the live (gateway-side) id of the session this run belongs to. The run's own prompts are
+ * withdrawn by this id when it ends; the live id of whatever session is on screen then is not it.
+ */
+export function withRunLiveSession(state, liveSessionId = '') {
+  const live = String(liveSessionId || '').trim();
+  if (!state || !live || state.liveSessionId === live) return state;
+  return freeze({ ...state, liveSessionId: live });
+}
+
+/**
+ * The live id whose prompt cards a finished run may withdraw: the run's OWN session, never the one
+ * currently selected. The connection is believed only while it is still bound to the run's durable
+ * id; once the view has moved on, the id recorded when the run started is used, and with neither,
+ * nothing is withdrawn.
+ */
+export function liveIdForRunSettle(runControl = null, connection = null) {
+  const durable = String(runControl?.sessionId || '').trim();
+  if (!durable) return '';
+  const boundDurable = String(connection?.wsStoredSessionId || '').trim();
+  const boundLive = String(connection?.wsSessionId || '').trim();
+  if (boundLive && boundDurable === durable) return boundLive;
+  return String(runControl?.liveSessionId || '').trim();
 }
 
 export function withRunControlId(state, runId = '') {

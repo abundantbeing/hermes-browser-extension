@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const panel = await read('extension/sidepanel.js');
@@ -8,8 +9,6 @@ const html = await read('extension/sidepanel.html');
 const css = await read('extension/sidepanel.css');
 const common = await read('extension/lib/common.mjs');
 const thread = await read('extension/lib/message-thread-ui.mjs');
-const app = await read('extension/app.js');
-const pkg = JSON.parse(await read('package.json'));
 
 test('panel uses the shared rail, divider, and truthful timestamp helpers', () => {
   assert.match(panel, /import\s*\{[^}]*createMessageThreadUi[^}]*\}\s*from\s*['"]\.\/lib\/message-thread-ui\.mjs['"]/);
@@ -21,6 +20,15 @@ test('panel uses the shared rail, divider, and truthful timestamp helpers', () =
 test('gateway history never substitutes the load time for a missing timestamp', () => {
   assert.doesNotMatch(panel, /message\.timestamp\s*\|\|\s*(?:message\.ts\s*\|\|\s*)?Date\.now\(\)/);
   assert.match(panel, /ts:\s*normalizeMessageTimestamp\(message\.timestamp\s*\?\?\s*message\.ts\)/);
+});
+
+test('a live panel reply gets its time when the stream finishes and keeps it when saved', () => {
+  // The live bubble streams without a time; flushing the stream ends streaming
+  // on the shared thread, which stamps the finish time on the shown record.
+  const updater = panel.slice(panel.indexOf('function createStreamingMessageUpdater('), panel.indexOf('const paintStream = '));
+  assert.match(updater, /panelMessageThread\?\.setStreaming\(row,\s*false\)/);
+  assert.match(panel, /addMessage\('assistant', THINKING_PLACEHOLDER, \{ persist: false, roleLabel: assistantMessageRoleLabel\(\), streaming: true \}\)/);
+  assert.match(panel, /messages\.push\(\{ role: 'assistant', content: finalAnswerForStorage, ts: Date\.now\(\)(?:, responseStyle: assistantStyle)?(?:, \.\.\.\(turnReasoning \? \{ reasoning: turnReasoning \} : \{\}\))? \}\)/);
 });
 
 test('history replay passes stored time and row identity rather than inventing them', () => {
@@ -50,14 +58,6 @@ test('streaming replies explicitly disable and later enable rail copy', () => {
 
 test('all six new shared modules participate in syntax verification', () => {
   for (const name of ['message-meta', 'message-actions', 'message-rewind', 'bot-identity', 'group-presence', 'group-member-models']) {
-    assert.ok(pkg.scripts['check:js'].includes(`node --check extension/lib/${name}.mjs`), name);
+    assert.ok(CHECK_JS.includes(`node --check extension/lib/${name}.mjs`), name);
   }
-});
-
-test('full-tab history uses the same controller and truthful times without ordinal actions', () => {
-  assert.match(app, /import\s*\{[^}]*createMessageThreadUi[^}]*\}\s*from\s*['"]\.\/lib\/message-thread-ui\.mjs['"]/);
-  assert.match(app, /normalizeMessageTimestamp\(message\.timestamp\s*\?\?\s*message\.ts\)/);
-  assert.match(app, /webMessageThread\??\.reset\(\)/);
-  assert.match(app, /hide-message-times/);
-  assert.doesNotMatch(app, /truncate_at:\s*(?:index|ordinal)/);
 });

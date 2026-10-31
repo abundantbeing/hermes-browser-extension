@@ -1,4 +1,5 @@
 import { isRestrictedUrl } from './browser-context-protocol.mjs';
+import { isCopyShortcut, isEditingKey, isNavigationKey, isPasteShortcut, isSpaceActivation, isSubmissionKey, resolveKeyPress } from './browser-control-keys.mjs';
 
 export const BROWSER_CONTROL_RISKS = Object.freeze({
   SAFE: 'safe',
@@ -24,20 +25,39 @@ const SAFE_ACTIONS = new Set([
   'browser_tabs',
 ]);
 
-// Matches combos too ("Control+Enter"), since the adapter accepts "Mod+Key".
-const SUBMISSION_KEY_RE = /(?:^|\+)(?:enter|return)$/i;
-// Paste shortcuts insert the user's own clipboard into the page, so they need approval.
-const PASTE_KEY_RE = /^(?:(?:control|ctrl|meta|cmd|command)\+(?:shift\+)?v|shift\+insert)$/i;
-const PASTE_MODIFIER_RE = /^(?:control|ctrl|meta|cmd|command)$/i;
+// What a focused control does with Space: roles and input types that act on it. Text
+// fields take the space as a character; the bare page scrolls. A focusable element with no role of its own
+// (a div with a tabindex, the host of a shadow root) is not inert: a page can make it act on a key, or hold a
+// field that Hermes cannot see into.
+const SPACE_INERT_ROLES = new Set(['', 'textbox', 'searchbox', 'document', 'body', 'text']);
+const OPAQUE_FOCUS_ROLES = new Set(['generic', 'none', 'presentation']);
+const SPACE_ACTIVATING_INPUT_TYPES = new Set(['button', 'submit', 'reset', 'image', 'checkbox', 'radio', 'file', 'color']);
 
-function isPasteShortcut(args = {}) {
-  const key = compact(args?.key);
-  if (PASTE_KEY_RE.test(key)) return true;
-  const modifiers = Array.isArray(args?.modifiers) ? args.modifiers : [];
-  if (/^v$/i.test(key)) return modifiers.some((value) => PASTE_MODIFIER_RE.test(compact(value)));
-  if (/^insert$/i.test(key)) return modifiers.some((value) => /^shift$/i.test(compact(value)));
-  return false;
+// A focused element that gives no role but does have a name is something the page made (a labelled div), not the bare page.
+function opaqueFocus(focused = {}) {
+  const role = compact(focused?.role).toLowerCase();
+  return OPAQUE_FOCUS_ROLES.has(role) || (role === '' && Boolean(compact(focused?.name)));
 }
+
+function spaceActivatesFocus(focused = {}) {
+  const role = compact(focused?.role).toLowerCase();
+  if (SPACE_ACTIVATING_INPUT_TYPES.has(compact(focused?.inputType).toLowerCase())) return true;
+  return opaqueFocus(focused) || !SPACE_INERT_ROLES.has(role);
+}
+
+// Autocomplete tokens that name a card, a one-time code or a password; the field's label need not say so.
+const SENSITIVE_AUTOCOMPLETE_RE = /\b(?:cc-[a-z-]+|one-time-code|current-password|new-password)\b/i;
+
+// Why a key must not be typed into the focused field, or '' when it may: the same fields browser_type refuses.
+function focusedFieldRefusal(focused = {}) {
+  if (compact(focused?.inputType).toLowerCase() === 'password') return 'sensitive-credential-field';
+  const descriptor = targetDescriptor(focused);
+  if (PAYMENT_RE.test(descriptor) || /\bcc-[a-z-]+\b/i.test(descriptor)) return 'sensitive-payment-field';
+  if (MFA_RE.test(descriptor) || /\bone-time-code\b/i.test(descriptor)) return 'sensitive-mfa-field';
+  if (CREDENTIAL_RE.test(descriptor) || SENSITIVE_AUTOCOMPLETE_RE.test(descriptor)) return 'sensitive-credential-field';
+  return '';
+}
+
 const APPROVAL_LABEL_RE = /\b(?:submit|send|post|publish|delete|remove|revoke|reset|buy|pay|checkout|transfer|subscribe|invite|approve|merge|deploy|download|upload|overwrite)\b/i;
 const PAYMENT_RE = /\b(?:credit.?card|card.?number|cvv|cvc|expiry|payment|billing|bank|banking|crypto|wallet|checkout)\b/i;
 const CREDENTIAL_RE = /\b(?:password|passwd|passcode|api.?(?:key|token)|access.?token|auth.?token|session.?token|private.?key|seed.?phrase|recovery.?phrase|secret)\b/i;
@@ -73,8 +93,8 @@ function targetDescriptor(target = {}) {
   ].map(compact).filter(Boolean).join(' ');
 }
 
-function decision(risk, reason = '') {
-  return Object.freeze({ risk, reason });
+function decision(risk, reason = '', message = '') {
+  return Object.freeze({ risk, reason, ...(message ? { message } : {}) });
 }
 
 export function validateBrowserControlUrl(value = '', { allowLocalFiles = false } = {}) {
@@ -104,6 +124,8 @@ export function classifyBrowserControlAction({
   hasUnsavedContent = false,
   developerMode = false,
   allowLocalDocuments = false,
+  // What has keyboard focus ({ role, name, inputType }); undefined when it could not be read.
+  focused,
 } = {}) {
   const normalizedAction = compact(action);
   if (normalizedAction === 'browser_drag') {
@@ -199,13 +221,51 @@ export function classifyBrowserControlAction({
     return decision(BROWSER_CONTROL_RISKS.SAFE);
   }
 
-  if (normalizedAction === 'browser_press' && SUBMISSION_KEY_RE.test(compact(args?.key))) {
-    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'submission-key');
+  if (normalizedAction === 'browser_press') {
+    // The key is read once, the way the adapter dispatches it. A request the adapter
+    // cannot read is one it cannot send, so it is refused here too.
+    let resolved;
+    try {
+      resolved = resolveKeyPress(args);
+    } catch (error) {
+      // The message names the key that could not be understood, so the model can correct it.
+      return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'invalid-key', compact(error?.message) || 'That key could not be understood.');
+    }
+    const focusKnown = Boolean(focused) && typeof focused === 'object';
+    // What types into or deletes from a sensitive field is refused like browser_type is: a password, card,
+    // one-time-code or credential field takes no key from Hermes, whether it was reached by a click, autofocus or Tab.
+    if (focusKnown && (isEditingKey(resolved) || isPasteShortcut(resolved))) {
+      const refusal = focusedFieldRefusal(focused);
+      if (refusal) return decision(BROWSER_CONTROL_RISKS.BLOCKED, refusal);
+    }
+    if (isSubmissionKey(resolved)) return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'submission-key');
+    if (isPasteShortcut(resolved)) return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'clipboard-paste');
+    // A key goes to whatever has focus. When that is an embedded frame, which the page can fill with a
+    // payment or sign-in form, anything that types or acts asks first; Hermes cannot judge the frame from here.
+    if (focused?.inFrame === true && !isNavigationKey(resolved)) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'framed-focus');
+    }
+    // When the page could not say what has focus, a key that types or deletes (or Space, which may press it)
+    // goes out only with the person's approval: the sensitive-field rules above could not be applied.
+    if (!focusKnown && (isEditingKey(resolved) || isSpaceActivation(resolved))) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, isSpaceActivation(resolved) ? 'activation-key' : 'unknown-focus');
+    }
+    const opaque = focusKnown && opaqueFocus(focused);
+    // Space presses the focused button or toggles the focused control: judge it as that click.
+    if (isSpaceActivation(resolved) && focusKnown) {
+      if (spaceActivatesFocus(focused) && APPROVAL_LABEL_RE.test(targetDescriptor(focused))) {
+        return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
+      }
+    }
+    // An element with no role of its own gives no way to tell what a key does there, so a key that types or
+    // acts asks first.
+    if (opaque && (isEditingKey(resolved) || isSpaceActivation(resolved))) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'opaque-focus');
+    }
+    if (isCopyShortcut(resolved)) return decision(BROWSER_CONTROL_RISKS.SAFE, 'clipboard-copy');
+    return decision(BROWSER_CONTROL_RISKS.SAFE);
   }
-  if (normalizedAction === 'browser_press' && isPasteShortcut(args)) {
-    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'clipboard-paste');
-  }
-  if ((normalizedAction === 'browser_click' || normalizedAction === 'browser_press') && APPROVAL_LABEL_RE.test(descriptor)) {
+  if (normalizedAction === 'browser_click' && APPROVAL_LABEL_RE.test(descriptor)) {
     return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
   }
   return decision(BROWSER_CONTROL_RISKS.SAFE);
@@ -226,6 +286,12 @@ function approvalField(value, name) {
   return compact(value).slice(0, APPROVAL_FIELD_LIMITS[name]);
 }
 
+function approvalFrame(value = {}) {
+  if (value?.frameId == null || value.frameId === '') return 0;
+  const frameId = Number(value.frameId);
+  return Number.isInteger(frameId) && frameId >= 0 ? frameId : null;
+}
+
 function approvalKey(value = {}) {
   return [
     compact(value.approvalId),
@@ -235,6 +301,7 @@ function approvalKey(value = {}) {
     compact(value.leaseId),
     Number(value.leaseGeneration) || 0,
     Number(value.tabId),
+    approvalFrame(value),
     Number(value.documentGeneration),
     compact(value.action),
     compact(value.state),
@@ -272,9 +339,10 @@ export function createBrowserControlApprovalStore({
     const destination = approvalField(value.destination, 'destination');
     const valueHash = approvalField(value.valueHash, 'valueHash');
     const tabId = Number(value.tabId);
+    const frameId = approvalFrame(value);
     const documentGeneration = Number(value.documentGeneration);
     if (!approvalId || !commandId || !action || !Number.isInteger(tabId) || tabId <= 0
-      || !Number.isInteger(documentGeneration) || documentGeneration < 1) return null;
+      || frameId == null || !Number.isInteger(documentGeneration) || documentGeneration < 1) return null;
     return {
       approvalId,
       approvalNonce,
@@ -284,6 +352,7 @@ export function createBrowserControlApprovalStore({
       leaseGeneration: Number.isInteger(leaseGeneration) && leaseGeneration >= 1 ? leaseGeneration : 0,
       action,
       tabId,
+      frameId,
       documentGeneration,
       state,
       ...(binding ? { binding } : {}),
@@ -293,7 +362,7 @@ export function createBrowserControlApprovalStore({
       ...(valueHash ? { valueHash } : {}),
       key: approvalKey({
         approvalId, approvalNonce, commandId, controllerId, leaseId,
-        leaseGeneration, action, tabId, documentGeneration, state, binding,
+        leaseGeneration, action, tabId, frameId, documentGeneration, state, binding,
         targetRole, targetName, destination, valueHash,
       }),
     };
@@ -373,7 +442,7 @@ export function createBrowserControlApprovalStore({
   function pending() {
     return [...requests.values()].map(({
       approvalId, approvalNonce, commandId, controllerId, leaseId, leaseGeneration,
-      tabId, documentGeneration, action, state, reason, binding, detail,
+      tabId, frameId, documentGeneration, action, state, reason, binding, detail,
       targetRole, targetName, destination, valueHash,
     }) => ({
       approvalId,
@@ -383,6 +452,7 @@ export function createBrowserControlApprovalStore({
       ...(leaseId ? { leaseId } : {}),
       ...(leaseGeneration ? { leaseGeneration } : {}),
       tabId,
+      frameId,
       documentGeneration,
       action,
       ...(state ? { state } : {}),

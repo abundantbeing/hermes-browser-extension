@@ -236,12 +236,9 @@ test('without a handler open requests are ignored', async () => {
 
 test('only chat surfaces advertise: the Browser wires handlers on its chat connections and nowhere else', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const app = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
   assert.equal((sidepanel.match(/createGatewayClient\(/g) || []).length, 1, 'sidepanel creates raw clients only through createChatGatewayClient');
-  assert.equal((sidepanel.match(/createChatGatewayClient\(/g) || []).length, 4, 'definition plus the three chat connections');
+  assert.equal((sidepanel.match(/createChatGatewayClient\(/g) || []).length, 7, 'definition plus the six chat connections (the sixth is the Hermes account sign-in socket)');
   assert.match(sidepanel, /serverRequests: gatewayServerRequests/);
-  assert.match(app, /serverRequests: gatewayServerRequests/);
-  assert.equal((app.match(/serverRequests:/g) || []).length, 1, 'bot mode and other app connections stay unadvertised');
   for (const file of ['controller-connector.mjs', 'wake-background.mjs']) {
     assert.doesNotMatch(readFileSync(new URL(`../extension/lib/${file}`, import.meta.url), 'utf8'), /serverRequests/, file);
   }

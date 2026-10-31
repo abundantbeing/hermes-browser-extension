@@ -40,7 +40,7 @@ function harness({ fail = false, profiles = [{ name: 'default' }], previous = []
     messages: activeGroupState?.messages || [],
     availableProfiles, botModeRosterNote: '', rosterRetryCount: 0,
     profileRichRosterPromise: null, profileRichRosterAllowsTrust: false,
-    desktopDashboardUrl: '', botModeRemoteAvatarCache: new Map(),
+    desktopDashboardUrl: '', localDashboardUrl: () => '', botModeRemoteAvatarCache: new Map(),
     els: {
       botModePanel: { hidden: true },
       botModeButton: { setAttribute(name, value) { this[name] = value; } },
@@ -51,6 +51,8 @@ function harness({ fail = false, profiles = [{ name: 'default' }], previous = []
     setBotModeView(view) { uiRenders.botModeView = view; },
     WS_METHODS: { profilesList: 'profiles.list' },
     normalizeGatewayUrl: (url) => url,
+    connectProfileViaGatewayTicket: async () => null,
+    connectProfileViaAccount: async () => null,
     ensureProfileWsConnection: async () => {
       connectionRequests.push('ensureProfileWsConnection');
       if (fail) throw new Error('dashboard-unavailable');
@@ -225,6 +227,7 @@ test('late callbacks from a retired Dashboard group runtime cannot repopulate cl
     callbacks = options;
     return { prepare: async () => ({ ok: true, failures: [] }), send: async () => ({ ok: true }) };
   };
+  context.probeHostedGroups = async () => ({ mode: 'legacy', profile: '' });
   context.updateActiveGroupActivity = () => { activityCalls += 1; };
   context.persistActiveGroupProjection = async () => { persistenceCalls += 1; };
   vm.runInContext(`${openGroupSource}\nthis.openGroup = openBotGroupChat;`, context);
@@ -431,7 +434,7 @@ test('legacy local bootstrap connects without requiring an unrelated signed-in t
   const wsSource = source.slice(source.indexOf('async function ensureProfileWsConnection('), source.indexOf('\nfunction usesDashboardWsChatTransport('));
   const client = { readyState: 1, on() {}, connect: async () => {}, close() {} };
   const context = {
-    isRemoteWsMode: () => false, isLocalApiMode: () => true, desktopDashboardUrl: 'http://127.0.0.1:43210',
+    isRemoteWsMode: () => false, isLocalApiMode: () => true, desktopDashboardUrl: 'http://127.0.0.1:43210', localDashboardUrl: () => 'http://127.0.0.1:43210',
     normalizeGatewayUrl: (url) => url, profileConnectionKey: () => 'profile-route',
     profileWsConnection: null, trustedDashboardTabId: null,
     dashboardTicketOriginMatches: () => false,
@@ -439,6 +442,10 @@ test('legacy local bootstrap connects without requiring an unrelated signed-in t
     extractDashboardSessionToken: () => 'fixture-bootstrap',
     requestDashboardOriginTrust: async () => { throw new Error('no-dashboard-tab'); },
     settings: {}, createChatGatewayClient: () => client, WebSocket: {},
+    webappGatewayTickets: () => ({ socketTicket: async () => ({ ok: false, reason: 'absent' }) }),
+    accountConnectionKeyNow: () => 'local-api|http://127.0.0.1:8642',
+    connectProfileViaAccount: async () => null,
+    refreshCapabilityViews() {},
     buildDashboardWsUrlWithCredential: () => 'ws://localhost/fixture',
     buildDashboardWsUrl: () => 'ws://localhost/fixture',
   };
@@ -448,12 +455,42 @@ test('legacy local bootstrap connects without requiring an unrelated signed-in t
   assert.equal(connection.client, client);
 });
 
+test('a legacy dashboard socket that opens after the panel moved to another gateway is closed, never stored', async () => {
+  const movedSource = source.slice(source.indexOf('function connectionMovedError('), source.indexOf('\n// Where a sign-in may be run for this connection'));
+  const wsSource = source.slice(source.indexOf('async function ensureProfileWsConnection('), source.indexOf('\nfunction usesDashboardWsChatTransport('));
+  let connectionKey = 'local-api|http://127.0.0.1:8642';
+  let closed = 0;
+  // Save moves the panel to a remote gateway while the handshake is pending.
+  const client = { readyState: 1, on() {}, connect: async () => { connectionKey = 'remote-api|https://elsewhere.example'; }, close() { closed += 1; } };
+  const context = {
+    isRemoteWsMode: () => false, isLocalApiMode: () => true, desktopDashboardUrl: 'http://127.0.0.1:43210', localDashboardUrl: () => 'http://127.0.0.1:43210',
+    normalizeGatewayUrl: (url) => url, profileConnectionKey: () => 'profile-route',
+    profileWsConnection: null, trustedDashboardTabId: null,
+    dashboardTicketOriginMatches: () => false,
+    dashboardFetch: async () => ({ ok: true, text: async () => 'legacy bootstrap' }),
+    extractDashboardSessionToken: () => 'fixture-bootstrap',
+    settings: {}, createChatGatewayClient: () => client, WebSocket: {},
+    webappGatewayTickets: () => ({ socketTicket: async () => ({ ok: false, reason: 'absent' }) }),
+    accountConnectionKeyNow: () => connectionKey,
+    connectProfileViaAccount: async () => null,
+    refreshCapabilityViews() {},
+    setLocalDashboardUrl: () => { throw new Error('a dial for the old gateway must not re-discover a port'); },
+    buildDashboardWsUrlWithCredential: () => 'ws://localhost/fixture',
+    buildDashboardWsUrl: () => 'ws://localhost/fixture',
+  };
+  vm.createContext(context);
+  vm.runInContext(`${movedSource}\n${wsSource}\nthis.run = ensureProfileWsConnection;`, context);
+  await assert.rejects(context.run(), (error) => error.ticketReason === 'connection_changed');
+  assert.equal(context.profileWsConnection, null);
+  assert.equal(closed, 1);
+});
+
 test('remote API mode reports the missing companion and never looks for a dashboard here', async () => {
   const errorSource = source.slice(source.indexOf('function dashboardCompanionNotConfiguredError('), source.indexOf('\nfunction profileConnectionKey('));
   const wsSource = source.slice(source.indexOf('async function ensureProfileWsConnection('), source.indexOf('\nfunction usesDashboardWsChatTransport('));
   const probes = [];
   const context = {
-    isRemoteWsMode: () => false, isLocalApiMode: () => false, desktopDashboardUrl: '',
+    isRemoteWsMode: () => false, isLocalApiMode: () => false, desktopDashboardUrl: '', localDashboardUrl: () => '',
     normalizeGatewayUrl: (url) => url, profileConnectionKey: () => 'profile-route',
     profileWsConnection: null, trustedDashboardTabId: null,
     dashboardTicketOriginMatches: () => false,
@@ -461,6 +498,7 @@ test('remote API mode reports the missing companion and never looks for a dashbo
     dashboardFetch: async (url) => { probes.push(String(url)); return { ok: true, text: async () => '' }; },
     requestDashboardOriginTrust: async () => { probes.push('trust'); },
     settings: {}, createChatGatewayClient: () => ({}), WebSocket: {},
+    connectProfileViaAccount: async () => null, // a held Hermes account sign-in on the remote origin; none here
     buildDashboardWsUrlWithCredential: () => 'ws://localhost/fixture',
     buildDashboardWsUrl: () => 'ws://localhost/fixture',
   };
@@ -539,6 +577,9 @@ test('an in-place roster sync keeps the open room runtime callbacks live', async
       captured.push(handlers);
       return { prepare: async () => ({ ok: true, failures: [] }) };
     },
+    // A gateway whose rooms the client drives itself (hosted rooms are covered in hosted-group-room.test.mjs).
+    probeHostedGroups: async () => ({ mode: 'legacy', profile: '' }),
+    settings: {},
   };
   vm.createContext(context);
   installGroupLifecycleHarness(context, source);

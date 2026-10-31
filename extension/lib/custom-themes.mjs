@@ -276,7 +276,7 @@ export function validateThemeDocument(candidate) {
 export function normalizeThemeDocument(candidate) {
   const result = validateThemeDocument(candidate);
   if (result.valid) return result.document;
-  const error = new TypeError('Invalid Hermes Browser theme document');
+  const error = new TypeError('Invalid Hermes Browser Extension theme document');
   error.code = 'invalid-theme-document';
   error.validationErrors = result.errors;
   throw error;

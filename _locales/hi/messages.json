@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
-    "message": "Hermes एक्सटेंशन",
+    "message": "Hermes Ext",
     "description": "Hermes Browser extensionShortName"
   },
   "extensionDescription": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Hermes Browser एक्सटेंशन खोलें",
+    "message": "Hermes Browser Extension खोलें",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Hermes Browser साइडबार खोलें",
+    "message": "Hermes Browser Extension साइडबार खोलें",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -34,6 +34,102 @@
   "runtime_a11y_subagent_status": {
     "message": "Hermes सब-एजेंट स्थिति",
     "description": "Runtime interface message a11y.subagent_status"
+  },
+  "runtime_account_hint": {
+    "message": "वही साइन-इन जो Hermes फ़ोन ऐप इस्तेमाल करता है। यह साइन-इन माँगने वाले गेटवे पर, कुछ भी चलाए बिना, प्रोजेक्ट, सेशन अथॉरिटी, कॉन्टेक्स्ट कॉम्पैक्शन और पूरी बॉट सूची खोल देता है। साइन आउट करने पर यह इस ब्राउज़र से हट जाता है।",
+    "description": "Runtime interface message account.hint"
+  },
+  "runtime_account_label": {
+    "message": "Hermes खाता",
+    "description": "Runtime interface message account.label"
+  },
+  "runtime_account_notice_exchange_rejected": {
+    "message": "गेटवे ने साइन-इन कोड अस्वीकार कर दिया। फिर कोशिश करें।",
+    "description": "Runtime interface message account.notice.exchange_rejected"
+  },
+  "runtime_account_notice_failed": {
+    "message": "साइन-इन पूरा नहीं हुआ। फिर कोशिश करें।",
+    "description": "Runtime interface message account.notice.failed"
+  },
+  "runtime_account_notice_no_permission": {
+    "message": "साइन-इन के लिए आपकी अनुमति चाहिए ताकि Hermes Browser Extension देख सके कि साइन-इन विंडो कहाँ समाप्त होती है। “साइन इन” फिर से चुनें और अनुमति दें।",
+    "description": "Runtime interface message account.notice.no_permission"
+  },
+  "runtime_account_notice_no_window": {
+    "message": "यह ब्राउज़र साइन-इन विंडो नहीं खोल सका।",
+    "description": "Runtime interface message account.notice.no_window"
+  },
+  "runtime_account_notice_provider_denied": {
+    "message": "साइन-इन को मंज़ूरी नहीं मिली। फिर कोशिश करें।",
+    "description": "Runtime interface message account.notice.provider_denied"
+  },
+  "runtime_account_notice_session_expired": {
+    "message": "आपके Hermes खाते का सेशन समाप्त हो गया। फिर से साइन इन करें।",
+    "description": "Runtime interface message account.notice.session_expired"
+  },
+  "runtime_account_notice_state_mismatch": {
+    "message": "वह साइन-इन इस अनुरोध से मेल नहीं खाया, इसलिए छोड़ दिया गया। फिर कोशिश करें।",
+    "description": "Runtime interface message account.notice.state_mismatch"
+  },
+  "runtime_account_notice_timeout": {
+    "message": "साइन-इन समय पर पूरा नहीं हुआ। फिर कोशिश करें।",
+    "description": "Runtime interface message account.notice.timeout"
+  },
+  "runtime_account_notice_unavailable": {
+    "message": "अभी गेटवे तक पहुँचा नहीं जा सका। आपका साइन-इन सुरक्षित है; थोड़ी देर बाद फिर कोशिश करें।",
+    "description": "Runtime interface message account.notice.unavailable"
+  },
+  "runtime_account_sign_in": {
+    "message": "अपने Hermes खाते से साइन इन करें",
+    "description": "Runtime interface message account.sign_in"
+  },
+  "runtime_account_sign_in_needed": {
+    "message": "इस गेटवे को आपके Hermes खाते से साइन-इन चाहिए। सेटिंग > कनेक्शन खोलें और “अपने Hermes खाते से साइन इन करें” चुनें।",
+    "description": "Runtime interface message account.sign_in_needed"
+  },
+  "runtime_account_sign_out": {
+    "message": "साइन आउट करें",
+    "description": "Runtime interface message account.sign_out"
+  },
+  "runtime_account_signed_in_as": {
+    "message": "{name} ({provider}) के रूप में साइन इन",
+    "description": "Runtime interface message account.signed_in_as"
+  },
+  "runtime_account_signed_in_generic": {
+    "message": "आपके Hermes खाते से साइन इन हो गया",
+    "description": "Runtime interface message account.signed_in_generic"
+  },
+  "runtime_account_signed_in_title": {
+    "message": "Hermes में साइन इन हो गया",
+    "description": "Runtime interface message account.signed_in_title"
+  },
+  "runtime_account_status_checking": {
+    "message": "जाँच रहे हैं कि यह गेटवे Hermes खाते से साइन-इन स्वीकार करता है या नहीं।",
+    "description": "Runtime interface message account.status_checking"
+  },
+  "runtime_account_status_signed_out": {
+    "message": "साइन इन नहीं है। यह गेटवे Hermes खाते से साइन-इन माँगता है।",
+    "description": "Runtime interface message account.status_signed_out"
+  },
+  "runtime_account_status_waiting": {
+    "message": "खुली विंडो में आपके साइन-इन पूरा करने की प्रतीक्षा है।",
+    "description": "Runtime interface message account.status_waiting"
+  },
+  "runtime_account_unavailable_no_native_flow": {
+    "message": "यह गेटवे साइन-इन माँगता है पर ऐप साइन-इन नहीं देता। Hermes को ऐसे संस्करण पर अपडेट करें जो इसे देता हो।",
+    "description": "Runtime interface message account.unavailable.no_native_flow"
+  },
+  "runtime_account_unavailable_no_origin": {
+    "message": "Hermes खाते से साइन-इन के लिए https गेटवे या साइन-इन के पीछे का स्थानीय गेटवे चाहिए।",
+    "description": "Runtime interface message account.unavailable.no_origin"
+  },
+  "runtime_account_unavailable_not_gated": {
+    "message": "यह गेटवे इस कंप्यूटर पर खुला है और साइन-इन नहीं माँगता, इसलिए यहाँ इस्तेमाल करने के लिए कोई Hermes खाता नहीं है। प्रोजेक्ट के लिए इसके बजाय Hermes Browser Extension के साथ पेयरिंग या Hermes Web का अपना साइन-इन काम आता है।",
+    "description": "Runtime interface message account.unavailable.not_gated"
+  },
+  "runtime_account_unavailable_unreachable": {
+    "message": "साइन-इन जाँचने के लिए इस गेटवे तक नहीं पहुँचा जा सका।",
+    "description": "Runtime interface message account.unavailable.unreachable"
   },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
@@ -380,15 +476,31 @@
     "description": "Runtime interface message bot_mode.density_compact"
   },
   "runtime_bot_mode_dialog_label": {
-    "message": "Hermes Browser बॉट मोड",
+    "message": "बॉट मोड",
     "description": "Runtime interface message bot_mode.dialog_label"
+  },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "{name} के साथ पिछले संदेश ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "पिछले संदेश लोड नहीं हो सके। आप अब भी Regular Sessions से “{title}” खोल सकते हैं।",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "पिछले संदेश लोड हो रहे हैं…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes ने {name} के साथ आपकी पिछली चैट को “{title}” नाम से अलग रख दिया और यह चैट शुरू की, इसलिए {name} यहाँ ये संदेश नहीं देखता।",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
   },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"
   },
   "runtime_bot_mode_enable_label": {
-    "message": "Hermes Browser बॉट मोड सक्षम करें",
+    "message": "बॉट मोड सक्षम करें",
     "description": "Runtime interface message bot_mode.enable_label"
   },
   "runtime_bot_mode_face_blobatar": {
@@ -438,6 +550,14 @@
   "runtime_bot_mode_group_create": {
     "message": "इस समूह चैट के लिए कम से कम एक एजेंट चुनें।",
     "description": "Runtime interface message bot_mode.group_create"
+  },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes ने जवाब नहीं दिया, इसलिए हो सकता है कि यह संदेश उसे पहले ही मिल चुका हो। दोबारा भेजने से पहले रूम देख लें।",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "आपका संदेश वापस लिखने के बॉक्स में है। 10 मिनट के भीतर बिना बदलाव के दोबारा भेजने पर यह दो बार पोस्ट नहीं होता।",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
   },
   "runtime_bot_mode_group_field_members": {
     "message": "उन एजेंटों को चुनें जो इस समूह चैट में भाग लेते हैं।",
@@ -504,7 +624,7 @@
     "description": "Runtime interface message bot_mode.leave_confirm"
   },
   "runtime_bot_mode_leave_detail": {
-    "message": "नया एक्सटेंशन सत्र शुरू करने पर आप अपने सामान्य Hermes Browser कार्यक्षेत्र पर वापस आ जाएँगे।",
+    "message": "नया एक्सटेंशन सत्र शुरू करने पर आप अपने सामान्य कार्यक्षेत्र पर वापस आ जाएँगे।",
     "description": "Runtime interface message bot_mode.leave_detail"
   },
   "runtime_bot_mode_leave_kicker": {
@@ -558,10 +678,6 @@
   "runtime_bot_mode_off_hint_sidepanel": {
     "message": "डिफ़ॉल्ट रूप से बंद। वर्तमान में कनेक्टेड Hermes इंस्टेंस का उपयोग करता है।",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
-  },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "डिफ़ॉल्ट रूप से बंद। वर्तमान में कनेक्टेड Hermes इंस्टेंस तक सीमित।",
-    "description": "Runtime interface message bot_mode.off_hint_web"
   },
   "runtime_bot_mode_open_chat": {
     "message": "Bot Chat खोलें",
@@ -632,16 +748,20 @@
     "description": "Runtime interface message bot_mode.return_to_sessions"
   },
   "runtime_bot_mode_return_to_sessions_title": {
-    "message": "Return to regular Hermes Browser sessions",
+    "message": "अपने सामान्य सत्रों पर वापस जाएँ",
     "description": "Runtime interface message bot_mode.return_to_sessions_title"
   },
   "runtime_bot_mode_roster_label": {
     "message": "Hermes एजेंट",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "Hermes Web एजेंट",
-    "description": "Runtime interface message bot_mode.roster_label_web"
+  "runtime_bot_mode_roster_names_only": {
+    "message": "प्रोफ़ाइल चित्र और बॉट की पूरी जानकारी के लिए Hermes डैशबोर्ड या इस गेटवे पर साइन-इन ज़रूरी है।",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "कनेक्शन सेटिंग खोलें",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
   },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
@@ -666,10 +786,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "इस ब्राउज़र के लिए वैकल्पिक प्रोफ़ाइल सूची और कैनोनिकल Bot Chat नेविगेटर चालू करता है।",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "इस ब्राउज़र पर वैकल्पिक एजेंट रेल और कैनोनिकल Bot Chat नेविगेशन सक्षम करता है।",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "एजेंट और बॉट मोड",
@@ -931,6 +1047,10 @@
     "message": "Hermes Control चालू करने से पहले एक Hermes सत्र शुरू करें या चुनें।",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "इस Hermes पर Hermes नियंत्रण उपलब्ध नहीं है। इसके लिए ब्राउज़र एक्सटेंशन नियंत्रण वाला Hermes चाहिए।",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "चुना गया दायरा उन टैब पर लागू करें जिन्हें Hermes नियंत्रित कर सकता है।",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1007,6 +1127,22 @@
     "message": "Chromium इस एक्सटेंशन को इंस्टॉल या अपडेट होने पर डीबगर एक्सेस देता है। Hermes डीबगर का उपयोग केवल उन टैब पर करता है जिन्हें आप जोड़ते हैं, कभी ब्राउज़र विंडो को सामने नहीं लाता, और क्रेडेंशियल, MFA, भुगतान फ़ील्ड और गोपनीय टेक्स्ट को ब्लॉक करता है।",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes ने वहाँ कार्रवाई नहीं की: वह स्थान ऐसे पेज के फ़्रेम के भीतर है जिसे Hermes पढ़ नहीं सकता।",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes ने स्क्रीनशॉट नहीं लिया: इस पेज का एक फ़्रेम ऐसे पेज पर है जिसे Hermes पढ़ नहीं सकता।",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes ने स्क्रीनशॉट नहीं लिया: पेज ऐसे पेज पर चला गया जिसे Hermes कैप्चर नहीं करता।",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes ने स्क्रीनशॉट नहीं लिया: Firefox को अतिरिक्त अनुमति चाहिए। Firefox में स्क्रीनशॉट की अनुमति दें का उपयोग करें।",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "विराम दें",
     "description": "Runtime interface message browser_control.pause"
@@ -1078,6 +1214,10 @@
   "runtime_browser_control_state_ready": {
     "message": "तैयार",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_state_waiting": {
+    "message": "प्रतीक्षारत",
+    "description": "Runtime interface message browser_control.state_waiting"
   },
   "runtime_browser_control_status_on": {
     "message": "चालू",
@@ -1151,9 +1291,405 @@
     "message": "बंद करें",
     "description": "Runtime interface message browser_control.turn_off"
   },
+  "runtime_browser_control_unsupported": {
+    "message": "इस Hermes पर Hermes नियंत्रण उपलब्ध नहीं है",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "इसके लिए ब्राउज़र एक्सटेंशन नियंत्रण वाला Hermes चाहिए।",
+    "description": "Runtime interface message browser_control.unsupported_detail"
+  },
   "runtime_browser_control_waiting": {
     "message": "Hermes की प्रतीक्षा में",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "इस चैट का पहला संदेश भेजे जाने के बाद Hermes नियंत्रण जुड़ जाता है।",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "इस चैट की प्रतीक्षा",
+    "description": "Runtime interface message browser_control.waiting_title"
+  },
+  "runtime_capability_feature_approvalEvents": {
+    "message": "अनुमोदन घटनाएँ",
+    "description": "Runtime interface message capability.feature.approvalEvents"
+  },
+  "runtime_capability_feature_audioTranscription": {
+    "message": "वॉइस ट्रांसक्रिप्शन",
+    "description": "Runtime interface message capability.feature.audioTranscription"
+  },
+  "runtime_capability_feature_auth": {
+    "message": "प्रमाणीकरण",
+    "description": "Runtime interface message capability.feature.auth"
+  },
+  "runtime_capability_feature_browserCompanionPlugin": {
+    "message": "Hermes Browser Extension प्लगिन",
+    "description": "Runtime interface message capability.feature.browserCompanionPlugin"
+  },
+  "runtime_capability_feature_browserContextProvider": {
+    "message": "Browser Context Protocol",
+    "description": "Runtime interface message capability.feature.browserContextProvider"
+  },
+  "runtime_capability_feature_browserContextStatus": {
+    "message": "ब्राउज़र संदर्भ स्थिति",
+    "description": "Runtime interface message capability.feature.browserContextStatus"
+  },
+  "runtime_capability_feature_browserContextUpload": {
+    "message": "ब्राउज़र संदर्भ अपलोड",
+    "description": "Runtime interface message capability.feature.browserContextUpload"
+  },
+  "runtime_capability_feature_browserPairing": {
+    "message": "ब्राउज़र पेयरिंग",
+    "description": "Runtime interface message capability.feature.browserPairing"
+  },
+  "runtime_capability_feature_health": {
+    "message": "स्वास्थ्य",
+    "description": "Runtime interface message capability.feature.health"
+  },
+  "runtime_capability_feature_imageSessionAttach": {
+    "message": "छवि संलग्नक (सत्र)",
+    "description": "Runtime interface message capability.feature.imageSessionAttach"
+  },
+  "runtime_capability_feature_imageUpload": {
+    "message": "छवि अपलोड (HTTP)",
+    "description": "Runtime interface message capability.feature.imageUpload"
+  },
+  "runtime_capability_feature_mediaRead": {
+    "message": "संग्रहीत छवि पढ़ना",
+    "description": "Runtime interface message capability.feature.mediaRead"
+  },
+  "runtime_capability_feature_models": {
+    "message": "मॉडल",
+    "description": "Runtime interface message capability.feature.models"
+  },
+  "runtime_capability_feature_pluginActions": {
+    "message": "प्लगइन क्रियाएँ",
+    "description": "Runtime interface message capability.feature.pluginActions"
+  },
+  "runtime_capability_feature_profiles": {
+    "message": "प्रोफ़ाइल",
+    "description": "Runtime interface message capability.feature.profiles"
+  },
+  "runtime_capability_feature_projects": {
+    "message": "प्रोजेक्ट",
+    "description": "Runtime interface message capability.feature.projects"
+  },
+  "runtime_capability_feature_runs": {
+    "message": "Runs API",
+    "description": "Runtime interface message capability.feature.runs"
+  },
+  "runtime_capability_feature_runSteer": {
+    "message": "रन संचालन",
+    "description": "Runtime interface message capability.feature.runSteer"
+  },
+  "runtime_capability_feature_sessionAuthority": {
+    "message": "सत्र अधिकार",
+    "description": "Runtime interface message capability.feature.sessionAuthority"
+  },
+  "runtime_capability_feature_sessionCompress": {
+    "message": "संदर्भ संपीड़न",
+    "description": "Runtime interface message capability.feature.sessionCompress"
+  },
+  "runtime_capability_feature_sessionContext": {
+    "message": "संदर्भ स्थिति",
+    "description": "Runtime interface message capability.feature.sessionContext"
+  },
+  "runtime_capability_feature_sessionModelLock": {
+    "message": "प्रति-सत्र मॉडल लॉक",
+    "description": "Runtime interface message capability.feature.sessionModelLock"
+  },
+  "runtime_capability_feature_sessions": {
+    "message": "सत्र",
+    "description": "Runtime interface message capability.feature.sessions"
+  },
+  "runtime_capability_feature_skills": {
+    "message": "स्किल",
+    "description": "Runtime interface message capability.feature.skills"
+  },
+  "runtime_capability_meta_checked": {
+    "message": "जाँच {age}",
+    "description": "Runtime interface message capability.meta.checked"
+  },
+  "runtime_capability_meta_never": {
+    "message": "कभी जाँचा नहीं गया",
+    "description": "Runtime interface message capability.meta.never"
+  },
+  "runtime_capability_meta_source": {
+    "message": "स्रोत: {source}",
+    "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_account_sign_in": {
+    "message": "यह गेटवे Hermes खाते से साइन-इन माँगता है। इसका सेशन सॉकेट खोलने के लिए सेटिंग > कनेक्शन से साइन इन करें।",
+    "description": "Runtime interface message capability.reason.account_sign_in"
+  },
+  "runtime_capability_reason_advertised": {
+    "message": "इस गेटवे ने घोषित किया।",
+    "description": "Runtime interface message capability.reason.advertised"
+  },
+  "runtime_capability_reason_advertised_off": {
+    "message": "यह गेटवे इसे बंद के रूप में घोषित करता है।",
+    "description": "Runtime interface message capability.reason.advertised_off"
+  },
+  "runtime_capability_reason_authority_compress": {
+    "message": "संपीड़न session.mutate के compress ऑपरेशन के रूप में चलता है, जिसे सत्र अधिकार वाला गेटवे सर्व करता है।",
+    "description": "Runtime interface message capability.reason.authority_compress"
+  },
+  "runtime_capability_reason_authority_ready": {
+    "message": "gateway.ready सत्र अधिकार की रिपोर्ट करता है।",
+    "description": "Runtime interface message capability.reason.authority_ready"
+  },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "गेटवे ने जोड़े गए टोकन को अस्वीकार कर दिया (HTTP {status}), इसलिए प्लगिन की जाँच नहीं हो सकी।",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "इस गेटवे पर न स्टेटस रूट है और न पढ़ने योग्य टूलसेट सूची, इसलिए एक्सटेंशन यह नहीं बता सकता कि सहायक प्लगिन लोड है या नहीं। इसका मतलब यह नहीं कि यह गायब है।",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "गेटवे ने HTTP {status} से जवाब दिया, इसलिए प्लगिन की जाँच नहीं हो सकी।",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "गेटवे तक पहुँचा नहीं जा सका{detail}, इसलिए प्लगिन की जाँच नहीं हो सकी।",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "सहायक प्लगिन {expectedCount} में से {presentCount} टूल के साथ लोड है, लेकिन यह स्टेटस रूट नहीं देता, इसलिए यह पुरानी प्रति है। इस प्रोफ़ाइल के लिए इसे फिर से इंस्टॉल करें और गेटवे को पुनः आरंभ करें।",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "कोई गेटवे टोकन उपलब्ध नहीं है, इसलिए प्लगिन की जाँच नहीं की गई।",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "इस गेटवे पर लोड नहीं है: स्टेटस रूट नहीं है और कोई सहायक टूलसेट सूचीबद्ध नहीं है। यह इंस्टॉल नहीं है, इस प्रोफ़ाइल के लिए चालू नहीं है, या तब से गेटवे को पुनः आरंभ नहीं किया गया है। प्रोफ़ाइल के लिए `hermes plugins list` चलाएँ।",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "लोड हुआ: संस्करण {version}, प्रोफ़ाइल {profile}, {toolCount} टूल।",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "लोड हुआ: संस्करण {version}, प्रोफ़ाइल {profile}, {toolCount} टूल। यह गेटवे पुष्टि नहीं कर सका कि API सर्वर के लिए इसका टूलसेट चालू है या नहीं।",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_renamed": {
+    "message": "इस प्लगिन की एक पुरानी प्रति उसके पिछले नाम hermes-browser-companion से लोड है। उसे हटाएँ (`hermes plugins remove hermes-browser-companion`), इस प्रोफ़ाइल के लिए hermes-browser-extension इंस्टॉल करें और गेटवे को पुनः आरंभ करें।",
+    "description": "Runtime interface message capability.reason.companion_renamed"
+  },
+  "runtime_capability_reason_companion_route": {
+    "message": "सहयोगी प्लगिन (संस्करण {version}) के माध्यम से उपलब्ध, जो इस गेटवे पर यह रूट देता है। Hermes के पास स्वयं ऐसा कोई रूट नहीं है।",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "लोड हुआ (संस्करण {version}), पर इन टूल की कमी है: {missing}। इस प्रोफ़ाइल के लिए इसे फिर से इंस्टॉल करें और गेटवे को पुनः आरंभ करें।",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "लोड हुआ, पर API सर्वर के लिए इसका टूलसेट बंद है। इसे `hermes tools` से चालू करें, या agent.disabled_toolsets से हटा दें।",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "लोड हुआ, लेकिन यह संस्करण {version} है और यह एक्सटेंशन {expected} की उम्मीद करता है। इस प्रोफ़ाइल के लिए इसे फिर से इंस्टॉल करें और गेटवे को पुनः आरंभ करें।",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
+  "runtime_capability_reason_connection_closed": {
+    "message": "कनेक्शन बंद हो गया। अंतिम पुष्टि {age}। दिखाया गया है, कुछ चलाने के लिए उपयोग नहीं होता।",
+    "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_context_socket": {
+    "message": "Hermes सेशन सॉकेट से पढ़ा गया: सेशन का उपयोग और श्रेणी-वार विवरण, सेशन की सहेजी गई आईडी से।",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "इस कंप्यूटर के Hermes डैशबोर्ड से दिया जा रहा है, जिसने इस पैनल के पास मौजूद साइन-इन को स्वीकार किया है। गेटवे API इसका विज्ञापन नहीं करता।",
+    "description": "Runtime interface message capability.reason.dashboard_route"
+  },
+  "runtime_capability_reason_extension_side": {
+    "message": "इस एक्सटेंशन द्वारा प्रॉम्प्ट के भीतर बनाया और भेजा गया। यह किसी गेटवे रूट पर निर्भर नहीं है।",
+    "description": "Runtime interface message capability.reason.extension_side"
+  },
+  "runtime_capability_reason_identity_changed": {
+    "message": "कनेक्शन, खाता या प्रोफ़ाइल बदल गया। अभी दोबारा नहीं जाँचा गया।",
+    "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "चिपकाई गई छवियाँ Hermes सेशन सॉकेट (image.attach_bytes) से तैयार की जाती हैं, और चैट उन्हें पाथ से पढ़ता है।",
+    "description": "Runtime interface message capability.reason.image_via_socket"
+  },
+  "runtime_capability_reason_legacy_assumed": {
+    "message": "माना गया क्योंकि /health ने टोकन के साथ उत्तर दिया। /v1/capabilities उपलब्ध नहीं था, इसलिए इसकी पुष्टि नहीं हुई।",
+    "description": "Runtime interface message capability.reason.legacy_assumed"
+  },
+  "runtime_capability_reason_legacy_gateway": {
+    "message": "इस गेटवे में /v1/capabilities नहीं है, इसलिए एक्सटेंशन नहीं देख सकता कि वह क्या देता है।",
+    "description": "Runtime interface message capability.reason.legacy_gateway"
+  },
+  "runtime_capability_reason_legacy_ws_compress": {
+    "message": "इस डैशबोर्ड गेटवे के पास सत्र अधिकार नहीं है, इसलिए पुराना session.compress संपीड़न सँभालता है।",
+    "description": "Runtime interface message capability.reason.legacy_ws_compress"
+  },
+  "runtime_capability_reason_method_not_found": {
+    "message": "गेटवे ने {method} के लिए \"method not found\" (-32601) उत्तर दिया।",
+    "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "इस कनेक्शन के लिए अभी कोई Hermes सेशन सॉकेट खुला नहीं है। सॉकेट खुलते ही संदर्भ की स्थिति यहाँ पढ़ी जाएगी।",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_record": {
+    "message": "अभी जाँचा नहीं गया।",
+    "description": "Runtime interface message capability.reason.no_record"
+  },
+  "runtime_capability_reason_no_session_authority": {
+    "message": "gateway.ready ने सत्र अधिकार की रिपोर्ट नहीं की।",
+    "description": "Runtime interface message capability.reason.no_session_authority"
+  },
+  "runtime_capability_reason_not_advertised": {
+    "message": "इस गेटवे ने घोषित नहीं किया।",
+    "description": "Runtime interface message capability.reason.not_advertised"
+  },
+  "runtime_capability_reason_not_advertised_plugin": {
+    "message": "इस गेटवे ने घोषित नहीं किया। Hermes Browser Extension यह नहीं बता सकता कि सहायक प्लगइन लोड है या नहीं, इसलिए इसका मतलब यह नहीं कि वह गायब है।",
+    "description": "Runtime interface message capability.reason.not_advertised_plugin"
+  },
+  "runtime_capability_reason_not_connected": {
+    "message": "डैशबोर्ड WebSocket ने अभी तक gateway.ready नहीं भेजा।",
+    "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "इस Hermes संस्करण में ऐसा कोई रूट नहीं है, इसलिए चालू करने के लिए कुछ नहीं है। पेज का संदर्भ हर संदेश के साथ भेजा जाता है।",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
+  },
+  "runtime_capability_reason_operation_ok": {
+    "message": "पिछली बार उपयोग करने पर काम किया।",
+    "description": "Runtime interface message capability.reason.operation_ok"
+  },
+  "runtime_capability_reason_operation_refused": {
+    "message": "Hermes ने पिछला प्रयास अस्वीकार किया: {detail}।",
+    "description": "Runtime interface message capability.reason.operation_refused"
+  },
+  "runtime_capability_reason_rest_chat": {
+    "message": "इस कनेक्शन पर चैट REST API से चलती है। चिपकाई गई छवियाँ तब लाइव सत्र से जुड़ती हैं जब चैट डैशबोर्ड WebSocket से चलती है, जैसा बॉट मोड या नामित-प्रोफ़ाइल सत्र में होता है।",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "इस कनेक्शन पर चैट REST API से चलती है और कोई Hermes सेशन सॉकेट खुला नहीं है, इसलिए चिपकाई गई छवियाँ डैशबोर्ड अपलोड का उपयोग करती हैं या इनलाइन रहती हैं।",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
+  },
+  "runtime_capability_reason_rest_no_compress": {
+    "message": "यह कनेक्शन केवल REST API तक पहुँचता है, जो संपीड़न रूट घोषित नहीं करता। संपीड़न के लिए सत्र अधिकार वाला डैशबोर्ड WebSocket चाहिए।",
+    "description": "Runtime interface message capability.reason.rest_no_compress"
+  },
+  "runtime_capability_reason_rest_only": {
+    "message": "यह कनेक्शन केवल REST API तक पहुँचता है। डैशबोर्ड WebSocket की ज़रूरत है।",
+    "description": "Runtime interface message capability.reason.rest_only"
+  },
+  "runtime_capability_reason_revoked": {
+    "message": "बंद किया गया: {detail}।",
+    "description": "Runtime interface message capability.reason.revoked"
+  },
+  "runtime_capability_reason_stale": {
+    "message": "अंतिम पुष्टि {age}। पुराना उत्तर दिखाया गया है, कुछ चलाने के लिए उपयोग नहीं होता।",
+    "description": "Runtime interface message capability.reason.stale"
+  },
+  "runtime_capability_reason_token_present": {
+    "message": "एक टोकन या प्रमाणीकरण संदर्भ मौजूद है। इस जाँच ने उसके वैध होने की पुष्टि नहीं की।",
+    "description": "Runtime interface message capability.reason.token_present"
+  },
+  "runtime_capability_reason_ws_connected": {
+    "message": "Hermes डैशबोर्ड का WebSocket जुड़ा हुआ है।",
+    "description": "Runtime interface message capability.reason.ws_connected"
+  },
+  "runtime_capability_reason_ws_contract": {
+    "message": "डैशबोर्ड WebSocket अनुबंध का हिस्सा। यह गेटवे इसे अलग से घोषित नहीं करता।",
+    "description": "Runtime interface message capability.reason.ws_contract"
+  },
+  "runtime_capability_reason_ws_not_reported": {
+    "message": "डैशबोर्ड WebSocket यह रिपोर्ट नहीं करता, और यह कनेक्शन /v1/capabilities नहीं पढ़ता।",
+    "description": "Runtime interface message capability.reason.ws_not_reported"
+  },
+  "runtime_capability_source_derived": {
+    "message": "कनेक्शन से अनुमानित",
+    "description": "Runtime interface message capability.source.derived"
+  },
+  "runtime_capability_source_extension": {
+    "message": "यह एक्सटेंशन",
+    "description": "Runtime interface message capability.source.extension"
+  },
+  "runtime_capability_source_method_not_found": {
+    "message": "Hermes की ओर से अस्वीकार",
+    "description": "Runtime interface message capability.source.method_not_found"
+  },
+  "runtime_capability_source_none": {
+    "message": "अभी कोई प्रमाण नहीं",
+    "description": "Runtime interface message capability.source.none"
+  },
+  "runtime_capability_source_operation": {
+    "message": "पिछला प्रयास",
+    "description": "Runtime interface message capability.source.operation"
+  },
+  "runtime_capability_source_probe": {
+    "message": "एक जाँच",
+    "description": "Runtime interface message capability.source.probe"
+  },
+  "runtime_capability_source_revocation": {
+    "message": "बंद किया गया",
+    "description": "Runtime interface message capability.source.revocation"
+  },
+  "runtime_capability_state_available": {
+    "message": "उपलब्ध",
+    "description": "Runtime interface message capability.state.available"
+  },
+  "runtime_capability_state_blocked": {
+    "message": "अवरुद्ध",
+    "description": "Runtime interface message capability.state.blocked"
+  },
+  "runtime_capability_state_cached": {
+    "message": "कैश्ड",
+    "description": "Runtime interface message capability.state.cached"
+  },
+  "runtime_capability_state_degraded": {
+    "message": "सीमित",
+    "description": "Runtime interface message capability.state.degraded"
+  },
+  "runtime_capability_state_unknown": {
+    "message": "अज्ञात",
+    "description": "Runtime interface message capability.state.unknown"
+  },
+  "runtime_capability_state_unsupported": {
+    "message": "असमर्थित",
+    "description": "Runtime interface message capability.state.unsupported"
+  },
+  "runtime_capability_summary_all": {
+    "message": "यहाँ जाँची गई हर सुविधा उपयोग में है।",
+    "description": "Runtime interface message capability.summary.all"
+  },
+  "runtime_capability_summary_some": {
+    "message": "इस कनेक्शन पर उपयोग में नहीं सुविधाएँ: {count}",
+    "description": "Runtime interface message capability.summary.some"
+  },
+  "runtime_chat_bot_reply_queued": {
+    "message": "आपका संदेश इस चैट की कतार में इंतज़ार कर रहा है। जवाब तैयार होते ही यहाँ दिखेगा, इसलिए इसे दोबारा भेजने की ज़रूरत नहीं है।",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
+  "runtime_chat_jump_to_latest": {
+    "message": "नवीनतम पर जाएँ",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "{count} नए संदेश",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "नवीनतम पर जाएँ, {count} नए संदेश",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
+  "runtime_chat_rewind_unsent": {
+    "message": "हो सकता है Hermes ने यह टर्न हटा दिया हो, और आपका नया संदेश नहीं भेजा गया। बातचीत अब वही दिखा रही है जो Hermes के पास है, और आपका टेक्स्ट कंपोज़र में वापस आ गया है।",
+    "description": "Runtime interface message chat.rewind_unsent"
   },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
@@ -1247,9 +1783,109 @@
     "message": "उपयोग में",
     "description": "Runtime interface message common.using"
   },
-  "runtime_composer_attach": {
-    "message": "＋ संलग्न करें",
-    "description": "Runtime interface message composer.attach"
+  "runtime_compact_button": {
+    "message": "संदर्भ संपीड़ित करें",
+    "description": "Runtime interface message compact.button"
+  },
+  "runtime_compact_button_recommended": {
+    "message": "संपीड़न की सलाह",
+    "description": "Runtime interface message compact.button_recommended"
+  },
+  "runtime_compact_result_aborted": {
+    "message": "Hermes सत्र का सारांश नहीं बना सका, इसलिए कुछ नहीं बदला गया।",
+    "description": "Runtime interface message compact.result.aborted"
+  },
+  "runtime_compact_result_blocked": {
+    "message": "Hermes अभी इस सत्र को संपीड़ित नहीं करेगा ({reason})।",
+    "description": "Runtime interface message compact.result.blocked"
+  },
+  "runtime_compact_result_busy": {
+    "message": "सत्र व्यस्त होने के कारण Hermes ने अस्वीकार किया। कुछ नहीं बदला।",
+    "description": "Runtime interface message compact.result.busy"
+  },
+  "runtime_compact_result_busy_compressing": {
+    "message": "Hermes पहले से इस सत्र को संपीड़ित कर रहा है।",
+    "description": "Runtime interface message compact.result.busy_compressing"
+  },
+  "runtime_compact_result_busy_turn": {
+    "message": "इस सत्र में एक टर्न चल रहा है। संपीड़ित करने से पहले उसे रोकें। कुछ नहीं भेजा गया।",
+    "description": "Runtime interface message compact.result.busy_turn"
+  },
+  "runtime_compact_result_compacted": {
+    "message": "Hermes ने इस सत्र को संपीड़ित किया और दोबारा पढ़ने से इसकी पुष्टि हुई। {detail}",
+    "description": "Runtime interface message compact.result.compacted"
+  },
+  "runtime_compact_result_denied": {
+    "message": "Hermes ने इस खाते या प्रोफ़ाइल के लिए संपीड़न अस्वीकार किया।",
+    "description": "Runtime interface message compact.result.denied"
+  },
+  "runtime_compact_result_failed": {
+    "message": "Hermes ने संपीड़न पूरा नहीं किया। {detail}",
+    "description": "Runtime interface message compact.result.failed"
+  },
+  "runtime_compact_result_indeterminate": {
+    "message": "उत्तर खो गया और सत्र आगे बढ़ चुका है। हो सकता है Hermes ने उसे संपीड़ित कर दिया हो; कुछ दोबारा नहीं भेजा गया।",
+    "description": "Runtime interface message compact.result.indeterminate"
+  },
+  "runtime_compact_result_noop": {
+    "message": "सत्र पहले से इतना छोटा है कि पूरा रखा जा सके। कुछ नहीं बदला।",
+    "description": "Runtime interface message compact.result.noop"
+  },
+  "runtime_compact_result_not_committed": {
+    "message": "उत्तर खो गया, और Hermes सत्र को अपरिवर्तित दिखाता है। वही अनुरोध भेजने के लिए संपीड़ित करें फिर दबाएँ।",
+    "description": "Runtime interface message compact.result.not_committed"
+  },
+  "runtime_compact_result_not_sent": {
+    "message": "पहले सत्र पढ़ने के लिए Hermes तक पहुँचा नहीं जा सका। कुछ नहीं भेजा गया।",
+    "description": "Runtime interface message compact.result.not_sent"
+  },
+  "runtime_compact_result_rotated": {
+    "message": "सत्र अपनी आईडी रखता है; Hermes उसे एक नए संग्रहीत खंड में जारी रखता है।",
+    "description": "Runtime interface message compact.result.rotated"
+  },
+  "runtime_compact_result_stale": {
+    "message": "संपीड़न के दौरान सत्र लगातार दो बार बदला। कुछ नहीं बदला। फिर कोशिश करें।",
+    "description": "Runtime interface message compact.result.stale"
+  },
+  "runtime_compact_result_unconfirmed": {
+    "message": "Hermes ने संपीड़न स्वीकार किया, पर सत्र दोबारा पढ़ने से पुष्टि नहीं हुई। भरोसा करने से पहले रीफ़्रेश करें।",
+    "description": "Runtime interface message compact.result.unconfirmed"
+  },
+  "runtime_compact_status_no_session": {
+    "message": "संपीड़ित करने से पहले कोई सत्र खोलें या बनाएँ।",
+    "description": "Runtime interface message compact.status.no_session"
+  },
+  "runtime_compact_status_ready": {
+    "message": "जगह खाली करने के लिए पुराने संदेशों को सारांश से बदलें।",
+    "description": "Runtime interface message compact.status.ready"
+  },
+  "runtime_compact_status_running": {
+    "message": "इस सत्र को संपीड़ित करने से पहले सक्रिय रन रोकें।",
+    "description": "Runtime interface message compact.status.running"
+  },
+  "runtime_compact_status_unavailable": {
+    "message": "संपीड़न उपलब्ध नहीं: {reason}",
+    "description": "Runtime interface message compact.status.unavailable"
+  },
+  "runtime_compact_title_failed": {
+    "message": "संदर्भ संपीड़न विफल रहा",
+    "description": "Runtime interface message compact.title.failed"
+  },
+  "runtime_compact_title_noop": {
+    "message": "संपीड़ित करने को कुछ नहीं",
+    "description": "Runtime interface message compact.title.noop"
+  },
+  "runtime_compact_title_ok": {
+    "message": "संदर्भ संपीड़ित हुआ",
+    "description": "Runtime interface message compact.title.ok"
+  },
+  "runtime_compact_title_unavailable": {
+    "message": "संदर्भ संपीड़न उपलब्ध नहीं",
+    "description": "Runtime interface message compact.title.unavailable"
+  },
+  "runtime_compact_working": {
+    "message": "संपीड़ित हो रहा है…",
+    "description": "Runtime interface message compact.working"
   },
   "runtime_composer_chat_label": {
     "message": "बात करना",
@@ -1287,13 +1923,45 @@
     "message": "मैन्युअल सेटअप के लिए.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "{url} पर {title} की जाँच हो रही है...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Hermes से कनेक्ट है, लेकिन रनटाइम चेतावनी के साथ। {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} मैन्युअल सेटअप अब भी सेटिंग्स में उपलब्ध है।",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "{url} पर {title} खोजा जा रहा है...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "स्वचालित पेयरिंग केवल loopback पते वाले स्थानीय गेटवे के लिए उपलब्ध है। रिमोट API कनेक्शन के लिए स्पष्ट रूप से कॉन्फ़िगर किया गया URL और टोकन ज़रूरी है; डैशबोर्ड कनेक्शन Trusted Dashboard Attach का उपयोग करते हैं।",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}। “Hermes से कनेक्ट करें” पर क्लिक करें या मैन्युअल सेटअप का उपयोग करें।",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "स्थानीय Hermes API सर्वर",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "रिमोट Hermes API सर्वर",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "रिमोट Hermes डैशबोर्ड",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "कॉन्फ़िगर नहीं किया गया",
     "description": "Runtime interface message connection.not_configured_short"
-  },
-  "runtime_connection_unknown_transport": {
-    "message": "अज्ञात ट्रांसपोर्ट",
-    "description": "Runtime interface message connection.unknown_transport"
   },
   "runtime_context_consent_share_detail": {
     "message": "इस सटीक कनेक्शन को मंज़ूरी देने तक केवल चैट उपलब्ध है। सहमति एंडपॉइंट, खाते, प्रोफ़ाइल और ब्राउज़र कंट्रोलर के अनुसार अलग रखी जाती है।",
@@ -1307,9 +1975,21 @@
     "message": "संलग्न टैब",
     "description": "Runtime interface message context.attached_tab"
   },
-  "runtime_context_browser_tab_handoff": {
-    "message": "ब्राउज़र टैब {tabId} हैंडऑफ़",
-    "description": "Runtime interface message context.browser_tab_handoff"
+  "runtime_context_card_no_socket": {
+    "message": "इस कनेक्शन में कोई Hermes सेशन सॉकेट नहीं है, इसलिए श्रेणी-वार विवरण नहीं पढ़ा जा सकता।",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes अपने सेशन सॉकेट पर यह सेशन नहीं रखता, इसलिए वह श्रेणियाँ नहीं माप सका।",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes ने इस सेशन के लिए अभी तक श्रेणी-वार विवरण नहीं बताया है।",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "इस सेशन का श्रेणी-वार विवरण पढ़ने के लिए सेटिंग > कनेक्शन में अपने Hermes खाते से साइन इन करें।",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "सक्रिय टैब का पालन करें",
@@ -1492,7 +2172,7 @@
     "description": "Runtime interface message custom_theme.validation_errors"
   },
   "runtime_diagnostic_api_authorization_health_detail": {
-    "message": "स्वास्थ्य जाँच ने उत्तर दिया, लेकिन संरक्षित ब्राउज़र/मॉडल रूट्स को Authorization: Bearer *** की आवश्यकता है। सेटिंग्स में API कुंजी या स्कोप्ड ब्राउज़र टोकन चिपकाएँ।",
+    "message": "स्वास्थ्य जाँच ने उत्तर दिया, लेकिन संरक्षित एक्सटेंशन/मॉडल रूट्स को Authorization: Bearer *** की आवश्यकता है। सेटिंग्स में API कुंजी या स्कोप्ड ब्राउज़र टोकन चिपकाएँ।",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
   },
   "runtime_diagnostic_api_authorization_title": {
@@ -1504,7 +2184,7 @@
     "description": "Runtime interface message diagnostic.api_rejected_detail"
   },
   "runtime_diagnostic_auth_detail": {
-    "message": "Hermes API ने अनुरोध अस्वीकार कर दिया। सेटिंग्स में ब्राउज़र API टोकन जाँचें और सुनिश्चित करें कि यह चालू Hermes गेटवे से मेल खाता है।",
+    "message": "Hermes API ने अनुरोध अस्वीकार कर दिया। एक्सटेंशन की सेटिंग्स में API टोकन जाँचें और सुनिश्चित करें कि यह चालू Hermes गेटवे से मेल खाता है।",
     "description": "Runtime interface message diagnostic.auth_detail"
   },
   "runtime_diagnostic_auth_title": {
@@ -1512,11 +2192,11 @@
     "description": "Runtime interface message diagnostic.auth_title"
   },
   "runtime_diagnostic_auth_user": {
-    "message": "Hermes API टोकन अस्वीकार कर दिया गया। ब्राउज़र सेटिंग्स टोकन अपडेट करें, फिर पुनः कनेक्ट करें।",
+    "message": "Hermes API टोकन अस्वीकार कर दिया गया। एक्सटेंशन की सेटिंग्स में टोकन अपडेट करें, फिर पुनः कनेक्ट करें।",
     "description": "Runtime interface message diagnostic.auth_user"
   },
   "runtime_diagnostic_cors_extension_detail": {
-    "message": "ब्राउज़र इस एक्सटेंशन मूल से Hermes API तक नहीं पहुँच सका। दूरस्थ होस्ट पर API_SERVER_CORS_ORIGINS में chrome-extension://<extension-id> जोड़ें।",
+    "message": "एक्सटेंशन अपने मूल से Hermes API तक नहीं पहुँच सका। दूरस्थ होस्ट पर API_SERVER_CORS_ORIGINS में chrome-extension://<extension-id> जोड़ें।",
     "description": "Runtime interface message diagnostic.cors_extension_detail"
   },
   "runtime_diagnostic_cors_title": {
@@ -1524,7 +2204,7 @@
     "description": "Runtime interface message diagnostic.cors_title"
   },
   "runtime_diagnostic_dashboard_url_detail": {
-    "message": "यह Hermes डैशबोर्ड SSO एंडपॉइंट जैसा दिखता है। ब्राउज़र API मोड को :8642 पर Hermes API सर्वर URL के साथ-साथ Authorization: Bearer *** की आवश्यकता है।",
+    "message": "यह Hermes डैशबोर्ड SSO एंडपॉइंट जैसा दिखता है। एक्सटेंशन के API मोड को :8642 पर Hermes API सर्वर URL के साथ-साथ Authorization: Bearer *** की आवश्यकता है।",
     "description": "Runtime interface message diagnostic.dashboard_url_detail"
   },
   "runtime_diagnostic_dashboard_url_title": {
@@ -1540,7 +2220,7 @@
     "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
   },
   "runtime_diagnostic_network_detail": {
-    "message": "ब्राउज़र Hermes API तक नहीं पहुँच सका। इस एक्सटेंशन के लिए गेटवे URL, फ़ायरवॉल/VPN रूटिंग और CORS/मूल सेटिंग्स जाँचें।",
+    "message": "एक्सटेंशन Hermes API तक नहीं पहुँच सका। गेटवे URL, फ़ायरवॉल/VPN रूटिंग और इस एक्सटेंशन की CORS/मूल सेटिंग्स जाँचें।",
     "description": "Runtime interface message diagnostic.network_detail"
   },
   "runtime_diagnostic_network_title": {
@@ -1548,7 +2228,7 @@
     "description": "Runtime interface message diagnostic.network_title"
   },
   "runtime_diagnostic_network_user": {
-    "message": "ब्राउज़र Hermes तक नहीं पहुँच सका क्योंकि अनुरोध नेटवर्क/CORS परत पर विफल रहा।",
+    "message": "एक्सटेंशन Hermes तक नहीं पहुँच सका क्योंकि अनुरोध नेटवर्क/CORS परत पर विफल रहा।",
     "description": "Runtime interface message diagnostic.network_user"
   },
   "runtime_diagnostic_remote_setup_title": {
@@ -1556,7 +2236,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "ब्राउज़र एक्सटेंशन इस रिमोट गेटवे प्रतिक्रिया को वर्गीकृत नहीं कर सका।",
+    "message": "Hermes Browser Extension इस रिमोट गेटवे प्रतिक्रिया को वर्गीकृत नहीं कर सका।",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -1568,7 +2248,7 @@
     "description": "Runtime interface message diagnostic.route_title"
   },
   "runtime_diagnostic_route_user": {
-    "message": "यह Hermes रनटाइम अभी तक अनुरोधित ब्राउज़र रूट उजागर नहीं करता है।",
+    "message": "यह Hermes रनटाइम अभी तक अनुरोधित एक्सटेंशन रूट उजागर नहीं करता है।",
     "description": "Runtime interface message diagnostic.route_user"
   },
   "runtime_diagnostic_runtime_exception_detail": {
@@ -1580,7 +2260,7 @@
     "description": "Runtime interface message diagnostic.runtime_exception_title"
   },
   "runtime_diagnostic_runtime_exception_user": {
-    "message": "अपस्ट्रीम Hermes Agent के अंदर Hermes गेटवे ट्रेसबैक का पता चला। ब्राउज़र कनेक्टेड रह सकता है; Hermes लॉग जाँचें और यदि ट्रेसबैक में computer_use/cua-driver दिखाई दे तो `hermes computer-use doctor` चलाएँ।",
+    "message": "अपस्ट्रीम Hermes Agent के अंदर Hermes गेटवे ट्रेसबैक का पता चला। एक्सटेंशन कनेक्टेड रह सकता है; Hermes लॉग जाँचें और यदि ट्रेसबैक में computer_use/cua-driver दिखाई दे तो `hermes computer-use doctor` चलाएँ।",
     "description": "Runtime interface message diagnostic.runtime_exception_user"
   },
   "runtime_diagnostics_surface": {
@@ -1659,13 +2339,129 @@
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
   },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "{source} से खोला गया।",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
+  "runtime_firefox_screenshots_allow": {
+    "message": "Firefox में स्क्रीनशॉट की अनुमति दें",
+    "description": "Runtime interface message firefox_screenshots.allow"
   },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "ब्राउज़र टैब {tabId} पर {source} से खोला गया।",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox ने अनुमति नहीं दी।",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes जुड़े हुए टैब के स्क्रीनशॉट ले सकता है, Hermes Control की बाकी सुविधाओं जैसी ही सुरक्षा सीमाओं में। आप यह अनुमति कभी भी वापस ले सकते हैं।",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Hermes टैब का स्क्रीनशॉट ले सके, इसके लिए Firefox को एक अतिरिक्त अनुमति चाहिए। Hermes इसे केवल तब माँगता है जब आप अनुमति दें पर क्लिक करते हैं; तब तक वह पेज का टेक्स्ट पढ़ता है।",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "स्क्रीनशॉट की अनुमति बदली नहीं जा सकी: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Firefox में स्क्रीनशॉट की अनुमति है।",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "स्क्रीनशॉट की अनुमति बंद करें",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "स्क्रीनशॉट की अनुमति हटा दी गई।",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Firefox में मॉडल स्क्रीनशॉट",
+    "description": "Runtime interface message firefox_screenshots.title"
+  },
+  "runtime_gateway_queue_cancel": {
+    "message": "टर्न रद्द करें",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "कतार में लगा टर्न रद्द नहीं किया जा सका: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
+  "runtime_gateway_queue_discard": {
+    "message": "हटाएँ",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "खोया हुआ टर्न हटाया नहीं जा सका: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "संपादित करें",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "मूल रखें",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "संपादन सहेजा नहीं जा सका: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "कतार में लगे संदेश को संपादित करें",
+    "description": "Runtime interface message gateway_queue.edit_label"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "रीस्टार्ट के दौरान टर्न खो गया",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "यह टर्न चलते समय Hermes रीस्टार्ट हो गया। इसे पूरा नहीं किया जा सकता और न ही सुरक्षित रूप से दोहराया जा सकता है, और इसके पीछे कतार में लगे टर्न तब तक प्रतीक्षा करते हैं जब तक आप इसे हटा नहीं देते। आपका संदेश ट्रांसक्रिप्ट में रहता है ताकि आप उसे दोबारा भेज सकें।",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Hermes पर कतार में: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "सहेजें",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "यह Hermes इस टर्न के लिए यह सुविधा नहीं देता।",
+    "description": "Runtime interface message gateway_queue.unsupported"
+  },
+  "runtime_haui_ask_hint": {
+    "message": "यह सवाल संदेश बॉक्स में डालता है",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "व्यू बनाया जा रहा है…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "कॉपी हो गया",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "कॉपी करें",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "नए टैब में खुलता है",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_unreadable": {
+    "message": "टेक्स्ट के रूप में दिखाया गया: यह कार्ड नहीं बन सका।",
+    "description": "Runtime interface message haui.unreadable"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "चार्ट के रूप में देखें",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "चार्ट",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "टेबल",
+    "description": "Runtime interface message haui.view_table"
   },
   "runtime_image_generated": {
     "message": "जनरेट की गई छवि",
@@ -1728,19 +2524,19 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
-    "message": "Hermes एक्सटेंशन",
+    "message": "Hermes Ext",
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Hermes Browser एक्सटेंशन खोलें",
+    "message": "Hermes Browser Extension खोलें",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Hermes Browser साइडबार खोलें",
+    "message": "Hermes Browser Extension साइडबार खोलें",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -1819,6 +2615,162 @@
     "message": "असमर्थित संग्रह प्रारूप",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "Hermes सेट करें",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "वापस",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_connect_body": {
+    "message": "इस पैनल को अपने Hermes एजेंट से जोड़ें। अगर आपका Hermes पेयरिंग देता है तो उसे मंज़ूर करें, या उसके पते और API कुंजी के साथ मैनुअल सेटअप इस्तेमाल करें। फिर Hermes वह पेज देख सकता है जिस पर आप हैं और यहीं जवाब दे सकता है।",
+    "description": "Runtime interface message onboarding.connect.body"
+  },
+  "runtime_onboarding_connect_connected": {
+    "message": "Hermes से कनेक्ट है",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "बाद में कनेक्ट करें",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "अभी कनेक्ट नहीं है",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes किसी दूसरे कंप्यूटर, सर्वर या Hermes Cloud पर है? वह कनेक्शन सेट करने के लिए मैनुअल सेटअप चुनें।",
+    "description": "Runtime interface message onboarding.connect.other_hint"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "Hermes से कनेक्ट करें",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "पहला प्रॉम्प्ट आज़माएँ",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "पैनल और Hermes के जवाबों के लिए टाइपफ़ेस।",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "फ़ॉन्ट चुनें",
+    "description": "Runtime interface message onboarding.font.title"
+  },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser Extension इसे हर जगह इस्तेमाल करेगा। आप इसे बाद में सेटिंग्स में बदल सकते हैं।",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "आपके ब्राउज़र के आधार पर सुझाई गई: {language}। चाहें तो कोई और चुनें; आप इसे बाद में सेटिंग्स में बदल सकते हैं।",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "अपनी भाषा चुनें",
+    "description": "Runtime interface message onboarding.language.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "आपके संदेश और Hermes के जवाब कहाँ दिखेंगे।",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "चैट लेआउट चुनें",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "आगे",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "लोड समय (से.)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "इस पेज पर तीन बातें खास हैं।",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "यह दोगुनी तेज़ी से लोड होता है",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "यह कम अनुरोध भेजता है",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "इसका बंडल छोटा है",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "इस पेज का सारांश दो",
+    "description": "Runtime interface message onboarding.preview.user"
+  },
+  "runtime_onboarding_skip": {
+    "message": "छोड़ें",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "चैट शुरू करें",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "चरण {current} / {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "Hermes अपने जवाब कैसे दिखाता है।",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "जवाब की शैली चुनें",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "साइड पैनल और पूरे टैब के रंग।",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "थीम चुनें",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
+  "runtime_onboarding_welcome_body": {
+    "message": "चलिए इसे सेट करते हैं। इसमें लगभग एक मिनट लगेगा।",
+    "description": "Runtime interface message onboarding.welcome.body"
+  },
+  "runtime_onboarding_welcome_greeting": {
+    "message": "स्वागत है",
+    "description": "Runtime interface message onboarding.welcome.greeting"
+  },
+  "runtime_onboarding_welcome_skip": {
+    "message": "सेटअप छोड़ें",
+    "description": "Runtime interface message onboarding.welcome.skip"
+  },
+  "runtime_onboarding_welcome_start": {
+    "message": "शुरू करें",
+    "description": "Runtime interface message onboarding.welcome.start"
+  },
+  "runtime_onboarding_welcome_title": {
+    "message": "Hermes Browser में आपका स्वागत है",
+    "description": "Runtime interface message onboarding.welcome.title"
+  },
+  "runtime_pairing_approve_below": {
+    "message": "नीचे दिए गए कनेक्शन को स्वीकृत करें।",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "पेयरिंग अस्वीकार कर दी गई।",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Hermes कनेक्शन स्वीकृत करें",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "टैब में खोलें",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "माइक्रोफ़ोन की अनुमति नहीं दी गई थी.\n\n{error}\n\nमाइक्रोफ़ोन सेटिंग खोलें पर क्लिक करें, माइक्रोफ़ोन को Hermes Browser Extension के लिए अनुमति दें पर सेट करें, यहां वापस आएं और पुनः प्रयास करें।",
     "description": "Runtime interface message permissions.not_granted"
@@ -1887,12 +2839,632 @@
     "message": "उपयोग में: {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
   },
+  "runtime_projects_back": {
+    "message": "वापस",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "रद्द करें",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_add_folder": {
+    "message": "फ़ोल्डर जोड़ें",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "जोड़ें",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
+  "runtime_projects_create_creating": {
+    "message": "बनाया जा रहा है…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "प्रोजेक्ट {name} बन गया।",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "प्रोजेक्ट {name} बन गया। आपका आइडिया IDEA.md के रूप में सहेजने के लिए तैयार है।",
+    "description": "Runtime interface message projects.create.done_idea"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "प्रोजेक्ट का नाम दर्ज करें।",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "वह फ़ोल्डर पहले से प्रोजेक्ट {project} का है।",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "गेटवे होस्ट पर पूर्ण पाथ का उपयोग करें: वह स्लैश, ड्राइव अक्षर या ~ से शुरू होता है।",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "गेटवे होस्ट पर प्रोजेक्ट का फ़ोल्डर दर्ज करें।",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_folders": {
+    "message": "फ़ोल्डर",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "आइडिया (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "आइडिया नहीं बन सका। {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "आइडिया बनाएँ",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "बनाया जा रहा है…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "वैकल्पिक। प्रोजेक्ट बनने के बाद उसके पहले फ़ोल्डर में एक सत्र खुलता है, जिसमें यह टेक्स्ट तैयार रहता है ताकि Hermes इसे IDEA.md में सहेज सके।",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "यह प्रोजेक्ट किस बारे में है? एक पंक्ति का सार और कुछ लक्ष्य।",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
+  "runtime_projects_create_name": {
+    "message": "प्रोजेक्ट का नाम",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "अभी कोई फ़ोल्डर नहीं है। वह फ़ोल्डर जोड़ें जिसमें यह प्रोजेक्ट काम करता है।",
+    "description": "Runtime interface message projects.create.no_folders"
+  },
+  "runtime_projects_create_path": {
+    "message": "गेटवे होस्ट पर फ़ोल्डर",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "यह पथ उस मशीन पर है जिस पर Hermes चल रहा है ({host}), इस कंप्यूटर पर नहीं। इसे ब्राउज़ करें या पथ लिखें।",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "मुख्य",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "{folder} हटाएँ",
+    "description": "Runtime interface message projects.create.remove_folder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "प्रोजेक्ट बनाएँ",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "गेटवे",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "नया प्रोजेक्ट",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "\"{name}\" का उपयोग करें",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "{name} नाम का प्रोजेक्ट पहले से है ({folder})। प्रोजेक्ट फ़ोल्डर से अलग पहचाने जाते हैं, पर अलग नाम को पहचानना आसान है।",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "बंद करें",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "प्रोजेक्ट उन सत्रों को समूहित करता है जो Hermes चलाने वाली मशीन के किसी फ़ोल्डर में चलते हैं। शुरू करने के लिए एक बनाएँ।",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "अभी कोई प्रोजेक्ट नहीं",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "Hermes से कनेक्शन टूट गया।",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes अनुरोध पूरा नहीं कर सका।",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes ने वह मान अस्वीकार कर दिया।",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes ने ऐसा उत्तर दिया जिसे यह एक्सटेंशन नहीं समझता।",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes ने वह प्रोजेक्ट वापस नहीं किया जिसे बनाने को कहा गया था।",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "वह प्रोजेक्ट अब मौजूद नहीं है।",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "यह प्रोफ़ाइल अब गेटवे पर उपलब्ध नहीं है।",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes ने समय पर उत्तर नहीं दिया।",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "प्रोजेक्ट में समस्या आई",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "गेटवे होस्ट पर फ़ोल्डर:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "पहचाने गए फ़ोल्डर",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "होम",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "प्रोजेक्ट",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "न सहेजें",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "अपने आइडिया के साथ {folder} में एक सत्र खोलें। उसे भेजें और Hermes वहाँ IDEA.md लिख देगा।",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "आपका आइडिया अभी सहेजा नहीं गया है",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "वर्तमान फ़ोल्डर में IDEA.md नाम की फ़ाइल बनाएँ जिसमें ठीक नीचे दिया टेक्स्ट हो, और कुछ और न बदलें।\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "IDEA.md के रूप में सहेजें",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "{name} में सत्र खुल गया। IDEA.md सहेजने के लिए संदेश भेजें।",
+    "description": "Runtime interface message projects.idea.started"
+  },
+  "runtime_projects_loading": {
+    "message": "प्रोजेक्ट लोड हो रहे हैं…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "इस प्रोजेक्ट के सत्र लोड हो रहे हैं…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "स्थानांतरित करें",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "{title} को प्रोजेक्ट में स्थानांतरित करें",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "प्रोजेक्ट में स्थानांतरित करें",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "सत्र पहले से {cwd} में है।",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes ने स्थानांतरण अस्वीकार कर दिया क्योंकि सत्र व्यस्त है। टर्न पूरा होने का इंतज़ार करें, या उसे रोकें, फिर दोबारा कोशिश करें।",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes ने स्थानांतरण अस्वीकार कर दिया क्योंकि सत्र को संक्षिप्त किया जा रहा है। यह पूरा होने पर दोबारा कोशिश करें।",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "फिर से जाँचें",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "फ़ोल्डर जाँचें",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "Hermes से पूछा जा रहा है…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "इस बीच सत्र को किसी और चीज़ ने बदल दिया, इसलिए स्थानांतरण लागू नहीं हुआ।",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "वर्तमान",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "वर्तमान फ़ोल्डर:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes ने आपके साइन-इन या प्रोफ़ाइल के लिए यह स्थानांतरण अनुमत नहीं किया।",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "यहाँ स्थानांतरित करें",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "स्थानांतरित हो गया। Hermes सत्र का फ़ोल्डर {cwd} बता रहा है।",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "सत्र को स्थानांतरित करने से उसका वर्कस्पेस बदलता है और वह फ़ोल्डर भी बदल सकता है जिसमें उसके कमांड चलते हैं। सत्र अपने फ़ोल्डर के कारण प्रोजेक्ट का होता है; इस ब्राउज़र में कुछ संग्रहीत नहीं होता।",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes सत्र को स्थानांतरित नहीं कर सका। {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "यह फ़ोल्डर प्रोजेक्ट {name} का है।",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "यह फ़ोल्डर किसी प्रोजेक्ट में नहीं है, इसलिए सत्र होम के अंतर्गत दिखेगा।",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "गेटवे होस्ट पर फ़ोल्डर",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "Hermes की पुष्टि से पहले कनेक्शन टूट गया। स्थानांतरण हुआ हो भी सकता है और नहीं भी, इसलिए कुछ भी स्थानांतरित करने से पहले दोबारा जाँचें।",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "वह फ़ोल्डर Hermes गेटवे होस्ट पर कोई डायरेक्टरी नहीं है।",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "फिर भी Hermes से स्थानांतरित करने को कहें",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "इस सत्र में एक टर्न चल रहा है",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "इसे स्थानांतरित करने से वह फ़ोल्डर बदलता है जिसमें इसके कमांड चलते हैं, और जब तक टर्न सक्रिय है Hermes स्थानांतरण अस्वीकार करता है। अभी कुछ नहीं बदला है।",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "स्थानांतरित हो रहा है…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes ने अभी स्थानांतरण लागू नहीं किया है। सत्र पढ़ने के लिए दोबारा जाँचें; स्थानांतरण तभी दोहराया जाता है जब कुछ लागू न हुआ हो।",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "Hermes को पढ़ा नहीं जा सका, इसलिए कुछ भेजा नहीं गया।",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "कोई और फ़ोल्डर…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "किसी सत्र को ऐसे फ़ोल्डर में ले जाना जो किसी प्रोजेक्ट में नहीं है, उसे उसके प्रोजेक्ट से बाहर कर देता है।",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "गेटवे होस्ट पर पूर्ण पाथ का उपयोग करें: वह स्लैश, ड्राइव अक्षर या ~ से शुरू होता है।",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "गेटवे होस्ट पर कोई फ़ोल्डर दर्ज करें।",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "सत्र",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "स्थानांतरित करते समय सत्र बदल गया, इसलिए कुछ स्थानांतरित नहीं हुआ। उसकी नवीनतम स्थिति के लिए स्थानांतरण फिर से खोलें।",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "{name} में स्थानांतरित करें",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "प्रोजेक्ट में स्थानांतरित करें",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes ने स्थानांतरण स्वीकार किया, लेकिन सत्र का फ़ोल्डर {cwd} के रूप में वापस पढ़ा गया, वह नहीं जो आपने माँगा था। भरोसा करने से पहले सत्र जाँच लें।",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "नया प्रोजेक्ट",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "इस प्रोजेक्ट में नया सत्र",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "ऐसा सत्र शुरू करता है जो इस प्रोजेक्ट के फ़ोल्डर में चलता है।",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "इस प्रोजेक्ट में सत्र शुरू नहीं हो सका। {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes ने सत्र शुरू नहीं किया।",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "{name} में नया सत्र",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "आपकी खोज से कोई प्रोजेक्ट मेल नहीं खाता।",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "फ़ोल्डर ब्राउज़ करें…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "यह फ़ोल्डर चुनें",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "फ़ोल्डर:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "डिफ़ॉल्ट फ़ोल्डर",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "यहाँ कोई फ़ोल्डर नहीं है।",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "यह फ़ोल्डर पढ़ा नहीं जा सका। {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "फ़ोल्डर फ़िल्टर करें",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "जाएँ",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "उस मशीन के फ़ोल्डर जिस पर Hermes चल रहा है ({host}), इस कंप्यूटर के नहीं।",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "होम",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "फ़ोल्डर पढ़े जा रहे हैं…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "फ़ोल्डर पथ",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "यहाँ से शुरू करें",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "फ़ोल्डर चुनें",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "पहले {count} फ़ोल्डर दिखाए जा रहे हैं। बाकी खोजने के लिए फ़िल्टर में लिखें।",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "या पथ लिखें",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "यह गेटवे अभी अपने फ़ोल्डर सूचीबद्ध नहीं कर सकता। इसके बजाय नीचे फ़ोल्डर का पथ लिखें।",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "एक स्तर ऊपर",
+    "description": "Runtime interface message projects.picker.up"
+  },
+  "runtime_projects_reason_code": {
+    "message": "कारण: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "प्रोजेक्ट रीफ़्रेश करें",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "फिर कोशिश करें",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "{host} पर प्रोफ़ाइल {profile}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "प्रोजेक्ट खोजें",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "इस प्रोजेक्ट के सत्रों में खोजें",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} सत्र",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "ऊपर से एक शुरू करें, या हाल के से किसी मौजूदा सत्र को यहाँ ले आएँ।",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "इस प्रोजेक्ट में अभी कोई सत्र नहीं",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "इस प्रोजेक्ट का कोई सत्र आपकी खोज से मेल नहीं खाता।",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "सत्र",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "सत्र दृश्य",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "प्रोजेक्ट",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "हाल के",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_account_sign_in": {
+    "message": "इस गेटवे पर प्रोजेक्ट के लिए Hermes खाते से साइन-इन चाहिए। “अपने Hermes खाते से साइन इन करें” का उपयोग करें, फिर दोबारा कोशिश करें।",
+    "description": "Runtime interface message projects.unavailable.account_sign_in"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "जुड़े Hermes गेटवे ने {method} के लिए \"method not found\" (-32601) उत्तर दिया।",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "इस Hermes गेटवे ने सत्र अधिकार घोषित नहीं किया, इसलिए प्रोजेक्ट और सत्र स्थानांतरण उपलब्ध नहीं हैं। Hermes को ऐसे बिल्ड पर अपडेट करें जिसमें मानक सत्र परिवर्तन हों।",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "Hermes डैशबोर्ड का WebSocket जुड़ने तक प्रोजेक्ट उपलब्ध नहीं हैं।",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "हाल के अब भी काम करता है।",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "प्रोजेक्ट के लिए Hermes डैशबोर्ड का WebSocket चाहिए। यह कनेक्शन केवल REST API तक पहुँचता है।",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "प्रोजेक्ट यहाँ उपलब्ध नहीं हैं",
+    "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "इस गेटवे पर Hermes Web बंद है, इसलिए प्रोजेक्ट के पास सत्र सॉकेट नहीं है। config.yaml में webapp.enabled को true करें, hermes gateway restart चलाएँ, फिर दोबारा कोशिश करें।",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
+  },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "प्रोजेक्ट को Hermes Web के साइन-इन की ज़रूरत है। Hermes Web को एक बार खोलें (hermes webapp चलाएँ), फिर दोबारा कोशिश करें।",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "दोनों तरफ़ बबल",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "आप और Hermes, हर कोई अपने बबल में, मैसेजिंग ऐप की तरह।",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "चैट में संदेश कहाँ दिखें।",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "चैट लेआउट",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "केवल उपयोगकर्ता का बबल",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "आपके संदेश बबल में, Hermes के जवाब सामान्य टेक्स्ट में।",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "पहली बार वाला सेटअप फिर से चलाएँ",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "थीम, जवाब की शैली और चैट लेआउट को फिर से चरण-दर-चरण चुनें।",
+    "description": "Runtime interface message responses.setup_again_description"
+  },
+  "runtime_responses_style_description": {
+    "message": "Hermes अपने जवाब कैसे दिखाता है।",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "जवाब की शैली",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "सादा टेक्स्ट",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "सिर्फ़ शब्द, कोई फ़ॉर्मैटिंग नहीं।",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "रिच टेक्स्ट",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "फ़ॉर्मैट किया हुआ Markdown: शीर्षक, सूचियाँ और कोड।",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "मदद करें तो कार्ड, टेबल और चार्ट।",
+    "description": "Runtime interface message responses.style.vivid_hint"
+  },
   "runtime_run_release": {
     "message": "Release",
     "description": "Runtime interface message run.release"
   },
   "runtime_run_release_detail": {
-    "message": "Browser released the composer without Hermes confirming the stop. Check the session before sending another message.",
+    "message": "एक्सटेंशन ने Hermes द्वारा रुकने की पुष्टि किए बिना संदेश बॉक्स को मुक्त कर दिया। दूसरा संदेश भेजने से पहले सत्र जाँच लें।",
     "description": "Runtime interface message run.release_detail"
   },
   "runtime_run_stop": {
@@ -1908,48 +3480,44 @@
     "description": "Runtime interface message run.stop_controller_toast"
   },
   "runtime_run_stop_controller_unreachable": {
-    "message": "Browser could not reach Hermes Control to cancel pending browser actions.",
+    "message": "एक्सटेंशन प्रतीक्षारत ब्राउज़र कार्रवाइयों को रद्द करने के लिए Hermes Control तक नहीं पहुँच सका।",
     "description": "Runtime interface message run.stop_controller_unreachable"
   },
   "runtime_run_stop_unconfirmed_no_run_id": {
-    "message": "Hermes has not reported a run id for this turn, so Browser cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.",
+    "message": "Hermes ने इस टर्न के लिए रन आईडी की रिपोर्ट नहीं की है, इसलिए एक्सटेंशन पुष्टि नहीं कर सकता कि रन रुक गया। सत्र राइटर और कतार में लगे संदेश तब तक रोके रहते हैं जब तक Hermes अंतिम स्थिति की पुष्टि नहीं कर देता।",
     "description": "Runtime interface message run.stop_unconfirmed_no_run_id"
   },
   "runtime_run_stop_unconfirmed_title": {
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "फ़ास्ट मोड {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}. मॉडल और रनटाइम विकल्प बदलें।",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "रनटाइम विकल्प",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "रनटाइम विकल्प: {summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "{effort} रीज़निंग",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "सोच बंद है",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "सोच {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "{title} के लिए सत्र आईडी कॉपी करें",
     "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_legacy_continue_copy": {
+    "message": "प्रति में जारी रखें",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes इस चैट की प्रति नहीं बना सका, इसलिए आपका संदेश नहीं भेजा गया। आगे बढ़ने के लिए नई चैट शुरू करें। आपका संदेश अभी बॉक्स में है।",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "चैट की प्रति बन रही है…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "नई चैट शुरू करें",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "यह चैट Hermes Browser Extension के पुराने संस्करण ने शुरू की थी, और यह गेटवे अब इसमें नए संदेश स्वीकार नहीं करता। आपका संदेश नहीं भेजा गया। आप चैट की प्रति में आगे बढ़ सकते हैं।",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "यह चैट Hermes Browser Extension के पुराने संस्करण ने शुरू की थी, और यह गेटवे अब इसमें नए संदेश स्वीकार नहीं करता। इसकी प्रति यहाँ नहीं बन सकती, इसलिए आगे बढ़ने के लिए नई चैट शुरू करें। आपका संदेश अभी बॉक्स में है।",
+    "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
@@ -1959,10 +3527,6 @@
     "message": "＋ नया Hermes Browser Extension सत्र",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "{title} खोला जा रहा है",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -1971,13 +3535,17 @@
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
   },
-  "runtime_session_rail_save_failed": {
-    "message": "सत्र रेल सहेजना विफल: {error}",
-    "description": "Runtime interface message session.rail_save_failed"
-  },
   "runtime_session_rename_named": {
     "message": "सत्र {title} का नाम बदलें",
     "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_session_replay_truncated": {
+    "message": "इतिहास छोटा हो गया था, फिर से लोड हो रहा है",
+    "description": "Runtime interface message session.replay.truncated"
+  },
+  "runtime_session_row_model": {
+    "message": "मॉडल: {model}",
+    "description": "Runtime interface message session.row_model"
   },
   "runtime_settings_back_to_top": {
     "message": "ऊपर जाएँ",
@@ -2019,6 +3587,10 @@
     "message": "श्रेणियाँ",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "श्रेणियों पर वापस जाएँ",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "गेटवे, एजेंट प्रोफ़ाइल और यह ब्राउज़र Hermes तक कैसे पहुँचता है।",
     "description": "Runtime interface message settings.categories.connections.summary"
@@ -2036,7 +3608,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Hermes Browser जो कुछ कर सकता है, उपयोग के अनुसार समूहित।",
+    "message": "Hermes Browser Extension जो कुछ कर सकता है, उपयोग के अनुसार समूहित।",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -2074,6 +3646,30 @@
   "runtime_settings_categories_voice_title": {
     "message": "आवाज़ और वेक",
     "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_context_depth_full": {
+    "message": "पूर्ण",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "पेज की सबसे बड़ी सामग्री",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "न्यूनतम",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "चयन और एक छोटा अंश",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "सामान्य",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "अच्छा डिफ़ॉल्ट",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
   },
   "runtime_settings_custom_theme_help": {
     "message": "और थीम जोड़ें: VS Code थीम ब्राउज़ करें, थीम फ़ाइल आयात करें, या एजेंट से बनवाएँ। इंस्टॉल की गई थीम ऊपर ग्रिड में दिखती हैं।",
@@ -2195,6 +3791,62 @@
     "message": "· सार्वजनिक अल्फ़ा / लोड अनपैक्ड",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "सहेजा नहीं गया: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "दिखावट, एजेंट तथा अनुमति और रनटाइम स्विच बदलते ही लागू हो जाते हैं। बाकी सब कुछ सहेजें दबाने पर लागू होता है।",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "एजेंट पोर्ट 1 से 65535 तक की संख्याएँ होने चाहिए, अल्पविराम से अलग किए हुए।",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "सहेज लिया गया। Hermes से कनेक्ट है।",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "सहेज लिया गया, लेकिन Hermes तक पहुँचा नहीं जा सका: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "ये मॉडल स्रोत पते मान्य नहीं हैं: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "स्वचालित",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "YouTube कैप्शन, फिर पेज",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "कस्टम",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "आपकी अपनी सेवा",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "कभी ट्रांसक्रिप्ट न लाएँ",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "YouTube ट्रांसक्रिप्ट",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "सेवा URL",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "Hermes इस पते में वीडियो ID जोड़ता है।",
+    "description": "Runtime interface message settings.transcript.url_hint"
+  },
   "runtime_status_connection_not_responding": {
     "message": "{summary} प्रतिक्रिया नहीं दे रहा है। Hermes Desktop/Gateway प्रारंभ करें, फिर पुनः कनेक्ट करें।",
     "description": "Runtime interface message status.connection_not_responding"
@@ -2224,7 +3876,7 @@
     "description": "Runtime interface message status.profile_selected_restart"
   },
   "runtime_status_profile_switch_unavailable": {
-    "message": "{error}. ब्राउज़र वर्तमान में चल रहे Hermes प्रोफ़ाइल का उपयोग करेगा।",
+    "message": "{error}. एक्सटेंशन वर्तमान में चल रहे Hermes प्रोफ़ाइल का उपयोग करेगा।",
     "description": "Runtime interface message status.profile_switch_unavailable"
   },
   "runtime_tasks_summary": {
@@ -2300,7 +3952,7 @@
     "description": "Runtime interface message ui.adjust"
   },
   "runtime_ui_adjust_extension_text_without_changing_browser_zoom": {
-    "message": "Adjust text across Hermes Browser surfaces without changing browser zoom.",
+    "message": "ब्राउज़र ज़ूम बदले बिना पूरे एक्सटेंशन में टेक्स्ट समायोजित करें।",
     "description": "Runtime interface message ui.adjust.extension.text.without.changing.browser.zoom"
   },
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
@@ -2632,11 +4284,11 @@
     "description": "Runtime interface message ui.browser.local.fallback"
   },
   "runtime_ui_browser_update_review": {
-    "message": "ब्राउज़र अद्यतन समीक्षा",
+    "message": "एक्सटेंशन अद्यतन समीक्षा",
     "description": "Runtime interface message ui.browser.update.review"
   },
   "runtime_ui_browser_updates": {
-    "message": "ब्राउज़र अपडेट",
+    "message": "एक्सटेंशन अपडेट",
     "description": "Runtime interface message ui.browser.updates"
   },
   "runtime_ui_build": {
@@ -2728,7 +4380,7 @@
     "description": "Runtime interface message ui.checking"
   },
   "runtime_ui_checking_browser_main": {
-    "message": "ब्राउज़र मुख्य की जाँच कर रहा है…",
+    "message": "एक्सटेंशन की मुख्य शाखा की जाँच हो रही है…",
     "description": "Runtime interface message ui.checking.browser.main"
   },
   "runtime_ui_checking_hermes": {
@@ -2784,7 +4436,7 @@
     "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
   },
   "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
-    "message": "चुनें कि यह ब्राउज़र सत्र Hermes पर कहां पहुंचेगा।",
+    "message": "चुनें कि एक्सटेंशन Hermes पर कहां पहुंचेगा।",
     "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
   },
   "runtime_ui_choose_where_to_send": {
@@ -2792,7 +4444,7 @@
     "description": "Runtime interface message ui.choose.where.to.send"
   },
   "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
-    "message": "चुनें कि जब स्थानीय गेटवे प्रोफ़ाइल प्रदर्शित करता है तो ब्राउज़र को किस Hermes एजेंट प्रोफ़ाइल का उपयोग करना चाहिए।",
+    "message": "चुनें कि जब स्थानीय गेटवे प्रोफ़ाइल प्रदर्शित करता है तो एक्सटेंशन को किस Hermes एजेंट प्रोफ़ाइल का उपयोग करना चाहिए।",
     "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
   },
   "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
@@ -2804,7 +4456,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "कुछ ब्राउज़र एक्सटेंशन साइडबार के अंदर माइक्रोफ़ोन कैप्चर को ब्लॉक कर देते हैं। यह दृश्यमान एक्सटेंशन टैब उसी Hermes एक्सटेंशन मूल से रिकॉर्ड करता है जब Hermes STT उपलब्ध होता है, या जब कनेक्टेड रनटाइम ऑडियो ट्रांसक्रिप्शन को उजागर नहीं करता है तो ब्राउज़र स्पीच फ़ॉलबैक का उपयोग करता है।",
+    "message": "कुछ ब्राउज़र एक्सटेंशन साइडबार के अंदर माइक्रोफ़ोन कैप्चर को ब्लॉक कर देते हैं। यह दृश्यमान एक्सटेंशन टैब उसी Hermes Browser Extension मूल से रिकॉर्ड करता है जब Hermes STT उपलब्ध होता है, या जब कनेक्टेड रनटाइम ऑडियो ट्रांसक्रिप्शन को उजागर नहीं करता है तो ब्राउज़र स्पीच फ़ॉलबैक का उपयोग करता है।",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -3380,7 +5032,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "ब्राउज़र सत्र माइग्रेट नहीं किया जा सका",
+    "message": "सत्र माइग्रेट नहीं किया जा सका",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -3887,37 +5539,33 @@
     "message": "समूह",
     "description": "Runtime interface message ui.group"
   },
-  "runtime_ui_group_presence_all_replied": {
-    "message": "सभी ने जवाब दिया",
-    "description": "Runtime interface message ui.group.presence.all.replied"
+  "runtime_ui_group_working_many": {
+    "message": "{first}, {second} और {count} अन्य काम कर रहे हैं…",
+    "description": "Runtime interface message ui.group.working.many"
   },
-  "runtime_ui_group_presence_done_failed": {
-    "message": "पूर्ण · {count} जवाब नहीं दे सके",
-    "description": "Runtime interface message ui.group.presence.done.failed"
+  "runtime_ui_group_working_three": {
+    "message": "{first}, {second} और {third} काम कर रहे हैं…",
+    "description": "Runtime interface message ui.group.working.three"
   },
-  "runtime_ui_group_presence_done_passed": {
-    "message": "पूर्ण · {count} ने छोड़ा",
-    "description": "Runtime interface message ui.group.presence.done.passed"
+  "runtime_ui_group_working_two": {
+    "message": "{first} और {second} काम कर रहे हैं…",
+    "description": "Runtime interface message ui.group.working.two"
   },
-  "runtime_ui_group_presence_reply_fail": {
-    "message": "{replied} ने जवाब दिया, {failed} नहीं दे सके",
-    "description": "Runtime interface message ui.group.presence.reply.fail"
+  "runtime_ui_group_working_typing": {
+    "message": "टाइप कर रहा है…",
+    "description": "Runtime interface message ui.group.working.typing"
   },
-  "runtime_ui_group_presence_replying": {
-    "message": "{name} जवाब दे रहा है",
-    "description": "Runtime interface message ui.group.presence.replying"
+  "runtime_ui_group_working_using": {
+    "message": "{tool} का उपयोग कर रहा है…",
+    "description": "Runtime interface message ui.group.working.using"
   },
-  "runtime_ui_group_presence_typing": {
-    "message": "{name} टाइप कर रहा है",
-    "description": "Runtime interface message ui.group.presence.typing"
+  "runtime_ui_group_working_working": {
+    "message": "काम कर रहा है…",
+    "description": "Runtime interface message ui.group.working.working"
   },
-  "runtime_ui_group_presence_using": {
-    "message": "{name} {tool} का उपयोग कर रहा है",
-    "description": "Runtime interface message ui.group.presence.using"
-  },
-  "runtime_ui_group_presence_waiting": {
-    "message": "{count} प्रतीक्षारत",
-    "description": "Runtime interface message ui.group.presence.waiting"
+  "runtime_ui_group_working_wrapping": {
+    "message": "समाप्त हो रहा है…",
+    "description": "Runtime interface message ui.group.working.wrapping"
   },
   "runtime_ui_handing_update_to_hermes": {
     "message": "Hermes को अद्यतन सौंपना",
@@ -3964,11 +5612,11 @@
     "description": "Runtime interface message ui.hermes.browser"
   },
   "runtime_ui_hermes_browser_bb83b5a0": {
-    "message": "हेमीज़ ब्राउज़र",
+    "message": "HERMES BROWSER",
     "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
   },
   "runtime_ui_hermes_browser_extension": {
-    "message": "हेमीज़ ब्राउज़र एक्सटेंशन",
+    "message": "HERMES BROWSER EXTENSION",
     "description": "Runtime interface message ui.hermes.browser.extension"
   },
   "runtime_ui_hermes_browser_extension_connected": {
@@ -3988,7 +5636,7 @@
     "description": "Runtime interface message ui.hermes.browser.local.sidecar"
   },
   "runtime_ui_hermes_browser_update_channel": {
-    "message": "हेमीज़ ब्राउज़र/अद्यतन चैनल",
+    "message": "HERMES BROWSER / अद्यतन चैनल",
     "description": "Runtime interface message ui.hermes.browser.update.channel"
   },
   "runtime_ui_hermes_chat_actions": {
@@ -4460,7 +6108,7 @@
     "description": "Runtime interface message ui.manual"
   },
   "runtime_ui_manual_setup": {
-    "message": "स्वतः व्यवस्था",
+    "message": "मैन्युअल सेटअप",
     "description": "Runtime interface message ui.manual.setup"
   },
   "runtime_ui_manual_setup_required": {
@@ -4512,7 +6160,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Hermes Browser के लिए माइक्रोफ़ोन पहुंच अवरुद्ध है।",
+    "message": "Hermes Browser Extension के लिए माइक्रोफ़ोन पहुंच अवरुद्ध है।",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -4604,7 +6252,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "नया ब्राउज़र चैट",
+    "message": "नई चैट",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -4668,7 +6316,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "यहां कोई ऑडियो सेव नहीं है. अनुमति केवल Hermes Browser को आपकी आवाज़ रिकॉर्ड करने देती है जब आप माइक बटन पर क्लिक करते हैं।",
+    "message": "यहां कोई ऑडियो सेव नहीं है। अनुमति केवल Hermes Browser Extension को आपकी आवाज़ रिकॉर्ड करने देती है जब आप माइक बटन पर क्लिक करते हैं।",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -4868,15 +6516,15 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Hermes Browser साइड पैनल में सटीक सत्र खोलें।",
+    "message": "Hermes Browser Extension साइड पैनल में सटीक सत्र खोलें।",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "अपने ब्राउज़र टूलबार से Hermes एक्सटेंशन साइड पैनल खोलें।",
+    "message": "अपने ब्राउज़र टूलबार से Hermes Browser Extension साइड पैनल खोलें।",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
-    "message": "ब्राउज़र साइड पैनल में या Hermes Web में बनाए रखा गया Assist सत्र खोलें।",
+    "message": "एक्सटेंशन के साइड पैनल में या Hermes Web में बनाए रखा गया Assist सत्र खोलें।",
     "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
   },
   "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
@@ -4912,7 +6560,7 @@
     "description": "Runtime interface message ui.optional"
   },
   "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
-    "message": "केवल वैकल्पिक खोज: ब्राउज़र प्रत्येक OpenAI-compatible `/v1/models` एंडपॉइंट की जांच करता है और मॉडल पिकर में मिलान दिखाता है। रनटाइम रूटिंग अभी भी कनेक्टेड Hermes गेटवे से आती है।",
+    "message": "केवल वैकल्पिक खोज: एक्सटेंशन प्रत्येक OpenAI-compatible `/v1/models` एंडपॉइंट की जांच करता है और मॉडल पिकर में मिलान दिखाता है। रनटाइम रूटिंग अभी भी कनेक्टेड Hermes गेटवे से आती है।",
     "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
   },
   "runtime_ui_options": {
@@ -5088,7 +6736,7 @@
     "description": "Runtime interface message ui.profile.api.unavailable"
   },
   "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
-    "message": "प्रोफ़ाइल API अनुपलब्ध है। ब्राउज़र वर्तमान में चल रहे Hermes गेटवे प्रोफ़ाइल का उपयोग करेगा।",
+    "message": "प्रोफ़ाइल API अनुपलब्ध है। एक्सटेंशन वर्तमान में चल रहे Hermes गेटवे प्रोफ़ाइल का उपयोग करेगा।",
     "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
   },
   "runtime_ui_profile_ff4fc027": {
@@ -5446,14 +7094,6 @@
   "runtime_ui_room_model_note": {
     "message": "मॉडल परिवर्तन केवल इस रूम पर लागू होते हैं।",
     "description": "Runtime interface message ui.room.model.note"
-  },
-  "runtime_ui_room_next": {
-    "message": "अगला",
-    "description": "Runtime interface message ui.room.next"
-  },
-  "runtime_ui_room_passed": {
-    "message": "छोड़ा",
-    "description": "Runtime interface message ui.room.passed"
   },
   "runtime_ui_room_profile_default": {
     "message": "प्रोफ़ाइल डिफ़ॉल्ट",
@@ -5848,7 +7488,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "नया ब्राउज़र सत्र प्रारंभ करें",
+    "message": "नई चैट शुरू करें",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -6100,7 +7740,7 @@
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
-    "message": "यह गेटवे अभी तक /v1/capabilities को उजागर नहीं करता है। ब्राउज़र-विशिष्ट मार्ग फ़ॉलबैक मोड में रहेंगे।",
+    "message": "यह गेटवे अभी तक /v1/capabilities को उजागर नहीं करता है। एक्सटेंशन-विशिष्ट मार्ग फ़ॉलबैक मोड में रहेंगे।",
     "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
   },
   "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
@@ -6116,12 +7756,16 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "यह मॉडल एक कस्टम एंडपॉइंट से खोजा गया था, लेकिन Hermes को ब्राउज़र द्वारा अनुरोधों को रूट करने से पहले इसे कनेक्टेड रनटाइम के माध्यम से उजागर करना होगा।",
+    "message": "यह मॉडल एक कस्टम एंडपॉइंट से खोजा गया था, लेकिन Hermes को एक्सटेंशन द्वारा अनुरोधों को रूट करने से पहले इसे कनेक्टेड रनटाइम के माध्यम से उजागर करना होगा।",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "यह अनुरोध चयनित ब्राउज़र सत्र से जुड़ा है।",
+    "message": "यह अनुरोध चयनित सत्र से जुड़ा है।",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_thoughts": {
+    "message": "विचार",
+    "description": "Runtime interface message ui.thoughts"
   },
   "runtime_ui_time": {
     "message": "समय",
@@ -6268,11 +7912,11 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "सक्रिय टैब के वर्तमान सत्र का उपयोग करें, एक नया ब्राउज़र सत्र बनाएं, या अलग से चलाएं।",
+    "message": "सक्रिय टैब के वर्तमान सत्र का उपयोग करें, एक नई चैट शुरू करें, या अलग से चलाएं।",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Hermes Browser के समान पैलेट और क्रोम भाषा का उपयोग करें।",
+    "message": "Hermes Browser Extension के समान पैलेट और क्रोम भाषा का उपयोग करें।",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -6552,7 +8196,7 @@
     "description": "Runtime interface message voice.permission_blocked"
   },
   "runtime_voice_settings_load_failed": {
-    "message": "Hermes Browser सेटिंग लोड नहीं हो सकी.\n\n{error}",
+    "message": "एक्सटेंशन की सेटिंग लोड नहीं हो सकी.\n\n{error}",
     "description": "Runtime interface message voice.settings_load_failed"
   },
   "runtime_voice_speech_recognition_error": {
@@ -6583,16 +8227,116 @@
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
   },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
+  "runtime_webapp_assist_detail": {
+    "message": "Hermes Web ऐप को नए ब्राउज़र टैब में खोलें।",
+    "description": "Runtime interface message webapp.assist_detail"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
+  "runtime_webapp_copy_command": {
+    "message": "कमांड कॉपी करें",
+    "description": "Runtime interface message webapp.copy_command"
   },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
+  "runtime_webapp_dialog_body": {
+    "message": "आपका गेटवे चालू होने पर Hermes Web उपलब्ध कराता है। जिस कंप्यूटर पर Hermes चलता है, उस पर ये कमांड चलाएँ।",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web उपलब्ध नहीं है",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Hermes Web गाइड पढ़ें",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Hermes Web खुल गया। उस पेज पर अपने डैशबोर्ड खाते से साइन इन करें।",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Hermes Web खुल गया। इस कंप्यूटर पर साइन इन करने के लिए एक बार hermes webapp चलाएँ। टैब साइन इन रहता है।",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web खुल गया। इस कंप्यूटर पर साइन इन करने के लिए एक बार hermes webapp चलाएँ। इसके बाद Hermes Browser Extension इस ब्राउज़र को बंद करने तक साइन इन रखता है।",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web खुल गया, पहले से साइन इन है।",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "जो Hermes, Hermes Browser Extension के साथ पेयरिंग करता है, उस पर Hermes Web, प्रोजेक्ट और बॉट प्रोफ़ाइल आपके लिए साइन इन हो जाते हैं, कुछ चलाने की ज़रूरत नहीं। वरना एक बार hermes webapp चलाने के बाद पैनल इस ब्राउज़र का Hermes Web साइन-इन ब्राउज़र बंद करने तक रखता है। hermes webapp --sign-out इसे खत्म करता है।",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "पैनल से Hermes Web को साइन इन रखें",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Hermes Web नहीं खुल सका",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Hermes Web खोलें",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Hermes Web खुल गया",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_opening_detail": {
+    "message": "आपको आपके Hermes Webapp में साइन इन किया जा रहा है। इसमें कुछ सेकंड लगते हैं।",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "फिर भी दिखाएँ",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web को लोड होने में सामान्य से अधिक समय लग रहा है। हो सकता है वह अभी शुरू हो रहा हो।",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_state": {
+    "message": "साइन इन हो रहा है",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "अभी भी लोड हो रहा है",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Hermes Web खुल रहा है",
+    "description": "Runtime interface message webapp.opening_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "सेटिंग्स में Hermes Web का पता मान्य http या https पता नहीं है।",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "यह कनेक्शन रिमोट है, इसलिए आज़माने के लिए कोई पता नहीं है। सेटिंग्स में Hermes Web का पता दर्ज करें।",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "ब्राउज़र ने Hermes Browser Extension को इस पते तक पहुँचने की अनुमति नहीं दी:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "इस पते पर कोई जवाब नहीं मिला:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "लोकल कनेक्शन में इसे खाली छोड़ें, तब http://127.0.0.1:9120 अपने-आप इस्तेमाल होगा। रिमोट गेटवे के लिए वह पता दर्ज करें जहाँ वह Hermes Web उपलब्ध कराता है।",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Hermes Web का पता",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web को अपने साइन-इन की ज़रूरत है। इस कंप्यूटर पर एक बार hermes webapp चलाएँ, फिर दोबारा कोशिश करें।",
+    "description": "Runtime interface message webapp.sign_in_needed"
+  },
+  "runtime_webapp_try_again": {
+    "message": "फिर से जाँचें",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

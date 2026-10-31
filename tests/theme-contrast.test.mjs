@@ -18,13 +18,8 @@ const root = path.resolve(import.meta.dirname, '..');
 const sidepanelCss = readFileSync(path.join(root, 'extension', 'sidepanel.css'), 'utf8');
 const sidepanelThemesCss = readFileSync(path.join(root, 'extension', 'sidepanel-themes.css'), 'utf8');
 const contextMenuCss = readFileSync(path.join(root, 'extension', 'context-menu-editor.css'), 'utf8');
-const appCss = readFileSync(path.join(root, 'extension', 'app.css'), 'utf8');
-const appParityCss = readFileSync(path.join(root, 'extension', 'app-parity.css'), 'utf8');
-const designTokensCss = readFileSync(path.join(root, 'extension', 'lib', 'design-tokens.css'), 'utf8');
-const fulltabThemesCss = readFileSync(path.join(root, 'extension', 'fulltab-themes.css'), 'utf8');
 
 const SIDE_PANEL_BUNDLE = [sidepanelCss, sidepanelThemesCss, contextMenuCss];
-const FULL_TAB_BUNDLE = [designTokensCss, appCss, appParityCss, fulltabThemesCss];
 
 const ACTION_PAIR = [
   'background: var(--hermes-primary-bg, var(--hermes-ink))',
@@ -231,7 +226,7 @@ test('the outlined-inverted hover pair keeps >= 4.5:1 text contrast in every bui
 const BOUNDARY_PROPERTIES = ['border-color', 'border', 'box-shadow', 'outline', 'background-image'];
 
 test('no hover/focus rule paints a hardcoded white tile or overlay', () => {
-  for (const [label, css] of [['sidepanel.css', sidepanelCss], ['app.css', appCss]]) {
+  for (const [label, css] of [['sidepanel.css', sidepanelCss]]) {
     for (const rule of rules(css)) {
       if (!/:hover|:focus-visible/.test(rule.selector)) continue;
       const decls = declarations(rule.body);
@@ -246,7 +241,7 @@ test('no hover/focus rule paints a hardcoded white tile or overlay', () => {
 });
 
 test('a hover that repaints the body with the surface token must still draw a boundary', () => {
-  for (const [label, css] of [['sidepanel.css', sidepanelCss], ['app.css', appCss]]) {
+  for (const [label, css] of [['sidepanel.css', sidepanelCss]]) {
     for (const rule of rules(css)) {
       if (!/:hover|:focus-visible/.test(rule.selector)) continue;
       const decls = declarations(rule.body);
@@ -261,7 +256,6 @@ test('a hover that repaints the body with the surface token must still draw a bo
 test('hover/focus rules never reference an undefined theme token without a fallback', () => {
   for (const [label, css, bundle] of [
     ['sidepanel.css', sidepanelCss, SIDE_PANEL_BUNDLE],
-    ['app.css', appCss, FULL_TAB_BUNDLE],
   ]) {
     const defined = new Set();
     for (const part of bundle) for (const name of cssVariableNames(part)) defined.add(name);
@@ -378,17 +372,4 @@ test('danger and missing-token hovers carry safe fallbacks instead of dead decla
   }
   const toast = ruleFor(sidepanelCss, '.operation-toast button:hover');
   assert.doesNotMatch(toast, /--hermes-line-subtle/, 'the toast hover should not depend on an undefined token');
-});
-
-test('the full tab carries the same token fallbacks and no hardcoded white hover', () => {
-  for (const selector of [
-    '.md-code-copy:hover',
-    '.custom-theme-card-actions button:hover',
-    '.marketplace-theme-card button:hover',
-    '.web-settings-dialog .marketplace-theme-search button:hover',
-  ]) {
-    const body = ruleFor(appCss, selector);
-    assert.match(body, /var\(--hermes-primary-bg, var\(--hermes-ink\)\)/, `${selector} should fall back to ink so the rule is never dead`);
-    assert.doesNotMatch(body, /#fff\b|255,\s*255,\s*255/, `${selector} must not paint a hardcoded white`);
-  }
 });

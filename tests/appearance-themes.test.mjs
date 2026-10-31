@@ -10,6 +10,7 @@ import {
   normalizeAppearanceTheme,
   normalizeColorMode,
   resolveColorMode,
+  themePreviewForMode,
 } from '../extension/lib/appearance-themes.mjs';
 import * as appearance from '../extension/lib/appearance-themes.mjs';
 
@@ -62,14 +63,6 @@ test('inline Assist resolves every canonical theme in both modes with Mono parit
   assert.equal(nousLight.panel, '#ffffff');
 });
 
-test('Nous Light keeps message and composer cards opaque white', () => {
-  const fulltabCss = read('extension/fulltab-themes.css');
-  const selector = 'html[data-hermes-theme="nous"][data-hermes-mode="light"]';
-  assert.match(fulltabCss, new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\.web-message \\{[^}]*background:\\s*#ffffff;`, 's'));
-  assert.match(fulltabCss, new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\.web-message\\.user \\{[^}]*background:\\s*#ffffff;`, 's'));
-  assert.match(fulltabCss, new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\.fulltab-composer \\{[^}]*background:\\s*#ffffff;`, 's'));
-});
-
 test('canonical Hermes appearance themes stay ordered with Nous first', () => {
   assert.deepEqual(APPEARANCE_THEMES.map((theme) => theme.value), [
     'nous',
@@ -103,18 +96,11 @@ test('canonical Hermes appearance themes stay ordered with Nous first', () => {
 test('Aphrodite replaces Aurora visually while preserving the stable aurora preference id', () => {
   const aphrodite = APPEARANCE_THEMES.find((theme) => theme.value === 'aurora');
   const sidepanelCss = read('extension/sidepanel-themes.css');
-  const fulltabCss = read('extension/fulltab-themes.css');
-  const appHtml = read('extension/app.html');
 
   assert.equal(aphrodite?.name, 'Aphrodite');
   assert.match(aphrodite?.description || '', /pink|rose|orchid/i);
-  assert.match(cssBlock(fulltabCss, 'html[data-hermes-theme="aurora"][data-hermes-mode="light"]'), /--hermes-accent:\s*#[0-9a-f]{6}/i);
-  assert.match(cssBlock(fulltabCss, 'html[data-hermes-theme="aurora"][data-hermes-mode="dark"]'), /--hermes-accent:\s*#[0-9a-f]{6}/i);
-  assert.equal(
-    cssValue(cssBlock(sidepanelCss, 'html[data-hermes-theme="aurora"][data-hermes-mode="light"]'), '--hermes-blue'),
-    cssValue(cssBlock(fulltabCss, 'html[data-hermes-theme="aurora"][data-hermes-mode="light"]'), '--hermes-blue'),
-  );
-  assert.doesNotMatch(appHtml, /<span>\s*Model\s*<\/span>/i);
+  assert.match(cssBlock(sidepanelCss, 'html[data-hermes-theme="aurora"][data-hermes-mode="light"]'), /--hermes-accent:\s*#[0-9a-f]{6}/i);
+  assert.match(cssBlock(sidepanelCss, 'html[data-hermes-theme="aurora"][data-hermes-mode="dark"]'), /--hermes-accent:\s*#[0-9a-f]{6}/i);
 });
 
 test('appearance normalization never falls through to system implicitly', () => {
@@ -124,11 +110,10 @@ test('appearance normalization never falls through to system implicitly', () => 
   assert.equal(resolveColorMode('system', true), 'dark');
 });
 
-test('sidepanel implements every canonical palette and shares the Hermes Web Nous Light treatment', () => {
+test('sidepanel implements every canonical palette and the Nous Light treatment', () => {
   const sidepanelThemeCssPath = path.join(root, 'extension', 'sidepanel-themes.css');
   const sidepanelThemeCss = fs.existsSync(sidepanelThemeCssPath) ? fs.readFileSync(sidepanelThemeCssPath, 'utf8') : '';
   const sidepanelCss = `${read('extension/sidepanel.css')}\n${sidepanelThemeCss}`;
-  const fulltabCss = read('extension/fulltab-themes.css');
   const sidepanelHtml = read('extension/sidepanel.html');
   const sharedTokens = ['--hermes-blue', '--hermes-blue-deep', '--hermes-paper', '--hermes-ink', '--hermes-accent'];
 
@@ -146,19 +131,30 @@ test('sidepanel implements every canonical palette and shares the Hermes Web Nou
     for (const mode of ['light', 'dark']) {
       const selector = `html[data-hermes-theme="${theme}"][data-hermes-mode="${mode}"]`;
       const sidepanelBlock = cssBlock(sidepanelCss, selector);
-      const fulltabBlock = cssBlock(fulltabCss, selector);
       for (const token of sharedTokens) {
-        assert.equal(cssValue(sidepanelBlock, token), cssValue(fulltabBlock, token), `${theme} ${mode} must match Hermes Web ${token}`);
+        assert.ok(cssValue(sidepanelBlock, token), `${theme} ${mode} must define ${token}`);
       }
     }
   }
 
   const nousLightSelector = 'html[data-hermes-theme="nous"][data-hermes-mode="light"]';
   const sidepanelNousLight = cssBlock(sidepanelCss, nousLightSelector);
-  const fulltabNousLight = cssBlock(fulltabCss, nousLightSelector);
-  // Side panel Nous Light is a white shell; Hermes Web keeps the blue rail, so accent/fg intentionally differ.
+  // Side panel Nous Light is a white shell.
   for (const token of sharedTokens.filter((t) => t !== '--hermes-accent')) {
-    assert.equal(cssValue(sidepanelNousLight, token), cssValue(fulltabNousLight, token), `Nous Light must match Hermes Web ${token}`);
+    assert.ok(cssValue(sidepanelNousLight, token), `Nous Light must define ${token}`);
   }
   assert.equal(cssValue(sidepanelNousLight, '--hermes-fg'), '#0000f2');
+});
+
+test('every built-in theme card has light colours, and the card follows the mode', () => {
+  const keys = ['bg', 'panel', 'text', 'muted', 'accent'];
+  for (const theme of APPEARANCE_THEMES) {
+    assert.deepEqual(Object.keys(theme.previewLight || {}).sort(), [...keys].sort(), theme.value);
+    for (const key of keys) assert.match(theme.previewLight[key], /^#[0-9a-f]{6}$/, `${theme.value} ${key}`);
+    assert.notEqual(theme.previewLight.bg, theme.preview.bg, `${theme.value} light card differs from dark`);
+    assert.equal(themePreviewForMode(theme, 'light'), theme.previewLight);
+    assert.equal(themePreviewForMode(theme, 'dark'), theme.preview);
+  }
+  assert.deepEqual(themePreviewForMode({ preview: { bg: '#000' } }, 'light'), { bg: '#000' }, 'a theme without light colours keeps its card');
+  assert.deepEqual(themePreviewForMode(null, 'light'), {});
 });

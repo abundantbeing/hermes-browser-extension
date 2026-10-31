@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import {
   createPresenceState,
   reducePresence,
-  presenceSummary,
+  presenceLine,
+  presenceFrameText,
   failureReason,
 } from '../extension/lib/group-presence.mjs';
 
@@ -87,36 +88,61 @@ test('a late typing event does not resurrect a replied member', () => {
   assert.equal(entry(s, 'A').text, '');
 });
 
-test('presenceSummary reports the active member and the waiting count', () => {
-  let s = reducePresence(createPresenceState(), {
-    kind: 'turn_start', members: [{ member: 'Luxord' }, { member: 'A' }, { member: 'B' }, { member: 'C' }],
-  }, { now: 1 });
-  s = reducePresence(s, { kind: 'typing', member: 'Luxord', text: 'hey' }, { now: 2 });
-  assert.equal(presenceSummary(s, {}), 'Luxord is typing · 3 waiting');
-
-  let t = reducePresence(createPresenceState(), {
-    kind: 'turn_start', members: [{ member: 'Luxord' }, { member: 'A' }, { member: 'B' }],
-  }, { now: 1 });
-  t = reducePresence(t, { kind: 'tool_start', member: 'Luxord', tool: 'web_search' }, { now: 2 });
-  assert.equal(presenceSummary(t, {}), 'Luxord is using web_search · 2 waiting');
+test('a member working again after it answered is reopened for a later round', () => {
+  let s = reducePresence(createPresenceState(), { kind: 'turn_start', members: [{ member: 'A' }, { member: 'B' }] }, { now: 1 });
+  s = reducePresence(s, { kind: 'pass', member: 'A' }, { now: 2 });
+  s = reducePresence(s, { kind: 'reply', member: 'B' }, { now: 3 });
+  s = reducePresence(s, { kind: 'working', member: 'A' }, { now: 4 });
+  assert.equal(entry(s, 'A').state, 'working', 'a bot mentioned into another round is working again');
+  assert.equal(entry(s, 'B').state, 'replied');
+  assert.equal(s.phase, 'running');
 });
 
-test('presenceSummary reports the terminal outcome', () => {
-  const base = () => reducePresence(createPresenceState(), {
-    kind: 'turn_start', members: [{ member: 'A' }, { member: 'B' }],
+const frameWords = (state) => presenceLine(state).frames.map((frame) => (
+  frame.kind === 'member' ? `${frame.member.member} · ${presenceFrameText(frame)}` : presenceFrameText(frame)));
+
+test('presenceLine names everyone still due, then each member answering now', () => {
+  let s = reducePresence(createPresenceState(), {
+    kind: 'turn_start', members: [{ member: 'Roxas' }, { member: 'Riku' }, { member: 'Saix' }, { member: 'Luxord' }],
   }, { now: 1 });
-  let allReplied = reducePresence(base(), { kind: 'reply', member: 'A' }, { now: 2 });
-  allReplied = reducePresence(allReplied, { kind: 'reply', member: 'B' }, { now: 3 });
-  allReplied = reducePresence(allReplied, { kind: 'idle' }, { now: 4 });
-  assert.equal(presenceSummary(allReplied, {}), 'All replied');
+  assert.deepEqual(frameWords(s), ['Roxas, Riku, and 2 more are working…'], 'nobody started yet: the group line alone');
+  s = reducePresence(s, { kind: 'working', member: 'Roxas' }, { now: 2 });
+  assert.deepEqual(frameWords(s), ['Roxas, Riku, and 2 more are working…', 'Roxas · Working…']);
+  s = reducePresence(s, { kind: 'reply', member: 'Roxas' }, { now: 3 });
+  s = reducePresence(s, { kind: 'tool_start', member: 'Riku', tool: 'web_search' }, { now: 4 });
+  assert.deepEqual(frameWords(s), ['Riku, Saix, and Luxord are working…', 'Riku · Using web_search…']);
+  s = reducePresence(s, { kind: 'pass', member: 'Riku' }, { now: 5 });
+  s = reducePresence(s, { kind: 'typing', member: 'Saix', text: 'Board' }, { now: 6 });
+  assert.deepEqual(frameWords(s), ['Saix and Luxord are working…', 'Saix · Typing…']);
+  s = reducePresence(s, { kind: 'reply', member: 'Saix' }, { now: 7 });
+  assert.deepEqual(frameWords(s), ['Luxord · Working…'], 'the last one due is a member line, never a group of one');
+});
 
-  let withPass = reducePresence(base(), { kind: 'reply', member: 'A' }, { now: 2 });
-  withPass = reducePresence(withPass, { kind: 'pass', member: 'B' }, { now: 3 });
-  assert.equal(presenceSummary(withPass, {}), 'All done · 1 passed');
+test('presenceLine keeps the line up between rounds and drops it when the turn ends', () => {
+  let s = reducePresence(createPresenceState(), { kind: 'turn_start', members: [{ member: 'A' }, { member: 'B' }] }, { now: 1 });
+  s = reducePresence(s, { kind: 'reply', member: 'A' }, { now: 2 });
+  s = reducePresence(s, { kind: 'pass', member: 'B' }, { now: 3 });
+  assert.deepEqual(frameWords(s), ['Wrapping up…'], 'Hermes may still give a mentioned bot another round');
+  s = reducePresence(s, { kind: 'working', member: 'B' }, { now: 4 });
+  assert.deepEqual(frameWords(s), ['B · Working…']);
+  s = reducePresence(s, { kind: 'reply', member: 'B' }, { now: 5 });
+  s = reducePresence(s, { kind: 'idle' }, { now: 6 });
+  assert.equal(presenceLine(s), null);
+  assert.equal(presenceLine(createPresenceState()), null);
+});
 
-  let withFail = reducePresence(base(), { kind: 'reply', member: 'A' }, { now: 2 });
-  withFail = reducePresence(withFail, { kind: 'failed', member: 'B', error: 'x' }, { now: 3 });
-  assert.equal(presenceSummary(withFail, {}), "1 replied, 1 couldn't");
+test('presenceLine counts a failed member as done, and frames use display names', () => {
+  let s = reducePresence(createPresenceState(), {
+    kind: 'turn_start', members: [{ member: 'default', roleLabel: 'Roxas' }, { member: 'riku', roleLabel: 'Riku' }],
+  }, { now: 1 });
+  s = reducePresence(s, { kind: 'failed', member: 'default', error: 'boom' }, { now: 2 });
+  const [frame] = presenceLine(s).frames;
+  assert.equal(frame.kind, 'member');
+  assert.equal(frame.member.member, 'riku');
+  s = reducePresence(createPresenceState(), {
+    kind: 'turn_start', members: [{ member: 'default', roleLabel: 'Roxas' }, { member: 'riku', roleLabel: 'Riku' }],
+  }, { now: 1 });
+  assert.equal(presenceFrameText(presenceLine(s).frames[0]), 'Roxas and Riku are working…');
 });
 
 test('failureReason maps usage and rate limit signals to one actionable line', () => {
@@ -140,11 +166,11 @@ test('failureReason falls back to a generic line and stays translatable', () => 
   assert.equal(failureReason('boom', { translate }), '[Something went wrong]');
 });
 
-test('presenceSummary is translatable via injected translate', () => {
-  let s = reducePresence(createPresenceState(), { kind: 'turn_start', members: [{ member: 'Luxord' }] }, { now: 1 });
-  s = reducePresence(s, { kind: 'typing', member: 'Luxord' }, { now: 2 });
+test('presenceFrameText is translatable via injected translate', () => {
   const translate = (tpl) => `[${tpl}]`;
-  assert.equal(presenceSummary(s, { translate }), '[Luxord is typing]');
+  assert.equal(presenceFrameText({ kind: 'member', member: { member: 'Luxord', state: 'typing' } }, { translate }), '[Typing…]');
+  assert.equal(presenceFrameText({ kind: 'wrapping' }, { translate }), '[Wrapping up…]');
+  assert.equal(presenceFrameText({ kind: 'group', members: [{ member: 'A' }, { member: 'B' }] }, { translate }), '[A and B are working…]');
 });
 
 test('reducePresence never mutates the input state', () => {

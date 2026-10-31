@@ -1,4 +1,4 @@
-"""Runtime event names for the Hermes Browser companion plugin."""
+"""Runtime event names for the Hermes Browser Extension plugin."""
 
 RUN_STARTED = "run.started"
 RUN_COMPLETED = "run.completed"

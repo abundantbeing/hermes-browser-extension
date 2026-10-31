@@ -143,9 +143,9 @@ for (const locale of SUPPORTED_LOCALES) {
 
 for (const relativePath of [
   'extension/sidepanel.html',
-  'extension/app.html',
   'extension/request-permissions.html',
   'extension/voice-dictation.html',
+  'extension/hermes-web-opening.html',
 ]) {
   const source = fs.readFileSync(path.join(root, relativePath), 'utf8');
   for (const match of source.matchAll(markerPattern)) {
@@ -154,7 +154,7 @@ for (const relativePath of [
   validateReverseCoverage(relativePath);
 }
 
-for (const relativePath of ['extension/sidepanel.html', 'extension/app.html']) {
+for (const relativePath of ['extension/sidepanel.html']) {
   const source = fs.readFileSync(path.join(root, relativePath), 'utf8');
   const select = source.match(/<select[^>]+data-language-select[\s\S]*?<\/select>/)?.[0] || '';
   if (!select) errors.push(`${relativePath} is missing the language selector`);

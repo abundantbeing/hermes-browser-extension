@@ -20,6 +20,38 @@ Pictures attached to a message are stored on the machine running Hermes. Reopeni
 
 Voice dictation uses the API transcription route first, then the dashboard route, then browser speech. A dashboard that does not provide its session token is skipped. Browser speech can still fail independently when the browser has not finished installing its language pack or does not support the requested recognition mode.
 
+### The Projects tab says projects are not available
+
+Projects and Move need the Hermes dashboard WebSocket and a gateway that advertises session authority. The tab names which of these is missing: a REST-only connection, a gateway that did not report session authority (update Hermes), a connection that has not finished connecting, or a gateway that answered "method not found" for a projects call. Recents keeps working in every case. A project's folder is a path on the machine running Hermes, so type it; a browser cannot browse that machine's folders. If a move says it was not confirmed, or that the connection dropped, open the move again and check the session's folder before relying on it.
+
+### Compact context is disabled, or says it did nothing
+
+The button is disabled with its reason when the connection is REST-only, the gateway has no session authority, Hermes answered "method not found", or a turn is running (stop it first). "Nothing to compact" means the session is already short enough. If the answer was lost, nothing is sent twice: check the session, then press Compact again. Compaction waits up to three minutes for the summary.
+
+### A capability row reads Cached, Unknown or "Not advertised by this gateway"
+
+Cached means the answer is old or its connection has closed; it is shown for information and never used to start anything. Reconnect and open Settings again to renew it. "Not advertised" means the gateway did not say, which is different from unsupported. The Browser Companion Plugin row reads this way only until the extension has asked the plugin itself (a read-only status route on the API server, with `/v1/toolsets` as a cross-check); after that it says ready, outdated, disabled, not installed or unreachable with the exact reason. "Not installed" means not loaded on that gateway: not installed, not enabled for the profile, or the gateway was not restarted since. `node scripts/enable-bot-companion-tools.mjs --list` on the Hermes machine shows where the plugin is installed for each profile.
+
+### My message says it was not delivered, refused, busy, or the session is gone
+
+Your draft is kept and the reason appears in a toast. A busy session is another window or client running a turn in it, and the gateway stays connected. A refused message is sent once, never in a loop. "Not delivered" means Hermes has no record of the message and the session is idle; nothing is resent automatically, so send it again yourself, but check the history first if Hermes stores messages in a form this panel might not recognise. "Session gone" means the gateway no longer has the session, and no new session is created under it.
+
+### Hermes Control refuses with `restricted_frame`
+
+A frame on the attached page is on a restricted address, has moved to one since the page was read, or is laid over the control, or the click would land in a frame from another site that Chrome runs in its own process. Those frames are not read or acted on. Ask Hermes for a fresh view of the page, or act on the control yourself.
+
+### Hermes Control says it is not available on this Hermes
+
+Hermes builds from October 24, 2026 on (canary, and every release after 0.22.5) no longer carry extension control themselves; the extension's Hermes plugin brings it back. Install it for the profile you chat with, `hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable` (add `--profile <name>` for a named bot), restart that profile's gateway, then press **Test connection** and turn Hermes Control on again. Settings > About & Diagnostics shows whether the plugin is loaded. On a gateway that serves several bots at one address, a named bot's copy of the plugin is reachable only on a Hermes that routes plugin calls per profile; until then Hermes Control through the plugin works for the default bot. See [companion-plugin/README.md](../companion-plugin/README.md).
+
+### The plugin is reported as an older copy under its old name
+
+Before 0.4.0 the plugin was called `hermes-browser-companion`, and its control tools were named `browser_*`, which Hermes' own Camofox plugin also uses. Remove the old copy and install the new one: `hermes plugins remove hermes-browser-companion`, then `hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable` (each with `--profile <name>` for a named bot), and restart the gateway.
+
+### Plugin tools say "unavailable"
+
+A copy of the plugin staged before the hook-worker fix cannot hand its authorization to its tools under Hermes' hook worker, so every owner-gated tool reports unavailable. Compare the `version` in the installed `plugin.yaml` with this repository's (`node scripts/enable-bot-companion-tools.mjs --list` does it for every profile), reinstall with `hermes plugins install ... --force` (or move an old nested copy out first) and restart that profile's gateway. See [companion-plugin/install.md](../companion-plugin/install.md).
+
 ### Native Hermes computer use is not working
 
 Hermes Browser Extension does not control your desktop. Chromium builds request the `debugger` permission only for opt-in Hermes Control, which drives tabs you attach; Firefox builds omit it. Native desktop control is separate and comes from Hermes Agent's `computer_use` toolset via `cua-driver`.

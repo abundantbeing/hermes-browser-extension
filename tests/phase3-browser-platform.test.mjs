@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 import * as browserRuntime from '../extension/lib/browser-runtime.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 async function importRequiredModule(path, label) {
   try {
@@ -256,14 +257,13 @@ test('manifest packaging assumptions are explicit for Chromium, Firefox, and Saf
 
   const firefoxBuild = readFileSync(new URL('../scripts/build-firefox.mjs', import.meta.url), 'utf8');
   assert.match(firefoxBuild, /manifest-profiles\.mjs/);
-  const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   for (const requiredFile of [
     'extension/lib/browser-api.mjs',
     'extension/lib/browser-api-global.js',
     'extension/lib/browser-controller-adapter.mjs',
     'scripts/manifest-profiles.mjs',
   ]) {
-    assert.match(packageJson.scripts['check:js'], new RegExp(requiredFile.replaceAll('.', '\\.')));
+    assert.match(CHECK_JS, new RegExp(requiredFile.replaceAll('.', '\\.')));
   }
 });
 

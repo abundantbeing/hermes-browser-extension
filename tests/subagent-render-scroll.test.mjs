@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import * as helpers from '../extension/lib/subagent-stack.mjs';
 
-for (const surface of ['sidepanel', 'app']) {
+for (const surface of ['sidepanel']) {
   test(`${surface}: completed rows leave and rerenders preserve log scroll`, () => {
     const dom = new JSDOM('<section id="stack"><button id="toggle"></button><span id="summary"></span><ol id="list"></ol><div id="detail"></div></section>');
     const document = dom.window.document;
@@ -20,6 +20,7 @@ for (const surface of ['sidepanel', 'app']) {
       let subagentSelectedId = 'live', subagentExpanded = true, subagentControlBusy = false, subagentControlError = '', subagentSteerDraft = '';
       const currentSubagentItems = () => items;
       const ensureSubagentTimer = () => {};
+      const scheduleSubagentRosterPoll = () => {};
       const runSelectedSubagentControl = () => {};
       ${renderer}
       return renderSubagentStack;

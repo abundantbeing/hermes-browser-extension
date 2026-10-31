@@ -5,12 +5,18 @@ function readableTab(tab, { allowLocalDocuments = false } = {}) {
   return Number.isInteger(tab?.id) && !isRestrictedUrl(tab?.url || '', { allowLocalDocuments });
 }
 
+// The panel's own window, exactly as the ordinary chat path resolves it. lastFocusedWindow can
+// name another window (a second browser window, a popup) and read the wrong page.
+export async function queryPanelActiveTab(browserApi) {
+  return (await browserApi.tabs.query({ active: true, currentWindow: true }))[0] || null;
+}
+
 export async function collectBotPageContext({ browserApi, scope = { mode: 'chat-only' }, settings = {} } = {}) {
   const empty = { activeTab: null, tabs: [], pageContext: null, contextScope: scope };
   if (scope.mode === 'chat-only') return empty;
   const active = scope.mode === 'pinned-tab'
     ? await browserApi.tabs.get(Number(scope.pinnedTabId)).catch(() => null)
-    : (await browserApi.tabs.query({ active: true, lastFocusedWindow: true }))[0];
+    : await queryPanelActiveTab(browserApi);
   if (!readableTab(active)) return empty;
   let pageContext = { ok: true, url: active.url, text: '', selectedText: '', meta: {} };
   if (settings.includePageText !== false || settings.includeSelectedText === true) {

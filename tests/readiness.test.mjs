@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import {
   deriveStartupView,
   initialStartupReadiness,
@@ -58,8 +58,8 @@ test('blocked cascade events never clobber the setup-needed phase after an uncon
     phase: 'gateway',
     step: 'gateway',
     status: 'unconfigured',
-    detail: 'Add a Hermes API token or complete pairing to use full Hermes Browser mode.',
-    blockingError: 'gateway: Add a Hermes API token or complete pairing to use full Hermes Browser mode.',
+    detail: 'Add a Hermes API token or complete pairing to use the Hermes Browser Extension fully.',
+    blockingError: 'gateway: Add a Hermes API token or complete pairing to use the Hermes Browser Extension fully.',
   });
   assert.equal(state.phase, 'setup-needed');
   for (const stage of ['capabilities', 'models', 'selectedModel', 'skills', 'profiles', 'sessions', 'sessionBinding']) {
@@ -74,7 +74,7 @@ test('blocked cascade events never clobber the setup-needed phase after an uncon
   assert.equal(state.phase, 'setup-needed');
   const view = deriveStartupView(state);
   assert.equal(view.title, 'Connect to Hermes');
-  assert.equal(view.detail, 'Add a Hermes API token or complete pairing to use full Hermes Browser mode.');
+  assert.equal(view.detail, 'Add a Hermes API token or complete pairing to use the Hermes Browser Extension fully.');
 });
 
 test('missing capabilities and sparse model data degrade without blocking ready state', () => {
@@ -136,7 +136,10 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
 
   assert.match(html, /assets\/img\/hermes-browser-logo-left\.svg/);
   assert.match(html, /class="startup-brand-icon"/);
-  assert.match(css, /assets\/img\/hermes-browser-extension-icon-ink\.png/);
+  assert.match(css, /\.startup-brand-icon\s*\{[^}]*assets\/img\/hermes-extension-icon-outline\.png/s);
+  assert.match(css, /html\[data-hermes-mode="light"\] \.startup-brand-icon\s*\{[^}]*assets\/img\/hermes-extension-icon-solid\.png/s);
+  assert.ok(existsSync(new URL('../extension/assets/img/hermes-extension-icon-outline.png', import.meta.url)));
+  assert.ok(existsSync(new URL('../extension/assets/img/hermes-extension-icon-solid.png', import.meta.url)));
   assert.match(css, /\.startup-screen\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*place-items:\s*center;[^}]*overflow:\s*hidden;/s);
   assert.match(html, /id="startupActions"/);
   assert.match(css, /body\.startup-active\s+\.topbar\s*\{[^}]*display:\s*none;/s);
@@ -145,25 +148,34 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
   assert.match(css, /body\.startup-active\s+\.startup-actions\s+#settingsButton\s*\{[^}]*pointer-events:\s*auto;/s);
   assert.match(css, /\.startup-brand-lockup\s*\{[^}]*justify-items:\s*center;/s);
   assert.doesNotMatch(html, /Connecting Browser Extension/i);
-  assert.match(css, /\.startup-brand-icon\s*\{[^}]*width:\s*132px;/s);
+  assert.match(css, /\.startup-brand-icon\s*\{[^}]*width:\s*190px;/s);
+  // The logo resolves once per showing: scanlines, then a coarse-to-fine
+  // ordered dither, held frame by frame; reduced motion shows it at once.
+  assert.match(css, /\.startup-screen:not\(\[hidden\]\) \.startup-brand-icon\s*\{[^}]*animation:\s*startup-logo-resolve 1s step-end 0\.2s both;/s);
+  assert.match(css, /@keyframes startup-logo-resolve\s*\{[\s\S]*?var\(--startup-dither-2\)[\s\S]*?var\(--startup-dither-14\)/);
+  assert.match(css, /\.startup-brand-icon\s*\{[^}]*mask-composite:\s*intersect;/s);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.startup-screen:not\(\[hidden\]\) \.startup-brand-icon,[^}]*animation:\s*none;/s);
   assert.match(css, /assets\/img\/hermes-browser-enter-gate-ink\.png/);
   assert.match(css, /\.shell::before\s*\{[^}]*hermes-browser-enter-gate-ink\.png[^}]*opacity:\s*0\.13;[^}]*mix-blend-mode:\s*normal;/s);
-  assert.match(css, /\.startup-screen::after\s*\{[^}]*mix-blend-mode:\s*soft-light;[^}]*animation:\s*startup-scan-refined/s);
-  assert.match(css, /@keyframes\s+startup-scan-refined/);
-  assert.doesNotMatch(css, /@keyframes\s+startup-scan-refined\s*\{[^}]*opacity:\s*0\.72/s);
+  // The Meander: a Greek key border is the progress bar, and the screen
+  // switches on like an old TV.
+  assert.match(js, /import \{ createStartupScreen \} from '\.\/lib\/startup-screen\.mjs'/);
+  assert.match(css, /\.startup-meander-line\s*\{[^}]*stroke:\s*var\(--startup-line\)/s);
+  // The ghosted HERMES caps rise above the backdrop's viewBox; it must not clip them.
+  assert.match(css, /\.startup-backtype\s*\{[^}]*bottom:\s*0;[^}]*overflow:\s*visible;/s);
+  assert.match(css, /@keyframes\s+startup-crt-on/);
+  assert.doesNotMatch(css, /startup-scan-refined/);
   assert.match(css, /\.hero-wordmark\s*\{[^}]*width:\s*min\(205px,/s);
   assert.match(css, /\.app-scroll:has\(\.message\.user\)\s+\.hero-card\s*\{[^}]*display:\s*none;/s);
 
-  const heroIndex = html.indexOf('class="hero-card"');
-  const messagesIndex = html.indexOf('id="messages"');
+  // The chat no longer opens on the intro card; the wordmark lives in Settings.
+  assert.equal(html.indexOf('class="hero-card"'), -1, 'the empty chat has no intro card');
   const statusCardIndex = html.indexOf('id="statusCard"');
   const browserBehaviorIndex = html.indexOf('id="browserBehaviorTitle"');
   const contextScopeButtonIndex = html.indexOf('id="contextScopeButton"');
   const composerStartIndex = html.indexOf('<form id="composer"');
   const composerEndIndex = html.indexOf('</form>', composerStartIndex);
-  assert.ok(heroIndex >= 0 && messagesIndex > heroIndex, 'hero should remain an intro before messages');
   assert.ok(statusCardIndex > browserBehaviorIndex, 'active-tab status belongs in Browser Behavior settings');
   assert.ok(contextScopeButtonIndex > composerStartIndex && contextScopeButtonIndex < composerEndIndex, 'tab-scope control belongs in the composer header');
   assert.ok(contextScopeButtonIndex > html.indexOf('id="contextChip"'), 'tab-scope control sits right of the context chip');
-  assert.doesNotMatch(html.slice(heroIndex, messagesIndex), /<span>ACTIVE TAB<\/span>/);
 });

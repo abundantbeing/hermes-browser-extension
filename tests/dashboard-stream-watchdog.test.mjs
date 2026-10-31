@@ -52,15 +52,12 @@ test('dashboard idle timeout is distinct from a dropped connection', () => {
   assert.equal(isDashboardIdleTimeout(new Error('Dashboard connection closed mid-turn.')), false);
 });
 
-test('side panel and Hermes Web reset the dashboard idle watchdog on live turn activity', () => {
+test('side panel resets the dashboard idle watchdog on live turn activity', () => {
   const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  for (const source of [panel, web]) {
-    assert.match(source, /createDashboardStreamWatchdog/);
-    assert.match(source, /watchdog\.ping\(\)/);
-    assert.match(source, /watchdog\.stop\(\)/);
-    assert.match(source, /\.on\('\*'/);
-  }
+  assert.match(panel, /createDashboardStreamWatchdog/);
+  assert.match(panel, /watchdog\.ping\(\)/);
+  assert.match(panel, /watchdog\.stop\(\)/);
+  assert.match(panel, /\.on\('\*'/);
   assert.match(panel, /isDashboardIdleTimeout\(streamError\)/);
 });
 
@@ -76,15 +73,12 @@ test('quiet dashboard sockets reattach instead of declaring the dashboard unreac
   assert.equal(matchesDashboardSessionEvent({ sessionId: 'other' }, ['live']), false);
 });
 
-test('side panel and Hermes Web keep listening to a live dashboard turn', () => {
+test('side panel keeps listening to a live dashboard turn', () => {
   const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  for (const source of [panel, web]) {
-    assert.match(source, /shouldReattachDashboardStream/);
-    assert.match(source, /dashboardWatchdogTimeoutAction/);
-    assert.match(source, /matchesDashboardSessionEvent/);
-    assert.match(source, /WS_METHODS\.sessionStatus/);
-  }
+  assert.match(panel, /shouldReattachDashboardStream/);
+  assert.match(panel, /dashboardWatchdogTimeoutAction/);
+  assert.match(panel, /matchesDashboardSessionEvent/);
+  assert.match(panel, /WS_METHODS\.sessionStatus/);
   assert.doesNotMatch(panel, /if \(usesDashboardWsChatTransport\(\) \|\| !settings\.apiKey\) return \{ answer: '', imageSources: \[\] \}/);
   assert.match(panel, /shouldReattachDashboardStream\(streamError\)/);
 });

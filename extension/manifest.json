@@ -3,7 +3,7 @@
   "default_locale": "en",
   "name": "__MSG_extensionName__",
   "short_name": "__MSG_extensionShortName__",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "description": "__MSG_extensionDescription__",
   "minimum_chrome_version": "116",
   "icons": {
@@ -25,6 +25,9 @@
     "storage",
     "unlimitedStorage",
     "tabs"
+  ],
+  "optional_permissions": [
+    "webRequest"
   ],
   "host_permissions": [
     "http://127.0.0.1/*",
@@ -90,6 +93,24 @@
         "content-inline-helper.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ],
+      "include_globs": [
+        "*/webapp/launch*",
+        "*/webapp/window*"
+      ],
+      "css": [
+        "hermes-web-launch.css"
+      ],
+      "js": [
+        "lib/browser-api-global.js",
+        "hermes-web-launch.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
@@ -103,9 +124,18 @@
         "https://*/*",
         "file:///*"
       ]
+    },
+    {
+      "resources": [
+        "hermes-web-opening.html"
+      ],
+      "matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ]
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; img-src 'self' data: blob:; media-src 'self'; connect-src http: https: wss: ws://127.0.0.1:* ws://localhost:*;"
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src http://127.0.0.1:* http://localhost:*; img-src 'self' data: blob:; media-src 'self'; connect-src http: https: wss: ws://127.0.0.1:* ws://localhost:*;"
   }
 }

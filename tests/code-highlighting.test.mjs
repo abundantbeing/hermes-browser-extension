@@ -125,3 +125,45 @@ test('leaves oversized blocks plain while preserving their exact source', () => 
   assert.equal(rendered.code.querySelector('[class^="hljs-"]'), null);
   assert.equal(rendered.code.textContent, source);
 });
+
+test('re-highlighting the same block, as a streaming reply does every frame, gives identical markup', () => {
+  const markdown = '```js\nconst answer = 42;\nconsole.log(answer);\n```';
+  const first = renderedCode(markdown);
+  const second = renderedCode(markdown);
+  highlightCodeBlocks(first.root);
+  highlightCodeBlocks(second.root);
+  assert.equal(second.code.innerHTML, first.code.innerHTML);
+  assert.ok(second.code.querySelector('[class^="hljs-"]'));
+
+  // The block grows by one line: its markup follows the new source, not a remembered one.
+  const grown = renderedCode('```js\nconst answer = 42;\nconsole.log(answer);\nreturn answer;\n```');
+  highlightCodeBlocks(grown.root);
+  assert.equal(grown.code.textContent, 'const answer = 42;\nconsole.log(answer);\nreturn answer;');
+  assert.match(grown.code.innerHTML, /class="hljs-keyword"[^>]*>return<\/span>/);
+});
+
+test('a reused highlighted block is an independent copy', () => {
+  const markdown = '```python\ndef greet():\n    return 1\n```';
+  const first = renderedCode(markdown);
+  highlightCodeBlocks(first.root);
+  first.code.querySelector('[class^="hljs-"]').className = 'tampered';
+  first.code.append(window.document.createElement('img'));
+
+  const second = renderedCode(markdown);
+  highlightCodeBlocks(second.root);
+  assert.equal(second.code.querySelector('img'), null);
+  assert.equal(second.code.querySelector('.tampered'), null);
+  assert.equal(second.code.textContent, 'def greet():\n    return 1');
+});
+
+test('the same source under another language is tokenized for that language', () => {
+  const source = 'print(1)';
+  const python = renderedCode(`\`\`\`python\n${source}\n\`\`\``);
+  const sql = renderedCode(`\`\`\`sql\n${source}\n\`\`\``);
+  highlightCodeBlocks(python.root);
+  highlightCodeBlocks(sql.root);
+  assert.equal(python.code.dataset.highlighted, 'python');
+  assert.equal(sql.code.dataset.highlighted, 'sql');
+  assert.match(python.code.innerHTML, /hljs-built_in/);
+  assert.doesNotMatch(sql.code.innerHTML, /hljs-built_in/);
+});

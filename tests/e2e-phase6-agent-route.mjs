@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { launchChrome } from './e2e-chrome-env.mjs';
 
 import {
   CdpClient,
@@ -113,7 +114,7 @@ async function main() {
     assert.ok(accessValue);
 
     const extensionId = unpackedExtensionId(DIST);
-    chrome = spawn(chromeExecutable(), [
+    chrome = launchChrome(chromeExecutable(), [
       '--headless=new',
       '--no-sandbox',
       '--disable-gpu',

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { callNativeReview } from './hermes-review-client.mjs';
+import { derivePullLabels } from './hermes-review-context.mjs';
 
 const DEFAULT_MODEL = 'hermes-agent';
 const MAX_DIFF_CHARS = 60_000;
@@ -133,33 +135,7 @@ export function deriveReviewLabels(target = {}, diff = '') {
     .join('\n');
 
   if (target.kind === 'pull_request') {
-    // For PRs: keep labels clean and high-signal (1-3 labels max), matching upstream Hermes Agent.
-    if (/^\s*(feat|feature)\b/i.test(target.title) || /\b(new feature|add capability)\b/i.test(metadataText)) {
-      labels.add('type/feature');
-    } else if (/^\s*(fix|bugfix)\b/i.test(target.title) || /\b(fix|bug|error|broken|fail(?:ed|ure)?)\b/i.test(metadataText)) {
-      labels.add('type/bug');
-    } else if (/^\s*docs\b/i.test(target.title) || /\b(docs?|documentation|readme)\b/i.test(metadataText)) {
-      labels.add('type/docs');
-    } else if (/^\s*test\b/i.test(target.title) || /\b(test|coverage|ci)\b/i.test(metadataText)) {
-      labels.add('type/test');
-    } else {
-      labels.add('type/chore');
-    }
-
-    // Add component labels only if PR title or body explicitly targets them
-    for (const [label, pattern] of LABEL_RULES) {
-      if (label.startsWith('comp/') && pattern.test(metadataText)) {
-        labels.add(label);
-      }
-    }
-
-    if (/https:\/\/github\.com\/(?!abundantbeing\/hermes-browser-extension\b)[^\s)]+/i.test(diff)) {
-      labels.add('needs/security-review');
-    }
-
-    if (![...labels, ...existing].some((label) => /^p[0-3]$/.test(label))) labels.add('p3');
-
-    return [...labels].filter((label) => !existing.has(label)).sort();
+    return derivePullLabels(target, diff).filter((label) => !existing.has(label));
   }
 
   // For issues: thorough triage categorization
@@ -351,47 +327,43 @@ export function parseSseReviewEvents(lines = []) {
 }
 
 export async function callHermesReview(prompt, env = process.env) {
+  if (env.HERMES_REVIEW_PYTHON) return (await callNativeReview(prompt, env)).text;
   const base = normalizeGatewayUrl(env.HERMES_REVIEW_GATEWAY_URL);
   const timeoutMs = Math.max(1, Number(env.HERMES_REVIEW_TIMEOUT_MS || 180_000) || 180_000);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${base}/v1/chat/completions`, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        ...authHeaders(env.HERMES_REVIEW_API_KEY),
-        'Content-Type': 'application/json',
-      },
+      method: 'POST', signal: controller.signal,
+      headers: { ...authHeaders(env.HERMES_REVIEW_API_KEY), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: env.HERMES_REVIEW_MODEL || DEFAULT_MODEL,
-        // Stream the review (the review-watch cron consumes gateway :8642 SSE)
-        // so long reviews avoid per-request idle limits; deltas are rejoined by
-        // parseSseReviewEvents below. Non-streaming JSON responses still work.
+        provider: env.HERMES_REVIEW_PROVIDER || 'openai-codex',
+        model_options: { reasoning_effort: env.HERMES_REVIEW_REASONING_EFFORT || 'xhigh' },
         stream: true,
         messages: [
-          { role: 'system', content: env.HERMES_REVIEW_SYSTEM_PROMPT || 'You are Hermes Agent performing a GitHub review. Be concise, specific, and safety-minded.' },
+          { role: 'system', content: env.HERMES_REVIEW_SYSTEM_PROMPT || 'You are a review writer. Return only the requested review. Do not call tools or post anything.' },
           { role: 'user', content: prompt },
         ],
       }),
     });
     const text = await response.text();
-    if (!response.ok) throw new Error(`Hermes review request failed (${response.status}): ${text.slice(0, 700)}`);
+    if (!response.ok) throw new Error(`Hermes review request failed (${response.status})`);
     const contentType = String(response.headers?.get?.('content-type') || '');
     if (contentType.includes('text/event-stream') || text.trimStart().startsWith('data:')) {
-      const { chunks, streamError } = parseSseReviewEvents(text.split(/\r?\n/));
+      const { chunks, streamError, sawDone } = parseSseReviewEvents(text.split(/\r?\n/));
       if (streamError) throw streamError;
+      if (!sawDone) throw new Error('Hermes review stream ended incomplete');
       const review = chunks.join('');
       if (review) return review;
       throw new Error('Hermes review stream ended without content.');
     }
-    let payload = {};
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      payload = { error: text };
-    }
-    return payload?.choices?.[0]?.message?.content || payload?.message?.content || payload?.output_text || payload?.output || text;
+    const payload = JSON.parse(text);
+    const runtime = payload.runtime;
+    if (runtime && (runtime.provider !== (env.HERMES_REVIEW_PROVIDER || 'openai-codex') || (env.HERMES_REVIEW_MODEL && runtime.model !== env.HERMES_REVIEW_MODEL))) throw new Error('Hermes served an unexpected review runtime');
+    const choice = payload.choices?.[0];
+    if (!choice?.message?.content || (choice.finish_reason && choice.finish_reason !== 'stop')) throw new Error('Hermes review response was incomplete');
+    return choice.message.content;
   } catch (error) {
     if (error?.name === 'AbortError') throw new Error(`Hermes review request timed out after ${timeoutMs}ms`);
     throw error;
@@ -424,57 +396,24 @@ export async function upsertReviewComment({ repo, target, token, body }) {
 
 async function main(env = process.env) {
   const dryRun = env.HERMES_REVIEW_DRY_RUN === '1';
-  const skip = dryRun ? '' : shouldSkipReview(env);
-  if (skip) {
-    console.log(`Hermes review skipped: ${skip}`);
-    return;
-  }
   const eventName = env.GITHUB_EVENT_NAME;
   const eventPath = env.GITHUB_EVENT_PATH;
   const repo = env.GITHUB_REPOSITORY;
-  const token = env.GITHUB_TOKEN;
-  if (!eventName || !eventPath || !repo || !token) throw new Error('Missing GitHub Actions event environment.');
+  if (!eventName || !eventPath || !repo) throw new Error('Missing GitHub event environment.');
   const payload = JSON.parse(fs.readFileSync(eventPath, 'utf8'));
   const target = eventReviewTarget(eventName, payload);
-  if (!target) {
-    console.log(`Hermes review skipped: unsupported ${eventName}:${payload.action || ''}`);
+  if (!target) return;
+  if (!dryRun) {
+    // Both entrypoints share the same lock, ledger, immutable-head collection,
+    // no-tools writer, publication checks, and label ownership rules.
+    const { runReviewWatch } = await import('./hermes-review-watch.mjs');
+    const result = await runReviewWatch({ ...env, HERMES_REVIEW_EVENT_TARGET: `${target.kind}:${target.number}`, HERMES_REVIEW_MAX_TARGETS: '1', HERMES_REVIEW_MAX_FOLLOW_UPS: '0' });
+    if (result.failed.length) throw new Error(result.failed.map((r) => r.error).join('; '));
+    for (const item of result.completed) console.log(`${item.result.action} ${item.target.kind} #${item.target.number}`);
     return;
   }
-
-  const pr = payload.pull_request || {};
-  const issue = payload.issue || {};
-  const diff = target.kind === 'pull_request'
-    ? (dryRun ? String(pr.diff || pr.patch || '') : await fetchPullRequestDiff({ repo, number: target.number, token }))
-    : '';
-  const targetWithLabels = {
-    ...target,
-    title: target.kind === 'issue' ? issue.title : pr.title,
-    body: target.kind === 'issue' ? issue.body : pr.body,
-    labels: target.kind === 'issue' ? (issue.labels || []) : (pr.labels || []),
-  };
-  const labels = deriveReviewLabels(targetWithLabels, diff);
-  const prompt = buildHermesReviewPrompt({
-    target: targetWithLabels,
-    repo,
-    title: targetWithLabels.title,
-    author: target.kind === 'issue' ? issue.user?.login : pr.user?.login,
-    body: targetWithLabels.body,
-    diff,
-    url: target.kind === 'issue' ? issue.html_url : pr.html_url,
-  });
-
-  if (dryRun) {
-    console.log(`Derived labels: ${labels.join(', ') || '(none)'}`);
-    console.log(prompt);
-    return;
-  }
-
-  await applyReviewLabels({ repo, target: targetWithLabels, token, labels });
-  const review = await callHermesReview(prompt, env);
-  const commentBody = formatReviewComment(targetWithLabels, review);
-  const result = await upsertReviewComment({ repo, target: targetWithLabels, token, body: commentBody });
-  const labelText = labels.length ? ` labels=${labels.join(',')}` : '';
-  console.log(`Hermes review ${result.action} comment ${result.id} on ${target.kind} #${target.number}${labelText}`);
+  const data = payload.pull_request || payload.issue || {};
+  console.log(buildHermesReviewPrompt({ target, repo, title: data.title, author: data.user?.login, body: data.body || '', diff: data.diff || data.patch || '', url: data.html_url || '' }));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

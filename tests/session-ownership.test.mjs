@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   SESSION_SURFACE_SOURCES,
   foreignSessionSourceLabel,
+  isSidePanelSessionId,
   requiresSessionOwnershipConfirmation,
   sessionMessageCount,
   sessionOwnedBySurface,
@@ -32,6 +33,25 @@ test('each Browser surface owns only its own durable session source', () => {
     expectedSource: SESSION_SURFACE_SOURCES.FULL_TAB,
     approvedSessionIds: approved,
   }), false);
+});
+
+test('API-server sessions the side panel and Hermes Assist created stay the Browser\'s', () => {
+  // Created as api_server (Hermes refuses REST turns on hermes_browser), so the id marks them.
+  for (const id of ['hermes-browser-extension', 'hermes-browser-extension-20261019-abc123', 'hermes-assist-mf3k2-0123456789ab']) {
+    assert.equal(isSidePanelSessionId(id), true, id);
+    assert.equal(requiresSessionOwnershipConfirmation({
+      session: { id, source: 'api_server', message_count: 3 },
+      expectedSource: SESSION_SURFACE_SOURCES.SIDE_PANEL,
+      approvedSessionIds: new Set(),
+    }), false, id);
+  }
+  assert.equal(isSidePanelSessionId('hermes-web-1'), false);
+  assert.equal(isSidePanelSessionId('telegram-42'), false);
+  assert.equal(requiresSessionOwnershipConfirmation({
+    session: { id: 'telegram-42', source: 'api_server', message_count: 3 },
+    expectedSource: SESSION_SURFACE_SOURCES.SIDE_PANEL,
+    approvedSessionIds: new Set(),
+  }), true);
 });
 
 test('new or nullable session input never triggers the foreign-session guard', () => {
@@ -76,8 +96,8 @@ test('ownership copy states source, exact blast radius, and overwrite/reorder ri
   assert.equal(notice.sourceLabel, 'Hermes Web');
   assert.match(notice.title, /Hermes Web session selected/);
   assert.match(notice.detail, /already contains 2 messages/);
-  assert.match(notice.detail, /overwrite or reorder transcript updates/);
-  assert.equal(notice.newChatLabel, 'New Browser chat');
+  assert.match(notice.detail, /Two apps writing to the same session can overwrite or reorder each other’s updates/);
+  assert.equal(notice.newChatLabel, 'New chat');
   assert.equal(notice.continueLabel, 'Continue in Hermes Web');
 
   const unknown = sessionOwnershipNotice({

@@ -96,15 +96,14 @@ test('thread ui: reply appears on room bot messages only and calls back with the
   assert.deepEqual(calls, ['luxord']);
 });
 
-test('wiring: panel and full tab import the module, styles exist, locales carry the string', () => {
+test('wiring: panel imports the module, styles exist, locales carry the string', () => {
   const panel = fs.readFileSync('extension/sidepanel.js', 'utf8');
-  const app = fs.readFileSync('extension/app.js', 'utf8');
-  for (const src of [panel, app]) {
+  for (const src of [panel]) {
     assert.match(src, /from '\.\/lib\/room-mentions\.mjs'/);
     assert.match(src, /highlightMentions\(/);
     assert.match(src, /insertMention\(/);
   }
-  for (const css of ['extension/sidepanel.css', 'extension/app.css']) {
+  for (const css of ['extension/sidepanel.css']) {
     assert.match(fs.readFileSync(css, 'utf8'), /\.room-mention\s*\{/);
   }
   for (const file of fs.readdirSync('extension/lib/locales')) {

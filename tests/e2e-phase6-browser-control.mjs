@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
@@ -8,7 +8,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable } from './e2e-chrome-env.mjs';
+import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable, launchChrome } from './e2e-chrome-env.mjs';
 
 export { ensureExtensionStartupPage };
 
@@ -487,7 +487,7 @@ async function main() {
   let chromeStderr = '';
   try {
     const extensionId = unpackedExtensionId(DIST);
-    chrome = spawn(chromeExecutable(), [
+    chrome = launchChrome(chromeExecutable(), [
       '--headless=new',
       '--no-sandbox',
       '--disable-gpu',
@@ -929,6 +929,8 @@ async function main() {
     const listed = await sendCommand('cmd-phase6-tabs', 'browser_tabs');
     assert.equal(listed.params.ok, true, JSON.stringify(listed.params));
     assert.deepEqual(listed.params.result.tabs.map((item) => item.id).sort((a, b) => a - b), [tabId, secondTabId].sort((a, b) => a - b));
+    // `active` is per window, so every listed tab says which window it is in.
+    assert.ok(listed.params.result.tabs.every((item) => Number.isInteger(item.windowId) && item.windowId > 0), JSON.stringify(listed.params.result.tabs));
     // The person switches to tab B the way they would: a chrome.tabs.update from
     // this extension page. Hermes never moves the person's tab on its own.
     const tabActiveStates = (tabIds) => page.evaluate(`Promise.all(${JSON.stringify(tabIds)}.map((id) => chrome.tabs.get(id)))
@@ -1147,6 +1149,14 @@ async function main() {
     assert.equal(linkTab.active, false, JSON.stringify(linkTab));
     assert.match(String(linkTab.url || linkTab.pendingUrl || ''), /from-link=1/);
     assert.deepEqual(await tabActiveStates([tabId, secondTabId, linkTabIds[0]]), { [tabId]: false, [secondTabId]: true, [linkTabIds[0]]: false });
+    // That tab is not attached: Hermes's click and the person's look the same to the extension. The click's
+    // result only says a tab opened, with neither its id nor its address, so the model asks the person.
+    assert.equal(linked.params.result.opened_tabs, undefined, JSON.stringify(linked.params.result));
+    assert.equal(linked.params.result.opened_tabs_not_attached, 1, JSON.stringify(linked.params.result));
+    assert.doesNotMatch(JSON.stringify(linked.params.result), /from-link=1/);
+    assert.equal(linked.params.result.tab_id, tabId, 'a page action names the tab it ran in');
+    const afterLink = await page.evaluate(`chrome.runtime.sendMessage({ type: 'HERMES_CONTROLLER_STATUS' })`);
+    assert.equal(afterLink.ownedTabIds.includes(Number(linkTabIds[0])), false, JSON.stringify(afterLink.ownedTabIds));
     await page.evaluate(`chrome.tabs.remove(${Number(linkTabIds[0])})`);
     await controlled.evaluate(`document.getElementById('phase6-new-tab-link')?.remove()`);
     await page.evaluate(`chrome.tabs.update(${tabId}, { active: true })`);
@@ -1160,6 +1170,18 @@ async function main() {
     assert.ok(Number.isInteger(openedTabId) && openedTabId > 0, JSON.stringify(opened.params));
     assert.equal(opened.params.result.tab.active, false, JSON.stringify(opened.params));
     assert.deepEqual(await tabActiveStates([tabId, openedTabId]), { [tabId]: true, [openedTabId]: false });
+    assert.equal(opened.params.result.tab.loading, undefined, 'tab_create waits for the page');
+
+    // The tabs Hermes opens share one task set, so they can be grouped together.
+    const openedAgain = await sendCommand('cmd-phase6-tab-create-2', 'browser_tab_create', { url: `${secondUrl}?opened=2` });
+    assert.equal(openedAgain.params.ok, true, JSON.stringify(openedAgain.params));
+    const openedAgainId = Number(openedAgain.params.result?.tab?.id);
+    const grouped = await sendCommand('cmd-phase6-tab-group', 'browser_tab_group', { tab_ids: [openedTabId, openedAgainId] });
+    assert.equal(grouped.params.ok, true, JSON.stringify(grouped.params));
+    assert.ok(Number.isInteger(grouped.params.result.groupId), JSON.stringify(grouped.params));
+    const ungrouped = await sendCommand('cmd-phase6-tab-ungroup', 'browser_tab_ungroup', { tab_ids: [openedTabId, openedAgainId] });
+    assert.equal(ungrouped.params.ok, true, JSON.stringify(ungrouped.params));
+    await page.evaluate(`chrome.tabs.remove(${openedAgainId})`);
 
     const paused = await page.evaluate(`chrome.runtime.sendMessage({ type: 'HERMES_CONTROLLER_PAUSE' })`);
     assert.equal(paused.paused, true);
