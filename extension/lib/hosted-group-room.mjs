@@ -25,6 +25,8 @@ const MEMBER_MAX = 6;
 const NAME_MAX = 200;
 const TEXT_MAX_BYTES = 65_536;
 const LOG_PAGE = 100;
+// How long a send whose reply was lost keeps its event id for a resend of the same message.
+const PENDING_SEND_TTL_MS = 10 * 60_000;
 export const HOSTED_ROOM_POLL_MS = 1_000;
 // A member turn may run for the gateway's own agent timeout; the room is followed this long.
 export const HOSTED_TURN_TIMEOUT_MS = 30 * 60_000;
@@ -55,6 +57,15 @@ function defaultRandomId() {
 
 function rpcReason(error) {
   return clean(error?.data?.reason) || clean(error?.rpcMessage) || clean(error?.message);
+}
+
+// groups.send failed with its request already on the wire and no answer from Hermes: the reply timed out, or the
+// socket closed while it waited (gateway-ws.mjs rejects with exactly these). The gateway may hold the event, so the
+// message was not provably refused. An error frame (rpcCode or data) is Hermes refusing it; a socket that is not open
+// and a send() that threw never left.
+function sendOutcomeUnknown(error) {
+  if (error?.rpcCode !== undefined || error?.data !== undefined) return false;
+  return /^(?:Gateway RPC .+ timed out|WebSocket closed|client closed)$/.test(clean(error?.message));
 }
 
 function failureText(error) {
@@ -482,6 +493,17 @@ export function createHostedGroupRuntime({
     return failures;
   }
 
+  // The send whose reply was lost, kept on the room's binding (so it outlives this runtime) until a send is
+  // answered. A store that cannot write only costs the resend its old event id.
+  async function rememberPendingSend(roomId, binding, pendingSend) {
+    const next = { ...binding };
+    if (pendingSend) next.pendingSend = pendingSend;
+    else delete next.pendingSend;
+    try {
+      await bindings.write(clean(roomId), next);
+    } catch { /* see above */ }
+  }
+
   async function send({ roomId = '', groupName = '', members = [], messages = [], text = '', signal, thread = '' } = {}) {
     const roster = normalizeRoster(members);
     const baseMessages = asList(messages).filter(Boolean);
@@ -496,26 +518,53 @@ export function createHostedGroupRuntime({
     try {
       let binding;
       let ack;
+      let unconfirmed = null;
+      let resent = false;
       try {
         binding = await ensureRoom({ roomId, groupName, members: roster });
         const outgoing = hostedMentionText(trimmed, roster, binding.handles);
         if (new TextEncoder().encode(outgoing).length > TEXT_MAX_BYTES) {
           throw new Error('This message is too long for a Hermes group room.');
         }
-        const params = { room_id: binding.roomId, event_id: randomId(), payload: { text: outgoing, thread_id: turnThread } };
+        // A send whose reply was lost may already be in the room. The same text to the same thread soon after is
+        // that send again, so it keeps its event id and Hermes answers it from the room instead of running it twice.
+        const pending = asObject(binding.pendingSend);
+        const resend = validIdentifier(pending.eventId) && pending.text === outgoing && pending.thread === turnThread
+          && (Number(now()) || Date.now()) - (Number(pending.at) || 0) < PENDING_SEND_TTL_MS;
+        resent = resend;
+        const params = { room_id: binding.roomId, event_id: resend ? clean(pending.eventId) : randomId(), payload: { text: outgoing, thread_id: turnThread } };
+        const attempt = async () => {
+          try {
+            return asObject(await request('groups.send', params, binding));
+          } catch (error) {
+            if (sendOutcomeUnknown(error)) unconfirmed = { eventId: params.event_id, text: outgoing, thread: turnThread };
+            throw error;
+          }
+        };
         try {
-          ack = asObject(await request('groups.send', params, binding));
+          ack = await attempt();
         } catch (error) {
           // The same event id and payload are idempotent: one retry after a transient refusal.
           if (!['runtime_coordination_required', 'storage_unavailable'].includes(rpcReason(error))) throw error;
           await sleep(pollMs);
-          ack = asObject(await request('groups.send', params, binding));
+          ack = await attempt();
         }
       } catch (error) {
-        // Nothing reached the room: the caller may hand the draft back.
-        error.notSent = true;
+        if (unconfirmed) {
+          // The request left and no answer came back (a timeout, a closed socket): Hermes may already run this task.
+          // The draft is not handed back as unsent; the event id is kept for a resend of the same message.
+          error.deliveryUnknown = true;
+          try {
+            error.message = `${clean(error.message).replace(/[.\s]+$/, '') || 'Hermes did not answer'}. Hermes may already have received this message: check the room before sending it again.`;
+          } catch { /* a read-only message keeps its text */ }
+          await rememberPendingSend(roomId, binding, { ...unconfirmed, at: Number(now()) || Date.now() });
+        } else {
+          // Nothing reached the room: the caller may hand the draft back.
+          error.notSent = true;
+        }
         throw error;
       }
+      if (resent) await rememberPendingSend(roomId, binding, null);
       await onMessage(working.at(-1), { kind: 'user' });
       await onActivity({
         kind: 'turn_start',

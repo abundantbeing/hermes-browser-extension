@@ -313,6 +313,129 @@ test('a transient refusal is sent again once with the identical request', async 
   assert.deepEqual(sends[0].params, sends[1].params);
 });
 
+// ---- a send whose reply is lost -------------------------------------------------------------------------------------
+
+// The gateway accepted groups.send and then the reply was lost (a timeout, or the socket closed while waiting): the
+// event is in the room, the caller saw an error. `lose` is how many accepted sends lose their reply. The gateway
+// answers a repeated event id with the event it already holds, as hosted_rooms.append_event does.
+function lossyGateway({ lose = 1, error = () => new Error('Gateway RPC groups.send timed out'), script } = {}) {
+  const client = fakeGateway({ script });
+  const request = client.request;
+  const held = new Map();
+  let lost = 0;
+  client.sendEventIds = [];
+  client.request = async (method, params = {}) => {
+    if (method !== 'groups.send') return request(method, params);
+    client.sendEventIds.push(params.event_id);
+    if (held.has(params.event_id)) return { event: held.get(params.event_id), client_event_id: params.event_id, accepted: true, idempotent: true };
+    const ack = await request(method, params);
+    held.set(params.event_id, ack.event);
+    if (lost < lose) {
+      lost += 1;
+      throw error();
+    }
+    return ack;
+  };
+  return client;
+}
+
+const userEvents = (client) => client.log.filter((event) => event.kind === 'message.user');
+const settledScript = [(user) => [{ kind: 'room.activity', payload: { discussion_event_id: user.event_id, status: 'settled' } }]];
+
+test('a reply lost to a timeout or a closed socket is delivery unknown, not not sent, and shows no message', async () => {
+  for (const make of [
+    () => new Error('Gateway RPC groups.send timed out'),
+    () => new Error('WebSocket closed'),
+    () => new Error('client closed'),
+  ]) {
+    const client = lossyGateway({ error: make });
+    const { runtime, seen } = runtimeFor(client);
+    await assert.rejects(
+      runtime.send({ roomId: 'r', members: MEMBERS, text: 'hi' }),
+      (error) => error.deliveryUnknown === true && error.notSent !== true && /check the room before sending it again/.test(error.message),
+    );
+    assert.deepEqual(seen.messages, []);
+    assert.equal(userEvents(client).length, 1, 'the gateway did get it');
+  }
+});
+
+test('a resend after a lost reply keeps the event id, so the task runs once, and the message then shows', async () => {
+  const client = lossyGateway({ script: settledScript });
+  const { runtime, seen, storage } = runtimeFor(client);
+  await assert.rejects(runtime.send({ roomId: 'r', members: MEMBERS, text: 'hi' }), (error) => error.deliveryUnknown === true);
+  assert.equal(storage.data[HOSTED_ROOMS_STORAGE_KEY]['http://127.0.0.1:1'].r.pendingSend.eventId, 'evt-1');
+  const result = await runtime.send({ roomId: 'r', members: MEMBERS, text: 'hi' });
+  assert.equal(result.ok, true);
+  assert.deepEqual(client.sendEventIds, ['evt-1', 'evt-1'], 'the resend reused the event id');
+  assert.equal(userEvents(client).length, 1, 'the room holds the message once');
+  assert.deepEqual(seen.messages.map((entry) => entry.meta.kind), ['user']);
+  assert.equal(storage.data[HOSTED_ROOMS_STORAGE_KEY]['http://127.0.0.1:1'].r.pendingSend, undefined, 'answered, so forgotten');
+  // The next message is a new one.
+  await runtime.send({ roomId: 'r', members: MEMBERS, text: 'hi' });
+  assert.equal(client.sendEventIds.at(-1), 'evt-2');
+});
+
+test('the event id of a lost reply survives a new runtime and goes only to the same message, thread and room within ten minutes', async () => {
+  const storage = memoryStorage();
+  const client = lossyGateway({ lose: 10, script: settledScript });
+  let clock = 1_000_000;
+  const ids = ['room-1', 'evt-1', 'evt-2', 'evt-3', 'evt-4', 'evt-5'];
+  // A new runtime each time, as after the panel switched chats or the socket came back.
+  const open = () => runtimeFor(client, { storage, now: () => clock, randomId: () => ids.shift() }).runtime;
+  const lostSend = (text, thread = 'main') => assert.rejects(
+    open().send({ roomId: 'r', members: MEMBERS, text, thread }),
+    (error) => error.deliveryUnknown === true && error.notSent !== true,
+  );
+  await lostSend('one');
+  assert.equal((await open().send({ roomId: 'r', members: MEMBERS, text: 'one' })).ok, true, 'answered from the room');
+  assert.equal(userEvents(client).length, 1, 'the room holds it once');
+  // Other text, another thread, or more than ten minutes later: a new message with a new id.
+  await lostSend('two');
+  await lostSend('three');
+  await lostSend('three', 'side');
+  clock += 11 * 60_000;
+  await lostSend('three', 'side');
+  assert.deepEqual(client.sendEventIds, ['evt-1', 'evt-1', 'evt-2', 'evt-3', 'evt-4', 'evt-5']);
+});
+
+test('a refusal, a socket that was never open, and a failure before the send all still count as not sent', async () => {
+  for (const [label, client] of [
+    ['an error frame', fakeGateway({ sendError: rpcError('permission_denied') })],
+    ['a closed socket', fakeGateway({ sendError: new Error('WebSocket is not open') })],
+    ['a send() that threw', fakeGateway({ sendError: new TypeError('Failed to execute send') })],
+  ]) {
+    const { runtime, storage } = runtimeFor(client);
+    await assert.rejects(runtime.send({ roomId: 'r', members: MEMBERS, text: 'hi' }), (error) => error.notSent === true && error.deliveryUnknown !== true, label);
+    assert.equal(storage.data[HOSTED_ROOMS_STORAGE_KEY]['http://127.0.0.1:1'].r.pendingSend, undefined, label);
+  }
+  // A timeout that is not groups.send's (the room could not even be made) has sent nothing.
+  const client = fakeGateway();
+  const request = client.request;
+  client.request = async (method, params) => {
+    if (method === 'groups.create') throw new Error('Gateway RPC groups.create timed out');
+    return request(method, params);
+  };
+  const { runtime } = runtimeFor(client);
+  await assert.rejects(runtime.send({ roomId: 'r', members: MEMBERS, text: 'hi' }), (error) => error.notSent === true && error.deliveryUnknown !== true);
+});
+
+test('a transient refusal followed by a lost reply is delivery unknown and keeps the same event id', async () => {
+  const client = lossyGateway({ script: settledScript });
+  const request = client.request;
+  let refused = false;
+  client.request = async (method, params) => {
+    if (method === 'groups.send' && !refused) {
+      refused = true;
+      client.sendEventIds.push(params.event_id);
+      throw rpcError('runtime_coordination_required');
+    }
+    return request(method, params);
+  };
+  const { runtime } = runtimeFor(client);
+  await assert.rejects(runtime.send({ roomId: 'r', members: MEMBERS, text: 'hi' }), (error) => error.deliveryUnknown === true);
+  assert.deepEqual(client.sendEventIds, ['evt-1', 'evt-1']);
+});
+
 test('the stored room is reused while it answers, and replaced when it does not or the roster changed', async () => {
   const storage = memoryStorage();
   const client = fakeGateway({ script: [(user) => [{ kind: 'room.activity', payload: { discussion_event_id: user.event_id } }]] });
@@ -442,4 +565,7 @@ test('a hosted send carries no page or screenshot, skips the projection sync, an
   assert.match(send, /groupRuntime\.hosted \? \{ browserContext: null, screenshotAttachments: \[\] \} : await prepareBotBrowserTurn/);
   assert.match(send, /error\?\.notSent === true/);
   assert.match(send, /Your message is back in the composer\./);
+  // a send with no answer is handed back too: the same text sent again keeps its event id
+  assert.match(send, /const deliveryUnknown = error\?\.deliveryUnknown === true;/);
+  assert.match(send, /\(error\?\.notSent === true \|\| deliveryUnknown\)/);
 });

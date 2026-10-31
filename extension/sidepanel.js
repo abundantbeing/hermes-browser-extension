@@ -14419,15 +14419,20 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
       && activeGroupProjection === groupProjection
       && activeGroupRuntime === groupRuntime
     ) {
-      // A hosted room refused the message before it was posted: the draft is the user's again.
-      const draftRestored = draftSettled && error?.notSent === true && !els.input.value.trim();
+      // A hosted room refused the message before it was posted: the draft is the user's again. When no answer came
+      // back it may be in the room, but the room keeps its event id, so the same text sent again is not posted twice.
+      const deliveryUnknown = error?.deliveryUnknown === true;
+      const draftRestored = draftSettled && (error?.notSent === true || deliveryUnknown) && !els.input.value.trim();
       if (draftRestored) {
         els.input.value = value;
         persistCurrentComposerDraft({ immediate: true });
       }
       const draftNote = !draftSettled
         ? ' Your message and attachments are still in the composer.'
-        : (draftRestored ? ' Your message is back in the composer.' : '');
+        : (!draftRestored ? ''
+          : (deliveryUnknown
+            ? ' Your message is back in the composer. Sent again unchanged within 10 minutes, it is not posted twice.'
+            : ' Your message is back in the composer.'));
       setStatus('error', 'Group message failed', `${String(error?.message || error)}${draftNote}`, { translateDetail: false });
     }
     return false;
