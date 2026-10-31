@@ -322,6 +322,19 @@ test('an accepted receipt that the read-back cannot confirm is unconfirmed, not 
   assert.equal(mismatch.reason, 'readback-mismatch');
 });
 
+test('a receipt with disconnected readback is reconciled without a second compression', async () => {
+  const gateway = fakeGateway();
+  gateway.hooks.failResumeAfterMutate = true;
+  const first = await compact(gateway);
+  assert.equal(first.status, 'unconfirmed');
+  assert.ok(first.pending?.receipt);
+  gateway.hooks.failResumeAfterMutate = false;
+  const second = await compact(gateway, { pending: first.pending });
+  assert.equal(second.status, 'compacted');
+  assert.equal(gateway.mutates().length, 1);
+  assert.equal(second.requestId, first.requestId);
+});
+
 test('a summary the gateway aborted is not reported as compacted', async () => {
   const gateway = fakeGateway();
   gateway.hooks.summary = { noop: false, aborted: true, headline: 'Summary failed', token_line: '' };

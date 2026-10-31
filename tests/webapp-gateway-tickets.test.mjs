@@ -221,6 +221,7 @@ function browser({ tabs = [], tabStorage = {}, probeStatus = 200, keep = true } 
     sessionStore,
     credentials,
     options: {
+      selectedProfile: async () => 'default',
       tabsApi: {
         query: async () => tabs,
         create: async (info) => { calls.create.push(info); return { id: 99, ...info }; },

@@ -9,6 +9,7 @@ import { createCapabilityRuntime } from '../extension/lib/capability-runtime.mjs
 import { dashboardWsGatewayCapabilities } from '../extension/lib/capabilities.mjs';
 import { capabilityIdentity } from '../extension/lib/capability-status.mjs';
 import { compactControlState } from '../extension/lib/capability-view.mjs';
+import { compactSessionCanonical } from '../extension/lib/session-compact.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const lines = source.split('\n');
@@ -40,7 +41,9 @@ function harness({ results }) {
     capabilityRuntime,
     settings: { sessionId: 'session-a' },
     compactInFlight: false,
-    compactPending: null,
+    compactPending: new Map(),
+    sessionLoadRequestId: 0,
+    scopeRevision: { current: () => 0, isCurrent: (v) => v === 0 },
     compactRecommendedHint: false,
     sending: false,
     activeRunControl: null,
@@ -108,4 +111,74 @@ test('a compaction that finishes after the view moved on marks the compacted ses
   assert.equal(outcome.ok, true);
   assert.deepEqual(staleMarks, ['session-a']);
   assert.equal(outcome.sessionId, 'session-a');
+});
+
+for (const sideSocket of [true, false]) {
+  test(`navigation during ${sideSocket ? 'side' : 'dashboard'} socket setup cancels compaction`, async () => {
+    const { context, sent } = harness({ results: {} });
+    let release;
+    const ready = new Promise((resolve) => { release = resolve; });
+    const connection = { wsStoredSessionId: 'session-b', client: { request: async () => ({}), readyState: 1, readyPayload: READY } };
+    context.ensureProfileWsConnection = async () => { await ready; return connection; };
+    context.ensureActiveDashboardWsConnection = async () => { await ready; return connection; };
+    const task = context.compactCanonicalSessionContext({ sideSocket });
+    context.settings = { sessionId: 'session-b' };
+    context.sessionLoadRequestId++;
+    release();
+    await task;
+    assert.deepEqual(sent, [], 'must not dispatch a mutation for another session');
+  });
+}
+
+test('side-socket compaction targets the captured session without adopting a live session', async () => {
+  const { context, sent } = harness({ results: {} });
+  let adopted = 0;
+  context.ensureProfileWsConnection = async () => ({ client: { request: async () => ({}), readyState: 1, readyPayload: READY } });
+  context.ensureRemoteWsSession = async () => { adopted++; };
+  const result = await context.compactCanonicalSessionContext({ sideSocket: true });
+  assert.equal(result.ok, true);
+  assert.deepEqual(sent, ['session-a']);
+  assert.equal(adopted, 0);
+  assert.equal(context.settings.sessionId, 'session-a');
+});
+
+test('an indeterminate compaction remains pending across other sessions', async () => {
+  const { context } = harness({ results: {} });
+  const seen = [];
+  context.compactSessionCanonical = async ({ sessionId, pending }) => {
+    seen.push({ sessionId, pending });
+    if (sessionId === 'session-a' && !pending) return { status: 'indeterminate', pending: { sessionId, requestId: 'r1' } };
+    return { status: 'noop' };
+  };
+  await context.compactCanonicalSessionContext();
+  context.settings = { sessionId: 'session-b' };
+  await context.compactCanonicalSessionContext();
+  context.settings = { sessionId: 'session-a' };
+  await context.compactCanonicalSessionContext();
+  assert.equal(seen[2].pending?.requestId, 'r1');
+});
+
+test('panel reconnect retries an uncertain compaction with the same request identity', async () => {
+  const { context } = harness({ results: {} });
+  const mutations = [];
+  let connected = true;
+  let revision = 7, generation = 2;
+  const request = async (method, params) => {
+    if (!connected) throw new Error('disconnected');
+    if (method === 'session.resume') return { session_id: params.session_id, revision, execution_generation: generation, execution_state: 'idle', info: {} };
+    mutations.push(structuredClone(params));
+    if (mutations.length === 1) { connected = false; throw new Error('disconnected'); }
+    revision++; generation++;
+    return { operation: 'compress', session_id: params.session_id, revision, execution_generation: generation, summary: {} };
+  };
+  const connection = { client: { request, readyState: 1, readyPayload: READY } };
+  context.ensureProfileWsConnection = async () => connection;
+  context.compactSessionCanonical = compactSessionCanonical;
+  const first = await context.compactCanonicalSessionContext({ sideSocket: true });
+  assert.equal(first.reason, 'indeterminate');
+  connected = true;
+  const second = await context.compactCanonicalSessionContext({ sideSocket: true });
+  assert.equal(second.ok, true);
+  assert.equal(mutations.length, 2);
+  assert.deepEqual(mutations[1], mutations[0], 'reconnect replays the identical fenced request');
 });

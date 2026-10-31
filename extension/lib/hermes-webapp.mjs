@@ -158,8 +158,9 @@ function tabUrl(tab) {
   }
 }
 
-/** The open tab that is showing this Webapp, or null. A tab on the right profile wins. */
-export async function findOpenWebappTab(tabsApi, target) {
+/** A URL is only a launch hint, not proof of the tab's current profile. */
+export async function findOpenWebappTab(tabsApi, target, { selectedProfile = null } = {}) {
+  if (typeof selectedProfile !== 'function') return null;
   if (typeof tabsApi?.query !== 'function') return null;
   let tabs;
   try {
@@ -174,12 +175,13 @@ export async function findOpenWebappTab(tabsApi, target) {
     const url = tabUrl(tab);
     if (!url || url.origin !== target.origin) continue;
     if (target.basePath && url.pathname !== target.basePath && !url.pathname.startsWith(`${target.basePath}/`)) continue;
-    const sameProfile = (url.searchParams.get('profile') || '') === target.profile;
-    candidates.push({ tab, sameProfile, active: tab.active === true, accessed: Number(tab.lastAccessed) || 0 });
+    let profile;
+    try { profile = await selectedProfile(tab); } catch { continue; }
+    if (typeof profile !== 'string' || (profile.toLowerCase() === 'default' ? '' : profile) !== target.profile) continue;
+    candidates.push({ tab, active: tab.active === true, accessed: Number(tab.lastAccessed) || 0 });
   }
   if (!candidates.length) return null;
-  candidates.sort((a, b) => Number(b.sameProfile) - Number(a.sameProfile)
-    || Number(b.active) - Number(a.active)
+  candidates.sort((a, b) => Number(b.active) - Number(a.active)
     || b.accessed - a.accessed);
   return candidates[0].tab;
 }
@@ -391,6 +393,7 @@ export async function openHermesWebapp({
   credentials = null,
   tickets = null,
   opener = null,
+  selectedProfile = null,
 } = {}) {
   const target = resolveWebappTarget(settings);
   if (!target.ok) return { status: target.reason };
@@ -401,7 +404,7 @@ export async function openHermesWebapp({
   const keepSignedIn = credentials && target.loopback ? (await credentials.enabled()) !== false : false;
   const viaGateway = Boolean(tickets) && target.loopback;
   let capturedFromTab = false;
-  const existing = await findOpenWebappTab(tabsApi, target);
+  const existing = await findOpenWebappTab(tabsApi, target, { selectedProfile });
   if (existing) {
     let focusIt = true;
     if (keepSignedIn) {

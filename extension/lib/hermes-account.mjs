@@ -445,11 +445,20 @@ function sessionFromStored(value) {
  * Sign-ins per gateway origin in storage.local. `storageArea` is chrome.storage.local (get/set/remove).
  * Reads are validated; a record that is not a sign-in is dropped.
  */
-export function createAccountStore({ storageArea = null, now = () => Date.now() } = {}) {
+export function createAccountStore({ storageArea = null, now = () => Date.now(), locks = globalThis.navigator?.locks } = {}) {
   let memory = {};
   let broken = false;
-
-  const usable = () => !broken && typeof storageArea?.get === 'function' && typeof storageArea?.set === 'function';
+  let tail = Promise.resolve();
+  const hasLocks = typeof locks?.request === 'function';
+  // The stored map is shared by all origins, so the lock must cover the whole map.
+  // Without cross-document locks, use only private memory rather than race shared storage.
+  const usable = () => hasLocks && !broken && typeof storageArea?.get === 'function' && typeof storageArea?.set === 'function';
+  const exclusive = (fn) => {
+    if (hasLocks) return locks.request('hermes-account-sessions', fn);
+    const run = tail.then(fn);
+    tail = run.catch(() => {});
+    return run;
+  };
 
   async function readAll() {
     if (usable()) {
@@ -488,7 +497,7 @@ export function createAccountStore({ storageArea = null, now = () => Date.now() 
     memory = Object.fromEntries(entries.map((session) => [session.origin, session]));
   }
 
-  return {
+  const unlocked = {
     async get(origin) {
       return (await readAll())[accountOriginOf(origin)] || null;
     },
@@ -529,6 +538,15 @@ export function createAccountStore({ storageArea = null, now = () => Date.now() 
     async list() {
       return Object.values(await readAll());
     },
+  };
+  return {
+    get: unlocked.get,
+    list: unlocked.list,
+    save: (session) => exclusive(() => unlocked.save(session)),
+    clear: (origin) => exclusive(() => unlocked.clear(origin)),
+    clearAll: () => exclusive(() => unlocked.clearAll()),
+    clearUnlessConnection: (key) => exclusive(() => unlocked.clearUnlessConnection(key)),
+    runExclusive: (fn) => exclusive(() => fn(unlocked)),
   };
 }
 
@@ -655,10 +673,13 @@ export function createHermesAccount({
     const base = accountOriginOf(origin);
     if (!base) return { ok: false, reason: ACCOUNT_REASONS.NO_ORIGIN };
     if (refreshing.has(base)) return refreshing.get(base);
-    const run = (async () => {
-      const latest = await store.get(base);
+    const observed = staleAccessToken === null ? await store.get(base) : null;
+    if (refreshing.has(base)) return refreshing.get(base);
+    const run = store.runExclusive(async (lockedStore) => {
+      const latest = await lockedStore.get(base);
       if (!latest) return { ok: false, reason: ACCOUNT_REASONS.SIGNED_OUT };
-      const rotated = staleAccessToken !== null && latest.accessToken !== staleAccessToken;
+      const rotated = staleAccessToken !== null ? latest.accessToken !== staleAccessToken
+        : observed && latest.refreshToken !== observed.refreshToken;
       const fresh = latest.expiresAt - Math.floor(now() / 1000) > ACCOUNT_REFRESH_MARGIN_SECONDS;
       if (rotated || (fresh && staleAccessToken !== null && !force)) return { ok: true, session: latest };
       const result = await send(base, '/auth/native/refresh', {
@@ -668,18 +689,18 @@ export function createHermesAccount({
       if (result.ok) {
         const next = shaped(base, latest.connectionKey, result.payload, latest);
         if (!next) return { ok: false, reason: ACCOUNT_REASONS.BAD_RESPONSE };
-        await store.save(next);
+        await lockedStore.save(next);
         notify({ type: 'refreshed', origin: base });
-        return { ok: true, session: (await store.get(base)) || next };
+        return { ok: true, session: (await lockedStore.get(base)) || next };
       }
       if (result.status === 401) {
-        await store.clear(base);
+        await lockedStore.clear(base);
         notify({ type: 'expired', origin: base });
         return { ok: false, reason: ACCOUNT_REASONS.EXPIRED };
       }
       // 503, a network error: the tokens are kept, nothing was decided.
       return { ok: false, reason: ACCOUNT_REASONS.UNAVAILABLE };
-    })().finally(() => { refreshing.delete(base); });
+    }).finally(() => { refreshing.delete(base); });
     refreshing.set(base, run);
     return run;
   }
@@ -745,12 +766,11 @@ export function createHermesAccount({
     const outcome = await authed(origin, '/api/auth/me');
     if (!outcome.ok || !outcome.result.ok) return session;
     const me = outcome.result.payload || {};
-    const current = (await store.get(origin)) || session;
-    return current.with({
-      userId: String(me.user_id || current.userId || ''),
+    return session.with({
+      userId: String(me.user_id || session.userId || ''),
       email: String(me.email || ''),
       displayName: String(me.display_name || ''),
-      provider: String(me.provider || current.provider || ''),
+      provider: String(me.provider || session.provider || ''),
     });
   }
 
@@ -789,7 +809,10 @@ export function createHermesAccount({
       if (!session) return { ok: false, reason: ACCOUNT_REASONS.BAD_RESPONSE };
       await store.save(session);
       const described = await describeIdentity(base, session).catch(() => session);
-      await store.save(described);
+      await store.runExclusive(async (lockedStore) => {
+        const latest = await lockedStore.get(base);
+        if (latest && latest.refreshToken === described.refreshToken) await lockedStore.save(described);
+      });
       notify({ type: 'signed-in', origin: base });
       return { ok: true, session: described.summary() };
     })();

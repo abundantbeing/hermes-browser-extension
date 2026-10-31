@@ -355,7 +355,7 @@ test('an already-open Webapp tab is only focused: no opening page, no new tab', 
   const browser = directTabs([{ id: 4, url: `${ORIGIN}/`, windowId: 3, active: false }]);
   let opened = 0;
   const opener = { async open() { opened += 1; return { ok: true, tabId: 1 }; } };
-  const result = await openHermesWebapp({ settings: local, ...browser, tickets, opener });
+  const result = await openHermesWebapp({ settings: local, ...browser, tickets, opener, selectedProfile: async () => 'default' });
   assert.equal(result.status, 'focused');
   assert.equal(opened, 0);
   assert.deepEqual(browser.created, []);

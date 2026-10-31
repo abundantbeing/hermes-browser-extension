@@ -107,7 +107,7 @@ async function waitingApprovalWorker() {
   const executor = createBrowserControlExecutor({
     adapter: {
       contract: { enabled: true, actions: ['browser_press'] },
-      async inspect() { return { currentUrl: 'https://example.test/form' }; },
+      async inspect() { return { currentUrl: 'https://example.test/form', focused: { role: 'textbox', name: 'Message', inputType: 'text', identity: '0123456789abcdef0123456789abcdef' } }; },
       async execute() { sideEffects += 1; return { status: 'pressed' }; },
     },
     approvals,
@@ -410,7 +410,7 @@ test('Phase 6 approval grants require a trusted extension sender and bind exact 
   const executor = createBrowserControlExecutor({
     adapter: {
       contract: { enabled: true, actions: ['browser_press'] },
-      async inspect() { return { currentUrl: 'https://example.test/form' }; },
+      async inspect() { return { currentUrl: 'https://example.test/form', focused: { role: 'textbox', name: 'Message', inputType: 'text', identity: '0123456789abcdef0123456789abcdef' } }; },
       async execute() { sideEffects += 1; return { status: 'pressed' }; },
     },
     approvals,

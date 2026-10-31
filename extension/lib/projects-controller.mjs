@@ -82,6 +82,7 @@ export function createProjectsController({
   let loadSerial = 0;
   let pickerSerial = 0;
   let ideaSerial = 0;
+  let navigationSerial = 0;
 
   function emit() {
     onChange(state);
@@ -283,6 +284,7 @@ export function createProjectsController({
   function back() {
     // A move that is being committed owns the view until the gateway answers.
     if (state.move?.step === 'working') return;
+    navigationSerial += 1;
     // The folder picker sits over the form or move view it was opened from: Back closes just the picker.
     if (state.view === 'picker') {
       closePicker();
@@ -305,6 +307,7 @@ export function createProjectsController({
   /** Back to the project list with nothing half-open: used each time the drawer opens. */
   function resetView() {
     if (state.move?.step === 'working') return;
+    navigationSerial += 1;
     pickerSerial += 1;
     state = { ...state, view: 'list', project: null, create: null, move: null, picker: null, notice: null, query: '' };
   }
@@ -419,7 +422,8 @@ export function createProjectsController({
     const folders = createFolders(draft);
     const path = folders[0];
     const idea = clean(draft.idea);
-    state = { ...state, create: { ...draft, status: 'submitting', error: null, touched: true } };
+    const submittedDraft = { ...draft, status: 'submitting', error: null, touched: true };
+    state = { ...state, create: submittedDraft };
     emit();
     let result = await current.client.create({ name, folders, primaryPath: path });
     if (!stillCurrent(token)) return;
@@ -433,21 +437,26 @@ export function createProjectsController({
     }
     if (!result.ok) {
       const failure = describeProjectsFailure(result);
-      state = { ...state, create: { ...state.create, status: 'editing', error: failure } };
+      if (state.create === submittedDraft && state.view === 'create') {
+        state = { ...state, create: { ...state.create, status: 'editing', error: failure } };
+      } else {
+        state = { ...state, notice: { tone: 'error', key: failure.key, params: failure.params } };
+      }
       emit();
       return;
     }
     const created = result.data.project;
+    const ownsView = state.create === submittedDraft && state.view === 'create';
+    const navigation = navigationSerial;
+    const receipt = { tone: 'ok', key: idea ? 'projects.create.done_idea' : 'projects.create.done', params: { name: created.name } };
     state = {
       ...state,
-      view: 'list',
-      create: null,
-      picker: null,
-      pendingIdea: idea ? { projectId: created.id, name: created.name, cwd: path, idea } : null,
-      notice: { tone: 'ok', key: idea ? 'projects.create.done_idea' : 'projects.create.done', params: { name: created.name } },
+      ...(ownsView ? { view: 'list', create: null, picker: null } : {}),
+      pendingIdea: idea && !state.pendingIdea ? { projectId: created.id, name: created.name, cwd: path, idea } : state.pendingIdea,
+      notice: receipt,
     };
     await loadList({ force: true });
-    if (!stillCurrent(token)) return;
+    if (!stillCurrent(token) || !ownsView || navigation !== navigationSerial || state.view !== 'list' || state.notice !== receipt || state.create) return;
     await loadProject(created.id, { force: true });
   }
 

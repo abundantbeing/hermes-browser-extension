@@ -174,9 +174,9 @@ function pressApprovalReason(reason, args, focused) {
 // Whether the element that has focus is still the one the person was asked about.
 function sameFocus(before, after) {
   const known = (value) => Boolean(value) && typeof value === 'object';
-  if (!known(before) && !known(after)) return true;
   if (!known(before) || !known(after)) return false;
-  return ['role', 'name', 'inputType', 'autocomplete'].every((field) => compact(before[field], 200) === compact(after[field], 200))
+  return /^[a-f0-9]{32}$/.test(before.identity || '') && before.identity === after.identity
+    && ['role', 'name', 'inputType', 'autocomplete'].every((field) => compact(before[field], 200) === compact(after[field], 200))
     && (before.inFrame === true) === (after.inFrame === true);
 }
 
@@ -845,6 +845,7 @@ export function createBrowserControlExecutor({
           leaseId: commandScope.leaseId,
           leaseGeneration: commandScope.leaseGeneration,
           tabId: commandScope.tabId,
+          frameId: Math.max(0, Number(scope.frameId) || 0),
           // The document the action will run on: a batch that navigated has moved on
           // from the generation the command arrived with, and the grant checks this one.
           documentGeneration: scope.documentGeneration,
@@ -852,6 +853,7 @@ export function createBrowserControlExecutor({
           state: 'paused',
           // A key press has no ref; what it is bound to is the element that has focus when it is asked about.
           ...approvalBindingFields(action, args, action === 'browser_press' ? focusAsTarget(pageState.focused) : target, destination),
+          ...(action === 'browser_press' && pageState.focused?.identity ? { binding: `focus:${pageState.focused.identity}` } : {}),
         };
         let approvalReason = (action === 'browser_press' && pressApprovalReason(policy.reason, args, pageState.focused))
           || APPROVAL_MESSAGES[policy.reason]
@@ -906,8 +908,10 @@ export function createBrowserControlExecutor({
         if (!consumed.ok) return errorOutcome('approval_required', policy.reason || 'This action requires approval.');
       }
 
-      // One probe per action; only a human approval wait leaves room for the page to change.
-      if (waitedForApproval && typeof adapter.inspect === 'function' && APPROVALS_RECHECK_ACTIONS.has(action)) {
+      // Recheck after a wait, and also for a pre-existing key-press grant. This is
+      // not atomic with the later browser input dispatch.
+      if ((waitedForApproval || (action === 'browser_press' && policy.risk === BROWSER_CONTROL_RISKS.APPROVAL))
+        && typeof adapter.inspect === 'function' && APPROVALS_RECHECK_ACTIONS.has(action)) {
         const current = await adapter.inspect({
           tabId: scope.tabId,
           frameId: scope.frameId,
@@ -930,6 +934,10 @@ export function createBrowserControlExecutor({
         if (restrictedPageUrl(current.currentUrl, Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments))) {
           return errorOutcome('domain_changed', 'The page moved to one Hermes will not act on while waiting for your approval, so the action did not run.');
         }
+      }
+
+      if (action === 'browser_press' && policy.risk === BROWSER_CONTROL_RISKS.APPROVAL && typeof adapter.inspect !== 'function') {
+        return errorOutcome('focus_changed', 'Focus could not be verified, so the key was not pressed.');
       }
 
       // Phase 8 privileged pre-execution gates: raw CDP method policy and
@@ -967,6 +975,7 @@ export function createBrowserControlExecutor({
         ownedTabIds: [...controllerOwnedTabs],
         currentWindowId: Number(currentWindowId) || null,
         allowLocalDocuments: Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments),
+        ...(action === 'browser_press' && pageState.focused ? { expectedFocus: pageState.focused } : {}),
         ...(artifact ? { artifact } : {}),
       });
       if (controller.signal.aborted) return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');

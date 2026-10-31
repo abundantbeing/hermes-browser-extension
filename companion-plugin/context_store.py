@@ -328,12 +328,42 @@ class BrowserContextStore:
     clock: Callable[[], float] = time
     _records: OrderedDict[str, BrowserContextRecord] = field(default_factory=OrderedDict, init=False, repr=False)
     _events: list[_StoredEvent] = field(default_factory=list, init=False, repr=False)
-    _uploads: OrderedDict[str, _UploadedContext] = field(default_factory=OrderedDict, init=False, repr=False)
+    _uploads: OrderedDict[tuple[str, str, str], _UploadedContext] = field(default_factory=OrderedDict, init=False, repr=False)
     _durable_state: Any = field(default=None, init=False, repr=False)
     _durable_receipts_enabled: bool = field(default=False, init=False, repr=False)
     _receipt_limit: int = field(default=DEFAULT_RECEIPT_LIMIT, init=False, repr=False)
     _journal: Optional[BrowserContextJournal] = field(default=None, init=False, repr=False)
     _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
+    _stop: threading.Event = field(default_factory=threading.Event, init=False, repr=False)
+    _expiry: threading.Thread = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self._expiry = threading.Thread(
+            target=self._expire_loop,
+            name="browser-context-expiry",
+            daemon=True,
+        )
+        self._expiry.start()
+
+    def _expire_loop(self) -> None:
+        while not self._stop.wait(0.05):
+            with self._lock:
+                now = self._now()
+                self._prune_expired_locked(now)
+                self._prune_uploads_locked(now)
+
+    def close(self) -> None:
+        """Drop cached payloads and stop the idle expiry worker."""
+        self._stop.set()
+        self._expiry.join(timeout=1)
+        with self._lock:
+            for record in self._records.values():
+                record.payload = None
+            for upload in self._uploads.values():
+                if isinstance(upload.normalized, dict):
+                    upload.normalized["payload"] = None
+            self._records.clear()
+            self._uploads.clear()
 
     def _now(self) -> float:
         return float(self.clock())
@@ -491,7 +521,7 @@ class BrowserContextStore:
     #
     # An upload names a session, not an execution owner: the owner tuple needs a
     # turn and task id that only Hermes' hooks know.  So the validated envelope
-    # waits in a one-slot-per-session shelf and is bound to an owner only when a
+    # waits in a bounded session-and-hash shelf and is bound to an owner only when a
     # trusted hook sees a reference turn for that same session naming the same
     # context hash.  Tools still reach it only through the owner-scoped record,
     # the opaque context id and the one-shot lease.
@@ -517,8 +547,7 @@ class BrowserContextStore:
         upload = _UploadedContext(normalized=normalized, created_at=now, expires_at=now + ttl)
         with self._lock:
             self._prune_uploads_locked(now)
-            self._uploads.pop(session, None)
-            self._uploads[session] = upload
+            self._uploads[(session, normalized["payload_hash"], secrets.token_hex(16))] = upload
             while len(self._uploads) > max(1, int(self.max_upload_sessions)):
                 _oldest, dropped = self._uploads.popitem(last=False)
                 dropped.normalized["payload"] = None
@@ -544,10 +573,10 @@ class BrowserContextStore:
         now = self._now()
         with self._lock:
             self._prune_uploads_locked(now)
-            upload = self._uploads.get(owner.session_id)
-            if upload is None or upload.normalized["payload_hash"] != named:
+            key = next((key for key in self._uploads if key[0] == owner.session_id and key[1] == named), None)
+            if key is None:
                 return dict(_UNAVAILABLE)
-            del self._uploads[owner.session_id]
+            upload = self._uploads.pop(key)
             normalized = upload.normalized
         return self._store_normalized(normalized, owner)
 
@@ -569,7 +598,7 @@ class BrowserContextStore:
                         consumed += 1
                     else:
                         held.append(record)
-                upload = self._uploads.get(session)
+                upload = next((upload for key, upload in reversed(self._uploads.items()) if key[0] == session), None)
                 if upload is not None:
                     pending = {
                         "present": True,

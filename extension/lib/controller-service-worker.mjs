@@ -1458,7 +1458,8 @@ export function createControllerServiceWorker({
       return { ok: false, error: 'controller_paused' };
     }
     const lease = leases.leaseForTab(tabId);
-    const authoritative = Number(documentGenerations[frameKey(tabId, message.frameId)] || 0);
+    const requestedFrame = Number.isInteger(Number(message.frameId)) ? Number(message.frameId) : 0;
+    const authoritative = Number(documentGenerations[frameKey(tabId, requestedFrame)] || 0);
     if (!lease || lease.generation !== generation) return { ok: false, error: 'lease_required' };
     if (lease.ownership !== TAB_LEASE_OWNERSHIPS.OWNED || lease.ownerId !== controllerId) {
       return { ok: false, error: 'lease_not_owned' };
@@ -1469,6 +1470,7 @@ export function createControllerServiceWorker({
       || pending.commandId !== String(message.commandId || '').trim()
       || pending.action !== String(message.action || '').trim()
       || pending.tabId !== tabId
+      || (pending.frameId ?? 0) !== requestedFrame
       || pending.documentGeneration !== documentGeneration) {
       return { ok: false, error: 'approval_missing' };
     }

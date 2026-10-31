@@ -73,7 +73,7 @@
     "web-ext": "^10.6.0"
   },
   "dependencies": {
-    "dompurify": "^3.4.13",
+    "dompurify": "^3.4.17",
     "highlight.js": "11.12.0"
   }
 }

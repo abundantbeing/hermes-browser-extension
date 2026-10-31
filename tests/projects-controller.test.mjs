@@ -205,6 +205,98 @@ test('opening a project loads its sessions; an unknown project reports not-found
   assert.equal(controller.state.view, 'list');
 });
 
+test('late project creation preserves newer draft and records the committed result', async () => {
+  const gateway = fakeGateway();
+  let release;
+  let entered;
+  const started = new Promise((resolve) => { entered = resolve; });
+  const gate = new Promise((resolve) => { release = resolve; });
+  const original = gateway.request;
+  gateway.request = async (method, params) => {
+    if (method === 'projects.create') { entered(); await gate; }
+    return original(method, params);
+  };
+  const { controller } = harness({ gateway });
+  await controller.activate();
+  controller.startCreate();
+  controller.updateCreate('name', 'Gamma');
+  controller.updateCreate('path', '/srv/gamma');
+  const pending = controller.submitCreate();
+  await started;
+  controller.back();
+  controller.startCreate();
+  controller.updateCreate('name', 'New draft');
+  release();
+  await pending;
+  assert.equal(controller.state.view, 'create');
+  assert.equal(controller.state.create.name, 'New draft');
+  assert.equal(controller.state.notice.key, 'projects.create.done');
+  assert.ok(controller.state.list.rows.some((row) => row.name === 'Gamma'));
+});
+
+for (const outcome of ['refused', 'lost']) {
+  test(`late ${outcome} create retains the newer draft and reports its outcome`, async () => {
+    const gateway = fakeGateway();
+    let release;
+    let entered;
+    const started = new Promise((resolve) => { entered = resolve; });
+    const gate = new Promise((resolve) => { release = resolve; });
+    const original = gateway.request;
+    gateway.request = async (method, params) => {
+      if (method === 'projects.create') {
+        entered();
+        await gate;
+        if (outcome === 'refused') throw rpcError(5063, 'duplicate');
+        gateway.state.dropCreateAnswer = true;
+      }
+      return original(method, params);
+    };
+    const { controller } = harness({ gateway });
+    await controller.activate();
+    controller.startCreate();
+    controller.updateCreate('name', 'Gamma');
+    controller.updateCreate('path', '/srv/gamma');
+    const pending = controller.submitCreate();
+    await started;
+    controller.resetView();
+    controller.startCreate();
+    controller.updateCreate('name', 'New draft');
+    release();
+    await pending;
+    assert.equal(controller.state.view, 'create');
+    assert.equal(controller.state.create.name, 'New draft');
+    assert.equal(controller.state.notice.tone, outcome === 'lost' ? 'ok' : 'error');
+    if (outcome === 'lost') assert.ok(controller.state.list.rows.some((row) => row.name === 'Gamma'));
+  });
+}
+
+test('Back during the post-create list refresh prevents automatic project navigation', async () => {
+  const gateway = fakeGateway();
+  let entered;
+  let release;
+  let block = false;
+  const started = new Promise((resolve) => { entered = resolve; });
+  const gate = new Promise((resolve) => { release = resolve; });
+  const original = gateway.request;
+  gateway.request = async (method, params) => {
+    if (block && method === 'projects.list') { entered(); await gate; }
+    return original(method, params);
+  };
+  const { controller } = harness({ gateway });
+  await controller.activate();
+  controller.startCreate();
+  controller.updateCreate('name', 'Gamma');
+  controller.updateCreate('path', '/srv/gamma');
+  block = true;
+  const pending = controller.submitCreate();
+  await started;
+  controller.back();
+  release();
+  await pending;
+  assert.equal(controller.state.view, 'list');
+  assert.equal(controller.state.notice.key, 'projects.create.done');
+});
+
 test('create sends the folder as primary, refreshes, and opens the new project', async () => {
   const { controller, gateway } = harness();
   await controller.activate();

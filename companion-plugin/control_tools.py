@@ -26,6 +26,7 @@ import os
 import re
 import secrets
 import tempfile
+import threading
 import time
 import unicodedata
 import urllib.parse
@@ -66,6 +67,25 @@ _SECRET_IN_URL = re.compile(
 )
 
 _config: dict[str, Any] = {"broker": None, "profile": "default", "screenshot_dir": None}
+_screenshot_stop = threading.Event()
+_screenshot_worker: threading.Thread | None = None
+
+
+def _ensure_screenshot_worker() -> None:
+    global _screenshot_worker
+    if _screenshot_worker is not None and _screenshot_worker.is_alive():
+        return
+    _screenshot_stop.clear()
+
+    def loop() -> None:
+        while not _screenshot_stop.wait(0.05):
+            try:
+                _prune_screenshots(_screenshot_directory())
+            except OSError:
+                continue
+
+    _screenshot_worker = threading.Thread(target=loop, name="browser-screenshot-expiry", daemon=True)
+    _screenshot_worker.start()
 
 
 def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default", screenshot_dir: Any = None) -> None:
@@ -73,6 +93,13 @@ def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default
     _config["broker"] = broker
     _config["profile"] = str(profile or "default")
     _config["screenshot_dir"] = Path(screenshot_dir) if screenshot_dir else None
+    # Clear stale screenshots left by a previous process, even if no new
+    # screenshot is taken in this one. Idle-time cleanup still needs a reaper.
+    try:
+        _prune_screenshots(_screenshot_directory())
+    except OSError:
+        logger.warning("could not prune Hermes Control screenshots at startup", exc_info=True)
+    _ensure_screenshot_worker()
 
 
 def _broker() -> ControlBroker:
@@ -240,6 +267,7 @@ def _save_screenshot(data_url: str) -> Optional[str]:
     try:
         directory.mkdir(parents=True, exist_ok=True)
         path = directory / f"shot-{secrets.token_hex(8)}.png"
+        _ensure_screenshot_worker()
         descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(descriptor, "wb") as handle:
             handle.write(image)

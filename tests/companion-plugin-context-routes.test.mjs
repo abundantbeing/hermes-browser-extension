@@ -188,7 +188,12 @@ async def main():
         bad["huge"] = (await client.post(BASE + "/context", headers=h, data=full_turn(page="x" * 300_000))).status
         bad["bad_utf8"] = (await client.post(BASE + "/context", headers=h, data=b"\\xff\\xfe")).status
         bad["no_session"] = (await client.post(BASE + "/context", headers=AUTH, data=full_turn())).status
-        bad["ctl_session"] = (await client.post(BASE + "/context", headers={**AUTH, "X-Hermes-Session-Id": "a\\x01b"}, data=full_turn())).status
+        bad["ctl_session"] = (await client.post(BASE + "/context?session_id=a%01b", headers=AUTH, data=full_turn())).status
+        # New aiohttp clients refuse CTL headers before sending. Exercise that
+        # header at the real handler too, without relying on client serialization.
+        from aiohttp.test_utils import make_mocked_request
+        ctl_request = make_mocked_request("POST", BASE + "/context", headers={**AUTH, "X-Hermes-Session-Id": "a\\x01b"})
+        bad["ctl_header"] = (await routes.make_upload_handler(Adapter(), module.STORE)(ctl_request)).status
         bad["get_on_post"] = (await client.get(BASE + "/context", headers=h)).status
         seen["bad"] = bad
         # the refused uploads did not replace the good one
@@ -220,7 +225,7 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.other.pending_upload.present, false, 'another session sees nothing of it');
   assert.equal(data.query_pending, true);
   assert.deepEqual(data.bad, {
-    not_json: 422, reference: 422, chat_only: 422, no_hash: 422, huge: 413, bad_utf8: 400, no_session: 400, ctl_session: 400, get_on_post: 405,
+    not_json: 422, reference: 422, chat_only: 422, no_hash: 422, huge: 413, bad_utf8: 400, no_session: 400, ctl_session: 400, ctl_header: 400, get_on_post: 405,
   });
   assert.equal(data.after.pending_upload.payload_hash, 'a1b2c3d4e5f60789');
   // Metadata only: nothing of the page, URL, title or session id leaves.

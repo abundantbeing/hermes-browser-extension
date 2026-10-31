@@ -27,6 +27,7 @@ function fakeBrowser({ tabs = [], fetchImpl, storage = {} } = {}) {
     order,
     calls,
     store,
+    selectedProfile: async () => 'default',
     tabsApi: {
       query: async () => tabs,
       create: async (info) => { order.push('create'); calls.create.push(info); return { id: 99, ...info }; },

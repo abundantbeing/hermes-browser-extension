@@ -230,6 +230,13 @@ async function startMockHermes() {
     const body = await requestBody(req);
     requests.push({ method: req.method, path: url.pathname, authorization: req.headers.authorization ?? '', body });
 
+    if (url.pathname === '/qa-web/' && req.method === 'GET') {
+      const html = '<!doctype html><html><head><title>Mock Hermes Web</title></head><body>Mock Hermes Web session list</body></html>';
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end(html);
+      return;
+    }
+
     if (url.pathname === '/qa-inline' && req.method === 'GET') {
       const html = `<!doctype html><html><head><meta charset="utf-8"><title>Hermes Assist QA</title><style>body{margin:0;min-height:180vh;background:#0505f5;color:#0505f5;font:16px Arial,sans-serif;padding:64px}main{max-width:980px;margin:auto;background:#f8f9ff;border:1px solid #0505f5;padding:32px;box-shadow:12px 12px 0 rgba(0,0,0,.28)}h1{font:700 36px Georgia,serif;margin:0 0 8px}p{color:#3030a5;margin:0 0 28px}textarea,[contenteditable="true"]{display:block;width:100%;min-height:180px;box-sizing:border-box;border:1px solid #0505f5;background:#fff;color:#111;padding:20px;font:18px/1.6 Arial,sans-serif}textarea{resize:none}[contenteditable="true"]{margin-top:28px;white-space:pre-wrap}label{display:block;margin:24px 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}</style></head><body><main><h1>Example compose field</h1><p>Real loaded-extension QA surface. The text is intentionally messy so exact Undo can be verified.</p><label for="draft">Draft</label><textarea id="draft" aria-label="Example compose field">  I wanted   to follow up.  </textarea><label for="rich-draft">Rich draft</label><div id="rich-draft" role="textbox" aria-label="Rich example compose field" contenteditable="true">One   clear   sentence.</div></main><script>window.richInputEvents=0;window.richNormalizeLikeX=false;window.xPopupOutsideClicks=0;document.querySelector('#rich-draft').addEventListener('input',()=>{window.richInputEvents+=1;if(window.richNormalizeLikeX){const rich=document.querySelector('#rich-draft');rich.textContent=rich.textContent.trim()+'\\n';}});document.addEventListener('click',(event)=>{const host=document.querySelector('#hermes-inline-draft-host');if(!host||event.target!==host)return;window.xPopupOutsideClicks+=1;const field=document.querySelector('#draft');if(field)field.replaceWith(field.cloneNode(true));});</script></body></html>`;
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': Buffer.byteLength(html) });
@@ -2402,18 +2409,37 @@ async function main() {
     assert.ok(openDestinationState.labels.some((label) => label.includes('Browser Extension')));
     assert.ok(openDestinationState.labels.some((label) => label.includes('Hermes Web')));
     await saveScreenshot(fixture, INLINE_OPEN_SESSION_SCREENSHOT, { captureBeyondViewport: false });
+    // Keep the Webapp on the mock server, not the user's local default Webapp.
+    await setup.evaluate(`(async () => {
+      const stored = await chrome.storage.local.get('hermesBrowserSettings');
+      await chrome.storage.local.set({ hermesBrowserSettings: {
+        ...stored.hermesBrowserSettings, hermesWebAddress: ${JSON.stringify(`${mock.baseUrl}/qa-web`)},
+      }});
+    })()`);
+    const tabsBeforeWeb = await setup.evaluate(`chrome.tabs.query({})`);
     await assistClick(fixture, '[data-session-surface="web"]');
     const webNotice = await waitFor(() => assistEvaluate(fixture, `(() => {
       const root = __assistRoot;
       const title = root?.querySelector('.route-title')?.textContent || '';
-      return title.includes('new surface') ? title : null;
+      const state = root?.querySelector('.context span:last-child')?.textContent || '';
+      return title === 'Hermes Web opened' && state === 'COMPLETE' ? { title, state } : null;
     })()`));
-    assert.match(webNotice, /new surface/i);
-    const openedWebSession = await setup.evaluate(`(async () => {
-      const tabs = await chrome.tabs.query({});
-      return tabs.some((item) => String(item.url || '').includes('sourceSurfaceId=inline-assist'));
-    })()`);
-    assert.equal(openedWebSession, false, 'the Hermes Web choice must show the deprecation notice instead of opening a tab');
+    assert.deepEqual(webNotice, { title: 'Hermes Web opened', state: 'COMPLETE' });
+    const openedWebSession = await waitFor(async () => {
+      const tabs = await setup.evaluate(`chrome.tabs.query({})`);
+      return tabs.find((item) => item.url === `${mock.baseUrl}/qa-web/`) || null;
+    });
+    assert.equal(openedWebSession.url, `${mock.baseUrl}/qa-web/`);
+    const tabsAfterWeb = await setup.evaluate(`chrome.tabs.query({})`);
+    const priorTabIds = new Set(tabsBeforeWeb.map((tab) => tab.id));
+    assert.equal(priorTabIds.has(openedWebSession.id), false, 'the configured Webapp opens in a new tab');
+    assert.equal(openedWebSession.active, true, 'the Webapp tab is active');
+    assert.equal(tabsAfterWeb.some((tab) => !priorTabIds.has(tab.id) && /\/app\.html(?:[?#]|$)/.test(String(tab.url || ''))), false,
+      'the Web choice must not open the removed extension app');
+    assert.ok(mock.requests.some((request) => request.method === 'POST'
+      && request.path === `/api/sessions/${retainedAssistSessionId}/chat`), 'the retained Assist session received its chat');
+    const retainedSessions = await fetchJson(`${mock.baseUrl}/api/sessions`, { headers: { Authorization: `Bearer ${TEST_TOKEN}` } });
+    assert.ok(retainedSessions.data.some((session) => session.id === retainedAssistSessionId), 'the Assist session remains in the gateway session list');
 
     await assistClick(fixture, '.close');
     await setup.evaluate(`(async () => {

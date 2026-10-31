@@ -135,15 +135,16 @@ test('a tab already on the Webapp is found by origin, path prefix and profile', 
     { id: 7 },
     tab(-1, 'http://127.0.0.1:9120/'),
   ];
-  assert.equal((await findOpenWebappTab({ query: async () => tabs }, target)).id, 5, 'the tab on the right profile wins');
-  assert.equal((await findOpenWebappTab({ query: async () => tabs.filter((entry) => entry.id !== 5) }, target)).id, 3, 'else the active one');
+  const selectedProfile = async (entry) => entry.id === 5 ? 'work' : 'default';
+  assert.equal((await findOpenWebappTab({ query: async () => tabs }, target, { selectedProfile })).id, 5, 'the tab on the right profile wins');
+  assert.equal(await findOpenWebappTab({ query: async () => tabs.filter((entry) => entry.id !== 5) }, target, { selectedProfile }), null, 'a different profile is not reused');
   assert.equal(await findOpenWebappTab({ query: async () => [tabs[0], tabs[1], tabs[5]] }, target), null);
   assert.equal(await findOpenWebappTab({ query: async () => { throw new Error('x'); } }, target), null);
   assert.equal(await findOpenWebappTab({}, target), null);
 
   const prefixed = resolveWebappTarget({ ...remote, hermesWebAddress: 'https://web.example.com/hermes' });
   const prefixTabs = [tab(1, 'https://web.example.com/'), tab(2, 'https://web.example.com/hermesx'), tab(3, 'https://web.example.com/hermes/#/x')];
-  assert.equal((await findOpenWebappTab({ query: async () => prefixTabs }, prefixed)).id, 3);
+  assert.equal((await findOpenWebappTab({ query: async () => prefixTabs }, prefixed, { selectedProfile })).id, 3);
 });
 
 function fakeBrowser({ tabs = [], fetchImpl, grant = true, storage = {} } = {}) {
@@ -152,6 +153,7 @@ function fakeBrowser({ tabs = [], fetchImpl, grant = true, storage = {} } = {}) 
   return {
     calls,
     store,
+    selectedProfile: async () => 'default',
     tabsApi: {
       query: async () => tabs,
       create: async (info) => { calls.create.push(info); return { id: 99, ...info }; },

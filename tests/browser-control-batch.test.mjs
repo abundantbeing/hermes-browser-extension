@@ -58,7 +58,7 @@ function fixture({
   const calls = [];
   const adapter = {
     contract: { enabled: true, actions: ACTIONS },
-    inspect: inspect || (async () => ({ currentUrl: 'https://example.test/start', hasUnsavedContent: false })),
+    inspect: inspect || (async () => ({ currentUrl: 'https://example.test/start', hasUnsavedContent: false, focused: { role: 'textbox', name: 'Message', inputType: 'text', identity: '0123456789abcdef0123456789abcdef' } })),
     settle: settle || (async () => ({ navigated: false, url: 'https://example.test/start', title: 'Start' })),
     async execute(action, args, context) {
       calls.push({ action, args, scope: context.scope, target: context.target?.name });

@@ -196,6 +196,7 @@ class _PendingCommand:
     event: threading.Event = field(default_factory=threading.Event)
     done: bool = False
     cancelled: bool = False
+    uncertain: bool = False
     ok: bool = False
     result: Any = None
 
@@ -355,7 +356,7 @@ class ControlBroker:
             # lane siblings before inserting, so a session lookup stays unique.
             if lane_scopes:
                 for lane_scope in lane_scopes:
-                    self.detach(lane_scope, notify_controller=False, keep_binding=True)
+                    self.detach(lane_scope, notify_controller=True, keep_binding=True)
                 continue
 
             with existing.send_lock:
@@ -456,6 +457,9 @@ class ControlBroker:
                 self._controllers.pop(scope, None)
                 pendings = self._pending_for_scope_locked(scope)
                 for pending in pendings:
+                    # Replacement cannot establish whether an in-flight action
+                    # completed before the browser received its cancel frame.
+                    pending.uncertain = keep_binding
                     self._resolve_pending(pending, cancelled=True)
                 # A removed controller may have been the binding's last: delete it, or start its grace.
                 if not keep_binding:
@@ -531,6 +535,8 @@ class ControlBroker:
                     if active is not None:
                         self._emit_cancel_frames(active, [pending])
                 raise ControllerTimeout(f"controller did not complete command {command_id!r} within {self._command_timeout}s")
+        if pending.uncertain:
+            raise ControllerTimeout(f"controller was replaced while command {command_id!r} was in flight")
         if pending.cancelled:
             raise ControllerCancelled(f"command {command_id!r} was cancelled")
         if not pending.ok:

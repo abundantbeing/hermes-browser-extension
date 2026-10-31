@@ -286,6 +286,12 @@ function approvalField(value, name) {
   return compact(value).slice(0, APPROVAL_FIELD_LIMITS[name]);
 }
 
+function approvalFrame(value = {}) {
+  if (value?.frameId == null || value.frameId === '') return 0;
+  const frameId = Number(value.frameId);
+  return Number.isInteger(frameId) && frameId >= 0 ? frameId : null;
+}
+
 function approvalKey(value = {}) {
   return [
     compact(value.approvalId),
@@ -295,6 +301,7 @@ function approvalKey(value = {}) {
     compact(value.leaseId),
     Number(value.leaseGeneration) || 0,
     Number(value.tabId),
+    approvalFrame(value),
     Number(value.documentGeneration),
     compact(value.action),
     compact(value.state),
@@ -332,9 +339,10 @@ export function createBrowserControlApprovalStore({
     const destination = approvalField(value.destination, 'destination');
     const valueHash = approvalField(value.valueHash, 'valueHash');
     const tabId = Number(value.tabId);
+    const frameId = approvalFrame(value);
     const documentGeneration = Number(value.documentGeneration);
     if (!approvalId || !commandId || !action || !Number.isInteger(tabId) || tabId <= 0
-      || !Number.isInteger(documentGeneration) || documentGeneration < 1) return null;
+      || frameId == null || !Number.isInteger(documentGeneration) || documentGeneration < 1) return null;
     return {
       approvalId,
       approvalNonce,
@@ -344,6 +352,7 @@ export function createBrowserControlApprovalStore({
       leaseGeneration: Number.isInteger(leaseGeneration) && leaseGeneration >= 1 ? leaseGeneration : 0,
       action,
       tabId,
+      frameId,
       documentGeneration,
       state,
       ...(binding ? { binding } : {}),
@@ -353,7 +362,7 @@ export function createBrowserControlApprovalStore({
       ...(valueHash ? { valueHash } : {}),
       key: approvalKey({
         approvalId, approvalNonce, commandId, controllerId, leaseId,
-        leaseGeneration, action, tabId, documentGeneration, state, binding,
+        leaseGeneration, action, tabId, frameId, documentGeneration, state, binding,
         targetRole, targetName, destination, valueHash,
       }),
     };
@@ -433,7 +442,7 @@ export function createBrowserControlApprovalStore({
   function pending() {
     return [...requests.values()].map(({
       approvalId, approvalNonce, commandId, controllerId, leaseId, leaseGeneration,
-      tabId, documentGeneration, action, state, reason, binding, detail,
+      tabId, frameId, documentGeneration, action, state, reason, binding, detail,
       targetRole, targetName, destination, valueHash,
     }) => ({
       approvalId,
@@ -443,6 +452,7 @@ export function createBrowserControlApprovalStore({
       ...(leaseId ? { leaseId } : {}),
       ...(leaseGeneration ? { leaseGeneration } : {}),
       tabId,
+      frameId,
       documentGeneration,
       action,
       ...(state ? { state } : {}),

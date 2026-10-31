@@ -63,6 +63,53 @@ _LEASES: ContextVar[dict[str, _AuthorizationLease]] = ContextVar("browser_compan
 # grant is served first so an abandoned older grant can never shadow a fresh one.
 _RUNTIME_LEASES: dict[tuple[str, str, str, str], list[_AuthorizationLease]] = {}
 _RUNTIME_LEASES_LOCK = threading.Lock()
+_TRACKED_LEASES: list[_AuthorizationLease] = []
+_expiry_stop = threading.Event()
+_expiry: threading.Thread | None = None
+
+
+def _wipe_lease(lease: _AuthorizationLease) -> None:
+    object.__setattr__(lease, "result", None)
+
+
+def _ensure_expiry() -> None:
+    global _expiry
+    if _expiry is not None and _expiry.is_alive():
+        return
+    _expiry_stop.clear()
+    _expiry = threading.Thread(target=_expire_loop, name="browser-lease-expiry", daemon=True)
+    _expiry.start()
+
+
+def _expire_loop() -> None:
+    while not _expiry_stop.wait(0.05):
+        now = monotonic()
+        with _RUNTIME_LEASES_LOCK:
+            _purge_runtime_leases_locked(now)
+            for lease in list(_TRACKED_LEASES):
+                if lease.expires_at <= now:
+                    _wipe_lease(lease)
+            _TRACKED_LEASES[:] = [
+                lease for lease in _TRACKED_LEASES
+                if lease.result is not None and lease.expires_at > now
+            ]
+
+
+def clear_leases() -> None:
+    """Drop every pending lease payload and stop the idle worker."""
+    _expiry_stop.set()
+    worker = _expiry
+    if worker is not None:
+        worker.join(timeout=1)
+    with _RUNTIME_LEASES_LOCK:
+        for rows in _RUNTIME_LEASES.values():
+            for lease in rows:
+                _wipe_lease(lease)
+        _RUNTIME_LEASES.clear()
+        for lease in _TRACKED_LEASES:
+            _wipe_lease(lease)
+        _TRACKED_LEASES.clear()
+    _LEASES.set({})
 
 
 def set_store(_store: Any) -> None:
@@ -130,12 +177,17 @@ def grant_lease(
     leases = dict(_LEASES.get())
     leases[key] = lease
     _LEASES.set(leases)
+    with _RUNTIME_LEASES_LOCK:
+        _TRACKED_LEASES.append(lease)
     if identity is None:
+        _ensure_expiry()
         return
     runtime_key = (identity[0], identity[1], operation, context_id or parameter)
     with _RUNTIME_LEASES_LOCK:
+        _TRACKED_LEASES.append(lease)
         _RUNTIME_LEASES.setdefault(runtime_key, []).append(lease)
         _purge_runtime_leases_locked(now)
+    _ensure_expiry()
 
 
 def _take_context_lease(operation: str, context_id: str = "") -> dict[str, Any] | None:
@@ -143,9 +195,13 @@ def _take_context_lease(operation: str, context_id: str = "") -> dict[str, Any] 
     leases = dict(_LEASES.get())
     lease = leases.pop(key, None)
     _LEASES.set(leases)
-    if lease is None or lease.expires_at < monotonic():
+    if lease is None or lease.expires_at < monotonic() or lease.result is None:
+        if lease is not None:
+            _wipe_lease(lease)
         return None
-    return lease.result
+    payload = lease.result
+    _wipe_lease(lease)
+    return payload
 
 
 def _take_runtime_lease(
@@ -161,7 +217,13 @@ def _take_runtime_lease(
         lease = rows.pop()
         if not rows:
             del _RUNTIME_LEASES[runtime_key]
-    return lease.result
+    if lease is None or lease.expires_at < now or lease.result is None:
+        if lease is not None:
+            _wipe_lease(lease)
+        return None
+    payload = lease.result
+    _wipe_lease(lease)
+    return payload
 
 
 def _take_lease(

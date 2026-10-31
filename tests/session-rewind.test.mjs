@@ -256,9 +256,9 @@ test('the panel rewinds through the mutation on an authority and keeps the legac
   const panel = await read('extension/sidepanel.js');
   const fn = panel.slice(panel.indexOf('async function submitRewind('), panel.indexOf('function addMessage('));
   // The mutation runs before any local change or submit.
-  assert.ok(fn.indexOf('await rewindOnSessionAuthority(rowId)') > 0);
-  assert.ok(fn.indexOf('await rewindOnSessionAuthority(rowId)') < fn.indexOf('applyRewindLocally('));
-  assert.ok(fn.indexOf('await rewindOnSessionAuthority(rowId)') < fn.indexOf('await askHermes(plan.text'));
+  assert.ok(fn.indexOf('await rewindOnSessionAuthority(rowId, rewindScope)') > 0);
+  assert.ok(fn.indexOf('await rewindOnSessionAuthority(rowId, rewindScope)') < fn.indexOf('applyRewindLocally('));
+  assert.ok(fn.indexOf('await rewindOnSessionAuthority(rowId, rewindScope)') < fn.indexOf('await askHermes(plan.text'));
   // A plain submit after an authority rewind; the legacy socket keeps the truncate param.
   assert.match(fn, /\.\.\.\(rewind \? \{\} : \{ truncate: \{ rowId \} \}\)/);
   // A failed rewind leaves the transcript alone and uses the existing message.

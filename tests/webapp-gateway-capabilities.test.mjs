@@ -188,7 +188,7 @@ test('compaction beside a REST chat runs on the socket without adopting or creat
   const body = source.slice(start, end);
   assert.match(body, /sideSocket \? await ensureProfileWsConnection\(\) : await ensureActiveDashboardWsConnection\(\)/);
   assert.match(body, /if \(!sideSocket\) await ensureRemoteWsSession\(connection\)/, 'the panel session is left as it is');
-  assert.match(body, /\(!sideSocket && connection\.wsStoredSessionId\) \|\| settings\.sessionId/);
+  assert.match(body, /const durableId = viewedId/, 'the captured session is the mutation target');
   const caller = sliceBetween('async function compactCurrentSessionContext(', '\n// Session-authority dashboard: session.mutate');
   assert.match(caller, /compressRecord\.params\.sideSocket === true/);
 });

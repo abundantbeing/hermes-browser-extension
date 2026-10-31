@@ -184,8 +184,7 @@ export async function reconcileWorkspaceMove({ request, pending } = {}) {
   }
   const advanced = snapshot.revision - pending.expectedRevision;
   if (advanced > 0) {
-    const landed = samePath(snapshot.cwd, pending.cwd)
-      || (advanced === 1 && snapshot.cwd !== '' && !samePath(snapshot.cwd, pending.previousCwd));
+    const landed = samePath(snapshot.cwd, pending.cwd);
     return { outcome: landed ? 'applied' : 'conflict', snapshot, pending };
   }
   if (advanced === 0) {
@@ -398,8 +397,7 @@ export async function moveSessionToWorkspace({
         reason: 'readback-failed',
       };
     }
-    const agrees = readback.revision >= receipt.revision
-      && (samePath(readback.cwd, folder) || (readback.cwd !== '' && !samePath(readback.cwd, previousCwd)));
+    const agrees = readback.revision >= receipt.revision && samePath(readback.cwd, folder);
     if (!agrees) {
       return { status: 'unconfirmed', committed: true, reason: 'readback-mismatch', receipt, snapshot: readback, ...context };
     }

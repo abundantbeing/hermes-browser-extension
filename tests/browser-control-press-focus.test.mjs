@@ -152,7 +152,7 @@ test('an approved action does not run when the page moved to a restricted path o
   let presses = 0;
   const adapter = {
     contract: { enabled: true, actions: ['browser_press'] },
-    async inspect() { return { currentUrl: urls[0], hasUnsavedContent: false, focused: { role: 'textbox', name: 'Message', inputType: 'text' } }; },
+    async inspect() { return { currentUrl: urls[0], hasUnsavedContent: false, focused: { role: 'textbox', name: 'Message', inputType: 'text', identity: '0123456789abcdef0123456789abcdef' } }; },
     async execute() { presses += 1; return { status: 'pressed' }; },
   };
   const executor = createBrowserControlExecutor({ adapter, approvals, refs: createBrowserControlRefStore() });

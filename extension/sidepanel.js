@@ -339,11 +339,13 @@ import {
   readGatewaySessionStatus,
   remoteStoredSessionIdForGateway,
   runtimeModelFromSessionStatus,
+  sessionRuntimeFromSnapshot,
   WS_EVENTS,
   WS_METHODS,
 } from './lib/gateway-ws.mjs';
 import { createDashboardStreamWatchdog, dashboardWatchdogTimeoutAction, isDashboardIdleTimeout, matchesDashboardSessionEvent, shouldReattachDashboardStream } from './lib/dashboard-stream-watchdog.mjs';
 import { clearComposerDraft, loadComposerDraft, persistComposerDraft } from './lib/composer-draft.mjs';
+import { clearRewindRecovery, loadRewindRecovery, saveRewindRecovery } from './lib/rewind-recovery.mjs';
 import { bindComposerFrame } from './lib/composer-autogrow.mjs';
 import {
   BOT_CHAT_TITLE,
@@ -1426,6 +1428,8 @@ let modelSelectionTarget = 'chat';
 const modelMenuHome = { parent: els.modelMenu?.parentElement || null, next: els.modelMenu?.nextSibling || null };
 let modelSelectionVersion = 0;
 let modelOptionSelectionVersion = 0;
+const modelOptionWriteQueues = new Map();
+const modelSwitchWriteQueues = new Map();
 let pendingModelRuntimeAck = null;
 let pendingProfileSwitch = null;
 let lastRemoteDiagnostic = null;
@@ -2540,7 +2544,7 @@ const capabilityClientTokens = new WeakMap();
 let capabilityLastWsClient = null;
 let capabilityClientCounter = 0;
 let compactInFlight = false;
-let compactPending = null;
+let compactPending = new Map();
 let compactRecommendedHint = false;
 
 // Sanitizer-proof accessor: the file-write sanitizer redacts the literal
@@ -3681,7 +3685,7 @@ async function decideBrowserControlApproval(approved) {
     leaseGeneration: pendingApproval.leaseGeneration,
     action: pendingApproval.action,
     tabId: pendingApproval.tabId,
-    frameId: 0,
+    frameId: pendingApproval.frameId ?? 0,
     documentGeneration: pendingApproval.documentGeneration,
     state: pendingApproval.state,
   });
@@ -10726,24 +10730,45 @@ async function syncSessionModelOptions({
   if (sessionId !== settings.sessionId) return { state: 'stale' };
   const authority = authoritySessionConnection(sessionId);
   if (authority) {
-    // A session authority runs the session at its own level: a turn carries none, so the pick is
-    // sent to the session itself (config.set reasoning / fast), never only remembered here.
+    // Serialize the whole write/read-back transaction per gateway, profile and session.
+    const authoritySessionId = authority.wsSessionId;
+    const authorityClient = authority.client;
+    const key = JSON.stringify([settings.connectionTransport, settings.gatewayUrl, settings.activeProfile, authoritySessionId]);
+    const loadId = sessionLoadRequestId;
+    const scopeId = scopeRevision.current();
+    const profile = settings.activeProfile;
+    const isCurrent = () => optionVersion === modelOptionSelectionVersion && sessionId === settings.sessionId
+      && settings.activeProfile === profile && sessionLoadRequestId === loadId && scopeRevision.isCurrent(scopeId)
+      && key === JSON.stringify([settings.connectionTransport, settings.gatewayUrl, settings.activeProfile, authoritySessionId]);
     setStatus('warn', 'Hermes model options pending', 'Asking Hermes to run this session with the new Thinking, effort, and Fast mode.');
-    try {
-      const sent = await applyModelOptionPick((method, params) => authority.client.request(method, params), {
-        sessionId: authority.wsSessionId,
+    const previousWrite = modelOptionWriteQueues.get(key) || Promise.resolve();
+    const write = previousWrite.catch(() => undefined).then(async () => {
+      if (!isCurrent()) return { stale: true };
+      // Re-send both desired fields: an earlier pick may have failed after only one write.
+      const sent = await applyModelOptionPick((method, params) => authorityClient.request(method, params), {
+        sessionId: authoritySessionId,
         requested: requestedOptions,
-        previous: previousOptions,
+        previous: { thinkingEnabled: true, reasoningEffort: '__force__', fastMode: requestedOptions?.fastMode !== true },
       });
-      if (optionVersion !== modelOptionSelectionVersion || sessionId !== settings.sessionId) return { state: 'stale' };
-      setStatus('ok', 'Hermes model options confirmed', sent.length
-        ? 'Hermes runs this session with the new Thinking, effort, and Fast mode from its next turn.'
-        : 'This session already runs with these options.');
-      return { state: 'confirmed' };
+      const snapshot = await authorityClient.request('session.resume', { session_id: authoritySessionId, omit_messages: true });
+      const info = snapshot?.info;
+      const hasFast = typeof info?.fast === 'boolean' || (info && Object.hasOwn(info, 'service_tier') && (info.service_tier === null || typeof info.service_tier === 'string'));
+      return { sent, runtime: hasFast ? sessionRuntimeFromSnapshot(snapshot) : null };
+    });
+    modelOptionWriteQueues.set(key, write);
+    try {
+      const { runtime } = await write;
+      if (!isCurrent()) return { state: 'stale' };
+      const ack = modelOptionsRuntimeAckState({ requested: requestedOptions, runtime: runtime || {} });
+      setStatus(ack.state === 'confirmed' ? 'ok' : 'warn', ack.state === 'confirmed' ? 'Hermes model options confirmed' : 'Hermes model options pending', ack.detail);
+      return ack;
     } catch (error) {
-      if (optionVersion !== modelOptionSelectionVersion) return { state: 'stale' };
-      if (sessionId !== settings.sessionId) return { state: 'stale' };
-      return rollBackModelOptionPick(error, { previousOptions, previousPreferredModelOptions, previousSessionModelOptionBindings });
+      if (!isCurrent()) return { state: 'stale' };
+      // A multi-field write can partially commit; do not present an optimistic rollback as fact.
+      setStatus('error', 'Hermes model options failed', error?.message || String(error), { translateDetail: false });
+      return { state: 'failed', error };
+    } finally {
+      if (modelOptionWriteQueues.get(key) === write) modelOptionWriteQueues.delete(key);
     }
   }
   if (isRemoteWsMode()) {
@@ -11194,6 +11219,15 @@ function keepDraftModelPickPending(error, sessionId, { detail = '' } = {}) {
 // Null when the gateway has no session.mutate, so the legacy switch is tried. Throws when Hermes
 // refuses, so the caller puts the previous model back.
 async function switchAuthoritySessionModel(connection, liveSessionId, selected) {
+  const viewedId = settings.sessionId;
+  const loadId = sessionLoadRequestId;
+  const scopeId = scopeRevision.current();
+  const version = modelSelectionVersion;
+  const profile = settings.activeProfile;
+  const gatewayScope = JSON.stringify([settings.connectionTransport, settings.gatewayUrl]);
+  const isCurrent = () => settings.sessionId === viewedId && settings.activeProfile === profile
+    && sessionLoadRequestId === loadId && scopeRevision.isCurrent(scopeId) && modelSelectionVersion === version
+    && gatewayScope === JSON.stringify([settings.connectionTransport, settings.gatewayUrl]);
   const request = (method, params) => connection.client.request(method, params);
   const pick = {
     sessionId: liveSessionId,
@@ -11201,12 +11235,14 @@ async function switchAuthoritySessionModel(connection, liveSessionId, selected) 
     provider: selected?.provider || currentModelProviderSlug() || '',
   };
   let result = await switchSessionModel(request, pick);
+  if (!isCurrent()) return { state: 'stale' };
   if (result.status === 'unavailable') return null;
   if (result.status === 'confirm') {
     const question = result.message || 'Hermes asks you to confirm this model before it switches.';
     const agreed = typeof globalThis.confirm === 'function' && globalThis.confirm(question);
     if (!agreed) throw new Error(`${question} The model was not switched.`);
     result = await switchSessionModel(request, { ...pick, confirm: result.confirm });
+    if (!isCurrent()) return { state: 'stale' };
     if (result.status !== 'switched') throw new Error(result.message || 'Hermes did not switch the model.');
   }
   const runtime = result.runtime?.model
@@ -11229,18 +11265,33 @@ async function switchAuthoritySessionModel(connection, liveSessionId, selected) 
     return { state: 'pending', payload: result.receipt || null };
   }
   runtime.context_length = selected?.contextTokens || settings.modelContextTokens || 0;
-  applySessionRuntimeSnapshot({ sessionId: settings.sessionId || liveSessionId, runtime, source: 'Session model switch' });
+  applySessionRuntimeSnapshot({ sessionId: viewedId, runtime, source: 'Session model switch' });
   applyPendingModelRuntimeAck(runtime);
   setStatus('ok', 'Cloud model switched', `${modelProviderLabel(selected)} · ${modelDisplayName(selected)} is active for this session.`);
   return { state: 'confirmed', payload: result.receipt || null };
 }
 
 async function syncSessionModelLock(selected, { previousId = '', previousBinding = null, requestedDetail = '', statusDetail = '' } = {}) {
+  const viewedId = settings.sessionId;
+  const loadId = sessionLoadRequestId;
+  const scopeId = scopeRevision.current();
+  const version = modelSelectionVersion;
+  const profile = settings.activeProfile;
+  const gatewayScope = JSON.stringify([settings.connectionTransport, settings.gatewayUrl]);
+  const isCurrent = () => settings.sessionId === viewedId && settings.activeProfile === profile
+    && sessionLoadRequestId === loadId && scopeRevision.isCurrent(scopeId) && modelSelectionVersion === version
+    && gatewayScope === JSON.stringify([settings.connectionTransport, settings.gatewayUrl]);
   if (usesDashboardWsChatTransport()) {
     setStatus('warn', 'Cloud model switch pending', `${requestedDetail || modelDisplayName(selected) || settings.model} — waiting for the live Cloud session to confirm.`);
+    const queueKey = JSON.stringify([gatewayScope, profile, viewedId]);
+    const previousSwitch = modelSwitchWriteQueues.get(queueKey) || Promise.resolve();
+    const switching = previousSwitch.catch(() => undefined).then(async () => {
+      if (!isCurrent()) return { state: 'stale' };
     try {
       const connection = await ensureActiveDashboardWsConnection();
+      if (!isCurrent()) return { state: 'stale' };
       const liveSessionId = await ensureRemoteWsSession(connection);
+      if (!isCurrent() || (connection.wsStoredSessionId && connection.wsStoredSessionId !== viewedId)) return { state: 'stale' };
       if (connection.client.readyPayload?.session_authority === true) {
         const switched = await switchAuthoritySessionModel(connection, liveSessionId, selected);
         if (switched) return switched;
@@ -11251,10 +11302,12 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
         provider: selected?.provider || currentModelProviderSlug() || '',
       });
       const payload = await connection.client.request(request.method, request.params);
+      if (!isCurrent()) return { state: 'stale' };
       if (payload?.confirm_required) {
         throw new Error(payload.confirm_message || 'Hermes requires confirmation before switching to this model.');
       }
       const statusPayload = await connection.client.request(WS_METHODS.sessionStatus, { session_id: liveSessionId });
+      if (!isCurrent()) return { state: 'stale' };
       const runtime = runtimeModelFromSessionStatus(statusPayload);
       const ack = modelRuntimeAckState({
         requested: {
@@ -11271,7 +11324,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
       }
       runtime.context_length = runtimeContextTokens(statusPayload.runtime || statusPayload) || selected?.contextTokens || settings.modelContextTokens || 0;
       applySessionRuntimeSnapshot({
-        sessionId: settings.sessionId || liveSessionId,
+        sessionId: viewedId,
         runtime,
         source: 'Cloud model switch',
       });
@@ -11279,6 +11332,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
       setStatus('ok', 'Cloud model switched', `${modelProviderLabel(selected)} · ${modelDisplayName(selected)} is active for this session.`);
       return { state: 'confirmed', payload };
     } catch (error) {
+      if (!isCurrent()) return { state: 'stale' };
       if (previousId) {
         const remoteRollbackScope = updateBrowserModelScope({
           selectedModel: previousBinding || { modelId: previousId, rawModelId: previousId, contextTokens: 0 },
@@ -11299,6 +11353,10 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
       setStatus('error', 'Cloud model switch failed', error?.message || String(error), { translateDetail: false });
       return { state: 'failed', error };
     }
+    });
+    modelSwitchWriteQueues.set(queueKey, switching);
+    try { return await switching; }
+    finally { if (modelSwitchWriteQueues.get(queueKey) === switching) modelSwitchWriteQueues.delete(queueKey); }
   }
   if (isUnsavedBrowserDraftSession({ sessionId: settings.sessionId, sessions: availableSessions })) {
     setStatus(
@@ -11333,7 +11391,8 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
   }
   setStatus('warn', 'Model lock pending', `${requestedDetail || modelDisplayName(selected) || settings.model} — waiting for Hermes acknowledgement.`);
   try {
-    const payload = await requestSessionModelLock(selected);
+    const payload = await requestSessionModelLock(selected, { sessionId: viewedId });
+    if (!isCurrent()) return { state: 'stale' };
     const runtime = payload?.runtime || {};
     const ack = modelRuntimeAckState({
       requested: {
@@ -11358,6 +11417,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
     setStatus('warn', 'Model lock pending', ack.detail || 'Gateway accepted the lock request without full runtime confirmation.');
     return { state: 'pending', payload };
   } catch (error) {
+    if (!isCurrent()) return { state: 'stale' };
     if (keepDraftModelPickPending(error, settings.sessionId, { detail: requestedDetail || modelDisplayName(selected) || settings.model })) {
       return { state: 'pending', payload: null };
     }
@@ -20366,9 +20426,13 @@ async function fetchDashboardHistoryWithResume(durableSessionId = '') {
     storedSessionId: sid,
     profile: safeActiveProfile(),
   });
-  connection.wsSessionId = liveId;
-  connection.wsStoredSessionId = sid;
-  connection.profile = safeActiveProfile();
+  // A history read for a chat the person has already left must not replace the
+  // live binding of the chat now on screen.
+  if (String(settings.sessionId || '').trim() === sid) {
+    connection.wsSessionId = liveId;
+    connection.wsStoredSessionId = sid;
+    connection.profile = safeActiveProfile();
+  }
   return fetchSessionMessagesQuietly(liveId, { transport: 'dashboard-ws', connection });
 }
 
@@ -20891,7 +20955,13 @@ async function loadSessionMessages(sessionId = settings.sessionId, {
     const result = await fetchSessionMessagesQuietly(sessionId, { transport, connection: activeDashboardWsConnection || connection, allPages: true });
     if (!isCurrentRequest()) return false;
     scheduleLiveSessionPoll();
-    return commitFetchedSessionMessages(result, { sessionId: expectedSessionId, requestId, scopeRevisionId });
+    const committed = await commitFetchedSessionMessages(result, { sessionId: expectedSessionId, requestId, scopeRevisionId });
+    const recovery = loadRewindRecovery(composerDraftStorage(), { profile: safeActiveProfile(), sessionId: expectedSessionId });
+    if (committed && recovery && els.input && !String(els.input.value || '').trim()) {
+      els.input.value = recovery.text;
+      persistCurrentComposerDraft({ immediate: true });
+    }
+    return committed;
   } catch (error) {
     if (!isCurrentRequest()) return false;
     addMessage('system', `Could not load session messages: ${error?.message || String(error)}`);
@@ -22138,6 +22208,13 @@ function confirmRestoreMessage(row, record, anchor) {
 }
 
 async function submitRewind({ record, text, mode = 'edit' } = {}) {
+  const sessionId = String(settings.sessionId || '').trim();
+  const requestId = sessionLoadRequestId;
+  const scopeRevisionId = scopeRevision.current();
+  const isCurrent = () => requestId === sessionLoadRequestId
+    && scopeRevision.isCurrent(scopeRevisionId)
+    && String(settings.sessionId || '').trim() === sessionId;
+  const rewindScope = { sessionId, requestId, scopeRevisionId, isCurrent };
   const index = messages.indexOf(record);
   if (index === -1) return false;
   const plan = mode === 'restore' ? planRestore(messages, index) : planEdit(messages, index, text);
@@ -22146,12 +22223,26 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
   // (that would be wrapped a second time and shown as raw JSON).
   if (mode === 'restore') plan.text = messageDisplayText('user', plan.sourceText);
   if (!String(plan.text || '').trim()) return false;
+  const recoveryProfile = safeActiveProfile();
+  saveRewindRecovery(composerDraftStorage(), {
+    profile: recoveryProfile,
+    sessionId,
+    text: plan.text,
+    needsReload: false,
+  });
+  const keepRecovery = () => saveRewindRecovery(composerDraftStorage(), {
+    profile: recoveryProfile,
+    sessionId,
+    text: plan.text,
+    needsReload: true,
+  });
   // Resolve the durable row id: the record's own id first, else a display-text
   // match against live gateway history (newest-at-tail only for the last turn).
   let rowId = Number.isInteger(plan.rowId) ? plan.rowId : undefined;
   if (!Number.isInteger(rowId)) {
     try {
-      const result = await fetchDashboardHistoryWithResume(settings.sessionId);
+      const result = await fetchDashboardHistoryWithResume(sessionId);
+      if (!isCurrent()) { keepRecovery(); return false; }
       const history = Array.isArray(result?.messages) ? result.messages : [];
       rowId = resolveRowIdByDisplayText(history, messageDisplayText('user', plan.sourceText), {
         displayText: messageDisplayText,
@@ -22161,6 +22252,7 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
       rowId = undefined;
     }
   }
+  if (!isCurrent()) { keepRecovery(); return false; }
   if (!Number.isInteger(rowId)) {
     // Fail closed: no address means no truncation. Send the text as a new turn
     // and say so, leaving the saved conversation untouched.
@@ -22170,13 +22262,14 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
   // A session authority refuses truncate keys on prompt.submit: it takes the
   // turns back with a fenced session.mutate rewind first, then a plain submit.
   // Nothing local changes until the gateway has said it rewound.
-  const rewind = await rewindOnSessionAuthority(rowId);
+  const rewind = await rewindOnSessionAuthority(rowId, rewindScope);
+  if (!isCurrent()) { keepRecovery(); return false; }
   const authorityRewound = rewind?.status === 'rewound';
   if (rewind && !authorityRewound) {
     if (rewind.status === 'indeterminate') {
       // The rewind may have been applied although its answer was lost: the turns are
       // settled from the gateway's history, never guessed.
-      await resyncAfterAuthorityRewind(messages.slice(), index, plan.text);
+      await resyncAfterAuthorityRewind(messages.slice(), index, plan.text, rewindScope);
     } else {
       addMessage('system', translateUiText('Edit failed. Your conversation was not changed.'));
     }
@@ -22198,10 +22291,11 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
   } catch {
     accepted = false;
   }
+  if (!isCurrent()) { keepRecovery(); return false; }
   if (!accepted && authorityRewound) {
     // The gateway already took the turns back, so the snapshot would show turns
     // that no longer exist there. Show what it has and give the text back.
-    await resyncAfterAuthorityRewind(snapshot, index, plan.text);
+    await resyncAfterAuthorityRewind(snapshot, index, plan.text, rewindScope);
     return false;
   }
   if (!accepted) {
@@ -22220,24 +22314,28 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
       if (target && !Number.isInteger(target.rowId)) target.rowId = newRowId;
     }
     await trimAndSaveMessages();
+    if (!isCurrent()) { keepRecovery(); return false; }
   }
   if (authorityRewound) {
     // The authority's receipt names no survivors (rows before the target keep their ids);
     // the new turn's row id is read back from history.
     try {
-      const history = await fetchDashboardHistoryWithResume(settings.sessionId);
+      const history = await fetchDashboardHistoryWithResume(sessionId);
+      if (!isCurrent()) { keepRecovery(); return false; }
       messages = bindRowIdsFromHistory(messages, Array.isArray(history?.messages) ? history.messages : [], { displayText: messageDisplayText });
       await trimAndSaveMessages();
     } catch {
       // Unbound rows fail closed: Edit and Restore address nothing they cannot match.
     }
   }
-  return true;
+  clearRewindRecovery(composerDraftStorage(), { profile: recoveryProfile, sessionId });
+  return isCurrent();
 }
 
 // Edit or Restore on a session authority: session.mutate operation=rewind. Returns null when this
 // connection is not a session authority (the legacy truncate keys apply), else the typed outcome.
-async function rewindOnSessionAuthority(rowId) {
+async function rewindOnSessionAuthority(rowId, { sessionId, isCurrent } = {}) {
+  if (!isCurrent()) return { status: 'not_sent', reason: 'view_changed' };
   if (!usesDashboardWsChatTransport()) return null;
   let connection;
   try {
@@ -22245,15 +22343,20 @@ async function rewindOnSessionAuthority(rowId) {
   } catch {
     return null;
   }
+  if (!isCurrent()) return { status: 'not_sent', reason: 'view_changed' };
   if (!usesAuthorityRewind(connection?.client)) return null;
   try {
-    const liveId = await ensureRemoteWsSession(connection);
+    // The rewind helper resumes the captured durable id itself. Do not use the
+    // connection's mutable binding, which another chat can replace while waiting.
     return await rewindSessionToMessage({
-      request: (method, params, options) => connection.client.request(method, params, options),
+      request: (method, params, options) => {
+        if (!isCurrent()) throw new Error('The edited chat is no longer open.');
+        return connection.client.request(method, params, options);
+      },
       dashboardWs: true,
       getReadyPayload: () => (connection.client.readyState === 1 ? connection.client.readyPayload || null : null),
       unsupportedMethods: capabilityRuntime.unsupportedMethods,
-      sessionId: connection.wsStoredSessionId || liveId,
+      sessionId,
       rowId,
     });
   } catch (error) {
@@ -22261,14 +22364,17 @@ async function rewindOnSessionAuthority(rowId) {
   }
 }
 
-async function resyncAfterAuthorityRewind(snapshot, index, text) {
+async function resyncAfterAuthorityRewind(snapshot, index, text, { sessionId, requestId, scopeRevisionId, isCurrent } = {}) {
+  if (!isCurrent()) return;
   let synced = false;
   try {
-    const result = await fetchDashboardHistoryWithResume(settings.sessionId);
-    synced = await commitFetchedSessionMessages(result, { sessionId: settings.sessionId });
+    const result = await fetchDashboardHistoryWithResume(sessionId);
+    if (!isCurrent()) return;
+    synced = await commitFetchedSessionMessages(result, { sessionId, requestId, scopeRevisionId });
   } catch {
     synced = false;
   }
+  if (!isCurrent()) return;
   if (!synced) {
     messages = snapshot.slice(0, Math.max(0, index));
     renderMessagesFromStorage();
@@ -24475,6 +24581,12 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
 async function compactCanonicalSessionContext({ automaticRecovery = false, sideSocket = false } = {}) {
   // The session the press was for; the view may move on while the call runs.
   const viewedId = settings.sessionId;
+  const loadId = sessionLoadRequestId;
+  const scopeId = scopeRevision.current();
+  const scopeKey = JSON.stringify([settings.connectionTransport, settings.connectionMode, settings.gatewayMode, settings.gatewayUrl, settings.activeProfile, viewedId]);
+  const isCurrent = () => settings.sessionId === viewedId && sessionLoadRequestId === loadId
+    && scopeRevision.isCurrent(scopeId)
+    && scopeKey === JSON.stringify([settings.connectionTransport, settings.connectionMode, settings.gatewayMode, settings.gatewayUrl, settings.activeProfile, viewedId]);
   const verdict = capabilityRuntime.verdict('sessionCompress', { sessionId: viewedId });
   if (!verdict.allowed) {
     const message = compactResultMessage({ status: 'unavailable', reason: verdict.reasonCode, method: verdict.params?.method }, { t });
@@ -24487,20 +24599,28 @@ async function compactCanonicalSessionContext({ automaticRecovery = false, sideS
     // Beside a REST chat the socket only speaks for the session by its durable id: it never adopts or
     // creates a live session, so the panel's own session is left as it is.
     const connection = sideSocket ? await ensureProfileWsConnection() : await ensureActiveDashboardWsConnection();
+    if (!isCurrent()) return { ok: false, reason: 'stale' };
     if (!sideSocket) await ensureRemoteWsSession(connection);
-    const durableId = (!sideSocket && connection.wsStoredSessionId) || settings.sessionId;
+    if (!isCurrent() || (!sideSocket && connection.wsStoredSessionId && connection.wsStoredSessionId !== viewedId)) {
+      return { ok: false, reason: 'stale' };
+    }
+    const durableId = viewedId;
+    const existingPending = compactPending.get(scopeKey) || null;
     const result = await compactSessionCanonical({
       request: (method, params, options) => connection.client.request(method, params, options),
       dashboardWs: true,
       getReadyPayload: () => (connection.client.readyState === 1 ? connection.client.readyPayload || null : null),
       unsupportedMethods: capabilityRuntime.unsupportedMethods,
       sessionId: durableId,
-      pending: compactPending && compactPending.sessionId === durableId ? compactPending : null,
+      pending: existingPending,
     });
-    compactPending = result.status === 'not_committed' ? result.pending : null;
+    if (result.pending) compactPending.set(scopeKey, result.pending);
+    else if (existingPending && ['compacted', 'noop', 'aborted', 'stale', 'blocked', 'denied', 'failed'].includes(result.status)) compactPending.delete(scopeKey);
     // A refusal is that session's, not the connection's: remember it per session.
     if (result.status === 'compacted') capabilityRuntime.noteOperation('sessionCompress', { ok: true }, { sessionId: viewedId });
     else if (result.status === 'blocked' || result.status === 'denied') capabilityRuntime.noteOperation('sessionCompress', { ok: false, detail: result.reason }, { sessionId: viewedId });
+    if (result.status === 'compacted') sessionContextStore = markContextBreakdownStale(sessionContextStore, durableId);
+    if (!isCurrent()) return { ok: result.status === 'compacted' || result.status === 'noop', reason: 'stale', sessionId: durableId, payload: result };
     refreshCapabilityViews();
     const message = compactResultMessage(result, { t });
     if (!automaticRecovery || result.status !== 'compacted') {
@@ -24509,9 +24629,7 @@ async function compactCanonicalSessionContext({ automaticRecovery = false, sideS
       showOperationToast({ kind: message.level === 'warn' ? 'warn' : 'ok', title: message.title, detail: message.detail, duration: 12_000 });
     }
     if (result.status === 'compacted') {
-      // The breakdown measured the transcript that was just replaced.
-      // The one that was compacted, which is not necessarily the one on screen now.
-      sessionContextStore = markContextBreakdownStale(sessionContextStore, durableId);
+      // The breakdown for the compacted session was marked stale above.
       refreshSessionContextTelemetry({ force: true });
       await clearContextDeliveryState();
       await loadSessions({ quiet: true });

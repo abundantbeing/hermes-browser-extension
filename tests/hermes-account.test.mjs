@@ -11,7 +11,7 @@ import {
   accountOriginsFor,
   buildAuthorizeUrl,
   buildRedirectUri,
-  createAccountStore,
+  createAccountStore as createStore,
   createHermesAccount,
   dialWithAccountTicket,
   generatePkce,
@@ -28,6 +28,14 @@ import { gatewayWebSocketProtocols } from '../extension/lib/gateway-ws.mjs';
 
 const ORIGIN = 'https://hermes.example.com';
 const REDIRECT = 'http://127.0.0.1:51234/hermes-browser-callback';
+
+let lockTail = Promise.resolve();
+const locks = { request(_name, callback) {
+  const result = lockTail.then(callback);
+  lockTail = result.catch(() => {});
+  return result;
+} };
+const createAccountStore = (options) => createStore({ ...options, locks });
 
 function memoryArea() {
   const data = {};
@@ -307,6 +315,34 @@ test('signIn runs authorize -> loopback code -> token exchange, stores the token
   assert.ok(storageArea.data[ACCOUNT_STORAGE_KEY][ORIGIN].refreshToken);
   // /api/auth/me was asked with the bearer, no cookie
   assert.equal(calls.find((call) => call.path === '/api/auth/me').headers.Authorization, 'Bearer at-1');
+});
+
+test('a delayed identity response cannot rewrite a newer sign-in', async () => {
+  const webRequestApi = { onBeforeRequest: fakeEvent() };
+  let entered;
+  let release;
+  const started = new Promise((resolve) => { entered = resolve; });
+  const gate = new Promise((resolve) => { release = resolve; });
+  const h = harness({
+    webRequestApi,
+    responses: {
+      '/auth/native/token': json(200, tokens(1)),
+      '/api/auth/me': async () => { entered(); await gate; return json(200, { user_id: 'old-user' }); },
+    },
+    openWindow: async (url) => {
+      const p = new URL(url).searchParams;
+      queueMicrotask(() => webRequestApi.onBeforeRequest.fire({ url: `${p.get('redirect_uri')}?code=c&state=${p.get('state')}` }));
+      return { close: async () => {} };
+    },
+  });
+  const pending = h.account.signIn({ origin: ORIGIN });
+  await started;
+  await h.store.save(new AccountSession({ origin: ORIGIN, accessToken: 'new-access', refreshToken: 'new-refresh', userId: 'new-user', expiresAt: 9999 }));
+  release();
+  await pending;
+  const stored = await h.store.get(ORIGIN);
+  assert.equal(stored.refreshToken, 'new-refresh');
+  assert.equal(stored.userId, 'new-user');
 });
 
 test('with several providers the authorize URL leaves the choice to the gateway', async () => {

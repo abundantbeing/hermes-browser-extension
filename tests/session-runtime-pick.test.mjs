@@ -153,7 +153,7 @@ test('the panel reads the opened session\'s own model and level, and never shows
 test('the panel sends a pick to the session authority and keeps the legacy path for other sockets', () => {
   const sync = functionSource('syncSessionModelOptions');
   assert.ok(sync.indexOf('authoritySessionConnection(sessionId)') < sync.indexOf('if (isRemoteWsMode())'), 'an authority is asked before the old pending notice');
-  assert.match(sync, /applyModelOptionPick\(\(method, params\) => authority\.client\.request\(method, params\)/);
+  assert.match(sync, /applyModelOptionPick\(\(method, params\) => authorityClient\.request\(method, params\)/);
   assert.match(functionSource('authoritySessionConnection'), /readyPayload\?\.session_authority !== true/);
   const lock = functionSource('syncSessionModelLock');
   assert.ok(lock.indexOf('switchAuthoritySessionModel(connection, liveSessionId, selected)') < lock.indexOf('buildSessionModelSwitchRequest('));

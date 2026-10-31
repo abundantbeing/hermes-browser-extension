@@ -113,7 +113,7 @@ test('the key is not pressed when focus moved to a different element while the c
 });
 
 test('the key goes out when the same element still has focus after the approval', async () => {
-  const same = { role: 'generic', name: 'Cancel', inputType: '' };
+  const same = { role: 'generic', name: 'Cancel', inputType: '', identity: '0123456789abcdef0123456789abcdef' };
   const { approvals, executor, presses, inspects } = fixture([same, { ...same }]);
   const running = executor.execute(frame({ key: ' ' }), { scope: SCOPE });
   await settle();
@@ -125,13 +125,13 @@ test('the key goes out when the same element still has focus after the approval'
   assert.equal(inspects(), 2, 'focus was read before the card and again after it');
 });
 
-test('focus that was unknown stays unknown, and one that becomes readable (or unreadable) is a change', async () => {
+test('unknown focus cannot authorize a key, even when it stays unknown', async () => {
   const unknown = fixture([null, null]);
   const first = unknown.executor.execute(frame({ key: ' ' }), { scope: SCOPE });
   await settle();
   assert.equal(unknown.approvals.grant({ ...unknown.approvals.pending()[0], state: 'paused' }).ok, true);
-  assert.equal((await first).ok, true);
-  assert.equal(unknown.presses(), 1);
+  assert.equal((await first).error.code, 'focus_changed');
+  assert.equal(unknown.presses(), 0);
 
   const turned = fixture([null, { role: 'button', name: 'Delete account', inputType: '' }]);
   const second = turned.executor.execute(frame({ key: ' ' }), { scope: SCOPE });

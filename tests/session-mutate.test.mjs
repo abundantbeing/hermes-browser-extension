@@ -450,9 +450,9 @@ test('reconcile never writes and tells apart applied, not committed, conflict an
   const applied = fakeGateway({ cwd: ATLAS, revision: 8 });
   assert.equal((await reconcileWorkspaceMove({ request: applied.request, pending })).outcome, 'applied');
 
-  // The gateway expanded the path, so it does not match textually: one revision step off our fence still counts.
+  // A changed folder is not proof that an alias expanded to that folder.
   const expanded = fakeGateway({ cwd: '/srv/atlas', revision: 8 });
-  assert.equal((await reconcileWorkspaceMove({ request: expanded.request, pending: { ...pending, cwd: '~/code/atlas' } })).outcome, 'applied');
+  assert.equal((await reconcileWorkspaceMove({ request: expanded.request, pending: { ...pending, cwd: '~/code/atlas' } })).outcome, 'conflict');
 
   const absent = fakeGateway();
   const notCommitted = await reconcileWorkspaceMove({ request: absent.request, pending });
@@ -508,6 +508,25 @@ test('a receipt whose read-back disagrees is unconfirmed, not success', async ()
   assert.equal(result.committed, true);
   assert.equal(result.reason, 'readback-mismatch');
   assert.equal(result.receipt.revision, 8);
+});
+
+test('a different folder at one revision after a lost answer is a conflict', async () => {
+  const gateway = fakeGateway({ cwd: '/home/ana/code/beta', revision: 8 });
+  const pending = { sessionId: SESSION, requestId: 'lost', expectedRevision: 7, expectedGeneration: 2, cwd: ATLAS, previousCwd: SCRATCH };
+  assert.equal((await reconcileWorkspaceMove({ request: gateway.request, pending })).outcome, 'conflict');
+});
+
+test('a later move to a third folder after a receipt is unconfirmed', async () => {
+  const gateway = fakeGateway();
+  const original = gateway.request;
+  gateway.request = async (method, params) => {
+    const result = await original(method, params);
+    if (method === 'session.mutate') { gateway.state.revision += 1; gateway.state.cwd = '/home/ana/code/beta'; }
+    return result;
+  };
+  const result = await move(gateway);
+  assert.equal(result.status, 'unconfirmed');
+  assert.equal(result.reason, 'readback-mismatch');
 });
 
 test('a receipt whose read-back cannot be fetched is unconfirmed with the committed flag', async () => {

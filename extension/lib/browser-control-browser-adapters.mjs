@@ -704,10 +704,26 @@ function pageProbe(mode, direction = '') {
     });
     const dirtyChecks = [...document.querySelectorAll('input[type="checkbox"], input[type="radio"]')]
       .some((element) => element.checked !== element.defaultChecked);
-    // What has keyboard focus, so a Space press can be judged as the click it is. An
-    // element inside an open shadow root is followed; an embedded frame is reported as one.
+    // Follow open and closed shadow roots using the extension-only browser APIs.
     let active = document.activeElement;
-    while (active && active.shadowRoot && active.shadowRoot.activeElement) active = active.shadowRoot.activeElement;
+    let shadowKnown = true;
+    const seen = new Set();
+    while (active && active !== document.body && active !== document.documentElement) {
+      if (seen.has(active)) { shadowKnown = false; break; }
+      seen.add(active);
+      let root;
+      try {
+        const domApi = globalThis.chrome?.dom || globalThis.browser?.dom;
+        if (typeof domApi?.openOrClosedShadowRoot === 'function') root = domApi.openOrClosedShadowRoot(active);
+        else if ('openOrClosedShadowRoot' in active) root = active.openOrClosedShadowRoot;
+        else { shadowKnown = false; break; }
+      } catch {
+        shadowKnown = false;
+        break;
+      }
+      if (!root?.activeElement) break;
+      active = root.activeElement;
+    }
     let focused = { role: '', name: '', inputType: '' };
     if (active && active !== document.body && active !== document.documentElement) {
       const tag = String(active.tagName || '').toUpperCase();
@@ -723,12 +739,33 @@ function pageProbe(mode, direction = '') {
       const name = String(active.getAttribute('aria-label') || labelled || labelFromValue || (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable ? '' : active.innerText) || active.title || active.alt || active.placeholder || active.name || '')
         .replace(/\s+/g, ' ').trim().slice(0, 200);
       const autocomplete = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ? String(active.autocomplete || '').trim().slice(0, 80) : '';
+      // Keep identities in the extension's isolated world, never on the DOM.
+      let identity = '';
+      if (!embeds && shadowKnown) {
+        try {
+          const key = '__hermesBrowserFocusIdentities';
+          let state = globalThis[key];
+          if (!state || state.document !== document) {
+            state = { document, nodes: new WeakMap() };
+            globalThis[key] = state;
+          }
+          identity = state.nodes.get(active) || '';
+          if (!identity) {
+            const bytes = crypto.getRandomValues(new Uint8Array(16));
+            identity = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+            state.nodes.set(active, identity);
+          }
+        } catch {
+          // No identity means an approval-dependent press must fail closed.
+        }
+      }
       focused = {
         role,
         name,
         inputType: tag === 'INPUT' || tag === 'BUTTON' ? inputType : '',
         ...(autocomplete ? { autocomplete } : {}),
         ...(embeds ? { inFrame: true } : {}),
+        ...(identity ? { identity } : {}),
       };
     }
     return { hasUnsavedContent: dirtyText || dirtyChecks, focused };
@@ -797,6 +834,7 @@ async function inspectPage(browserApi, scope, signal, { light = false } = {}) {
           inputType: compact(read.inputType, 40),
           ...(compact(read.autocomplete, 80) ? { autocomplete: compact(read.autocomplete, 80) } : {}),
           ...(read.inFrame === true ? { inFrame: true } : {}),
+          ...(/^[a-f0-9]{32}$/.test(read.identity || '') ? { identity: read.identity } : {}),
         };
       }
     } catch {
@@ -1911,7 +1949,7 @@ function createChromiumCdpAdapter({
     return url;
   }
 
-  async function runWithSession(action, args, scope, signal, target, destination, { allowLocalDocuments = false } = {}) {
+  async function runWithSession(action, args, scope, signal, target, destination, { allowLocalDocuments = false, expectedFocus = null } = {}) {
     return withSession(scope, signal, async (session) => {
       const { send, enable } = session;
       const framing = action === 'browser_snapshot' ? {} : await assertFramedTargetsReadable(send, enable, signal, { target, destination });
@@ -2094,6 +2132,18 @@ function createChromiumCdpAdapter({
         return { status: 'selected' };
       }
       if (action === 'browser_press') {
+        const frameId = Math.max(0, Number(scope.frameId) || 0);
+        if (frameId !== 0) {
+          throw codedError('focus_changed', 'A key press inside an embedded frame cannot be bound to the focused control, so it was not sent.');
+        }
+        if (expectedFocus) {
+          const current = await inspectPage(browserApi, scope, signal);
+          const approved = String(expectedFocus.identity || '');
+          const actual = String(current?.focused?.identity || '');
+          if (!/^[a-f0-9]{32}$/.test(approved) || approved !== actual) {
+            throw codedError('focus_changed', 'Focus moved before the approved key could be sent.');
+          }
+        }
         const { down, up } = keyEventFields(args);
         await send('Input.dispatchKeyEvent', down);
         await send('Input.dispatchKeyEvent', up);
@@ -2146,7 +2196,7 @@ function createChromiumCdpAdapter({
 
   async function execute(action, args = {}, {
     scope = {}, signal, target = null, destination = null, leasedTabIds = [], ownedTabIds = [], currentWindowId = null,
-    allowLocalDocuments = false,
+    allowLocalDocuments = false, expectedFocus = null,
   } = {}) {
     if (!contract.actions.includes(action)) throw new Error(`Action ${action} is not supported by the Chromium adapter.`);
     assertNotAborted(signal);
@@ -2186,7 +2236,7 @@ function createChromiumCdpAdapter({
     }
     if (action === 'browser_navigate') return navigate(args, scope, signal);
     if (action === 'browser_back') return goBack(scope, signal);
-    return runWithSession(action, args, scope, signal, target, destination, { allowLocalDocuments });
+    return runWithSession(action, args, scope, signal, target, destination, { allowLocalDocuments, expectedFocus });
   }
 
   // Waits for the page to react to an action. Never throws: any failure is

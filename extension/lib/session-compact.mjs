@@ -200,6 +200,14 @@ export async function compactSessionCanonical({
     if (pending.sessionId !== target) throw new TypeError('The pending compaction belongs to a different session.');
     const settled = await reconcileCompaction({ request, pending });
     if (settled.outcome === 'unreadable') return { status: 'indeterminate', pending, reason: settled.reason, message: settled.message };
+    if (pending.receipt) {
+      const receipt = pending.receipt;
+      const generation = isInteger(receipt.execution_generation) ? receipt.execution_generation : null;
+      if (settled.snapshot.revision >= receipt.revision && (generation === null || settled.snapshot.generation >= generation)) {
+        return compactedResult({ snapshot: settled.snapshot, receipt, requestId: pending.requestId, reconciled: true });
+      }
+      return { status: 'unconfirmed', committed: true, reason: 'readback-mismatch', receipt, snapshot: settled.snapshot, pending };
+    }
     if (settled.outcome === 'moved') return { status: 'indeterminate', pending, reason: 'session-moved', snapshot: settled.snapshot };
     resend = { pending, snapshot: settled.snapshot };
   }
@@ -241,7 +249,7 @@ export async function compactSessionCanonical({
       requestId: params.request_id,
       expectedRevision: params.expected_revision,
       expectedGeneration: params.expected_generation,
-      focus: clean(focus),
+      focus: clean(params.payload.focus),
     };
 
     let receipt;
@@ -311,6 +319,7 @@ export async function compactSessionCanonical({
         committed: true,
         reason: 'readback-failed',
         receipt,
+        pending: { ...pendingCompaction, receipt },
         summary,
         message: describeTransportFailure(error).message,
         ...context,
@@ -320,7 +329,7 @@ export async function compactSessionCanonical({
     const agrees = readback.revision >= receipt.revision
       && (receiptGeneration === null || readback.generation >= receiptGeneration);
     if (!agrees) {
-      return { status: 'unconfirmed', committed: true, reason: 'readback-mismatch', receipt, summary, snapshot: readback, ...context };
+      return { status: 'unconfirmed', committed: true, reason: 'readback-mismatch', receipt, summary, snapshot: readback, pending: { ...pendingCompaction, receipt }, ...context };
     }
     return compactedResult({ snapshot: readback, receipt, before, requestId: params.request_id });
   }
