@@ -117,6 +117,10 @@ function chromiumApis({ failMethod = '' } = {}) {
     scripting: {
       executeScript: async (details) => {
         calls.push(['executeScript', details.target]);
+        // The real inspect probe always reports focus; this page has nothing focused.
+        if (Array.isArray(details.args) && details.args.includes('inspect')) {
+          return [{ result: { hasUnsavedContent: false, focused: { role: '', name: '', inputType: '' } } }];
+        }
         return [{ result: { hasUnsavedContent: false } }];
       },
     },
@@ -2639,6 +2643,33 @@ test('browser_press: the classifier and the adapter agree on every key spelling'
     if (sendsEnter) assert.equal(decision.reason, 'submission-key', `${label} sends Enter`);
     else if (sendsPaste) assert.equal(decision.reason, 'clipboard-paste', `${label} sends a paste shortcut`);
     else assert.equal(decision.risk, BROWSER_CONTROL_RISKS.SAFE, `${label} sends ${dispatched.key}`);
+  }
+});
+
+test('browser_press: page focus passes a key, while focus that cannot be read or sits in a frame passes only Tab', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const press = async (focusRead, key) => {
+    const chromium = chromiumApis();
+    chromium.api.scripting.executeScript = async () => {
+      if (focusRead === 'throws') throw new Error('Cannot access contents of the page');
+      return [{ result: { hasUnsavedContent: false, ...(focusRead ? { focused: focusRead } : {}) } }];
+    };
+    let error = null;
+    try {
+      await createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_press', { key }, { scope, signal: openSignal() });
+    } catch (caught) { error = caught; }
+    return { error, sent: chromium.calls.filter((call) => call[2] === 'Input.dispatchKeyEvent').length };
+  };
+  const page = { role: '', name: '', inputType: '' };
+  assert.deepEqual(await press(page, 'ArrowDown'), { error: null, sent: 2 }, 'the page itself has focus');
+  for (const unknown of ['throws', null, { role: 'frame', name: 'Payment', inputType: '' }, { ...page, inFrame: true }]) {
+    const label = JSON.stringify(unknown);
+    const held = await press(unknown, 'ArrowDown');
+    assert.equal(held.error?.code, 'focus_changed', label);
+    assert.equal(held.sent, 0, `${label}: nothing was sent`);
+    assert.deepEqual(await press(unknown, 'Tab'), { error: null, sent: 2 }, `${label}: Tab still moves focus`);
+    assert.equal((await press(unknown, 'Shift+Tab')).sent, 2, `${label}: Shift+Tab too`);
+    assert.equal((await press(unknown, 'Control+Tab')).sent, 0, `${label}: a modified Tab is not plain Tab`);
   }
 });
 
