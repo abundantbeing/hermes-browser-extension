@@ -57,7 +57,7 @@ _PNG_PREFIX = "data:image/png;base64,"
 _SCREENSHOT_KEEP = 8
 _SCREENSHOT_MAX_AGE_SECONDS = 3600
 # How often the idle reaper looks. An hour's expiry needs no finer clock, and a thread waking 20 times a
-# second inside the gateway made a closed controller's disconnect late often enough to fail the socket tests.
+# second inside the gateway made a closed controller's disconnect late often enough to fail the control tests.
 _SCREENSHOT_PRUNE_INTERVAL_SECONDS = 60.0
 
 _CLOUD_METADATA_HOSTS = frozenset({"metadata.google.internal", "metadata.goog", "instance-data", "100.100.100.200"})
