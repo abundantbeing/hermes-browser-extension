@@ -56,9 +56,14 @@ test('a different named or default webapp profile is never reused', async () => 
   }
 });
 
-test('a URL alone does not prove the currently selected Webapp profile', async () => {
+test('a Webapp tab is reused for the profile it shows now, not only the one in its URL', async () => {
   const target = resolveWebappTarget({ connectionMode: 'local', activeProfile: 'work' });
-  assert.equal(await findOpenWebappTab({ query: async () => [{ id: 1, url: target.url }] }, target), null);
+  const tabsApi = { query: async () => [{ id: 1, url: target.url }] };
+  assert.equal(await findOpenWebappTab(tabsApi, target, { selectedProfile: async () => 'personal' }), null, 'switched to another profile');
+  assert.equal(await findOpenWebappTab(tabsApi, target, { selectedProfile: async () => { throw new Error('unreadable'); } }), null, 'unreadable tab');
+  assert.equal((await findOpenWebappTab(tabsApi, target, { selectedProfile: async () => 'work' }))?.id, 1);
+  assert.equal((await findOpenWebappTab(tabsApi, target))?.id, 1, 'without a reader, the launch profile decides');
+  assert.equal(await findOpenWebappTab({ query: async () => [{ id: 2, url: `${target.origin}/?profile=personal` }] }, target), null);
 });
 
 test('without cross-document locks, separate stores do not share persistent credentials', async () => {

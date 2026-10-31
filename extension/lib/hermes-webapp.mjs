@@ -158,9 +158,14 @@ function tabUrl(tab) {
   }
 }
 
-/** A URL is only a launch hint, not proof of the tab's current profile. */
+/**
+ * The open tab showing this Webapp on the target's profile, or null. A URL is only a launch hint,
+ * so a `selectedProfile` reader of the tab's live profile wins when a caller has one. The buttons
+ * pass none (reading the tab would script into it, which a Webapp sign-in kept off must never
+ * do), so the profile the tab was launched for (its `profile` parameter) must match: the button
+ * returns to its own workspace and never switches to a tab launched for another profile.
+ */
 export async function findOpenWebappTab(tabsApi, target, { selectedProfile = null } = {}) {
-  if (typeof selectedProfile !== 'function') return null;
   if (typeof tabsApi?.query !== 'function') return null;
   let tabs;
   try {
@@ -175,8 +180,10 @@ export async function findOpenWebappTab(tabsApi, target, { selectedProfile = nul
     const url = tabUrl(tab);
     if (!url || url.origin !== target.origin) continue;
     if (target.basePath && url.pathname !== target.basePath && !url.pathname.startsWith(`${target.basePath}/`)) continue;
-    let profile;
-    try { profile = await selectedProfile(tab); } catch { continue; }
+    let profile = url.searchParams.get('profile') || '';
+    if (typeof selectedProfile === 'function') {
+      try { profile = await selectedProfile(tab); } catch { continue; }
+    }
     if (typeof profile !== 'string' || (profile.toLowerCase() === 'default' ? '' : profile) !== target.profile) continue;
     candidates.push({ tab, active: tab.active === true, accessed: Number(tab.lastAccessed) || 0 });
   }
