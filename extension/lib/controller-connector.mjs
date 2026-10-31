@@ -45,6 +45,10 @@ const CLOUD_TRANSPORTS = new Set([
   CONNECTION_TRANSPORTS.REMOTE_DASHBOARD,
 ]);
 const DEFAULT_CONNECT_TIMEOUT_MS = 15_000;
+// Chromium stops an extension service worker after 30 seconds without events, and a socket message is the
+// event that keeps it running; the gateway answers a heartbeat with one. The once-a-minute heartbeat alarm
+// alone let the worker stop, and the control socket with it, for half of every minute.
+const DEFAULT_KEEPALIVE_MS = 20_000;
 
 function asError(error, fallback) {
   return error instanceof Error ? error : new Error(String(error || fallback));
@@ -108,12 +112,14 @@ function openControllerSocket({
   onFrame,
   onClose,
   timeoutMs,
+  keepAliveMs = DEFAULT_KEEPALIVE_MS,
 }) {
   if (!WebSocketImpl) return Promise.reject(new Error('WebSocket is unavailable for controller transport.'));
   return new Promise((resolve, reject) => {
     let settled = false;
     let socket;
     let heartbeatSequence = 0;
+    let keepAlive = null;
     const pendingHeartbeats = new Map();
     const timer = setTimeout(() => {
       if (settled) return;
@@ -135,6 +141,15 @@ function openControllerSocket({
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      // Fire and forget: the reply is the point, and a socket that stopped answering is found by the alarm's checked heartbeat.
+      if (keepAliveMs > 0) {
+        keepAlive = setInterval(() => {
+          if (socket.readyState !== 1) return;
+          heartbeatSequence += 1;
+          try { socket.send(JSON.stringify({ method: CONTROLLER_HEARTBEAT_METHOD, params: { nonce: `keepalive-${heartbeatSequence}` } })); } catch { /* the close event reports it */ }
+        }, keepAliveMs);
+        keepAlive?.unref?.();
+      }
       resolve({
         async send(frame) {
           if (socket.readyState !== 1) throw new Error('Controller WebSocket is not open.');
@@ -179,6 +194,8 @@ function openControllerSocket({
       // not replaced by a generic browser error event.
     });
     socket.addEventListener('close', (event) => {
+      clearInterval(keepAlive);
+      keepAlive = null;
       for (const pending of pendingHeartbeats.values()) {
         clearTimeout(pending.timer);
         pending.reject(new Error('Controller WebSocket closed during heartbeat.'));
@@ -202,6 +219,7 @@ export function createControllerConnector({
   scriptingApi = null,
   mintDashboardTicket = mintWsTicket,
   connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS,
+  keepAliveMs = DEFAULT_KEEPALIVE_MS,
 } = {}) {
   // One registration against one gateway route (Hermes core's or the companion
   // plugin's). Resolves to the ticket and the socket path to open; a 404 or 405 is
@@ -287,6 +305,7 @@ export function createControllerConnector({
       onFrame,
       onClose,
       timeoutMs: connectTimeoutMs,
+      keepAliveMs,
     });
     // The route decides the names the model's control tools have (control-tool-names.mjs).
     return { ...connection, route: registered.route };

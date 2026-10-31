@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { CONTROLLER_SESSION_PENDING } from '../extension/lib/controller-protocol.mjs';
@@ -142,6 +143,38 @@ test('local and VPS connector registers with Bearer auth then uses a credential-
   assert.deepEqual(lastJson(socket), { method: 'browser.controller.result', params: { command_id: 'local-command', ok: true } });
   socket.close();
   assert.equal(closes.length, 1);
+});
+
+test('an open control socket sends a heartbeat on its own, so the service worker and the socket stay up', async () => {
+  FakeSocket.instances = [];
+  const fetchImpl = async () => jsonResponse(201, { ticket: 'api-ticket-fixture', ticket_expires_in_seconds: 30, ws_path: '/v1/browser-control/ws' });
+  const connector = createControllerConnector({ fetchImpl, WebSocketImpl: FakeSocket, keepAliveMs: 15 });
+  const frames = [];
+  const connecting = connector.connect({
+    settings: { connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: ['fixture', 'access', 'value'].join('-') },
+    identity: IDENTITY,
+    onFrame: (frame) => frames.push(frame),
+    onClose: () => {},
+  });
+  await settle();
+  const socket = FakeSocket.instances[0];
+  socket.open();
+  await connecting;
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  const keepalives = socket.sent.map((raw) => JSON.parse(raw))
+    .filter((frame) => frame.method === 'browser.controller.heartbeat' && /^keepalive-/.test(frame.params.nonce));
+  assert.ok(keepalives.length >= 2, `a heartbeat every interval while open (got ${keepalives.length})`);
+  // The gateway's answer is not a command for the worker.
+  socket.message({ method: 'browser.controller.heartbeat', params: { nonce: keepalives[0].params.nonce, ok: true } });
+  assert.deepEqual(frames, []);
+  socket.close();
+  const sentAtClose = socket.sent.length;
+  await new Promise((resolve) => setTimeout(resolve, 45));
+  assert.equal(socket.sent.length, sentAtClose, 'nothing is sent after the socket closed');
+  // Chromium stops an idle service worker after 30 seconds, so the default must come well inside that.
+  const source = readFileSync(new URL('../extension/lib/controller-connector.mjs', import.meta.url), 'utf8');
+  const interval = Number(source.match(/const DEFAULT_KEEPALIVE_MS = ([\d_]+);/)?.[1]?.replaceAll('_', ''));
+  assert.ok(interval > 0 && interval <= 25_000, `keepalive ${interval} ms`);
 });
 
 test('local API registration POST is bounded by the connector timeout', async () => {
