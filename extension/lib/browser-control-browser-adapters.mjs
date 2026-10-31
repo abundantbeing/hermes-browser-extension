@@ -2143,15 +2143,22 @@ function createChromiumCdpAdapter({
         if (frameId !== 0) {
           throw codedError('focus_changed', 'A key press inside an embedded frame cannot be bound to the focused control, so it was not sent.');
         }
+        // A key goes where focus is now. An embedded frame's address is not judged here, so only Tab and Shift+Tab,
+        // which move focus and change no value, may go into one; an arrow key would work a payment frame's dropdown.
+        const current = await inspectPage(browserApi, scope, signal);
+        const fields = keyEventFields(args);
+        const inFrame = current?.focused?.inFrame === true || current?.focused?.role === 'frame';
+        if (inFrame && !(fields.down.key === 'Tab' && (fields.down.modifiers & 7) === 0)) {
+          throw codedError('focus_changed', 'Focus is inside an embedded frame, so the key was not sent.');
+        }
         if (expectedFocus) {
-          const current = await inspectPage(browserApi, scope, signal);
           const approved = String(expectedFocus.identity || '');
           const actual = String(current?.focused?.identity || '');
           if (!/^[a-f0-9]{32}$/.test(approved) || approved !== actual) {
             throw codedError('focus_changed', 'Focus moved before the approved key could be sent.');
           }
         }
-        const { down, up } = keyEventFields(args);
+        const { down, up } = fields;
         await send('Input.dispatchKeyEvent', down);
         await send('Input.dispatchKeyEvent', up);
         return { status: 'pressed' };

@@ -74,6 +74,23 @@ test('a navigation key leaves a focused embedded frame, which has no identity to
   assert.equal(f.keys().length, 2);
 });
 
+for (const key of ['ArrowDown', 'ArrowUp', 'Escape', 'Home', 'PageDown', 'Ctrl+Tab']) {
+  test(`${key} is not sent into a focused embedded frame, whose address is not judged`, async () => {
+    const f = fixture();
+    f.doc.activeElement = control('IFRAME', 'Payment');
+    const result = await f.press(key);
+    assert.equal(result.ok, false);
+    assert.equal(f.keys().length, 0, 'nothing reached the frame');
+  });
+}
+
+test('Shift+Tab may leave a focused embedded frame too', async () => {
+  const f = fixture();
+  f.doc.activeElement = control('IFRAME', 'Video');
+  assert.equal((await f.press('Shift+Tab')).ok, true);
+  assert.equal(f.keys().length, 2);
+});
+
 test('keys that act on the page with nothing focused are held to the page, not refused', async () => {
   const f = fixture();
   assert.equal((await f.press('Space')).ok, true);
