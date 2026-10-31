@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.0] - 2026-10-26
+## [0.4.0] - 2026-10-31
 
 **What needs more than upstream Hermes.** A few parts of this release rely on gateway features that upstream Hermes does not have as of this release:
 
@@ -129,6 +129,7 @@ Everything else works on upstream Hermes, apart from four items below that were 
   - Closing the tab a command was queued on, the only attached tab included, reports the close instead of "cancelled".
   - Tabs Hermes opens can be grouped: they share one task set (each was its own set, so grouping always failed), and join the person's task set when the tabs they attached are one.
   - A tab that a link Hermes clicked, or a page script, opens while Hermes acts becomes a tab Hermes can use, and the action's result names it under `opened_tabs`. Before, it could not be reached. A tab the person opens themselves is never taken.
+  - Only an action that can open a tab (a click, a key press, typing, a drag, a select, navigating or going back) adopts one, so a tab the person opens while Hermes reads a page or takes a screenshot stays theirs. Two commands running at once each report only the tabs their own actions opened.
   - A tab Hermes opens waits for its page before the result comes back, and a tab whose page never reported itself to the extension (a PDF, an error page, a tab open since before the extension loaded) can be acted in instead of failing with `stale_document`.
   - A page Hermes read before the page reported itself to the extension keeps its refs: the page's own report confirms the document Hermes already read instead of counting as a new one, which made the next action fail with `stale_document` or "That element is gone".
   - The close approval names the tab it closes and covers that tab only.
@@ -140,6 +141,7 @@ Everything else works on upstream Hermes, apart from four items below that were 
 - A long chat opened over the API server shows all of its messages. Hermes answers the newest 500 by default, so the start of a longer chat was silently missing; the panel now reads older pages until the start (up to 10,000 messages, newest kept).
 - Renaming a chat over the Hermes dashboard, a remote dashboard or Hermes Cloud works again. Hermes now refuses a rename that does not name the revision it read, so every rename of a chat that was not open failed; the rename now reads that revision first.
 - Switching to another gateway starts on that gateway's default bot and no longer sends the previous gateway's pairing token to it. Before, every request went to the old bot's profile on the new gateway and failed.
+- A socket that finishes connecting after Save or Connect moved the panel to another gateway is closed instead of becoming the panel's connection, so the old gateway no longer answers for the new one.
 - A gateway address typed without `http://` (such as `box.tailnet.ts.net:8642`) works instead of failing every request.
 - **Test connection** names the real problem. A remote gateway that cannot be reached is no longer reported as a CORS error, a real CORS error names this browser's own origin (Firefox included), and on upstream Hermes a browser origin missing from `API_SERVER_CORS_ORIGINS` is caught by the test with the exact `.env` line, instead of the test passing and the first message failing.
 - A bot whose Hermes profile has no API key of its own says so, with what to set, instead of a bare 401.
@@ -154,6 +156,7 @@ Everything else works on upstream Hermes, apart from four items below that were 
   - A gateway that does not run rooms itself keeps the previous group chats.
   - A mention followed by a colon, full stop or dash ("@Riku: look at this", "thanks @Riku.") goes to that bot. Hermes read the punctuation as part of the name, so the message went to every bot.
   - When a bot @mentions another, Hermes gives the mentioned bot another round. The panel now shows that bot working again; it used to say "All done" while the bots were still answering.
+  - A message whose answer was lost (a timeout or a closed socket) may already be in the room. The panel says so and puts your text back in the box, and the same text sent again within 10 minutes keeps its message id, so Hermes runs it once instead of twice.
 - A message in a bot's Bot Chat shows its reply on current Hermes. Hermes hands a Bot Chat turn to that chat's own queue.
   - When it moved an older Bot Chat aside first, the reply went to the new chat while the panel reloaded the old one. That chat's last line could be an old "Your request was not processed".
   - The panel now follows the chat Hermes used, and says so when a reply is still queued.
@@ -253,6 +256,7 @@ Everything else works on upstream Hermes, apart from four items below that were 
 - Gmail thread capture stays on once you turn it on. Saving Settings used to flip it back, so the next send asked for consent again. The **Gmail thread context** switch (Settings > Assist & Actions) now saves at once and stays on until you turn it off, which asks for consent again. Long Gmail threads are kept up to 200,000 characters, keeping the newest messages, the page context is trimmed to its size budget instead of the page text being dropped, and on a dashboard connection text beyond the inline excerpt is attached to the turn as `page-context.txt`.
 - Chat headings follow the font chosen in Settings. In the Signature and Cinzel font profiles they stayed in their own headline face while the rest of the chat changed.
 - A panel follows a response style or chat layout chosen in another window, instead of writing its old choice back on its next Settings save. A setup preselection that was never saved is left alone.
+- A Vivid UI chart whose numbers span an absurd or broken range (such as 0 to 10^300) is shown as its table instead of freezing the panel while it drew millions of tick marks.
 - Custom selects get their own element ids, so `aria-controls` points at the right list when several share a page.
 - Hermes cores with a strict `prompt.submit` contract no longer reject chat messages with an "invalid params ... display_text" error. The turn is retried once without the optional display text and the extension stops sending it for that session.
 - The built-in context-window table shows Haiku 5.5 with a 1M-token window instead of the generic 200,000 for Haiku, while Haiku 4.5 stays at 200,000.
