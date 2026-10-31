@@ -227,16 +227,28 @@ class Regressions(unittest.TestCase):
             self.assertFalse(shot.exists(), 'stale screenshot survives restart configuration')
 
     def test_screenshot_is_removed_during_idle(self):
+        def restart_reaper():
+            # The reaper sleeps a whole interval between looks: stop it, so the next one starts on the new clock.
+            control_tools._screenshot_stop.set()
+            if control_tools._screenshot_worker is not None:
+                control_tools._screenshot_worker.join(2)
+            control_tools._ensure_screenshot_worker()
+
         with tempfile.TemporaryDirectory() as directory:
             control_tools.configure(screenshot_dir=directory)
             old_ttl = control_tools._SCREENSHOT_MAX_AGE_SECONDS
+            old_interval = control_tools._SCREENSHOT_PRUNE_INTERVAL_SECONDS
             control_tools._SCREENSHOT_MAX_AGE_SECONDS = 0.05
+            control_tools._SCREENSHOT_PRUNE_INTERVAL_SECONDS = 0.05
+            restart_reaper()
             try:
                 shot = pathlib.Path(control_tools._save_screenshot('data:image/png;base64,c3ludGhldGlj'))
                 time.sleep(0.3)
                 self.assertFalse(shot.exists(), 'idle screenshot retained after expiry')
             finally:
                 control_tools._SCREENSHOT_MAX_AGE_SECONDS = old_ttl
+                control_tools._SCREENSHOT_PRUNE_INTERVAL_SECONDS = old_interval
+                restart_reaper()
 
 if __name__ == '__main__':
     unittest.main()

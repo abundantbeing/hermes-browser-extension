@@ -56,6 +56,9 @@ TOOL_NAMES = tuple(TOOL_FOR_ACTION[action] for action in CONTROL_ACTIONS)
 _PNG_PREFIX = "data:image/png;base64,"
 _SCREENSHOT_KEEP = 8
 _SCREENSHOT_MAX_AGE_SECONDS = 3600
+# How often the idle reaper looks. An hour's expiry needs no finer clock, and a thread waking 20 times a
+# second inside the gateway made a closed controller's disconnect late often enough to fail the socket tests.
+_SCREENSHOT_PRUNE_INTERVAL_SECONDS = 60.0
 
 _CLOUD_METADATA_HOSTS = frozenset({"metadata.google.internal", "metadata.goog", "instance-data", "100.100.100.200"})
 _CLOUD_METADATA_NETWORKS = (ipaddress.ip_network("169.254.0.0/16"), ipaddress.ip_network("fd00:ec2::/32"))
@@ -78,7 +81,7 @@ def _ensure_screenshot_worker() -> None:
     _screenshot_stop.clear()
 
     def loop() -> None:
-        while not _screenshot_stop.wait(0.05):
+        while not _screenshot_stop.wait(_SCREENSHOT_PRUNE_INTERVAL_SECONDS):
             try:
                 _prune_screenshots(_screenshot_directory())
             except OSError:
