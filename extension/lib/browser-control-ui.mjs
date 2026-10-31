@@ -1,5 +1,5 @@
 import { validateBrowserControlUrl } from './browser-control-safety.mjs';
-import { CONTROLLER_UNSUPPORTED_GATEWAY } from './controller-protocol.mjs';
+import { CONTROLLER_SESSION_PENDING, CONTROLLER_UNSUPPORTED_GATEWAY } from './controller-protocol.mjs';
 import { isGatewayAuthRejection, isGatewayControlKeyUnconfigured, isMissingGatewayCredential } from './connection-modes.mjs';
 
 const CONTROL_SCOPES = new Set(['this-tab', 'selected-tabs', 'task-set']);
@@ -169,6 +169,17 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
   if (status?.connected !== true) {
     const failure = status?.lastConnectFailure;
     if (failure?.reason === CONTROLLER_UNSUPPORTED_GATEWAY) return unsupportedView({ enabled });
+    // Not a fault: the gateway knows a chat only once its first message is sent, and control connects then.
+    if (failure?.reason === CONTROLLER_SESSION_PENDING) {
+      return baseView({
+        state: 'waiting',
+        tone: 'neutral',
+        title: 'Waiting for this chat',
+        detail: "Hermes Control connects after this chat's first message is sent.",
+        canEnable: false,
+        canDetach: true,
+      });
+    }
     let detail = 'Hermes Control is reconnecting. No tab actions can run yet.';
     let canAuthorize = false;
     if (failure?.reason === 'missing_session') {

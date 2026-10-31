@@ -1207,6 +1207,10 @@
     "message": "Prêt",
     "description": "Runtime interface message browser_control.state_ready"
   },
+  "runtime_browser_control_state_waiting": {
+    "message": "En attente",
+    "description": "Runtime interface message browser_control.state_waiting"
+  },
   "runtime_browser_control_status_on": {
     "message": "Activé",
     "description": "Runtime interface message browser_control.status_on"
@@ -1290,6 +1294,14 @@
   "runtime_browser_control_waiting": {
     "message": "En attente de Hermes.",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "Le contrôle Hermes se connecte une fois le premier message de cette discussion envoyé.",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "En attente de cette discussion",
+    "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_capability_feature_approvalEvents": {
     "message": "Événements d'approbation",

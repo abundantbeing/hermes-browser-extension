@@ -1988,6 +1988,7 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   border-color: currentColor;
 }
 .browser-control-state[data-state="reconnecting"],
+.browser-control-state[data-state="waiting"],
 .browser-control-state[data-state="unavailable"],
 .browser-control-state[data-state="unsupported"],
 .browser-control-state[data-state="unattached"],

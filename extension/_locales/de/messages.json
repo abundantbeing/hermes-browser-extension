@@ -1207,6 +1207,10 @@
     "message": "Bereit",
     "description": "Runtime interface message browser_control.state_ready"
   },
+  "runtime_browser_control_state_waiting": {
+    "message": "Wartet",
+    "description": "Runtime interface message browser_control.state_waiting"
+  },
   "runtime_browser_control_status_on": {
     "message": "An",
     "description": "Runtime interface message browser_control.status_on"
@@ -1290,6 +1294,14 @@
   "runtime_browser_control_waiting": {
     "message": "Warte auf Hermes.",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "Die Hermes-Steuerung verbindet sich, sobald die erste Nachricht in diesem Chat gesendet ist.",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "Wartet auf diesen Chat",
+    "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_capability_feature_approvalEvents": {
     "message": "Freigabe-Ereignisse",

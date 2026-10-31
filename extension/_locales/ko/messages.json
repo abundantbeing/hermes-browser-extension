@@ -1207,6 +1207,10 @@
     "message": "준비됨",
     "description": "Runtime interface message browser_control.state_ready"
   },
+  "runtime_browser_control_state_waiting": {
+    "message": "대기 중",
+    "description": "Runtime interface message browser_control.state_waiting"
+  },
   "runtime_browser_control_status_on": {
     "message": "켜짐",
     "description": "Runtime interface message browser_control.status_on"
@@ -1290,6 +1294,14 @@
   "runtime_browser_control_waiting": {
     "message": "Hermes를 기다리는 중입니다.",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "이 채팅의 첫 메시지를 보내면 Hermes 제어가 연결됩니다.",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "이 채팅을 기다리는 중",
+    "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_capability_feature_approvalEvents": {
     "message": "승인 이벤트",

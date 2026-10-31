@@ -1207,6 +1207,10 @@
     "message": "พร้อม",
     "description": "Runtime interface message browser_control.state_ready"
   },
+  "runtime_browser_control_state_waiting": {
+    "message": "กำลังรอ",
+    "description": "Runtime interface message browser_control.state_waiting"
+  },
   "runtime_browser_control_status_on": {
     "message": "เปิด",
     "description": "Runtime interface message browser_control.status_on"
@@ -1290,6 +1294,14 @@
   "runtime_browser_control_waiting": {
     "message": "กำลังรอ Hermes",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "การควบคุมของ Hermes จะเชื่อมต่อหลังจากส่งข้อความแรกในแชทนี้",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "กำลังรอแชทนี้",
+    "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_capability_feature_approvalEvents": {
     "message": "เหตุการณ์การอนุมัติ",

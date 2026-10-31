@@ -1207,6 +1207,10 @@
     "message": "तैयार",
     "description": "Runtime interface message browser_control.state_ready"
   },
+  "runtime_browser_control_state_waiting": {
+    "message": "प्रतीक्षारत",
+    "description": "Runtime interface message browser_control.state_waiting"
+  },
   "runtime_browser_control_status_on": {
     "message": "चालू",
     "description": "Runtime interface message browser_control.status_on"
@@ -1290,6 +1294,14 @@
   "runtime_browser_control_waiting": {
     "message": "Hermes की प्रतीक्षा में",
     "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_waiting_detail": {
+    "message": "इस चैट का पहला संदेश भेजे जाने के बाद Hermes नियंत्रण जुड़ जाता है।",
+    "description": "Runtime interface message browser_control.waiting_detail"
+  },
+  "runtime_browser_control_waiting_title": {
+    "message": "इस चैट की प्रतीक्षा",
+    "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_capability_feature_approvalEvents": {
     "message": "अनुमोदन घटनाएँ",

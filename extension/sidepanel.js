@@ -3363,6 +3363,7 @@ function renderBrowserControl() {
   const stateKey = {
     off: 'browser_control.state_off',
     reconnecting: 'ui.reconnecting',
+    waiting: 'browser_control.state_waiting',
     unavailable: 'ui.unavailable',
     unsupported: 'ui.unavailable',
     unattached: 'ui.attach',

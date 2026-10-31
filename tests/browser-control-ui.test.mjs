@@ -226,6 +226,27 @@ test('connected controller without a browser executor is unavailable, not reconn
   assert.doesNotMatch(view.detail, /reconnect/i);
 });
 
+test('a chat the gateway does not know yet waits for its first message instead of reconnecting', async () => {
+  const { browserControlView, browserControlLightState } = await uiModule();
+  const view = browserControlView({
+    settings: { browserControlEnabled: true },
+    status: { connected: false, lastConnectFailure: { reason: 'session_pending', detail: 'Hermes Control connects once this chat has a Hermes session.' } },
+    activeTab: { id: 10, url: 'https://example.test/' },
+  });
+  assert.equal(view.state, 'waiting');
+  assert.equal(view.title, 'Waiting for this chat');
+  assert.equal(view.detail, "Hermes Control connects after this chat's first message is sent.");
+  assert.equal(view.tone, 'neutral');
+  assert.equal(view.attention, false, 'nothing is wrong, so nothing asks for attention');
+  assert.equal(view.canDetach, true);
+  assert.equal(browserControlLightState(view), 'off');
+  // Every string the card shows has a translation key, and the state has a pill label.
+  const english = readFileSync(new URL('../extension/lib/locales/en.mjs', import.meta.url), 'utf8');
+  for (const text of [view.title, view.detail]) assert.ok(english.includes(JSON.stringify(text)), text);
+  const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(panel, /waiting: 'browser_control\.state_waiting'/);
+});
+
 test('reconnecting state explains the last controller failure with actionable remediation', async () => {
   const { browserControlView } = await uiModule();
   const settings = { browserControlEnabled: true };
