@@ -535,6 +535,11 @@ function formatNumber(value) {
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: abs < 10 ? 2 : 1 }).format(value);
 }
 
+// A handful of ticks is all an axis ever needs (the step is at least a quarter of the span).
+const MAX_SCALE_TICKS = 12;
+
+// null when the numbers are too large or too small to put on an axis: a bound that rounds up past the largest
+// number, a span or step that is not finite, or a step of zero. The chart is then shown as its table.
 function niceScale(min, max) {
   const low = Math.min(0, min);
   const high = Math.max(0, max);
@@ -544,19 +549,26 @@ function niceScale(min, max) {
   const step = [1, 2, 2.5, 5, 10].map((factor) => factor * power).find((candidate) => candidate >= rough) || power * 10;
   const lower = Math.floor(low / step) * step;
   const upper = Math.ceil(high / step) * step || step;
+  if (![span, step, lower, upper, upper - lower].every(Number.isFinite) || !(step > 0)) return null;
   const ticks = [];
-  for (let tick = lower; tick <= upper + step / 2; tick += step) ticks.push(Number(tick.toFixed(10)));
+  for (let tick = lower; tick <= upper + step / 2; tick += step) {
+    if (ticks.length >= MAX_SCALE_TICKS) return null;
+    ticks.push(Number(tick.toFixed(10)));
+  }
   return { lower, upper, ticks };
 }
 
 const CHART_BOX = Object.freeze({ width: 320, height: 172, left: 38, right: 8, top: 10, bottom: 24 });
 
+// '' when the numbers cannot be drawn on an axis; the caller shows the table instead.
 export function renderChartSvg(chart, { title = '' } = {}) {
   const { width, height, left, right, top, bottom } = CHART_BOX;
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
   const values = chart.series.flatMap((entry) => entry.values).filter((value) => value !== null);
-  const { lower, upper, ticks } = niceScale(Math.min(...values), Math.max(...values));
+  const scale = niceScale(Math.min(...values), Math.max(...values));
+  if (!scale) return '';
+  const { lower, upper, ticks } = scale;
   const y = (value) => top + plotHeight - ((value - lower) / (upper - lower || 1)) * plotHeight;
   const count = chart.labels.length;
   const slot = plotWidth / count;
@@ -639,7 +651,12 @@ function renderBlock(block, scope, labels) {
         : '';
       const columns = ['', ...block.series.map((entry, index) => entry.name || `${index + 1}`)];
       const rows = block.labels.map((label, index) => [label, ...block.series.map((entry) => (entry.values[index] === null ? '' : `${formatNumber(entry.values[index])}${block.unit ? ` ${block.unit}` : ''}`))]);
-      return `<figure class="haui-block haui-chart" ${blockAttrs(block, scope, ' data-haui-view="chart"')}><figcaption class="haui-chart-head">${block.title ? `<span class="haui-title">${esc(block.title)}</span>` : '<span></span>'}<span class="haui-view-toggle" role="group"><button type="button" data-haui-action="view" data-haui-value="chart" aria-pressed="true">${esc(labels.viewChart)}</button><button type="button" data-haui-action="view" data-haui-value="table" aria-pressed="false">${esc(labels.viewTable)}</button></span></figcaption><div class="haui-chart-canvas">${renderChartSvg(block)}</div><div class="haui-chart-table" hidden>${renderTableHtml({ title: block.title, columns, rows })}</div>${legend}</figure>`;
+      const svg = renderChartSvg(block);
+      const tableHtml = renderTableHtml({ title: block.title, columns, rows });
+      const caption = block.title ? `<span class="haui-title">${esc(block.title)}</span>` : '<span></span>';
+      // Numbers that cannot go on an axis are shown as the table, with nothing to toggle.
+      if (!svg) return `<figure class="haui-block haui-chart" ${blockAttrs(block, scope, ' data-haui-view="table"')}><figcaption class="haui-chart-head">${caption}</figcaption><div class="haui-chart-table">${tableHtml}</div></figure>`;
+      return `<figure class="haui-block haui-chart" ${blockAttrs(block, scope, ' data-haui-view="chart"')}><figcaption class="haui-chart-head">${caption}<span class="haui-view-toggle" role="group"><button type="button" data-haui-action="view" data-haui-value="chart" aria-pressed="true">${esc(labels.viewChart)}</button><button type="button" data-haui-action="view" data-haui-value="table" aria-pressed="false">${esc(labels.viewTable)}</button></span></figcaption><div class="haui-chart-canvas">${svg}</div><div class="haui-chart-table" hidden>${tableHtml}</div>${legend}</figure>`;
     }
     case 'disclosure': {
       const nested = renderBlockList(block.blocks || [], scope, labels);
