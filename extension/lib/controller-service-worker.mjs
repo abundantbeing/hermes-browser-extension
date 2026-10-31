@@ -35,7 +35,6 @@ import {
 } from './browser-control-safety.mjs';
 import { isGatewayAuthRejection, transportUsesDashboardTicket } from './connection-modes.mjs';
 import { CONTROL_TOOL_FAMILIES, controlToolFamily, controlToolName, setControlToolFamily } from './control-tool-names.mjs';
-import { safeNetworkUrl } from './browser-control-executor.mjs';
 
 export const CONTROLLER_WORKER_VERSION = 1;
 export const CONTROLLER_WORKER_STORAGE_KEY = 'hermesBrowserControllerWorker';
@@ -85,10 +84,13 @@ const TAB_MANAGEMENT_ACTIONS = new Set(['browser_tabs', 'browser_tab_create', ..
 const HERMES_OPENED_TASK_SET = 'hermes-opened';
 // A tab a page opens just after a Hermes action on it ended (a link's navigation, a script's window.open
 // after a delay) still belongs to that action.
-const OPENED_TAB_GRACE_MS = 3_000;
 // The actions that can open a tab: a click or key press on a link, a script's window.open after one, a form
 // submitted by typing, a navigation. A snapshot, screenshot, scroll or tab command never does, so a tab the
 // person opens while one of those runs stays theirs.
+// Told to the model when a tab opened while its action ran: the tab is not attached, whoever opened it.
+const OPENED_TAB_NOTE = 'A new tab opened. Hermes cannot tell whether this action or the person opened it, so it was not attached. '
+  + 'If you need it, ask the person to attach it in Hermes Control.';
+
 const TAB_OPENING_ACTIONS = new Set([
   'browser_click', 'browser_press', 'browser_type', 'browser_drag', 'browser_select', 'browser_navigate', 'browser_back',
 ]);
@@ -308,8 +310,6 @@ export function createControllerServiceWorker({
   // The tab of the most recent action Hermes ran. Show tab points at it between
   // actions, so the button does not flicker with each action.
   let lastActionTabId = 0;
-  // When the latest Hermes action that can open a tab ended, so a tab its page opens a moment later is still adopted.
-  let lastOpeningActionEndedAt = 0;
   // The last refusal worth telling the person about (a frame withheld a screenshot, a pointer action would land in
   // a frame Hermes cannot read): a code, never page details. The model gets the full message with its result; this
   // is for the Hermes Control window. It ends when the next command starts or after a couple of minutes.
@@ -436,10 +436,10 @@ export function createControllerServiceWorker({
       action,
       tabId,
       startedAt: Number(now()),
-      // Whether this action can open a tab: only then does handleTabCreated adopt one for it.
+      // Whether this action can open a tab: only then does handleTabCreated tell it about one.
       opensTab: actionCanOpenTab(action, actionArgs),
-      // Tabs a link or page script opened while this action ran, adopted by handleTabCreated.
-      openedTabs: [],
+      // How many tabs opened from a tab Hermes acts in while this action ran. None is attached.
+      openedTabs: 0,
       ...(action === 'browser_tab_close' ? { closingTabId: Number(actionArgs.tab_id) } : {}),
     };
     activeActions.add(running);
@@ -500,15 +500,17 @@ export function createControllerServiceWorker({
       if (renewed.ok) await persist();
       if (result.result && typeof result.result === 'object' && !Array.isArray(result.result)) {
         // Every page action says which tab it ran in: refs are numbered per page, so results from two
-        // tabs are told apart by this, and a tab a click opened is named so the model can act on it.
+        // tabs are told apart by this. A tab that opened meanwhile is only counted: the model asks the person.
         const extra = {};
         if (!TAB_MANAGEMENT_ACTIONS.has(action)) extra.tab_id = tabId;
-        if (running.openedTabs.length) extra.opened_tabs = running.openedTabs.map((opened) => ({ ...opened }));
+        if (running.openedTabs) {
+          extra.opened_tabs_not_attached = running.openedTabs;
+          extra.opened_tabs_note = OPENED_TAB_NOTE;
+        }
         if (Object.keys(extra).length) result = { ...result, result: { ...result.result, ...extra } };
       }
       return result;
     } finally {
-      if (running.opensTab) lastOpeningActionEndedAt = Number(now());
       activeActions.delete(running);
     }
   }
@@ -1711,12 +1713,10 @@ export function createControllerServiceWorker({
     return { ok: true, changed };
   }
 
-  // A tab one of Hermes's own actions opened (a link to a new tab, a page's window.open) belongs to that
-  // action: it is adopted like a tab Hermes created, so the agent can act on it, and the action's result
-  // names it. Only while a Hermes action that can open a tab runs, or a moment after one ended, and only
-  // from a tab Hermes owns: when Hermes clicks in a background tab, Chrome names the tab in front of the
-  // window as the opener, so any owned tab counts. A tab opened from a tab Hermes does not own is never taken,
-  // nor is one that opens while a snapshot, screenshot or tab command runs.
+  // A tab that opens from a tab Hermes acts in is never attached by itself. Hermes's own click and the person's
+  // reach the browser the same way (both are trusted input, at the same moment), so nothing here can say whose
+  // the new tab is, and a tab the person opened must not become one Hermes controls. The action running then
+  // only learns that a tab opened, with no address or id, so the model can ask the person to attach it.
   async function handleTabCreated(tab = {}) {
     await boot();
     const tabId = Number(tab?.id);
@@ -1727,31 +1727,18 @@ export function createControllerServiceWorker({
     if (settings?.browserControlEnabled !== true || settings?.browserControlPaused === true) {
       return { ok: true, adopted: false };
     }
-    // Only an action that can open a tab claims one; a snapshot, screenshot or scroll never does.
+    // Only an action that can open a tab hears of one; a snapshot, screenshot or scroll never does.
     const openers = [...activeActions].filter((running) => running.opensTab);
-    const justEnded = lastOpeningActionEndedAt > 0 && Number(now()) - lastOpeningActionEndedAt <= OPENED_TAB_GRACE_MS;
-    if (!openers.length && !justEnded) return { ok: true, adopted: false };
     const opener = leases.leaseForTab(openerTabId);
-    if (!opener || opener.generation !== generation || opener.ownership !== TAB_LEASE_OWNERSHIPS.OWNED
-      || opener.ownerId !== controllerId || leases.leaseForTab(tabId)) {
+    if (!openers.length || leases.leaseForTab(tabId) || !opener || opener.generation !== generation
+      || opener.ownership !== TAB_LEASE_OWNERSHIPS.OWNED || opener.ownerId !== controllerId) {
       return { ok: true, adopted: false };
     }
-    const acquired = leases.acquire({
-      tabId,
-      windowId: Number(tab.windowId) || opener.windowId,
-      kind: TAB_LEASE_KINDS.TASK_SET,
-      ownerId: controllerId,
-      ownership: TAB_LEASE_OWNERSHIPS.OWNED,
-      taskSetId: openedTaskSetId(opener),
-    });
-    if (!acquired.ok) return { ok: true, adopted: false, error: acquired.error };
-    const url = safeNetworkUrl(tab.pendingUrl || tab.url || '');
     // The action running in the opener's tab, else the latest to start: Chrome names the tab in front as the
     // opener of a link clicked in a background tab, so the opener alone does not always say whose it is.
     const claiming = openers.find((running) => running.tabId === openerTabId) || openers.at(-1);
-    claiming?.openedTabs.push({ id: tabId, ...(url ? { url } : {}) });
-    await persist();
-    return { ok: true, adopted: true, tabId };
+    claiming.openedTabs += 1;
+    return { ok: true, adopted: false, reported: true };
   }
 
   async function handleTabRemoved(tabId) {

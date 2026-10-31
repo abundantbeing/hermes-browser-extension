@@ -265,7 +265,9 @@ GET  /api/plugins/hermes-browser-extension/control/ws   (WebSocket; the ticket r
 - **Several tabs at once.** Every page action takes `tab_id` and works in a
   background tab without changing what the person sees (hover, drag and
   screenshots need the tab in front). Each result names the tab it ran in, and a
-  click that opens a new tab reports it under `opened_tabs`, ready to use. Refs
+  tab that opens during a click is not attached (Hermes cannot tell whether the
+  click or the person opened it): the result counts it under
+  `opened_tabs_not_attached`, and the person attaches it if needed. Refs
   belong to the tab they came from.
 - **Offered only while attached.** The tools appear only while some controller is
   attached, and a call reaches only the controller registered for its own Hermes

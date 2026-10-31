@@ -1149,11 +1149,14 @@ async function main() {
     assert.equal(linkTab.active, false, JSON.stringify(linkTab));
     assert.match(String(linkTab.url || linkTab.pendingUrl || ''), /from-link=1/);
     assert.deepEqual(await tabActiveStates([tabId, secondTabId, linkTabIds[0]]), { [tabId]: false, [secondTabId]: true, [linkTabIds[0]]: false });
-    // That tab becomes one Hermes can use, and the click's result names it.
-    assert.deepEqual((linked.params.result.opened_tabs || []).map((item) => item.id), [Number(linkTabIds[0])], JSON.stringify(linked.params.result));
+    // That tab is not attached: Hermes's click and the person's look the same to the extension. The click's
+    // result only says a tab opened, with neither its id nor its address, so the model asks the person.
+    assert.equal(linked.params.result.opened_tabs, undefined, JSON.stringify(linked.params.result));
+    assert.equal(linked.params.result.opened_tabs_not_attached, 1, JSON.stringify(linked.params.result));
+    assert.doesNotMatch(JSON.stringify(linked.params.result), /from-link=1/);
     assert.equal(linked.params.result.tab_id, tabId, 'a page action names the tab it ran in');
-    const adopted = await page.evaluate(`chrome.runtime.sendMessage({ type: 'HERMES_CONTROLLER_STATUS' })`);
-    assert.ok(adopted.ownedTabIds.includes(Number(linkTabIds[0])), JSON.stringify(adopted.ownedTabIds));
+    const afterLink = await page.evaluate(`chrome.runtime.sendMessage({ type: 'HERMES_CONTROLLER_STATUS' })`);
+    assert.equal(afterLink.ownedTabIds.includes(Number(linkTabIds[0])), false, JSON.stringify(afterLink.ownedTabIds));
     await page.evaluate(`chrome.tabs.remove(${Number(linkTabIds[0])})`);
     await controlled.evaluate(`document.getElementById('phase6-new-tab-link')?.remove()`);
     await page.evaluate(`chrome.tabs.update(${tabId}, { active: true })`);

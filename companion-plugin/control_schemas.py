@@ -137,8 +137,9 @@ CONTROL_SCHEMAS: dict[str, dict[str, Any]] = {
         _schema(
             "browser_click",
             "Click an element by its ref ID, or a point given by x and y in CSS pixels from the top-left of the viewport "
-            "(only when no ref reaches the target). A link that opens a new tab opens it in the background, and the "
-            "result lists it under opened_tabs with its id, so you can act in it. The person is asked to approve a "
+            "(only when no ref reaches the target). A new tab that opens meanwhile is not attached, since Hermes cannot "
+            "tell who opened it: the result counts it under opened_tabs_not_attached; ask the person to attach it "
+            "in Hermes Control if you need it. The person is asked to approve a "
             "coordinate click and a click on a button or link labelled like submit, send, post, publish, delete, remove, "
             "pay, buy, checkout, download or upload; the call waits for the answer, so do not repeat it. Works in a "
             f"background tab. {_REFS}",

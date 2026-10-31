@@ -94,8 +94,9 @@ another browser. Read `browser_control` in the turn envelope:
   `tab_id` to any action to work in that tab without changing what the
   person is looking at; every result names the tab it ran in.
 - `tab_create` opens a page in a new background tab and waits for it to load;
-  use its id with `tab_snapshot` to read it. A click that opens a new tab
-  lists it under `opened_tabs` in the click's result, ready to use.
+  use its id with `tab_snapshot` to read it. A tab that opens during a click
+  is not attached: the result counts it under `opened_tabs_not_attached`.
+  Ask the person to attach it in Hermes Control if you need it.
 - Refs belong to the tab they came from: take a snapshot of a tab before
   using refs in it.
 - Several tabs can be worked in parallel, one call per tab. `tab_group`
