@@ -180,7 +180,12 @@ export async function findOpenWebappTab(tabsApi, target, { selectedProfile = nul
     const url = tabUrl(tab);
     if (!url || url.origin !== target.origin) continue;
     if (target.basePath && url.pathname !== target.basePath && !url.pathname.startsWith(`${target.basePath}/`)) continue;
-    let profile = url.searchParams.get('profile') || '';
+    // A tab still on a sign-in hand-off page carries its profile in the fragment (`#ticket=…&query=profile%3Dwork`),
+    // not in the query.
+    const handoff = /\/webapp\/(?:launch|window)\/?$/.test(url.pathname);
+    let profile = (handoff
+      ? new URLSearchParams(new URLSearchParams(url.hash.slice(1)).get('query') || '').get('profile')
+      : url.searchParams.get('profile')) || '';
     if (typeof selectedProfile === 'function') {
       try { profile = await selectedProfile(tab); } catch { continue; }
     }

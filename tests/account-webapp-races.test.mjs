@@ -56,6 +56,17 @@ test('a different named or default webapp profile is never reused', async () => 
   }
 });
 
+test('a tab still on a sign-in hand-off page is matched by the profile in its fragment', async () => {
+  const target = resolveWebappTarget({ connectionMode: 'local' });
+  const origin = new URL(target.url).origin;
+  // A launch for `work` keeps its profile in the fragment; read from the query it would pass for the default profile.
+  const work = { id: 1, url: `${origin}/webapp/launch#ticket=t&query=profile%3Dwork` };
+  assert.equal(await findOpenWebappTab({ query: async () => [work] }, target), null);
+  const workTarget = resolveWebappTarget({ connectionMode: 'local', activeProfile: 'work' });
+  assert.equal((await findOpenWebappTab({ query: async () => [work] }, workTarget))?.id, 1);
+  assert.equal((await findOpenWebappTab({ query: async () => [{ id: 2, url: `${origin}/webapp/window#ticket=t` }] }, target))?.id, 2);
+});
+
 test('a Webapp tab is reused for the profile it shows now, not only the one in its URL', async () => {
   const target = resolveWebappTarget({ connectionMode: 'local', activeProfile: 'work' });
   const tabsApi = { query: async () => [{ id: 1, url: target.url }] };
