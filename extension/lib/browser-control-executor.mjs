@@ -2,6 +2,7 @@ import {
   BROWSER_CONTROL_RISKS,
   classifyBrowserControlAction,
 } from './browser-control-safety.mjs';
+import { isNavigationKey, resolveKeyPress } from './browser-control-keys.mjs';
 import { redactSensitiveText } from './browser-context-protocol.mjs';
 import { redactSensitiveTextWithCount } from './content-extraction-core.mjs';
 import { hasCredentialBearingUrl } from './redaction.mjs';
@@ -178,6 +179,16 @@ function sameFocus(before, after) {
   return /^[a-f0-9]{32}$/.test(before.identity || '') && before.identity === after.identity
     && ['role', 'name', 'inputType', 'autocomplete'].every((field) => compact(before[field], 200) === compact(after[field], 200))
     && (before.inFrame === true) === (after.inFrame === true);
+}
+
+// Tab, Escape, arrows and the page keys write nothing and are judged the same wherever focus is, so they are
+// not held to the focus that was read: a page whose focus cannot be identified (an embedded frame) still takes them.
+function isNavigationPress(args) {
+  try {
+    return isNavigationKey(resolveKeyPress(args));
+  } catch {
+    return false;
+  }
 }
 
 const TIMED_OUT = Symbol('timed-out');
@@ -975,7 +986,7 @@ export function createBrowserControlExecutor({
         ownedTabIds: [...controllerOwnedTabs],
         currentWindowId: Number(currentWindowId) || null,
         allowLocalDocuments: Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments),
-        ...(action === 'browser_press' && pageState.focused ? { expectedFocus: pageState.focused } : {}),
+        ...(action === 'browser_press' && pageState.focused && !isNavigationPress(args) ? { expectedFocus: pageState.focused } : {}),
         ...(artifact ? { artifact } : {}),
       });
       if (controller.signal.aborted) return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');

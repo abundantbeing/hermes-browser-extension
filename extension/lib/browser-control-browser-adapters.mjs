@@ -724,7 +724,33 @@ function pageProbe(mode, direction = '') {
       if (!root?.activeElement) break;
       active = root.activeElement;
     }
+    // Keep identities in the extension's isolated world, never on the DOM. The page itself (nothing focused) has
+    // one too, so a key pressed with no control focused is bound to the page and not to nothing.
+    const identityOf = (node) => {
+      try {
+        const key = '__hermesBrowserFocusIdentities';
+        let state = globalThis[key];
+        if (!state || state.document !== document) {
+          state = { document, nodes: new WeakMap() };
+          globalThis[key] = state;
+        }
+        let identity = state.nodes.get(node) || '';
+        if (!identity) {
+          const bytes = crypto.getRandomValues(new Uint8Array(16));
+          identity = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+          state.nodes.set(node, identity);
+        }
+        return identity;
+      } catch {
+        // No identity means an approval-dependent press must fail closed.
+        return '';
+      }
+    };
     let focused = { role: '', name: '', inputType: '' };
+    if (active && (active === document.body || active === document.documentElement)) {
+      const identity = identityOf(document);
+      if (identity) focused = { ...focused, identity };
+    }
     if (active && active !== document.body && active !== document.documentElement) {
       const tag = String(active.tagName || '').toUpperCase();
       const inputType = String(active.type || '').toLowerCase();
@@ -739,26 +765,7 @@ function pageProbe(mode, direction = '') {
       const name = String(active.getAttribute('aria-label') || labelled || labelFromValue || (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable ? '' : active.innerText) || active.title || active.alt || active.placeholder || active.name || '')
         .replace(/\s+/g, ' ').trim().slice(0, 200);
       const autocomplete = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ? String(active.autocomplete || '').trim().slice(0, 80) : '';
-      // Keep identities in the extension's isolated world, never on the DOM.
-      let identity = '';
-      if (!embeds && shadowKnown) {
-        try {
-          const key = '__hermesBrowserFocusIdentities';
-          let state = globalThis[key];
-          if (!state || state.document !== document) {
-            state = { document, nodes: new WeakMap() };
-            globalThis[key] = state;
-          }
-          identity = state.nodes.get(active) || '';
-          if (!identity) {
-            const bytes = crypto.getRandomValues(new Uint8Array(16));
-            identity = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-            state.nodes.set(active, identity);
-          }
-        } catch {
-          // No identity means an approval-dependent press must fail closed.
-        }
-      }
+      const identity = !embeds && shadowKnown ? identityOf(active) : '';
       focused = {
         role,
         name,
