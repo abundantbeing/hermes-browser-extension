@@ -443,6 +443,7 @@ test('legacy local bootstrap connects without requiring an unrelated signed-in t
     requestDashboardOriginTrust: async () => { throw new Error('no-dashboard-tab'); },
     settings: {}, createChatGatewayClient: () => client, WebSocket: {},
     webappGatewayTickets: () => ({ socketTicket: async () => ({ ok: false, reason: 'absent' }) }),
+    accountConnectionKeyNow: () => 'local-api|http://127.0.0.1:8642',
     connectProfileViaAccount: async () => null,
     refreshCapabilityViews() {},
     buildDashboardWsUrlWithCredential: () => 'ws://localhost/fixture',
@@ -452,6 +453,36 @@ test('legacy local bootstrap connects without requiring an unrelated signed-in t
   vm.runInContext(`${wsSource}\nthis.run = ensureProfileWsConnection;`, context);
   const connection = await context.run({ allowDashboardTrust: true });
   assert.equal(connection.client, client);
+});
+
+test('a legacy dashboard socket that opens after the panel moved to another gateway is closed, never stored', async () => {
+  const movedSource = source.slice(source.indexOf('function connectionMovedError('), source.indexOf('\n// Where a sign-in may be run for this connection'));
+  const wsSource = source.slice(source.indexOf('async function ensureProfileWsConnection('), source.indexOf('\nfunction usesDashboardWsChatTransport('));
+  let connectionKey = 'local-api|http://127.0.0.1:8642';
+  let closed = 0;
+  // Save moves the panel to a remote gateway while the handshake is pending.
+  const client = { readyState: 1, on() {}, connect: async () => { connectionKey = 'remote-api|https://elsewhere.example'; }, close() { closed += 1; } };
+  const context = {
+    isRemoteWsMode: () => false, isLocalApiMode: () => true, desktopDashboardUrl: 'http://127.0.0.1:43210', localDashboardUrl: () => 'http://127.0.0.1:43210',
+    normalizeGatewayUrl: (url) => url, profileConnectionKey: () => 'profile-route',
+    profileWsConnection: null, trustedDashboardTabId: null,
+    dashboardTicketOriginMatches: () => false,
+    dashboardFetch: async () => ({ ok: true, text: async () => 'legacy bootstrap' }),
+    extractDashboardSessionToken: () => 'fixture-bootstrap',
+    settings: {}, createChatGatewayClient: () => client, WebSocket: {},
+    webappGatewayTickets: () => ({ socketTicket: async () => ({ ok: false, reason: 'absent' }) }),
+    accountConnectionKeyNow: () => connectionKey,
+    connectProfileViaAccount: async () => null,
+    refreshCapabilityViews() {},
+    setLocalDashboardUrl: () => { throw new Error('a dial for the old gateway must not re-discover a port'); },
+    buildDashboardWsUrlWithCredential: () => 'ws://localhost/fixture',
+    buildDashboardWsUrl: () => 'ws://localhost/fixture',
+  };
+  vm.createContext(context);
+  vm.runInContext(`${movedSource}\n${wsSource}\nthis.run = ensureProfileWsConnection;`, context);
+  await assert.rejects(context.run(), (error) => error.ticketReason === 'connection_changed');
+  assert.equal(context.profileWsConnection, null);
+  assert.equal(closed, 1);
 });
 
 test('remote API mode reports the missing companion and never looks for a dashboard here', async () => {

@@ -194,6 +194,15 @@ test('the remote dashboard dial uses an account ticket in the subprotocol only, 
   assert.match(remote, /await connectGatewayWithTicket\(client, baseUrl, ticket\.ticket/);
 });
 
+test('the remote dashboard dial closes a socket that opens after the panel moved to another gateway', () => {
+  const remote = slice('async function ensureRemoteWsClient()', '\nasync function ensureRemoteWsSession(');
+  assert.match(remote, /const dialedFor = accountConnectionKeyNow\(\);/);
+  // checked before the stored socket is closed, so a stale dial never closes the new connection's socket
+  assert.ok(remote.indexOf('if (!stillCurrent()) throw connectionMovedError();') < remote.indexOf('remoteWsConnection?.client?.close()'));
+  const guard = remote.indexOf('if (!stillCurrent()) {\n    try { client.close(); }');
+  assert.ok(guard > 0 && guard < remote.indexOf('remoteWsConnection = connection;'), 'closed before it could be stored');
+});
+
 // ---- The dial ----------------------------------------------------------------------------------------------------
 
 test('signed out: no request is made and the dial answers null, so the next source decides', async () => {
@@ -261,6 +270,75 @@ test('a dial that cannot mint a ticket leaves no connection; session-expired is 
   assert.equal(await down.run('connectProfileViaAccount()'), null);
   assert.equal(down.requests.filter((request) => request.path === '/api/auth/ws-ticket').length, 1, 'the outage cools down before another try');
   assert.ok(await down.run('hermesAccountStore().get(\'https://hermes.example.com\')'), 'the sign-in is kept through an outage');
+});
+
+// A dial that outlives the connection it was started for must not hand its socket to the panel: Save closes only the
+// socket already stored, so without this the old gateway's socket would come back after the switch.
+test('a handshake that finishes after the connection moved is closed, not stored, and does not cool the new connection down', async () => {
+  const p = panel({ gatewayMode: 'local-api', local: [LOCAL_GATED], held: [{ origin: LOCAL_GATED }] });
+  await p.seed();
+  vm.runInContext(slice('function sessionAuthoritySideSocket() {', '\nfunction refreshCapabilityViews()'), p.context);
+  let release = null;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const closes = [];
+  p.context.createChatGatewayClient = () => {
+    const client = {
+      readyState: 1,
+      on() {},
+      close() { closes.push('stale'); client.readyState = 3; },
+      connect: async (endpoint, protocols) => { p.connects.push({ endpoint, protocols }); await gate; },
+    };
+    return client;
+  };
+  const dial = p.run('connectProfileViaAccount({ readyTimeoutMs: 1000 })');
+  while (p.connects.length === 0) await new Promise((resolve) => setTimeout(resolve, 1));
+  // Settings: Remote API mode, saved while the local handshake is still pending.
+  p.context.settings.gatewayMode = 'remote-api';
+  p.context.settings.gatewayUrl = REMOTE;
+  release();
+  assert.equal(await dial, null);
+  assert.equal(p.run('profileWsConnection'), null, 'the old socket did not come back');
+  assert.deepEqual(closes, ['stale'], 'and it was closed');
+  assert.equal(p.run('accountSocketFailedAt'), 0);
+  assert.equal(p.run('accountSocketPending'), null);
+  assert.equal(p.run('sessionAuthoritySideSocket()'), null, 'nothing is left for a pasted image to reach');
+});
+
+test('a sign-in read that finishes after the connection moved dials nothing and leaves the new connection\'s socket alone', async () => {
+  const p = panel({ gatewayMode: 'local-api', local: [LOCAL_GATED], held: [{ origin: LOCAL_GATED }] });
+  await p.seed();
+  const store = p.run('hermesAccountStore()');
+  const read = store.get.bind(store);
+  store.get = async (origin) => {
+    const held = await read(origin);
+    p.context.settings.gatewayMode = 'remote-api';
+    p.context.settings.gatewayUrl = REMOTE;
+    return held;
+  };
+  const current = { client: { readyState: 1, close() { p.closed.push('current'); } }, baseUrl: REMOTE, key: `key:${REMOTE}` };
+  p.context.profileWsConnection = current;
+  assert.equal(await p.run('dialProfileViaAccount({ readyTimeoutMs: 1000 })'), null);
+  assert.equal(p.connects.length, 0, 'no socket was opened');
+  assert.deepEqual(p.requests.filter((request) => request.path === '/api/auth/ws-ticket'), [], 'no ticket was minted');
+  assert.equal(p.run('profileWsConnection'), current);
+  assert.deepEqual(p.closed, [], 'the socket of the connection the panel is on was not closed');
+});
+
+test('a dial that fails after the connection moved does not start the retry cool-down', async () => {
+  const p = panel({ gatewayMode: 'local-api', local: [LOCAL_GATED], held: [{ origin: LOCAL_GATED }] });
+  await p.seed();
+  p.context.createChatGatewayClient = () => ({
+    readyState: 0,
+    on() {},
+    close() {},
+    connect: async () => {
+      p.context.settings.gatewayMode = 'remote-api';
+      p.context.settings.gatewayUrl = REMOTE;
+      throw new Error('Hermes gateway.ready timed out');
+    },
+  });
+  assert.equal(await p.run('dialProfileViaAccount({ readyTimeoutMs: 1000 })'), null);
+  assert.equal(p.run('accountSocketFailedAt'), 0);
 });
 
 // ---- Sign-out, expiry and the connection --------------------------------------------------------------------------

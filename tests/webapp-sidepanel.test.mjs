@@ -253,6 +253,19 @@ test('with the sign-in held, the Webapp listener is the dashboard and the rich r
   assert.deepEqual(p.listeners(), { [WEBAPP]: 'accepted' });
 });
 
+test('a Webapp socket that opens after the panel moved to another gateway is closed, never stored', async () => {
+  const p = panel({ held: heldRecord });
+  let closed = 0;
+  p.context.createChatGatewayClient = () => ({
+    readyState: 1, on() {}, close() { closed += 1; },
+    // Save moves the panel to another gateway while the handshake is pending.
+    connect: async () => { p.context.settings = { ...p.context.settings, gatewayUrl: 'http://127.0.0.1:18642' }; },
+  });
+  await assert.rejects(vm.runInContext('ensureProfileWsConnection()', p.context), (error) => error.ticketReason === 'connection_changed');
+  assert.equal(p.context.profileWsConnection, null, 'the old gateway\'s socket is not the panel\'s');
+  assert.equal(closed, 1, 'and it was closed');
+});
+
 test('with the sign-in held, loadProfiles reads the roster through the Webapp socket', async () => {
   const p = panel({ held: heldRecord });
   p.context.createChatGatewayClient = () => ({
@@ -559,4 +572,75 @@ test('a remote connection never asks the local gateway', async () => {
   assert.equal(await vm.runInContext('connectProfileViaGatewayTicket()', p.context), null);
   assert.equal(await vm.runInContext('refreshGatewaySocket()', p.context), null);
   assert.equal(ticketPosts(net).length, 0);
+});
+
+// A dial that outlives the connection it was started for must not hand its socket to the panel: Save closes only the
+// socket already stored, so the old local gateway's socket would otherwise come back after a switch to Remote API.
+test('a ticket handshake that finishes after the connection moved is closed, not stored', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  vm.runInContext(slice('function sessionAuthoritySideSocket() {', '\nfunction refreshCapabilityViews()'), p.context);
+  let release = null;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const closes = [];
+  p.context.createChatGatewayClient = () => {
+    const client = {
+      readyState: 1,
+      readyPayload: { session_authority: true },
+      on() {},
+      close() { closes.push('stale'); client.readyState = 3; },
+      connect: async (...args) => { p.connects.push(args); await gate; },
+    };
+    return client;
+  };
+  const dial = vm.runInContext('connectProfileViaGatewayTicket()', p.context);
+  while (p.connects.length === 0) await new Promise((resolve) => setTimeout(resolve, 1));
+  p.context.settings.gatewayMode = 'remote-api';
+  p.context.settings.gatewayUrl = 'https://hermes.example.com';
+  release();
+  assert.equal(await dial, null);
+  assert.equal(p.read('profileWsConnection'), null, 'the old socket did not come back');
+  assert.deepEqual(closes, ['stale'], 'and it was closed');
+  assert.equal(p.read('gatewaySocketFailedAt'), 0);
+  assert.equal(p.read('sessionAuthoritySideSocket()'), null, 'nothing is left for a pasted image to reach');
+});
+
+test('a socket ticket that arrives after the connection moved opens nothing and leaves the new connection\'s socket alone', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  p.context.fetch = async (url, init) => {
+    const response = await net(url, init);
+    if (String(url).includes('/api/browser-extension/webapp-socket-ticket')) {
+      p.context.settings.gatewayMode = 'remote-api';
+      p.context.settings.gatewayUrl = 'https://hermes.example.com';
+    }
+    return response;
+  };
+  const closed = [];
+  const current = { client: { readyState: 1, close() { closed.push('current'); } }, baseUrl: 'https://hermes.example.com', key: 'key:https://hermes.example.com' };
+  p.context.profileWsConnection = current;
+  p.context.createChatGatewayClient = () => { throw new Error('a stale ticket must not open a socket'); };
+  assert.equal(await vm.runInContext('dialProfileViaGatewayTicket()', p.context), null);
+  assert.equal(ticketPosts(net).length, 1);
+  assert.equal(p.connects.length, 0);
+  assert.equal(p.read('profileWsConnection'), current);
+  assert.deepEqual(closed, [], 'the socket of the connection the panel is on was not closed');
+  assert.equal(p.read('gatewaySocketFailedAt'), 0);
+});
+
+test('a ticket dial that fails after the connection moved does not start the retry cool-down', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  p.context.createChatGatewayClient = () => ({
+    readyState: 0,
+    on() {},
+    close() {},
+    connect: async () => {
+      p.context.settings.gatewayMode = 'remote-api';
+      p.context.settings.gatewayUrl = 'https://hermes.example.com';
+      throw new Error('closed before gateway.ready');
+    },
+  });
+  assert.equal(await vm.runInContext('connectProfileViaGatewayTicket()', p.context), null);
+  assert.equal(p.read('gatewaySocketFailedAt'), 0);
 });

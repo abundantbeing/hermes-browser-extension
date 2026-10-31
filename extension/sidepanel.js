@@ -4265,6 +4265,15 @@ function accountConnectionKeyNow() {
   return accountConnectionKey({ gatewayMode: normalizeGatewayMode(settings.gatewayMode), gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl) });
 }
 
+// Save, Connect or another panel's write can move the panel to another gateway or mode while a dial is pending, and
+// they close only the socket already stored. A dial that finishes for the connection the panel has left closes its
+// socket and fails with this, so the old gateway's socket is never stored or used for the new one.
+function connectionMovedError() {
+  const error = new Error('The connection changed while connecting. Try again.');
+  error.ticketReason = 'connection_changed';
+  return error;
+}
+
 // Where a sign-in may be run for this connection. A remote connection gets its own gateway origin and never a
 // loopback one (accountOriginsFor); a local one gets the loopback listeners discovery or Settings named.
 function accountOriginsNow() {
@@ -4491,8 +4500,12 @@ function connectProfileViaAccount(options = {}) {
 async function dialProfileViaAccount({ readyTimeoutMs = 8_000 } = {}) {
   if (Date.now() - accountSocketFailedAt < ACCOUNT_SOCKET_RETRY_MS) return null;
   const connectionKey = accountConnectionKeyNow();
+  // Save or Connect can move the panel to another gateway or mode while a read, ticket or handshake is pending, and
+  // they close only the socket already stored. What finishes for the connection the panel has left is closed, never stored.
+  const stillCurrent = () => accountConnectionKeyNow() === connectionKey;
   for (const origin of accountOriginsNow()) {
     const held = await hermesAccountStore().get(origin).catch(() => null);
+    if (!stillCurrent()) return null;
     if (!held) continue;
     if (held.connectionKey && held.connectionKey !== connectionKey) {
       void clearAccountForConnection();
@@ -4518,6 +4531,10 @@ async function dialProfileViaAccount({ readyTimeoutMs = 8_000 } = {}) {
         endpoint: buildDashboardWsEndpoint(origin),
         protocolsFor: gatewayWebSocketProtocols,
       });
+      if (!stillCurrent()) {
+        try { gatewayClient.close(); } catch { /* already closed */ }
+        return null;
+      }
       if (!dialed.ok) {
         // signed-out / session-expired already cleared the tokens (handleAccountChange); unavailable keeps them.
         if (dialed.reason === 'unavailable') accountSocketFailedAt = Date.now();
@@ -4528,7 +4545,8 @@ async function dialProfileViaAccount({ readyTimeoutMs = 8_000 } = {}) {
       refreshCapabilityViews();
       return connection;
     } catch {
-      accountSocketFailedAt = Date.now();
+      // A failure for a connection the panel has left says nothing about the one it is on now.
+      if (stillCurrent()) accountSocketFailedAt = Date.now();
       return null;
     }
   }
@@ -12451,6 +12469,8 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
     if (viaAccountRemote) return viaAccountRemote;
     throw dashboardCompanionNotConfiguredError();
   }
+  const dialedFor = accountConnectionKeyNow();
+  const stillCurrent = () => accountConnectionKeyNow() === dialedFor;
   // First choice: the paired gateway signs a socket in itself, so no dashboard has to be discovered and no
   // credential held. A gateway without the routes (or with its Webapp off) answers null and the rest runs as before.
   const viaGatewayTicket = await connectProfileViaGatewayTicket({ readyTimeoutMs });
@@ -12480,6 +12500,7 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
   } catch {
     // Authenticated dashboards use the explicit signed-in tab below.
   }
+  if (!stillCurrent()) throw connectionMovedError();
   // The gateway's Webapp injects no token. With its sign-in held, a one-use socket ticket opens /api/ws.
   if (!dashboardToken) {
     const viaWebapp = await connectProfileViaWebapp(baseUrl, key, readyTimeoutMs);
@@ -12514,6 +12535,7 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
       error.ticketReason = ticket?.reason || 'ticket-failed';
       throw error;
     }
+    if (!stillCurrent()) throw connectionMovedError();
     profileWsConnection?.client?.close?.();
     const gatewayClient = createChatGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs, replayEndpoint: baseUrl });
     gatewayClient.on('close', () => {
@@ -12536,9 +12558,14 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
         return fresh?.ok ? fresh.ticket : '';
       },
     });
+    if (!stillCurrent()) {
+      try { gatewayClient.close(); } catch { /* already closed */ }
+      throw connectionMovedError();
+    }
     profileWsConnection = { client: gatewayClient, baseUrl, key };
     return profileWsConnection;
   }
+  if (!stillCurrent()) throw connectionMovedError();
   if (profileWsConnection?.client?.readyState === 1 && profileWsConnection.key === key) {
     return profileWsConnection;
   }
@@ -12560,9 +12587,15 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
       : buildDashboardWsUrl(baseUrl));
   try {
     await gatewayClient.connect(wsUrl);
+    if (!stillCurrent()) throw connectionMovedError();
     profileWsConnection = { client: gatewayClient, baseUrl, key };
     return profileWsConnection;
   } catch (connectError) {
+    // A dial for the connection the panel has left is not retried on a re-discovered port.
+    if (!stillCurrent()) {
+      try { gatewayClient.close(); } catch { /* already closed */ }
+      throw connectionMovedError();
+    }
     // Port re-binding resilience: if the cached desktop dashboard port is down,
     // clear the cache, probe dynamically for the new active port, and reconnect.
     if (localDashboardUrl()) {
@@ -12575,20 +12608,24 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
           const freshBase = normalizeGatewayUrl(freshUrl);
           const rootRes = await dashboardFetch(freshBase, { headers: { Accept: 'text/html' }, cache: 'no-store', redirect: 'error' });
           const freshToken = extractDashboardSessionToken(await rootRes.text());
+          if (!stillCurrent()) throw connectionMovedError();
           if (!freshToken) {
             const viaWebapp = await connectProfileViaWebapp(freshBase, profileConnectionKey(freshBase), readyTimeoutMs);
             if (viaWebapp) return viaWebapp;
           }
           const freshWs = freshToken ? buildDashboardWsUrlWithCredential(freshBase, 'token', freshToken) : buildDashboardWsUrl(freshBase);
           await gatewayClient.connect(freshWs);
-          profileWsConnection = { client: gatewayClient, baseUrl: freshBase, key: profileConnectionKey(freshBase) };
-          return profileWsConnection;
+          if (stillCurrent()) {
+            profileWsConnection = { client: gatewayClient, baseUrl: freshBase, key: profileConnectionKey(freshBase) };
+            return profileWsConnection;
+          }
+          try { gatewayClient.close(); } catch { /* already closed */ }
         }
       } catch {
         /* re-discovery failed, rethrow original connect error */
       }
     }
-    throw connectError;
+    throw stillCurrent() ? connectError : connectionMovedError();
   }
 }
 
@@ -12602,6 +12639,8 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
 async function connectProfileViaWebapp(baseUrl, key, readyTimeoutMs) {
   const origin = originOf(baseUrl);
   if (!origin) return null;
+  const dialedFor = accountConnectionKeyNow();
+  const stillCurrent = () => accountConnectionKeyNow() === dialedFor;
   const store = webappCredentialStore();
   let token = await dashboardTokenFor(baseUrl, '');
   if (!token && !webappListeners.has(origin)) return null;
@@ -12609,6 +12648,7 @@ async function connectProfileViaWebapp(baseUrl, key, readyTimeoutMs) {
   if (!token && await captureWebappCredential({ origin, force: true })) token = await dashboardTokenFor(baseUrl, '');
   const mint = () => store.mintSocketTicket(target, { socket: 'gateway' });
   const minted = token ? await mint() : { ok: false, reason: 'none' };
+  if (!stillCurrent()) throw connectionMovedError();
   if (!minted.ok) {
     if (['none', 'rejected', 'disabled'].includes(minted.reason)) {
       webappListeners.set(origin, minted.reason === 'rejected' ? 'rejected' : 'none');
@@ -12634,6 +12674,10 @@ async function connectProfileViaWebapp(baseUrl, key, readyTimeoutMs) {
       return fresh?.ok ? fresh.ticket : '';
     },
   });
+  if (!stillCurrent()) {
+    try { gatewayClient.close(); } catch { /* already closed */ }
+    throw connectionMovedError();
+  }
   webappListeners.set(origin, 'accepted');
   profileWsConnection = { client: gatewayClient, baseUrl, key };
   return profileWsConnection;
@@ -12661,8 +12705,13 @@ function connectProfileViaGatewayTicket(options = {}) {
 
 async function dialProfileViaGatewayTicket({ readyTimeoutMs = 8_000 } = {}) {
   const tickets = webappGatewayTickets();
+  // Save, Connect or another panel's write can move this panel to another gateway or mode while the ticket or the
+  // handshake is pending, and they close only the socket already stored. A socket that finishes after that belongs
+  // to the old gateway (a Remote API panel would be holding a loopback one): it is closed here, never stored.
+  const dialedFor = accountConnectionKeyNow();
+  const stillCurrent = () => accountConnectionKeyNow() === dialedFor;
   const minted = await tickets.socketTicket();
-  if (!minted.ok) return null;
+  if (!minted.ok || !stillCurrent()) return null;
   const baseUrl = minted.baseUrl;
   const key = profileConnectionKey(baseUrl);
   let connection = null;
@@ -12685,10 +12734,15 @@ async function dialProfileViaGatewayTicket({ readyTimeoutMs = 8_000 } = {}) {
         return fresh.ok ? fresh.ticket : '';
       },
     });
+    if (!stillCurrent()) {
+      try { gatewayClient.close(); } catch { /* already closed */ }
+      return null;
+    }
     connection = { client: gatewayClient, baseUrl, key };
     profileWsConnection = connection;
   } catch {
-    gatewaySocketFailedAt = Date.now();
+    // A failure for a connection the panel has left says nothing about the one it is on now.
+    if (stillCurrent()) gatewaySocketFailedAt = Date.now();
     return null;
   }
   refreshCapabilityViews();
@@ -12712,7 +12766,8 @@ async function refreshGatewaySocket({ force = false } = {}) {
   // Older local gateways lack automatic tickets. Reuse an already held Web
   // sign-in at the known listener, without discovery, sign-in prompts or chat adoption.
   const baseUrl = isLocalApiMode() ? localDashboardUrl() : '';
-  if (!baseUrl || !(await dashboardTokenFor(baseUrl, ''))) return null;
+  const dialedFor = accountConnectionKeyNow();
+  if (!baseUrl || !(await dashboardTokenFor(baseUrl, '')) || accountConnectionKeyNow() !== dialedFor) return null;
   const viaWebapp = await connectProfileViaWebapp(baseUrl, profileConnectionKey(baseUrl), 5_000).catch(() => null);
   if (viaWebapp) refreshCapabilityViews();
   return viaWebapp;
@@ -25619,9 +25674,12 @@ async function ensureRemoteWsClient() {
   if (!isUsableRemoteGatewayUrl(baseUrl)) {
     throw new Error('Set a remote https gateway URL in Settings before connecting.');
   }
+  const dialedFor = accountConnectionKeyNow();
+  const stillCurrent = () => accountConnectionKeyNow() === dialedFor;
   // A Hermes account sign-in for this gateway's own origin takes the place of the trusted signed-in tab: signing
   // in was the person's consent for this origin, and its ticket is minted with the account's tokens.
   const accountOrigin = await signedInAccountOriginFor(baseUrl);
+  if (!stillCurrent()) throw connectionMovedError();
   if (!accountOrigin && !isTrustedDashboardOrigin(baseUrl, settings.trustedDashboardOrigin)) {
     const error = new Error('This dashboard origin is not trusted yet. Open Settings → Test connection to review and approve Dashboard Attach.');
     error.ticketReason = 'dashboard_origin_untrusted';
@@ -25651,6 +25709,7 @@ async function ensureRemoteWsClient() {
       tabId: trustedDashboardTabId,
     }));
   const ticket = await mintTicket();
+  if (!stillCurrent()) throw connectionMovedError();
   if (!ticket.ok) {
     if (accountOrigin) {
       const error = ['signed-out', 'session-expired'].includes(ticket.reason)
@@ -25699,6 +25758,10 @@ async function ensureRemoteWsClient() {
   } catch (error) {
     console.warn('[Hermes] remote: WebSocket connect failed:', error?.message || error);
     throw error;
+  }
+  if (!stillCurrent()) {
+    try { client.close(); } catch { /* already closed */ }
+    throw connectionMovedError();
   }
   const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '', profile: '', ...(accountOrigin ? { account: accountOrigin } : {}) };
   client.on('close', () => {
