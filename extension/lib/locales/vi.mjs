@@ -86,6 +86,8 @@ export default Object.freeze({
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
+  "bot_mode.group_delivery_unknown": "Hermes không trả lời, nên có thể đã nhận được tin nhắn này. Hãy kiểm tra phòng trước khi gửi lại.",
+  "bot_mode.group_delivery_unknown_draft": "Tin nhắn của bạn đã trở lại ô soạn. Gửi lại không thay đổi trong vòng 10 phút thì sẽ không bị đăng hai lần.",
   "bot_mode.title": "Chế độ Bot",
   "bot_mode.open_title": "Mở chế độ Bot",
   "bot_mode.open_chat": "Mở Bot Chat",

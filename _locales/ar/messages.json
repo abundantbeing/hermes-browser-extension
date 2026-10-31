@@ -551,6 +551,14 @@
     "message": "اختر وكيلاً واحداً على الأقل لمجموعة الدردشة هذه.",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "لم يردّ Hermes، لذا ربما وصلته هذه الرسالة بالفعل. تحقّق من الغرفة قبل إرسالها مرة أخرى.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "رسالتك عادت إلى مربع الكتابة. إذا أُرسلت مرة أخرى دون تغيير خلال 10 دقائق، فلن تُنشر مرتين.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "اختر الوكلاء الذين يشاركون في مجموعة الدردشة هذه.",
     "description": "Runtime interface message bot_mode.group_field_members"

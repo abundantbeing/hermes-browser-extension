@@ -551,6 +551,14 @@
     "message": "Bu grup sohbeti için en az bir ajan seçin.",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes yanıt vermedi, bu yüzden bu mesaj ona zaten ulaşmış olabilir. Yeniden göndermeden önce odayı kontrol edin.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Mesajınız yazma kutusuna geri döndü. 10 dakika içinde değiştirmeden yeniden gönderilirse iki kez paylaşılmaz.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "Bu grup sohbetine katılacak ajanları seçin.",
     "description": "Runtime interface message bot_mode.group_field_members"

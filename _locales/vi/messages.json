@@ -551,6 +551,14 @@
     "message": "Chọn ít nhất một agent cho trò chuyện nhóm này.",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes không trả lời, nên có thể đã nhận được tin nhắn này. Hãy kiểm tra phòng trước khi gửi lại.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Tin nhắn của bạn đã trở lại ô soạn. Gửi lại không thay đổi trong vòng 10 phút thì sẽ không bị đăng hai lần.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "Chọn các agent tham gia trò chuyện nhóm này.",
     "description": "Runtime interface message bot_mode.group_field_members"

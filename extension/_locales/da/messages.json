@@ -551,6 +551,14 @@
     "message": "Vælg mindst én agent til denne gruppechat.",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes svarede ikke, så den har måske allerede denne besked. Tjek rummet, før du sender den igen.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Din besked er tilbage i skrivefeltet. Sendes den igen uændret inden for 10 minutter, bliver den ikke slået op to gange.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "Vælg de agenter, der skal deltage i denne gruppechat.",
     "description": "Runtime interface message bot_mode.group_field_members"

@@ -86,6 +86,8 @@ export default Object.freeze({
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
+  "bot_mode.group_delivery_unknown": "Hermes hat nicht geantwortet und hat diese Nachricht vielleicht schon. Sieh im Raum nach, bevor du sie noch einmal sendest.",
+  "bot_mode.group_delivery_unknown_draft": "Deine Nachricht ist wieder im Eingabefeld. Unverändert innerhalb von 10 Minuten erneut gesendet, wird sie nicht doppelt gepostet.",
   "bot_mode.title": "Bot-Modus",
   "bot_mode.open_title": "Bot-Modus öffnen",
   "bot_mode.open_chat": "Bot-Chat öffnen",

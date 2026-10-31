@@ -551,6 +551,14 @@
     "message": "Choisissez au moins un agent pour cette discussion de groupe.",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes n'a pas répondu, il a donc peut-être déjà reçu ce message. Vérifiez le salon avant de le renvoyer.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Votre message est de retour dans la zone de saisie. Renvoyé sans modification dans les 10 minutes, il n'est pas publié deux fois.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "Choisissez les agents qui participent à cette discussion de groupe.",
     "description": "Runtime interface message bot_mode.group_field_members"

@@ -551,6 +551,14 @@
     "message": "इस समूह चैट के लिए कम से कम एक एजेंट चुनें।",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes ने जवाब नहीं दिया, इसलिए हो सकता है कि यह संदेश उसे पहले ही मिल चुका हो। दोबारा भेजने से पहले रूम देख लें।",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "आपका संदेश वापस लिखने के बॉक्स में है। 10 मिनट के भीतर बिना बदलाव के दोबारा भेजने पर यह दो बार पोस्ट नहीं होता।",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "उन एजेंटों को चुनें जो इस समूह चैट में भाग लेते हैं।",
     "description": "Runtime interface message bot_mode.group_field_members"

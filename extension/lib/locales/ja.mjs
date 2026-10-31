@@ -86,6 +86,8 @@ export default Object.freeze({
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
+  "bot_mode.group_delivery_unknown": "Hermes から応答がなかったため、このメッセージはすでに届いている可能性があります。もう一度送る前にルームを確認してください。",
+  "bot_mode.group_delivery_unknown_draft": "メッセージは入力欄に戻りました。10 分以内に変更せずに再送すると、二重に投稿されることはありません。",
   "bot_mode.title": "ボットモード",
   "bot_mode.open_title": "ボットモードを開く",
   "bot_mode.open_chat": "Bot Chatを開く",

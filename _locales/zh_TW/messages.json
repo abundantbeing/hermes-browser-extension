@@ -551,6 +551,14 @@
     "message": "請為這個群聊至少選擇一個代理人。",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes 沒有回應，可能已經收到這則訊息。再次傳送前請先查看聊天室。",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "你的訊息已回到輸入框。10 分鐘內原樣再次傳送，不會重複發佈。",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "選擇參與此群聊的代理人。",
     "description": "Runtime interface message bot_mode.group_field_members"

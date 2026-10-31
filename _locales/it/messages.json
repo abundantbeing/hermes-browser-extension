@@ -551,6 +551,14 @@
     "message": "Scegli almeno un agente per questa chat di gruppo.",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes non ha risposto, quindi potrebbe aver già ricevuto questo messaggio. Controlla la stanza prima di inviarlo di nuovo.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Il tuo messaggio è tornato nella casella di scrittura. Se lo invii di nuovo senza modifiche entro 10 minuti, non viene pubblicato due volte.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "Scegli gli agenti che partecipano a questa chat di gruppo.",
     "description": "Runtime interface message bot_mode.group_field_members"

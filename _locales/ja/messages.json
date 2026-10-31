@@ -551,6 +551,14 @@
     "message": "このグループチャットには少なくとも1人のエージェントを選択してください。",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes から応答がなかったため、このメッセージはすでに届いている可能性があります。もう一度送る前にルームを確認してください。",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "メッセージは入力欄に戻りました。10 分以内に変更せずに再送すると、二重に投稿されることはありません。",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "このグループチャットに参加するエージェントを選択してください。",
     "description": "Runtime interface message bot_mode.group_field_members"

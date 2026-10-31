@@ -375,6 +375,16 @@ test('a resend after a lost reply keeps the event id, so the task runs once, and
   assert.equal(client.sendEventIds.at(-1), 'evt-2');
 });
 
+test('a later message the room accepts ends the wait, so the lost one asked again is a new task', async () => {
+  const client = lossyGateway({ script: settledScript });
+  const { runtime, storage } = runtimeFor(client);
+  await assert.rejects(runtime.send({ roomId: 'r', members: MEMBERS, text: 'one' }), (error) => error.deliveryUnknown === true);
+  assert.equal((await runtime.send({ roomId: 'r', members: MEMBERS, text: 'two' })).ok, true);
+  assert.equal(storage.data[HOSTED_ROOMS_STORAGE_KEY]['http://127.0.0.1:1'].r.pendingSend, undefined, 'forgotten once the room answered');
+  await runtime.send({ roomId: 'r', members: MEMBERS, text: 'one' });
+  assert.deepEqual(client.sendEventIds, ['evt-1', 'evt-2', 'evt-3'], 'asked again later, it runs again');
+});
+
 test('the event id of a lost reply survives a new runtime and goes only to the same message, thread and room within ten minutes', async () => {
   const storage = memoryStorage();
   const client = lossyGateway({ lose: 10, script: settledScript });

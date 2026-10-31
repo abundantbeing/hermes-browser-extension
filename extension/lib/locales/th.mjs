@@ -86,6 +86,8 @@ export default Object.freeze({
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
+  "bot_mode.group_delivery_unknown": "Hermes ไม่ได้ตอบกลับ จึงอาจได้รับข้อความนี้แล้ว ตรวจสอบห้องก่อนส่งอีกครั้ง",
+  "bot_mode.group_delivery_unknown_draft": "ข้อความของคุณกลับมาอยู่ในช่องพิมพ์แล้ว หากส่งซ้ำโดยไม่แก้ไขภายใน 10 นาที จะไม่ถูกโพสต์สองครั้ง",
   "bot_mode.title": "โหมดบอต",
   "bot_mode.open_title": "เปิดโหมดบอต",
   "bot_mode.open_chat": "เปิด Bot Chat",

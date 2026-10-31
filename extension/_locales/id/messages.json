@@ -551,6 +551,14 @@
     "message": "Pilih setidaknya satu agen untuk obrolan grup ini.",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes tidak menjawab, jadi mungkin pesan ini sudah diterimanya. Periksa ruang sebelum mengirimnya lagi.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Pesan Anda kembali ke kotak tulis. Jika dikirim lagi tanpa perubahan dalam 10 menit, pesan tidak diposting dua kali.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "Pilih agen yang ikut serta dalam obrolan grup ini.",
     "description": "Runtime interface message bot_mode.group_field_members"

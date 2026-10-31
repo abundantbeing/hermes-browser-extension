@@ -85,6 +85,8 @@ export default Object.freeze({
   "a11y.subagent_status": "Hermes subagent status",
   "bot_mode.title": "Bot Mode",
   "bot_mode.chat_empty": "Say something to get started.",
+  "bot_mode.group_delivery_unknown": "Hermes did not answer, so it may already have this message. Check the room before sending it again.",
+  "bot_mode.group_delivery_unknown_draft": "Your message is back in the composer. Sent again unchanged within 10 minutes, it is not posted twice.",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.open_title": "Open Bot Mode",

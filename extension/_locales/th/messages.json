@@ -551,6 +551,14 @@
     "message": "เลือกเอเจนต์อย่างน้อยหนึ่งตัวสำหรับแชทกลุ่มนี้",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes ไม่ได้ตอบกลับ จึงอาจได้รับข้อความนี้แล้ว ตรวจสอบห้องก่อนส่งอีกครั้ง",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "ข้อความของคุณกลับมาอยู่ในช่องพิมพ์แล้ว หากส่งซ้ำโดยไม่แก้ไขภายใน 10 นาที จะไม่ถูกโพสต์สองครั้ง",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "เลือกเอเจนต์ที่จะเข้าร่วมแชทกลุ่มนี้",
     "description": "Runtime interface message bot_mode.group_field_members"

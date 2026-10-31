@@ -564,7 +564,8 @@ export function createHostedGroupRuntime({
         }
         throw error;
       }
-      if (resent) await rememberPendingSend(roomId, binding, null);
+      // Any send the room accepts ends the wait for a lost one: the same text asked again later is a new task.
+      if (resent || binding?.pendingSend) await rememberPendingSend(roomId, binding, null);
       await onMessage(working.at(-1), { kind: 'user' });
       await onActivity({
         kind: 'turn_start',

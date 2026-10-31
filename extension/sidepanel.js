@@ -14430,11 +14430,12 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
       }
       const draftNote = !draftSettled
         ? ' Your message and attachments are still in the composer.'
-        : (!draftRestored ? ''
-          : (deliveryUnknown
-            ? ' Your message is back in the composer. Sent again unchanged within 10 minutes, it is not posted twice.'
-            : ' Your message is back in the composer.'));
-      setStatus('error', 'Group message failed', `${String(error?.message || error)}${draftNote}`, { translateDetail: false });
+        : (draftRestored ? ' Your message is back in the composer.' : '');
+      // No answer is not a refusal: say so in the reader's language, not the transport's English error.
+      const detail = deliveryUnknown
+        ? [t('bot_mode.group_delivery_unknown'), draftRestored ? t('bot_mode.group_delivery_unknown_draft') : ''].filter(Boolean).join(' ')
+        : `${String(error?.message || error)}${draftNote}`;
+      setStatus('error', 'Group message failed', detail, { translateDetail: false });
     }
     return false;
   } finally {

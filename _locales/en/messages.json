@@ -551,6 +551,14 @@
     "message": "Create group chat",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes did not answer, so it may already have this message. Check the room before sending it again.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Your message is back in the composer. Sent again unchanged within 10 minutes, it is not posted twice.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "Members",
     "description": "Runtime interface message bot_mode.group_field_members"

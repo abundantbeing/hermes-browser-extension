@@ -551,6 +551,14 @@
     "message": "Виберіть принаймні одного агента для цього групового чату.",
     "description": "Runtime interface message bot_mode.group_create"
   },
+  "runtime_bot_mode_group_delivery_unknown": {
+    "message": "Hermes не відповів, тож це повідомлення, можливо, вже в нього. Перевірте кімнату, перш ніж надсилати його знову.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown"
+  },
+  "runtime_bot_mode_group_delivery_unknown_draft": {
+    "message": "Ваше повідомлення знову в полі введення. Якщо надіслати його без змін протягом 10 хвилин, воно не буде опубліковане двічі.",
+    "description": "Runtime interface message bot_mode.group_delivery_unknown_draft"
+  },
   "runtime_bot_mode_group_field_members": {
     "message": "Виберіть агентів, які беруть участь у цьому груповому чаті.",
     "description": "Runtime interface message bot_mode.group_field_members"
