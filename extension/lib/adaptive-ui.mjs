@@ -809,11 +809,18 @@ export function presentMarkdownParts(text = '', { settled = false } = {}) {
     markdown = [];
   };
   const followed = (end) => settled || lines.slice(end).some((line) => line.trim());
-  let inFence = false;
+  // The same fence rule as splitAdaptiveSegments and renderMarkdown: a fenced block stays one piece of
+  // Markdown, whatever its lines look like.
+  let fence = null;
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    if (line.trim().startsWith('```')) inFence = !inFence;
-    if (inFence) { markdown.push(line); continue; }
+    if (fence) {
+      markdown.push(line);
+      if (isMarkdownFenceClose(line, fence)) fence = null;
+      continue;
+    }
+    fence = markdownFenceOpening(line);
+    if (fence) { markdown.push(line); continue; }
     const previousBlank = index === 0 || !lines[index - 1].trim();
     const standalone = (run) => (run.end >= lines.length || !lines[run.end].trim()) && followed(run.end);
     if (previousBlank && shortLine(line) && METRIC_LINE.test(line)) {
