@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   INLINE_ASSIST_FONT_FILES,
+  INLINE_ASSIST_CIRCLE_FILLS,
   INLINE_ASSIST_FONT_PREFIX,
   INLINE_ASSIST_ICONS,
   circleToneForBackground,
@@ -156,4 +157,15 @@ test('a transparent page under a dark colour-scheme gets the light circle', () =
   assert.equal(circleToneForBackground(null, { colorScheme: 'dark' }), 'light');
   assert.equal(circleToneForBackground(null, { colorScheme: 'light dark' }), 'dark');
   assert.equal(circleToneForBackground(null, { colorScheme: 'normal' }), 'dark');
+});
+
+test('the circle takes whichever fill stands out more, so light-gray pages get the dark circle', () => {
+  assert.equal(circleToneForBackground(parseCssColor('rgb(170, 170, 170)')), 'dark', 'about 7.9:1 against 2.1:1');
+  assert.equal(circleToneForBackground(parseCssColor('rgb(128, 128, 128)')), 'dark');
+  assert.equal(circleToneForBackground(parseCssColor('rgb(100, 100, 100)')), 'light');
+  assert.equal(circleToneForBackground(parseCssColor('rgb(255, 255, 255)')), 'dark');
+  assert.equal(circleToneForBackground(parseCssColor('rgb(0, 0, 0)')), 'light');
+  const css = readFileSync(new URL('../extension/content-inline-helper.js', import.meta.url), 'utf8');
+  assert.ok(css.includes(`.launcher[data-tone="light"] { --hx-fill:${INLINE_ASSIST_CIRCLE_FILLS.light};`), 'the light fill the contrast is measured with');
+  assert.ok(css.includes(`.launcher[data-tone="dark"] { --hx-fill:${INLINE_ASSIST_CIRCLE_FILLS.dark};`), 'the dark fill the contrast is measured with');
 });
