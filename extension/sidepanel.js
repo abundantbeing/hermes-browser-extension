@@ -19468,6 +19468,17 @@ async function loadDashboardSessionsForProfile(profile = '') {
 
 async function loadSessions({ quiet = false } = {}) {
   if (usesDashboardWsChatTransport()) {
+    // A chat followed over the Hermes Web socket (one running in Desktop or the phone app) must not shrink
+    // the list: that socket lists only the chats its own sign-in made, not this gateway's history. On a
+    // local connection with an API key the default profile lists over REST first; the socket list below
+    // stays the fallback, for a key that no longer works while the socket still does.
+    if (isLocalApiMode() && settings.apiKey && !isNamedHermesProfile()) {
+      const listed = await loadSessionsOverRest({ quiet: true });
+      if (listed.ok) {
+        if (!quiet) setStatus('ok', 'Hermes sessions synced', `${listed.count} sessions available`);
+        return listed;
+      }
+    }
     // Remote and local-dashboard fallback reads use the already authenticated
     // socket. The local fallback must not jump back to the stale API key.
     const dashboardConnection = isRemoteWsMode() ? remoteWsConnection : activeDashboardWsConnection;
@@ -19515,6 +19526,10 @@ async function loadSessions({ quiet = false } = {}) {
     renderSessionMenu();
     return { ok: false, count: 0, error: 'Connect to Hermes before refreshing sessions.' };
   }
+  return loadSessionsOverRest({ quiet });
+}
+
+async function loadSessionsOverRest({ quiet = false } = {}) {
   try {
     // Profile-scoped session reads: the gateway multiplexes /p/<profile>/ with
     // per-profile Bearer keys (fail-closed when a profile has no API_SERVER_KEY),
