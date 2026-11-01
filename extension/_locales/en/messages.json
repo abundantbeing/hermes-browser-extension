@@ -216,7 +216,7 @@
     "description": "Runtime interface message appearance.font_collapse"
   },
   "runtime_appearance_font_fallback_note": {
-    "message": "Licensed signature font not installed — showing the bundled fallback face.",
+    "message": "Rules signature font did not load — showing the bundled fallback face.",
     "description": "Runtime interface message appearance.font_fallback_note"
   },
   "runtime_appearance_font_family": {

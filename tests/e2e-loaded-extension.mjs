@@ -775,15 +775,12 @@ const EXPECTED_HANDLED_GITHUB_FETCHES = new Set([
 ]);
 
 // Resource-load failures that are expected in this journey and not page errors:
-//  - the licensed "Rules" typefaces are not in the public source tree (see
-//    extension/lib/fonts.css), so their @font-face files 404 and the fallback stack is used;
 //  - connection discovery probes loopback gateway/dashboard candidates, and the
 //    stub gateway deliberately lacks optional routes (profiles, health detail);
 //  - the five handled startup fetches above (the cache-busting ?t= is ignored).
 function expectedResourceFailure(entry = {}) {
   if (entry.source !== 'network') return false;
   const url = String(entry.url || '');
-  if (/\/assets\/fonts\/Rules[^/]*\.woff2$/.test(url)) return true;
   if (EXPECTED_HANDLED_GITHUB_FETCHES.has(url.split(/[?#]/)[0])) return true;
   return /^http:\/\/127\.0\.0\.1:\d+\//.test(url);
 }
