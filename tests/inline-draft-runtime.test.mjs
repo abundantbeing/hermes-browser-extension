@@ -23,12 +23,13 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.doesNotMatch(source, /logoUrl[\s\S]{0,180}hermes-browser-extension-icon-box-white\.png/);
   assert.doesNotMatch(source, /nous-girl-solo-logo\.png/);
   assert.match(source, /maskImage|webkitMaskImage/);
-  assert.match(source, /\.launcher \{[^}]*box-shadow:0 2px 10px rgba\(0,0,0,\.18\)/);
+  assert.match(source, /\.launcher \{[^}]*border-radius:50%/);
+  assert.match(source, /inlineAssistIconAsset/);
   assert.match(source, /\.panel \{[^}]*box-shadow:0 18px 50px rgba\(0,0,0,\.32\)/);
-  assert.match(source, /width:36px; height:36px/);
+  assert.match(source, /width:24px; height:24px/);
   assert.match(source, /\.launcher \{[^}]*padding:0;/s);
-  assert.match(source, /\.launcher-logo \{ width:30px; height:30px; \}/);
-  assert.match(source, /\.brand-logo \{ width:42px; height:42px; \}/);
+  assert.match(source, /\.launcher-logo \{ width:18px; height:18px;/);
+  assert.match(source, /\.brand-logo \{ width:22px; height:22px;/);
   assert.match(source, /--hb-logo', tokens\.logo/);
   assert.match(source, /browserApi\.storage\.local\.get/);
   assert.match(source, /browserApi\.storage\.onChanged/);
