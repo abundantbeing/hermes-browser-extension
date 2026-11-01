@@ -19467,7 +19467,11 @@ async function loadDashboardSessionsForProfile(profile = '') {
 }
 
 async function loadSessions({ quiet = false } = {}) {
-  if (usesDashboardWsChatTransport()) {
+  // The Hermes Web socket lists only the chats its own sign-in made, not this gateway's history, so a chat
+  // followed over it (one running in Desktop or the phone app) must not shrink the list to those: with a
+  // local API key, the default profile always lists over REST.
+  const restListing = isLocalApiMode() && Boolean(settings.apiKey) && !isNamedHermesProfile();
+  if (usesDashboardWsChatTransport() && !restListing) {
     // Remote and local-dashboard fallback reads use the already authenticated
     // socket. The local fallback must not jump back to the stale API key.
     const dashboardConnection = isRemoteWsMode() ? remoteWsConnection : activeDashboardWsConnection;
