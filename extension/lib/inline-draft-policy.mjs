@@ -284,8 +284,15 @@ function launcherCandidate(strategy, anchor, target, size, gap, viewport) {
   if (strategy === 'outside-start') return { left: anchor.left - size - gap, top: centeredTop, strategy };
   if (strategy === 'above-end') return { left: anchor.right - size, top: anchor.top - size - gap, strategy };
   if (strategy === 'below-end') return { left: anchor.right - size, top: anchor.bottom + gap, strategy };
+  // The generic rule for sites without a slot: just outside the field's bottom-right corner, or just inside
+  // that corner when there is no room outside (the corner of a text box is the part least likely to hold text).
+  if (strategy === 'corner-outside') return { left: anchor.right + gap, top: anchor.bottom - size, strategy };
+  if (strategy === 'corner-inside') return { left: anchor.right - size - gap, top: anchor.bottom - size - gap, strategy };
   return null;
 }
+
+// Placements that sit on the field itself, allowed to overlap its box.
+const INSIDE_FIELD_STRATEGIES = new Set(['inside-end', 'corner-inside']);
 
 function rectsOverlap(left, right) {
   return left.left < right.right
@@ -349,11 +356,50 @@ export function inlineLauncherPlacement(anchorRect = {}, viewport = {}, options 
         && candidate.right <= viewportRect.right
         && candidate.bottom <= viewportRect.bottom;
       if (!insideViewport || obstacles.some((obstacle) => rectsOverlap(candidate, obstacle))) continue;
-      if (strategy !== 'inside-end' && rectsOverlap(candidate, target)) continue;
+      if (!INSIDE_FIELD_STRATEGIES.has(strategy) && rectsOverlap(candidate, target)) continue;
       return { left: candidate.left, top: candidate.top, strategy };
     }
   }
   return null;
+}
+
+// A site slot: the circle sits beside one of the composer's own controls (rects are viewport rects).
+//   after        gap past the control's right edge, centred on the control (or on rowRect)
+//   before       gap before the control's left edge, same centring
+//   below-center centred under the control (an avatar), centred on rowRect, and at least
+//                minGapBelow (default 20) below the control so it never touches it
+// No placement when the control has no size, the circle would leave the viewport's safe area, or it
+// would cover the field's text or an obstacle (a send button); the caller then uses the generic rule.
+export function inlineSlotPlacement(slot = {}, viewport = {}, options = {}) {
+  const size = Math.max(20, Number(options.size || 24));
+  const safe = Math.max(0, Number(options.safe ?? 8));
+  const control = slot.rect;
+  if (!control || !(Number(control.width) > 0) || !(Number(control.height) > 0)) return null;
+  const gap = Math.max(0, Number(slot.gap ?? 12));
+  const row = slot.rowRect && Number(slot.rowRect.height) > 0 ? slot.rowRect : control;
+  const centredTop = row.top + ((row.height - size) / 2);
+  let left;
+  let top = centredTop;
+  if (slot.strategy === 'after') left = control.right + gap;
+  else if (slot.strategy === 'before') left = control.left - gap - size;
+  else if (slot.strategy === 'below-center') {
+    left = control.left + ((control.width - size) / 2);
+    top = Math.max(centredTop, control.bottom + Math.max(0, Number(slot.minGapBelow ?? 20)));
+  } else return null;
+  const candidate = { left: Math.round(left), top: Math.round(top) };
+  candidate.right = candidate.left + size;
+  candidate.bottom = candidate.top + size;
+  const offsetLeft = Number(viewport.offsetLeft || 0);
+  const offsetTop = Number(viewport.offsetTop || 0);
+  const insideViewport = candidate.left >= offsetLeft + safe
+    && candidate.top >= offsetTop + safe
+    && candidate.right <= offsetLeft + Number(viewport.width || 0) - safe
+    && candidate.bottom <= offsetTop + Number(viewport.height || 0) - safe;
+  if (!insideViewport) return null;
+  if (options.targetRect && rectsOverlap(candidate, options.targetRect)) return null;
+  const obstacles = Array.isArray(options.obstacleRects) ? options.obstacleRects : [];
+  if (obstacles.some((obstacle) => rectsOverlap(candidate, obstacle))) return null;
+  return { left: candidate.left, top: candidate.top, strategy: slot.strategy };
 }
 
 function focusEditableAtEnd(element, value = '') {
@@ -573,6 +619,7 @@ export const INLINE_DRAFT_API = Object.freeze({
   inlineDraftPrimaryActionLabel,
   inlineLauncherPosition,
   inlineLauncherPlacement,
+  inlineSlotPlacement,
   applyResult: applyInlineDraftResult,
   undoResult: undoInlineDraftResult,
   runLocalTransform: runInlineLocalTransform,
