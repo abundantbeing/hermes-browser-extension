@@ -305,7 +305,7 @@ test('the picker opens a session through the transport choice and falls back to 
 
 // Runs the real commitContextScope against stubs: a scope change must not load the regular chat's cached
 // transcript over an open group chat, whose messages live in activeGroupMessages.
-async function runScopeCommit({ groupOpen }) {
+async function runScopeCommit({ groupOpen, scope = { mode: CONTEXT_SCOPE_MODES.CHAT_ONLY }, ensureSession = false }) {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const start = source.indexOf('async function commitContextScope');
@@ -334,7 +334,7 @@ async function runScopeCommit({ groupOpen }) {
     loadMessagesForActiveScope: async () => { calls.push('load-regular-transcript'); return true; },
     renderMessagesFromStorage: () => { calls.push('render'); },
     openHermesSession: async () => { calls.push('open-session'); return true; },
-    ensureSessionForActiveScope: async () => true,
+    ensureSessionForActiveScope: async () => { calls.push('bind-scope-session'); return true; },
     refreshContext: async () => { calls.push('refresh-context'); },
     restoreScopeTransitionSnapshot: () => {},
     browserApi: { storage: { local: { set: async () => {} } } },
@@ -342,7 +342,7 @@ async function runScopeCommit({ groupOpen }) {
   // The stubs are the sandbox's globals, as sidepanel.js's module scope is for the real function.
   const context = vm.createContext(env);
   vm.runInContext(source.slice(start, end), context);
-  const ok = await context.commitContextScope({ mode: CONTEXT_SCOPE_MODES.CHAT_ONLY }, { ensureSession: false, scopeRevisionId: 1 });
+  const ok = await context.commitContextScope(scope, { ensureSession, scopeRevisionId: 1 });
   return { ok, calls };
 }
 
@@ -357,4 +357,20 @@ test('Chat only on a regular chat still loads that chat for the new scope', asyn
   const { ok, calls } = await runScopeCommit({ groupOpen: false });
   assert.equal(ok, true);
   assert.deepEqual(calls, ['load-regular-transcript', 'refresh-context']);
+});
+
+// Pinning a tab binds the regular chat saved for that tab (ensureSession). With a room open, that would
+// open the regular chat and close the room.
+const PINNED = { mode: CONTEXT_SCOPE_MODES.PINNED_TAB, pinnedTabId: 7, pinnedTitle: 'Launch page', pinnedUrl: 'https://example.com/' };
+
+test('pinning a tab on an open group chat keeps the room open and binds no regular chat', async () => {
+  const { ok, calls } = await runScopeCommit({ groupOpen: true, scope: PINNED, ensureSession: true });
+  assert.equal(ok, true);
+  assert.deepEqual(calls, ['render', 'refresh-context']);
+});
+
+test('pinning a tab on a regular chat still binds the chat saved for that tab', async () => {
+  const { ok, calls } = await runScopeCommit({ groupOpen: false, scope: PINNED, ensureSession: true });
+  assert.equal(ok, true);
+  assert.deepEqual(calls, ['load-regular-transcript', 'bind-scope-session', 'refresh-context']);
 });

@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- A group chat keeps its own messages when you change what page Hermes reads. Choosing Chat only, or pinning or returning to a tab, showed the last single-bot chat under the room's name until the room was reopened, and pinning a tab with a saved chat left the room (#138).
+
 ## [0.4.0] - 2026-10-31
 
 **What needs more than upstream Hermes.** A few parts of this release rely on gateway features that upstream Hermes does not have as of this release:
