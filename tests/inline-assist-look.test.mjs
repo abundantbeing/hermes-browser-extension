@@ -142,6 +142,15 @@ test('color() converts each colour space before the tone is chosen', () => {
   assert.equal(circleToneForBackground(parseCssColor('color(xyz-d65 0.03 0.03 0.03)')), 'light');
 });
 
+test('given a namer, bundled families get names that do not carry the family', () => {
+  const names = new Map([['Rules Variable', 'HermesAssist-1a2b3c4d 7f01'], ['Space Grotesk', 'HermesAssist-1a2b3c4d 09ee']]);
+  assert.deepEqual(namespaceFontStack('"Rules Variable", "Space Grotesk", "Segoe UI", sans-serif', (family) => names.get(family)), {
+    stack: '"HermesAssist-1a2b3c4d 7f01", "HermesAssist-1a2b3c4d 09ee", "Segoe UI", sans-serif',
+    families: ['Rules Variable', 'Space Grotesk'],
+  });
+  const stacks = inlineAssistFontStacks('signature', '', (family) => `X ${family.length}`);
+  assert.doesNotMatch(`${stacks.ui} ${stacks.display} ${stacks.mono}`, /Rules|Grotesk|HermesDisplay|HermesMono/);
+});
 
 test('a transparent page under a dark colour-scheme gets the light circle', () => {
   assert.equal(circleToneForBackground(null, { colorScheme: 'dark' }), 'light');

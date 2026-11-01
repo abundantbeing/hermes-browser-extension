@@ -54,7 +54,7 @@ test('the signature profile asks for the Rules faces and names them in the panel
   const request = env.sent.find((message) => message.type === 'HERMES_INLINE_FONT_REQUEST');
   assert.ok(request.families.includes('Rules Variable'));
   assert.ok(request.families.includes('Rules Gothic Compressed'));
-  assert.match(env.root().querySelector('style.assist-fonts').textContent, /--hb-font-display: "HermesAssist-[0-9a-f]{8} Rules Gothic Compressed"/);
+  assert.match(env.root().querySelector('style.assist-fonts').textContent, /--hb-font-display: "HermesAssist-[0-9a-f]{8} [0-9a-f]{6}"/);
 });
 
 test('the page can not read the font choice or guess the font names', async () => {
@@ -71,4 +71,19 @@ test('the page can not read the font choice or guess the font names', async () =
   await other.sleep(60);
   const token = (text) => /HermesAssist-([0-9a-f]{8}) /.exec(text)?.[1];
   assert.notEqual(token(env.root().querySelector('style.assist-fonts').textContent), token(other.root().querySelector('style.assist-fonts').textContent), 'each page gets its own font names');
+});
+
+test('the names the panel registers in document.fonts do not say which font was chosen', async () => {
+  const env = boot({
+    settings: { fontProfile: 'signature' },
+    fontReply: () => Promise.resolve({ ok: true, fonts: [{ family: 'Rules Variable', data: 'AAAA', weight: '100 900', style: 'normal' }] }),
+  });
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  assert.equal(env.fonts.length, 1, 'the face was registered');
+  const bundled = /Rules|Grotesk|HermesDisplay|HermesMono|Montserrat/;
+  assert.doesNotMatch(env.fonts[0], bundled);
+  assert.doesNotMatch(env.root().querySelector('style.assist-fonts').textContent, bundled);
+  assert.ok(env.root().querySelector('style.assist-fonts').textContent.includes(`--hb-font-ui: "${env.fonts[0]}"`), 'the stack uses the registered name');
 });
