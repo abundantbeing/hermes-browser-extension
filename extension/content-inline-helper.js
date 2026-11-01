@@ -291,7 +291,8 @@
       const color = look?.parseCssColor?.(globalThis.getComputedStyle?.(node)?.backgroundColor);
       if (color && color.a >= 0.5) return look.circleToneForBackground(color);
     }
-    return look?.circleToneForBackground?.(null) || 'dark';
+    const colorScheme = globalThis.getComputedStyle?.(document.documentElement)?.getPropertyValue?.('color-scheme') || '';
+    return look?.circleToneForBackground?.(null, { colorScheme }) || 'dark';
   }
 
   function applyLauncherIcon() {

@@ -23,9 +23,54 @@ export function parseCssColor(value) {
     return { r: Number.parseInt(full.slice(0, 2), 16), g: Number.parseInt(full.slice(2, 4), 16), b: Number.parseInt(full.slice(4, 6), 16), a: 1 };
   }
   const match = /^rgba?\(\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*(?:[,/]\s*([\d.]+%?)\s*)?\)$/.exec(text);
-  if (!match) return null;
-  const alpha = match[4] === undefined ? 1 : (match[4].endsWith('%') ? Number.parseFloat(match[4]) / 100 : Number(match[4]));
-  return { r: Number(match[1]), g: Number(match[2]), b: Number(match[3]), a: alpha };
+  if (match) return { r: Number(match[1]), g: Number(match[2]), b: Number(match[3]), a: alphaOf(match[4]) };
+  // Chrome reports these as written: oklch()/oklab() (Tailwind v4, shadcn), lab()/lch(), and color()
+  // for color-mix() results and wide-gamut colours.
+  const modern = /^(oklab|oklch|lab|lch|color)\(\s*(?:(srgb|srgb-linear|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz|xyz-d50|xyz-d65)\s+)?([-\d.e]+%?)\s+([-\d.e]+%?)\s+([-\d.e]+%?)(?:deg)?\s*(?:\/\s*([\d.]+%?)\s*)?\)$/.exec(text);
+  if (!modern) return null;
+  const [, kind, space, first, second, third, alphaText] = modern;
+  const number = (part, percentScale = 1) => (part.endsWith('%') ? Number.parseFloat(part) / 100 * percentScale : Number(part));
+  const alpha = alphaOf(alphaText);
+  if (kind === 'color') {
+    const linear = space === 'srgb-linear';
+    const toByte = (unit) => Math.round(255 * Math.min(1, Math.max(0, linear ? encodeChannel(unit) : unit)));
+    return { r: toByte(number(first)), g: toByte(number(second)), b: toByte(number(third)), a: alpha };
+  }
+  if (kind === 'oklab' || kind === 'oklch') {
+    const lightness = number(first);
+    const chroma = number(second, 0.4);
+    const hue = kind === 'oklch' ? (number(third) * Math.PI) / 180 : 0;
+    const a = kind === 'oklch' ? chroma * Math.cos(hue) : chroma;
+    const b = kind === 'oklch' ? chroma * Math.sin(hue) : number(third, 0.4);
+    return { ...oklabToRgb(lightness, a, b), a: alpha };
+  }
+  // CIE Lab and LCH: relative luminance Y depends on lightness alone, which is all the tone needs.
+  const lightness = number(first, 100);
+  const y = lightness > 8 ? ((lightness + 16) / 116) ** 3 : lightness / 903.3;
+  const gray = Math.round(255 * Math.min(1, Math.max(0, encodeChannel(y))));
+  return { r: gray, g: gray, b: gray, a: alpha };
+}
+
+function alphaOf(text) {
+  if (text === undefined) return 1;
+  return text.endsWith('%') ? Number.parseFloat(text) / 100 : Number(text);
+}
+
+function encodeChannel(linear) {
+  const value = Math.min(1, Math.max(0, linear));
+  return value <= 0.0031308 ? value * 12.92 : 1.055 * (value ** (1 / 2.4)) - 0.055;
+}
+
+function oklabToRgb(lightness, a, b) {
+  const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  const toByte = (linear) => Math.round(255 * encodeChannel(linear));
+  return {
+    r: toByte(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+    g: toByte(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+    b: toByte(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+  };
 }
 
 function channel(value) {
@@ -34,9 +79,13 @@ function channel(value) {
 }
 
 // WCAG relative luminance of the page behind the circle. A dark page gets a light circle; a light page,
-// or one whose background could not be found (treated as a white page), gets a dark circle.
-export function circleToneForBackground(color) {
-  if (!color) return 'dark';
+// or one whose background could not be found, gets a dark circle, unless the page declares a dark-only
+// colour-scheme, whose default canvas is dark.
+export function circleToneForBackground(color, { colorScheme = '' } = {}) {
+  if (!color) {
+    const scheme = String(colorScheme || '').toLowerCase();
+    return /\bdark\b/.test(scheme) && !/\blight\b/.test(scheme) ? 'light' : 'dark';
+  }
   const luminance = 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
   return luminance < 0.5 ? 'light' : 'dark';
 }
