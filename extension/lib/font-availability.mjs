@@ -1,11 +1,11 @@
 // Signature font availability probe (v0.3.4 rider F2).
 //
-// The licensed "Rules" faces are not in the public source tree, so a clean
-// install renders the bundled fallback instead. This module answers, purely
-// and without touching the DOM directly, whether the licensed faces actually
-// resolved, so the settings surface can show an honest one-line fallback note
-// instead of pretending the signature face is live.
-//
+// The signature profile prefers Rules Variable (UI) and Rules Gothic Compressed
+// (display). When either @font-face fails to load, the stack falls back to
+// bundled Space Grotesk and HermesDisplay. This module answers, purely and
+// without touching the DOM directly, whether the Rules faces actually resolved,
+// so the settings surface can show an honest one-line note instead of pretending
+// the signature face is live.
 // document.fonts.check() is NOT trustworthy for this: it returns true for a
 // family that has no registered @font-face at all, because the browser assumes
 // a system font would render. So instead of asking "would something render?",

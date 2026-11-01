@@ -1,10 +1,9 @@
 /* Bundled Latin faces for the extension UI only.
    Google Fonts files in assets/fonts/google are SIL Open Font License subsets.
-   The licensed "Rules" signature faces are not part of the public source tree,
-   so the signature profile uses a guaranteed bundled fallback: Space Grotesk
-   (UI, registered below) and HermesDisplay/Sigurd (display, registered in
-   design-tokens.css and sidepanel.css). The stack is defined so a clean
-   install never drops to a random system font. */
+   Rules signature faces in assets/fonts/Rules*.woff2 are Blaze Type, used under
+   Nous Research's commercial license (see extension/assets/fonts/README.md).
+   Space Grotesk (UI) and HermesDisplay/Sigurd (display) remain bundled fallbacks
+   when a @font-face fails to load at runtime. */
 
 @font-face {
   font-family: "Montserrat";

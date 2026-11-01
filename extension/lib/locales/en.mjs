@@ -12,7 +12,7 @@ export default Object.freeze({
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",
   "appearance.font_collapse": "Hermes Legacy",
-  "appearance.font_fallback_note": "Licensed signature font not installed — showing the bundled fallback face.",
+  "appearance.font_fallback_note": "Rules signature font did not load — showing the bundled fallback face.",
   "appearance.theme_font_overlay": "This theme is using its own font. Your saved font comes back when you leave it.",
   "appearance.font_fraunces": "Fraunces",
   "appearance.font_garamond": "Garamond",
