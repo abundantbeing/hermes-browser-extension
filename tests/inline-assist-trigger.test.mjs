@@ -143,3 +143,16 @@ test('reopening Assist during a run drops that run and stops the busy ring', asy
   assert.equal(env.root().querySelector('.panel').hidden, false);
   assert.equal(launcher.classList.contains('busy'), false);
 });
+
+test('an open panel shows the replacement switch Settings just saved', async () => {
+  const env = boot();
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  const toggle = () => env.root().querySelector('input.toggle[data-setting="auto-replace"]');
+  assert.equal(toggle().checked, true);
+  env.changeStorage({ hermesBrowserSettings: { newValue: { inlineAssistAutoReplace: false } } });
+  assert.equal(toggle().checked, false);
+  env.changeStorage({ hermesBrowserSettings: { newValue: { inlineAssistAutoReplace: true } } });
+  assert.equal(toggle().checked, true);
+});

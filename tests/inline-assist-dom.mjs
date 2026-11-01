@@ -11,6 +11,7 @@ export function bootAssist({ settings = {}, pageBackground = '', fontReply = () 
   const sent = [];
   const stored = [];
   const listeners = [];
+  const storageListeners = [];
   const dom = new JSDOM(
     `<!doctype html><html><body><div id="composer" style="${pageBackground ? `background-color:${pageBackground}` : ''}"><textarea id="field"></textarea></div></body></html>`,
     { url: 'https://page.example/', runScripts: 'outside-only', pretendToBeVisual: true },
@@ -45,7 +46,7 @@ export function bootAssist({ settings = {}, pageBackground = '', fontReply = () 
     },
     storage: {
       local: { get: () => Promise.resolve({ hermesBrowserSettings: { ...settings } }), set: (items) => { stored.push(items); return Promise.resolve(); } },
-      onChanged: { addListener() {}, removeListener() {} },
+      onChanged: { addListener: (listener) => storageListeners.push(listener), removeListener() {} },
     },
   };
   // The faces the panel registers, by the family name the page would see in document.fonts.
@@ -70,7 +71,9 @@ export function bootAssist({ settings = {}, pageBackground = '', fontReply = () 
     }
   };
   const listenersFor = (element, type) => listeners.filter((item) => item.target === element && item.type === type).map((item) => item.listener);
-  return { w, sent, stored, fonts, sleep, userClick, listenersFor, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
+  // Another surface (the side panel, another tab) wrote to storage.
+  const changeStorage = (changes) => { for (const listener of storageListeners) listener(changes, 'local'); };
+  return { w, sent, stored, fonts, changeStorage, sleep, userClick, listenersFor, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
 }
 
 export async function focusField(env) {
