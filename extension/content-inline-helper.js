@@ -623,6 +623,8 @@
     include(target);
     include(anchor);
     obstacles.forEach(include);
+    include(profile?.placement?.slot?.element);
+    include(profile?.placement?.slot?.rowElement);
     let ancestor = anchor?.parentElement || target.parentElement;
     for (let depth = 0; ancestor && depth < 3; depth += 1) {
       include(ancestor);
@@ -635,7 +637,13 @@
       });
       observed.forEach((element) => targetResizeObserver.observe(element));
     }
-    const layoutRoot = anchor || observed[observed.length - 1];
+    // Watch the whole composer when the circle sits beside one of its controls, so a re-rendered control
+    // moves the circle with it.
+    let composerRoot = profile?.placement?.slot?.element || null;
+    while (composerRoot && !composerRoot.contains?.(target)) composerRoot = composerRoot.parentElement;
+    const layoutRoot = composerRoot && composerRoot !== document.body && composerRoot !== document.documentElement
+      ? composerRoot
+      : (anchor || observed[observed.length - 1]);
     if (layoutRoot && typeof MutationObserver === 'function') {
       targetMutationObserver = new MutationObserver(() => {
         refreshSiteProfile();
@@ -667,6 +675,25 @@
     panel.style.pointerEvents = '';
   }
 
+  // The site's own control the circle sits beside (see site-adapters inlineSlot). A slot whose control
+  // is gone, hidden or would put the circle on the text or a send button gives no placement, and the
+  // caller falls back to the generic corner rule.
+  function slotPlacement(slot, viewport, targetRect, obstacleRects) {
+    if (!slot?.element?.isConnected || typeof policy.inlineSlotPlacement !== 'function') return null;
+    const visibleRect = (element) => {
+      const box = element?.isConnected ? element.getBoundingClientRect() : null;
+      return box && box.width > 0 && box.height > 0 ? box : null;
+    };
+    const slotObstacles = Array.from(slot.obstacles || []).map(visibleRect).filter(Boolean);
+    return policy.inlineSlotPlacement({
+      strategy: slot.strategy,
+      rect: visibleRect(slot.element),
+      rowRect: visibleRect(slot.rowElement),
+      gap: slot.gap,
+      minGapBelow: slot.minGapBelow,
+    }, viewport, { size: 24, targetRect, obstacleRects: [...obstacleRects, ...slotObstacles] });
+  }
+
   function position() {
     // No field is targeted and nothing is showing: this runs for every scroll
     // event of every scroller on the page, so do not touch the DOM for it.
@@ -679,7 +706,10 @@
       suspendPanelForScroll();
       return;
     }
-    const profile = siteProfile || refreshSiteProfile();
+    let profile = siteProfile || refreshSiteProfile();
+    // Sites re-render their composers (X swaps the avatar and toolbar nodes): a slot whose control left
+    // the page is looked up again rather than dropped.
+    if (profile?.placement?.slot?.element && !profile.placement.slot.element.isConnected) profile = refreshSiteProfile();
     const anchor = profile?.placement?.anchorElement?.isConnected
       ? profile.placement.anchorElement
       : target;
@@ -701,14 +731,15 @@
       offsetLeft: visualViewport?.offsetLeft || 0,
       offsetTop: visualViewport?.offsetTop || 0,
     };
-    const launcherPosition = typeof policy.inlineLauncherPlacement === 'function'
-      ? policy.inlineLauncherPlacement(rect, viewport, {
-        targetRect,
-        obstacleRects,
-        preferred: profile?.placement?.preferred || ['inside-end'],
-        size: 24,
-      })
-      : policy.inlineLauncherPosition(rect, viewport, { launcherSize: 24 });
+    const launcherPosition = slotPlacement(profile?.placement?.slot, viewport, targetRect, obstacleRects)
+      || (typeof policy.inlineLauncherPlacement === 'function'
+        ? policy.inlineLauncherPlacement(rect, viewport, {
+          targetRect,
+          obstacleRects,
+          preferred: profile?.placement?.preferred || ['inside-end'],
+          size: 24,
+        })
+        : policy.inlineLauncherPosition(rect, viewport, { launcherSize: 24 }));
     if (!launcherPosition) {
       suspendPanelForScroll();
       return;

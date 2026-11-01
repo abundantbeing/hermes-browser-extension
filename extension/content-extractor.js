@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 5387a7575a7c997b */
+/* extension/lib/site-adapters.mjs · SHA-256 0dd648ad1542170e */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1680,6 +1680,83 @@ function inlineAnchor(target, adapterId) {
   return target;
 }
 
+function firstMatch(root, selectors) {
+  for (const selector of selectors) {
+    const found = root?.querySelector?.(selector);
+    if (found) return found;
+  }
+  return null;
+}
+
+// The nearest ancestor of the field (within a few levels) that holds every selector: the composer.
+function composerAround(target, selectors, levels = 12) {
+  let node = target?.parentElement || null;
+  for (let depth = 0; node && depth < levels; depth += 1, node = node.parentElement) {
+    if (selectors.every((selector) => node.querySelector?.(selector))) return node;
+  }
+  return null;
+}
+
+// The site slot: one of the composer's own controls that the Assist circle sits beside, so it lands in a
+// row of buttons the site already has instead of on the text, the avatar or a send button. Selectors
+// prefer stable attributes (data-testid, aria-label, roles, element names); when a site changes its
+// markup and nothing matches, the slot is null and the content script uses the generic corner rule.
+function inlineSlot(target, adapterId) {
+  if (!target) return null;
+  const all = (root, selector) => Array.from(root?.querySelectorAll?.(selector) || []);
+  if (adapterId === 'x') {
+    // Reply, post and quote composers: the account avatar beside the editable, the media toolbar below it.
+    const composer = composerAround(target, ['[data-testid="toolBar"]', '[data-testid^="UserAvatar-Container"]']);
+    if (!composer) return null;
+    return {
+      element: composer.querySelector('[data-testid^="UserAvatar-Container"]'),
+      rowElement: composer.querySelector('[data-testid="toolBar"]'),
+      strategy: 'below-center',
+      gap: 12,
+      minGapBelow: 20,
+      obstacles: all(composer, '[data-testid="tweetButtonInline"], [data-testid="tweetButton"]'),
+    };
+  }
+  if (adapterId === 'chatgpt') {
+    // The composer's tool row: just before the dictate button (or voice / send when dictation is absent).
+    const form = target.closest?.('form');
+    const element = firstMatch(form, ['button[aria-label="Dictate button"]', 'button[aria-label*="Dictate" i]', '[data-testid="composer-speech-button"]', '[data-testid="send-button"]', '#composer-submit-button']);
+    return element ? { element, strategy: 'before', gap: 12, obstacles: [] } : null;
+  }
+  if (adapterId === 'youtube') {
+    // Comment box footer: just after the emoji button, far from Cancel and Comment.
+    const box = target.closest?.('ytd-commentbox');
+    const element = box?.querySelector?.('#emoji-button');
+    return element ? { element, strategy: 'after', gap: 12, obstacles: all(box, '#cancel-button, #submit-button') } : null;
+  }
+  if (adapterId === 'gmail') {
+    // Compose toolbar: just after the Send group (Send plus its "More send options" dropdown).
+    const compose = target.closest?.('[role="dialog"], .M9, form') || target.ownerDocument;
+    const send = firstMatch(compose, ['[role="button"][data-tooltip^="Send"]', '[role="button"][aria-label^="Send"]']);
+    const group = send?.parentElement?.querySelector?.('[aria-label="More send options"]') ? send.parentElement : send;
+    return group ? { element: group, strategy: 'after', gap: 12, obstacles: [] } : null;
+  }
+  if (adapterId === 'reddit') {
+    // Comment composer: just after the formatting toggle at the end of the left icon group.
+    const composer = target.closest?.('shreddit-composer, comment-composer-host, faceplate-form, form');
+    const element = firstMatch(composer, ['button[aria-label="Show formatting options"]', 'button[aria-label*="formatting" i]']);
+    return element ? { element, strategy: 'after', gap: 12, obstacles: all(composer, 'button[type="submit"], button[slot="submit-button"], button[slot="cancel-button"]') } : null;
+  }
+  if (adapterId === 'linkedin') {
+    // Comment pill: just before the emoji button inside it.
+    const form = target.closest?.('.comments-comment-box__form, form');
+    const element = firstMatch(form, ['button[aria-label*="Emoji" i]']);
+    return element ? { element, strategy: 'before', gap: 8, obstacles: [] } : null;
+  }
+  if (adapterId === 'github') {
+    // Comment form: at the front of the Markdown toolbar.
+    const form = target.closest?.('form, .CommentBox, [class*="MarkdownEditor"]');
+    const element = firstMatch(form, ['markdown-toolbar', '[aria-label="Formatting tools"]', '[role="toolbar"]']);
+    return element ? { element, strategy: 'before', gap: 8, obstacles: [] } : null;
+  }
+  return null;
+}
+
 function xReplyContextRoot(target) {
   const containingArticle = target?.closest?.('article') || null;
   let ancestor = target?.parentElement || null;
@@ -1761,11 +1838,10 @@ function inspectInlineSite(document, target, options = {}) {
     placement: {
       anchorElement,
       obstacleElements,
-      // Prefer a placement outside the field for every adapter, and keep inside-end
-      // last: the launcher must never cover the draft in a full-width composer.
-      preferred: adapterId === 'chatgpt'
-        ? ['outside-end', 'outside-start', 'above-end', 'below-end']
-        : ['outside-end', 'outside-start', 'above-end', 'below-end', 'inside-end'],
+      // The site's own control to sit beside; when it is missing the generic corner rule applies:
+      // outside the field's bottom-right corner, else inside that corner, else just under the field.
+      slot: inlineSlot(target, adapterId),
+      preferred: ['corner-outside', 'corner-inside', 'below-end'],
     },
   };
 }
