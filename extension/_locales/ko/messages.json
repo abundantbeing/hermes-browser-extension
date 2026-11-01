@@ -4303,6 +4303,10 @@
     "message": "마스킹된 진단 정보를 생성하는 중...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "버튼 아이콘",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "캐시",
     "description": "Runtime interface message ui.cache"
@@ -4466,6 +4470,10 @@
   "runtime_ui_class": {
     "message": "클래스",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "어떤 크기에서도 선명함",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "지우기",
@@ -6411,6 +6419,10 @@
     "message": "알아채다",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "지금",
     "description": "Runtime interface message ui.now"
@@ -6971,6 +6983,10 @@
     "message": "렌더링된 메시지 본문은 다음 Hermes 턴에 첨부됩니다.",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "텍스트 자동으로 바꾸기",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "원래 필드를 안전하게 교체했습니다.",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
@@ -7491,6 +7507,10 @@
     "message": "깨우기 답장 말하기",
     "description": "Runtime interface message ui.speak.wake.replies"
   },
+  "runtime_ui_staff": {
+    "message": "지팡이",
+    "description": "Runtime interface message ui.staff"
+  },
   "runtime_ui_standard": {
     "message": "기준",
     "description": "Runtime interface message ui.standard"
@@ -7719,6 +7739,10 @@
     "message": "텍스트 크기",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "카두세우스",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "연결된 Hermes 런타임은 네이티브 세션 압축을 지원하지 않습니다.",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7750,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "연결된 런타임은 다음 턴에 이 옵션을 받지만 확인 엔드포인트를 제공하지 않습니다.",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "확장 프로그램 로고",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "라이브 모델 카탈로그를 사용할 수 없습니다. 마지막으로 검증된 공급자/모델 목록을 유지합니다.",
@@ -7894,6 +7922,10 @@
   "runtime_ui_undo": {
     "message": "끄르다",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "실행 취소는 언제나 한 번의 클릭",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "업데이트",
@@ -8146,6 +8178,10 @@
   "runtime_ui_window_tab_list": {
     "message": "창 탭 목록",
     "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_wing": {
+    "message": "날개",
+    "description": "Runtime interface message ui.wing"
   },
   "runtime_ui_worker": {
     "message": "노동자",

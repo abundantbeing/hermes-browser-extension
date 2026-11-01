@@ -4303,6 +4303,10 @@
     "message": "マスキング済み診断情報を作成しています...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "ボタンのアイコン",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "キャッシュ",
     "description": "Runtime interface message ui.cache"
@@ -4466,6 +4470,10 @@
   "runtime_ui_class": {
     "message": "クラス",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "どのサイズでもくっきり",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "クリア",
@@ -6411,6 +6419,10 @@
     "message": "知らせ",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "今",
     "description": "Runtime interface message ui.now"
@@ -6971,6 +6983,10 @@
     "message": "レンダリングされたメッセージ本文は、次の Hermes ターンに添付されます。",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "テキストを自動で置き換える",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "元のフィールドを安全に置き換えました",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
@@ -7491,6 +7507,10 @@
     "message": "ウェイク応答を話す",
     "description": "Runtime interface message ui.speak.wake.replies"
   },
+  "runtime_ui_staff": {
+    "message": "杖",
+    "description": "Runtime interface message ui.staff"
+  },
   "runtime_ui_standard": {
     "message": "標準",
     "description": "Runtime interface message ui.standard"
@@ -7719,6 +7739,10 @@
     "message": "文字サイズ",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "カドゥケウス",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "接続済みの Hermes ランタイムはネイティブのセッション圧縮に対応していません。",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7750,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "接続済みランタイムは次のターンでこれらのオプションを受け取りますが、確認用エンドポイントは提供していません。",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "拡張機能のロゴ",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "ライブ モデル カタログは利用できません。最後に検証されたプロバイダー/モデルのリストを保持します。",
@@ -7894,6 +7922,10 @@
   "runtime_ui_undo": {
     "message": "元に戻す",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "いつでもワンクリックで元に戻せます",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "アップデート",
@@ -8146,6 +8178,10 @@
   "runtime_ui_window_tab_list": {
     "message": "ウィンドウタブリスト",
     "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_wing": {
+    "message": "翼",
+    "description": "Runtime interface message ui.wing"
   },
   "runtime_ui_worker": {
     "message": "ワーカー",

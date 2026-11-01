@@ -2474,7 +2474,7 @@ const INLINE_DRAFT_API = Object.freeze({
   hermesGlobal.HermesInlineDraft = INLINE_DRAFT_API;
 })(globalThis);
 
-/* extension/lib/appearance-preferences.mjs · SHA-256 66d2c08e5f8250f1 */
+/* extension/lib/appearance-preferences.mjs · SHA-256 6a50d76677377924 */
 (function hermesAppearancePreferencesRuntime(hermesGlobal) {
   'use strict';
 

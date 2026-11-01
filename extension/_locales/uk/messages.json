@@ -4303,6 +4303,10 @@
     "message": "Створення редагованої діагностики...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "Значок кнопки",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "Кеш",
     "description": "Runtime interface message ui.cache"
@@ -4466,6 +4470,10 @@
   "runtime_ui_class": {
     "message": "Клас",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "Чіткий у будь-якому розмірі",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "Очистити",
@@ -6411,6 +6419,10 @@
     "message": "Повідомлення",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "Зараз",
     "description": "Runtime interface message ui.now"
@@ -6971,6 +6983,10 @@
     "message": "Тіла відтворених повідомлень будуть додані до наступного черги Hermes.",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "Автоматично замінювати текст",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "Замінив оригінальне поле безпечно",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
@@ -7491,6 +7507,10 @@
     "message": "Промовляти відповіді пробудження",
     "description": "Runtime interface message ui.speak.wake.replies"
   },
+  "runtime_ui_staff": {
+    "message": "Жезл",
+    "description": "Runtime interface message ui.staff"
+  },
   "runtime_ui_standard": {
     "message": "Стандартний",
     "description": "Runtime interface message ui.standard"
@@ -7719,6 +7739,10 @@
     "message": "Розмір тексту",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "Кадуцей",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "Підключене середовище виконання Hermes не рекламує власне ущільнення сеансу.",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7750,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "Підключене середовище виконання отримає ці параметри на наступному ході, але не розкриє кінцеву точку підтвердження.",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "Логотип розширення",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "Актуальний каталог моделей недоступний; збереження останнього перевіреного списку постачальників/моделей.",
@@ -7894,6 +7922,10 @@
   "runtime_ui_undo": {
     "message": "Скасувати",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "Скасувати можна одним кліком",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "Оновити",
@@ -8146,6 +8178,10 @@
   "runtime_ui_window_tab_list": {
     "message": "Список вкладок вікна",
     "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_wing": {
+    "message": "Крило",
+    "description": "Runtime interface message ui.wing"
   },
   "runtime_ui_worker": {
     "message": "робітник",

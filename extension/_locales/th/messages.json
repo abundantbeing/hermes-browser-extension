@@ -4303,6 +4303,10 @@
     "message": "กำลังสร้างการวินิจฉัยที่แก้ไข...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "ไอคอนปุ่ม",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "แคช",
     "description": "Runtime interface message ui.cache"
@@ -4466,6 +4470,10 @@
   "runtime_ui_class": {
     "message": "ชั้นเรียน",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "คมชัดทุกขนาด",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "ชัดเจน",
@@ -6411,6 +6419,10 @@
     "message": "ประกาศ",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "ตอนนี้",
     "description": "Runtime interface message ui.now"
@@ -6971,6 +6983,10 @@
     "message": "เนื้อหาข้อความที่แสดงผลจะถูกแนบไปกับเทิร์น Hermes ครั้งถัดไป",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "แทนที่ข้อความโดยอัตโนมัติ",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "แทนที่ฟิลด์เดิมอย่างปลอดภัยแล้ว",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
@@ -7491,6 +7507,10 @@
     "message": "อ่านคำตอบเมื่อเรียกใช้งาน",
     "description": "Runtime interface message ui.speak.wake.replies"
   },
+  "runtime_ui_staff": {
+    "message": "คทา",
+    "description": "Runtime interface message ui.staff"
+  },
   "runtime_ui_standard": {
     "message": "มาตรฐาน",
     "description": "Runtime interface message ui.standard"
@@ -7719,6 +7739,10 @@
     "message": "ขนาดข้อความ",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "คทาคาดูเซียส",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "Hermes runtime ที่เชื่อมต่ออยู่ไม่ได้โฆษณาการบีบอัดเซสชันดั้งเดิม",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7750,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "รันไทม์ที่เชื่อมต่อจะได้รับตัวเลือกเหล่านี้ในเทิร์นถัดไป แต่จะไม่เปิดเผยจุดสิ้นสุดการรับทราบ",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "โลโก้ของส่วนขยาย",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "แคตตาล็อกโมเดลสดไม่พร้อมใช้งาน เก็บรายชื่อผู้ให้บริการ/รุ่นที่ได้รับการตรวจสอบล่าสุด",
@@ -7894,6 +7922,10 @@
   "runtime_ui_undo": {
     "message": "เลิกทำ",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "เลิกทำได้ในคลิกเดียวเสมอ",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "อัปเดต",
@@ -8146,6 +8178,10 @@
   "runtime_ui_window_tab_list": {
     "message": "รายการแท็บหน้าต่าง",
     "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_wing": {
+    "message": "ปีก",
+    "description": "Runtime interface message ui.wing"
   },
   "runtime_ui_worker": {
     "message": "คนงาน",
