@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Hermes Assist's new button.** The button by a writing field is now a small circle carrying the icon you choose under Settings → Hermes Assist → Button icon: the wing (the default), the staff or the Nous girl. The circle takes the tone that stands out against the page under it, light on a dark page and dark on a light one, and follows the page when its theme changes.
+- **Replace text automatically** is a saved setting, shared by Settings → Hermes Assist and the switch in the Assist panel. Turning it off in either place keeps it off for every later run, on every page.
+- **The Assist panel uses your font.** It follows the font profile you chose for the side panel, the Rules signature faces included. The faces reach the page from the extension itself, never as files a page can load, and under random names, so a page can not tell which font you picked.
+
 ### Fixed
 
 - A clean checkout or contributor build no longer renders the signature profile with HermesDisplay instead of **Rules Gothic Compressed**. The Rules `woff2` files from the v0.4.0 release are in the repository, and Chromium and Firefox builds fail if any CSS-referenced font file is missing.
