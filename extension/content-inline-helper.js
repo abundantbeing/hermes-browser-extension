@@ -213,7 +213,8 @@
   // Per-page family names: a page can not guess or pre-declare them, and since it can list what
   // document.fonts holds, each family gets its own random name that does not say which font it is.
   const randomHex = (bytes) => Array.from(globalThis.crypto?.getRandomValues?.(new Uint8Array(bytes)) || Array.from({ length: bytes }, () => Math.floor(Math.random() * 256)), (byte) => byte.toString(16).padStart(2, '0')).join('');
-  const fontPrefix = `HermesAssist-${randomHex(4)} `;
+  // One CSS identifier per name (FontFace parses the family as CSS): HermesAssist-<page token>-<family token>.
+  const fontPrefix = `HermesAssist-${randomHex(4)}-`;
   const fontNames = new Map();
   const fontName = (family) => {
     if (!fontNames.has(family)) {
