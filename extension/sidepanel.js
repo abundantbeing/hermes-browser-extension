@@ -5481,9 +5481,16 @@ async function commitContextScope(nextScope, { ensureSession = false, scopeRevis
   syncSelectedTabsFromContextScope(currentContext.tabs || []);
   renderContextScopeControls();
   try {
-    await loadMessagesForActiveScope({ scopeRevisionId });
+    // An open group chat owns the transcript (activeGroupMessages) and stays open: a scope change redraws
+    // it, and neither loads nor opens the regular chat bound to the new scope. That chat is the one
+    // restored when the person leaves the room.
+    const groupOpen = Boolean(activeGroupProjection);
+    if (groupOpen) renderMessagesFromStorage();
+    else await loadMessagesForActiveScope({ scopeRevisionId });
     if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
-    if (restoredSession) {
+    if (groupOpen) {
+      // Nothing to bind: the room keeps its own session.
+    } else if (restoredSession) {
       const opened = await openHermesSession(restoredSession, { scopeRevisionId });
       if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
       if (!opened) throw new Error('Could not restore the previous conversation for this tab scope.');
