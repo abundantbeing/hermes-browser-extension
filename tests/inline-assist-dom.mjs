@@ -48,6 +48,13 @@ export function bootAssist({ settings = {}, pageBackground = '', fontReply = () 
       onChanged: { addListener() {}, removeListener() {} },
     },
   };
+  // The faces the panel registers, by the family name the page would see in document.fonts.
+  const fonts = [];
+  w.FontFace = class FontFace {
+    constructor(family) { this.family = family; }
+    load() { return Promise.resolve(this); }
+  };
+  Object.defineProperty(w.document, 'fonts', { configurable: true, value: { add: (face) => fonts.push(face.family) } });
   w.browser = undefined;
   for (const file of ['lib/browser-api-global.js', 'content-extractor.js', 'lib/i18n-content.js', 'content-inline-helper.js']) w.eval(load(file));
   const sleep = (ms = 25) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -57,7 +64,7 @@ export function bootAssist({ settings = {}, pageBackground = '', fontReply = () 
     }
   };
   const listenersFor = (element, type) => listeners.filter((item) => item.target === element && item.type === type).map((item) => item.listener);
-  return { w, sent, stored, sleep, userClick, listenersFor, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
+  return { w, sent, stored, fonts, sleep, userClick, listenersFor, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
 }
 
 export async function focusField(env) {

@@ -210,8 +210,20 @@
   // The font stacks live in a stylesheet inside the closed root, set on the circle and the panel, so the
   // page can not read the user's font choice off the host element.
   const fontStyle = make('style', 'assist-fonts');
-  // Per-page family names: a page can not guess or pre-declare them.
-  const fontPrefix = `HermesAssist-${Array.from(globalThis.crypto?.getRandomValues?.(new Uint8Array(4)) || [Date.now() & 255, 1, 2, 3], (byte) => byte.toString(16).padStart(2, '0')).join('')} `;
+  // Per-page family names: a page can not guess or pre-declare them, and since it can list what
+  // document.fonts holds, each family gets its own random name that does not say which font it is.
+  const randomHex = (bytes) => Array.from(globalThis.crypto?.getRandomValues?.(new Uint8Array(bytes)) || Array.from({ length: bytes }, () => Math.floor(Math.random() * 256)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  const fontPrefix = `HermesAssist-${randomHex(4)} `;
+  const fontNames = new Map();
+  const fontName = (family) => {
+    if (!fontNames.has(family)) {
+      const taken = new Set(fontNames.values());
+      let name = `${fontPrefix}${randomHex(3)}`;
+      while (taken.has(name)) name = `${fontPrefix}${randomHex(3)}`;
+      fontNames.set(family, name);
+    }
+    return fontNames.get(family);
+  };
   shadow.append(style, fontStyle, launcher, panel);
   (document.documentElement || document.body).appendChild(host);
   browserApi.storage?.local?.get?.('hermesBrowserSettings').then((stored) => {
@@ -314,7 +326,7 @@
   function applyAssistFontStacks() {
     const profile = appearancePreferences?.normalizeFontProfile?.(assistSettings.fontProfile, assistSettings.customFontFamily) || 'signature';
     const profileStack = appearancePreferences?.fontFamilyPreview?.(profile, assistSettings.customFontFamily) || '';
-    const stacks = look?.inlineAssistFontStacks?.(profile, profileStack, fontPrefix);
+    const stacks = look?.inlineAssistFontStacks?.(profile, profileStack, fontName);
     if (!stacks) return null;
     panel.dataset.fontProfile = profile;
     fontStyle.textContent = `.launcher, .panel { --hb-font-ui: ${stacks.ui}; --hb-font-display: ${stacks.display}; --hermes-font-mono: ${stacks.mono}; --hb-display-scale: ${profile === 'signature' ? '1.3' : '1'}; }`;
@@ -342,7 +354,7 @@
         const binary = atob(String(font.data || ''));
         const bytes = new Uint8Array(binary.length);
         for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-        const face = new globalThis.FontFace(`${fontPrefix}${font.family}`, bytes.buffer, { weight: font.weight, style: font.style });
+        const face = new globalThis.FontFace(fontName(String(font.family || '')), bytes.buffer, { weight: font.weight, style: font.style });
         face.load().then((loaded) => document.fonts.add(loaded)).catch(() => {});
       } catch {
         // A face that will not load leaves the stack to fall through to the next family.

@@ -2753,7 +2753,7 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
   hermesGlobal.HermesAppearancePreferences = APPEARANCE_PREFERENCES_API;
 })(globalThis);
 
-/* extension/lib/inline-assist-look.mjs · SHA-256 d284aa4eb1fa70b8 */
+/* extension/lib/inline-assist-look.mjs · SHA-256 edee8dc497af7b49 */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
 
@@ -2929,14 +2929,16 @@ const INLINE_ASSIST_FONT_FILES = Object.freeze({
 });
 const INLINE_ASSIST_FONT_PREFIX = 'HermesAssist ';
 
-// The content script passes its own per-page prefix (a random token) so a page can neither guess nor
-// pre-declare the names the panel registers.
-function namespaceFontStack(stack, prefix = INLINE_ASSIST_FONT_PREFIX) {
+// `naming` is a prefix, or a function giving each family its registered name. The content script passes
+// a function that gives every family its own random name for the page, since the names it registers in
+// document.fonts are readable by the page and must not say which font the user chose.
+function namespaceFontStack(stack, naming = INLINE_ASSIST_FONT_PREFIX) {
+  const nameFor = typeof naming === 'function' ? naming : (family) => `${naming}${family}`;
   const families = [];
   const renamed = String(stack || '').replace(/"([^"]+)"/g, (whole, family) => {
     if (!Object.hasOwn(INLINE_ASSIST_FONT_FILES, family)) return whole;
     if (!families.includes(family)) families.push(family);
-    return `"${prefix}${family}"`;
+    return `"${nameFor(family)}"`;
   });
   return { stack: renamed, families };
 }
@@ -2948,11 +2950,11 @@ function namespaceFontStack(stack, prefix = INLINE_ASSIST_FONT_PREFIX) {
 const SIGNATURE_UI_STACK = '"Rules Variable", "Space Grotesk", "Segoe UI", system-ui, sans-serif';
 const SIGNATURE_DISPLAY_STACK = '"Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif';
 const MONO_STACK = '"HermesMono", ui-monospace, Consolas, monospace';
-function inlineAssistFontStacks(fontProfile, profileStack, prefix = INLINE_ASSIST_FONT_PREFIX) {
+function inlineAssistFontStacks(fontProfile, profileStack, naming = INLINE_ASSIST_FONT_PREFIX) {
   const signature = fontProfile === 'signature';
-  const ui = namespaceFontStack(signature ? SIGNATURE_UI_STACK : profileStack, prefix);
-  const display = signature ? namespaceFontStack(SIGNATURE_DISPLAY_STACK, prefix) : ui;
-  const mono = namespaceFontStack(MONO_STACK, prefix);
+  const ui = namespaceFontStack(signature ? SIGNATURE_UI_STACK : profileStack, naming);
+  const display = signature ? namespaceFontStack(SIGNATURE_DISPLAY_STACK, naming) : ui;
+  const mono = namespaceFontStack(MONO_STACK, naming);
   return {
     ui: ui.stack,
     display: display.stack,
