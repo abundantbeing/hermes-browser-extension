@@ -211,3 +211,67 @@ test('plain responses keep ~~~ fences and a ``` line inside a longer fence as co
   const nested = '````md\n```js\nlet x = 1;\n```\n````\nDone';
   assert.match(renderPlainResponse(nested), /<pre class="plain-response-code">```js\nlet x = 1;\n```<\/pre><p class="plain-response">Done<\/p>/);
 });
+
+test('malformed links never rescan a failed target, so hostile replies render at once', () => {
+  const hostile = [
+    `${'['.repeat(1000)}a](https://example.com/a_(b_(${'a'.repeat(100_000)}`,
+    `${'['.repeat(5000)}a](https://example.com/a_(b_(${'a'.repeat(1_000_000)}`,
+    '[a](x[b](y)'.repeat(5_000),
+    '[a]((x)('.repeat(50_000),
+  ];
+  for (const input of hostile) {
+    const begin = Date.now();
+    const html = renderMarkdown(input);
+    const elapsed = Date.now() - begin;
+    assert.ok(elapsed < 100, `rendered in ${elapsed} ms`);
+    // No Markdown link is made (a long bare URL may still be linked as itself).
+    assert.doesNotMatch(html, />[ab]<\/a>/);
+  }
+});
+
+test('link rendering keeps its label and target rules', () => {
+  const link = (text, href) => `<a href="${href}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+  assert.equal(renderMarkdown('[a](https://x.test/1) and [b](https://x.test/2)'), `<p>${link('a', 'https://x.test/1')} and ${link('b', 'https://x.test/2')}</p>`);
+  assert.equal(renderMarkdown('[a [b](https://x.test/)'), `<p>${link('a [b', 'https://x.test/')}</p>`);
+  assert.equal(renderMarkdown('x] [a](https://x.test/)'), `<p>x] ${link('a', 'https://x.test/')}</p>`);
+  assert.equal(renderMarkdown('[](https://x.test/)'), '<p>[](<a href="https://x.test/" target="_blank" rel="noopener noreferrer">https://x.test/</a>)</p>');
+  assert.equal(renderMarkdown('[a]() [b](https://x.test/)'), `<p>[a]() ${link('b', 'https://x.test/')}</p>`);
+  assert.equal(renderMarkdown('[a](https://x.test/p q)'), '<p>[a](<a href="https://x.test/p" target="_blank" rel="noopener noreferrer">https://x.test/p</a> q)</p>');
+});
+
+test('a fence opened by a child item ends with that child', () => {
+  assert.equal(
+    renderMarkdown('- parent\n  - ~~~js\n    code\n  - sibling\n\n~~~\noutside\n~~~\nAfter'),
+    '<ul><li>parent<ul><li><pre><code data-lang="js">code</code></pre></li><li>sibling</li></ul></li></ul><pre><code>outside</code></pre><p>After</p>',
+  );
+  // Still closed by its own marker while the child lasts.
+  assert.equal(
+    renderMarkdown('- parent\n  - ~~~js\n    a\n    b\n    ~~~\n  - sibling'),
+    '<ul><li>parent<ul><li><pre><code data-lang="js">a\nb</code></pre></li><li>sibling</li></ul></li></ul>',
+  );
+  // An unclosed child fence runs to the end of the child, not into the next child's text.
+  assert.equal(
+    renderMarkdown('1. one\n   - ```\n     x\n   - two\n2. three'),
+    '<ol><li>one<ul><li><pre><code>x</code></pre></li><li>two</li></ul></li><li>three</li></ol>',
+  );
+});
+
+test('a tab after a nested marker keeps its original width when the parent indentation is removed', () => {
+  assert.equal(
+    renderMarkdown('- parent\n  -\tchild\n    continued\n  - sibling'),
+    '<ul><li>parent<ul><li>child continued</li><li>sibling</li></ul></li></ul>',
+  );
+  assert.equal(
+    renderMarkdown('- -\tinner\n    more'),
+    '<ul><li><ul><li>inner more</li></ul></li></ul>',
+  );
+  assert.equal(
+    renderMarkdown('> -\tquoted\n>   still quoted\n> - next'),
+    '<blockquote><ul><li>quoted still quoted</li><li>next</li></ul></blockquote>',
+  );
+  // Tabs inside code keep their bytes.
+  assert.equal(
+    renderMarkdown('- parent\n  ```make\n  -\trm x\n  ```'),
+    '<ul><li>parent<pre><code data-lang="make">-\trm x</code></pre></li></ul>',
+  );
+});
