@@ -1,5 +1,5 @@
 /* Generated from extension/lib/content-extraction-core.mjs, extension/lib/appearance-themes.mjs, extension/lib/site-adapters.mjs, extension/lib/inline-draft-policy.mjs, extension/lib/page-annotation-content.mjs. Do not edit directly. */
-/* extension/lib/content-extraction-core.mjs · SHA-256 8b63a45056491eb4 */
+/* extension/lib/content-extraction-core.mjs · SHA-256 e783661f786707d1 */
 (function hermesContentExtractorRuntime(hermesGlobal) {
   'use strict';
 
@@ -110,6 +110,8 @@ const SENSITIVE_ASSIGNMENT_KEY_SUFFIXES = [
   'encryptionkey',
   'authkey',
   'masterkey',
+  // Hermes Agent's own gateway key is API_SERVER_KEY.
+  'serverkey',
   'credential',
   'credentials',
 ];
@@ -131,7 +133,8 @@ const SECRET_PATTERNS = [
   { pattern: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bAIza[0-9A-Za-z_-]{35}\b/g, replacement: '[REDACTED_SECRET]' },
-  { pattern: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bxox[abeprs]-[A-Za-z0-9-]{10,}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bxapp-\d+-[A-Za-z0-9-]{10,}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, replacement: '[REDACTED_JWT]' },
   { pattern: /\b(?:sk|pk)_(?:live|test)_[A-Za-z0-9_-]{8,}\b/gi, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bgh[pousr]_[A-Za-z0-9_]{16,}\b/gi, replacement: '[REDACTED_SECRET]' },
@@ -140,8 +143,34 @@ const SECRET_PATTERNS = [
   { pattern: /\bSG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bya29\.[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bGOCSPX-[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
-  { pattern: /\bglpat-[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
-  { pattern: /\bdop_v1_[a-f0-9]{64}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bgl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-[A-Za-z0-9_.-]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bGR1348941[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bdo[opr]_v1_[a-f0-9]{64}\b/g, replacement: '[REDACTED_SECRET]' },
+  // The key shapes Hermes Agent's own redactor (agent/redact.py) knows for the providers, tools and chat
+  // platforms Hermes is set up with. Each has a fixed prefix and a minimum length well past ordinary words.
+  { pattern: /\b(?:gsk_|xai-|r8_|pplx-|fw_|fpk_)[A-Za-z0-9]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bsyt_[A-Za-z0-9]{4,}_[A-Za-z0-9]{10,}_[A-Za-z0-9]{6}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\btvly-(?:dev-|prod-)?[A-Za-z0-9]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\b(?:fal_|bb_live_)[A-Za-z0-9]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bfc-[a-f0-9]{32}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bntn_[A-Za-z0-9]{40,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bsecret_[A-Za-z0-9]{43}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\blin_(?:api|oauth)_[A-Za-z0-9]{32,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bpypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bsk_[a-f0-9]{48}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bpk-lf-[A-Za-z0-9-]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bgAAAAA[A-Za-z0-9_=-]{40,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bATATT3[A-Za-z0-9_=-]{40,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bPMAK-[a-f0-9]{24}-[a-f0-9]{34}\b/g, replacement: '[REDACTED_SECRET]' },
+  // A Google OAuth refresh token.
+  { pattern: /\b1\/\/0[A-Za-z0-9_-]{40,}/g, replacement: '[REDACTED_SECRET]' },
+  // A Telegram bot token (`123456789:AA…`), also inside an `api.telegram.org/bot<token>/` path.
+  { pattern: /\b(bot)?\d{8,12}:[A-Za-z0-9_-]{30,}/g, replacement: '$1[REDACTED_SECRET]' },
+  // A Discord bot token: base64 user id, timestamp and HMAC, dot separated.
+  { pattern: /\b[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b/g, replacement: '[REDACTED_SECRET]' },
+  // Slack and Discord incoming webhook URLs carry their secret as the last path segment.
+  { pattern: /(\/services\/T[A-Z0-9]{8,}\/B[A-Z0-9]{8,}\/)[A-Za-z0-9]{20,}/g, replacement: '$1[REDACTED_SECRET]' },
+  { pattern: /(\/api(?:\/v\d+)?\/webhooks\/\d{17,20}\/)[A-Za-z0-9_-]{60,}/g, replacement: '$1[REDACTED_SECRET]' },
   { pattern: /\bshp(?:at|ca|pa|ss)_[a-f0-9]{32}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bwhsec_[A-Za-z0-9]{16,}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\b(?:Authorization|Proxy-Authorization)(["'`]?\s*[:=]\s*["'`]?)(?:Basic|Digest|Negotiate|NTLM|Token)\s+[^\s'"`;&,]+/gi, replacement: 'Authorization$1[REDACTED_SECRET]' },
@@ -1863,7 +1892,7 @@ const SITE_ADAPTER_API = Object.freeze({
   hermesGlobal.HermesSiteAdapters = SITE_ADAPTER_API;
 })(globalThis);
 
-/* extension/lib/inline-draft-policy.mjs · SHA-256 abde7418446df5a1 */
+/* extension/lib/inline-draft-policy.mjs · SHA-256 cb2a5dec3e298338 */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
 
@@ -1888,6 +1917,14 @@ const MAX_RESULT_CHARS = 12_000;
 const ID_RE = /^[A-Za-z0-9_.:-]{8,160}$/;
 const SENSITIVE_LABEL_RE = /(?:password|passwd|passcode|one.?time|otp|verification.?code|security.?code|two.?factor|2fa|credit.?card|card.?number|cvv|cvc|expiry|payment|billing|api.?(?:key|token)|access.?token|auth.?token|session.?token|secret|private.?key|seed.?phrase|recovery.?phrase|wallet)/i;
 const SECRET_TEXT_RE = /(?:-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----|\bBearer\s+\S{8,}|\b(?:sk-|gh[pousr]_|github_pat_|AIza|xox[baprs]-)[A-Za-z0-9_-]{8,}|\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|password|secret)\s*[:=]\s*\S{4,})/i;
+// This module stays import-free (it also runs as a classic content script), so it keeps its own copy of
+// the provider key prefixes the shared redactor (content-extraction-core.mjs SECRET_PATTERNS) knows.
+// tests/redaction-hermes-token-shapes.test.mjs checks that the two agree.
+const PROVIDER_KEY_TEXT_RE = /\b(?:(?:gsk_|xai-|r8_|pplx-|tvly-(?:dev-|prod-)?|fal_|bb_live_|ntn_|lin_api_|lin_oauth_|fw_|fpk_|pk-lf-|xapp-\d+-|xoxe-\d+-|pypi-AgEIcHlwaS5vcmc|ATATT3|PMAK-|gAAAAA|gl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-|GR1348941|1\/\/0)[A-Za-z0-9]{20,}|syt_[A-Za-z0-9]{4,}_[A-Za-z0-9]{10,}_[A-Za-z0-9]{6}\b|fc-[a-f0-9]{32}\b|secret_[A-Za-z0-9]{43}\b|sk_[a-f0-9]{48}\b|do[opr]_v1_[a-f0-9]{64}\b|(?:bot)?\d{8,12}:[A-Za-z0-9_-]{30,}|[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b)/;
+
+function containsSecretText(value = '') {
+  return SECRET_TEXT_RE.test(value) || PROVIDER_KEY_TEXT_RE.test(value);
+}
 
 function compact(value = '', max = 500) {
   const text = String(value || '').replace(/\u00a0/g, ' ').replace(/[\t\f\v ]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
@@ -2004,8 +2041,8 @@ function buildInlineDraftRequest(element, options = {}) {
   const redactedContext = redact(pageContext);
   if (Number(redacted?.count || 0) > 0
     || Number(redactedContext?.count || 0) > 0
-    || SECRET_TEXT_RE.test(draftText)
-    || SECRET_TEXT_RE.test(pageContext)) {
+    || containsSecretText(draftText)
+    || containsSecretText(pageContext)) {
     return { ok: false, reason: 'sensitive-content' };
   }
   return {
@@ -2044,8 +2081,8 @@ function normalizeInlineDraftRequest(value = {}) {
     || !actionId
     || (!draftText && !contextDraft)
     || (!draftText && !pageContext && !compact(value.fieldLabel, 200) && !contextDraft)
-    || SECRET_TEXT_RE.test(draftText)
-    || SECRET_TEXT_RE.test(pageContext)) return null;
+    || containsSecretText(draftText)
+    || containsSecretText(pageContext)) return null;
   return {
     schema: INLINE_DRAFT_SCHEMA,
     version: INLINE_DRAFT_VERSION,

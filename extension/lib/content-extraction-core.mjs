@@ -105,6 +105,8 @@ const SENSITIVE_ASSIGNMENT_KEY_SUFFIXES = [
   'encryptionkey',
   'authkey',
   'masterkey',
+  // Hermes Agent's own gateway key is API_SERVER_KEY.
+  'serverkey',
   'credential',
   'credentials',
 ];
@@ -126,7 +128,8 @@ const SECRET_PATTERNS = [
   { pattern: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bAIza[0-9A-Za-z_-]{35}\b/g, replacement: '[REDACTED_SECRET]' },
-  { pattern: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bxox[abeprs]-[A-Za-z0-9-]{10,}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bxapp-\d+-[A-Za-z0-9-]{10,}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, replacement: '[REDACTED_JWT]' },
   { pattern: /\b(?:sk|pk)_(?:live|test)_[A-Za-z0-9_-]{8,}\b/gi, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bgh[pousr]_[A-Za-z0-9_]{16,}\b/gi, replacement: '[REDACTED_SECRET]' },
@@ -135,8 +138,34 @@ const SECRET_PATTERNS = [
   { pattern: /\bSG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bya29\.[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bGOCSPX-[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
-  { pattern: /\bglpat-[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
-  { pattern: /\bdop_v1_[a-f0-9]{64}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bgl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-[A-Za-z0-9_.-]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bGR1348941[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bdo[opr]_v1_[a-f0-9]{64}\b/g, replacement: '[REDACTED_SECRET]' },
+  // The key shapes Hermes Agent's own redactor (agent/redact.py) knows for the providers, tools and chat
+  // platforms Hermes is set up with. Each has a fixed prefix and a minimum length well past ordinary words.
+  { pattern: /\b(?:gsk_|xai-|r8_|pplx-|fw_|fpk_)[A-Za-z0-9]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bsyt_[A-Za-z0-9]{4,}_[A-Za-z0-9]{10,}_[A-Za-z0-9]{6}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\btvly-(?:dev-|prod-)?[A-Za-z0-9]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\b(?:fal_|bb_live_)[A-Za-z0-9]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bfc-[a-f0-9]{32}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bntn_[A-Za-z0-9]{40,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bsecret_[A-Za-z0-9]{43}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\blin_(?:api|oauth)_[A-Za-z0-9]{32,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bpypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bsk_[a-f0-9]{48}\b/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bpk-lf-[A-Za-z0-9-]{20,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bgAAAAA[A-Za-z0-9_=-]{40,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bATATT3[A-Za-z0-9_=-]{40,}/g, replacement: '[REDACTED_SECRET]' },
+  { pattern: /\bPMAK-[a-f0-9]{24}-[a-f0-9]{34}\b/g, replacement: '[REDACTED_SECRET]' },
+  // A Google OAuth refresh token.
+  { pattern: /\b1\/\/0[A-Za-z0-9_-]{40,}/g, replacement: '[REDACTED_SECRET]' },
+  // A Telegram bot token (`123456789:AA…`), also inside an `api.telegram.org/bot<token>/` path.
+  { pattern: /\b(bot)?\d{8,12}:[A-Za-z0-9_-]{30,}/g, replacement: '$1[REDACTED_SECRET]' },
+  // A Discord bot token: base64 user id, timestamp and HMAC, dot separated.
+  { pattern: /\b[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b/g, replacement: '[REDACTED_SECRET]' },
+  // Slack and Discord incoming webhook URLs carry their secret as the last path segment.
+  { pattern: /(\/services\/T[A-Z0-9]{8,}\/B[A-Z0-9]{8,}\/)[A-Za-z0-9]{20,}/g, replacement: '$1[REDACTED_SECRET]' },
+  { pattern: /(\/api(?:\/v\d+)?\/webhooks\/\d{17,20}\/)[A-Za-z0-9_-]{60,}/g, replacement: '$1[REDACTED_SECRET]' },
   { pattern: /\bshp(?:at|ca|pa|ss)_[a-f0-9]{32}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bwhsec_[A-Za-z0-9]{16,}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\b(?:Authorization|Proxy-Authorization)(["'`]?\s*[:=]\s*["'`]?)(?:Basic|Digest|Negotiate|NTLM|Token)\s+[^\s'"`;&,]+/gi, replacement: 'Authorization$1[REDACTED_SECRET]' },

@@ -19,6 +19,14 @@ const MAX_RESULT_CHARS = 12_000;
 const ID_RE = /^[A-Za-z0-9_.:-]{8,160}$/;
 const SENSITIVE_LABEL_RE = /(?:password|passwd|passcode|one.?time|otp|verification.?code|security.?code|two.?factor|2fa|credit.?card|card.?number|cvv|cvc|expiry|payment|billing|api.?(?:key|token)|access.?token|auth.?token|session.?token|secret|private.?key|seed.?phrase|recovery.?phrase|wallet)/i;
 const SECRET_TEXT_RE = /(?:-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----|\bBearer\s+\S{8,}|\b(?:sk-|gh[pousr]_|github_pat_|AIza|xox[baprs]-)[A-Za-z0-9_-]{8,}|\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|password|secret)\s*[:=]\s*\S{4,})/i;
+// This module stays import-free (it also runs as a classic content script), so it keeps its own copy of
+// the provider key prefixes the shared redactor (content-extraction-core.mjs SECRET_PATTERNS) knows.
+// tests/redaction-hermes-token-shapes.test.mjs checks that the two agree.
+const PROVIDER_KEY_TEXT_RE = /\b(?:(?:gsk_|xai-|r8_|pplx-|tvly-(?:dev-|prod-)?|fal_|bb_live_|ntn_|lin_api_|lin_oauth_|fw_|fpk_|pk-lf-|xapp-\d+-|xoxe-\d+-|pypi-AgEIcHlwaS5vcmc|ATATT3|PMAK-|gAAAAA|gl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-|GR1348941|1\/\/0)[A-Za-z0-9]{20,}|syt_[A-Za-z0-9]{4,}_[A-Za-z0-9]{10,}_[A-Za-z0-9]{6}\b|fc-[a-f0-9]{32}\b|secret_[A-Za-z0-9]{43}\b|sk_[a-f0-9]{48}\b|do[opr]_v1_[a-f0-9]{64}\b|(?:bot)?\d{8,12}:[A-Za-z0-9_-]{30,}|[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b)/;
+
+function containsSecretText(value = '') {
+  return SECRET_TEXT_RE.test(value) || PROVIDER_KEY_TEXT_RE.test(value);
+}
 
 function compact(value = '', max = 500) {
   const text = String(value || '').replace(/\u00a0/g, ' ').replace(/[\t\f\v ]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
@@ -135,8 +143,8 @@ export function buildInlineDraftRequest(element, options = {}) {
   const redactedContext = redact(pageContext);
   if (Number(redacted?.count || 0) > 0
     || Number(redactedContext?.count || 0) > 0
-    || SECRET_TEXT_RE.test(draftText)
-    || SECRET_TEXT_RE.test(pageContext)) {
+    || containsSecretText(draftText)
+    || containsSecretText(pageContext)) {
     return { ok: false, reason: 'sensitive-content' };
   }
   return {
@@ -175,8 +183,8 @@ export function normalizeInlineDraftRequest(value = {}) {
     || !actionId
     || (!draftText && !contextDraft)
     || (!draftText && !pageContext && !compact(value.fieldLabel, 200) && !contextDraft)
-    || SECRET_TEXT_RE.test(draftText)
-    || SECRET_TEXT_RE.test(pageContext)) return null;
+    || containsSecretText(draftText)
+    || containsSecretText(pageContext)) return null;
   return {
     schema: INLINE_DRAFT_SCHEMA,
     version: INLINE_DRAFT_VERSION,
