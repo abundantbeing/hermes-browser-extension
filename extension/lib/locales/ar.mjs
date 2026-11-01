@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "تمت إزالة إذن لقطات الشاشة.",
   "firefox_screenshots.failed": "تعذّر تغيير إذن لقطات الشاشة: {error}",
   "browser_control.note_screenshot_permission": "لم يلتقط Hermes الصورة: يحتاج Firefox إلى إذن إضافي. استخدم «السماح بلقطات الشاشة في Firefox».",
+  "ui.bot.options": "خيارات البوت",
+  "ui.fast": "سريع",
+  "ui.steer.this.subagent": "توجيه هذا الوكيل الفرعي",
+  "ui.stop.this.subagent": "إيقاف هذا الوكيل الفرعي",
+  "ui.not.accepting.steer": "لا يقبل التوجيه",
+  "ui.open.generated.image.for.closer.inspection": "فتح الصورة المولّدة لفحصها عن قرب",
+  "ui.group.settings": "إعدادات المجموعة",
 });

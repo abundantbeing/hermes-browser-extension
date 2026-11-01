@@ -4259,6 +4259,10 @@
     "message": "Body",
     "description": "Runtime interface message ui.body"
   },
+  "runtime_ui_bot_options": {
+    "message": "Bot options",
+    "description": "Runtime interface message ui.bot.options"
+  },
   "runtime_ui_browser": {
     "message": "Browser",
     "description": "Runtime interface message ui.browser"
@@ -5419,6 +5423,10 @@
     "message": "Falls back to review if the field changed",
     "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
   },
+  "runtime_ui_fast": {
+    "message": "Fast",
+    "description": "Runtime interface message ui.fast"
+  },
   "runtime_ui_fast_mode": {
     "message": "Fast mode",
     "description": "Runtime interface message ui.fast.mode"
@@ -5538,6 +5546,10 @@
   "runtime_ui_group": {
     "message": "Group",
     "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_group_settings": {
+    "message": "Group settings",
+    "description": "Runtime interface message ui.group.settings"
   },
   "runtime_ui_group_working_many": {
     "message": "{first}, {second}, and {count} more are working…",
@@ -6383,6 +6395,10 @@
     "message": "Normal - good default",
     "description": "Runtime interface message ui.normal.good.default"
   },
+  "runtime_ui_not_accepting_steer": {
+    "message": "Not accepting steer",
+    "description": "Runtime interface message ui.not.accepting.steer"
+  },
   "runtime_ui_not_connected": {
     "message": "Not connected",
     "description": "Runtime interface message ui.not.connected"
@@ -6450,6 +6466,10 @@
   "runtime_ui_open_full_view": {
     "message": "Open full view",
     "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_generated_image_for_closer_inspection": {
+    "message": "Open generated image for closer inspection",
+    "description": "Runtime interface message ui.open.generated.image.for.closer.inspection"
   },
   "runtime_ui_open_hermes_assist": {
     "message": "Open Hermes Assist",
@@ -7539,6 +7559,10 @@
     "message": "Steer the current run",
     "description": "Runtime interface message ui.steer.the.current.run"
   },
+  "runtime_ui_steer_this_subagent": {
+    "message": "Steer this subagent",
+    "description": "Runtime interface message ui.steer.this.subagent"
+  },
   "runtime_ui_steered_label": {
     "message": "Steered",
     "description": "Runtime interface message ui.steered.label"
@@ -7554,6 +7578,10 @@
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "Stop the active run before switching sessions.",
     "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
+  },
+  "runtime_ui_stop_this_subagent": {
+    "message": "Stop this subagent",
+    "description": "Runtime interface message ui.stop.this.subagent"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Stopping Hermes",

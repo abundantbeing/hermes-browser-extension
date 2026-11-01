@@ -4259,6 +4259,10 @@
     "message": "ร่างกาย",
     "description": "Runtime interface message ui.body"
   },
+  "runtime_ui_bot_options": {
+    "message": "ตัวเลือกบอต",
+    "description": "Runtime interface message ui.bot.options"
+  },
   "runtime_ui_browser": {
     "message": "เบราว์เซอร์",
     "description": "Runtime interface message ui.browser"
@@ -5419,6 +5423,10 @@
     "message": "กลับไปให้ตรวจทานหากฟิลด์มีการเปลี่ยนแปลง",
     "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
   },
+  "runtime_ui_fast": {
+    "message": "เร็ว",
+    "description": "Runtime interface message ui.fast"
+  },
   "runtime_ui_fast_mode": {
     "message": "โหมดรวดเร็ว",
     "description": "Runtime interface message ui.fast.mode"
@@ -5538,6 +5546,10 @@
   "runtime_ui_group": {
     "message": "กลุ่ม",
     "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_group_settings": {
+    "message": "การตั้งค่ากลุ่ม",
+    "description": "Runtime interface message ui.group.settings"
   },
   "runtime_ui_group_working_many": {
     "message": "{first}, {second} และอีก {count} คนกำลังทำงาน…",
@@ -6383,6 +6395,10 @@
     "message": "ปกติ – ค่าเริ่มต้นที่เหมาะสม",
     "description": "Runtime interface message ui.normal.good.default"
   },
+  "runtime_ui_not_accepting_steer": {
+    "message": "ไม่รับการกำหนดทิศทาง",
+    "description": "Runtime interface message ui.not.accepting.steer"
+  },
   "runtime_ui_not_connected": {
     "message": "ไม่ได้เชื่อมต่อ",
     "description": "Runtime interface message ui.not.connected"
@@ -6450,6 +6466,10 @@
   "runtime_ui_open_full_view": {
     "message": "เปิดมุมมองแบบเต็ม",
     "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_generated_image_for_closer_inspection": {
+    "message": "เปิดรูปภาพที่สร้างขึ้นเพื่อดูใกล้ ๆ",
+    "description": "Runtime interface message ui.open.generated.image.for.closer.inspection"
   },
   "runtime_ui_open_hermes_assist": {
     "message": "เปิด Hermes Assist",
@@ -7539,6 +7559,10 @@
     "message": "คัดท้ายการวิ่งปัจจุบัน",
     "description": "Runtime interface message ui.steer.the.current.run"
   },
+  "runtime_ui_steer_this_subagent": {
+    "message": "กำหนดทิศทางเอเจนต์ย่อยนี้",
+    "description": "Runtime interface message ui.steer.this.subagent"
+  },
   "runtime_ui_steered_label": {
     "message": "ปรับทิศทาง",
     "description": "Runtime interface message ui.steered.label"
@@ -7554,6 +7578,10 @@
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "หยุดการทำงานที่กำลังใช้งานอยู่ก่อนสลับเซสชัน",
     "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
+  },
+  "runtime_ui_stop_this_subagent": {
+    "message": "หยุดเอเจนต์ย่อยนี้",
+    "description": "Runtime interface message ui.stop.this.subagent"
   },
   "runtime_ui_stopping_hermes": {
     "message": "กำลังหยุด Hermes",

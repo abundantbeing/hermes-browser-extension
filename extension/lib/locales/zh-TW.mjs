@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "已移除截圖權限。",
   "firefox_screenshots.failed": "無法變更截圖權限：{error}",
   "browser_control.note_screenshot_permission": "Hermes 沒有截圖：Firefox 需要額外權限。請使用「允許在 Firefox 中截圖」。",
+  "ui.bot.options": "機器人選項",
+  "ui.fast": "快速",
+  "ui.steer.this.subagent": "引導此子代理",
+  "ui.stop.this.subagent": "停止此子代理",
+  "ui.not.accepting.steer": "不接受引導",
+  "ui.open.generated.image.for.closer.inspection": "開啟已產生的圖片以仔細檢視",
+  "ui.group.settings": "群組設定",
 });
