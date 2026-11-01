@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "Дозвіл на знімки екрана скасовано.",
   "firefox_screenshots.failed": "Не вдалося змінити дозвіл на знімки екрана: {error}",
   "browser_control.note_screenshot_permission": "Hermes не зробив знімок: Firefox потребує додаткового дозволу. Скористайтеся «Дозволити знімки екрана у Firefox».",
+  "ui.bot.options": "Параметри бота",
+  "ui.fast": "Швидко",
+  "ui.steer.this.subagent": "Спрямувати цього субагента",
+  "ui.stop.this.subagent": "Зупинити цього субагента",
+  "ui.not.accepting.steer": "Не приймає вказівок",
+  "ui.open.generated.image.for.closer.inspection": "Відкрити згенероване зображення для детального перегляду",
+  "ui.group.settings": "Налаштування групи",
 });
