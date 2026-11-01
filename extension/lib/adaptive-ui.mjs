@@ -14,7 +14,7 @@
 // streaming patcher can keep a finished block (and its local view state)
 // untouched while later text arrives.
 
-import { escapeHtml, isMarkdownFenceClose, markdownFenceOpening, redactSensitiveText, renderMarkdown } from './common.mjs';
+import { escapeHtml, isMarkdownFenceClose, markdownFenceOpening, markdownListFenceEnd, markdownListFenceOpening, redactSensitiveText, renderMarkdown } from './common.mjs';
 
 export const HAUI_SCHEMA = 'hermes.adaptive-ui';
 export const HAUI_VERSION = 1;
@@ -93,6 +93,20 @@ export function splitAdaptiveSegments(text = '', { streaming = true } = {}) {
   };
   for (let index = 0; index < lines.length; index += 1) {
     const opening = markdownFenceOpening(lines[index]);
+    const listFence = opening ? null : markdownListFenceOpening(lines[index]);
+    if (listFence) {
+      // A fence opened after list markers (`- ~~~~md`) is that item's code: a hermes-ui example inside it
+      // stays an example, so the whole fence goes to prose.
+      let end = lines.length - 1;
+      for (let next = index + 1; next < lines.length; next += 1) {
+        const ending = markdownListFenceEnd(lines[next], listFence);
+        if (ending) { end = ending === 'close' ? next : next - 1; break; }
+      }
+      if (!prose.length) proseStart = offsets[index];
+      prose.push(...lines.slice(index, end + 1));
+      index = end;
+      continue;
+    }
     if (!opening) {
       if (!prose.length) proseStart = offsets[index];
       prose.push(lines[index]);

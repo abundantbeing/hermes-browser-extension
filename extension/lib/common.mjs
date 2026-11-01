@@ -2382,21 +2382,28 @@ export function escapeHtml(value = '') {
     .replace(/'/g, '&#39;');
 }
 
+// The parentheses are counted once and the count follows the trim, so a URL ending in a long run of `)`
+// stays linear.
 function splitBareUrlTrail(raw = '') {
-  let url = String(raw || '');
-  let trail = '';
-  while (url) {
-    const last = url.slice(-1);
-    if (!/[.,;:!?]/.test(last) && last !== ')') break;
-    if (last === ')') {
-      const opens = (url.match(/\(/g) || []).length;
-      const closes = (url.match(/\)/g) || []).length;
-      if (closes <= opens) break;
-    }
-    trail = last + trail;
-    url = url.slice(0, -1);
+  const text = String(raw || '');
+  let opens = 0;
+  let closes = 0;
+  for (const char of text) {
+    if (char === '(') opens += 1;
+    else if (char === ')') closes += 1;
   }
-  return { url, trail };
+  let end = text.length;
+  while (end > 0) {
+    const last = text[end - 1];
+    if (last === ')') {
+      if (closes <= opens) break;
+      closes -= 1;
+    } else if (!/[.,;:!?]/.test(last)) {
+      break;
+    }
+    end -= 1;
+  }
+  return { url: text.slice(0, end), trail: text.slice(end) };
 }
 
 function autolinkBareUrls(html = '') {
@@ -2576,14 +2583,28 @@ function isTableDivider(line = '') {
   return /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(line);
 }
 
-// A table row splits on unescaped pipes; `\|` is a literal pipe inside a cell (GFM).
+// A table row splits on unescaped pipes; `\|` is a literal pipe inside a cell (GFM). A pipe is escaped
+// only by an odd run of backslashes: in `C:\\|ok` the backslash is itself escaped and the pipe splits.
 function tableCells(line = '') {
-  return String(line || '')
-    .trim()
-    .replace(/^\|/, '')
-    .replace(/(?<!\\)\|$/, '')
-    .split(/(?<!\\)\|/)
-    .map((cell) => cell.trim().replace(/\\\|/g, '|'));
+  const text = String(line || '').trim().replace(/^\|/, '');
+  const cells = [];
+  let cell = '';
+  let slashes = 0;
+  let endsOnPipe = false;
+  for (const char of text) {
+    endsOnPipe = false;
+    if (char === '|' && slashes % 2 === 0) {
+      cells.push(cell);
+      cell = '';
+      slashes = 0;
+      endsOnPipe = true;
+      continue;
+    }
+    cell += char;
+    slashes = char === '\\' ? slashes + 1 : 0;
+  }
+  if (!endsOnPipe) cells.push(cell);
+  return cells.map((value) => value.trim().replace(/\\\|/g, '|'));
 }
 
 function renderTableBlock(lines = []) {
@@ -2691,10 +2712,32 @@ function isQuoteLine(line = '') {
   return /^ {0,3}>/.test(expandLeadingTabs(line));
 }
 
-function stripQuoteMarker(line = '') {
+// Inside a quoted fence the line is code, so `keepTabs` leaves a tab after a list-like `1.` as it is.
+function stripQuoteMarker(line = '', { keepTabs = false } = {}) {
   const expanded = expandLeadingTabs(line);
   const marker = /^ {0,3}> ?/.exec(expanded)[0];
-  return spaceMarkerTabs(expanded.slice(marker.length), marker.length);
+  const text = expanded.slice(marker.length);
+  return keepTabs ? text : spaceMarkerTabs(text, marker.length);
+}
+
+// Strips the `>` markers of a quote. A fence opened inside the quote (after list markers too) keeps its
+// lines byte for byte until it closes, or until a line falls back out of the list item that holds it.
+function stripQuoteLines(lines = []) {
+  const out = [];
+  let fence = null;
+  for (const line of lines) {
+    const raw = stripQuoteMarker(line, { keepTabs: true });
+    const end = markdownListFenceEnd(raw, fence);
+    if (fence && end !== 'outdent') {
+      out.push(raw);
+      if (end === 'close') fence = null;
+      continue;
+    }
+    const text = stripQuoteMarker(line);
+    out.push(text);
+    fence = openingFence(text);
+  }
+  return out;
 }
 
 // Quotes and list items render their content as Markdown again; past this depth the rest of a reply stays
@@ -2717,6 +2760,20 @@ function openingFence(line = '') {
     text = `${' '.repeat(item.contentOffset)}${item.content}`;
   }
   return null;
+}
+
+// The same reading for code outside the renderer (adaptive UI blocks), which must not lift a block out
+// of a fence that a list item holds.
+export function markdownListFenceOpening(line = '') {
+  return openingFence(line);
+}
+
+// How a line ends a fence from `markdownListFenceOpening`: 'close' (the line belongs to the fence),
+// 'outdent' (the line falls back out of the list item holding it, so the fence ended just before it), or ''.
+export function markdownListFenceEnd(line = '', opening = null) {
+  if (!opening) return '';
+  if (opening.owner && /\S/.test(line) && /^ */.exec(expandLeadingTabs(line))[0].length < opening.owner) return 'outdent';
+  return isMarkdownFenceClose(line, opening) ? 'close' : '';
 }
 
 function renderListItem(lines = [], depth = 0) {
@@ -2878,11 +2935,9 @@ function renderMarkdownBlocks(lines = [], { tight = false, depth = 0 } = {}) {
     if (nestable && isQuoteLine(line)) {
       flushParagraph();
       // Consecutive `>` lines, a bare `>` included, are one quote; its content is Markdown too.
-      const quoted = [];
-      while (index < lines.length && isQuoteLine(lines[index])) {
-        quoted.push(stripQuoteMarker(lines[index]));
-        index += 1;
-      }
+      const start = index;
+      while (index < lines.length && isQuoteLine(lines[index])) index += 1;
+      const quoted = stripQuoteLines(lines.slice(start, index));
       index -= 1;
       const inner = renderMarkdownBlocks(quoted, { tight: !quoted.some(isBlankLine), depth: depth + 1 });
       if (inner) out.push(`<blockquote>${inner}</blockquote>`);
