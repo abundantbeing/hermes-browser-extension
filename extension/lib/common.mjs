@@ -2771,7 +2771,7 @@ function fenceEnd(line, fence) {
 // `closed`, otherwise the line before the reply leaves the fence's list item, or the reply's last line.
 export function markdownFenceRegions(lines = []) {
   const regions = [];
-  // The content columns of the list items the scan is inside, outermost first.
+  // The list items the scan is inside, outermost first: their content column and kind.
   const items = [];
   let open = null;
   for (let index = 0; index < lines.length; index += 1) {
@@ -2789,7 +2789,21 @@ export function markdownFenceRegions(lines = []) {
     }
     if (isBlankLine(line)) continue;
     const indent = indentWidth(line);
-    while (items.length && indent < items[items.length - 1]) items.pop();
+    let left = null;
+    while (items.length && indent < items[items.length - 1].contentOffset) left = items.pop();
+    // The renderer's order: a plain fence, then a table, whose rows are table text even when one looks
+    // like a fence, then a list item.
+    const plain = markdownFenceOpening(line);
+    if (plain) {
+      open = { start: index, fence: { ...plain, owner: 0, nested: false } };
+      continue;
+    }
+    if (line.includes('|') && index + 1 < lines.length && isTableDivider(lines[index + 1])) {
+      index += 2;
+      while (index < lines.length && lines[index].includes('|') && !isBlankLine(lines[index])) index += 1;
+      index -= 1;
+      continue;
+    }
     const parents = items.length;
     let markers = 0;
     if (!isHorizontalRule(line)) {
@@ -2797,9 +2811,14 @@ export function markdownFenceRegions(lines = []) {
       for (let depth = 0; depth < MARKDOWN_MAX_NESTING; depth += 1) {
         const item = listItemStart(text);
         if (!item) break;
-        items.push(item.contentOffset);
+        // An empty marker starts no list (it is paragraph text) unless it is the next item of the list
+        // the line just left.
+        const empty = !/\S/.test(item.content);
+        const sibling = depth === 0 && left && left.ordered === item.ordered && item.indent < left.contentOffset;
+        if (empty && !sibling) break;
+        items.push({ contentOffset: item.contentOffset, ordered: item.ordered });
         markers += 1;
-        if (!/\S/.test(item.content)) break;
+        if (empty) break;
         text = `${' '.repeat(item.contentOffset)}${item.content}`;
       }
     }

@@ -358,6 +358,27 @@ test('a nested item fence ends with its parent item, as in the renderer', () => 
   assert.match(renderPlainResponse(reply), /<pre class="plain-response-code">~~~hermes-ui\n/);
 });
 
+test('an empty list marker starts no parent item for a fence', () => {
+  const ui = '~~~hermes-ui\n{"version":1,"blocks":[{"type":"text","text":"x"}]}\n~~~';
+  // `- ` alone is paragraph text, so the next item is top-level and its fence closes at the left margin.
+  const reply = `- \n  - ~~~~md\n    code\n~~~~\n\n${ui}`;
+  assert.equal(renderMarkdown(reply).split('<pre>')[0], '<p>-</p><ul><li>');
+  assert.deepEqual(splitAdaptiveSegments(reply, { streaming: false }).map((segment) => segment.kind), ['markdown', 'ui']);
+  // An empty marker that continues a list is an item, so the fence below it is nested and ends with it.
+  const sibling = '- a\n-\n  - ~~~~md\n    code\n~~~~\nlater';
+  assert.ok(renderMarkdown(sibling).endsWith('<pre><code>later</code></pre>'));
+  assert.ok(renderPlainResponse(sibling).endsWith('<pre class="plain-response-code">later</pre>'));
+});
+
+test('a table row that starts like a fence stays table text', () => {
+  const reply = 'A | B\n---|---\n~~~ | example\n\n~~~md\n\n- **A:** 1\n- **B:** 2\n\n~~~\n\nAfter';
+  const code = '<pre><code data-lang="md">\n- **A:** 1\n- **B:** 2\n</code></pre><p>After</p>';
+  assert.ok(renderMarkdown(reply).endsWith(code));
+  assert.deepEqual(presentMarkdownParts(reply, { settled: true }).map((part) => part.kind), ['markdown']);
+  assert.ok(renderAdaptiveMarkdown(reply).endsWith(code));
+  assert.match(renderPlainResponse(reply), /<pre class="plain-response-code">\n- \*\*A:\*\* 1\n- \*\*B:\*\* 2\n<\/pre><p class="plain-response">After<\/p>$/);
+});
+
 test('a very long list item fence still renders', () => {
   const reply = `- ~~~\n${'\n'.repeat(150000)}`;
   assert.equal(splitAdaptiveSegments(reply, { streaming: false }).length, 1);
