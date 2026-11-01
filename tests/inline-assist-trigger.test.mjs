@@ -126,3 +126,20 @@ test('the circle follows the page when the surface under it changes theme', asyn
   for (const listener of env.listenersFor(env.w.matchMedia('(prefers-color-scheme: dark)'), 'change')) listener({ matches: false });
   assert.equal(launcher.dataset.tone, 'dark', 'system theme change');
 });
+
+test('reopening Assist during a run drops that run and stops the busy ring', async () => {
+  const env = boot({ settings: { inlineAssistDefaultRoute: 'background' } });
+  const launcher = await focusField(env);
+  env.w.document.getElementById('field').value = 'a rough first draft';
+  env.userClick(launcher);
+  await env.sleep(60);
+  env.userClick(env.root().querySelector('.actions .action'));
+  await env.sleep(60);
+  assert.ok(env.sent.some((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST'), 'a draft is running');
+  assert.equal(launcher.classList.contains('busy'), true);
+  env.userClick(env.root().querySelector('.close'));
+  env.userClick(launcher);
+  await env.sleep(40);
+  assert.equal(env.root().querySelector('.panel').hidden, false);
+  assert.equal(launcher.classList.contains('busy'), false);
+});
