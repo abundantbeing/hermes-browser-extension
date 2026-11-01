@@ -69,11 +69,16 @@ _SECRET_IN_URL = re.compile(
     r"|npm_[A-Za-z0-9]{30,}|ya29\.[A-Za-z0-9_-]{20,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"
     # Provider, tool and chat-platform shapes Hermes Agent's agent/redact.py knows; the extension's
     # SECRET_PATTERNS carries the same set (tests/redaction-hermes-token-shapes.test.mjs).
-    r"|(?:gsk_|xai-|r8_|pplx-|tvly-(?:dev-|prod-)?|fal_|bb_live_|ntn_|lin_api_|lin_oauth_|fw_|fpk_|pk-lf-"
-    r"|xapp-\d+-|xoxe-\d+-|pypi-AgEIcHlwaS5vcmc|ATATT3|PMAK-|gAAAAA"
-    r"|gl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-|GR1348941|1//0)[A-Za-z0-9]{20,}"
+    r"|(?:gsk_|xai-|r8_|pplx-|fw_|fpk_|tvly-(?:dev-|prod-)?|fal_|bb_live_)[A-Za-z0-9]{20,}"
+    r"|ntn_[A-Za-z0-9]{40,}|lin_(?:api|oauth)_[A-Za-z0-9]{32,}"
     r"|syt_[A-Za-z0-9]{4,}_[A-Za-z0-9]{10,}_[A-Za-z0-9]{6}|fc-[a-f0-9]{32}|secret_[A-Za-z0-9]{43}|sk_[a-f0-9]{48}"
     r"|do[opr]_v1_[a-f0-9]{64}|\d{8,12}:[A-Za-z0-9_-]{30,}"
+    # These bodies carry separators (hyphens, underscores, dots, `=`), as the shared redactor's do.
+    r"|pk-lf-[A-Za-z0-9-]{20,}|xapp-\d+-[A-Za-z0-9-]{10,}|xoxe-[A-Za-z0-9-]{10,}"
+    r"|pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{20,}|(?:gAAAAA|ATATT3)[A-Za-z0-9_=-]{40,}"
+    r"|PMAK-[a-f0-9]{24}-[a-f0-9]{34}"
+    r"|gl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-[A-Za-z0-9_.-]{20,}"
+    r"|GR1348941[A-Za-z0-9_-]{20,}|1//0[A-Za-z0-9_-]{40,}"
     r"|(?<![A-Za-z0-9_-])[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}(?![A-Za-z0-9_-])"
     r"|/services/T[A-Z0-9]{8,}/B[A-Z0-9]{8,}/[A-Za-z0-9]{20,}|/api(?:/v\d+)?/webhooks/\d{17,20}/[A-Za-z0-9_-]{60,})"
 )

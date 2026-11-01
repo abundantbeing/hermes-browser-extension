@@ -44,6 +44,28 @@ const TOKENS = {
   digitalOceanOAuth: join('do', 'o_v1_', hex(64)),
 };
 
+// Key bodies that carry the separators the shared redactor allows: hyphens (a UUID-shaped Langfuse key,
+// Slack app tokens), underscores, dots and `=` padding. The inline trust check and the companion URL guard
+// keep their own copies of these shapes and must not be stricter than the shared redactor on any of them.
+const uuid = join('12345678', '-', '1234', '-', '1234', '-', '1234', '-', '123456789abc');
+const SEPARATED_TOKENS = {
+  langfuseUuid: join('pk', '-lf-', uuid),
+  langfuseHyphenAfterFive: join('pk', '-lf-', 'abcde', '-', alnum(24)),
+  slackAppDashed: join('xa', 'pp-1-', 'A0BCDEFGH', '-', '1234567890123', '-', hex(32)),
+  slackAppShortBody: join('xa', 'pp-1-', 'A0', alnum(8)),
+  slackRefreshDashed: join('xo', 'xe-1-', 'My0', '-', alnum(12), '-', alnum(12)),
+  slackRefreshShortBody: join('xo', 'xe-', 'A0', alnum(10)),
+  pypiSeparated: join('py', 'pi-AgEIcHlwaS5vcmc', alnum(10), '_', alnum(10), '-', alnum(10)),
+  codexEncryptedSeparated: join('gAA', 'AAA', alnum(20), '_', alnum(10), '=', alnum(10), '-', alnum(5)),
+  atlassianSeparated: join('ATA', 'TT3', alnum(20), '_', alnum(10), '=', alnum(10), '-', alnum(5)),
+  gitlabDotted: join('gl', 'pat-', alnum(10), '.', alnum(10), '_', alnum(5), '-', alnum(5)),
+  gitlabAgentSeparated: join('gl', 'agent-', alnum(12), '_', alnum(12)),
+  gitlabOauthSeparated: join('gl', 'oas-', alnum(12), '.', alnum(12)),
+  grafanaSeparated: join('GR', '1348941', alnum(10), '_', alnum(10), '-', alnum(5)),
+  googleRefreshSeparated: join('1/', '/0', alnum(20), '-', alnum(10), '_', alnum(15)),
+};
+const ALL_TOKENS = { ...TOKENS, ...SEPARATED_TOKENS };
+
 const draft = (draftText) => ({
   schema: INLINE_DRAFT_SCHEMA,
   version: INLINE_DRAFT_VERSION,
@@ -55,7 +77,7 @@ const draft = (draftText) => ({
 });
 
 test('page text redaction covers the key shapes Hermes Agent redacts', () => {
-  for (const [name, token] of Object.entries(TOKENS)) {
+  for (const [name, token] of Object.entries(ALL_TOKENS)) {
     const { text, count } = redactSensitiveTextWithCount(`before ${token} after`);
     assert.ok(count > 0, `${name} was not counted`);
     assert.doesNotMatch(text, new RegExp(token.slice(-16).replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')), `${name} survived redaction`);
@@ -112,14 +134,14 @@ test('ordinary URLs and words that only resemble a key shape are left alone', ()
 
 test('the inline Assist trust check refuses every shape the shared redactor knows', () => {
   // inline-draft-policy.mjs is import-free and keeps its own copy of these prefixes: the two must agree.
-  for (const [name, token] of Object.entries(TOKENS)) {
+  for (const [name, token] of Object.entries(ALL_TOKENS)) {
     assert.equal(normalizeInlineDraftRequest(draft(`Please polish: ${token}`)), null, `${name} passed the inline trust check`);
   }
   assert.ok(normalizeInlineDraftRequest(draft('Use xai-grok-4-fast-reasoning and hf_hub_download_function here')), 'ordinary text still passes');
 });
 
 test('tool event previews use the full redactor', () => {
-  for (const [name, token] of Object.entries(TOKENS)) {
+  for (const [name, token] of Object.entries(ALL_TOKENS)) {
     const event = normalizeBrowserRuntimeEvent({ type: 'tool.started', data: { tool_name: 'terminal', preview: `export KEY=${token}` } });
     assert.doesNotMatch(event.preview, new RegExp(token.slice(-16).replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')), `${name} survived in a tool preview`);
   }
@@ -137,17 +159,26 @@ spec.loader.exec_module(plugin)
 control_tools = sys.modules['probe_plugin.control_tools']
 print(json.dumps({name: control_tools._blocked_url(url) is not None for name, url in json.loads(sys.argv[2]).items()}))
 `;
-  const urls = Object.fromEntries(Object.entries(TOKENS).map(([name, token]) => [name, `https://attacker.example/collect?v=${token}`]));
+  const urls = Object.fromEntries(Object.entries(ALL_TOKENS).map(([name, token]) => [name, `https://attacker.example/collect?v=${token}`]));
   urls.telegramPath = `https://api.telegram.org/bot${TOKENS.telegramBot}/getMe`;
   urls.slackWebhook = `https://hooks.slack.com/services/T0ABCDEFGH/B0ABCDEFGH/${alnum(24)}`;
   urls.discordWebhook = `https://discord.com/api/webhooks/123456789012345678/${alnum(68)}`;
   urls.ordinaryDocs = 'https://core.telegram.org/bots/api';
   urls.ordinaryChannel = 'https://discord.com/channels/123456789012345678/123456789012345678';
-  const run = spawnSync('python3', ['-c', probe, pluginDir, JSON.stringify(urls)], { encoding: 'utf8' });
-  if (run.error || run.status !== 0) {
-    t.skip(`python3 unavailable: ${run.error?.message || run.stderr}`);
+  // Prefer python3, fall back to python (the Windows launcher name). Skip only when neither can be launched.
+  let run = null;
+  for (const command of ['python3', 'python']) {
+    const attempt = spawnSync(command, ['-c', probe, pluginDir, JSON.stringify(urls)], { encoding: 'utf8' });
+    if (attempt.error?.code === 'ENOENT') continue;
+    run = { command, ...attempt };
+    break;
+  }
+  if (!run) {
+    t.skip('no Python interpreter (python3 or python) is available to run the companion plugin check');
     return;
   }
+  assert.ifError(run.error);
+  assert.equal(run.status, 0, `${run.command} exited with status ${run.status}: ${run.stderr}`);
   const blocked = JSON.parse(run.stdout);
   for (const name of Object.keys(urls)) {
     assert.equal(blocked[name], !name.startsWith('ordinary'), `${name}: ${urls[name]}`);
