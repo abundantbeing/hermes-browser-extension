@@ -2902,12 +2902,29 @@ function captureSettingsBaseline() {
 }
 
 // A control the panel refilled from storage while Settings is open: its new value is the saved one, so it
-// does not read as an unsaved edit. The key is the one settingsControlEntries() gives a non-radio control.
+// does not read as an unsaved edit. The key is the one settingsControlEntries() gives the control.
 function adoptSettingsBaselineValue(control) {
   const pane = control?.closest?.('[data-settings-pane]')?.dataset.settingsPane;
-  if (!settingsBaseline || !pane || !control.id) return;
-  settingsBaseline.set(`${pane}\u0000${control.id}:`, control.type === 'checkbox' ? String(control.checked) : String(control.value));
+  const name = control?.id || control?.name;
+  if (!settingsBaseline || !pane || !name) return;
+  const checkable = control.type === 'checkbox' || control.type === 'radio';
+  settingsBaseline.set(`${pane}\u0000${name}:${control.type === 'radio' ? control.value : ''}`, checkable ? String(control.checked) : String(control.value));
   renderSettingsEditedMarkers();
+}
+
+// Every tab has its own side panel, and they share one settings record. An icon saved in another panel is
+// taken in, and the radios show it unless they hold an unsaved pick, so an unrelated Save here does not put
+// the old icon back.
+function adoptInlineAssistIconChange(value) {
+  const saved = normalizeInlineAssistIcon(settings.inlineAssistIcon);
+  const next = normalizeInlineAssistIcon(value);
+  settings = { ...settings, inlineAssistIcon: next };
+  const inputs = els.inlineAssistIconInputs || [];
+  if (!inputs.length || inputs.find((input) => input.checked)?.value !== saved) return;
+  for (const input of inputs) {
+    input.checked = input.value === next;
+    adoptSettingsBaselineValue(input);
+  }
 }
 
 // Assist's switch on a page writes "Replace text automatically" under its own key. The panel takes a new value
@@ -29813,6 +29830,7 @@ function bindEvents() {
           renderBrowserControl();
         }
         adoptStoredResponsePresentation(next);
+        if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
       }
     }
     if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);

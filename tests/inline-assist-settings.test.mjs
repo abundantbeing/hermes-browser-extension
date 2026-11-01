@@ -92,3 +92,26 @@ test('an unsaved edit of the switch in Settings is not overwritten by a page', a
   assert.equal(h.els.inlineAssistAutoReplace.checked, false);
   assert.equal(h.scope.settings.inlineAssistAutoReplace, true);
 });
+
+// Every tab has its own side panel, and they share one settings record: an icon picked in one panel must not
+// be put back by an unrelated Save in another.
+test('an icon saved by another panel shows here and holds through an unrelated Save', async () => {
+  const h = await createSettingsSaveHarness({ settings: { inlineAssistIcon: 'wing' } });
+  h.scope.settingsBaseline = null;
+  for (const input of h.els.inlineAssistIconInputs) input.checked = input.value === 'wing';
+  h.fn('captureSettingsBaseline')();
+  h.fn('adoptInlineAssistIconChange')('girl');
+  assert.equal(h.els.inlineAssistIconInputs.find((input) => input.checked)?.value, 'girl');
+  assert.equal(changedPanes(h.scope.settingsBaseline, h.fn('settingsControlEntries')()).size, 0, 'not an unsaved edit');
+  await h.save();
+  assert.equal(h.store.hermesBrowserSettings.inlineAssistIcon, 'girl');
+});
+
+test('an icon picked here and not saved yet is not overwritten by another panel', async () => {
+  const h = await createSettingsSaveHarness({ settings: { inlineAssistIcon: 'wing' } });
+  h.scope.settingsBaseline = null;
+  for (const input of h.els.inlineAssistIconInputs) input.checked = input.value === 'staff';
+  h.fn('adoptInlineAssistIconChange')('girl');
+  assert.equal(h.els.inlineAssistIconInputs.find((input) => input.checked)?.value, 'staff');
+  assert.equal(h.scope.settings.inlineAssistIcon, 'girl');
+});

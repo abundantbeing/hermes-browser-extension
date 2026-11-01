@@ -35,6 +35,7 @@ function storageListener(initialSettings) {
     ONBOARDING_COMPLETED_STORAGE_KEY: 'onboardingDone',
     INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY: 'hermesInlineAssistAutoReplace',
     adoptInlineAssistAutoReplaceChange() {},
+    adoptInlineAssistIconChange() {},
     adoptOnboardingCompletedChange() {},
     adoptStoredResponsePresentation() {},
     updateConnectionPrompt() {},
