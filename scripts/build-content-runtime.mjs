@@ -32,6 +32,18 @@ const AUTHORED_MODULES = Object.freeze([
     apiName: 'INLINE_DRAFT_API',
   },
   {
+    path: 'extension/lib/appearance-preferences.mjs',
+    runtimeName: 'hermesAppearancePreferencesRuntime',
+    globalName: 'HermesAppearancePreferences',
+    apiName: 'APPEARANCE_PREFERENCES_API',
+  },
+  {
+    path: 'extension/lib/inline-assist-look.mjs',
+    runtimeName: 'hermesInlineAssistLookRuntime',
+    globalName: 'HermesInlineAssistLook',
+    apiName: 'INLINE_ASSIST_LOOK_API',
+  },
+  {
     path: 'extension/lib/page-annotation-content.mjs',
     runtimeName: 'hermesPageAnnotationRuntime',
     globalName: 'HermesPageAnnotation',

@@ -112,14 +112,17 @@ test('synthetic events from the page cannot open, drive, or read Assist', async 
   custom.dispatchEvent(new env.w.KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
   root.querySelector('.action').click();
   await env.sleep(60);
-  assert.deepEqual(env.sent, [], 'no request, not even a status probe, leaves the page for untrusted events');
+  // The trusted open above asks the background for the panel's font bytes; that request carries only font
+  // family names, never page content, and nothing else may leave the page.
+  assert.deepEqual(env.sent.filter((message) => message.type !== 'HERMES_INLINE_FONT_REQUEST'), [], 'no request, not even a status probe, leaves the page for untrusted events');
+  assert.ok(env.sent.every((message) => message.type !== 'HERMES_INLINE_FONT_REQUEST' || Object.keys(message).sort().join() === 'families,type'), 'the font request holds font names only');
   assert.equal(root.querySelector('.route'), null, 'routing view never rendered');
   assert.doesNotMatch(root.textContent, /Private active chat/);
 
   // The same instruction through real user clicks still works end to end.
   env.userClick(root.querySelector('.custom-go'));
   await env.sleep(60);
-  assert.equal(env.sent[0]?.type, 'HERMES_INLINE_SESSION_STATUS');
+  assert.equal(env.sent.filter((message) => message.type !== 'HERMES_INLINE_FONT_REQUEST')[0]?.type, 'HERMES_INLINE_SESSION_STATUS');
   const current = root.querySelector('button.route[data-route="current"]');
   assert.ok(current, 'routing choices render after a trusted click');
 

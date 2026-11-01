@@ -1,3 +1,4 @@
+import { INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, normalizeInlineAssistIcon } from './lib/inline-assist-look.mjs';
 import { reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
 import { CONTROL_TOOL_FAMILIES } from './lib/control-tool-names.mjs';
 import {
@@ -1225,6 +1226,8 @@ const els = {
   browserContextConsentIdentity: $('#browserContextConsentIdentity'),
   inlineAssistEnabled: $('#inlineAssistEnabled'),
   inlineAssistDefaultRoute: $('#inlineAssistDefaultRoute'),
+  inlineAssistIconInputs: Array.from(document.querySelectorAll('input[name="inlineAssistIcon"]')),
+  inlineAssistAutoReplace: $('#inlineAssistAutoReplace'),
   inlineAssistModel: $('#inlineAssistModel'),
   inlineAssistModelButton: $('#inlineAssistModelButton'),
   inlineAssistModelLabel: $('#inlineAssistModelLabel'),
@@ -2896,6 +2899,28 @@ function settingsControlEntries() {
 function captureSettingsBaseline() {
   settingsBaseline = snapshotControls(settingsControlEntries());
   renderSettingsEditedMarkers();
+}
+
+// A control the panel refilled from storage while Settings is open: its new value is the saved one, so it
+// does not read as an unsaved edit. The key is the one settingsControlEntries() gives a non-radio control.
+function adoptSettingsBaselineValue(control) {
+  const pane = control?.closest?.('[data-settings-pane]')?.dataset.settingsPane;
+  if (!settingsBaseline || !pane || !control.id) return;
+  settingsBaseline.set(`${pane}\u0000${control.id}:`, control.type === 'checkbox' ? String(control.checked) : String(control.value));
+  renderSettingsEditedMarkers();
+}
+
+// Assist's switch on a page writes "Replace text automatically" under its own key. The panel takes a new value
+// in, and its checkbox shows it unless the box holds an unsaved edit, so an unrelated Save does not write an
+// older copy back.
+function adoptInlineAssistAutoReplaceChange(value) {
+  const saved = settings.inlineAssistAutoReplace !== false;
+  const next = value !== false;
+  settings = { ...settings, inlineAssistAutoReplace: next };
+  const box = els.inlineAssistAutoReplace;
+  if (!box || box.checked !== saved) return;
+  box.checked = next;
+  adoptSettingsBaselineValue(box);
 }
 
 function renderSettingsEditedMarkers() {
@@ -23036,7 +23061,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -23080,6 +23105,10 @@ async function loadSettings({ restoreMessages = false } = {}) {
     sessionStartupMode: normalizeSessionStartupMode(settings.sessionStartupMode),
     inlineAssistEnabled: settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute),
+    inlineAssistIcon: normalizeInlineAssistIcon(settings.inlineAssistIcon),
+    inlineAssistAutoReplace: typeof stored[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY] === 'boolean'
+      ? stored[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]
+      : settings.inlineAssistAutoReplace !== false,
     inlineAssistModel: String(settings.inlineAssistModel || ''),
     inlineAssistRawModel: String(settings.inlineAssistRawModel || ''),
     inlineAssistProvider: String(settings.inlineAssistProvider || ''),
@@ -23364,6 +23393,8 @@ function syncSettingsForm() {
   els.includeSelectedTextInput.checked = Boolean(settings.includeSelectedText);
   if (els.inlineAssistEnabled) els.inlineAssistEnabled.checked = settings.inlineAssistEnabled !== false;
   if (els.inlineAssistDefaultRoute) els.inlineAssistDefaultRoute.value = normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute);
+  for (const input of els.inlineAssistIconInputs || []) input.checked = input.value === normalizeInlineAssistIcon(settings.inlineAssistIcon);
+  if (els.inlineAssistAutoReplace) els.inlineAssistAutoReplace.checked = settings.inlineAssistAutoReplace !== false;
   renderInlineAssistModelOptions();
   if (els.inlineAssistSessionRetention) els.inlineAssistSessionRetention.value = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
   if (els.contextMenuDefaultRoute) els.contextMenuDefaultRoute.value = settings.contextMenuDefaultRoute || 'ask';
@@ -23476,6 +23507,8 @@ async function saveSettingsFromForm() {
     includeSelectedText: els.includeSelectedTextInput.checked,
     inlineAssistEnabled: els.inlineAssistEnabled ? els.inlineAssistEnabled.checked : settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(els.inlineAssistDefaultRoute?.value || settings.inlineAssistDefaultRoute),
+    inlineAssistIcon: normalizeInlineAssistIcon(els.inlineAssistIconInputs?.find((input) => input.checked)?.value || settings.inlineAssistIcon),
+    inlineAssistAutoReplace: els.inlineAssistAutoReplace ? els.inlineAssistAutoReplace.checked : settings.inlineAssistAutoReplace !== false,
     ...assistBinding,
     inlineAssistSessionRetention: els.inlineAssistSessionRetention?.value === 'delete' ? 'delete' : 'keep',
     inlineAssistThinkingEnabled: settings.inlineAssistThinkingEnabled !== false,
@@ -23561,6 +23594,7 @@ async function saveSettingsFromForm() {
   );
   applyAppearanceSettings();
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]: settings.inlineAssistAutoReplace !== false });
   await applyWebappCredentialPreference();
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
     || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
@@ -29781,6 +29815,7 @@ function bindEvents() {
         adoptStoredResponsePresentation(next);
       }
     }
+    if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);
     if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)) adoptOnboardingCompletedChange(changes);
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
     if (Object.hasOwn(changes, CONTEXT_CONSENT_STORAGE_KEY)) {

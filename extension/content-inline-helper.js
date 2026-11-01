@@ -10,6 +10,8 @@
   const extractor = globalThis.HermesContentExtractor;
   const adapters = globalThis.HermesSiteAdapters;
   const i18n = globalThis.HermesI18nContent;
+  const look = globalThis.HermesInlineAssistLook;
+  const appearancePreferences = globalThis.HermesAppearancePreferences;
   if (!policy?.classifyEditable || !policy?.buildInlineDraftRequest || !policy?.applyResult || !appearance?.resolveInlineAssistTheme || !i18n?.ready) return;
   await i18n.ready;
   if (globalThis.__HERMES_INLINE_HELPER_GENERATION__ !== generation) return;
@@ -20,6 +22,7 @@
   const SESSION_STATUS = 'HERMES_INLINE_SESSION_STATUS';
   const OPEN_SESSION = 'HERMES_INLINE_OPEN_SESSION';
   const CONTEXT_ACTION = 'HERMES_INLINE_CONTEXT_ACTION';
+  const FONT_REQUEST = 'HERMES_INLINE_FONT_REQUEST';
   const extensionRoot = String(browserApi.runtime.getManifest()?.side_panel?.default_path || '').startsWith('extension/') ? 'extension/' : '';
   const logoUrl = browserApi.runtime.getURL(`${extensionRoot}assets/img/hermes-browser-extension-icon-ink.png`);
   const documentId = `doc-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
@@ -91,23 +94,31 @@
   const shadow = host.attachShadow({ mode: 'closed' });
   const style = make('style');
   style.textContent = `
-    :host { all:initial; position:fixed; z-index:2147483646; inset:0; pointer-events:none; --hb-surface:#0d0d0d; --hb-paper:#171717; --hb-blue:#e5e5e5; --hb-fg:#f1f1f1; --hb-accent:#c9c9c9; --hb-logo:#0d0d0d; --hb-logo-bg:#f5f5f5; --hb-line:color-mix(in srgb,var(--hb-blue) 24%,transparent); --hb-muted:color-mix(in srgb,var(--hb-blue) 68%,transparent); --hb-soft:color-mix(in srgb,var(--hb-accent) 12%,var(--hb-paper)); --hermes-fg-rgb:241,241,241; --hermes-line-strong:rgba(229,229,229,0.78); --hermes-text-zoom:1; font-family:"Segoe UI",Arial,sans-serif; color-scheme:dark; }
+    :host { all:initial; position:fixed; z-index:2147483646; inset:0; pointer-events:none; --hb-surface:#0d0d0d; --hb-paper:#171717; --hb-blue:#e5e5e5; --hb-fg:#f1f1f1; --hb-accent:#c9c9c9; --hb-logo:#0d0d0d; --hb-logo-bg:#f5f5f5; --hb-line:color-mix(in srgb,var(--hb-blue) 24%,transparent); --hb-muted:color-mix(in srgb,var(--hb-blue) 68%,transparent); --hb-soft:color-mix(in srgb,var(--hb-accent) 12%,var(--hb-paper)); --hermes-fg-rgb:241,241,241; --hermes-line-strong:rgba(229,229,229,0.78); --hermes-text-zoom:1; --hb-font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; --hb-font-display:var(--hb-font-ui); --hermes-font-mono:ui-monospace,SFMono-Regular,Consolas,monospace; --hb-display-scale:1; font-family:var(--hb-font-ui); color-scheme:dark; }
     *, *::before, *::after { box-sizing:border-box; }
     button, textarea { font:inherit; }
-    .launcher { position:fixed; z-index:2; display:grid; place-items:center; width:36px; height:36px; padding:0; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-logo-bg); color:var(--hb-logo); cursor:pointer; pointer-events:auto; overflow:hidden; transition:background 120ms ease,border-color 120ms ease,box-shadow 120ms ease; box-shadow:0 2px 10px rgba(0,0,0,.18); }
-    .launcher:hover, .launcher:focus-visible { background:var(--hb-soft); border-color:var(--hb-blue); outline:2px solid var(--hb-blue); outline-offset:2px; box-shadow:0 4px 16px rgba(0,0,0,.24); }
-    .launcher-logo, .brand-logo { display:block; background:var(--hb-logo); mask-position:center; mask-size:contain; mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; }
-    .launcher-logo { width:30px; height:30px; }
+    .launcher { position:fixed; z-index:2; display:grid; place-items:center; width:24px; height:24px; padding:0; border:0; border-radius:50%; background:var(--hx-fill,#141414); cursor:pointer; pointer-events:auto; opacity:.85; box-shadow:0 0 0 1px var(--hx-hair,rgba(0,0,0,.08)); transition:opacity 120ms ease,box-shadow 120ms ease; }
+    .launcher[data-tone="light"] { --hx-fill:#f4f4f1; --hx-glyph:#111111; --hx-hair:rgba(255,255,255,.14); }
+    .launcher[data-tone="dark"] { --hx-fill:#141414; --hx-glyph:#f4f4f1; --hx-hair:rgba(0,0,0,.08); }
+    .launcher:hover, .launcher:focus-visible { opacity:1; outline:none; box-shadow:0 0 0 2px var(--hb-accent); }
+    .launcher.busy::before { content:""; position:absolute; inset:-4px; border-radius:50%; pointer-events:none; border:2px solid transparent; border-top-color:var(--hb-accent); border-right-color:var(--hb-accent); animation:spin .9s linear infinite; }
+    .launcher-label { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); white-space:nowrap; padding:3px 6px; border:1px solid var(--hb-line); background:var(--hb-paper); color:var(--hb-blue); font:600 calc(10.5px * var(--hermes-text-zoom, 1))/1.2 var(--hb-font-ui); opacity:0; pointer-events:none; transition:opacity 120ms ease; }
+    .launcher:hover .launcher-label, .launcher:focus-visible .launcher-label { opacity:1; }
+    .launcher-logo, .brand-logo { display:block; mask-position:center; mask-size:contain; mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; }
+    .launcher-logo { width:18px; height:18px; background:var(--hx-glyph,#f4f4f1); }
+    .launcher[data-icon="girl"] .launcher-logo, .brand-mark[data-icon="girl"] .brand-logo { border-radius:50%; mask-size:cover; -webkit-mask-size:cover; }
+    .launcher[data-icon="girl"] .launcher-logo { width:22px; height:22px; }
     .launcher[hidden], .panel[hidden] { display:none; }
     .panel { position:fixed; z-index:1; width:min(500px,calc(100vw - 20px)); max-height:min(680px,calc(100vh - 20px)); overflow:auto; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); pointer-events:auto; box-shadow:0 18px 50px rgba(0,0,0,.32), 0 0 0 1px color-mix(in srgb,var(--hb-blue) 14%,transparent); }
     .panel, .preview, .custom { scrollbar-gutter:stable; }
     .panel::-webkit-scrollbar, .preview::-webkit-scrollbar, .custom::-webkit-scrollbar { width:8px; }
     .panel::-webkit-scrollbar-thumb, .preview::-webkit-scrollbar-thumb, .custom::-webkit-scrollbar-thumb { background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); }
-    .head { display:grid; grid-template-columns:44px 1fr 44px; gap:12px; align-items:center; padding:14px; border-bottom:1px solid var(--hb-line); }
-    .brand-mark { display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid var(--hb-line); background:var(--hb-logo-bg); }
-    .brand-logo { width:42px; height:42px; }
+    .head { display:grid; grid-template-columns:30px 1fr 44px; gap:12px; align-items:center; padding:14px; border-bottom:1px solid var(--hb-line); }
+    .brand-mark { display:grid; place-items:center; width:30px; height:30px; padding:0; border-radius:50%; background:var(--hb-blue); }
+    .brand-logo { width:22px; height:22px; background:var(--hb-paper); }
+    .brand-mark[data-icon="girl"] .brand-logo { width:28px; height:28px; }
     .kicker, .section-label { display:block; color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); letter-spacing:.16em; text-transform:uppercase; }
-    .title { display:block; margin-top:4px; font-family:Georgia,"Times New Roman",serif; font-size:calc(22px * var(--hermes-text-zoom, 1)); line-height:1; color:var(--hb-blue); }
+    .title { display:block; margin-top:4px; font-family:var(--hb-font-display); font-size:calc(22px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); line-height:1; color:var(--hb-blue); }
     .close { width:44px; height:44px; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font-size:calc(28px * var(--hermes-text-zoom, 1)); line-height:1; display:grid; place-items:center; transition:background 120ms ease,border-color 120ms ease,color 120ms ease; }
     .close:hover, .close:focus-visible { background:var(--hb-blue); color:var(--hb-paper); border-color:var(--hb-blue); outline:2px solid var(--hb-blue); outline-offset:2px; }
     .context { display:grid; grid-template-columns:1fr auto; gap:10px; padding:9px 12px; border-bottom:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(10px * var(--hermes-text-zoom, 1)); }
@@ -115,22 +126,22 @@
     .body { display:flex; flex-direction:column; gap:11px; padding:12px; }
     .note, .status, .privacy, .run-copy { margin:0; color:var(--hb-muted); font-size:calc(11px * var(--hermes-text-zoom, 1)); line-height:1.45; }
     .actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-top:1px solid var(--hb-line); border-left:1px solid var(--hb-line); }
-    .action { min-height:58px; padding:9px; border:0; border-right:1px solid var(--hb-line); border-bottom:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); cursor:pointer; text-align:left; font-family:Georgia,"Times New Roman",serif; font-size:calc(13px * var(--hermes-text-zoom, 1)); font-weight:700; }
+    .action { min-height:58px; padding:9px; border:0; border-right:1px solid var(--hb-line); border-bottom:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); cursor:pointer; text-align:left; font-family:var(--hb-font-display); font-size:calc(13px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); font-weight:700; }
     .action.primary { background:var(--hb-blue); color:var(--hb-paper); }
-    .action small { display:block; margin-top:3px; color:var(--hb-muted); font-family:"Segoe UI",Arial,sans-serif; font-size:calc(9px * var(--hermes-text-zoom, 1)); font-weight:400; line-height:1.3; }
+    .action small { display:block; margin-top:3px; color:var(--hb-muted); font-family:var(--hb-font-ui); font-size:calc(9px * var(--hermes-text-zoom, 1)); font-weight:400; line-height:1.3; }
     .action.primary small { color:color-mix(in srgb,var(--hb-paper) 74%,transparent); }
     .action:hover, .action:focus-visible, .route:hover, .route:focus-visible, .result-actions button:hover, .result-actions button:focus-visible { outline:2px solid var(--hb-blue); outline-offset:-2px; }
     .local-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
     .local-actions .action { border:1px solid var(--hb-line); min-height:50px; background:var(--hb-soft); }
-    .custom { width:100%; min-height:62px; resize:vertical; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); padding:9px; font:calc(11px * var(--hermes-text-zoom, 1))/1.4 "Segoe UI",Arial,sans-serif; }
+    .custom { width:100%; min-height:62px; resize:vertical; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); padding:9px; font:calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hb-font-ui); }
     .custom-row { display:grid; grid-template-columns:1fr auto; gap:7px; align-items:stretch; }
     .custom-go { min-width:76px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-blue); color:var(--hb-paper); cursor:pointer; font-size:calc(11px * var(--hermes-text-zoom, 1)); font-weight:700; }
-    .route-title { margin:0; color:var(--hb-blue); font-family:Georgia,"Times New Roman",serif; font-size:calc(20px * var(--hermes-text-zoom, 1)); line-height:1.05; }
+    .route-title { margin:0; color:var(--hb-blue); font-family:var(--hb-font-display); font-size:calc(20px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); line-height:1.05; }
     .route { display:grid; grid-template-columns:42px 1fr 18px; gap:9px; align-items:center; width:100%; padding:11px; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); cursor:pointer; text-align:left; }
     .route.recommended { border:2px solid var(--hb-blue); background:var(--hb-soft); }
     .route:disabled { cursor:not-allowed; opacity:.45; }
-    .route-num { font-family:Georgia,"Times New Roman",serif; font-size:calc(20px * var(--hermes-text-zoom, 1)); font-weight:700; }
-    .route strong { font-family:Georgia,"Times New Roman",serif; font-size:calc(13px * var(--hermes-text-zoom, 1)); }
+    .route-num { font-family:var(--hb-font-display); font-size:calc(20px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); font-weight:700; }
+    .route strong { font-family:var(--hb-font-display); font-size:calc(13px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); }
     .route small { display:block; margin-top:3px; color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); line-height:1.35; }
     .route .tag { display:block; margin-top:4px; color:var(--hb-blue); font-size:calc(8px * var(--hermes-text-zoom, 1)); letter-spacing:.11em; text-transform:uppercase; }
     .arrow { font-size:calc(18px * var(--hermes-text-zoom, 1)); }
@@ -142,10 +153,10 @@
     .success i { width:9px; height:9px; background:var(--hb-blue); }
     .run-card, .preview { border:1px solid var(--hb-line); background:var(--hb-paper); padding:11px; }
     .run-row { display:flex; justify-content:space-between; gap:10px; color:var(--hb-muted); font-size:calc(10px * var(--hermes-text-zoom, 1)); }
-    .run-title { margin:8px 0 3px; color:var(--hb-blue); font-family:Georgia,"Times New Roman",serif; font-size:calc(17px * var(--hermes-text-zoom, 1)); font-weight:700; }
-    .preview { max-height:170px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--hb-blue); font:calc(11px * var(--hermes-text-zoom, 1))/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; user-select:text; }
+    .run-title { margin:8px 0 3px; color:var(--hb-blue); font-family:var(--hb-font-display); font-size:calc(17px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); font-weight:700; }
+    .preview { max-height:170px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--hb-blue); font:calc(11px * var(--hermes-text-zoom, 1))/1.5 var(--hermes-font-mono); user-select:text; }
     .result-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
-    .result-actions button { min-height:39px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); cursor:pointer; font-family:Georgia,"Times New Roman",serif; font-size:calc(12px * var(--hermes-text-zoom, 1)); font-weight:700; }
+    .result-actions button { min-height:39px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); cursor:pointer; font-family:var(--hb-font-display); font-size:calc(12px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); font-weight:700; }
     .result-actions .main { background:var(--hb-blue); color:var(--hb-paper); }
     .result-actions[data-action-count="3"] button:last-child { grid-column:1 / -1; }
     .setting { display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--hb-line); padding:9px; color:var(--hb-blue); font-size:calc(10px * var(--hermes-text-zoom, 1)); }
@@ -155,12 +166,18 @@
     .toggle::after { content:""; position:absolute; width:12px; height:12px; left:2px; top:2px; background:var(--hb-blue); transition:left 120ms ease,background 120ms ease; }
     .toggle:checked::after { left:18px; background:var(--hb-paper); }
     .foot { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); }
+    .panel[data-font-profile="signature"] .title, .panel[data-font-profile="signature"] .route-title, .panel[data-font-profile="signature"] .run-title, .panel[data-font-profile="signature"] .action, .panel[data-font-profile="signature"] .route strong, .panel[data-font-profile="signature"] .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
+    .panel[data-font-profile="signature"] .action small, .panel[data-font-profile="signature"] .route small { text-transform:none; letter-spacing:normal; }
     @media (max-width:520px) { .panel { width:calc(100vw - 16px); } }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; animation:none!important; } }
   `;
 
   const launcher = button('launcher', '', 'Open Hermes Assist');
-  launcher.appendChild(logo('launcher-logo'));
+  const launcherLabel = make('span', 'launcher-label', 'Hermes Assist');
+  launcherLabel.setAttribute('aria-hidden', 'true');
+  launcher.append(logo('launcher-logo'), launcherLabel);
+  launcher.dataset.icon = 'wing';
+  launcher.dataset.tone = 'dark';
   launcher.title = translateUiText('Open Hermes Assist');
   launcher.hidden = true;
 
@@ -189,7 +206,25 @@
   const footMode = make('strong', '', 'SAFE APPLY');
   foot.append(footSafety, footMode);
   panel.append(head, context, body, foot);
-  shadow.append(style, launcher, panel);
+  // The font stacks live in a stylesheet inside the closed root, set on the circle and the panel, so the
+  // page can not read the user's font choice off the host element.
+  const fontStyle = make('style', 'assist-fonts');
+  // Per-page family names: a page can not guess or pre-declare them, and since it can list what
+  // document.fonts holds, each family gets its own random name that does not say which font it is.
+  const randomHex = (bytes) => Array.from(globalThis.crypto?.getRandomValues?.(new Uint8Array(bytes)) || Array.from({ length: bytes }, () => Math.floor(Math.random() * 256)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  // One CSS identifier per name (FontFace parses the family as CSS): HermesAssist-<page token>-<family token>.
+  const fontPrefix = `HermesAssist-${randomHex(4)}-`;
+  const fontNames = new Map();
+  const fontName = (family) => {
+    if (!fontNames.has(family)) {
+      const taken = new Set(fontNames.values());
+      let name = `${fontPrefix}${randomHex(3)}`;
+      while (taken.has(name)) name = `${fontPrefix}${randomHex(3)}`;
+      fontNames.set(family, name);
+    }
+    return fontNames.get(family);
+  };
+  shadow.append(style, fontStyle, launcher, panel);
   (document.documentElement || document.body).appendChild(host);
   browserApi.storage?.local?.get?.('hermesBrowserSettings').then((stored) => {
     const percent = Number(stored?.hermesBrowserSettings?.textZoomPercent);
@@ -220,13 +255,21 @@
   let stabilizationFrame = 0;
   let stabilizationDeadline = 0;
   const SITE_CONTEXT_STORAGE_KEY = 'hermesInlineSiteContextPreferences';
+  // "Replace text automatically" has its own key, shared with Settings → Hermes Assist, so Assist never
+  // rewrites the settings record Settings and Hermes Control also save. Unset, the record's copy decides.
+  const AUTO_REPLACE_STORAGE_KEY = 'hermesInlineAssistAutoReplace';
+  let savedAutoReplace = null;
   const visualViewport = globalThis.visualViewport || null;
   let assistSettings = {
     inlineAssistEnabled: true,
     inlineAssistDefaultRoute: policy.routePreferences?.ASK || 'ask',
     appearanceTheme: appearance.defaultTheme || 'nous',
     colorMode: appearance.defaultColorMode || 'dark',
+    inlineAssistIcon: 'wing',
+    fontProfile: 'signature',
+    customFontFamily: '',
   };
+  let requestedFontFamilies = '';
   const systemThemeQuery = globalThis.matchMedia?.('(prefers-color-scheme: dark)') || null;
 
   function applyAssistAppearance() {
@@ -247,9 +290,108 @@
     host.style.setProperty('--hermes-fg-rgb', colorChannels(tokens.fg));
     host.style.setProperty('--hermes-line-strong', `rgba(${colorChannels(tokens.ink)},0.78)`);
     host.style.colorScheme = tokens.mode;
+    applyAssistFontStacks();
+    applyLauncherIcon();
+  }
+
+  function assetUrl(path) {
+    return browserApi.runtime.getURL(`${extensionRoot}${path}`);
+  }
+
+  function maskWith(element, path) {
+    if (!element) return;
+    const url = `url("${assetUrl(path)}")`;
+    element.style.maskImage = url;
+    element.style.webkitMaskImage = url;
+  }
+
+  // The circle takes the opposite tone of the page behind the field: the first ancestor with a mostly
+  // opaque background decides, and a page with none is treated as white.
+  function pageToneBehind(element) {
+    for (let node = element; node && node.nodeType === 1; node = node.parentElement) {
+      const color = look?.parseCssColor?.(globalThis.getComputedStyle?.(node)?.backgroundColor);
+      if (color && color.a >= 0.5) return look.circleToneForBackground(color);
+    }
+    const colorScheme = globalThis.getComputedStyle?.(document.documentElement)?.getPropertyValue?.('color-scheme') || '';
+    return look?.circleToneForBackground?.(null, { colorScheme }) || 'dark';
+  }
+
+  function applyLauncherIcon() {
+    const icon = look?.normalizeInlineAssistIcon?.(assistSettings.inlineAssistIcon) || 'wing';
+    const tone = target ? pageToneBehind(siteProfile?.placement?.anchorElement || target) : launcher.dataset.tone;
+    launcher.dataset.icon = icon;
+    launcher.dataset.tone = tone || 'dark';
+    maskWith(launcher.querySelector('.launcher-logo'), look?.inlineAssistIconAsset?.(icon, launcher.dataset.tone) || 'assets/img/assist-wing.png');
+    // The panel's own mark is a circle in the theme's ink: light on dark themes, dark on light ones.
+    brandMark.dataset.icon = icon;
+    maskWith(brandMark.querySelector('.brand-logo'), look?.inlineAssistIconAsset?.(icon, host.dataset.mode === 'light' ? 'dark' : 'light') || 'assets/img/assist-wing.png');
+  }
+
+  // The tone comes from what is under the circle once placed, since it usually sits beside the field: the
+  // page under that point, not counting Assist itself. Without elementsFromPoint, the field's own surface.
+  function surfaceToneAt(x, y, fallback) {
+    const under = typeof document.elementsFromPoint === 'function'
+      ? Array.from(document.elementsFromPoint(x, y) || []).find((element) => element !== host && !host.contains(element))
+      : null;
+    return pageToneBehind(under || fallback);
+  }
+
+  function setLauncherTone(tone) {
+    const next = tone || 'dark';
+    if (launcher.dataset.tone === next) return;
+    launcher.dataset.tone = next;
+    maskWith(launcher.querySelector('.launcher-logo'), look?.inlineAssistIconAsset?.(launcher.dataset.icon, next) || 'assets/img/assist-wing.png');
+  }
+
+  function applyAssistFontStacks() {
+    const profile = appearancePreferences?.normalizeFontProfile?.(assistSettings.fontProfile, assistSettings.customFontFamily) || 'signature';
+    const profileStack = appearancePreferences?.fontFamilyPreview?.(profile, assistSettings.customFontFamily) || '';
+    const stacks = look?.inlineAssistFontStacks?.(profile, profileStack, fontName);
+    if (!stacks) return null;
+    panel.dataset.fontProfile = profile;
+    fontStyle.textContent = `.launcher, .panel { --hb-font-ui: ${stacks.ui}; --hb-font-display: ${stacks.display}; --hermes-font-mono: ${stacks.mono}; --hb-display-scale: ${profile === 'signature' ? '1.3' : '1'}; font-family: var(--hb-font-ui); }`;
+    return stacks;
+  }
+
+  // The faces arrive as bytes from the background (font files are never web-accessible) when the panel
+  // first opens, and are registered under namespaced family names. If they never arrive, the stacks fall
+  // through to the system fonts at their end.
+  function requestAssistFonts() {
+    const stacks = applyAssistFontStacks();
+    const key = stacks?.families?.join('|') || '';
+    if (!key || key === requestedFontFamilies) return;
+    requestedFontFamilies = key;
+    Promise.resolve()
+      .then(() => browserApi.runtime.sendMessage({ type: FONT_REQUEST, families: stacks.families }))
+      .then((reply) => registerAssistFonts(reply?.fonts))
+      .catch(() => {});
+  }
+
+  function registerAssistFonts(fonts) {
+    if (!Array.isArray(fonts) || typeof globalThis.FontFace !== 'function' || !document.fonts?.add) return;
+    for (const font of fonts) {
+      try {
+        const binary = atob(String(font.data || ''));
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+        const face = new globalThis.FontFace(fontName(String(font.family || '')), bytes.buffer, { weight: font.weight, style: font.style });
+        face.load().then((loaded) => document.fonts.add(loaded)).catch(() => {});
+      } catch {
+        // A face that will not load leaves the stack to fall through to the next family.
+      }
+    }
+  }
+
+  function setLauncherBusy(busy) {
+    launcher.classList.toggle('busy', Boolean(busy));
   }
 
   function applyAssistSettings() {
+    autoReplace = savedAutoReplace ?? (assistSettings.inlineAssistAutoReplace !== false);
+    // An open panel shows the saved choice; the switch stays off where the editor cannot be written to.
+    for (const toggle of panel.querySelectorAll('input.toggle[data-setting="auto-replace"]')) {
+      if (!toggle.disabled) toggle.checked = autoReplace;
+    }
     applyAssistAppearance();
     host.dataset.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     host.dataset.inlineAssistSessionRetention = String(assistSettings.inlineAssistSessionRetention || 'retain');
@@ -265,12 +407,19 @@
   }
 
   async function loadAssistSettings() {
-    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY]).catch(() => ({}));
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY, AUTO_REPLACE_STORAGE_KEY]).catch(() => ({}));
     assistSettings = { ...assistSettings, ...(stored?.hermesBrowserSettings || {}) };
+    savedAutoReplace = typeof stored?.[AUTO_REPLACE_STORAGE_KEY] === 'boolean' ? stored[AUTO_REPLACE_STORAGE_KEY] : null;
     siteContextPreferences = adapters?.normalizeInlineSiteContextPreferences?.(stored?.[SITE_CONTEXT_STORAGE_KEY]) || {};
     assistSettings.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     refreshSiteProfile();
     applyAssistSettings();
+  }
+
+  async function persistAutoReplace(enabled) {
+    autoReplace = Boolean(enabled);
+    savedAutoReplace = autoReplace;
+    await browserApi.storage.local.set({ [AUTO_REPLACE_STORAGE_KEY]: autoReplace });
   }
 
   async function persistDefaultRoute(route) {
@@ -302,6 +451,10 @@
       assistSettings = { ...assistSettings, ...(changes.hermesBrowserSettings.newValue || {}) };
       assistSettings.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     }
+    if (changes?.[AUTO_REPLACE_STORAGE_KEY]) {
+      const value = changes[AUTO_REPLACE_STORAGE_KEY].newValue;
+      savedAutoReplace = typeof value === 'boolean' ? value : null;
+    }
     if (changes?.[SITE_CONTEXT_STORAGE_KEY]) {
       siteContextPreferences = adapters?.normalizeInlineSiteContextPreferences?.(changes[SITE_CONTEXT_STORAGE_KEY].newValue) || {};
       refreshSiteProfile();
@@ -312,6 +465,8 @@
 
   function onSystemThemeChanged() {
     if (assistSettings.colorMode === 'system') applyAssistAppearance();
+    // A page that follows the system theme repaints behind the circle.
+    position();
   }
 
   function refreshSiteProfile(candidate = target) {
@@ -528,9 +683,9 @@
         targetRect,
         obstacleRects,
         preferred: profile?.placement?.preferred || ['inside-end'],
-        size: 36,
+        size: 24,
       })
-      : policy.inlineLauncherPosition(rect, viewport, { launcherSize: 36 });
+      : policy.inlineLauncherPosition(rect, viewport, { launcherSize: 24 });
     if (!launcherPosition) {
       suspendPanelForScroll();
       return;
@@ -540,6 +695,7 @@
     launcher.dataset.placement = launcherPosition.strategy || 'inside-end';
     launcher.style.left = `${launcherPosition.left}px`;
     launcher.style.top = `${launcherPosition.top}px`;
+    setLauncherTone(surfaceToneAt(launcherPosition.left + 12, launcherPosition.top + 12, anchor));
     if (!panel.hidden) {
       const safe = 8;
       const panelWidth = Math.min(500, viewportWidth - 20);
@@ -605,6 +761,7 @@
     const targetChanged = target !== candidate;
     target = candidate;
     refreshSiteProfile(candidate);
+    applyLauncherIcon();
     if (targetChanged) observeTargetLayout();
     else stabilizePosition(420);
     launcher.hidden = assistSettings.inlineAssistEnabled === false || !isTargetVisible(target);
@@ -700,7 +857,8 @@
     toggle.type = 'checkbox';
     toggle.checked = supportsSafeApply && autoReplace;
     toggle.disabled = !supportsSafeApply;
-    toggle.addEventListener('change', trustedOnly(() => { autoReplace = toggle.checked; }));
+    toggle.dataset.setting = 'auto-replace';
+    toggle.addEventListener('change', trustedOnly(() => { persistAutoReplace(toggle.checked).catch(() => {}); }));
     setting.append(settingCopy, toggle);
     nodes.push(label, actionsNode, localLabel, localNode, customLabel, customRow, setting);
     setBody(...nodes);
@@ -783,6 +941,7 @@
     }
     pending = { ...built.request, applyMode: supportsSafeApply ? 'safe-apply' : 'copy-only' };
     resetResult();
+    setLauncherBusy(true);
     renderWorking();
     const response = await browserApi.runtime.sendMessage({ type: REQUEST, request: pending }).catch((error) => ({ ok: false, reason: error?.message }));
     if (!response?.ok) renderFailure(response?.reason || 'Hermes could not queue this draft.');
@@ -800,6 +959,7 @@
   }
 
   function renderFailure(reason) {
+    setLauncherBusy(false);
     activeView = { name: 'failure', args: [reason] };
     contextState.textContent = translateUiText('BLOCKED');
     const title = make('h2', 'route-title', 'Assist could not run');
@@ -829,6 +989,7 @@
   }
 
   function receiveResult(message) {
+    setLauncherBusy(false);
     resultText = policy.sanitizeInlineDraftResult(message.text || message.result || '');
     resultSessionId = String(message.sessionId || '');
     resultSessionTitle = String(message.sessionTitle || (message.noModel ? 'Local utility · no model' : 'Inline assist'));
@@ -926,7 +1087,8 @@
     toggle.type = 'checkbox';
     toggle.checked = !copyOnly && autoReplace;
     toggle.disabled = copyOnly;
-    toggle.addEventListener('change', trustedOnly(() => { autoReplace = toggle.checked; }));
+    toggle.dataset.setting = 'auto-replace';
+    toggle.addEventListener('change', trustedOnly(() => { persistAutoReplace(toggle.checked).catch(() => {}); }));
     setting.append(settingCopy, toggle);
     setBody(success, card, label, preview, actions, setting);
   }
@@ -1102,8 +1264,11 @@
   function openPanel() {
     if (!target || assistSettings.inlineAssistEnabled === false || !isTargetVisible(target)) return;
     resetResult();
+    // A run still out is dropped here (its result is ignored), so its ring stops with it.
     pending = null;
+    setLauncherBusy(false);
     panel.hidden = false;
+    requestAssistFonts();
     renderAssist();
     position();
   }

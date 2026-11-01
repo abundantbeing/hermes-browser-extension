@@ -33,6 +33,8 @@ function storageListener(initialSettings) {
     CUSTOM_THEME_STORAGE_KEY: 'customThemes',
     CONTEXT_CONSENT_STORAGE_KEY: 'consent',
     ONBOARDING_COMPLETED_STORAGE_KEY: 'onboardingDone',
+    INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY: 'hermesInlineAssistAutoReplace',
+    adoptInlineAssistAutoReplaceChange() {},
     adoptOnboardingCompletedChange() {},
     adoptStoredResponsePresentation() {},
     updateConnectionPrompt() {},

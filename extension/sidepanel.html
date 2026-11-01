@@ -1445,6 +1445,38 @@
             <input id="inlineAssistEnabled" class="settings-switch-input" type="checkbox" />
             <span class="settings-switch" aria-hidden="true"></span>
           </label>
+          <fieldset id="inlineAssistIconOptions" class="inline-assist-icon-options settings-choice-group">
+            <legend data-i18n="ui.button.icon">Button icon</legend>
+            <div class="settings-choice-grid assist-icon-grid">
+              <label class="settings-choice-card compact-choice assist-icon-card">
+                <input type="radio" name="inlineAssistIcon" value="wing" />
+                <span class="assist-icon-preview" data-icon="wing" aria-hidden="true"><i class="assist-icon-swatch assist-icon-swatch-dark"></i><i class="assist-icon-swatch assist-icon-swatch-light"></i></span>
+                <span class="settings-choice-copy">
+                  <strong data-i18n="ui.wing">Wing</strong>
+                  <small data-i18n="ui.clean.at.any.size">Clean at any size</small>
+                </span>
+                <span class="settings-choice-mark" aria-hidden="true"></span>
+              </label>
+              <label class="settings-choice-card compact-choice assist-icon-card">
+                <input type="radio" name="inlineAssistIcon" value="staff" />
+                <span class="assist-icon-preview" data-icon="staff" aria-hidden="true"><i class="assist-icon-swatch assist-icon-swatch-dark"></i><i class="assist-icon-swatch assist-icon-swatch-light"></i></span>
+                <span class="settings-choice-copy">
+                  <strong data-i18n="ui.staff">Staff</strong>
+                  <small data-i18n="ui.the.caduceus">The caduceus</small>
+                </span>
+                <span class="settings-choice-mark" aria-hidden="true"></span>
+              </label>
+              <label class="settings-choice-card compact-choice assist-icon-card">
+                <input type="radio" name="inlineAssistIcon" value="girl" />
+                <span class="assist-icon-preview" data-icon="girl" aria-hidden="true"><i class="assist-icon-swatch assist-icon-swatch-dark"></i><i class="assist-icon-swatch assist-icon-swatch-light"></i></span>
+                <span class="settings-choice-copy">
+                  <strong data-i18n="ui.nous.girl">Nous girl</strong>
+                  <small data-i18n="ui.the.extension.logo">The extension logo</small>
+                </span>
+                <span class="settings-choice-mark" aria-hidden="true"></span>
+              </label>
+            </div>
+          </fieldset>
           <label>
             <span data-i18n="ui.default.session.route">Default session route</span>
             <select id="inlineAssistDefaultRoute">
@@ -1461,6 +1493,14 @@
             </button>
             <input id="inlineAssistModel" type="hidden" />
           </div>
+          <label class="settings-toggle-card">
+            <span class="settings-toggle-copy">
+              <strong data-i18n="ui.replace.text.automatically">Replace text automatically</strong>
+              <small data-i18n="ui.undo.is.always.one.click.away">Undo is always one click away</small>
+            </span>
+            <input id="inlineAssistAutoReplace" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
           <label>
             <span data-i18n="ui.assist.session.history">Assist session history</span>
             <select id="inlineAssistSessionRetention">

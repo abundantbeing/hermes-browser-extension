@@ -32,6 +32,7 @@ import { resolveWebappTarget } from './lib/hermes-webapp.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
 import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
 import { HERMES_WEB_LAUNCH_LOOK_MESSAGE, HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
+import { INLINE_ASSIST_FONT_REQUEST, createInlineAssistFontServer } from './lib/inline-assist-font-server.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -272,6 +273,8 @@ const contextMenuController = createContextMenuController({
   openHermesSurface: (tab) => openHermesPanelFromContextGesture(tab),
   translate: (_key, fallback) => translateUiText(fallback),
 });
+// Fonts for the Hermes Assist panel, which a web page may not load from the extension directly.
+const handleInlineAssistFontRequest = createInlineAssistFontServer({ runtime: browserApi.runtime });
 const themeMarketplaceController = createThemeMarketplaceController({
   client: createVscodeMarketplaceClient(),
   storageArea: browserApi.storage.local,
@@ -1127,6 +1130,8 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // From the content script on the gateway's hand-off page: it only learns how to cover the page.
     : message?.type === HERMES_WEB_LAUNCH_LOOK_MESSAGE
       ? hermesWebOpening.handleLaunchLook(sender)
+    : message?.type === INLINE_ASSIST_FONT_REQUEST
+      ? handleInlineAssistFontRequest(message, sender)
     : message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
       ? queueInlineDraftRequest(message, sender)
       : message?.type === 'HERMES_INLINE_SESSION_STATUS'
