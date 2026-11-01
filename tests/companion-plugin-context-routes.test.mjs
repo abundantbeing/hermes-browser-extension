@@ -152,6 +152,8 @@ print(json.dumps(asyncio.run(main())))
     '/api/plugins/hermes-browser-extension/context/status',
     '/api/plugins/hermes-browser-extension/control/register',
     '/api/plugins/hermes-browser-extension/control/ws',
+    '/api/plugins/hermes-browser-extension/profiles',
+    '/api/plugins/hermes-browser-extension/profiles/{name}/avatar',
     '/api/plugins/hermes-browser-extension/status',
   ]);
 });

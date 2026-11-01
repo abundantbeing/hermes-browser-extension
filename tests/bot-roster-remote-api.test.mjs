@@ -107,6 +107,15 @@ test('Remote API without a key, or on a gateway without /v1/profiles, still repo
   assert.equal(older.seen.loopback.length, 0);
 });
 
+test('a successful empty API roster is authoritative and is not replaced by health guesses', async () => {
+  const { context, seen } = rosterHarness({ roster: { profiles: [] } });
+  const result = await context.run({ quiet: true });
+  assert.equal(result.status, 'ready');
+  assert.equal(result.detail, '0 PROFILES LOADED.');
+  assert.equal(context.botModeRoster.length, 0);
+  assert.equal(seen.healthProbes, 0);
+});
+
 test('a roster reply that arrives after the connection changed is dropped', async () => {
   const { context, seen } = rosterHarness();
   let release;

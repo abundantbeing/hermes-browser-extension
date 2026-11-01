@@ -405,10 +405,8 @@ export async function fetchRosterFromGateway({
   });
 }
 
-// Authenticated roster from the gateway itself (GET /v1/profiles). The unified
-// gateway no longer hands out a Desktop dashboard, so this is the only roster a
-// client holding just the API credential can read. Gateways without the route
-// answer 404 and the caller falls back to bare names.
+// Prefer the gateway's native roster. On older gateways the companion plugin may
+// supply the same read-only shape; absent both, the caller falls back to names.
 export async function fetchRosterFromGatewayApi({
   gatewayUrl = '',
   apiKey = '',
@@ -420,11 +418,17 @@ export async function fetchRosterFromGatewayApi({
   if (!base) throw new Error('no-gateway-url');
   if (!token) throw new Error('no-gateway-credential');
   const authScheme = 'Bear' + 'er';
-  const response = await fetchWithTimeout(fetchFn, `${base}/v1/profiles`, {
+  const options = {
     method: 'GET',
     headers: { Accept: 'application/json', Authorization: `${authScheme} ${token}` },
     ...LOOPBACK_FETCH,
-  }, timeoutMs);
+  };
+  let response = await fetchWithTimeout(fetchFn, `${base}/v1/profiles`, options, timeoutMs);
+  // Only an absent route permits fallback. Never bypass an authorization failure,
+  // nor send credentials to a different origin or a URL supplied by a response.
+  if (response.status === 404 || response.status === 405) {
+    response = await fetchWithTimeout(fetchFn, `${base}/api/plugins/hermes-browser-extension/profiles`, options, timeoutMs);
+  }
   if (!response.ok) throw Object.assign(new Error(`gateway-roster-${response.status}`), { status: response.status });
   const payload = await response.json().catch(() => null);
   if (!Array.isArray(payload?.profiles)) throw new Error('invalid-gateway-roster');
@@ -446,11 +450,16 @@ export async function fetchGatewayProfileAvatar({
   if (!base || !token || !name) return '';
   const authScheme = 'Bear' + 'er';
   try {
-    const response = await fetchWithTimeout(fetchFn, `${base}/v1/profiles/${encodeURIComponent(name)}/avatar`, {
+    const options = {
       method: 'GET',
       headers: { Accept: 'image/*', Authorization: `${authScheme} ${token}` },
       ...LOOPBACK_FETCH,
-    }, timeoutMs);
+    };
+    const encoded = encodeURIComponent(name);
+    let response = await fetchWithTimeout(fetchFn, `${base}/v1/profiles/${encoded}/avatar`, options, timeoutMs);
+    if (response.status === 404 || response.status === 405) {
+      response = await fetchWithTimeout(fetchFn, `${base}/api/plugins/hermes-browser-extension/profiles/${encoded}/avatar`, options, timeoutMs);
+    }
     if (!response.ok) return '';
     const mime = String(response.headers?.get?.('content-type') || '').split(';')[0].trim().toLowerCase();
     if (!mime.startsWith('image/')) return '';

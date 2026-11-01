@@ -15245,7 +15245,7 @@ async function loadProfilesFromGatewayRoutes({ quiet = false, generation = 0, ga
         return { status: 'skipped', detail: 'Profile sync was superseded.' };
       }
       const split = splitBotRosterRows(rosterPayload, { sourceId: gatewayUrl });
-      if (split.agents.length) {
+      if (Array.isArray(rosterPayload.profiles)) {
         availableProfiles = botProfileRowsToHermesProfiles(split.agents, settings.activeProfile);
         botModeRoster = split.agents;
         botModeRosterSource = 'gateway';
