@@ -109,3 +109,22 @@ test('any other profile uses its own stack for text and headings alike', () => {
   assert.deepEqual([...stacks.families].sort(), ['HermesMono', 'Montserrat']);
   assert.equal(inlineAssistFontStacks('mono', 'var(--hermes-font-mono)').ui, 'var(--hermes-font-mono)');
 });
+
+test('modern colour syntaxes Chrome reports as written still decide the tone', () => {
+  assert.equal(circleToneForBackground(parseCssColor('oklch(0.145 0 0)')), 'light', 'shadcn dark background');
+  assert.equal(circleToneForBackground(parseCssColor('oklch(1 0 0)')), 'dark');
+  assert.equal(circleToneForBackground(parseCssColor('oklch(0.21 0.034 264.665)')), 'light', 'Tailwind gray-900');
+  assert.equal(circleToneForBackground(parseCssColor('oklab(0.98 0 0)')), 'dark');
+  assert.equal(parseCssColor('oklab(0.2 0.01 0.01 / 0.5)').a, 0.5);
+  assert.equal(circleToneForBackground(parseCssColor('lab(10 0 0)')), 'light');
+  assert.equal(circleToneForBackground(parseCssColor('lch(96 2 90)')), 'dark');
+  const mixed = parseCssColor('color(srgb 0.1 0.1 0.1)');
+  assert.deepEqual([mixed.r, mixed.g, mixed.b, mixed.a], [26, 26, 26, 1]);
+  assert.equal(parseCssColor('color(display-p3 1 1 1 / 0)').a, 0);
+});
+
+test('a transparent page under a dark colour-scheme gets the light circle', () => {
+  assert.equal(circleToneForBackground(null, { colorScheme: 'dark' }), 'light');
+  assert.equal(circleToneForBackground(null, { colorScheme: 'light dark' }), 'dark');
+  assert.equal(circleToneForBackground(null, { colorScheme: 'normal' }), 'dark');
+});
