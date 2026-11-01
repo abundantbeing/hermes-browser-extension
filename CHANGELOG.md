@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- The controls the panel builds while it runs now follow the chosen language: the model options menu (its heading, Thinking, Fast and the effort levels), the thinking indicator's label, the subagent steer and stop controls, the group Settings button and the generated-image inspect button. They were left in English, and the labels of controls already on screen now change as soon as you pick another language. Thanks to @Sahil-SS9 (#145, #146).
+
 ## [0.4.0] - 2026-10-31
 
 **What needs more than upstream Hermes.** A few parts of this release rely on gateway features that upstream Hermes does not have as of this release:
