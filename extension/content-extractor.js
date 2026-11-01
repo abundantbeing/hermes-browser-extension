@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 0dd648ad1542170e */
+/* extension/lib/site-adapters.mjs · SHA-256 1209a8660996df8c */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1430,6 +1430,18 @@ const INLINE_SITE_LABELS = Object.freeze({
   whatsapp: 'WhatsApp',
   telegram: 'Telegram',
 });
+
+// For Settings → Hermes Assist → Sites: an adapter id shows its site name, anything else its hostname.
+function inlineSiteLabel(site = '') {
+  const key = String(site || '').toLowerCase();
+  return key !== 'generic' && Object.hasOwn(INLINE_SITE_LABELS, key) ? INLINE_SITE_LABELS[key] : key;
+}
+
+function inlineSiteForHost(hostname = '') {
+  const host = String(hostname || '').toLowerCase().replace(/^www\./, '');
+  const adapterId = adapterIdForHost(host);
+  return { adapterId, label: adapterId === 'generic' ? host : inlineSiteLabel(adapterId) };
+}
 
 function adapterIdForHost(host = '') {
   const normalized = String(host || '').toLowerCase();

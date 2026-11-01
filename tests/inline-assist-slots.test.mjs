@@ -109,3 +109,12 @@ test('any other site: 8px outside the field’s bottom-right corner', async () =
   assert.equal(launcher.dataset.placement, 'corner-outside');
   assert.equal(launcher.style.left, '1224px');
 });
+
+test('a hostname names its adapter and the label Settings shows for it', async () => {
+  const { inlineSiteForHost, inlineSiteLabel } = await import('../extension/lib/site-adapters.mjs');
+  assert.deepEqual(inlineSiteForHost('www.x.com'), { adapterId: 'x', label: 'X' });
+  assert.deepEqual(inlineSiteForHost('mail.google.com'), { adapterId: 'gmail', label: 'Gmail' });
+  assert.deepEqual(inlineSiteForHost('forum.example'), { adapterId: 'generic', label: 'forum.example' });
+  assert.equal(inlineSiteLabel('youtube'), 'YouTube');
+  assert.equal(inlineSiteLabel('notes.example.org'), 'notes.example.org');
+});

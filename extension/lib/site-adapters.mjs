@@ -361,6 +361,18 @@ const INLINE_SITE_LABELS = Object.freeze({
   telegram: 'Telegram',
 });
 
+// For Settings → Hermes Assist → Sites: an adapter id shows its site name, anything else its hostname.
+export function inlineSiteLabel(site = '') {
+  const key = String(site || '').toLowerCase();
+  return key !== 'generic' && Object.hasOwn(INLINE_SITE_LABELS, key) ? INLINE_SITE_LABELS[key] : key;
+}
+
+export function inlineSiteForHost(hostname = '') {
+  const host = String(hostname || '').toLowerCase().replace(/^www\./, '');
+  const adapterId = adapterIdForHost(host);
+  return { adapterId, label: adapterId === 'generic' ? host : inlineSiteLabel(adapterId) };
+}
+
 function adapterIdForHost(host = '') {
   const normalized = String(host || '').toLowerCase();
   if (normalized === 'github.com' || normalized.endsWith('.github.com')) return 'github';
