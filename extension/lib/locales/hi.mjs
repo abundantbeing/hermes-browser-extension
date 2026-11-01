@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "स्क्रीनशॉट की अनुमति हटा दी गई।",
   "firefox_screenshots.failed": "स्क्रीनशॉट की अनुमति बदली नहीं जा सकी: {error}",
   "browser_control.note_screenshot_permission": "Hermes ने स्क्रीनशॉट नहीं लिया: Firefox को अतिरिक्त अनुमति चाहिए। Firefox में स्क्रीनशॉट की अनुमति दें का उपयोग करें।",
+  "ui.bot.options": "बॉट विकल्प",
+  "ui.fast": "तेज़",
+  "ui.steer.this.subagent": "इस सब-एजेंट को दिशा दें",
+  "ui.stop.this.subagent": "इस सब-एजेंट को रोकें",
+  "ui.not.accepting.steer": "दिशा-निर्देश स्वीकार नहीं कर रहा",
+  "ui.open.generated.image.for.closer.inspection": "जनरेट की गई छवि को पास से देखने के लिए खोलें",
+  "ui.group.settings": "समूह सेटिंग्स",
 });

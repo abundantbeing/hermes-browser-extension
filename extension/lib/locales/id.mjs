@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "Izin tangkapan layar telah dicabut.",
   "firefox_screenshots.failed": "Tidak dapat mengubah izin tangkapan layar: {error}",
   "browser_control.note_screenshot_permission": "Hermes tidak mengambil tangkapan layar: Firefox memerlukan izin tambahan. Gunakan Izinkan tangkapan layar di Firefox.",
+  "ui.bot.options": "Opsi bot",
+  "ui.fast": "Cepat",
+  "ui.steer.this.subagent": "Arahkan subagen ini",
+  "ui.stop.this.subagent": "Hentikan subagen ini",
+  "ui.not.accepting.steer": "Tidak menerima arahan",
+  "ui.open.generated.image.for.closer.inspection": "Buka gambar yang dihasilkan untuk dilihat lebih dekat",
+  "ui.group.settings": "Pengaturan grup",
 });

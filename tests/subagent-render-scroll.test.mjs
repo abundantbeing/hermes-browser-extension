@@ -22,6 +22,7 @@ for (const surface of ['sidepanel']) {
       const ensureSubagentTimer = () => {};
       const scheduleSubagentRosterPoll = () => {};
       const runSelectedSubagentControl = () => {};
+      const t = (key) => key;
       ${renderer}
       return renderSubagentStack;
     `);

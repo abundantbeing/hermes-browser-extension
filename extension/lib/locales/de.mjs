@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "Die Screenshot-Berechtigung wurde entfernt.",
   "firefox_screenshots.failed": "Die Screenshot-Berechtigung konnte nicht geändert werden: {error}",
   "browser_control.note_screenshot_permission": "Hermes hat den Screenshot nicht gemacht: Firefox braucht eine zusätzliche Berechtigung. Nutze „Screenshots in Firefox erlauben“.",
+  "ui.bot.options": "Bot-Optionen",
+  "ui.fast": "Schnell",
+  "ui.steer.this.subagent": "Diesen Subagenten steuern",
+  "ui.stop.this.subagent": "Diesen Subagenten stoppen",
+  "ui.not.accepting.steer": "Nimmt keine Steuerung an",
+  "ui.open.generated.image.for.closer.inspection": "Generiertes Bild zur genaueren Ansicht öffnen",
+  "ui.group.settings": "Gruppeneinstellungen",
 });
