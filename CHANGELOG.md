@@ -5,6 +5,7 @@
 ### Fixed
 
 - The sessions list stays complete after you open a chat that is running in another app (Hermes Desktop, the phone app, another window) and then start a new session. It showed 0 sessions, and Refresh failed or kept saying 0, until the panel was reopened (#139).
+- Page text, inline Assist requests, tool previews and the Hermes plugin's navigation guard hide many more keys before anything reaches Hermes: the Telegram, Discord, Slack, Groq, xAI, Replicate, Perplexity, Tavily, Firecrawl, Notion, Linear, PyPI, ElevenLabs, Langfuse, GitLab, DigitalOcean, Atlassian, Postman and Google refresh token shapes Hermes Agent itself redacts, `API_SERVER_KEY` values, and secrets carried in a URL path (a Telegram bot URL, Slack and Discord webhooks), also when percent-encoded. Thanks to @Sahil-SS9 (#140, #141).
 
 ## [0.4.0] - 2026-10-31
 
