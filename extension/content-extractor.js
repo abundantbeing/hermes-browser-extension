@@ -2901,7 +2901,7 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
   hermesGlobal.HermesAppearancePreferences = APPEARANCE_PREFERENCES_API;
 })(globalThis);
 
-/* extension/lib/inline-assist-look.mjs · SHA-256 91283ca16b595f70 */
+/* extension/lib/inline-assist-look.mjs · SHA-256 713b26cbbd1210df */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
 
@@ -3199,7 +3199,11 @@ function withInlineAssistSiteState(model, site, state) {
   const next = inlineAssistSitesModel(model?.contextPrefs, model?.hidden);
   const key = String(site || '').toLowerCase();
   if (!key) return next;
-  if (state === 'hidden') return inlineAssistSitesModel(next.contextPrefs, [...next.hidden, key]);
+  if (state === 'hidden') {
+    // One setting per site: a hidden circle reads nothing, so its thread choice goes with it.
+    const { [key]: _dropped, ...contextPrefs } = next.contextPrefs;
+    return inlineAssistSitesModel(contextPrefs, [...next.hidden, key]);
+  }
   const hidden = next.hidden.filter((entry) => entry !== key);
   return inlineAssistSitesModel(state === 'visible' || state === 'draft' ? { ...next.contextPrefs, [key]: state } : next.contextPrefs, hidden);
 }

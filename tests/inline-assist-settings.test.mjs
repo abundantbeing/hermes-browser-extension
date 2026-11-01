@@ -161,6 +161,7 @@ test('the Sites list merges where Assist reads the thread with where the circle 
   const hiddenX = withInlineAssistSiteState(model, 'x', 'hidden');
   assert.ok(hiddenX.hidden.includes('x'));
   assert.equal(inlineAssistSiteEntries(hiddenX).find((entry) => entry.site === 'x').state, 'hidden');
+  assert.equal(Object.hasOwn(hiddenX.contextPrefs, 'x'), false, 'a site keeps one setting: hidden drops its thread reading');
   const shownAgain = withInlineAssistSiteState(hiddenX, 'x', 'draft');
   assert.equal(shownAgain.hidden.includes('x'), false);
   assert.equal(shownAgain.contextPrefs.x, 'draft');
