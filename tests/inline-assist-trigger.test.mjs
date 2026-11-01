@@ -166,3 +166,9 @@ test('what can be clicked is the 24px circle placement reserved, nothing wider',
   assert.doesNotMatch(css, /\.launcher::after \{[^}]*inset:-/);
   assert.match(css, /\.launcher\.busy::before \{[^}]*pointer-events:none/, 'the busy ring is drawn outside but never clicked');
 });
+
+test('a half-transparent gray over a white page gets the dark circle', async () => {
+  const { env } = bootWithSurface({ field: '', under: 'rgba(100, 100, 100, 0.5)' });
+  const launcher = await focusField(env);
+  assert.equal(launcher.dataset.tone, 'dark');
+});

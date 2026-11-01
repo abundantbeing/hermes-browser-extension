@@ -305,15 +305,18 @@
     element.style.webkitMaskImage = url;
   }
 
-  // The circle takes the opposite tone of the page behind the field: the first ancestor with a mostly
-  // opaque background decides, and a page with none is treated as white.
+  // The circle takes the tone that stands out against the page under it: the backgrounds from that element
+  // up to the first opaque one, see-through ones blended over what is under them.
   function pageToneBehind(element) {
+    const layers = [];
     for (let node = element; node && node.nodeType === 1; node = node.parentElement) {
       const color = look?.parseCssColor?.(globalThis.getComputedStyle?.(node)?.backgroundColor);
-      if (color && color.a >= 0.5) return look.circleToneForBackground(color);
+      if (!color || !(color.a > 0)) continue;
+      layers.push(color);
+      if (color.a >= 1) break;
     }
     const colorScheme = globalThis.getComputedStyle?.(document.documentElement)?.getPropertyValue?.('color-scheme') || '';
-    return look?.circleToneForBackground?.(null, { colorScheme }) || 'dark';
+    return look?.circleToneForBackground?.(look.blendSurface?.(layers, { colorScheme }) || null, { colorScheme }) || 'dark';
   }
 
   function applyLauncherIcon() {

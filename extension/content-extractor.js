@@ -2753,7 +2753,7 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
   hermesGlobal.HermesAppearancePreferences = APPEARANCE_PREFERENCES_API;
 })(globalThis);
 
-/* extension/lib/inline-assist-look.mjs · SHA-256 e14821caf0269846 */
+/* extension/lib/inline-assist-look.mjs · SHA-256 714016089ff5daba */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
 
@@ -2895,14 +2895,37 @@ const INLINE_ASSIST_CIRCLE_FILLS = Object.freeze({ light: '#f4f4f1', dark: '#141
 const luminanceOf = (color) => 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
 const contrastRatio = (first, second) => (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
 
+function darkOnlyScheme(colorScheme) {
+  const scheme = String(colorScheme || '').toLowerCase();
+  return /\bdark\b/.test(scheme) && !/\blight\b/.test(scheme);
+}
+
+// The colour a stack of backgrounds shows, given top layer first: see-through layers are blended over what
+// is under them, down to the first opaque one or else the page canvas (white, or Chrome's dark canvas under
+// a dark-only colour-scheme). With nothing painted at all it returns null, and the colour-scheme decides.
+function blendSurface(layers, { colorScheme = '' } = {}) {
+  const painted = [];
+  for (const layer of layers || []) {
+    if (!layer || !(layer.a > 0)) continue;
+    painted.push(layer);
+    if (layer.a >= 1) break;
+  }
+  if (!painted.length) return null;
+  let surface = painted[painted.length - 1].a >= 1
+    ? painted.pop()
+    : (darkOnlyScheme(colorScheme) ? { r: 18, g: 18, b: 18, a: 1 } : { r: 255, g: 255, b: 255, a: 1 });
+  for (const layer of painted.reverse()) {
+    const mix = (key) => Math.round(layer[key] * layer.a + surface[key] * (1 - layer.a));
+    surface = { r: mix('r'), g: mix('g'), b: mix('b'), a: 1 };
+  }
+  return surface;
+}
+
 // The page behind the circle picks whichever fill has the higher WCAG contrast against it, so a mid or
 // light gray gets the dark circle. A page whose background could not be found gets the dark circle,
 // unless it declares a dark-only colour-scheme, whose default canvas is dark.
 function circleToneForBackground(color, { colorScheme = '' } = {}) {
-  if (!color) {
-    const scheme = String(colorScheme || '').toLowerCase();
-    return /\bdark\b/.test(scheme) && !/\blight\b/.test(scheme) ? 'light' : 'dark';
-  }
+  if (!color) return darkOnlyScheme(colorScheme) ? 'light' : 'dark';
   const page = luminanceOf(color);
   const light = contrastRatio(page, luminanceOf(parseCssColor(INLINE_ASSIST_CIRCLE_FILLS.light)));
   const dark = contrastRatio(page, luminanceOf(parseCssColor(INLINE_ASSIST_CIRCLE_FILLS.dark)));
@@ -2984,6 +3007,7 @@ const INLINE_ASSIST_LOOK_API = Object.freeze({
   normalizeInlineAssistOpenMode,
   parseCssColor,
   circleToneForBackground,
+  blendSurface,
   inlineAssistIconAsset,
   namespaceFontStack,
   inlineAssistFontStacks,

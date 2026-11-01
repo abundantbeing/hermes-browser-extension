@@ -9,6 +9,7 @@ import {
   INLINE_ASSIST_FONT_PREFIX,
   INLINE_ASSIST_ICONS,
   circleToneForBackground,
+  blendSurface,
   inlineAssistFontStacks,
   namespaceFontStack,
   inlineAssistIconAsset,
@@ -168,4 +169,15 @@ test('the circle takes whichever fill stands out more, so light-gray pages get t
   const css = readFileSync(new URL('../extension/content-inline-helper.js', import.meta.url), 'utf8');
   assert.ok(css.includes(`.launcher[data-tone="light"] { --hx-fill:${INLINE_ASSIST_CIRCLE_FILLS.light};`), 'the light fill the contrast is measured with');
   assert.ok(css.includes(`.launcher[data-tone="dark"] { --hx-fill:${INLINE_ASSIST_CIRCLE_FILLS.dark};`), 'the dark fill the contrast is measured with');
+});
+
+test('see-through backgrounds are blended over what is under them before the tone is chosen', () => {
+  const gray = parseCssColor('rgba(100, 100, 100, 0.5)');
+  const onWhite = blendSurface([gray]);
+  for (const key of ['r', 'g', 'b']) assert.ok(Math.abs(onWhite[key] - 178) <= 1, `${key} ${onWhite[key]}`);
+  assert.equal(circleToneForBackground(onWhite), 'dark', 'half-transparent gray over the white canvas reads light');
+  assert.equal(circleToneForBackground(blendSurface([gray], { colorScheme: 'dark' })), 'light', 'over a dark canvas it reads dark');
+  const stacked = blendSurface([parseCssColor('rgba(0, 0, 0, 0.5)'), parseCssColor('rgb(255, 255, 255)'), parseCssColor('rgb(0, 0, 0)')]);
+  assert.ok(Math.abs(stacked.r - 128) <= 1, 'stops at the first opaque layer');
+  assert.equal(blendSurface([]), null, 'nothing painted: the caller decides from the colour-scheme');
 });
