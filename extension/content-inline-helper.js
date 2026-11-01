@@ -446,6 +446,11 @@
     launcher.classList.toggle('busy', Boolean(busy));
   }
 
+  // The user hid the circle on this site (by its adapter, or this hostname and its subdomains).
+  function circleHiddenHere() {
+    return Boolean(look?.isInlineAssistHiddenSite?.(location.hostname, siteProfile?.adapterId, assistSettings.inlineAssistHiddenSites));
+  }
+
   function applyAssistSettings() {
     autoReplace = savedAutoReplace ?? (assistSettings.inlineAssistAutoReplace !== false);
     // An open panel shows the saved choice; the switch stays off where the editor cannot be written to.
@@ -455,7 +460,7 @@
     applyAssistAppearance();
     host.dataset.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     host.dataset.inlineAssistSessionRetention = String(assistSettings.inlineAssistSessionRetention || 'retain');
-    if (assistSettings.inlineAssistEnabled === false) {
+    if (assistSettings.inlineAssistEnabled === false || circleHiddenHere()) {
       disconnectTargetObservers();
       launcher.hidden = true;
       hidePanel();
@@ -742,7 +747,7 @@
     // No field is targeted and nothing is showing: this runs for every scroll
     // event of every scroller on the page, so do not touch the DOM for it.
     if (!target && launcher.hidden && panel.hidden) return;
-    if (!target || assistSettings.inlineAssistEnabled === false) {
+    if (!target || assistSettings.inlineAssistEnabled === false || circleHiddenHere()) {
       suspendPanelForScroll();
       return;
     }
@@ -857,7 +862,7 @@
     applyLauncherIcon();
     if (targetChanged) observeTargetLayout();
     else stabilizePosition(420);
-    launcher.hidden = assistSettings.inlineAssistEnabled === false || !isTargetVisible(target);
+    launcher.hidden = assistSettings.inlineAssistEnabled === false || circleHiddenHere() || !isTargetVisible(target);
     if (!launcher.hidden) position();
   }
 
@@ -1008,6 +1013,20 @@
       persistAssistSettings({ inlineAssistSessionRetention: keepChats.checked ? 'keep' : 'delete' }).catch(() => {});
     }));
     rows.push(row('Keep Assist chats', 'Kept under Inline assist in your history', keepChats));
+    // Hides the circle on this site: by the adapter when the site has one (every hostname of it), else by
+    // this hostname and its subdomains. Settings → Hermes Assist → Sites turns it back on.
+    const hideSite = make('input', 'toggle');
+    hideSite.type = 'checkbox';
+    hideSite.dataset.setting = 'hide-site';
+    hideSite.addEventListener('change', trustedOnly(() => {
+      if (!hideSite.checked) return;
+      const site = profile?.adapterId && profile.adapterId !== 'generic' ? profile.adapterId : location.hostname.replace(/^www\./, '');
+      const hidden = look?.normalizeInlineAssistHiddenSites?.([...(assistSettings.inlineAssistHiddenSites || []), site]) || [site];
+      persistAssistSettings({ inlineAssistHiddenSites: hidden }).catch(() => {});
+      launcher.hidden = true;
+      hidePanel();
+    }));
+    rows.push(row('Hide the circle on this site', 'Turn it back on in Settings → Hermes Assist', hideSite));
     setBody(back, ...rows);
   }
 
