@@ -384,6 +384,10 @@
 
   function applyAssistSettings() {
     autoReplace = assistSettings.inlineAssistAutoReplace !== false;
+    // An open panel shows the saved choice; the switch stays off where the editor cannot be written to.
+    for (const toggle of panel.querySelectorAll('input.toggle[data-setting="auto-replace"]')) {
+      if (!toggle.disabled) toggle.checked = autoReplace;
+    }
     applyAssistAppearance();
     host.dataset.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     host.dataset.inlineAssistSessionRetention = String(assistSettings.inlineAssistSessionRetention || 'retain');
