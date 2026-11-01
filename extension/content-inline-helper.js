@@ -168,6 +168,7 @@
     .toggle:checked::after { left:18px; background:var(--hb-paper); }
     .foot { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); }
     :host([data-font-profile="signature"]) .title, :host([data-font-profile="signature"]) .route-title, :host([data-font-profile="signature"]) .run-title, :host([data-font-profile="signature"]) .action, :host([data-font-profile="signature"]) .route strong, :host([data-font-profile="signature"]) .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
+    :host([data-font-profile="signature"]) .action small, :host([data-font-profile="signature"]) .route small { text-transform:none; letter-spacing:normal; }
     @media (max-width:520px) { .panel { width:calc(100vw - 16px); } }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; animation:none!important; } }
   `;
