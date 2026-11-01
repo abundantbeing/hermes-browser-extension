@@ -230,8 +230,11 @@ export function buildCanonicalSessionCreateParams(input = {}) {
  * reads stored rows). Unchanged on any other socket, whose session.list refuses an unknown key.
  */
 export function sessionListParamsFor(client, params = {}) {
-  if (client?.readyPayload?.session_authority !== true || 'title' in params || 'scope' in params) return params;
-  return { ...params, scope: 'stored' };
+  if (client?.readyPayload?.session_authority !== true) return params;
+  // The authority strips a named profile from its closed session.list keys, but refuses an empty one.
+  const { profile, ...rest } = params;
+  const scoped = profile ? { ...rest, profile } : rest;
+  return 'title' in scoped || 'scope' in scoped ? scoped : { ...scoped, scope: 'stored' };
 }
 
 /** The session.create params this socket accepts: canonical on a session authority, unchanged otherwise. */
