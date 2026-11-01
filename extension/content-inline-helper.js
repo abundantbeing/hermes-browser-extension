@@ -1254,7 +1254,9 @@
   function openPanel() {
     if (!target || assistSettings.inlineAssistEnabled === false || !isTargetVisible(target)) return;
     resetResult();
+    // A run still out is dropped here (its result is ignored), so its ring stops with it.
     pending = null;
+    setLauncherBusy(false);
     panel.hidden = false;
     requestAssistFonts();
     renderAssist();
