@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The sessions list stays complete after you open a chat that is running in another app (Hermes Desktop, the phone app, another window) and then start a new session. It showed 0 sessions, and Refresh failed or kept saying 0, until the panel was reopened (#139).
 - The controls the panel builds while it runs now follow the chosen language: the model options menu (its heading, Thinking, Fast and the effort levels), the thinking indicator's label, the subagent steer and stop controls, the group Settings button and the generated-image inspect button. They were left in English, and the labels of controls already on screen now change as soon as you pick another language. Thanks to @Sahil-SS9 (#145, #146).
 
 ## [0.4.0] - 2026-10-31
