@@ -1731,7 +1731,7 @@ test('assistant thinking placeholder renders animated indicator markup and reduc
   assert.match(source, /const THINKING_PLACEHOLDER = 'Hermes is thinking\.\.\.'/);
   assert.match(source, /const THINKING_STATUSES = \['thinking', 'brainstorming', 'contemplating', 'reasoning', 'processing', 'analyzing', 'reflecting', 'pondering', 'deliberating', 'formulating'\]/);
   assert.match(source, /function renderThinkingIndicator/);
-  assert.match(source, /class="thinking-indicator" role="status" aria-live="polite" aria-label="\$\{escapeHtml\(translateUiText\('Hermes is thinking, brainstorming, contemplating, reasoning, processing, analyzing, reflecting, pondering, deliberating, and formulating'\)\)\}"/);
+  assert.match(source, /class="thinking-indicator" role="status" aria-live="polite" data-i18n-aria-label="ui\.hermes\.is\.thinking\.brainstorming\.contemplating\.reasoning\.proces\.3e8d81c0" aria-label="\$\{escapeHtml\(t\('ui\.hermes\.is\.thinking\.brainstorming\.contemplating\.reasoning\.proces\.3e8d81c0'\)\)\}"/);
   assert.match(source, /classicThinkingFace\(thinkingFaceStep\)/);
   assert.match(source, /scheduleClassicThinkingFaces/);
   assert.doesNotMatch(css, /thinkingFaceCycle/);

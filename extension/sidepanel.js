@@ -2250,7 +2250,9 @@ function renderSubagentStack() {
   input.id = 'subagentSteerInput';
   input.type = 'text';
   input.autocomplete = 'off';
-  input.placeholder = t(selected.acceptingSteer === false || selected.status !== 'running' ? 'ui.not.accepting.steer' : 'ui.steer.this.subagent');
+  const steerPlaceholderKey = selected.acceptingSteer === false || selected.status !== 'running' ? 'ui.not.accepting.steer' : 'ui.steer.this.subagent';
+  input.placeholder = t(steerPlaceholderKey);
+  input.setAttribute('data-i18n-placeholder', steerPlaceholderKey);
   input.value = subagentSteerDraft;
   input.disabled = subagentControlBusy || selected.acceptingSteer === false || selected.status !== 'running';
   input.addEventListener('input', () => {
@@ -2267,6 +2269,8 @@ function renderSubagentStack() {
   steerButton.className = 'subagent-stack-icon';
   steerButton.title = t('ui.steer.this.subagent');
   steerButton.setAttribute('aria-label', t('ui.steer.this.subagent'));
+  steerButton.setAttribute('data-i18n-title', 'ui.steer.this.subagent');
+  steerButton.setAttribute('data-i18n-aria-label', 'ui.steer.this.subagent');
   steerButton.innerHTML = SUBAGENT_STEER_ICON;
   steerButton.disabled = subagentControlBusy || selected.acceptingSteer === false || selected.status !== 'running';
   steerButton.addEventListener('click', () => {
@@ -2277,6 +2281,8 @@ function renderSubagentStack() {
   stopButton.className = 'subagent-stack-icon';
   stopButton.title = t('ui.stop.this.subagent');
   stopButton.setAttribute('aria-label', t('ui.stop.this.subagent'));
+  stopButton.setAttribute('data-i18n-title', 'ui.stop.this.subagent');
+  stopButton.setAttribute('data-i18n-aria-label', 'ui.stop.this.subagent');
   stopButton.textContent = SUBAGENT_STOP_ICON;
   stopButton.disabled = subagentControlBusy || selected.status !== 'running';
   stopButton.addEventListener('click', () => {
@@ -19079,6 +19085,9 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
           settingsButton.textContent = t('ui.settings');
           settingsButton.title = t('ui.group.settings');
           settingsButton.setAttribute('aria-label', t('ui.group.settings'));
+          settingsButton.setAttribute('data-i18n', 'ui.settings');
+          settingsButton.setAttribute('data-i18n-title', 'ui.group.settings');
+          settingsButton.setAttribute('data-i18n-aria-label', 'ui.group.settings');
           settingsButton.addEventListener('click', (event) => {
             event.stopPropagation();
             closeFloatingPanels();
@@ -21262,7 +21271,7 @@ function renderThinkingIndicator(element) {
       `.trim())
     .join('');
   element.innerHTML = `
-    <span class="thinking-indicator" role="status" aria-live="polite" aria-label="${escapeHtml(translateUiText('Hermes is thinking, brainstorming, contemplating, reasoning, processing, analyzing, reflecting, pondering, deliberating, and formulating'))}">
+    <span class="thinking-indicator" role="status" aria-live="polite" data-i18n-aria-label="ui.hermes.is.thinking.brainstorming.contemplating.reasoning.proces.3e8d81c0" aria-label="${escapeHtml(t('ui.hermes.is.thinking.brainstorming.contemplating.reasoning.proces.3e8d81c0'))}">
       <span class="thinking-glyph" aria-hidden="true">${escapeHtml(classicThinkingFace(thinkingFaceStep))}</span>
       <span class="thinking-words" aria-hidden="true">${phrases}</span>
     </span>
@@ -21409,6 +21418,7 @@ function wrapGeneratedImagesForInspection(root) {
     wrapper.tabIndex = 0;
     wrapper.setAttribute('role', 'button');
     wrapper.setAttribute('aria-label', t('ui.open.generated.image.for.closer.inspection'));
+    wrapper.setAttribute('data-i18n-aria-label', 'ui.open.generated.image.for.closer.inspection');
     const inspect = document.createElement('span');
     inspect.className = 'generated-image-inspect';
     inspect.setAttribute('aria-hidden', 'true');

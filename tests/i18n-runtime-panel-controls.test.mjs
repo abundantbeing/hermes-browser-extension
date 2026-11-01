@@ -19,9 +19,9 @@ function functionSource(name) {
   return source.slice(start, end + 2);
 }
 
-async function localeRuntime(locale) {
+async function localeRuntime(locale, documentRef = null) {
   const runtime = createI18nRuntime({
-    documentRef: null,
+    documentRef,
     storageArea: { get: async () => ({ [LOCALE_STORAGE_KEY]: locale }), set: async () => {} },
     storageEvents: null,
   });
@@ -92,7 +92,7 @@ test('the thinking indicator announces itself in the panel language', async () =
     classicThinkingFace: () => '(•‿•)',
     thinkingFaceStep: 0,
     escapeHtml,
-    translateUiText: runtime.translateText,
+    t: runtime.t,
   }, document);
   context.renderThinkingIndicator(host);
   const label = host.querySelector('.thinking-indicator').getAttribute('aria-label');
@@ -148,6 +148,153 @@ test('the subagent steer and stop controls are labelled in the panel language', 
   item.acceptingSteer = false;
   context.renderSubagentStack();
   assert.equal(document.getElementById('subagentSteerInput').placeholder, messages['ui.not.accepting.steer']);
+});
+
+test('the group Settings button speaks the panel language', async () => {
+  const { runtime, messages } = await localeRuntime('de');
+  const { document } = new JSDOM('<!doctype html><body><div id="menu"></div></body>').window;
+  const context = run('renderSessionMenu', {
+    els: { sessionMenuList: document.getElementById('menu'), sessionSearchInput: { value: '' } },
+    scheduleLiveSessionPoll: () => {},
+    syncSessionMenuChrome: () => {},
+    projectsTabActive: () => false,
+    getProjectsController: () => ({ availability: () => ({ available: false }) }),
+    sessionMenuGroups: () => [{
+      label: 'Rooms',
+      source: 'hermes_bot_group_threads',
+      sessions: [{ id: 'group-1', kind: 'group-thread', threadId: 'main', title: 'Room', selected: false, replyCount: 0 }],
+    }],
+    shouldAutoOpenSessionGroup: () => true,
+    openSessionGroups: new Set(),
+    closedSessionGroups: new Set(),
+    isSessionRenameEditorTarget: () => false,
+    selectGroupThreadFromMenu: () => {},
+    startNewGroupThread: () => {},
+    closeFloatingPanels: () => {},
+    openGroupSettingsModal: () => {},
+    openSessionRenameEditor: () => {},
+    activeGroupProjection: { id: 'group-1', displayName: 'Room' },
+    t: runtime.t,
+    translateUiText: runtime.translateText,
+  }, document);
+  context.renderSessionMenu();
+  const button = document.querySelector('.session-action-button');
+  assert.ok(button, 'the group row renders its Settings button');
+  assert.equal(button.textContent, messages['ui.settings']);
+  assert.equal(button.title, messages['ui.group.settings']);
+  assert.equal(button.getAttribute('aria-label'), messages['ui.group.settings']);
+  assert.notEqual(button.textContent, 'Settings');
+  assert.notEqual(button.getAttribute('aria-label'), 'Group settings');
+});
+
+test('controls built before a language change are relabelled by the panel pass', async () => {
+  const { document } = new JSDOM('<!doctype html><body><div id="root"><img data-slot="aui_generated-image" src="data:,"></div><div id="host"></div></body>').window;
+  const { runtime } = await localeRuntime('de', document);
+  const context = vm.createContext({
+    document,
+    window: document.defaultView,
+    t: runtime.t,
+    escapeHtml,
+    openGeneratedImageLightbox: () => {},
+    scheduleClassicThinkingFaces: () => {},
+    THINKING_STATUSES: ['thinking'],
+    classicThinkingFace: () => '(•‿•)',
+    thinkingFaceStep: 0,
+  });
+  vm.runInContext(`${functionSource('wrapGeneratedImagesForInspection')}\n${functionSource('renderThinkingIndicator')}\nthis.wrapGeneratedImagesForInspection = wrapGeneratedImagesForInspection;\nthis.renderThinkingIndicator = renderThinkingIndicator;`, context);
+  context.wrapGeneratedImagesForInspection(document.getElementById('root'));
+  const host = document.getElementById('host');
+  context.renderThinkingIndicator(host);
+  const image = document.querySelector('.generated-image-inspectable');
+  const indicator = host.querySelector('.thinking-indicator');
+  const german = { image: image.getAttribute('aria-label'), thinking: indicator.getAttribute('aria-label') };
+
+  await runtime.setLocale('ja');
+  const japanese = await loadLocaleMessages('ja');
+  // The panel's language-change pass does not redraw messages: the existing nodes must follow on their own.
+  assert.equal(document.querySelector('.generated-image-inspectable'), image, 'the wrapper is not rebuilt');
+  context.renderThinkingIndicator(host);
+  assert.equal(host.querySelector('.thinking-indicator'), indicator, 'the early return keeps the node');
+  assert.equal(image.getAttribute('aria-label'), japanese['ui.open.generated.image.for.closer.inspection']);
+  assert.notEqual(image.getAttribute('aria-label'), german.image);
+  assert.equal(indicator.getAttribute('aria-label'), japanese['ui.hermes.is.thinking.brainstorming.contemplating.reasoning.proces.3e8d81c0']);
+  assert.notEqual(indicator.getAttribute('aria-label'), german.thinking);
+});
+
+test('subagent and group controls are relabelled when the language changes', async () => {
+  const { document } = new JSDOM('<!doctype html><body><div id="stack"><button id="toggle"></button><span id="summary"></span><ul id="list"></ul><div id="detail"></div></div><div id="menu"></div></body>').window;
+  const { runtime } = await localeRuntime('de', document);
+  const item = { id: 'sub-1', status: 'running', goal: 'Read the docs', acceptingSteer: true, stream: [{ text: 'started' }] };
+  const sessionGroups = [{
+    label: 'Rooms',
+    source: 'hermes_bot_group_threads',
+    sessions: [{ id: 'group-1', kind: 'group-thread', threadId: 'main', title: 'Room', selected: false, replyCount: 0 }],
+  }];
+  const context = vm.createContext({
+    document,
+    window: document.defaultView,
+    els: {
+      subagentStack: document.getElementById('stack'),
+      subagentStackToggle: document.getElementById('toggle'),
+      subagentStackSummary: document.getElementById('summary'),
+      subagentStackList: document.getElementById('list'),
+      subagentStackDetail: document.getElementById('detail'),
+      sessionMenuList: document.getElementById('menu'),
+      sessionSearchInput: { value: '' },
+    },
+    currentSubagentItems: () => [item],
+    activeSubagentView: (items) => items,
+    ensureSubagentTimer: () => {},
+    scheduleSubagentRosterPoll: () => {},
+    subagentStackSummary: () => '1 running',
+    formatSubagentElapsed: () => '5s',
+    subagentSelectedId: 'sub-1',
+    subagentExpanded: true,
+    subagentSteerDraft: '',
+    subagentControlBusy: false,
+    subagentControlError: '',
+    SUBAGENT_STEER_ICON: '<svg></svg>',
+    SUBAGENT_STOP_ICON: '■',
+    runSelectedSubagentControl: async () => {},
+    scheduleLiveSessionPoll: () => {},
+    syncSessionMenuChrome: () => {},
+    projectsTabActive: () => false,
+    getProjectsController: () => ({ availability: () => ({ available: false }) }),
+    sessionMenuGroups: () => sessionGroups,
+    shouldAutoOpenSessionGroup: () => true,
+    openSessionGroups: new Set(),
+    closedSessionGroups: new Set(),
+    isSessionRenameEditorTarget: () => false,
+    selectGroupThreadFromMenu: () => {},
+    startNewGroupThread: () => {},
+    closeFloatingPanels: () => {},
+    openGroupSettingsModal: () => {},
+    openSessionRenameEditor: () => {},
+    activeGroupProjection: { id: 'group-1', displayName: 'Room' },
+    t: runtime.t,
+    translateUiText: runtime.translateText,
+  });
+  vm.runInContext(`${functionSource('renderSubagentStack')}\n${functionSource('renderSessionMenu')}\nthis.renderSubagentStack = renderSubagentStack;\nthis.renderSessionMenu = renderSessionMenu;`, context);
+  context.renderSubagentStack();
+  context.renderSessionMenu();
+  const [steer, stop] = document.querySelectorAll('.subagent-stack-icon');
+  const input = document.getElementById('subagentSteerInput');
+  const settings = document.querySelector('.session-action-button');
+  const before = { steer: steer.getAttribute('aria-label'), placeholder: input.placeholder, settings: settings.textContent };
+
+  await runtime.setLocale('ja');
+  const japanese = await loadLocaleMessages('ja');
+  assert.equal(steer.getAttribute('aria-label'), japanese['ui.steer.this.subagent']);
+  assert.equal(steer.title, japanese['ui.steer.this.subagent']);
+  assert.equal(stop.getAttribute('aria-label'), japanese['ui.stop.this.subagent']);
+  assert.equal(stop.title, japanese['ui.stop.this.subagent']);
+  assert.equal(input.placeholder, japanese['ui.steer.this.subagent']);
+  assert.notEqual(steer.getAttribute('aria-label'), before.steer);
+  assert.notEqual(input.placeholder, before.placeholder);
+  assert.equal(settings.textContent, japanese['ui.settings']);
+  assert.equal(settings.title, japanese['ui.group.settings']);
+  assert.equal(settings.getAttribute('aria-label'), japanese['ui.group.settings']);
+  assert.notEqual(settings.textContent, before.settings);
 });
 
 test('every new control string exists in every locale', async () => {
