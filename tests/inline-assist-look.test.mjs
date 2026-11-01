@@ -123,6 +123,26 @@ test('modern colour syntaxes Chrome reports as written still decide the tone', (
   assert.equal(parseCssColor('color(display-p3 1 1 1 / 0)').a, 0);
 });
 
+test('color() converts each colour space before the tone is chosen', () => {
+  const near = (value, expected, label) => {
+    const color = parseCssColor(value);
+    for (const key of ['r', 'g', 'b']) assert.ok(Math.abs(color[key] - expected[key]) <= 2, `${label}: ${key} ${color[key]} vs ${expected[key]}`);
+  };
+  const gray = (level) => ({ r: level, g: level, b: level });
+  near('color(xyz-d65 0.570282 0.6 0.653298)', gray(203), 'xyz-d65 light gray');
+  near('color(xyz 0.570282 0.6 0.653298)', gray(203), 'xyz is xyz-d65');
+  near('color(xyz-d50 0.578526 0.6 0.495060)', gray(203), 'xyz-d50 light gray');
+  near('color(display-p3 1 1 1)', gray(255), 'p3 white');
+  near('color(display-p3 1 0 0)', { r: 255, g: 0, b: 0 }, 'p3 red clips to sRGB red');
+  near('color(a98-rgb 0.5 0.5 0.5)', gray(128), 'a98 mid gray');
+  near('color(prophoto-rgb 0.5 0.5 0.5)', gray(146), 'prophoto mid gray');
+  near('color(rec2020 0.5 0.5 0.5)', gray(140), 'rec2020 mid gray');
+  near('color(srgb-linear 0.2140 0.2140 0.2140)', gray(128), 'linear sRGB');
+  assert.equal(circleToneForBackground(parseCssColor('color(xyz-d65 0.570282 0.6 0.653298)')), 'dark');
+  assert.equal(circleToneForBackground(parseCssColor('color(xyz-d65 0.03 0.03 0.03)')), 'light');
+});
+
+
 test('a transparent page under a dark colour-scheme gets the light circle', () => {
   assert.equal(circleToneForBackground(null, { colorScheme: 'dark' }), 'light');
   assert.equal(circleToneForBackground(null, { colorScheme: 'light dark' }), 'dark');

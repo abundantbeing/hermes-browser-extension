@@ -2753,7 +2753,7 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
   hermesGlobal.HermesAppearancePreferences = APPEARANCE_PREFERENCES_API;
 })(globalThis);
 
-/* extension/lib/inline-assist-look.mjs · SHA-256 ffe8166e2bf72f1f */
+/* extension/lib/inline-assist-look.mjs · SHA-256 d284aa4eb1fa70b8 */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
 
@@ -2790,11 +2790,7 @@ function parseCssColor(value) {
   const [, kind, space, first, second, third, alphaText] = modern;
   const number = (part, percentScale = 1) => (part.endsWith('%') ? Number.parseFloat(part) / 100 * percentScale : Number(part));
   const alpha = alphaOf(alphaText);
-  if (kind === 'color') {
-    const linear = space === 'srgb-linear';
-    const toByte = (unit) => Math.round(255 * Math.min(1, Math.max(0, linear ? encodeChannel(unit) : unit)));
-    return { r: toByte(number(first)), g: toByte(number(second)), b: toByte(number(third)), a: alpha };
-  }
+  if (kind === 'color') return { ...colorSpaceToRgb(space || 'srgb', [number(first), number(second), number(third)]), a: alpha };
   if (kind === 'oklab' || kind === 'oklch') {
     const lightness = number(first);
     const chroma = number(second, 0.4);
@@ -2818,6 +2814,58 @@ function alphaOf(text) {
 function encodeChannel(linear) {
   const value = Math.min(1, Math.max(0, linear));
   return value <= 0.0031308 ? value * 12.92 : 1.055 * (value ** (1 / 2.4)) - 0.055;
+}
+
+// color(<space> …) to sRGB bytes, through CIE XYZ (D65) with the CSS Color 4 matrices. Out-of-gamut
+// channels are clipped, which is close enough for choosing a light or dark circle.
+const multiply = (matrix, [x, y, z]) => matrix.map(([a, b, c]) => a * x + b * y + c * z);
+const XYZ_D65_TO_LINEAR_SRGB = [
+  [3.2409699419045226, -1.537383177570094, -0.4986107602930034],
+  [-0.9692436362808796, 1.8759675015077202, 0.04155505740717559],
+  [0.05563007969699366, -0.20397695888897652, 1.0569715142428786],
+];
+const D50_TO_D65 = [
+  [0.955473421488075, -0.02309845494876471, 0.06325924320057072],
+  [-0.0283697093338637, 1.0099953980813041, 0.021041441191917323],
+  [0.012314014864481998, -0.020507649298898964, 1.330365926242124],
+];
+const signed = (decode) => (value) => Math.sign(value) * decode(Math.abs(value));
+const srgbDecode = signed((value) => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4));
+const REC2020_ALPHA = 1.09929682680944;
+const REC2020_BETA = 0.018053968510807;
+const RGB_SPACES = {
+  'display-p3': {
+    decode: srgbDecode,
+    toXyz: [[0.4865709486482162, 0.26566769316909306, 0.1982172852343625], [0.2289745640697488, 0.6917385218365064, 0.079286914093745], [0, 0.04511338185890264, 1.043944368900976]],
+  },
+  'a98-rgb': {
+    decode: signed((value) => value ** (563 / 256)),
+    toXyz: [[0.5766690429101305, 0.1855582379065463, 0.1882286462349947], [0.29734497525053605, 0.6273635662554661, 0.07529145849399788], [0.02703136138641234, 0.07068885253582723, 0.9913375368376388]],
+  },
+  rec2020: {
+    decode: signed((value) => (value < REC2020_BETA * 4.5 ? value / 4.5 : ((value + REC2020_ALPHA - 1) / REC2020_ALPHA) ** (1 / 0.45))),
+    toXyz: [[0.6369580483012914, 0.14461690358620832, 0.1688809751641721], [0.2627002120112671, 0.6779980715188708, 0.05930171646986196], [0, 0.028072693049087428, 1.060985057710791]],
+  },
+  'prophoto-rgb': {
+    decode: signed((value) => (value <= 16 / 512 ? value / 16 : value ** 1.8)),
+    toXyz: [[0.7977604896723027, 0.13518583717574031, 0.0313493495815248], [0.2880711282292934, 0.7118432178101014, 0.00008565396060525902], [0, 0, 0.8251046025104601]],
+    d50: true,
+  },
+};
+
+function colorSpaceToRgb(space, channels) {
+  let linear;
+  if (space === 'srgb') linear = channels.map(srgbDecode);
+  else if (space === 'srgb-linear') linear = channels;
+  else if (space === 'xyz' || space === 'xyz-d65') linear = multiply(XYZ_D65_TO_LINEAR_SRGB, channels);
+  else if (space === 'xyz-d50') linear = multiply(XYZ_D65_TO_LINEAR_SRGB, multiply(D50_TO_D65, channels));
+  else {
+    const { decode, toXyz, d50 } = RGB_SPACES[space];
+    const xyz = multiply(toXyz, channels.map(decode));
+    linear = multiply(XYZ_D65_TO_LINEAR_SRGB, d50 ? multiply(D50_TO_D65, xyz) : xyz);
+  }
+  const [r, g, b] = linear.map((value) => Math.round(255 * encodeChannel(value)));
+  return { r, g, b };
 }
 
 function oklabToRgb(lightness, a, b) {
