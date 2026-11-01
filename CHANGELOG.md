@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The sessions list stays complete after you open a chat that is running in another app (Hermes Desktop, the phone app, another window) and then start a new session. It showed 0 sessions, and Refresh failed or kept saying 0, until the panel was reopened (#139).
 - Replies keep their Markdown structure: nested lists stay nested, a quote over several lines stays one quote, `~~~` and longer fences stay code (in Vivid UI and Plain text too), escaped `\|` pipes stay inside a table cell, and links whose address has parentheses keep their label. Very deep quotes or lists no longer stop a reply from rendering. Thanks to @Sahil-SS9 (#143, #144).
 
 ## [0.4.0] - 2026-10-31
