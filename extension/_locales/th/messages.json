@@ -4211,6 +4211,10 @@
     "message": "ข้ามการตั้งชื่ออัตโนมัติแล้ว",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "แทนที่อัตโนมัติ",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "การจับคู่อัตโนมัติไม่พร้อมใช้งานใน Hermes runtime นี้ เปิดการตั้งค่าและใช้การตั้งค่าด้วยตนเองด้วย Gateway URL และ API token ของคุณ",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4346,6 +4350,10 @@
   "runtime_ui_change": {
     "message": "เปลี่ยน",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "เปลี่ยนได้ที่ การตั้งค่า → Hermes Assist",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "เปลี่ยนโมเดลและตัวเลือกรันไทม์",
@@ -5439,6 +5447,10 @@
     "message": "โหมดรวดเร็ว",
     "description": "Runtime interface message ui.fast.mode"
   },
+  "runtime_ui_fewer_actions": {
+    "message": "การทำงานน้อยลง",
+    "description": "Runtime interface message ui.fewer.actions"
+  },
   "runtime_ui_field": {
     "message": "สนาม",
     "description": "Runtime interface message ui.field"
@@ -6259,6 +6271,10 @@
     "message": "เพิ่มเติม",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "การทำงานเพิ่มเติม",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "ชื่อ",
     "description": "Runtime interface message ui.name"
@@ -6266,6 +6282,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "การควบคุมบริบทดั้งเดิมไม่พร้อมใช้งาน",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "ไม่โพสต์หรือส่งเอง เปลี่ยนแค่ช่องนี้เท่านั้น",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "ใหม่",
@@ -7175,6 +7195,10 @@
     "message": "ความปลอดภัย",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "เหมือนแชต",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "เลือกชุดสีสำหรับพื้นที่ทำงานของคุณ",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7410,6 +7434,10 @@
   "runtime_ui_short": {
     "message": "สั้น",
     "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_shorter": {
+    "message": "สั้นลง",
+    "description": "Runtime interface message ui.shorter"
   },
   "runtime_ui_show": {
     "message": "แสดง",
@@ -8158,6 +8186,10 @@
   "runtime_ui_what_should_we_work_on": {
     "message": "เราควรทำงานอะไร?",
     "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "ทำงานที่ไหน",
+    "description": "Runtime interface message ui.where.it.runs"
   },
   "runtime_ui_where_should_hermes_work": {
     "message": "Hermes ควรทำงานที่ไหน",

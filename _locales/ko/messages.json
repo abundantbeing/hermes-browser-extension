@@ -4211,6 +4211,10 @@
     "message": "자동 이름 지정을 건너뜀",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "자동 바꾸기",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "이 Hermes 런타임에서는 자동 페어링을 사용할 수 없습니다. 설정을 열고 게이트웨이 URL과 API 토큰으로 수동 설정을 사용하세요.",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4346,6 +4350,10 @@
   "runtime_ui_change": {
     "message": "변경",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "설정 → Hermes Assist에서 변경",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "모델 및 런타임 옵션 변경",
@@ -5439,6 +5447,10 @@
     "message": "빠른 모드",
     "description": "Runtime interface message ui.fast.mode"
   },
+  "runtime_ui_fewer_actions": {
+    "message": "작업 줄이기",
+    "description": "Runtime interface message ui.fewer.actions"
+  },
   "runtime_ui_field": {
     "message": "필드",
     "description": "Runtime interface message ui.field"
@@ -6259,6 +6271,10 @@
     "message": "더",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "작업 더 보기",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "이름",
     "description": "Runtime interface message ui.name"
@@ -6266,6 +6282,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "기본 컨텍스트 컨트롤을 사용할 수 없습니다.",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "게시하거나 보내지 않습니다. 이 입력란만 바뀝니다.",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "새로운",
@@ -7175,6 +7195,10 @@
     "message": "안전",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "채팅과 동일",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "작업 공간의 색상 팔레트를 선택하세요.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7410,6 +7434,10 @@
   "runtime_ui_short": {
     "message": "짧은",
     "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_shorter": {
+    "message": "더 짧게",
+    "description": "Runtime interface message ui.shorter"
   },
   "runtime_ui_show": {
     "message": "보여주다",
@@ -8158,6 +8186,10 @@
   "runtime_ui_what_should_we_work_on": {
     "message": "우리는 무엇을 해야 할까요?",
     "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "실행 위치",
+    "description": "Runtime interface message ui.where.it.runs"
   },
   "runtime_ui_where_should_hermes_work": {
     "message": "Hermes는 어디에서 작동하나요?",

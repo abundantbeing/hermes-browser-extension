@@ -4211,6 +4211,10 @@
     "message": "स्वतः-नाम छोड़ दिया गया",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "अपने-आप बदलें",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "इस Hermes रनटाइम पर स्वचालित युग्मन उपलब्ध नहीं है। सेटिंग्स खोलें और अपने गेटवे URL और API टोकन के साथ मैन्युअल सेटअप का उपयोग करें।",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4346,6 +4350,10 @@
   "runtime_ui_change": {
     "message": "परिवर्तन",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "सेटिंग्स → Hermes Assist में बदलें",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "मॉडल और रनटाइम विकल्प बदलें",
@@ -5439,6 +5447,10 @@
     "message": "तेज़ मोड",
     "description": "Runtime interface message ui.fast.mode"
   },
+  "runtime_ui_fewer_actions": {
+    "message": "कम कार्रवाइयाँ",
+    "description": "Runtime interface message ui.fewer.actions"
+  },
   "runtime_ui_field": {
     "message": "मैदान",
     "description": "Runtime interface message ui.field"
@@ -6259,6 +6271,10 @@
     "message": "अधिक",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "और कार्रवाइयाँ",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "नाम",
     "description": "Runtime interface message ui.name"
@@ -6266,6 +6282,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "मूल संदर्भ नियंत्रण अनुपलब्ध है.",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "कभी पोस्ट या भेजता नहीं। सिर्फ़ यह फ़ील्ड बदलता है।",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "नया",
@@ -7175,6 +7195,10 @@
     "message": "सुरक्षा",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "चैट जैसा ही",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "अपने कार्यक्षेत्र के लिए रंगों का पैलेट चुनें।",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7410,6 +7434,10 @@
   "runtime_ui_short": {
     "message": "छोटा",
     "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_shorter": {
+    "message": "छोटा",
+    "description": "Runtime interface message ui.shorter"
   },
   "runtime_ui_show": {
     "message": "दिखाओ",
@@ -8158,6 +8186,10 @@
   "runtime_ui_what_should_we_work_on": {
     "message": "हमें किस पर काम करना चाहिए?",
     "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "यह कहाँ चलता है",
+    "description": "Runtime interface message ui.where.it.runs"
   },
   "runtime_ui_where_should_hermes_work": {
     "message": "Hermes कहाँ काम करना चाहिए?",

@@ -4211,6 +4211,10 @@
     "message": "Nome automático ignorado",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "Substituição automática",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "O emparelhamento automático não está disponível neste tempo de execução Hermes. Abra Configurações e use a configuração manual com seu URL Gateway e token API.",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4346,6 +4350,10 @@
   "runtime_ui_change": {
     "message": "Mudança",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "Altere em Configurações → Hermes Assist",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "Alterar opções de modelo e tempo de execução",
@@ -5439,6 +5447,10 @@
     "message": "Modo rápido",
     "description": "Runtime interface message ui.fast.mode"
   },
+  "runtime_ui_fewer_actions": {
+    "message": "Menos ações",
+    "description": "Runtime interface message ui.fewer.actions"
+  },
   "runtime_ui_field": {
     "message": "Campo",
     "description": "Runtime interface message ui.field"
@@ -6259,6 +6271,10 @@
     "message": "Mais",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "Mais ações",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "Nome",
     "description": "Runtime interface message ui.name"
@@ -6266,6 +6282,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "Controles de contexto nativos indisponíveis.",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "Nunca publica nem envia. Só este campo muda.",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "Novo",
@@ -7175,6 +7195,10 @@
     "message": "Segurança",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "Igual ao chat",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "Escolha uma paleta de cores para seu espaço de trabalho.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7410,6 +7434,10 @@
   "runtime_ui_short": {
     "message": "Curto",
     "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_shorter": {
+    "message": "Mais curto",
+    "description": "Runtime interface message ui.shorter"
   },
   "runtime_ui_show": {
     "message": "Mostrar",
@@ -8158,6 +8186,10 @@
   "runtime_ui_what_should_we_work_on": {
     "message": "Em que devemos trabalhar?",
     "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "Onde é executado",
+    "description": "Runtime interface message ui.where.it.runs"
   },
   "runtime_ui_where_should_hermes_work": {
     "message": "Onde Hermes deve funcionar?",

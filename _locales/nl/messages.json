@@ -4211,6 +4211,10 @@
     "message": "Automatische naam overgeslagen",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "Automatisch vervangen",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "Automatisch koppelen is niet beschikbaar in deze Hermes-runtime. Open Instellingen en gebruik Handmatige configuratie met uw Gateway URL en API-token.",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4346,6 +4350,10 @@
   "runtime_ui_change": {
     "message": "Verandering",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "Wijzig het in Instellingen → Hermes Assist",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "Wijzig model- en runtime-opties",
@@ -5439,6 +5447,10 @@
     "message": "Snelle modus",
     "description": "Runtime interface message ui.fast.mode"
   },
+  "runtime_ui_fewer_actions": {
+    "message": "Minder acties",
+    "description": "Runtime interface message ui.fewer.actions"
+  },
   "runtime_ui_field": {
     "message": "Veld",
     "description": "Runtime interface message ui.field"
@@ -6259,6 +6271,10 @@
     "message": "Meer",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "Meer acties",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "Naam",
     "description": "Runtime interface message ui.name"
@@ -6266,6 +6282,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "Systeemeigen contextbesturingselementen zijn niet beschikbaar.",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "Plaatst of verstuurt nooit. Alleen dit veld verandert.",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "Nieuw",
@@ -7175,6 +7195,10 @@
     "message": "Veiligheid",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "Zelfde als chat",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "Kies een kleurenpalet voor je werkruimte.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7410,6 +7434,10 @@
   "runtime_ui_short": {
     "message": "Kort",
     "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_shorter": {
+    "message": "Korter",
+    "description": "Runtime interface message ui.shorter"
   },
   "runtime_ui_show": {
     "message": "Toon",
@@ -8158,6 +8186,10 @@
   "runtime_ui_what_should_we_work_on": {
     "message": "Waar moeten we aan werken?",
     "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "Waar het draait",
+    "description": "Runtime interface message ui.where.it.runs"
   },
   "runtime_ui_where_should_hermes_work": {
     "message": "Waar moet Hermes werken?",

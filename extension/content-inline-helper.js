@@ -109,7 +109,7 @@
     .launcher[data-icon="girl"] .launcher-logo, .brand-mark[data-icon="girl"] .brand-logo { border-radius:50%; mask-size:cover; -webkit-mask-size:cover; }
     .launcher[data-icon="girl"] .launcher-logo { width:22px; height:22px; }
     .launcher[hidden], .panel[hidden] { display:none; }
-    .panel { position:fixed; z-index:1; width:min(500px,calc(100vw - 20px)); max-height:min(680px,calc(100vh - 20px)); overflow:auto; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); pointer-events:auto; box-shadow:0 18px 50px rgba(0,0,0,.32), 0 0 0 1px color-mix(in srgb,var(--hb-blue) 14%,transparent); }
+    .panel { position:fixed; z-index:1; width:min(380px,calc(100vw - 20px)); max-height:min(680px,calc(100vh - 20px)); overflow:auto; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); pointer-events:auto; box-shadow:0 18px 50px rgba(0,0,0,.32), 0 0 0 1px color-mix(in srgb,var(--hb-blue) 14%,transparent); }
     .panel, .preview, .custom { scrollbar-gutter:stable; }
     .panel::-webkit-scrollbar, .preview::-webkit-scrollbar, .custom::-webkit-scrollbar { width:8px; }
     .panel::-webkit-scrollbar-thumb, .preview::-webkit-scrollbar-thumb, .custom::-webkit-scrollbar-thumb { background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); }
@@ -131,9 +131,12 @@
     .action small { display:block; margin-top:3px; color:var(--hb-muted); font-family:var(--hb-font-ui); font-size:calc(9px * var(--hermes-text-zoom, 1)); font-weight:400; line-height:1.3; }
     .action.primary small { color:color-mix(in srgb,var(--hb-paper) 74%,transparent); }
     .action:hover, .action:focus-visible, .route:hover, .route:focus-visible, .result-actions button:hover, .result-actions button:focus-visible { outline:2px solid var(--hb-blue); outline-offset:-2px; }
-    .local-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
-    .local-actions .action { border:1px solid var(--hb-line); min-height:50px; background:var(--hb-soft); }
-    .custom { width:100%; min-height:62px; resize:vertical; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); padding:9px; font:calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hb-font-ui); }
+    .local-actions { display:flex; flex-wrap:wrap; gap:7px; }
+    .local-actions .action { min-height:0; padding:5px 11px; border:1px solid var(--hb-line); border-radius:999px; background:var(--hb-soft); font-family:var(--hb-font-ui); font-size:calc(11.5px * var(--hermes-text-zoom, 1)); font-weight:600; text-transform:none; letter-spacing:normal; }
+    .local-actions .action small { display:none; }
+    .more-actions { justify-self:start; padding:4px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font-size:calc(10.5px * var(--hermes-text-zoom, 1)); text-decoration:underline; }
+    .action[hidden] { display:none; }
+    .custom { width:100%; min-height:40px; resize:vertical; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); padding:9px; font:calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hb-font-ui); }
     .custom-row { display:grid; grid-template-columns:1fr auto; gap:7px; align-items:stretch; }
     .custom-go { min-width:76px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-blue); color:var(--hb-paper); cursor:pointer; font-size:calc(11px * var(--hermes-text-zoom, 1)); font-weight:700; }
     .route-title { margin:0; color:var(--hb-blue); font-family:var(--hb-font-display); font-size:calc(20px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); line-height:1.05; }
@@ -165,7 +168,12 @@
     .toggle:checked { background:var(--hb-blue); }
     .toggle::after { content:""; position:absolute; width:12px; height:12px; left:2px; top:2px; background:var(--hb-blue); transition:left 120ms ease,background 120ms ease; }
     .toggle:checked::after { left:18px; background:var(--hb-paper); }
-    .foot { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); }
+    .foot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); }
+    .foot-control { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--hb-line); color:var(--hb-blue); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); white-space:nowrap; }
+    .foot-control em { font-style:normal; color:var(--hb-muted); }
+    .route-select { border:0; background:transparent; color:var(--hb-blue); font:inherit; cursor:pointer; }
+    .route-select option { color:#111; }
+    .foot-safety { width:100%; font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .panel[data-font-profile="signature"] .title, .panel[data-font-profile="signature"] .route-title, .panel[data-font-profile="signature"] .run-title, .panel[data-font-profile="signature"] .action, .panel[data-font-profile="signature"] .route strong, .panel[data-font-profile="signature"] .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
     .panel[data-font-profile="signature"] .action small, .panel[data-font-profile="signature"] .route small { text-transform:none; letter-spacing:normal; }
     @media (max-width:520px) { .panel { width:calc(100vw - 16px); } }
@@ -203,9 +211,8 @@
   context.append(contextDetail, contextState);
   const body = make('div', 'body');
   const foot = make('footer', 'foot');
-  const footSafety = make('span', '', 'No submit · no send · no other fields touched');
-  const footMode = make('strong', '', 'SAFE APPLY');
-  foot.append(footSafety, footMode);
+  const footSafety = make('span', 'foot-safety', 'Never posts or sends. Only this field changes.');
+  foot.append(footSafety);
   panel.append(head, context, body, foot);
   // The font stacks live in a stylesheet inside the closed root, set on the circle and the panel, so the
   // page can not read the user's font choice off the host element.
@@ -238,6 +245,7 @@
   let siteProfile = null;
   let siteContextPreferences = {};
   let pendingAction = null;
+  let lastRunAction = null;
   let pending = null;
   let handledResultRequestId = '';
   let resultText = '';
@@ -751,35 +759,20 @@
     launcher.style.top = `${launcherPosition.top}px`;
     setLauncherTone(surfaceToneAt(launcherPosition.left + 12, launcherPosition.top + 12, anchor));
     if (!panel.hidden) {
+      // The panel opens right at the circle: just below it, lined up with its left edge, or just above it
+      // when there is clearly more room there. It never jumps to a detached corner of the page.
       const safe = 8;
-      const panelWidth = Math.min(500, viewportWidth - 20);
-      const detachedPlacement = launcherPosition.strategy && launcherPosition.strategy !== 'inside-end';
-      const belowTop = rect.bottom + 8;
-      const availableBelow = viewportHeight - belowTop - safe;
-      const availableAbove = rect.top - 8 - safe;
-      if (detachedPlacement && (availableBelow >= 300 || availableAbove >= 300)) {
-        const useBelow = availableBelow >= 300 || availableBelow >= availableAbove;
-        const availableHeight = useBelow ? availableBelow : availableAbove;
-        panel.style.maxHeight = `${Math.min(680, Math.max(300, availableHeight))}px`;
-        panel.style.left = `${Math.max(safe, Math.min(viewportWidth - panelWidth - safe, rect.right - panelWidth))}px`;
-        panel.style.top = `${useBelow ? belowTop : safe}px`;
-        return;
-      }
-      panel.style.maxHeight = '';
+      const panelWidth = Math.min(380, viewportWidth - 20);
       const panelHeight = Math.max(260, panel.getBoundingClientRect().height || 0);
-      const outsideRight = rect.right + panelWidth + 12 <= viewportWidth - safe;
-      const leftOfLauncher = launcherPosition.left - panelWidth - 8;
-      const panelLeft = outsideRight
-        ? rect.right + 8
-        : (leftOfLauncher >= safe
-          ? leftOfLauncher
-          : Math.max(safe, Math.min(viewportWidth - panelWidth - safe, rect.right - panelWidth)));
-      const aboveTop = rect.top - panelHeight - 8;
-      const panelTop = belowTop + panelHeight <= viewportHeight - safe
-        ? belowTop
-        : (aboveTop >= safe ? aboveTop : Math.max(safe, Math.min(viewportHeight - panelHeight - safe, rect.top)));
-      panel.style.left = `${panelLeft}px`;
-      panel.style.top = `${panelTop}px`;
+      const circleTop = launcherPosition.top;
+      const circleBottom = launcherPosition.top + 24;
+      const roomBelow = viewportHeight - circleBottom - 8 - safe;
+      const roomAbove = circleTop - 8 - safe;
+      const below = roomBelow >= Math.min(panelHeight, 300) || roomBelow >= roomAbove;
+      const room = below ? roomBelow : roomAbove;
+      panel.style.maxHeight = `${Math.max(200, Math.min(680, room))}px`;
+      panel.style.left = `${Math.max(safe, Math.min(viewportWidth - panelWidth - safe, launcherPosition.left))}px`;
+      panel.style.top = `${below ? circleBottom + 8 : Math.max(safe, circleTop - 8 - Math.min(panelHeight, room))}px`;
     }
   }
 
@@ -824,7 +817,40 @@
 
   function setBody(...nodes) {
     body.replaceChildren(...nodes);
+    renderFooter();
     position();
+  }
+
+  // The footer: where Assist runs, automatic replacement, the Assist model, and what Assist never does.
+  // The route and auto-replace are the same saved settings as Settings → Hermes Assist; the model is
+  // changed there.
+  function renderFooter() {
+    const supportsSafeApply = (siteProfile?.applyMode || 'safe-apply') !== 'copy-only';
+    const routeControl = make('label', 'foot-control');
+    const routeSelect = make('select', 'route-select');
+    routeSelect.setAttribute('aria-label', translateUiText('Where it runs'));
+    for (const [value, label] of [['ask', 'Ask every time'], ['current', 'Continue current chat'], ['new', 'Start new Assist session'], ['background', 'Run in background']]) {
+      const option = make('option', '', label);
+      option.value = value;
+      routeSelect.appendChild(option);
+    }
+    routeSelect.value = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
+    routeSelect.addEventListener('change', trustedOnly(() => { persistDefaultRoute(routeSelect.value).catch(() => {}); }));
+    routeControl.append(make('em', '', 'Runs'), routeSelect);
+    const replaceControl = make('label', 'foot-control');
+    const toggle = make('input', 'toggle');
+    toggle.type = 'checkbox';
+    toggle.checked = supportsSafeApply && autoReplace;
+    toggle.disabled = !supportsSafeApply;
+    toggle.dataset.setting = 'auto-replace';
+    toggle.addEventListener('change', trustedOnly(() => { persistAutoReplace(toggle.checked).catch(() => {}); }));
+    replaceControl.append(make('em', '', 'Auto-replace'), toggle);
+    const modelControl = make('span', 'foot-control');
+    modelControl.title = translateUiText('Change it in Settings → Hermes Assist');
+    modelControl.append(make('em', '', 'Model'), assistSettings.inlineAssistModel ? makeRaw('span', '', assistSettings.inlineAssistModel) : make('span', '', 'Same as chat'));
+    footSafety.className = 'foot-safety';
+    footSafety.textContent = translateUiText('Never posts or sends. Only this field changes.');
+    foot.replaceChildren(routeControl, replaceControl, modelControl, footSafety);
   }
 
   function renderAssist() {
@@ -861,13 +887,23 @@
 
     const label = make('span', 'section-label', `What should Hermes do on ${profile?.label || 'this site'}?`);
     const actionsNode = make('div', 'actions');
-    pageActions().forEach((action, index) => {
+    // Up to four actions in the grid; the rest wait behind More actions.
+    const actionButtons = pageActions().map((action, index) => {
       const actionButton = button(`action${index === 0 ? ' primary' : ''}`, action.label);
       actionButton.dataset.actionId = action.id;
       actionButton.appendChild(make('small', '', action.detail || action.instruction || 'Use this field only'));
       actionButton.addEventListener('click', trustedOnly(() => beginAction(action)));
+      actionButton.hidden = index >= 4;
       actionsNode.appendChild(actionButton);
+      return actionButton;
     });
+    const moreActions = actionButtons.length > 4 ? button('more-actions', 'More actions') : null;
+    moreActions?.addEventListener('click', trustedOnly(() => {
+      const showing = moreActions.dataset.expanded === 'true';
+      actionButtons.forEach((item, index) => { item.hidden = showing && index >= 4; });
+      moreActions.dataset.expanded = String(!showing);
+      moreActions.textContent = translateUiText(showing ? 'More actions' : 'Fewer actions');
+    }));
     const localLabel = make('span', 'section-label', 'Instant tools · no model call');
     const localNode = make('div', 'local-actions');
     localActions.forEach((action) => {
@@ -897,24 +933,9 @@
     }));
     customGo.addEventListener('click', trustedOnly(submitCustom));
     customRow.append(custom, customGo);
-    const setting = make('label', 'setting');
-    const settingCopy = make('span');
-    const supportsSafeApply = profile?.applyMode !== 'copy-only';
-    settingCopy.append(
-      make('strong', '', supportsSafeApply ? 'Automatic replacement' : 'Preview + copy only'),
-      make('br'),
-      make('small', '', supportsSafeApply
-        ? 'Falls back to review if the field changed'
-        : 'This managed editor is not mutated until insertion is verified'),
-    );
-    const toggle = make('input', 'toggle');
-    toggle.type = 'checkbox';
-    toggle.checked = supportsSafeApply && autoReplace;
-    toggle.disabled = !supportsSafeApply;
-    toggle.dataset.setting = 'auto-replace';
-    toggle.addEventListener('change', trustedOnly(() => { persistAutoReplace(toggle.checked).catch(() => {}); }));
-    setting.append(settingCopy, toggle);
-    nodes.push(label, actionsNode, localLabel, localNode, customLabel, customRow, setting);
+    nodes.push(label, actionsNode);
+    if (moreActions) nodes.push(moreActions);
+    nodes.push(localLabel, localNode, customLabel, customRow);
     setBody(...nodes);
   }
 
@@ -973,6 +994,7 @@
 
   async function requestDraft(action, route) {
     if (!target || !action) return;
+    lastRunAction = action;
     const requestId = `req-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
     const profile = siteProfile || refreshSiteProfile();
     const pageContext = boundedContextForTarget({ explicitGenericCapture: action.id === 'draft-for-context' });
@@ -1131,21 +1153,39 @@
     open.addEventListener('click', trustedOnly(renderOpenSessionChoices));
     actions.append(keep, undo, copyButton);
     if (resultSessionId) actions.append(open);
-    const setting = make('label', 'setting');
-    const settingCopy = make('span');
-    settingCopy.append(
-      make('strong', '', copyOnly ? 'Preview + copy only' : 'Automatic replacement'),
-      make('br'),
-      make('small', '', copyOnly ? 'Direct mutation is disabled for this editor' : 'Falls back to review if the field changed'),
-    );
-    const toggle = make('input', 'toggle');
-    toggle.type = 'checkbox';
-    toggle.checked = !copyOnly && autoReplace;
-    toggle.disabled = copyOnly;
-    toggle.dataset.setting = 'auto-replace';
-    toggle.addEventListener('change', trustedOnly(() => { persistAutoReplace(toggle.checked).catch(() => {}); }));
-    setting.append(settingCopy, toggle);
-    setBody(success, card, label, preview, actions, setting);
+    // Try again always; Shorter once the draft is in the field, since it shortens what the field holds.
+    const followUps = make('div', 'result-actions follow-ups');
+    const again = button('', 'Try again');
+    again.disabled = !lastRunAction;
+    again.addEventListener('click', trustedOnly(tryAgain));
+    followUps.append(again);
+    if (applyReceipt) {
+      const shorter = button('', 'Shorter');
+      shorter.addEventListener('click', trustedOnly(makeShorter));
+      followUps.append(shorter);
+    }
+    setBody(success, card, label, preview, actions, followUps);
+  }
+
+  // Run the same action again from the text the user had: an applied draft is undone first.
+  function tryAgain() {
+    const action = lastRunAction;
+    if (!action) return undefined;
+    if (applyReceipt) {
+      const undone = policy.undoResult(target, applyReceipt);
+      if (!undone.ok) return renderFailure('Undo was blocked because the field changed after the replacement.');
+      applyReceipt = null;
+      appliedAutomatically = false;
+    }
+    return action.local ? runLocalAction(action) : beginAction(action);
+  }
+
+  // Shorten the draft that is now in the field (offered only once it was applied there).
+  function makeShorter() {
+    const shorten = genericActions.find((item) => item.id === 'shorten');
+    applyReceipt = null;
+    appliedAutomatically = false;
+    if (shorten) beginAction(shorten);
   }
 
   function applyResult() {
@@ -1337,8 +1377,7 @@
     brandKicker.textContent = translateUiText('Hermes Browser');
     brandTitle.textContent = translateUiText('Hermes Assist');
     close.setAttribute('aria-label', translateUiText('Close Hermes Assist'));
-    footSafety.textContent = translateUiText('No submit · no send · no other fields touched');
-    footMode.textContent = translateUiText('SAFE APPLY');
+    footSafety.textContent = translateUiText('Never posts or sends. Only this field changes.');
   }
 
   function rerenderLocalizedView() {

@@ -59,7 +59,7 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.doesNotMatch(source, /launcher\.addEventListener\('click', openPanel\)/);
   assert.match(source, /\.launcher \{[^}]*z-index:2;/s);
   assert.match(source, /\.panel \{[^}]*z-index:1;/s);
-  assert.match(source, /leftOfLauncher/);
+  assert.match(source, /circleBottom \+ 8/);
   assert.match(source, /panelScrollSuspended/);
   assert.match(source, /panel\.style\.visibility\s*=\s*'hidden'/);
   assert.match(source, /hasUnresolvedInteraction/);
@@ -76,7 +76,7 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.match(source, /Keep replacement/);
   assert.match(source, /inlineDraftPrimaryActionLabel/);
   assert.match(source, /Open session/);
-  assert.match(source, /Automatic replacement/);
+  assert.match(source, /Auto-replace/);
   const sidepanelHtml = await read('extension/sidepanel.html');
   // Assist controls live only in the side panel Settings.
   for (const html of [sidepanelHtml]) {
@@ -197,7 +197,7 @@ test('inline runtime wires semantic site profiles, persisted context controls, a
   assert.match(source, /launcher\.dataset\.placement/);
   assert.match(source, /DRAFT ONLY/);
   assert.match(source, /BOUNDED/);
-  assert.match(source, /Preview \+ copy only/);
+  assert.match(source, /Copy to use/);
   assert.match(source, /applyMode:\s*supportsSafeApply\s*\?\s*['"]safe-apply['"]\s*:\s*['"]copy-only['"]/);
 });
 

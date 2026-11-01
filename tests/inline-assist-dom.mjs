@@ -9,6 +9,7 @@ const load = loadExtensionFile;
 
 export function bootAssist({ settings = {}, storage = {}, pageBackground = '', fontReply = () => Promise.resolve({ ok: true, fonts: [] }) } = {}) {
   const sent = [];
+  const messageListeners = [];
   const stored = [];
   const listeners = [];
   const storageListeners = [];
@@ -42,7 +43,7 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', f
         if (message?.type === 'HERMES_INLINE_SESSION_STATUS') return Promise.resolve({ ok: true, hasActiveSession: false });
         return Promise.resolve({ ok: true });
       },
-      onMessage: { addListener() {}, removeListener() {} },
+      onMessage: { addListener: (fn) => messageListeners.push(fn), removeListener() {} },
     },
     storage: {
       local: { get: () => Promise.resolve({ ...structuredClone(storage), hermesBrowserSettings: { ...settings } }), set: (items) => { stored.push(items); return Promise.resolve(); } },
@@ -77,7 +78,9 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', f
   const listenersFor = (element, type) => listeners.filter((item) => item.target === element && item.type === type).map((item) => item.listener);
   // Another surface (the side panel, another tab) wrote to storage.
   const changeStorage = (changes) => { for (const listener of storageListeners) listener(changes, 'local'); };
-  return { w, sent, stored, fonts, fontSources, changeStorage, sleep, userClick, listenersFor, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
+  // Hands the content script a message from the background, as the result of a draft arrives.
+  const deliver = (message) => messageListeners.forEach((fn) => fn(message, {}, () => {}));
+  return { w, sent, stored, fonts, fontSources, changeStorage, sleep, userClick, listenersFor, deliver, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
 }
 
 export async function focusField(env) {
