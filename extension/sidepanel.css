@@ -12317,7 +12317,7 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
 /* Hermes Assist button icon: each card previews the 24px circle on a dark and a white page, the way the
    content script picks the circle's tone. */
 .assist-icon-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.assist-icon-card { align-items: center; text-align: center; flex-direction: column; }
+.settings-dialog .settings-choice-card.assist-icon-card { justify-items: center; text-align: center; }
 .assist-icon-preview { display: flex; justify-content: center; gap: 6px; }
 .assist-icon-swatch { position: relative; width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; }
 .assist-icon-swatch-dark { background: #000; }

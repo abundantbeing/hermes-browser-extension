@@ -12,6 +12,8 @@ test('Settings offers the three button icons, each previewed on a dark and a whi
   assert.deepEqual(radios.map((input) => input.value), ['wing', 'staff', 'girl']);
   for (const input of radios) {
     const card = input.closest('label');
+    // Three across leaves no room for the check square: the highlighted card is the mark (compact-choice).
+    assert.ok(card.classList.contains('compact-choice'), `${input.value} card uses the single-column layout`);
     assert.equal(card.querySelectorAll('.assist-icon-swatch').length, 2, `${input.value} shows two swatches`);
     assert.equal(card.querySelector('.assist-icon-preview').dataset.icon, input.value);
   }
