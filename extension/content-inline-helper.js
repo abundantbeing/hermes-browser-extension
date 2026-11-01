@@ -351,6 +351,7 @@
   }
 
   function applyAssistSettings() {
+    autoReplace = assistSettings.inlineAssistAutoReplace !== false;
     applyAssistAppearance();
     host.dataset.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     host.dataset.inlineAssistSessionRetention = String(assistSettings.inlineAssistSessionRetention || 'retain');
@@ -372,6 +373,15 @@
     assistSettings.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     refreshSiteProfile();
     applyAssistSettings();
+  }
+
+  // "Replace text automatically" is a saved setting, shared with Settings → Hermes Assist.
+  async function persistAutoReplace(enabled) {
+    autoReplace = Boolean(enabled);
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
+    const next = { ...(stored?.hermesBrowserSettings || {}), inlineAssistAutoReplace: autoReplace };
+    assistSettings = { ...assistSettings, ...next };
+    await browserApi.storage.local.set({ hermesBrowserSettings: next });
   }
 
   async function persistDefaultRoute(route) {
@@ -802,7 +812,8 @@
     toggle.type = 'checkbox';
     toggle.checked = supportsSafeApply && autoReplace;
     toggle.disabled = !supportsSafeApply;
-    toggle.addEventListener('change', trustedOnly(() => { autoReplace = toggle.checked; }));
+    toggle.dataset.setting = 'auto-replace';
+    toggle.addEventListener('change', trustedOnly(() => { persistAutoReplace(toggle.checked).catch(() => {}); }));
     setting.append(settingCopy, toggle);
     nodes.push(label, actionsNode, localLabel, localNode, customLabel, customRow, setting);
     setBody(...nodes);
@@ -1031,7 +1042,8 @@
     toggle.type = 'checkbox';
     toggle.checked = !copyOnly && autoReplace;
     toggle.disabled = copyOnly;
-    toggle.addEventListener('change', trustedOnly(() => { autoReplace = toggle.checked; }));
+    toggle.dataset.setting = 'auto-replace';
+    toggle.addEventListener('change', trustedOnly(() => { persistAutoReplace(toggle.checked).catch(() => {}); }));
     setting.append(settingCopy, toggle);
     setBody(success, card, label, preview, actions, setting);
   }
