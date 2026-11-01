@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "스크린샷 권한이 제거되었습니다.",
   "firefox_screenshots.failed": "스크린샷 권한을 변경하지 못했습니다: {error}",
   "browser_control.note_screenshot_permission": "Hermes가 스크린샷을 찍지 않았습니다. Firefox의 추가 권한이 필요합니다. 'Firefox에서 스크린샷 허용'을 사용하세요.",
+  "ui.bot.options": "봇 옵션",
+  "ui.fast": "빠르게",
+  "ui.steer.this.subagent": "이 하위 에이전트 방향 조정",
+  "ui.stop.this.subagent": "이 하위 에이전트 중지",
+  "ui.not.accepting.steer": "방향 조정을 받지 않음",
+  "ui.open.generated.image.for.closer.inspection": "생성된 이미지를 자세히 보기",
+  "ui.group.settings": "그룹 설정",
 });

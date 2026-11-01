@@ -4259,6 +4259,10 @@
     "message": "शरीर",
     "description": "Runtime interface message ui.body"
   },
+  "runtime_ui_bot_options": {
+    "message": "बॉट विकल्प",
+    "description": "Runtime interface message ui.bot.options"
+  },
   "runtime_ui_browser": {
     "message": "ब्राउज़र",
     "description": "Runtime interface message ui.browser"
@@ -5419,6 +5423,10 @@
     "message": "यदि फ़ील्ड बदल गई है तो समीक्षा के लिए वापस आ जाता है",
     "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
   },
+  "runtime_ui_fast": {
+    "message": "तेज़",
+    "description": "Runtime interface message ui.fast"
+  },
   "runtime_ui_fast_mode": {
     "message": "तेज़ मोड",
     "description": "Runtime interface message ui.fast.mode"
@@ -5538,6 +5546,10 @@
   "runtime_ui_group": {
     "message": "समूह",
     "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_group_settings": {
+    "message": "समूह सेटिंग्स",
+    "description": "Runtime interface message ui.group.settings"
   },
   "runtime_ui_group_working_many": {
     "message": "{first}, {second} और {count} अन्य काम कर रहे हैं…",
@@ -6383,6 +6395,10 @@
     "message": "सामान्य - अच्छा डिफ़ॉल्ट",
     "description": "Runtime interface message ui.normal.good.default"
   },
+  "runtime_ui_not_accepting_steer": {
+    "message": "दिशा-निर्देश स्वीकार नहीं कर रहा",
+    "description": "Runtime interface message ui.not.accepting.steer"
+  },
   "runtime_ui_not_connected": {
     "message": "जुड़े नहीं हैं",
     "description": "Runtime interface message ui.not.connected"
@@ -6450,6 +6466,10 @@
   "runtime_ui_open_full_view": {
     "message": "पूरा दृश्य खोलें",
     "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_generated_image_for_closer_inspection": {
+    "message": "जनरेट की गई छवि को पास से देखने के लिए खोलें",
+    "description": "Runtime interface message ui.open.generated.image.for.closer.inspection"
   },
   "runtime_ui_open_hermes_assist": {
     "message": "Hermes Assist खोलें",
@@ -7539,6 +7559,10 @@
     "message": "वर्तमान रन को संचालित करें",
     "description": "Runtime interface message ui.steer.the.current.run"
   },
+  "runtime_ui_steer_this_subagent": {
+    "message": "इस सब-एजेंट को दिशा दें",
+    "description": "Runtime interface message ui.steer.this.subagent"
+  },
   "runtime_ui_steered_label": {
     "message": "निर्देशित",
     "description": "Runtime interface message ui.steered.label"
@@ -7554,6 +7578,10 @@
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "सत्र बदलने से पहले सक्रिय रन को रोकें।",
     "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
+  },
+  "runtime_ui_stop_this_subagent": {
+    "message": "इस सब-एजेंट को रोकें",
+    "description": "Runtime interface message ui.stop.this.subagent"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Hermes को रोकना",

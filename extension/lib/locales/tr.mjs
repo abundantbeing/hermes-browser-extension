@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "Ekran görüntüsü izni kaldırıldı.",
   "firefox_screenshots.failed": "Ekran görüntüsü izni değiştirilemedi: {error}",
   "browser_control.note_screenshot_permission": "Hermes ekran görüntüsünü almadı: Firefox ek izne ihtiyaç duyuyor. Firefox'ta ekran görüntülerine izin ver seçeneğini kullanın.",
+  "ui.bot.options": "Bot seçenekleri",
+  "ui.fast": "Hızlı",
+  "ui.steer.this.subagent": "Bu alt ajanı yönlendir",
+  "ui.stop.this.subagent": "Bu alt ajanı durdur",
+  "ui.not.accepting.steer": "Yönlendirme kabul etmiyor",
+  "ui.open.generated.image.for.closer.inspection": "Oluşturulan resmi yakından incelemek için aç",
+  "ui.group.settings": "Grup ayarları",
 });

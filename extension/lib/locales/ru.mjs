@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "Разрешение на скриншоты отозвано.",
   "firefox_screenshots.failed": "Не удалось изменить разрешение на скриншоты: {error}",
   "browser_control.note_screenshot_permission": "Hermes не сделал снимок: Firefox требует дополнительное разрешение. Используйте «Разрешить скриншоты в Firefox».",
+  "ui.bot.options": "Параметры бота",
+  "ui.fast": "Быстро",
+  "ui.steer.this.subagent": "Направить этого субагента",
+  "ui.stop.this.subagent": "Остановить этого субагента",
+  "ui.not.accepting.steer": "Не принимает указания",
+  "ui.open.generated.image.for.closer.inspection": "Открыть созданное изображение для подробного просмотра",
+  "ui.group.settings": "Настройки группы",
 });

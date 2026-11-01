@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "Tilladelsen til skærmbilleder er fjernet.",
   "firefox_screenshots.failed": "Kunne ikke ændre tilladelsen til skærmbilleder: {error}",
   "browser_control.note_screenshot_permission": "Hermes tog ikke skærmbilledet: Firefox kræver ekstra tilladelse. Brug Tillad skærmbilleder i Firefox.",
+  "ui.bot.options": "Botindstillinger",
+  "ui.fast": "Hurtig",
+  "ui.steer.this.subagent": "Styr denne underagent",
+  "ui.stop.this.subagent": "Stop denne underagent",
+  "ui.not.accepting.steer": "Tager ikke imod styring",
+  "ui.open.generated.image.for.closer.inspection": "Åbn det genererede billede for at se det nærmere",
+  "ui.group.settings": "Gruppeindstillinger",
 });

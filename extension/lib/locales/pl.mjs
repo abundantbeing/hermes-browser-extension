@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "Uprawnienie do zrzutów ekranu zostało cofnięte.",
   "firefox_screenshots.failed": "Nie udało się zmienić uprawnienia do zrzutów ekranu: {error}",
   "browser_control.note_screenshot_permission": "Hermes nie zrobił zrzutu ekranu: Firefox wymaga dodatkowego uprawnienia. Użyj opcji Zezwól na zrzuty ekranu w przeglądarce Firefox.",
+  "ui.bot.options": "Opcje bota",
+  "ui.fast": "Szybko",
+  "ui.steer.this.subagent": "Steruj tym subagentem",
+  "ui.stop.this.subagent": "Zatrzymaj tego subagenta",
+  "ui.not.accepting.steer": "Nie przyjmuje sterowania",
+  "ui.open.generated.image.for.closer.inspection": "Otwórz wygenerowany obraz, aby obejrzeć go z bliska",
+  "ui.group.settings": "Ustawienia grupy",
 });
