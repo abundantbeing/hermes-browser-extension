@@ -1,16 +1,36 @@
 # Hermes Browser Extension
 
+<p align="center">
+  <a href="https://github.com/abundantbeing/hermes-browser-extension/releases/latest"><img src="https://img.shields.io/github/v/release/abundantbeing/hermes-browser-extension?label=release&color=111111" alt="Latest release" /></a>
+  <a href="https://addons.mozilla.org/firefox/addon/hermes-browser-extension/"><img src="https://img.shields.io/amo/v/hermes-browser-extension?logo=firefoxbrowser&logoColor=white&label=Firefox%20Add-ons&color=FF7139" alt="Firefox Add-ons" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-111111" alt="MIT license" /></a>
+  <a href="https://github.com/NousResearch/hermes-agent"><img src="https://img.shields.io/badge/built%20for-Hermes%20Agent-111111" alt="Built for Hermes Agent" /></a>
+  <a href="https://nousresearch.com"><img src="https://img.shields.io/badge/ecosystem-Nous%20Research-111111" alt="Nous Research" /></a>
+  <a href="https://github.com/abundantbeing/hermes-browser-extension/stargazers"><img src="https://img.shields.io/github/stars/abundantbeing/hermes-browser-extension?color=111111" alt="GitHub stars" /></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript" />
+  <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white" alt="HTML5" />
+  <img src="https://img.shields.io/badge/CSS-663399?logo=css&logoColor=white" alt="CSS" />
+  <img src="https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Node.js-20%2B-5FA04E?logo=nodedotjs&logoColor=white" alt="Node.js 20+" />
+  <img src="https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white" alt="Manifest V3" />
+  <img src="https://img.shields.io/badge/Chromium-116%2B-4285F4?logo=googlechrome&logoColor=white" alt="Chromium 116+" />
+  <img src="https://img.shields.io/badge/Firefox-142%2B-FF7139?logo=firefoxbrowser&logoColor=white" alt="Firefox 142+" />
+</p>
+
 Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.com/docs) — connect active web context through a local gateway, Hermes Cloud, or a self-hosted remote gateway.
 
-> Created by **Jon Komet** (`@abundantbeing`). Community extension for Hermes Agent by Nous Research.
+> Created by **Jon Komet** (`@abundantbeing`). Community extension for [Hermes Agent](https://github.com/NousResearch/hermes-agent) by [Nous Research](https://nousresearch.com). MIT licensed.
 
 <p align="center">
   <img src="./assets/readme/hermes-browser-demo.gif" alt="Hermes Browser Extension demo showing the side panel reading browser context and composing a Hermes prompt" width="100%" />
 </p>
 
 <p align="center">
-  <strong>Public v0.4.0 · Load unpacked · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong><br />
-  </p>
+  <strong>v0.4.0 · Chromium and Firefox · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong>
+</p>
 
 <p align="center">
   <a href="https://ko-fi.com/T8Z726J5YZ"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support Jon Komet on Ko-fi" /></a>
@@ -46,9 +66,9 @@ Screenshots use the Mono theme in Dark mode.
 
 | Side panel | Bot chats | Edit a bot |
 | --- | --- | --- |
-| <img src="./assets/readme/hermes-browser-sidepanel.png" alt="Hermes Browser Extension side panel in Mono Dark, answering a question about the attached page" width="300" /> | <img src="./assets/readme/hermes-browser-bot-chats.png" alt="Bot Mode group chat with four demo agents replying in one room" width="300" /> | <img src="./assets/readme/hermes-browser-bot-profile.png" alt="Bot Mode profile editor with avatar, display title, and description" width="300" /> |
+| <img src="./assets/readme/hermes-browser-sidepanel.png" alt="Hermes Browser Extension side panel in Mono Dark, summarizing the pinned page in three bullets and then in two lines" width="300" /> | <img src="./assets/readme/hermes-browser-bot-chats.png" alt="Bot Mode group chat where four agents each answer one question in the Launch Room" width="300" /> | <img src="./assets/readme/hermes-browser-bot-profile.png" alt="Bot Mode profile editor with avatar, display title, and description" width="300" /> |
 | Theme settings | Local agents | Hermes Control |
-| <img src="./assets/readme/hermes-browser-theme-settings.png" alt="Appearance settings with color mode, text zoom, and built-in theme previews" width="300" /> | <img src="./assets/readme/hermes-browser-local-agents.png" alt="Agent Profile settings listing the verified agents from the connected gateway" width="300" /> | <img src="./assets/readme/hermes-browser-control.png" alt="Hermes Control dialog with an on/off light, scope, and the Show tab, Turn off and Pause controls" width="300" /> |
+| <img src="./assets/readme/hermes-browser-theme-settings.png" alt="Appearance settings with text zoom, language, font, color mode, and built-in theme previews" width="300" /> | <img src="./assets/readme/hermes-browser-local-agents.png" alt="Agent Profile settings listing the verified agents from the connected gateway" width="300" /> | <img src="./assets/readme/hermes-browser-control.png" alt="Hermes Control dialog with an on light, tab scope, and the Apply, Turn off and Pause controls" width="300" /> |
 
 ## Requirements
 
