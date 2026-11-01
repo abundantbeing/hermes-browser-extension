@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "Đã gỡ quyền chụp ảnh màn hình.",
   "firefox_screenshots.failed": "Không thể thay đổi quyền chụp ảnh màn hình: {error}",
   "browser_control.note_screenshot_permission": "Hermes đã không chụp ảnh màn hình: Firefox cần thêm quyền. Hãy dùng Cho phép chụp ảnh màn hình trên Firefox.",
+  "ui.bot.options": "Tùy chọn bot",
+  "ui.fast": "Nhanh",
+  "ui.steer.this.subagent": "Chỉ đạo tiểu tác nhân này",
+  "ui.stop.this.subagent": "Dừng tiểu tác nhân này",
+  "ui.not.accepting.steer": "Không nhận chỉ đạo",
+  "ui.open.generated.image.for.closer.inspection": "Mở hình ảnh đã tạo để xem kỹ hơn",
+  "ui.group.settings": "Cài đặt nhóm",
 });

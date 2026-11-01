@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "The screenshot permission was removed.",
   "firefox_screenshots.failed": "Could not change the screenshot permission: {error}",
   "browser_control.note_screenshot_permission": "Hermes did not take the screenshot: Firefox needs extra permission. Use Allow screenshots on Firefox.",
+  "ui.bot.options": "Bot options",
+  "ui.fast": "Fast",
+  "ui.steer.this.subagent": "Steer this subagent",
+  "ui.stop.this.subagent": "Stop this subagent",
+  "ui.not.accepting.steer": "Not accepting steer",
+  "ui.open.generated.image.for.closer.inspection": "Open generated image for closer inspection",
+  "ui.group.settings": "Group settings",
 });

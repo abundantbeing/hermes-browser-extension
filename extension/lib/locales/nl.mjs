@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "De toestemming voor schermafbeeldingen is ingetrokken.",
   "firefox_screenshots.failed": "Kon de toestemming voor schermafbeeldingen niet wijzigen: {error}",
   "browser_control.note_screenshot_permission": "Hermes heeft de schermafbeelding niet gemaakt: Firefox heeft extra toestemming nodig. Gebruik Schermafbeeldingen in Firefox toestaan.",
+  "ui.bot.options": "Botopties",
+  "ui.fast": "Snel",
+  "ui.steer.this.subagent": "Deze subagent bijsturen",
+  "ui.stop.this.subagent": "Deze subagent stoppen",
+  "ui.not.accepting.steer": "Accepteert geen bijsturing",
+  "ui.open.generated.image.for.closer.inspection": "Gegenereerde afbeelding openen om beter te bekijken",
+  "ui.group.settings": "Groepsinstellingen",
 });

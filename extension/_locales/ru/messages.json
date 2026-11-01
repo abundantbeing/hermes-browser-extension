@@ -4259,6 +4259,10 @@
     "message": "Тело",
     "description": "Runtime interface message ui.body"
   },
+  "runtime_ui_bot_options": {
+    "message": "Параметры бота",
+    "description": "Runtime interface message ui.bot.options"
+  },
   "runtime_ui_browser": {
     "message": "Браузер",
     "description": "Runtime interface message ui.browser"
@@ -5419,6 +5423,10 @@
     "message": "Возвращается к просмотру, если поле изменилось.",
     "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
   },
+  "runtime_ui_fast": {
+    "message": "Быстро",
+    "description": "Runtime interface message ui.fast"
+  },
   "runtime_ui_fast_mode": {
     "message": "Быстрый режим",
     "description": "Runtime interface message ui.fast.mode"
@@ -5538,6 +5546,10 @@
   "runtime_ui_group": {
     "message": "Группа",
     "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_group_settings": {
+    "message": "Настройки группы",
+    "description": "Runtime interface message ui.group.settings"
   },
   "runtime_ui_group_working_many": {
     "message": "{first}, {second} и ещё {count} работают…",
@@ -6383,6 +6395,10 @@
     "message": "Нормальный – хороший по умолчанию",
     "description": "Runtime interface message ui.normal.good.default"
   },
+  "runtime_ui_not_accepting_steer": {
+    "message": "Не принимает указания",
+    "description": "Runtime interface message ui.not.accepting.steer"
+  },
   "runtime_ui_not_connected": {
     "message": "Не подключено",
     "description": "Runtime interface message ui.not.connected"
@@ -6450,6 +6466,10 @@
   "runtime_ui_open_full_view": {
     "message": "Открыть полный вид",
     "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_generated_image_for_closer_inspection": {
+    "message": "Открыть созданное изображение для подробного просмотра",
+    "description": "Runtime interface message ui.open.generated.image.for.closer.inspection"
   },
   "runtime_ui_open_hermes_assist": {
     "message": "Откройте Hermes Assist",
@@ -7539,6 +7559,10 @@
     "message": "Управляйте текущим пробегом",
     "description": "Runtime interface message ui.steer.the.current.run"
   },
+  "runtime_ui_steer_this_subagent": {
+    "message": "Направить этого субагента",
+    "description": "Runtime interface message ui.steer.this.subagent"
+  },
   "runtime_ui_steered_label": {
     "message": "Корректировка",
     "description": "Runtime interface message ui.steered.label"
@@ -7554,6 +7578,10 @@
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "Остановите активный запуск перед переключением сеанса.",
     "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
+  },
+  "runtime_ui_stop_this_subagent": {
+    "message": "Остановить этого субагента",
+    "description": "Runtime interface message ui.stop.this.subagent"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Остановка Hermes",

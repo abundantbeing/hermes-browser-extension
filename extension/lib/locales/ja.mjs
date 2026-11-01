@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "スクリーンショットの権限を削除しました。",
   "firefox_screenshots.failed": "スクリーンショットの権限を変更できませんでした: {error}",
   "browser_control.note_screenshot_permission": "Hermes はスクリーンショットを撮りませんでした。Firefox で追加の権限が必要です。「Firefox でスクリーンショットを許可」を使ってください。",
+  "ui.bot.options": "ボットのオプション",
+  "ui.fast": "高速",
+  "ui.steer.this.subagent": "このサブエージェントをステアリング",
+  "ui.stop.this.subagent": "このサブエージェントを停止",
+  "ui.not.accepting.steer": "ステアリングを受け付けていません",
+  "ui.open.generated.image.for.closer.inspection": "生成された画像を拡大して表示",
+  "ui.group.settings": "グループ設定",
 });

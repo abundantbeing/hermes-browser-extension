@@ -4259,6 +4259,10 @@
     "message": "جسم",
     "description": "Runtime interface message ui.body"
   },
+  "runtime_ui_bot_options": {
+    "message": "خيارات البوت",
+    "description": "Runtime interface message ui.bot.options"
+  },
   "runtime_ui_browser": {
     "message": "المتصفح",
     "description": "Runtime interface message ui.browser"
@@ -5419,6 +5423,10 @@
     "message": "يعود للمراجعة إذا تغير الحقل",
     "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
   },
+  "runtime_ui_fast": {
+    "message": "سريع",
+    "description": "Runtime interface message ui.fast"
+  },
   "runtime_ui_fast_mode": {
     "message": "الوضع السريع",
     "description": "Runtime interface message ui.fast.mode"
@@ -5538,6 +5546,10 @@
   "runtime_ui_group": {
     "message": "مجموعة",
     "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_group_settings": {
+    "message": "إعدادات المجموعة",
+    "description": "Runtime interface message ui.group.settings"
   },
   "runtime_ui_group_working_many": {
     "message": "{first} و{second} و{count} آخرون يعملون…",
@@ -6383,6 +6395,10 @@
     "message": "عادي - افتراضي جيد",
     "description": "Runtime interface message ui.normal.good.default"
   },
+  "runtime_ui_not_accepting_steer": {
+    "message": "لا يقبل التوجيه",
+    "description": "Runtime interface message ui.not.accepting.steer"
+  },
   "runtime_ui_not_connected": {
     "message": "غير متصل",
     "description": "Runtime interface message ui.not.connected"
@@ -6450,6 +6466,10 @@
   "runtime_ui_open_full_view": {
     "message": "فتح عرض كامل",
     "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_generated_image_for_closer_inspection": {
+    "message": "فتح الصورة المولّدة لفحصها عن قرب",
+    "description": "Runtime interface message ui.open.generated.image.for.closer.inspection"
   },
   "runtime_ui_open_hermes_assist": {
     "message": "افتح Hermes Assist",
@@ -7539,6 +7559,10 @@
     "message": "توجيه المدى الحالي",
     "description": "Runtime interface message ui.steer.the.current.run"
   },
+  "runtime_ui_steer_this_subagent": {
+    "message": "توجيه هذا الوكيل الفرعي",
+    "description": "Runtime interface message ui.steer.this.subagent"
+  },
   "runtime_ui_steered_label": {
     "message": "تم التوجيه",
     "description": "Runtime interface message ui.steered.label"
@@ -7554,6 +7578,10 @@
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "أوقف التشغيل النشط قبل تبديل الجلسات.",
     "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
+  },
+  "runtime_ui_stop_this_subagent": {
+    "message": "إيقاف هذا الوكيل الفرعي",
+    "description": "Runtime interface message ui.stop.this.subagent"
   },
   "runtime_ui_stopping_hermes": {
     "message": "وقف Hermes",
