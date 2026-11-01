@@ -143,7 +143,7 @@ test('ensureDesktopDashboardUrl() refuses a non-local connection before it reads
 
 // The readers that must go through the accessor (the audit counted about ten).
 const READERS = [
-  'dashboardApiRequest', 'loadDashboardSessionsForProfile', 'loadSessions', 'renameSessionViaDashboardRest',
+  'dashboardApiRequest', 'loadDashboardSessionsForProfile', 'loadSessionsOverRest', 'renameSessionViaDashboardRest',
   'projectsConnectionSnapshot', 'prepareProjectsConnection', 'applySessionMenuTabOnOpen', 'liveSessionScopeKey',
   'refreshLiveSessionRoster', 'profileConnectionKey', 'ensureProfileWsConnection', 'activateLocalDashboardTransport',
   'voiceLiveDashboardBaseUrl', 'resolveDashboardMediaBaseUrl', 'attachGatewayRestartAction', 'fetchBotModeRemoteAvatar',
