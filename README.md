@@ -306,7 +306,7 @@ Useful links:
 
 ## Contributors
 
-External contributions that have shipped are credited in [`CONTRIBUTORS.md`](CONTRIBUTORS.md). Interface icons are [pixelarticons](https://github.com/halfmage/pixelarticons) (MIT); its licence ships in `extension/assets/icons/pixel/`.
+External contributions that have shipped are credited in [`CONTRIBUTORS.md`](CONTRIBUTORS.md). Interface icons are [pixelarticons](https://github.com/halfmage/pixelarticons) (MIT); its licence ships in `extension/assets/icons/pixel/`. **Rules** signature typefaces (Blaze Type) ship under Nous Research's commercial license; see [`extension/assets/fonts/README.md`](extension/assets/fonts/README.md).
 
 ## Author
 

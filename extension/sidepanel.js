@@ -9461,8 +9461,8 @@ function applyAppearanceSettings() {
   applyResponsePresentation();
 }
 
-// The signature profile renders the bundled fallback face when the licensed
-// Rules faces are absent. Probe the faces actually registered in
+// When a Rules @font-face fails to load, the signature profile renders the
+// bundled fallback face. Probe the faces actually registered in
 // document.fonts (not document.fonts.check, which reports true even for a
 // family that was never registered) and reveal the honest note only when the
 // licensed faces are confirmed missing. A superseded probe result is dropped so
