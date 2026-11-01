@@ -148,3 +148,23 @@ test('Settings offers Quick menu and Full panel, each with a picture of what ope
   assert.match(source, /input\.checked = input\.value === normalizeInlineAssistOpenMode\(settings\.inlineAssistOpenMode\)/);
   assert.match(source, /inlineAssistOpenMode: normalizeInlineAssistOpenMode\(els\.inlineAssistOpenModeInputs\?\.find\(\(input\) => input\.checked\)\?\.value \|\| settings\.inlineAssistOpenMode\)/);
 });
+
+test('the Sites list merges where Assist reads the thread with where the circle is hidden', async () => {
+  const { inlineAssistSitesModel, inlineAssistSiteEntries, withInlineAssistSiteState, withoutInlineAssistSite } = await import('../extension/lib/inline-assist-look.mjs');
+  const model = inlineAssistSitesModel({ x: 'visible', gmail: 'draft', bogus: 'maybe' }, ['reddit', 'forum.example']);
+  assert.deepEqual(inlineAssistSiteEntries(model), [
+    { site: 'forum.example', state: 'hidden' },
+    { site: 'gmail', state: 'draft' },
+    { site: 'reddit', state: 'hidden' },
+    { site: 'x', state: 'visible' },
+  ]);
+  const hiddenX = withInlineAssistSiteState(model, 'x', 'hidden');
+  assert.ok(hiddenX.hidden.includes('x'));
+  assert.equal(inlineAssistSiteEntries(hiddenX).find((entry) => entry.site === 'x').state, 'hidden');
+  const shownAgain = withInlineAssistSiteState(hiddenX, 'x', 'draft');
+  assert.equal(shownAgain.hidden.includes('x'), false);
+  assert.equal(shownAgain.contextPrefs.x, 'draft');
+  const removed = withoutInlineAssistSite(shownAgain, 'gmail');
+  assert.equal(inlineAssistSiteEntries(removed).some((entry) => entry.site === 'gmail'), false);
+  assert.deepEqual(model.hidden, ['reddit', 'forum.example'], 'the original model is not changed');
+});

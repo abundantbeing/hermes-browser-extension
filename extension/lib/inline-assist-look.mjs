@@ -271,6 +271,39 @@ export function isInlineAssistHiddenSite(hostname, adapterId, hidden) {
   return sites.some((site) => (adapter && adapter !== 'generic' && site === adapter) || host === site || host.endsWith(`.${site}`));
 }
 
+// Settings → Hermes Assist → Sites: one list holding where Assist reads the visible thread (per adapter:
+// 'visible' or 'draft') and where the circle is hidden. The helpers return new models; nothing is changed
+// in place.
+export function inlineAssistSitesModel(contextPrefs = {}, hidden = []) {
+  const prefs = {};
+  for (const [site, mode] of Object.entries(contextPrefs && typeof contextPrefs === 'object' ? contextPrefs : {})) {
+    if (mode === 'visible' || mode === 'draft') prefs[String(site).toLowerCase()] = mode;
+  }
+  return { contextPrefs: prefs, hidden: normalizeInlineAssistHiddenSites(hidden) };
+}
+
+export function inlineAssistSiteEntries(model) {
+  const { contextPrefs, hidden } = inlineAssistSitesModel(model?.contextPrefs, model?.hidden);
+  const sites = [...new Set([...Object.keys(contextPrefs), ...hidden])].sort();
+  return sites.map((site) => ({ site, state: hidden.includes(site) ? 'hidden' : contextPrefs[site] }));
+}
+
+export function withInlineAssistSiteState(model, site, state) {
+  const next = inlineAssistSitesModel(model?.contextPrefs, model?.hidden);
+  const key = String(site || '').toLowerCase();
+  if (!key) return next;
+  if (state === 'hidden') return inlineAssistSitesModel(next.contextPrefs, [...next.hidden, key]);
+  const hidden = next.hidden.filter((entry) => entry !== key);
+  return inlineAssistSitesModel(state === 'visible' || state === 'draft' ? { ...next.contextPrefs, [key]: state } : next.contextPrefs, hidden);
+}
+
+export function withoutInlineAssistSite(model, site) {
+  const next = inlineAssistSitesModel(model?.contextPrefs, model?.hidden);
+  const key = String(site || '').toLowerCase();
+  const { [key]: _removed, ...contextPrefs } = next.contextPrefs;
+  return inlineAssistSitesModel(contextPrefs, next.hidden.filter((entry) => entry !== key));
+}
+
 export const INLINE_ASSIST_LOOK_API = Object.freeze({
   icons: INLINE_ASSIST_ICONS,
   openModes: INLINE_ASSIST_OPEN_MODES,
