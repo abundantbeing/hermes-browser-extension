@@ -50,12 +50,69 @@ export function inlineAssistIconAsset(icon, tone) {
   return 'assets/img/assist-wing.png';
 }
 
+// Every bundled face a font profile can name, as sidepanel.css and lib/fonts.css declare it. The
+// background serves these as bytes (font files are never web-accessible); the panel registers them
+// under INLINE_ASSIST_FONT_PREFIX so a page's own fonts with the same name can not clash.
+const face = (file, weight = '400', style = 'normal') => Object.freeze({ file, weight, style });
+const google = (name, weights) => Object.freeze(weights.map((weight) => face(`assets/fonts/google/${name}-${weight}.woff2`, String(weight))));
+export const INLINE_ASSIST_FONT_FILES = Object.freeze({
+  'Rules Variable': Object.freeze([face('assets/fonts/RulesVariable.woff2', '100 900')]),
+  'Rules Gothic Compressed': Object.freeze([face('assets/fonts/RulesGothicCmp-Medium.woff2', '100 900')]),
+  Collapse: Object.freeze([face('assets/fonts/Collapse-Light.woff2', '300'), face('assets/fonts/Collapse-Regular.woff2', '400'), face('assets/fonts/Collapse-Bold.woff2', '700')]),
+  HermesDisplay: Object.freeze([face('assets/fonts/Sigurd-Variable.woff2', '300 800')]),
+  HermesMono: Object.freeze([face('assets/fonts/CourierPrime-Regular.woff2')]),
+  Montserrat: google('Montserrat', [400, 600, 700]),
+  'Source Sans 3': google('SourceSans3', [400, 600]),
+  'IBM Plex Sans': google('IBMPlexSans', [400, 600]),
+  Outfit: google('Outfit', [400, 600]),
+  'Space Grotesk': google('SpaceGrotesk', [400, 600]),
+  'Playfair Display': google('PlayfairDisplay', [400, 700]),
+  'Libre Baskerville': google('LibreBaskerville', [400, 700]),
+  Fraunces: google('Fraunces', [400, 700]),
+  Cinzel: google('Cinzel', [400, 700]),
+});
+export const INLINE_ASSIST_FONT_PREFIX = 'HermesAssist ';
+
+export function namespaceFontStack(stack) {
+  const families = [];
+  const renamed = String(stack || '').replace(/"([^"]+)"/g, (whole, family) => {
+    if (!Object.hasOwn(INLINE_ASSIST_FONT_FILES, family)) return whole;
+    if (!families.includes(family)) families.push(family);
+    return `"${INLINE_ASSIST_FONT_PREFIX}${family}"`;
+  });
+  return { stack: renamed, families };
+}
+
+// The panel's text, heading and code stacks for a font profile. The caller passes the profile's own
+// stack (HermesAppearancePreferences.fontFamilyPreview), since this module stays import-free. Signature
+// mirrors the side panel's own tokens: Rules Variable for text, Rules Gothic Compressed for headings,
+// with the bundled Space Grotesk and HermesDisplay standing in when the licensed faces are absent.
+const SIGNATURE_UI_STACK = '"Rules Variable", "Space Grotesk", "Segoe UI", system-ui, sans-serif';
+const SIGNATURE_DISPLAY_STACK = '"Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif';
+const MONO_STACK = '"HermesMono", ui-monospace, Consolas, monospace';
+export function inlineAssistFontStacks(fontProfile, profileStack) {
+  const signature = fontProfile === 'signature';
+  const ui = namespaceFontStack(signature ? SIGNATURE_UI_STACK : profileStack);
+  const display = signature ? namespaceFontStack(SIGNATURE_DISPLAY_STACK) : ui;
+  const mono = namespaceFontStack(MONO_STACK);
+  return {
+    ui: ui.stack,
+    display: display.stack,
+    mono: mono.stack,
+    families: [...new Set([...ui.families, ...display.families, ...mono.families])],
+  };
+}
+
 export const INLINE_ASSIST_LOOK_API = Object.freeze({
   icons: INLINE_ASSIST_ICONS,
   openModes: INLINE_ASSIST_OPEN_MODES,
+  fontFiles: INLINE_ASSIST_FONT_FILES,
+  fontPrefix: INLINE_ASSIST_FONT_PREFIX,
   normalizeInlineAssistIcon,
   normalizeInlineAssistOpenMode,
   parseCssColor,
   circleToneForBackground,
   inlineAssistIconAsset,
+  namespaceFontStack,
+  inlineAssistFontStacks,
 });

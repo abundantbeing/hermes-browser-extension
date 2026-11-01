@@ -262,3 +262,10 @@ export function applyAppearancePreferences(root, preferences) {
   // --hermes-font-mono is intentionally never touched.
   return normalized;
 }
+
+// The content script's view of these rules (scripts/build-content-runtime.mjs bundles this module).
+export const APPEARANCE_PREFERENCES_API = Object.freeze({
+  fontFamilyPreview,
+  normalizeFontProfile,
+  sanitizeLocalFontFamily,
+});

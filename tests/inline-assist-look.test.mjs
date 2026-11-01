@@ -1,9 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { readFileSync } from 'node:fs';
+
 import {
+  INLINE_ASSIST_FONT_FILES,
+  INLINE_ASSIST_FONT_PREFIX,
   INLINE_ASSIST_ICONS,
   circleToneForBackground,
+  inlineAssistFontStacks,
+  namespaceFontStack,
   inlineAssistIconAsset,
   normalizeInlineAssistIcon,
   normalizeInlineAssistOpenMode,
@@ -54,4 +60,52 @@ test('each icon and tone names a packaged image', () => {
   assert.equal(inlineAssistIconAsset('girl', 'dark'), 'assets/img/assist-girl-outline.png');
   assert.equal(inlineAssistIconAsset('girl', 'light'), 'assets/img/assist-girl-solid.png');
   assert.equal(inlineAssistIconAsset('unknown', 'light'), 'assets/img/assist-wing.png');
+});
+
+function fontFaces(file, base) {
+  const css = readFileSync(new URL(file, new URL('../extension/', import.meta.url)), 'utf8');
+  return [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map(([, block]) => ({
+    family: /font-family:\s*['"]?([^'";]+)['"]?/.exec(block)?.[1],
+    file: new URL(/url\(['"]?([^'")]+)['"]?\)/.exec(block)?.[1], `https://x/${base}`).pathname.slice(1),
+    weight: /font-weight:\s*([^;]+);/.exec(block)?.[1]?.trim() || '400',
+    style: /font-style:\s*([^;]+);/.exec(block)?.[1]?.trim() || 'normal',
+  }));
+}
+
+test('the Assist font table mirrors the faces the extension already declares', () => {
+  const declared = [...fontFaces('sidepanel.css', ''), ...fontFaces('lib/fonts.css', 'lib/')];
+  for (const [family, faces] of Object.entries(INLINE_ASSIST_FONT_FILES)) {
+    for (const face of faces) {
+      assert.ok(declared.some((entry) => entry.family === family && entry.file === face.file && entry.weight === face.weight && entry.style === face.style), `${family} ${face.file}`);
+    }
+  }
+  for (const family of ['Rules Variable', 'Rules Gothic Compressed', 'Space Grotesk', 'HermesDisplay', 'HermesMono', 'Collapse', 'Montserrat', 'Cinzel']) {
+    assert.ok(INLINE_ASSIST_FONT_FILES[family]?.length, family);
+  }
+});
+
+test('bundled families in a stack are renamed so they never clash with the page', () => {
+  assert.equal(INLINE_ASSIST_FONT_PREFIX, 'HermesAssist ');
+  assert.deepEqual(namespaceFontStack('"Rules Variable", "Segoe UI", sans-serif'), {
+    stack: '"HermesAssist Rules Variable", "Segoe UI", sans-serif',
+    families: ['Rules Variable'],
+  });
+  assert.deepEqual(namespaceFontStack('var(--hermes-font-mono)'), { stack: 'var(--hermes-font-mono)', families: [] });
+  assert.deepEqual(namespaceFontStack('Georgia, "Times New Roman", serif'), { stack: 'Georgia, "Times New Roman", serif', families: [] });
+});
+
+test('the signature profile pairs Rules Variable text with Rules Gothic Compressed headings', () => {
+  const stacks = inlineAssistFontStacks('signature', '"Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif');
+  assert.equal(stacks.ui, '"HermesAssist Rules Variable", "HermesAssist Space Grotesk", "Segoe UI", system-ui, sans-serif');
+  assert.equal(stacks.display, '"HermesAssist Rules Gothic Compressed", "HermesAssist HermesDisplay", "HermesAssist Rules Variable", "HermesAssist Space Grotesk", sans-serif');
+  assert.equal(stacks.mono, '"HermesAssist HermesMono", ui-monospace, Consolas, monospace');
+  assert.deepEqual([...stacks.families].sort(), ['HermesDisplay', 'HermesMono', 'Rules Gothic Compressed', 'Rules Variable', 'Space Grotesk']);
+});
+
+test('any other profile uses its own stack for text and headings alike', () => {
+  const stacks = inlineAssistFontStacks('montserrat', '"Montserrat", "Segoe UI", sans-serif');
+  assert.equal(stacks.ui, '"HermesAssist Montserrat", "Segoe UI", sans-serif');
+  assert.equal(stacks.display, stacks.ui);
+  assert.deepEqual([...stacks.families].sort(), ['HermesMono', 'Montserrat']);
+  assert.equal(inlineAssistFontStacks('mono', 'var(--hermes-font-mono)').ui, 'var(--hermes-font-mono)');
 });
