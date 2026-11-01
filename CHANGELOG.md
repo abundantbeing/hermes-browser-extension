@@ -5,6 +5,9 @@
 ### Added
 
 - **Bot Mode loads your bots and their pictures from the extension's Hermes plugin.** When the gateway has no roster routes of its own (stock Hermes serves no `GET /v1/profiles`), the panel now asks the `hermes-browser-extension` plugin, installed as described in `companion-plugin/install.md`, for each bot's title, shape, colour and picture, with the same API key, instead of listing names only. The plugin answers only for the bots that gateway serves and never returns paths or other plugins' data. Hermes needs one restart after you install or update the plugin so its routes exist; until then Bot Mode lists the bots by name, as before.
+- **Hermes Assist's new button.** The button by a writing field is now a small circle carrying the icon you choose under Settings → Hermes Assist → Button icon: the wing (the default), the staff or the Nous girl. The circle takes the tone that stands out against the page under it, light on a dark page and dark on a light one, and follows the page when its theme changes.
+- **Replace text automatically** is a saved setting, shared by Settings → Hermes Assist and the switch in the Assist panel. Turning it off in either place keeps it off for every later run, on every page.
+- **The Assist panel uses your font.** It follows the font profile you chose for the side panel, the Rules signature faces included. The faces reach the page from the extension itself, never as files a page can load, and under random names, so a page can not tell which font you picked.
 
 ### Fixed
 
