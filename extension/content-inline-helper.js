@@ -256,6 +256,10 @@
   let stabilizationFrame = 0;
   let stabilizationDeadline = 0;
   const SITE_CONTEXT_STORAGE_KEY = 'hermesInlineSiteContextPreferences';
+  // "Replace text automatically" has its own key, shared with Settings → Hermes Assist, so Assist never
+  // rewrites the settings record Settings and Hermes Control also save. Unset, the record's copy decides.
+  const AUTO_REPLACE_STORAGE_KEY = 'hermesInlineAssistAutoReplace';
+  let savedAutoReplace = null;
   const visualViewport = globalThis.visualViewport || null;
   let assistSettings = {
     inlineAssistEnabled: true,
@@ -384,7 +388,7 @@
   }
 
   function applyAssistSettings() {
-    autoReplace = assistSettings.inlineAssistAutoReplace !== false;
+    autoReplace = savedAutoReplace ?? (assistSettings.inlineAssistAutoReplace !== false);
     // An open panel shows the saved choice; the switch stays off where the editor cannot be written to.
     for (const toggle of panel.querySelectorAll('input.toggle[data-setting="auto-replace"]')) {
       if (!toggle.disabled) toggle.checked = autoReplace;
@@ -404,21 +408,19 @@
   }
 
   async function loadAssistSettings() {
-    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY]).catch(() => ({}));
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY, AUTO_REPLACE_STORAGE_KEY]).catch(() => ({}));
     assistSettings = { ...assistSettings, ...(stored?.hermesBrowserSettings || {}) };
+    savedAutoReplace = typeof stored?.[AUTO_REPLACE_STORAGE_KEY] === 'boolean' ? stored[AUTO_REPLACE_STORAGE_KEY] : null;
     siteContextPreferences = adapters?.normalizeInlineSiteContextPreferences?.(stored?.[SITE_CONTEXT_STORAGE_KEY]) || {};
     assistSettings.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     refreshSiteProfile();
     applyAssistSettings();
   }
 
-  // "Replace text automatically" is a saved setting, shared with Settings → Hermes Assist.
   async function persistAutoReplace(enabled) {
     autoReplace = Boolean(enabled);
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
-    const next = { ...(stored?.hermesBrowserSettings || {}), inlineAssistAutoReplace: autoReplace };
-    assistSettings = { ...assistSettings, ...next };
-    await browserApi.storage.local.set({ hermesBrowserSettings: next });
+    savedAutoReplace = autoReplace;
+    await browserApi.storage.local.set({ [AUTO_REPLACE_STORAGE_KEY]: autoReplace });
   }
 
   async function persistDefaultRoute(route) {
@@ -449,6 +451,10 @@
     if (changes?.hermesBrowserSettings) {
       assistSettings = { ...assistSettings, ...(changes.hermesBrowserSettings.newValue || {}) };
       assistSettings.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
+    }
+    if (changes?.[AUTO_REPLACE_STORAGE_KEY]) {
+      const value = changes[AUTO_REPLACE_STORAGE_KEY].newValue;
+      savedAutoReplace = typeof value === 'boolean' ? value : null;
     }
     if (changes?.[SITE_CONTEXT_STORAGE_KEY]) {
       siteContextPreferences = adapters?.normalizeInlineSiteContextPreferences?.(changes[SITE_CONTEXT_STORAGE_KEY].newValue) || {};

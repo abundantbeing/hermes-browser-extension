@@ -2910,8 +2910,10 @@ function adoptSettingsBaselineValue(control) {
   renderSettingsEditedMarkers();
 }
 
-// Assist's own switch on a page saves this too. The panel takes the new value in, and its checkbox shows it
-// unless the box holds an unsaved edit, so an unrelated Save does not write an older copy back.
+// "Replace text automatically" is kept under its own key, which Assist's switch on a page writes (never the
+// settings record). The panel takes a new value in, and its checkbox shows it unless the box holds an
+// unsaved edit, so an unrelated Save does not write an older copy back.
+const INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = 'hermesInlineAssistAutoReplace';
 function adoptInlineAssistAutoReplaceChange(value) {
   const saved = settings.inlineAssistAutoReplace !== false;
   const next = value !== false;
@@ -23060,7 +23062,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -23105,7 +23107,9 @@ async function loadSettings({ restoreMessages = false } = {}) {
     inlineAssistEnabled: settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute),
     inlineAssistIcon: normalizeInlineAssistIcon(settings.inlineAssistIcon),
-    inlineAssistAutoReplace: settings.inlineAssistAutoReplace !== false,
+    inlineAssistAutoReplace: typeof stored[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY] === 'boolean'
+      ? stored[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]
+      : settings.inlineAssistAutoReplace !== false,
     inlineAssistModel: String(settings.inlineAssistModel || ''),
     inlineAssistRawModel: String(settings.inlineAssistRawModel || ''),
     inlineAssistProvider: String(settings.inlineAssistProvider || ''),
@@ -23591,6 +23595,7 @@ async function saveSettingsFromForm() {
   );
   applyAppearanceSettings();
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]: settings.inlineAssistAutoReplace !== false });
   await applyWebappCredentialPreference();
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
     || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
@@ -29809,9 +29814,9 @@ function bindEvents() {
           renderBrowserControl();
         }
         adoptStoredResponsePresentation(next);
-        if (Object.hasOwn(next, 'inlineAssistAutoReplace')) adoptInlineAssistAutoReplaceChange(next.inlineAssistAutoReplace);
       }
     }
+    if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);
     if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)) adoptOnboardingCompletedChange(changes);
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
     if (Object.hasOwn(changes, CONTEXT_CONSENT_STORAGE_KEY)) {
