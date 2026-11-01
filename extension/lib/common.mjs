@@ -2497,7 +2497,8 @@ function renderInlineMarkdown(value = '') {
     });
     let html = escapeHtml(withImageTokens);
     html = html.replace(/@@HERMES_IMAGE_(\d+)@@/g, (_match, index) => images[Number(index)] || '');
-    html = html.replace(/\[([^\]]+)\]\(([^\s)]+)\)/g, (_match, text, href) => {
+    // A link target may hold balanced parentheses (`https://en.wikipedia.org/wiki/Rust_(programming_language)`).
+    html = html.replace(/\[([^\]]+)\]\(((?:[^\s()]|\([^\s()]*\))+)\)/g, (_match, text, href) => {
           const safe = safeHref(href);
           return safe ? `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
         });
@@ -2521,8 +2522,14 @@ function isTableDivider(line = '') {
   return /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(line);
 }
 
+// A table row splits on unescaped pipes; `\|` is a literal pipe inside a cell (GFM).
 function tableCells(line = '') {
-  return String(line || '').trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+  return String(line || '')
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/(?<!\\)\|$/, '')
+    .split(/(?<!\\)\|/)
+    .map((cell) => cell.trim().replace(/\\\|/g, '|'));
 }
 
 function renderTableBlock(lines = []) {
@@ -2533,82 +2540,212 @@ function renderTableBlock(lines = []) {
   return `<div class="md-table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-function flushParagraph(out, paragraph) {
-  if (!paragraph.length) return;
-  out.push(`<p>${renderInlineMarkdown(paragraph.join(' '))}</p>`);
-  paragraph.length = 0;
+// Indentation is measured with tab stops of four columns; only leading whitespace is ever rewritten, so
+// tabs inside code keep their bytes.
+function expandLeadingTabs(line = '') {
+  const text = String(line || '');
+  const lead = /^[ \t]*/.exec(text)[0];
+  let width = 0;
+  for (const char of lead) width += char === '\t' ? 4 - (width % 4) : 1;
+  return `${' '.repeat(width)}${text.slice(lead.length)}`;
 }
 
-function flushList(out, list) {
-  if (!list.items.length) return;
-  const tag = list.ordered ? 'ol' : 'ul';
-  const start = list.ordered && list.start !== 1 ? ` start="${list.start}"` : '';
-  out.push(`<${tag}${start}>${list.items.map((item) => `<li>${renderListItem(item)}</li>`).join('')}</${tag}>`);
-  list.items = [];
-  list.ordered = false;
-  list.start = 1;
+function indentWidth(line = '') {
+  return /^ */.exec(expandLeadingTabs(line))[0].length;
 }
 
-function renderListItem(item = '') {
-  const task = /^\[([ xX])\]\s+(.+)$/.exec(String(item || ''));
-  if (!task) return renderInlineMarkdown(item);
-  const checked = task[1].trim().toLowerCase() === 'x';
-  return `<span class="md-task ${checked ? 'checked' : ''}" aria-hidden="true">${checked ? '✓' : '□'}</span>${renderInlineMarkdown(task[2])}`;
+// Remove up to `columns` columns of leading whitespace.
+function dedent(line = '', columns = 0) {
+  const text = String(line || '');
+  let width = 0;
+  let index = 0;
+  while (index < text.length && width < columns && (text[index] === ' ' || text[index] === '\t')) {
+    const step = text[index] === '\t' ? 4 - (width % 4) : 1;
+    if (width + step > columns) return `${' '.repeat(width + step - columns)}${text.slice(index + 1)}`;
+    width += step;
+    index += 1;
+  }
+  return text.slice(index);
 }
 
-export function renderMarkdown(value = '') {
-  const text = redactSensitiveText(String(value || ''));
-  if (!text.trim()) return '';
-  const lines = text.replace(/\r\n/g, '\n').split('\n');
+function isBlankLine(line = '') {
+  return !String(line || '').trim();
+}
+
+/**
+ * A fence opening: three or more backticks or tildes, at any indentation (replies indent fences inside
+ * list items and quotes). The fence closes on a line of the same character, at least as long, with
+ * nothing after it, so a ```js line inside a ~~~ or ```` block stays code.
+ */
+export function markdownFenceOpening(line = '') {
+  const match = /^( *)(`{3,}|~{3,})(.*)$/.exec(expandLeadingTabs(line));
+  if (!match) return null;
+  const [, indent, marker, info] = match;
+  if (marker[0] === '`' && info.includes('`')) return null;
+  return { indent: indent.length, char: marker[0], length: marker.length, info: info.trim() };
+}
+
+export function isMarkdownFenceClose(line = '', opening = null) {
+  if (!opening) return false;
+  const match = /^ *(`{3,}|~{3,})\s*$/.exec(expandLeadingTabs(line));
+  return Boolean(match && match[1][0] === opening.char && match[1].length >= opening.length);
+}
+
+function listItemStart(line = '') {
+  const match = /^( *)([-*+]|(\d{1,9})[.)])( +|$)(.*)$/.exec(expandLeadingTabs(line));
+  if (!match) return null;
+  const [, indent, marker, number, spacing, content] = match;
+  // Content starts after the marker and its spacing; five or more spaces leave one (an indented code
+  // start in CommonMark), and an empty item continues one column after the marker.
+  const gap = spacing.length >= 1 && spacing.length <= 4 ? spacing.length : 1;
+  return {
+    indent: indent.length,
+    ordered: number !== undefined,
+    number: number === undefined ? 1 : Number(number),
+    contentOffset: indent.length + marker.length + gap,
+    content: spacing.length > 4 ? `${' '.repeat(spacing.length - 1)}${content}` : content,
+  };
+}
+
+function isQuoteLine(line = '') {
+  return /^ {0,3}>/.test(expandLeadingTabs(line));
+}
+
+function stripQuoteMarker(line = '') {
+  return expandLeadingTabs(line).replace(/^ {0,3}> ?/, '');
+}
+
+function renderListItem(lines = []) {
+  const items = [...lines];
+  const task = /^\[([ xX])\]\s+(.*)$/.exec(items[0] || '');
+  let prefix = '';
+  if (task) {
+    const checked = task[1].trim().toLowerCase() === 'x';
+    prefix = `<span class="md-task ${checked ? 'checked' : ''}" aria-hidden="true">${checked ? '✓' : '□'}</span>`;
+    items[0] = task[2];
+  }
+  // A tight item (no blank line inside it) keeps its text inline, as a list item always has here.
+  const tight = !items.some(isBlankLine);
+  return `${prefix}${renderMarkdownBlocks(items, { tight })}`;
+}
+
+// The lines of one list item from `start`: its first line, then every line indented to its content
+// column (dedented to it), and blank lines that sit between such lines.
+function collectListItem(lines, start, item) {
+  const body = [item.content];
+  let index = start + 1;
+  let fence = markdownFenceOpening(item.content);
+  while (index < lines.length) {
+    const line = lines[index];
+    if (fence) {
+      // Inside a fenced block of this item every line is code until the fence closes, at whatever
+      // indentation the reply closed it; a less indented non-blank line means it left the item.
+      if (isMarkdownFenceClose(line, fence)) {
+        body.push(line.trim());
+        fence = null;
+        index += 1;
+        continue;
+      }
+      if (!isBlankLine(line) && indentWidth(line) < item.contentOffset) break;
+      body.push(dedent(line, item.contentOffset));
+      index += 1;
+      continue;
+    }
+    if (isBlankLine(line)) {
+      let next = index + 1;
+      while (next < lines.length && isBlankLine(lines[next])) next += 1;
+      if (next >= lines.length || indentWidth(lines[next]) < item.contentOffset) break;
+      for (; index < next; index += 1) body.push('');
+      continue;
+    }
+    if (indentWidth(line) < item.contentOffset) break;
+    const dedented = dedent(line, item.contentOffset);
+    body.push(dedented);
+    fence = markdownFenceOpening(dedented);
+    index += 1;
+  }
+  return { body, next: index };
+}
+
+function renderListBlock(lines, start) {
+  const first = listItemStart(lines[start]);
+  const items = [];
+  let index = start;
+  let expected = first.number;
+  while (index < lines.length) {
+    const item = listItemStart(lines[index]);
+    if (!item || item.ordered !== first.ordered || item.indent >= first.contentOffset) break;
+    // A number out of sequence starts a new list, so explicit numbering survives (`start="…"`).
+    if (first.ordered && item.number !== expected) break;
+    const { body, next } = collectListItem(lines, index, item);
+    items.push(body);
+    expected += 1;
+    index = next;
+    // Blank lines between two items of the same list keep it one list.
+    let peek = index;
+    while (peek < lines.length && isBlankLine(lines[peek])) peek += 1;
+    const sibling = peek > index && peek < lines.length ? listItemStart(lines[peek]) : null;
+    if (sibling && sibling.ordered === first.ordered && sibling.indent < first.contentOffset
+      && (!first.ordered || sibling.number === expected)) {
+      index = peek;
+    }
+  }
+  const tag = first.ordered ? 'ol' : 'ul';
+  const startAttribute = first.ordered && first.number !== 1 ? ` start="${first.number}"` : '';
+  const html = `<${tag}${startAttribute}>${items.map((body) => `<li>${renderListItem(body)}</li>`).join('')}</${tag}>`;
+  return { html, next: index };
+}
+
+function renderMarkdownBlocks(lines = [], { tight = false } = {}) {
   const out = [];
   const paragraph = [];
-  const list = { ordered: false, start: 1, items: [] };
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    const inline = renderInlineMarkdown(paragraph.join(' '));
+    out.push(tight ? inline : `<p>${inline}</p>`);
+    paragraph.length = 0;
+  };
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     const trimmed = line.trim();
-    if (trimmed.startsWith('```')) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
-      const lang = trimmed.slice(3).trim();
+    const fence = markdownFenceOpening(line);
+    if (fence) {
+      flushParagraph();
       const code = [];
       index += 1;
-      while (index < lines.length && !lines[index].trim().startsWith('```')) {
-        code.push(lines[index]);
+      while (index < lines.length && !isMarkdownFenceClose(lines[index], fence)) {
+        // Code lines lose the fence's own indentation, never more.
+        code.push(dedent(lines[index], fence.indent));
         index += 1;
       }
-      out.push(`<pre><code${lang ? ` data-lang="${escapeHtml(lang)}"` : ''}>${escapeHtml(code.join('\n'))}</code></pre>`);
+      out.push(`<pre><code${fence.info ? ` data-lang="${escapeHtml(fence.info)}"` : ''}>${escapeHtml(code.join('\n'))}</code></pre>`);
       continue;
     }
     if (!trimmed) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       continue;
     }
     const markdownImage = /^!\[([^\]]*)\]\((.+)\)$/.exec(trimmed);
     if (markdownImage) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       const image = generatedImageMarkup(markdownImage[2], markdownImage[1]);
       out.push(image || generatedImageUnavailableMarkup());
       continue;
     }
     const mediaTag = /^MEDIA:\s*(.+)$/.exec(trimmed);
     if (mediaTag) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       const image = generatedImageMarkup(mediaTag[1]);
       out.push(image || generatedImageUnavailableMarkup());
       continue;
     }
     if (isHorizontalRule(line)) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       out.push('<hr />');
       continue;
     }
     if (line.includes('|') && index + 1 < lines.length && isTableDivider(lines[index + 1])) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       const tableLines = [line, lines[index + 1]];
       index += 2;
       while (index < lines.length && lines[index].includes('|') && lines[index].trim()) {
@@ -2621,38 +2758,41 @@ export function renderMarkdown(value = '') {
     }
     const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
     if (heading) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       const level = Math.min(6, heading[1].length);
       out.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
       continue;
     }
-    const quote = /^>\s+(.+)$/.exec(trimmed);
-    if (quote) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
-      out.push(`<blockquote>${renderInlineMarkdown(quote[1])}</blockquote>`);
+    if (isQuoteLine(line)) {
+      flushParagraph();
+      // Consecutive `>` lines, a bare `>` included, are one quote; its content is Markdown too.
+      const quoted = [];
+      while (index < lines.length && isQuoteLine(lines[index])) {
+        quoted.push(stripQuoteMarker(lines[index]));
+        index += 1;
+      }
+      index -= 1;
+      const inner = renderMarkdownBlocks(quoted, { tight: !quoted.some(isBlankLine) });
+      if (inner) out.push(`<blockquote>${inner}</blockquote>`);
       continue;
     }
-    const bullet = /^[-*+]\s+(.+)$/.exec(trimmed);
-    const ordered = /^(\d+)[.)]\s+(.+)$/.exec(trimmed);
-    if (bullet || ordered) {
-      flushParagraph(out, paragraph);
-      const wantOrdered = Boolean(ordered);
-      const orderedIndex = ordered ? Number(ordered[1]) : 1;
-      const expectedIndex = list.start + list.items.length;
-      if (list.items.length && (list.ordered !== wantOrdered || (wantOrdered && orderedIndex !== expectedIndex))) flushList(out, list);
-      list.ordered = wantOrdered;
-      if (!list.items.length) list.start = orderedIndex;
-      list.items.push(bullet ? bullet[1] : ordered[2]);
+    if (listItemStart(line) && /\S/.test(listItemStart(line).content)) {
+      flushParagraph();
+      const list = renderListBlock(lines, index);
+      out.push(list.html);
+      index = list.next - 1;
       continue;
     }
-    flushList(out, list);
     paragraph.push(trimmed);
   }
-  flushParagraph(out, paragraph);
-  flushList(out, list);
+  flushParagraph();
   return out.join('');
+}
+
+export function renderMarkdown(value = '') {
+  const text = redactSensitiveText(String(value || ''));
+  if (!text.trim()) return '';
+  return renderMarkdownBlocks(text.replace(/\r\n/g, '\n').split('\n'));
 }
 
 function modelContextTokens(model = {}) {

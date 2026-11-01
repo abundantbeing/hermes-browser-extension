@@ -14,7 +14,7 @@
 // streaming patcher can keep a finished block (and its local view state)
 // untouched while later text arrives.
 
-import { escapeHtml, redactSensitiveText, renderMarkdown } from './common.mjs';
+import { escapeHtml, isMarkdownFenceClose, markdownFenceOpening, redactSensitiveText, renderMarkdown } from './common.mjs';
 
 export const HAUI_SCHEMA = 'hermes.adaptive-ui';
 export const HAUI_VERSION = 1;
@@ -62,8 +62,9 @@ const CHART_KINDS = Object.freeze({
 });
 
 // ---------------------------------------------------------------------------
-// Fence splitting. Same fence rule as renderMarkdown: a line starting with ```
-// opens a fence and the next such line closes it. While a reply streams, an
+// Fence splitting. Same fence rule as renderMarkdown (markdownFenceOpening): three or
+// more backticks or tildes open a fence, and a line of the same character, at least
+// as long, closes it. While a reply streams, an
 // open fence is unfinished; once it has settled, an open fence ran to the end
 // of the reply and is read as it stands.
 
@@ -91,17 +92,17 @@ export function splitAdaptiveSegments(text = '', { streaming = true } = {}) {
     prose = [];
   };
   for (let index = 0; index < lines.length; index += 1) {
-    const trimmed = lines[index].trim();
-    if (!trimmed.startsWith('```')) {
+    const opening = markdownFenceOpening(lines[index]);
+    if (!opening) {
       if (!prose.length) proseStart = offsets[index];
       prose.push(lines[index]);
       continue;
     }
     let close = -1;
     for (let next = index + 1; next < lines.length; next += 1) {
-      if (lines[next].trim().startsWith('```')) { close = next; break; }
+      if (isMarkdownFenceClose(lines[next], opening)) { close = next; break; }
     }
-    const rawLang = trimmed.slice(3).trim().split(/\s+/)[0].toLowerCase();
+    const rawLang = opening.info.split(/\s+/)[0].toLowerCase();
     const closed = close >= 0;
     const bodyLines = lines.slice(index + 1, closed ? close : lines.length);
     const lang = adaptiveFenceLang(rawLang, closed ? bodyLines.join('\n') : '', closed);

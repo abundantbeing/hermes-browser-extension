@@ -1,0 +1,114 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { renderMarkdown } from '../extension/lib/common.mjs';
+import { splitAdaptiveSegments } from '../extension/lib/adaptive-ui.mjs';
+
+test('nested lists keep their hierarchy', () => {
+  assert.equal(
+    renderMarkdown('- Parent\n  - Child one\n  - Child two\n- Sibling'),
+    '<ul><li>Parent<ul><li>Child one</li><li>Child two</li></ul></li><li>Sibling</li></ul>',
+  );
+  assert.equal(
+    renderMarkdown('1. Install\n   - run npm ci\n   - run npm test\n2. Build'),
+    '<ol><li>Install<ul><li>run npm ci</li><li>run npm test</li></ul></li><li>Build</li></ol>',
+  );
+  assert.equal(
+    renderMarkdown('- [ ] parent\n  - [x] child'),
+    '<ul><li><span class="md-task " aria-hidden="true">□</span>parent<ul><li><span class="md-task checked" aria-hidden="true">✓</span>child</li></ul></li></ul>',
+  );
+  assert.equal(
+    renderMarkdown('- one\n\t- tab indented child'),
+    '<ul><li>one<ul><li>tab indented child</li></ul></li></ul>',
+  );
+});
+
+test('an indented line continues its list item instead of ending the list', () => {
+  assert.equal(
+    renderMarkdown('1. First item\n   continued on the next line\n2. Second'),
+    '<ol><li>First item continued on the next line</li><li>Second</li></ol>',
+  );
+  assert.equal(renderMarkdown('- a\n\n- b'), '<ul><li>a</li><li>b</li></ul>');
+  assert.equal(
+    renderMarkdown('1. Step\n\n   More about the step.\n\n2. Next'),
+    '<ol><li><p>Step</p><p>More about the step.</p></li><li>Next</li></ol>',
+  );
+});
+
+test('a fenced block inside a list item stays in the item and loses only the item indentation', () => {
+  assert.equal(
+    renderMarkdown('1. Run:\n   ```bash\n   npm test\n     --watch\n   ```\n2. Done'),
+    '<ol><li>Run:<pre><code data-lang="bash">npm test\n  --watch</code></pre></li><li>Done</li></ol>',
+  );
+  // A fence the reply closed at the left margin still closes; the list then ends as before.
+  assert.equal(
+    renderMarkdown('1. Run:\n   ```\n   npm test\n```\n\nAfter'),
+    '<ol><li>Run:<pre><code>npm test</code></pre></li></ol><p>After</p>',
+  );
+});
+
+test('existing list behaviour is unchanged', () => {
+  // Explicit numbering across separated fragments (issue #45) and plain lists.
+  assert.equal(
+    renderMarkdown('1. First item\n\nExplanation one.\n\n2. Second item'),
+    '<ol><li>First item</li></ol><p>Explanation one.</p><ol start="2"><li>Second item</li></ol>',
+  );
+  assert.equal(renderMarkdown('- one\n- two\nText after'), '<ul><li>one</li><li>two</li></ul><p>Text after</p>');
+  assert.equal(renderMarkdown('- one\n1. two'), '<ul><li>one</li></ul><ol><li>two</li></ol>');
+  assert.equal(renderMarkdown('**Bold start** of a paragraph'), '<p><strong>Bold start</strong> of a paragraph</p>');
+  assert.equal(renderMarkdown('* * *'), '<hr />');
+});
+
+test('consecutive quote lines are one blockquote, and a bare > separates its paragraphs', () => {
+  assert.equal(renderMarkdown('> line one\n> line two'), '<blockquote>line one line two</blockquote>');
+  assert.equal(
+    renderMarkdown('> first paragraph\n>\n> second paragraph'),
+    '<blockquote><p>first paragraph</p><p>second paragraph</p></blockquote>',
+  );
+  assert.equal(renderMarkdown('> - a\n> - b'), '<blockquote><ul><li>a</li><li>b</li></ul></blockquote>');
+  assert.equal(renderMarkdown('> single'), '<blockquote>single</blockquote>');
+  assert.doesNotMatch(renderMarkdown('> quoted\n>\n> more'), /&gt;/);
+});
+
+test('an escaped pipe stays inside its table cell', () => {
+  const html = renderMarkdown('| expr | note |\n|---|---|\n| a \\| b | escaped |');
+  assert.match(html, /<td>a \| b<\/td><td>escaped<\/td>/);
+});
+
+test('link targets keep balanced parentheses', () => {
+  assert.equal(
+    renderMarkdown('See [Rust](https://en.wikipedia.org/wiki/Rust_(programming_language)) now'),
+    '<p>See <a href="https://en.wikipedia.org/wiki/Rust_(programming_language)" target="_blank" rel="noopener noreferrer">Rust</a> now</p>',
+  );
+  assert.equal(
+    renderMarkdown('(see [docs](https://example.com/docs))'),
+    '<p>(see <a href="https://example.com/docs" target="_blank" rel="noopener noreferrer">docs</a>)</p>',
+  );
+});
+
+test('tilde fences and longer backtick fences are code', () => {
+  assert.equal(renderMarkdown('~~~python\nprint("hi")\n~~~'), '<pre><code data-lang="python">print(&quot;hi&quot;)</code></pre>');
+  assert.equal(renderMarkdown('````md\n```js\nx\n```\n````'), '<pre><code data-lang="md">```js\nx\n```</code></pre>');
+  assert.equal(renderMarkdown('~~~\n```\nstill code\n~~~'), '<pre><code>```\nstill code</code></pre>');
+  // Tabs inside code keep their bytes.
+  assert.equal(renderMarkdown('```make\nall:\n\tcc main.c\n```'), '<pre><code data-lang="make">all:\n\tcc main.c</code></pre>');
+  assert.equal(renderMarkdown('```js\nconst a = 1;'), '<pre><code data-lang="js">const a = 1;</code></pre>');
+});
+
+test('Vivid UI fence splitting follows the same fence rule', () => {
+  const segments = splitAdaptiveSegments('Intro\n\n````md\n```hermes-ui\n{"not":"a block"}\n```\n````\n\nOutro', { streaming: false });
+  assert.deepEqual(segments.map((segment) => segment.kind), ['markdown']);
+  assert.match(segments[0].text, /````md[\s\S]*````/);
+
+  const tilde = splitAdaptiveSegments('~~~text\n```\n~~~\n\nAfter', { streaming: false });
+  assert.deepEqual(tilde.map((segment) => segment.kind), ['markdown']);
+  assert.match(renderMarkdown(tilde[0].text), /<pre><code data-lang="text">```<\/code><\/pre><p>After<\/p>/);
+});
+
+test('the sanitized panel markup keeps nested lists, quote paragraphs and fenced code', async () => {
+  const { JSDOM } = await import('jsdom');
+  const { window } = new JSDOM('<!doctype html><html><body></body></html>');
+  globalThis.window = window;
+  const { renderMarkdownSafe } = await import('../extension/lib/sanitizer.mjs');
+  const markdown = '- Parent\n  - Child\n\n> one\n>\n> two\n\n~~~sh\necho hi\n~~~';
+  assert.equal(renderMarkdownSafe(markdown), renderMarkdown(markdown));
+});
