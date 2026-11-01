@@ -341,6 +341,23 @@ test('a hermes-ui example inside a list item fence stays code', () => {
   assert.deepEqual(splitAdaptiveSegments(margin, { streaming: false }).map((segment) => segment.kind), ['markdown', 'ui']);
 });
 
+test('Plain text keeps a recipe tab inside a list item fence', () => {
+  const reply = '- ~~~make\n  all:\n  \tcc main.c\n  ~~~';
+  assert.equal(renderMarkdown(reply), '<ul><li><pre><code data-lang="make">all:\n\tcc main.c</code></pre></li></ul>');
+  assert.equal(renderPlainResponse(reply), '<pre class="plain-response-code">all:\n\tcc main.c</pre>');
+});
+
+test('a nested item fence ends with its parent item, as in the renderer', () => {
+  const ui = '~~~hermes-ui\n{"version":1,"blocks":[{"type":"text","text":"x"}]}\n~~~';
+  // The left-margin `~~~~` has left the parent item, so it opens a new top-level fence around the example.
+  const reply = `- parent\n  - ~~~~md\n    code\n\n~~~~\n${ui}\n~~~~\n\nAfter`;
+  assert.deepEqual(splitAdaptiveSegments(reply, { streaming: false }).map((segment) => segment.kind), ['markdown']);
+  const example = '<pre><code>~~~hermes-ui\n{&quot;version&quot;:1,&quot;blocks&quot;:[{&quot;type&quot;:&quot;text&quot;,&quot;text&quot;:&quot;x&quot;}]}\n~~~</code></pre><p>After</p>';
+  assert.ok(renderMarkdown(reply).endsWith(example));
+  assert.ok(renderAdaptiveMarkdown(reply).endsWith(example));
+  assert.match(renderPlainResponse(reply), /<pre class="plain-response-code">~~~hermes-ui\n/);
+});
+
 test('a very long list item fence still renders', () => {
   const reply = `- ~~~\n${'\n'.repeat(150000)}`;
   assert.equal(splitAdaptiveSegments(reply, { streaming: false }).length, 1);
