@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The sessions list stays complete after you open a chat that is running in another app (Hermes Desktop, the phone app, another window) and then start a new session. It showed 0 sessions, and Refresh failed or kept saying 0, until the panel was reopened (#139).
 - A group chat keeps its own messages when you change what page Hermes reads. Choosing Chat only, or pinning or returning to a tab, showed the last single-bot chat under the room's name until the room was reopened, and pinning a tab with a saved chat left the room (#138).
 
 ## [0.4.0] - 2026-10-31

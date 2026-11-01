@@ -1,5 +1,17 @@
 # Hermes Browser Extension
 
+Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.com/docs) — connect active web context through a local gateway, Hermes Cloud, or a self-hosted remote gateway.
+
+> Created by **Jon Komet** (`@abundantbeing`). Community extension for [Hermes Agent](https://github.com/NousResearch/hermes-agent) by [Nous Research](https://nousresearch.com). MIT licensed.
+
+<p align="center">
+  <img src="./assets/readme/hermes-browser-demo.gif" alt="Hermes Browser Extension demo showing the side panel reading browser context and composing a Hermes prompt" width="100%" />
+</p>
+
+<p align="center">
+  <strong>v0.4.0 · Chromium and Firefox · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong>
+</p>
+
 <p align="center">
   <a href="https://github.com/abundantbeing/hermes-browser-extension/releases/latest"><img src="https://img.shields.io/github/v/release/abundantbeing/hermes-browser-extension?label=release&color=111111" alt="Latest release" /></a>
   <a href="https://addons.mozilla.org/firefox/addon/hermes-browser-extension/"><img src="https://img.shields.io/amo/v/hermes-browser-extension?logo=firefoxbrowser&logoColor=white&label=Firefox%20Add-ons&color=FF7139" alt="Firefox Add-ons" /></a>
@@ -18,18 +30,6 @@
   <img src="https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white" alt="Manifest V3" />
   <img src="https://img.shields.io/badge/Chromium-116%2B-4285F4?logo=googlechrome&logoColor=white" alt="Chromium 116+" />
   <img src="https://img.shields.io/badge/Firefox-142%2B-FF7139?logo=firefoxbrowser&logoColor=white" alt="Firefox 142+" />
-</p>
-
-Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.com/docs) — connect active web context through a local gateway, Hermes Cloud, or a self-hosted remote gateway.
-
-> Created by **Jon Komet** (`@abundantbeing`). Community extension for [Hermes Agent](https://github.com/NousResearch/hermes-agent) by [Nous Research](https://nousresearch.com). MIT licensed.
-
-<p align="center">
-  <img src="./assets/readme/hermes-browser-demo.gif" alt="Hermes Browser Extension demo showing the side panel reading browser context and composing a Hermes prompt" width="100%" />
-</p>
-
-<p align="center">
-  <strong>v0.4.0 · Chromium and Firefox · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong>
 </p>
 
 <p align="center">

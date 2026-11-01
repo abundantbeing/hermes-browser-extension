@@ -148,8 +148,13 @@ function durationParts(ms) {
  * A short turn length: "<1s", "14s", "1m 05s", "1h 02m". The UI locale's
  * narrow duration format where the browser has Intl.DurationFormat.
  * '' for an unknown, negative or implausible length.
+ * An explicit `DurationFormat` option (even `undefined` or `null`) replaces the
+ * browser's: a destructuring default would quietly bring the global back.
  */
-export function formatTurnDuration(ms, { locale, DurationFormat = globalThis.Intl?.DurationFormat } = {}) {
+export function formatTurnDuration(ms, options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  const { locale } = opts;
+  const DurationFormat = Object.hasOwn(opts, 'DurationFormat') ? opts.DurationFormat : globalThis.Intl?.DurationFormat;
   const value = Number(ms);
   if (!Number.isFinite(value) || value < 0 || value > MAX_TURN_MS) return '';
   if (value < 1000) return '<1s';
