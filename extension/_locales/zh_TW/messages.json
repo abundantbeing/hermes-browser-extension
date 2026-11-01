@@ -3887,6 +3887,10 @@
     "message": "0 完成 · 0 進行中",
     "description": "Runtime interface message ui.0.complete.0.active"
   },
+  "runtime_ui_a_small_menu_at_the_circle_type_or_pick_an_action_the_draft_goes_straight_into_the_field": {
+    "message": "圓圈旁的小選單。輸入或選擇動作，草稿直接寫入輸入框。",
+    "description": "Runtime interface message ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field"
+  },
   "runtime_ui_accept": {
     "message": "接受",
     "description": "Runtime interface message ui.accept"
@@ -3958,6 +3962,10 @@
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "調整側邊面板以獲得更好的可讀性，無需變更瀏覽器縮放。",
     "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_again": {
+    "message": "再來",
+    "description": "Runtime interface message ui.again"
   },
   "runtime_ui_agent": {
     "message": "代理程式",
@@ -4143,6 +4151,10 @@
     "message": "向 Hermes 詢問任何問題…",
     "description": "Runtime interface message ui.ask.hermes.anything"
   },
+  "runtime_ui_ask_hermes_ellipsis": {
+    "message": "問問 Hermes…",
+    "description": "Runtime interface message ui.ask.hermes.ellipsis"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "無法執行 Assist",
     "description": "Runtime interface message ui.assist.could.not.run"
@@ -4242,6 +4254,10 @@
   "runtime_ui_back_to_result": {
     "message": "返回結果",
     "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_back_to_the_quick_menu": {
+    "message": "返回快捷選單",
+    "description": "Runtime interface message ui.back.to.the.quick.menu"
   },
   "runtime_ui_background": {
     "message": "背景",
@@ -5247,6 +5263,14 @@
     "message": "草稿和輸入值會持續排除。",
     "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
   },
+  "runtime_ui_draft_in_place": {
+    "message": "草稿已放入",
+    "description": "Runtime interface message ui.draft.in.place"
+  },
+  "runtime_ui_draft_ready": {
+    "message": "草稿已就緒",
+    "description": "Runtime interface message ui.draft.ready"
+  },
   "runtime_ui_draft_ready_for_review": {
     "message": "草稿已準備好審查",
     "description": "Runtime interface message ui.draft.ready.for.review"
@@ -5407,6 +5431,10 @@
     "message": "事件",
     "description": "Runtime interface message ui.events"
   },
+  "runtime_ui_every_action_tool_and_option_at_once_with_a_preview_before_anything_changes": {
+    "message": "所有動作、工具和選項一次呈現，變更前先預覽。",
+    "description": "Runtime interface message ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes"
+  },
   "runtime_ui_exception": {
     "message": "異常",
     "description": "Runtime interface message ui.exception"
@@ -5522,6 +5550,14 @@
   "runtime_ui_full_largest_payload": {
     "message": "完整 - 最大載荷",
     "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_full_panel": {
+    "message": "完整面板",
+    "description": "Runtime interface message ui.full.panel"
+  },
+  "runtime_ui_full_panel_arrow": {
+    "message": "完整面板 →",
+    "description": "Runtime interface message ui.full.panel.arrow"
   },
   "runtime_ui_gateway": {
     "message": "閘道器",
@@ -6007,9 +6043,17 @@
     "message": "專案",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep": {
+    "message": "保留",
+    "description": "Runtime interface message ui.keep"
+  },
   "runtime_ui_keep_restricted": {
     "message": "Keep restricted",
     "description": "Runtime interface message ui.keep_restricted"
+  },
+  "runtime_ui_keep_assist_chats": {
+    "message": "保留 Assist 對話",
+    "description": "Runtime interface message ui.keep.assist.chats"
   },
   "runtime_ui_keep_assist_sessions": {
     "message": "保留 Assist 工作階段",
@@ -6026,6 +6070,10 @@
   "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
     "message": "保持目前交談可見。將結果傳回此欄位。",
     "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_kept_under_inline_assist_in_your_history": {
+    "message": "儲存在記錄的 Inline assist 下",
+    "description": "Runtime interface message ui.kept.under.inline.assist.in.your.history"
   },
   "runtime_ui_key": {
     "message": "金鑰",
@@ -6463,6 +6511,10 @@
     "message": "關",
     "description": "Runtime interface message ui.off"
   },
+  "runtime_ui_off_this_field_only": {
+    "message": "關閉：僅此輸入框",
+    "description": "Runtime interface message ui.off.this.field.only"
+  },
   "runtime_ui_ok": {
     "message": "確定",
     "description": "Runtime interface message ui.ok"
@@ -6879,9 +6931,17 @@
     "message": "快速指令",
     "description": "Runtime interface message ui.quick.commands"
   },
+  "runtime_ui_quick_menu": {
+    "message": "快捷選單",
+    "description": "Runtime interface message ui.quick.menu"
+  },
   "runtime_ui_range": {
     "message": "範圍",
     "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_read_the_visible_thread": {
+    "message": "讀取可見的對話",
+    "description": "Runtime interface message ui.read.the.visible.thread"
   },
   "runtime_ui_readable_dom_text": {
     "message": "可讀 DOM 文字",
@@ -6890,6 +6950,10 @@
   "runtime_ui_reading_connection_settings_and_canonical_session_history": {
     "message": "正在讀取連線設定和規範工作階段歷史。",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_reads_thread": {
+    "message": "讀取對話",
+    "description": "Runtime interface message ui.reads.thread"
   },
   "runtime_ui_ready": {
     "message": "就緒",
@@ -7823,6 +7887,10 @@
     "message": "此瀏覽器不會將 MediaRecorder/getUserMedia 暴露給擴充頁面，且 Web Speech 後備不可用。",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
+  "runtime_ui_this_field_only": {
+    "message": "僅此輸入框",
+    "description": "Runtime interface message ui.this.field.only"
+  },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
     "message": "此閘道尚未提供 /v1/capabilities。擴充功能專用路由會維持在後備模式。",
     "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
@@ -8186,6 +8254,10 @@
   "runtime_ui_what_should_we_work_on": {
     "message": "我們該做什麼？",
     "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_when_you_click_it": {
+    "message": "點擊時",
+    "description": "Runtime interface message ui.when.you.click.it"
   },
   "runtime_ui_where_it_runs": {
     "message": "執行位置",

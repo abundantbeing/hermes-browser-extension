@@ -3887,6 +3887,10 @@
     "message": "0 voltooid · 0 actief",
     "description": "Runtime interface message ui.0.complete.0.active"
   },
+  "runtime_ui_a_small_menu_at_the_circle_type_or_pick_an_action_the_draft_goes_straight_into_the_field": {
+    "message": "Een klein menu bij de cirkel. Typ of kies een actie; het concept komt direct in het veld.",
+    "description": "Runtime interface message ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field"
+  },
   "runtime_ui_accept": {
     "message": "Accepteer",
     "description": "Runtime interface message ui.accept"
@@ -3958,6 +3962,10 @@
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "Pas het zijpaneel aan voor leesbaarheid zonder de browserzoom te wijzigen.",
     "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_again": {
+    "message": "Opnieuw",
+    "description": "Runtime interface message ui.again"
   },
   "runtime_ui_agent": {
     "message": "AGENT",
@@ -4143,6 +4151,10 @@
     "message": "Vraag Hermes alles...",
     "description": "Runtime interface message ui.ask.hermes.anything"
   },
+  "runtime_ui_ask_hermes_ellipsis": {
+    "message": "Vraag het Hermes…",
+    "description": "Runtime interface message ui.ask.hermes.ellipsis"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist kon niet worden uitgevoerd",
     "description": "Runtime interface message ui.assist.could.not.run"
@@ -4242,6 +4254,10 @@
   "runtime_ui_back_to_result": {
     "message": "Terug naar resultaat",
     "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_back_to_the_quick_menu": {
+    "message": "Terug naar het snelmenu",
+    "description": "Runtime interface message ui.back.to.the.quick.menu"
   },
   "runtime_ui_background": {
     "message": "Achtergrond",
@@ -5247,6 +5263,14 @@
     "message": "Diepgangs- en invoerwaarden bleven uitgesloten.",
     "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
   },
+  "runtime_ui_draft_in_place": {
+    "message": "Concept geplaatst",
+    "description": "Runtime interface message ui.draft.in.place"
+  },
+  "runtime_ui_draft_ready": {
+    "message": "Concept klaar",
+    "description": "Runtime interface message ui.draft.ready"
+  },
   "runtime_ui_draft_ready_for_review": {
     "message": "Concept klaar voor beoordeling",
     "description": "Runtime interface message ui.draft.ready.for.review"
@@ -5407,6 +5431,10 @@
     "message": "Evenementen",
     "description": "Runtime interface message ui.events"
   },
+  "runtime_ui_every_action_tool_and_option_at_once_with_a_preview_before_anything_changes": {
+    "message": "Alle acties, hulpmiddelen en opties tegelijk, met een voorbeeld voordat er iets verandert.",
+    "description": "Runtime interface message ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes"
+  },
   "runtime_ui_exception": {
     "message": "Uitzondering",
     "description": "Runtime interface message ui.exception"
@@ -5522,6 +5550,14 @@
   "runtime_ui_full_largest_payload": {
     "message": "Volledig - grootste laadvermogen",
     "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_full_panel": {
+    "message": "Volledig paneel",
+    "description": "Runtime interface message ui.full.panel"
+  },
+  "runtime_ui_full_panel_arrow": {
+    "message": "Volledig paneel →",
+    "description": "Runtime interface message ui.full.panel.arrow"
   },
   "runtime_ui_gateway": {
     "message": "Gateway",
@@ -6007,9 +6043,17 @@
     "message": "Artikel",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep": {
+    "message": "Bewaren",
+    "description": "Runtime interface message ui.keep"
+  },
   "runtime_ui_keep_restricted": {
     "message": "Keep restricted",
     "description": "Runtime interface message ui.keep_restricted"
+  },
+  "runtime_ui_keep_assist_chats": {
+    "message": "Assist-chats bewaren",
+    "description": "Runtime interface message ui.keep.assist.chats"
   },
   "runtime_ui_keep_assist_sessions": {
     "message": "Behoud Assist-sessies",
@@ -6026,6 +6070,10 @@
   "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
     "message": "Houd de huidige chat zichtbaar. Stuur het resultaat terug naar dit veld.",
     "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_kept_under_inline_assist_in_your_history": {
+    "message": "Bewaard onder Inline assist in je geschiedenis",
+    "description": "Runtime interface message ui.kept.under.inline.assist.in.your.history"
   },
   "runtime_ui_key": {
     "message": "Sleutel",
@@ -6463,6 +6511,10 @@
     "message": "Uit",
     "description": "Runtime interface message ui.off"
   },
+  "runtime_ui_off_this_field_only": {
+    "message": "Uit: alleen dit veld",
+    "description": "Runtime interface message ui.off.this.field.only"
+  },
   "runtime_ui_ok": {
     "message": "Oké",
     "description": "Runtime interface message ui.ok"
@@ -6879,9 +6931,17 @@
     "message": "Snelle opdrachten",
     "description": "Runtime interface message ui.quick.commands"
   },
+  "runtime_ui_quick_menu": {
+    "message": "Snelmenu",
+    "description": "Runtime interface message ui.quick.menu"
+  },
   "runtime_ui_range": {
     "message": "Bereik",
     "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_read_the_visible_thread": {
+    "message": "Zichtbare thread lezen",
+    "description": "Runtime interface message ui.read.the.visible.thread"
   },
   "runtime_ui_readable_dom_text": {
     "message": "Leesbare DOM-tekst",
@@ -6890,6 +6950,10 @@
   "runtime_ui_reading_connection_settings_and_canonical_session_history": {
     "message": "Verbindingsinstellingen en canonieke sessiegeschiedenis lezen.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_reads_thread": {
+    "message": "Leest de thread",
+    "description": "Runtime interface message ui.reads.thread"
   },
   "runtime_ui_ready": {
     "message": "Klaar",
@@ -7823,6 +7887,10 @@
     "message": "Deze browser stelt MediaRecorder/getUserMedia niet bloot aan extensiepagina's en de fallback van Web Speech is niet beschikbaar.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
+  "runtime_ui_this_field_only": {
+    "message": "Alleen dit veld",
+    "description": "Runtime interface message ui.this.field.only"
+  },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
     "message": "Deze gateway maakt /v1/capabilities nog niet zichtbaar. Extensiespecifieke routes blijven in de fallback-modus.",
     "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
@@ -8186,6 +8254,10 @@
   "runtime_ui_what_should_we_work_on": {
     "message": "Waar moeten we aan werken?",
     "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_when_you_click_it": {
+    "message": "Als je erop klikt",
+    "description": "Runtime interface message ui.when.you.click.it"
   },
   "runtime_ui_where_it_runs": {
     "message": "Waar het draait",
