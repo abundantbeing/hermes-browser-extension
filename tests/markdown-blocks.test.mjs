@@ -285,3 +285,55 @@ test('horizontal rules end an unordered list', () => {
   // An indented rule inside an item still belongs to that item.
   assert.equal(renderMarkdown('- item\n\n  * * *\n- next'), '<ul><li><p>item</p><hr /></li><li>next</li></ul>');
 });
+
+test('a rejected link target with many closing parentheses renders quickly', () => {
+  const reply = `[docs](https://example.com/${'('.repeat(9)}${')'.repeat(100000)}`;
+  const started = Date.now();
+  const html = renderMarkdown(reply);
+  assert.ok(Date.now() - started < 2000, `took ${Date.now() - started} ms`);
+  assert.doesNotMatch(html, />docs<\/a>/);
+  // Trailing parentheses past the balanced ones still fall outside a bare link.
+  assert.equal(
+    renderMarkdown('see https://example.com/a_(b))).'),
+    '<p>see <a href="https://example.com/a_(b)" target="_blank" rel="noopener noreferrer">https://example.com/a_(b)</a>)).</p>',
+  );
+});
+
+test('a table pipe after an even run of backslashes splits the cells', () => {
+  const table = (row) => renderMarkdown(`| a | b |\n| - | - |\n${row}`).replace(/^.*<tbody>|<\/tbody>.*$/g, '');
+  assert.equal(table('| C:\\\\|ok |'), '<tr><td>C:\\\\</td><td>ok</td></tr>');
+  assert.equal(table('| x\\|y | z |'), '<tr><td>x|y</td><td>z</td></tr>');
+  assert.equal(table('| x\\\\\\|y | z |'), '<tr><td>x\\\\|y</td><td>z</td></tr>');
+});
+
+test('a fence inside a quote keeps tabs after list-like lines', () => {
+  assert.equal(
+    renderMarkdown('> ~~~tsv\n> 1.\tAlice\n> 2.\tBob\n> ~~~'),
+    '<blockquote><pre><code data-lang="tsv">1.\tAlice\n2.\tBob</code></pre></blockquote>',
+  );
+  // After the fence closes, list-marker tabs are spaced again.
+  assert.equal(
+    renderMarkdown('> ~~~\n> x\n> ~~~\n> -\titem'),
+    '<blockquote><pre><code>x</code></pre><ul><li>item</li></ul></blockquote>',
+  );
+});
+
+test('a hermes-ui example inside a list item fence stays code', () => {
+  const reply = [
+    '- ~~~~md',
+    '  Before',
+    '  ~~~hermes-ui',
+    '  {"version":1,"blocks":[{"type":"text","text":"x"}]}',
+    '  ~~~',
+    '  After',
+    '  ~~~~',
+    '',
+    'End',
+  ].join('\n');
+  const segments = splitAdaptiveSegments(reply, { streaming: false });
+  assert.deepEqual(segments.map((segment) => segment.kind), ['markdown']);
+  assert.equal(segments[0].text, reply);
+  // A list item that falls back out ends its fence; a later top-level block is still lifted.
+  const after = '- ~~~md\n  code\nNext\n~~~hermes-ui\n{"version":1,"blocks":[]}\n~~~';
+  assert.deepEqual(splitAdaptiveSegments(after, { streaming: false }).map((segment) => segment.kind), ['markdown', 'ui']);
+});
