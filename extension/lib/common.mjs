@@ -2484,41 +2484,57 @@ function generatedImageUnavailableMarkup() {
   return '<div class="generated-image-unavailable" role="status">Generated image unavailable in this browser response.</div>';
 }
 
-// A link target may nest parentheses (`https://en.wikipedia.org/wiki/Rust_(programming_language)`). Its end
-// is found by counting them in one pass, to a fixed depth, so no pattern can backtrack on it.
+// A link target may nest parentheses (`https://en.wikipedia.org/wiki/Rust_(programming_language)`). Every
+// parenthesis pair is matched in one pass over the text, to a fixed depth, so a target that fails is
+// never scanned again and no pattern can backtrack on it.
 const MARKDOWN_LINK_PAREN_DEPTH = 8;
 
-function linkTargetEnd(text, start) {
-  let depth = 1;
-  for (let index = start; index < text.length; index += 1) {
-    const char = text[index];
-    if (char === '(') {
-      depth += 1;
-      if (depth > MARKDOWN_LINK_PAREN_DEPTH) return -1;
-    } else if (char === ')') {
-      depth -= 1;
-      if (depth === 0) return index > start ? index : -1;
-    } else if (/\s/.test(char)) {
-      return -1;
+// The closing parenthesis of each `(` that follows a `]`, by index. A pair never spans whitespace.
+function linkTargetEnds(text) {
+  const ends = new Map();
+  const opens = [];
+  const heights = [];
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    if (code === 40) {
+      opens.push(index);
+      heights.push(1);
+    } else if (code === 41) {
+      if (!opens.length) continue;
+      const open = opens.pop();
+      const height = heights.pop();
+      if (heights.length) heights[heights.length - 1] = Math.max(heights[heights.length - 1], height + 1);
+      if (height <= MARKDOWN_LINK_PAREN_DEPTH && text.charCodeAt(open - 1) === 93) ends.set(open, index);
+    } else if ((code <= 32 || code > 127) && /\s/.test(text[index])) {
+      opens.length = 0;
+      heights.length = 0;
     }
   }
-  return -1;
+  return ends;
 }
 
+// `[label](target)`: the label opens at the first `[` after the previous `]` and holds no `]`.
 function replaceMarkdownLinks(html = '', render = (text) => text) {
-  const opener = /\[([^\]]+)\]\(/g;
+  if (!html.includes('](')) return html;
+  const ends = linkTargetEnds(html);
   let out = '';
   let last = 0;
-  let match;
-  while ((match = opener.exec(html))) {
-    const end = linkTargetEnd(html, opener.lastIndex);
-    if (end < 0) {
-      opener.lastIndex = match.index + 1;
-      continue;
+  let from = 0;
+  let open = -1;
+  let at = html.indexOf('](');
+  while (at >= 0) {
+    const start = Math.max(from, html.lastIndexOf(']', at - 1) + 1);
+    if (open < start) open = html.indexOf('[', start);
+    if (open < 0) break;
+    const end = ends.get(at + 1);
+    if (open < at - 1 && end > at + 2) {
+      out += html.slice(last, open) + render(html.slice(open + 1, at), html.slice(at + 2, end));
+      last = end + 1;
+      from = last;
+    } else {
+      from = at + 1;
     }
-    out += html.slice(last, match.index) + render(match[1], html.slice(opener.lastIndex, end));
-    last = end + 1;
-    opener.lastIndex = last;
+    at = html.indexOf('](', from);
   }
   return out + html.slice(last);
 }
@@ -2629,6 +2645,28 @@ export function isMarkdownFenceClose(line = '', opening = null) {
   return Boolean(match && match[1][0] === opening.char && match[1].length >= opening.length);
 }
 
+// A tab after a list marker runs to the next tab stop from the marker's own column. Once the text moves left
+// (a parent item's indentation or a quote marker removed) the same tab would span another width, so each
+// marker tab becomes the spaces it covers where it stands. `column` is where the text starts in the line.
+function spaceMarkerTabs(text = '', column = 0) {
+  if (!text.includes('\t')) return text;
+  let out = '';
+  let rest = text;
+  let at = column;
+  for (let depth = 0; depth < MARKDOWN_MAX_NESTING; depth += 1) {
+    const match = /^( *)([-*+]|\d{1,9}[.)])([ \t]+)/.exec(rest);
+    if (!match) break;
+    const [whole, indent, marker, spacing] = match;
+    at += indent.length + marker.length;
+    let width = 0;
+    for (const char of spacing) width += char === '\t' ? 4 - ((at + width) % 4) : 1;
+    out += `${indent}${marker}${' '.repeat(width)}`;
+    at += width;
+    rest = rest.slice(whole.length);
+  }
+  return out + rest;
+}
+
 function listItemStart(line = '') {
   const match = /^( *)([-*+]|(\d{1,9})[.)])([ \t]+|$)(.*)$/.exec(expandLeadingTabs(line));
   if (!match) return null;
@@ -2645,7 +2683,7 @@ function listItemStart(line = '') {
     ordered: number !== undefined,
     number: number === undefined ? 1 : Number(number),
     contentOffset: markerEnd + gap,
-    content: spaceWidth > 4 ? `${' '.repeat(spaceWidth - 1)}${content}` : content,
+    content: spaceMarkerTabs(spaceWidth > 4 ? `${' '.repeat(spaceWidth - 1)}${content}` : content, markerEnd + gap),
   };
 }
 
@@ -2654,7 +2692,9 @@ function isQuoteLine(line = '') {
 }
 
 function stripQuoteMarker(line = '') {
-  return expandLeadingTabs(line).replace(/^ {0,3}> ?/, '');
+  const expanded = expandLeadingTabs(line);
+  const marker = /^ {0,3}> ?/.exec(expanded)[0];
+  return spaceMarkerTabs(expanded.slice(marker.length), marker.length);
 }
 
 // Quotes and list items render their content as Markdown again; past this depth the rest of a reply stays
@@ -2662,14 +2702,18 @@ function stripQuoteMarker(line = '') {
 const MARKDOWN_MAX_NESTING = 32;
 
 // The fence a line opens, looking through the list markers in front of it: `- ````md` opens a fence one
-// list level down, and the item that holds it must still track that fence to its close.
+// list level down, and the item that holds it must still track that fence to its close. `owner` is the
+// column of the nested item's content (0 when no marker is in the way): that item, and the fence with it,
+// ends at the first line indented less than that.
 function openingFence(line = '') {
   let text = line;
+  let owner = 0;
   for (let depth = 0; depth < MARKDOWN_MAX_NESTING; depth += 1) {
     const fence = markdownFenceOpening(text);
-    if (fence) return fence;
+    if (fence) return { ...fence, owner };
     const item = listItemStart(text);
     if (!item || !/\S/.test(item.content)) return null;
+    owner = item.contentOffset;
     text = `${' '.repeat(item.contentOffset)}${item.content}`;
   }
   return null;
@@ -2697,6 +2741,8 @@ function collectListItem(lines, start, item) {
   let fence = openingFence(item.content);
   while (index < lines.length) {
     const line = lines[index];
+    // A fence opened by a nested item ends with that item, at the first line indented less than its content.
+    if (fence?.owner && !isBlankLine(line) && indentWidth(line) < item.contentOffset + fence.owner) fence = null;
     if (fence) {
       // Inside a fenced block of this item every line is code until the fence closes, at whatever
       // indentation the reply closed it; a less indented non-blank line means it left the item. The
@@ -2720,7 +2766,7 @@ function collectListItem(lines, start, item) {
       continue;
     }
     if (indentWidth(line) < item.contentOffset) break;
-    const dedented = dedent(line, item.contentOffset);
+    const dedented = dedent(spaceMarkerTabs(expandLeadingTabs(line)), item.contentOffset);
     body.push(dedented);
     fence = openingFence(dedented);
     index += 1;
