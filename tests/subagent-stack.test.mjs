@@ -171,8 +171,8 @@ test('sidepanel mounts a hidden-until-live SUBAGENTS stack beside TASKS', () => 
   assert.match(css, /\.subagent-stack\s*>\s*\.task-stack-toggle[\s\S]*grid-template-columns:\s*auto minmax\(0,1fr\) 20px/);
   assert.match(css, /\.subagent-stack-stream::-webkit-scrollbar/);
   assert.doesNotMatch(css, /\.subagent-stack[\s\S]{0,400}scrollbar-color/);
-  assert.match(source, /Steer this subagent/);
-  assert.match(source, /Stop this subagent/);
+  assert.match(source, /t\('ui\.steer\.this\.subagent'\)/);
+  assert.match(source, /t\('ui\.stop\.this\.subagent'\)/);
   assert.match(source, /SUBAGENT_STEER_ICON/);
   assert.match(css, /\.subagent-stack-controls[\s\S]*grid-template-columns:\s*minmax\(0,1fr\) 32px 32px/);
 });

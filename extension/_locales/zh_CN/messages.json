@@ -4259,6 +4259,10 @@
     "message": "正文",
     "description": "Runtime interface message ui.body"
   },
+  "runtime_ui_bot_options": {
+    "message": "机器人选项",
+    "description": "Runtime interface message ui.bot.options"
+  },
   "runtime_ui_browser": {
     "message": "浏览器",
     "description": "Runtime interface message ui.browser"
@@ -5419,6 +5423,10 @@
     "message": "字段发生变化时将改为人工审阅",
     "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
   },
+  "runtime_ui_fast": {
+    "message": "快速",
+    "description": "Runtime interface message ui.fast"
+  },
   "runtime_ui_fast_mode": {
     "message": "快速模式",
     "description": "Runtime interface message ui.fast.mode"
@@ -5538,6 +5546,10 @@
   "runtime_ui_group": {
     "message": "分组",
     "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_group_settings": {
+    "message": "群组设置",
+    "description": "Runtime interface message ui.group.settings"
   },
   "runtime_ui_group_working_many": {
     "message": "{first}、{second} 等 {count} 人正在处理…",
@@ -6383,6 +6395,10 @@
     "message": "标准 - 推荐默认",
     "description": "Runtime interface message ui.normal.good.default"
   },
+  "runtime_ui_not_accepting_steer": {
+    "message": "不接受引导",
+    "description": "Runtime interface message ui.not.accepting.steer"
+  },
   "runtime_ui_not_connected": {
     "message": "未连接",
     "description": "Runtime interface message ui.not.connected"
@@ -6450,6 +6466,10 @@
   "runtime_ui_open_full_view": {
     "message": "打开完整视图",
     "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_generated_image_for_closer_inspection": {
+    "message": "打开生成的图像以仔细查看",
+    "description": "Runtime interface message ui.open.generated.image.for.closer.inspection"
   },
   "runtime_ui_open_hermes_assist": {
     "message": "打开 Hermes Assist",
@@ -7539,6 +7559,10 @@
     "message": "引导当前运行",
     "description": "Runtime interface message ui.steer.the.current.run"
   },
+  "runtime_ui_steer_this_subagent": {
+    "message": "引导此子代理",
+    "description": "Runtime interface message ui.steer.this.subagent"
+  },
   "runtime_ui_steered_label": {
     "message": "已转向",
     "description": "Runtime interface message ui.steered.label"
@@ -7554,6 +7578,10 @@
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "切换会话前，请先停止当前运行。",
     "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
+  },
+  "runtime_ui_stop_this_subagent": {
+    "message": "停止此子代理",
+    "description": "Runtime interface message ui.stop.this.subagent"
   },
   "runtime_ui_stopping_hermes": {
     "message": "正在停止 Hermes",
