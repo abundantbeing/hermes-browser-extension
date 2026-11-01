@@ -117,7 +117,11 @@
     {
       "resources": [
         "assets/img/hermes-browser-extension-icon-box-white.png",
-        "assets/img/hermes-browser-extension-icon-ink.png"
+        "assets/img/hermes-browser-extension-icon-ink.png",
+        "assets/img/assist-wing.png",
+        "assets/img/assist-staff.svg",
+        "assets/img/assist-girl-outline.png",
+        "assets/img/assist-girl-solid.png"
       ],
       "matches": [
         "http://*/*",
