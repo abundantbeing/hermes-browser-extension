@@ -134,3 +134,17 @@ test('the Assist choice headings keep a gap above their cards', () => {
   const css = loadExtensionFile('sidepanel.css');
   assert.match(css, /\n\.inline-assist-settings \.settings-choice-group legend \{[^}]*margin-bottom: 10px;/);
 });
+
+test('Settings offers Quick menu and Full panel, each with a picture of what opens', () => {
+  const section = new JSDOM(loadExtensionFile('sidepanel.html')).window.document.querySelector('.inline-assist-settings');
+  const radios = [...section.querySelectorAll('input[name="inlineAssistOpenMode"]')];
+  assert.deepEqual(radios.map((input) => input.value), ['quick', 'panel']);
+  for (const input of radios) {
+    assert.ok(input.closest('label').querySelector('.assist-open-thumb'), `${input.value} has a picture`);
+    assert.ok(input.closest('label').classList.contains('compact-choice'), `${input.value} card uses the single-column layout`);
+  }
+  const source = loadExtensionFile('sidepanel.js');
+  assert.match(source, /inlineAssistOpenMode: normalizeInlineAssistOpenMode\(settings\.inlineAssistOpenMode\)/);
+  assert.match(source, /input\.checked = input\.value === normalizeInlineAssistOpenMode\(settings\.inlineAssistOpenMode\)/);
+  assert.match(source, /inlineAssistOpenMode: normalizeInlineAssistOpenMode\(els\.inlineAssistOpenModeInputs\?\.find\(\(input\) => input\.checked\)\?\.value \|\| settings\.inlineAssistOpenMode\)/);
+});

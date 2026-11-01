@@ -1,4 +1,4 @@
-import { INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, normalizeInlineAssistIcon } from './lib/inline-assist-look.mjs';
+import { INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, normalizeInlineAssistIcon, normalizeInlineAssistOpenMode } from './lib/inline-assist-look.mjs';
 import { reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
 import { CONTROL_TOOL_FAMILIES } from './lib/control-tool-names.mjs';
 import {
@@ -1227,6 +1227,7 @@ const els = {
   inlineAssistEnabled: $('#inlineAssistEnabled'),
   inlineAssistDefaultRoute: $('#inlineAssistDefaultRoute'),
   inlineAssistIconInputs: Array.from(document.querySelectorAll('input[name="inlineAssistIcon"]')),
+  inlineAssistOpenModeInputs: Array.from(document.querySelectorAll('input[name="inlineAssistOpenMode"]')),
   inlineAssistAutoReplace: $('#inlineAssistAutoReplace'),
   inlineAssistModel: $('#inlineAssistModel'),
   inlineAssistModelButton: $('#inlineAssistModelButton'),
@@ -23123,6 +23124,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     inlineAssistEnabled: settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute),
     inlineAssistIcon: normalizeInlineAssistIcon(settings.inlineAssistIcon),
+    inlineAssistOpenMode: normalizeInlineAssistOpenMode(settings.inlineAssistOpenMode),
     inlineAssistAutoReplace: typeof stored[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY] === 'boolean'
       ? stored[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]
       : settings.inlineAssistAutoReplace !== false,
@@ -23411,6 +23413,7 @@ function syncSettingsForm() {
   if (els.inlineAssistEnabled) els.inlineAssistEnabled.checked = settings.inlineAssistEnabled !== false;
   if (els.inlineAssistDefaultRoute) els.inlineAssistDefaultRoute.value = normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute);
   for (const input of els.inlineAssistIconInputs || []) input.checked = input.value === normalizeInlineAssistIcon(settings.inlineAssistIcon);
+  for (const input of els.inlineAssistOpenModeInputs || []) input.checked = input.value === normalizeInlineAssistOpenMode(settings.inlineAssistOpenMode);
   if (els.inlineAssistAutoReplace) els.inlineAssistAutoReplace.checked = settings.inlineAssistAutoReplace !== false;
   renderInlineAssistModelOptions();
   if (els.inlineAssistSessionRetention) els.inlineAssistSessionRetention.value = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
@@ -23525,6 +23528,7 @@ async function saveSettingsFromForm() {
     inlineAssistEnabled: els.inlineAssistEnabled ? els.inlineAssistEnabled.checked : settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(els.inlineAssistDefaultRoute?.value || settings.inlineAssistDefaultRoute),
     inlineAssistIcon: normalizeInlineAssistIcon(els.inlineAssistIconInputs?.find((input) => input.checked)?.value || settings.inlineAssistIcon),
+    inlineAssistOpenMode: normalizeInlineAssistOpenMode(els.inlineAssistOpenModeInputs?.find((input) => input.checked)?.value || settings.inlineAssistOpenMode),
     inlineAssistAutoReplace: els.inlineAssistAutoReplace ? els.inlineAssistAutoReplace.checked : settings.inlineAssistAutoReplace !== false,
     ...assistBinding,
     inlineAssistSessionRetention: els.inlineAssistSessionRetention?.value === 'delete' ? 'delete' : 'keep',

@@ -12333,3 +12333,17 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
 .assist-icon-preview[data-icon="girl"] .assist-icon-swatch::after { width: 30px; height: 30px; left: 1px; top: 1px; border-radius: 50%; -webkit-mask-size: cover; mask-size: cover; }
 .assist-icon-preview[data-icon="girl"] .assist-icon-swatch-dark { --assist-icon-mask: url("assets/img/assist-girl-solid.png"); }
 .assist-icon-preview[data-icon="girl"] .assist-icon-swatch-light { --assist-icon-mask: url("assets/img/assist-girl-outline.png"); }
+
+/* Hermes Assist: what opens on click. Each card draws a small picture of it: a composer line with the
+   circle, and under it either the narrow quick menu or the wide full panel. */
+.assist-open-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.settings-dialog .settings-choice-card.assist-open-card { align-content: start; }
+.assist-open-thumb { position: relative; display: block; height: 96px; border-radius: 6px; background: #000; overflow: hidden; }
+.assist-open-thumb .thumb-circle { position: absolute; left: 8px; top: 10px; width: 11px; height: 11px; border-radius: 50%; background: #f4f4f1; box-shadow: 0 0 0 1.5px var(--accent, #ffbf00); }
+.assist-open-thumb::before { content: ""; position: absolute; left: 26px; top: 13px; width: 60px; height: 5px; border-radius: 2px; background: #333; }
+.assist-open-thumb .thumb-menu, .assist-open-thumb .thumb-panel { position: absolute; left: 6px; top: 28px; display: grid; gap: 5px; padding: 6px; border: 1px solid rgba(255, 248, 220, .5); background: #232335; }
+.assist-open-thumb .thumb-menu { width: 64px; }
+.assist-open-thumb .thumb-panel { width: 132px; grid-template-columns: 1fr 1fr; }
+.assist-open-thumb b { display: block; height: 7px; background: rgba(255, 248, 220, .7); }
+.assist-open-thumb .thumb-panel b { height: 14px; background: rgba(255, 248, 220, .18); }
+.assist-open-thumb .thumb-panel b:first-child { background: #fff8dc; }

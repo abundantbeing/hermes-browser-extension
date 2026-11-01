@@ -1477,6 +1477,29 @@
               </label>
             </div>
           </fieldset>
+          <fieldset id="inlineAssistOpenModeOptions" class="inline-assist-open-options settings-choice-group">
+            <legend data-i18n="ui.when.you.click.it">When you click it</legend>
+            <div class="settings-choice-grid assist-open-grid">
+              <label class="settings-choice-card compact-choice assist-open-card">
+                <input type="radio" name="inlineAssistOpenMode" value="quick" />
+                <span class="assist-open-thumb assist-open-thumb-quick" aria-hidden="true"><i class="thumb-circle"></i><i class="thumb-menu"><b></b><b></b><b></b><b></b></i></span>
+                <span class="settings-choice-copy">
+                  <strong data-i18n="ui.quick.menu">Quick menu</strong>
+                  <small data-i18n="ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field">A small menu at the circle. Type or pick an action; the draft goes straight into the field.</small>
+                </span>
+                <span class="settings-choice-mark" aria-hidden="true"></span>
+              </label>
+              <label class="settings-choice-card compact-choice assist-open-card">
+                <input type="radio" name="inlineAssistOpenMode" value="panel" />
+                <span class="assist-open-thumb assist-open-thumb-panel" aria-hidden="true"><i class="thumb-circle"></i><i class="thumb-panel"><b></b><b></b><b></b><b></b></i></span>
+                <span class="settings-choice-copy">
+                  <strong data-i18n="ui.full.panel">Full panel</strong>
+                  <small data-i18n="ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes">Every action, tool and option at once, with a preview before anything changes.</small>
+                </span>
+                <span class="settings-choice-mark" aria-hidden="true"></span>
+              </label>
+            </div>
+          </fieldset>
           <label>
             <span data-i18n="ui.default.session.route">Default session route</span>
             <select id="inlineAssistDefaultRoute">
