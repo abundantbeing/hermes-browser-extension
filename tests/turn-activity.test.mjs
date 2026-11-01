@@ -108,6 +108,26 @@ test('turn lengths read short and compact', () => {
   assert.equal(formatTurnDuration(3 * 24 * 60 * 60 * 1000, fixed), '');
 });
 
+test('an explicit DurationFormat option replaces the runtime one, even when it is empty', () => {
+  // Node 23+ and current browsers ship Intl.DurationFormat. Stand one in, so this
+  // runs the same on every runtime: the opt-out must win over the global.
+  const original = Object.getOwnPropertyDescriptor(Intl, 'DurationFormat');
+  class GlobalDurationFormat {
+    format() { return 'from the runtime'; }
+  }
+  Object.defineProperty(Intl, 'DurationFormat', { value: GlobalDurationFormat, configurable: true, writable: true });
+  try {
+    assert.equal(formatTurnDuration(65_000, { DurationFormat: undefined }), '1m 05s');
+    assert.equal(formatTurnDuration(65_000, { DurationFormat: null }), '1m 05s');
+    assert.equal(formatTurnDuration(65_000, { locale: 'en' }), 'from the runtime');
+    assert.equal(formatTurnDuration(65_000), 'from the runtime');
+    assert.equal(formatTurnDuration(65_000, null), 'from the runtime');
+  } finally {
+    if (original) Object.defineProperty(Intl, 'DurationFormat', original);
+    else delete Intl.DurationFormat;
+  }
+});
+
 test('the locale duration format is used where the browser has it', () => {
   class FakeDurationFormat {
     constructor(locale, options) { this.locale = locale; this.options = options; }
