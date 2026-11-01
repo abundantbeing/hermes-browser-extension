@@ -1531,6 +1531,20 @@
               <option value="delete" data-i18n="ui.delete.after.the.draft.returns">Delete after the draft returns</option>
             </select>
           </label>
+          <div class="inline-assist-sites">
+            <div class="inline-assist-sites-head">
+              <span class="settings-toggle-copy">
+                <strong data-i18n="ui.sites">Sites</strong>
+                <small data-i18n="ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden">Where Assist reads the thread, and where the circle stays hidden.</small>
+              </span>
+              <button id="inlineAssistAddSite" class="secondary" type="button" data-i18n="ui.add.this.site">+ Add this site</button>
+            </div>
+            <!-- The rows only show #inlineAssistSitesValue, which is what Save and the edited markers read. -->
+            <ul id="inlineAssistSites" class="inline-assist-sites-list" data-settings-live hidden></ul>
+            <p id="inlineAssistSitesEmpty" class="hint" data-i18n="ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open">No sites yet. Change one from the Assist panel on a page, or add the site you have open.</p>
+            <p id="inlineAssistSitesHint" class="hint" data-i18n="ui.open.a.web.page.first.then.add.it.here" hidden>Open a web page first, then add it here.</p>
+            <input id="inlineAssistSitesValue" type="hidden" />
+          </div>
           <p id="assistModelCapabilityHint" class="hint">Choose any available model for Hermes Assist. If the gateway cannot enforce that exact model, Assist transparently falls back to the gateway default and labels the result.</p>
         </section>
 

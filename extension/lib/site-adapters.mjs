@@ -733,6 +733,10 @@ function contextRootFor(target, adapterId, surface = '') {
   return target.closest?.('article, [data-message-id], ytd-comment-thread-renderer, main, [role="main"]') || target.parentElement;
 }
 
+// Where Assist reads the visible thread, per site adapter: written by the Assist panel on a page and by
+// Settings → Hermes Assist → Sites.
+export const INLINE_SITE_CONTEXT_STORAGE_KEY = 'hermesInlineSiteContextPreferences';
+
 export function normalizeInlineSiteContextPreferences(value = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const normalized = {};

@@ -36,6 +36,8 @@ function storageListener(initialSettings) {
     INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY: 'hermesInlineAssistAutoReplace',
     adoptInlineAssistAutoReplaceChange() {},
     adoptInlineAssistIconChange() {},
+    INLINE_SITE_CONTEXT_STORAGE_KEY: 'hermesInlineSiteContextPreferences',
+    adoptInlineAssistSitesChange() {},
     adoptOnboardingCompletedChange() {},
     adoptStoredResponsePresentation() {},
     updateConnectionPrompt() {},

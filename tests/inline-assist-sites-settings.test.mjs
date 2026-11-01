@@ -1,0 +1,113 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { JSDOM } from 'jsdom';
+
+import { loadExtensionFile } from './inline-assist-dom.mjs';
+import { createSettingsSaveHarness, sidepanelSource } from './helpers/settings-save-harness.mjs';
+
+test('Settings → Hermes Assist has the Sites list; its rows only show the value Save reads', () => {
+  const section = new JSDOM(loadExtensionFile('sidepanel.html')).window.document.querySelector('.inline-assist-settings');
+  assert.ok(section.querySelector('#inlineAssistSites[data-settings-live]'), 'the list');
+  assert.ok(section.querySelector('#inlineAssistAddSite'), 'the Add this site button');
+  assert.equal(section.querySelector('#inlineAssistSitesValue')?.type, 'hidden', 'the value Save and unsaved edits track');
+  assert.equal(section.querySelector('#inlineAssistSitesValue').closest('[data-settings-live]'), null);
+});
+
+// The real sidepanel functions against the real markup (see helpers/settings-save-harness.mjs).
+// eslint-disable-next-line no-new-func
+const constant = (name) => new Function(`return ${sidepanelSource.match(new RegExp(`^const ${name} = (.+);$`, 'm'))[1]}`)();
+
+async function sitesPanel({ hidden = [], contextPrefs = {}, tabs = [] } = {}) {
+  const h = await createSettingsSaveHarness({ settings: { inlineAssistHiddenSites: hidden } });
+  h.scope.INLINE_ASSIST_SITE_STATES = constant('INLINE_ASSIST_SITE_STATES');
+  h.scope.inlineSiteContextPreferences = contextPrefs;
+  h.scope.settingsBaseline = null;
+  h.scope.Event = h.document.defaultView.Event;
+  h.scope.browserApi.tabs = { query: async () => tabs };
+  // As bindEvents() wires them.
+  h.els.inlineAssistSites.addEventListener('change', h.fn('handleInlineAssistSiteChange'));
+  h.els.inlineAssistSites.addEventListener('click', h.fn('handleInlineAssistSiteRemove'));
+  h.fn('syncInlineAssistSitesForm')();
+  const rows = () => [...h.els.inlineAssistSites.querySelectorAll('.inline-assist-site')];
+  const row = (site) => rows().find((item) => item.dataset.site === site);
+  const model = () => h.fn('readInlineAssistSitesModel')();
+  const edits = [];
+  h.els.inlineAssistSitesValue.addEventListener('input', () => edits.push(h.els.inlineAssistSitesValue.value));
+  return { h, rows, row, model, edits };
+}
+
+test('each site shows its setting: known sites pick thread reading or hidden, other hosts read Circle hidden', async () => {
+  const { rows, row } = await sitesPanel({ hidden: ['page.example'], contextPrefs: { gmail: 'visible', x: 'draft' } });
+  assert.deepEqual(rows().map((item) => item.dataset.site), ['gmail', 'page.example', 'x']);
+  assert.deepEqual(rows().map((item) => item.querySelector('.inline-assist-site-name').textContent), ['Gmail', 'page.example', 'X']);
+  assert.equal(row('gmail').querySelector('select').value, 'visible');
+  assert.deepEqual([...row('x').querySelector('select').options].map((option) => option.value), ['visible', 'draft', 'hidden']);
+  assert.equal(row('x').querySelector('select').value, 'draft');
+  assert.equal(row('page.example').querySelector('select'), null);
+  assert.match(row('page.example').textContent, /Circle hidden/);
+  assert.ok(row('page.example').querySelector('button.inline-assist-site-remove'));
+});
+
+test('changing a site updates the saved value and counts as an unsaved edit', async () => {
+  const { row, model, edits } = await sitesPanel({ contextPrefs: { gmail: 'visible', x: 'draft' } });
+  const select = row('x').querySelector('select');
+  select.value = 'hidden';
+  select.dispatchEvent(new select.ownerDocument.defaultView.Event('change', { bubbles: true }));
+  assert.deepEqual([...model().hidden], ['x']);
+  assert.deepEqual({ ...model().contextPrefs }, { gmail: 'visible' });
+  assert.equal(edits.length, 1);
+  assert.equal(row('x').querySelector('select'), select, 'the row stays, so focus stays on the select');
+});
+
+test('Remove drops the site from both lists', async () => {
+  const { h, rows, model, edits } = await sitesPanel({ hidden: ['page.example', 'gmail'], contextPrefs: { gmail: 'visible' } });
+  rows().find((item) => item.dataset.site === 'gmail').querySelector('button.inline-assist-site-remove').click();
+  assert.deepEqual(rows().map((item) => item.dataset.site), ['page.example']);
+  assert.deepEqual([...model().hidden], ['page.example']);
+  assert.deepEqual({ ...model().contextPrefs }, {});
+  assert.equal(edits.length, 1);
+  assert.equal(h.document.activeElement?.closest?.('.inline-assist-site')?.dataset.site, 'page.example');
+});
+
+for (const [url, site, state] of [['https://www.x.com/home', 'x', 'draft'], ['https://forum.page.example/new', 'forum.page.example', 'hidden']]) {
+  test(`Add this site adds ${site} as ${state}`, async () => {
+    const { h, row, model, edits } = await sitesPanel({ tabs: [{ id: 3, url, title: 'Page' }] });
+    await h.fn('addActiveSiteToInlineAssistSites')();
+    assert.ok(row(site), 'the row');
+    if (state === 'hidden') assert.deepEqual([...model().hidden], [site]);
+    else assert.deepEqual({ ...model().contextPrefs }, { [site]: state });
+    assert.equal(edits.length, 1);
+  });
+}
+
+test('Add this site on a page that is not a website says so and adds nothing', async () => {
+  const { h, rows, edits } = await sitesPanel({ tabs: [{ id: 3, url: 'chrome://extensions/', title: 'Extensions' }] });
+  await h.fn('addActiveSiteToInlineAssistSites')();
+  assert.equal(rows().length, 0);
+  assert.equal(edits.length, 0);
+  assert.equal(h.els.inlineAssistSitesHint.hidden, false);
+});
+
+test('Save writes hidden sites into the settings and thread reading into its own key', async () => {
+  const { h, row } = await sitesPanel({ hidden: ['page.example'], contextPrefs: { gmail: 'visible', x: 'draft' } });
+  const select = row('x').querySelector('select');
+  select.value = 'hidden';
+  select.dispatchEvent(new select.ownerDocument.defaultView.Event('change', { bubbles: true }));
+  await h.save();
+  assert.deepEqual(h.store.hermesBrowserSettings.inlineAssistHiddenSites, ['page.example', 'x']);
+  assert.deepEqual(h.store.hermesInlineSiteContextPreferences, { gmail: 'visible' });
+});
+
+test('a change from a page follows into an unedited list, and never over unsaved edits', async () => {
+  const fresh = await sitesPanel({ hidden: ['page.example'] });
+  fresh.h.fn('adoptInlineAssistSitesChange')({ hidden: ['page.example', 'new.example'] });
+  assert.deepEqual(fresh.rows().map((item) => item.dataset.site), ['new.example', 'page.example']);
+  fresh.h.fn('adoptInlineAssistSitesChange')({ contextPrefs: { reddit: 'draft' } });
+  assert.ok(fresh.row('reddit'));
+
+  const edited = await sitesPanel({ hidden: ['page.example'] });
+  edited.rows()[0].querySelector('button.inline-assist-site-remove').click();
+  edited.h.fn('adoptInlineAssistSitesChange')({ hidden: ['page.example', 'new.example'] });
+  assert.deepEqual(edited.rows().map((item) => item.dataset.site), []);
+  assert.deepEqual(edited.h.scope.settings.inlineAssistHiddenSites, ['page.example', 'new.example']);
+});

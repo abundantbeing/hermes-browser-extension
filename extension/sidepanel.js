@@ -1,4 +1,13 @@
-import { INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, normalizeInlineAssistIcon, normalizeInlineAssistOpenMode } from './lib/inline-assist-look.mjs';
+import {
+  INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY,
+  inlineAssistSiteEntries,
+  inlineAssistSitesModel,
+  normalizeInlineAssistHiddenSites,
+  normalizeInlineAssistIcon,
+  normalizeInlineAssistOpenMode,
+  withInlineAssistSiteState,
+  withoutInlineAssistSite,
+} from './lib/inline-assist-look.mjs';
 import { reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
 import { CONTROL_TOOL_FAMILIES } from './lib/control-tool-names.mjs';
 import {
@@ -765,7 +774,7 @@ import {
 import { rewindSessionToMessage, usesAuthorityRewind } from './lib/session-rewind.mjs';
 import { botChatDeliveryFrame, botChatRefusalState, isPendingBotChatDelivery, movedAsideBotChat, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
 import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-pick.mjs';
-import { explicitSiteCaptureAction, isGmailThreadUrl } from './lib/site-adapters.mjs';
+import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
@@ -1229,6 +1238,11 @@ const els = {
   inlineAssistIconInputs: Array.from(document.querySelectorAll('input[name="inlineAssistIcon"]')),
   inlineAssistOpenModeInputs: Array.from(document.querySelectorAll('input[name="inlineAssistOpenMode"]')),
   inlineAssistAutoReplace: $('#inlineAssistAutoReplace'),
+  inlineAssistSites: $('#inlineAssistSites'),
+  inlineAssistSitesValue: $('#inlineAssistSitesValue'),
+  inlineAssistSitesEmpty: $('#inlineAssistSitesEmpty'),
+  inlineAssistSitesHint: $('#inlineAssistSitesHint'),
+  inlineAssistAddSite: $('#inlineAssistAddSite'),
   inlineAssistModel: $('#inlineAssistModel'),
   inlineAssistModelButton: $('#inlineAssistModelButton'),
   inlineAssistModelLabel: $('#inlineAssistModelLabel'),
@@ -23079,7 +23093,8 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, INLINE_SITE_CONTEXT_STORAGE_KEY]);
+  inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(stored[INLINE_SITE_CONTEXT_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -23385,6 +23400,144 @@ function renderTranscriptProviderField() {
   if (els.transcriptProviderField) els.transcriptProviderField.hidden = !custom;
 }
 
+// Settings → Hermes Assist → Sites: where Assist reads the visible thread (kept per site under its own
+// storage key, which the page's Assist panel also writes) and where the circle is hidden (a setting). The
+// hidden #inlineAssistSitesValue holds both as JSON, so Save and the edited markers treat the list like
+// any other control; the rows only show it.
+let inlineSiteContextPreferences = {};
+const INLINE_ASSIST_SITE_STATES = [['visible', 'Reads thread'], ['draft', 'This field only'], ['hidden', 'Circle hidden']];
+
+function readInlineAssistSitesModel() {
+  let stored = null;
+  try {
+    stored = JSON.parse(els.inlineAssistSitesValue?.value || 'null');
+  } catch {
+    stored = null;
+  }
+  return inlineAssistSitesModel(stored?.contextPrefs, stored?.hidden);
+}
+
+function writeInlineAssistSitesModel(model, { edited = false, render = true } = {}) {
+  const input = els.inlineAssistSitesValue;
+  if (!input) return;
+  input.value = JSON.stringify(inlineAssistSitesModel(model?.contextPrefs, model?.hidden));
+  if (render) renderInlineAssistSites();
+  if (edited) input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function syncInlineAssistSitesForm() {
+  writeInlineAssistSitesModel(inlineAssistSitesModel(inlineSiteContextPreferences, settings.inlineAssistHiddenSites));
+  if (els.inlineAssistSitesValue) els.inlineAssistSitesValue.dataset.syncedValue = els.inlineAssistSitesValue.value;
+}
+
+// A site Assist knows (an adapter id) can read the thread; any other hostname can only hide the circle.
+function inlineAssistSiteReadsThreads(site) {
+  return Object.hasOwn(normalizeInlineSiteContextPreferences({ [site]: 'draft' }), site);
+}
+
+function renderInlineAssistSites() {
+  const list = els.inlineAssistSites;
+  if (!list) return;
+  const entries = inlineAssistSiteEntries(readInlineAssistSitesModel());
+  list.replaceChildren(...entries.map(({ site, state }) => {
+    const row = document.createElement('li');
+    row.className = 'inline-assist-site';
+    row.dataset.site = site;
+    const name = document.createElement('span');
+    name.className = 'inline-assist-site-name';
+    name.textContent = inlineSiteLabel(site);
+    row.append(name);
+    if (inlineAssistSiteReadsThreads(site)) {
+      const select = document.createElement('select');
+      select.className = 'inline-assist-site-state';
+      select.dataset.site = site;
+      select.setAttribute('aria-label', name.textContent);
+      for (const [value, label] of INLINE_ASSIST_SITE_STATES) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = translateUiText(label);
+        select.append(option);
+      }
+      select.value = state;
+      row.append(select);
+    } else {
+      const fixed = document.createElement('span');
+      fixed.className = 'inline-assist-site-state';
+      fixed.textContent = translateUiText('Circle hidden');
+      row.append(fixed);
+    }
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'inline-assist-site-remove';
+    remove.dataset.site = site;
+    remove.textContent = '×';
+    remove.title = translateUiText('Remove');
+    remove.setAttribute('aria-label', `${translateUiText('Remove')} ${name.textContent}`);
+    row.append(remove);
+    return row;
+  }));
+  list.hidden = !entries.length;
+  if (els.inlineAssistSitesEmpty) els.inlineAssistSitesEmpty.hidden = entries.length > 0;
+}
+
+function focusInlineAssistSite(site) {
+  const row = [...(els.inlineAssistSites?.children || [])].find((item) => item.dataset.site === site);
+  (row?.querySelector('select') || row?.querySelector('button') || els.inlineAssistAddSite)?.focus();
+}
+
+function handleInlineAssistSiteChange(event) {
+  const select = event.target.closest?.('select.inline-assist-site-state');
+  if (!select) return;
+  // The row set does not change, so the rows stay put and the select keeps focus.
+  writeInlineAssistSitesModel(withInlineAssistSiteState(readInlineAssistSitesModel(), select.dataset.site, select.value), { edited: true, render: false });
+}
+
+function handleInlineAssistSiteRemove(event) {
+  const button = event.target.closest?.('button.inline-assist-site-remove');
+  if (!button) return;
+  const sites = inlineAssistSiteEntries(readInlineAssistSitesModel()).map((entry) => entry.site);
+  const index = sites.indexOf(button.dataset.site);
+  writeInlineAssistSitesModel(withoutInlineAssistSite(readInlineAssistSitesModel(), button.dataset.site), { edited: true });
+  const rest = sites.filter((site) => site !== button.dataset.site);
+  focusInlineAssistSite(rest[Math.min(index, rest.length - 1)]);
+}
+
+// The open tab's site joins the list with the setting that shares least: "This field only" for a site
+// Assist knows, "Circle hidden" for any other. The row shows it before Save, and the select changes it.
+async function addActiveSiteToInlineAssistSites() {
+  if (els.inlineAssistSitesHint) els.inlineAssistSitesHint.hidden = true;
+  const tab = await activeTab().catch(() => null);
+  let host = '';
+  try {
+    const url = new URL(tab?.url || '');
+    if (url.protocol === 'http:' || url.protocol === 'https:') host = url.hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    host = '';
+  }
+  if (!host) {
+    if (els.inlineAssistSitesHint) els.inlineAssistSitesHint.hidden = false;
+    return;
+  }
+  const { adapterId } = inlineSiteForHost(host);
+  const site = adapterId === 'generic' ? host : adapterId;
+  const model = readInlineAssistSitesModel();
+  if (!inlineAssistSiteEntries(model).some((entry) => entry.site === site)) {
+    writeInlineAssistSitesModel(withInlineAssistSiteState(model, site, inlineAssistSiteReadsThreads(site) ? 'draft' : 'hidden'), { edited: true });
+  }
+  focusInlineAssistSite(site);
+}
+
+// The page's Assist panel changes these too (Hide the circle on this site, Read the visible thread). They
+// are taken in, and an open list follows unless it holds unsaved edits.
+function adoptInlineAssistSitesChange({ hidden, contextPrefs } = {}) {
+  if (hidden !== undefined) settings = { ...settings, inlineAssistHiddenSites: normalizeInlineAssistHiddenSites(hidden) };
+  if (contextPrefs !== undefined) inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(contextPrefs);
+  const input = els.inlineAssistSitesValue;
+  if (!input || input.value !== input.dataset.syncedValue) return;
+  syncInlineAssistSitesForm();
+  adoptSettingsBaselineValue(input);
+}
+
 function syncSettingsForm() {
   renderAppearanceControls();
   renderProfiles();
@@ -23415,6 +23568,7 @@ function syncSettingsForm() {
   for (const input of els.inlineAssistIconInputs || []) input.checked = input.value === normalizeInlineAssistIcon(settings.inlineAssistIcon);
   for (const input of els.inlineAssistOpenModeInputs || []) input.checked = input.value === normalizeInlineAssistOpenMode(settings.inlineAssistOpenMode);
   if (els.inlineAssistAutoReplace) els.inlineAssistAutoReplace.checked = settings.inlineAssistAutoReplace !== false;
+  syncInlineAssistSitesForm();
   renderInlineAssistModelOptions();
   if (els.inlineAssistSessionRetention) els.inlineAssistSessionRetention.value = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
   if (els.contextMenuDefaultRoute) els.contextMenuDefaultRoute.value = settings.contextMenuDefaultRoute || 'ask';
@@ -23530,6 +23684,7 @@ async function saveSettingsFromForm() {
     inlineAssistIcon: normalizeInlineAssistIcon(els.inlineAssistIconInputs?.find((input) => input.checked)?.value || settings.inlineAssistIcon),
     inlineAssistOpenMode: normalizeInlineAssistOpenMode(els.inlineAssistOpenModeInputs?.find((input) => input.checked)?.value || settings.inlineAssistOpenMode),
     inlineAssistAutoReplace: els.inlineAssistAutoReplace ? els.inlineAssistAutoReplace.checked : settings.inlineAssistAutoReplace !== false,
+    inlineAssistHiddenSites: normalizeInlineAssistHiddenSites(readInlineAssistSitesModel().hidden),
     ...assistBinding,
     inlineAssistSessionRetention: els.inlineAssistSessionRetention?.value === 'delete' ? 'delete' : 'keep',
     inlineAssistThinkingEnabled: settings.inlineAssistThinkingEnabled !== false,
@@ -23616,6 +23771,8 @@ async function saveSettingsFromForm() {
   applyAppearanceSettings();
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]: settings.inlineAssistAutoReplace !== false });
+  inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(readInlineAssistSitesModel().contextPrefs);
+  await browserApi.storage.local.set({ [INLINE_SITE_CONTEXT_STORAGE_KEY]: inlineSiteContextPreferences });
   await applyWebappCredentialPreference();
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
     || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
@@ -28542,6 +28699,9 @@ function bindEvents() {
   els.settingsForm.addEventListener('click', handleSettingsCategoryNavigation);
   els.settingsForm.addEventListener('input', handleSettingsFormEdit);
   els.settingsForm.addEventListener('change', handleSettingsFormEdit);
+  els.inlineAssistSites?.addEventListener('change', handleInlineAssistSiteChange);
+  els.inlineAssistSites?.addEventListener('click', handleInlineAssistSiteRemove);
+  els.inlineAssistAddSite?.addEventListener('click', () => void addActiveSiteToInlineAssistSites());
   document.getElementById('settingsOpenModelPickerButton')?.addEventListener('click', openSettingsModelPicker);
   document.getElementById('settingsRefreshModelsButton')?.addEventListener('click', (event) => {
     const button = event.currentTarget;
@@ -29835,9 +29995,11 @@ function bindEvents() {
         }
         adoptStoredResponsePresentation(next);
         if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
+        if (Object.hasOwn(next, 'inlineAssistHiddenSites')) adoptInlineAssistSitesChange({ hidden: next.inlineAssistHiddenSites });
       }
     }
     if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);
+    if (Object.hasOwn(changes, INLINE_SITE_CONTEXT_STORAGE_KEY)) adoptInlineAssistSitesChange({ contextPrefs: changes[INLINE_SITE_CONTEXT_STORAGE_KEY]?.newValue });
     if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)) adoptOnboardingCompletedChange(changes);
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
     if (Object.hasOwn(changes, CONTEXT_CONSENT_STORAGE_KEY)) {

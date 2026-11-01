@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 1209a8660996df8c */
+/* extension/lib/site-adapters.mjs · SHA-256 775dd608a8e3a245 */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1802,6 +1802,10 @@ function contextRootFor(target, adapterId, surface = '') {
   }
   return target.closest?.('article, [data-message-id], ytd-comment-thread-renderer, main, [role="main"]') || target.parentElement;
 }
+
+// Where Assist reads the visible thread, per site adapter: written by the Assist panel on a page and by
+// Settings → Hermes Assist → Sites.
+const INLINE_SITE_CONTEXT_STORAGE_KEY = 'hermesInlineSiteContextPreferences';
 
 function normalizeInlineSiteContextPreferences(value = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
