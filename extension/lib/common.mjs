@@ -2720,22 +2720,14 @@ function stripQuoteMarker(line = '', { keepTabs = false } = {}) {
   return keepTabs ? text : spaceMarkerTabs(text, marker.length);
 }
 
-// Strips the `>` markers of a quote. A fence opened inside the quote (after list markers too) keeps its
-// lines byte for byte until it closes, or until a line falls back out of the list item that holds it.
+// Strips the `>` markers of a quote. The lines of a fence opened inside the quote (after list markers
+// too) keep their bytes; only the line that opens it has its marker tabs spaced.
 function stripQuoteLines(lines = []) {
-  const out = [];
-  let fence = null;
-  for (const line of lines) {
-    const raw = stripQuoteMarker(line, { keepTabs: true });
-    const end = markdownListFenceEnd(raw, fence);
-    if (fence && end !== 'outdent') {
-      out.push(raw);
-      if (end === 'close') fence = null;
-      continue;
+  const out = lines.map((line) => stripQuoteMarker(line));
+  for (const region of markdownFenceRegions(out)) {
+    for (let index = region.start + 1; index <= region.end; index += 1) {
+      out[index] = stripQuoteMarker(lines[index], { keepTabs: true });
     }
-    const text = stripQuoteMarker(line);
-    out.push(text);
-    fence = openingFence(text);
   }
   return out;
 }
@@ -2762,29 +2754,66 @@ function openingFence(line = '') {
   return null;
 }
 
-// The same reading for code outside the renderer (adaptive UI blocks), which must not lift a block out
-// of a fence that a list item holds.
-export function markdownListFenceOpening(line = '') {
-  return openingFence(line);
+// How a line ends an open fence: 'close' (the line belongs to the fence), 'outdent' (the line falls back
+// out of the list item that holds it, so the fence ended just before it), or ''. As in collectListItem,
+// a fence its own top-level item opened (`- ~~~~md`) closes at any indentation, the left margin
+// included, while one a nested item opened ends with that item first.
+function fenceEnd(line, fence) {
+  const outdented = fence.owner > 0 && !isBlankLine(line) && indentWidth(line) < fence.owner;
+  if (outdented && fence.nested) return 'outdent';
+  if (isMarkdownFenceClose(line, fence)) return 'close';
+  return outdented ? 'outdent' : '';
 }
 
-// How a line ends a fence from `markdownListFenceOpening`: 'close' (the line belongs to the fence; a
-// closing line at the left margin still closes it, as in the list renderer), 'outdent' (the line falls
-// back out of the list item holding it, so the fence ended just before it), or ''.
-export function markdownListFenceEnd(line = '', opening = null) {
-  if (!opening) return '';
-  if (isMarkdownFenceClose(line, opening)) return 'close';
-  if (opening.owner && /\S/.test(line) && /^ */.exec(expandLeadingTabs(line))[0].length < opening.owner) return 'outdent';
-  return '';
+// Every fenced block of a reply, read the way the renderer reads it, for code outside the renderer
+// (adaptive UI blocks, Plain text, quotes) that must not lift a block out of a fence or read code as
+// Markdown. Each region runs from the opening line (`start`) to its last line (`end`): the close when
+// `closed`, otherwise the line before the reply leaves the fence's list item, or the reply's last line.
+export function markdownFenceRegions(lines = []) {
+  const regions = [];
+  // The content columns of the list items the scan is inside, outermost first.
+  const items = [];
+  let open = null;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (open) {
+      const end = fenceEnd(line, open.fence);
+      if (end === 'close') {
+        regions.push({ ...open, end: index, closed: true });
+        open = null;
+        continue;
+      }
+      if (!end) continue;
+      regions.push({ ...open, end: index - 1, closed: false });
+      open = null;
+    }
+    if (isBlankLine(line)) continue;
+    const indent = indentWidth(line);
+    while (items.length && indent < items[items.length - 1]) items.pop();
+    const parents = items.length;
+    let markers = 0;
+    if (!isHorizontalRule(line)) {
+      let text = expandLeadingTabs(line);
+      for (let depth = 0; depth < MARKDOWN_MAX_NESTING; depth += 1) {
+        const item = listItemStart(text);
+        if (!item) break;
+        items.push(item.contentOffset);
+        markers += 1;
+        if (!/\S/.test(item.content)) break;
+        text = `${' '.repeat(item.contentOffset)}${item.content}`;
+      }
+    }
+    const fence = openingFence(line);
+    if (fence) open = { start: index, fence: { ...fence, nested: fence.owner > 0 && (parents > 0 || markers > 1) } };
+  }
+  if (open) regions.push({ ...open, end: lines.length - 1, closed: false });
+  return regions;
 }
 
-// A line of that fence's code without the indent of the list item that holds it.
-export function markdownFenceBodyLine(line = '', opening = null) {
-  const owner = Number(opening?.owner) || 0;
-  if (!owner) return line;
-  const expanded = expandLeadingTabs(line);
-  const indent = /^ */.exec(expanded)[0].length;
-  return expanded.slice(Math.min(indent, owner));
+// A line of a fence's code without the indent of the list item that holds it; tabs past that indent
+// keep their bytes.
+export function markdownFenceBodyLine(line = '', fence = null) {
+  return dedent(line, Number(fence?.owner) || 0);
 }
 
 function renderListItem(lines = [], depth = 0) {

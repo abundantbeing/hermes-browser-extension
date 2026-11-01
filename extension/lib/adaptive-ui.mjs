@@ -14,7 +14,7 @@
 // streaming patcher can keep a finished block (and its local view state)
 // untouched while later text arrives.
 
-import { escapeHtml, isMarkdownFenceClose, markdownFenceBodyLine, markdownFenceOpening, markdownListFenceEnd, markdownListFenceOpening, redactSensitiveText, renderMarkdown } from './common.mjs';
+import { escapeHtml, markdownFenceBodyLine, markdownFenceRegions, redactSensitiveText, renderMarkdown } from './common.mjs';
 
 export const HAUI_SCHEMA = 'hermes.adaptive-ui';
 export const HAUI_VERSION = 1;
@@ -91,31 +91,24 @@ export function splitAdaptiveSegments(text = '', { streaming = true } = {}) {
     if (value.trim()) segments.push({ kind: 'markdown', id: `m${proseStart}`, text: value });
     prose = [];
   };
+  const regions = new Map(markdownFenceRegions(lines).map((region) => [region.start, region]));
   for (let index = 0; index < lines.length; index += 1) {
-    const opening = markdownFenceOpening(lines[index]);
-    const listFence = opening ? null : markdownListFenceOpening(lines[index]);
-    if (listFence) {
-      // A fence opened after list markers (`- ~~~~md`) is that item's code: a hermes-ui example inside it
-      // stays an example, so the whole fence goes to prose.
-      let end = lines.length - 1;
-      for (let next = index + 1; next < lines.length; next += 1) {
-        const ending = markdownListFenceEnd(lines[next], listFence);
-        if (ending) { end = ending === 'close' ? next : next - 1; break; }
-      }
-      if (!prose.length) proseStart = offsets[index];
-      // One push per line: a spread of a long fence would pass the engine's argument limit.
-      for (let next = index; next <= end; next += 1) prose.push(lines[next]);
-      index = end;
-      continue;
-    }
-    if (!opening) {
+    const region = regions.get(index);
+    if (!region) {
       if (!prose.length) proseStart = offsets[index];
       prose.push(lines[index]);
       continue;
     }
-    let close = -1;
-    for (let next = index + 1; next < lines.length; next += 1) {
-      if (isMarkdownFenceClose(lines[next], opening)) { close = next; break; }
+    // Only a fence at the top level can hold UI blocks. A fence a list item opened (`- ~~~~md`) is that
+    // item's code, so a hermes-ui example inside it stays an example and the whole fence goes to prose.
+    const opening = region.fence.owner ? null : region.fence;
+    const close = region.closed ? region.end : -1;
+    if (!opening) {
+      if (!prose.length) proseStart = offsets[index];
+      // One push per line: a spread of a long fence would pass the engine's argument limit.
+      for (let next = index; next <= region.end; next += 1) prose.push(lines[next]);
+      index = region.end;
+      continue;
     }
     const rawLang = opening.info.split(/\s+/)[0].toLowerCase();
     const closed = close >= 0;
@@ -827,19 +820,15 @@ export function presentMarkdownParts(text = '', { settled = false } = {}) {
   // The same fence rule as splitAdaptiveSegments and renderMarkdown: a fenced block stays one piece of
   // Markdown, whatever its lines look like.
   // A fence a list item opens (`- ~~~~md`) counts too, up to its close or the end of that item.
-  let fence = null;
+  const regions = new Map(markdownFenceRegions(lines).map((region) => [region.start, region]));
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    if (fence) {
-      const end = markdownListFenceEnd(line, fence);
-      if (end !== 'outdent') {
-        markdown.push(line);
-        if (end === 'close') fence = null;
-        continue;
-      }
+    const region = regions.get(index);
+    if (region) {
+      for (let next = index; next <= region.end; next += 1) markdown.push(lines[next]);
+      index = region.end;
+      continue;
     }
-    fence = markdownListFenceOpening(line);
-    if (fence) { markdown.push(line); continue; }
     const previousBlank = index === 0 || !lines[index - 1].trim();
     const standalone = (run) => (run.end >= lines.length || !lines[run.end].trim()) && followed(run.end);
     if (previousBlank && shortLine(line) && METRIC_LINE.test(line)) {
@@ -926,24 +915,31 @@ export function renderAdaptiveMarkdown(value = '', { labels = HAUI_DEFAULT_LABEL
   return html.join('');
 }
 
+// The code lines of a fence region, without its opening and closing lines or the indent of the list item
+// that holds it.
+function fenceCode(lines, region) {
+  const code = [];
+  const last = region.closed ? region.end - 1 : region.end;
+  for (let index = region.start + 1; index <= last; index += 1) code.push(markdownFenceBodyLine(lines[index], region.fence));
+  return code;
+}
+
 // Plain text: the words without Markdown formatting. Code stays in a plain
 // monospace block and generated images still show, so nothing is lost.
 export function markdownToPlainText(value = '') {
   const lines = stripAdaptiveFences(value).split('\n');
   const out = [];
-  let fence = null;
-  for (const line of lines) {
-    // The shared fence rules: ``` or ~~~, closed only by the same character at least as long; a fence a
-    // list item opens ends with that item too, and its lines lose the item's indent.
-    if (fence) {
-      const end = markdownListFenceEnd(line, fence);
-      if (end === 'close') fence = null;
-      if (!end) out.push(markdownFenceBodyLine(line, fence));
-      if (end !== 'outdent') continue;
-      fence = null;
+  // The shared fence rules: ``` or ~~~, closed only by the same character at least as long; a fence a
+  // list item opens ends with that item too, and its lines lose the item's indent.
+  const regions = new Map(markdownFenceRegions(lines).map((region) => [region.start, region]));
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const region = regions.get(index);
+    if (region) {
+      for (const code of fenceCode(lines, region)) out.push(code);
+      index = region.end;
+      continue;
     }
-    fence = markdownListFenceOpening(line);
-    if (fence) continue;
     if (TABLE_DIVIDER.test(line)) continue;
     let text = line
       .replace(/^\s{0,3}#{1,6}\s+/, '')
@@ -970,33 +966,26 @@ export function renderPlainResponse(value = '') {
   const lines = stripAdaptiveFences(source).split('\n');
   const html = [];
   let paragraph = [];
-  let code = null;
-  let fence = null;
   const flush = () => {
     if (paragraph.length) html.push(`<p class="plain-response">${paragraph.map((line) => esc(markdownToPlainText(line))).join('<br>')}</p>`);
     paragraph = [];
   };
-  for (const line of lines) {
-    if (code) {
-      const end = markdownListFenceEnd(line, fence);
-      if (!end) {
-        code.push(markdownFenceBodyLine(line, fence));
-        continue;
-      }
-      html.push(`<pre class="plain-response-code">${esc(code.join('\n'))}</pre>`);
-      code = null;
-      fence = null;
-      if (end === 'close') continue;
+  const regions = new Map(markdownFenceRegions(lines).map((region) => [region.start, region]));
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const region = regions.get(index);
+    if (region) {
+      flush();
+      html.push(`<pre class="plain-response-code">${esc(fenceCode(lines, region).join('\n'))}</pre>`);
+      index = region.end;
+      continue;
     }
-    fence = markdownListFenceOpening(line);
-    if (fence) { flush(); code = []; continue; }
     if (!line.trim()) { flush(); continue; }
     // A generated image or media line keeps its own rendering.
     if (/^\s*(!\[[^\]]*\]\([^)]+\)|MEDIA:\s*\S+)\s*$/.test(line)) { flush(); html.push(renderMarkdown(line.trim())); continue; }
     if (TABLE_DIVIDER.test(line)) continue;
     paragraph.push(line);
   }
-  if (code) html.push(`<pre class="plain-response-code">${esc(code.join('\n'))}</pre>`);
   flush();
   return html.join('');
 }
