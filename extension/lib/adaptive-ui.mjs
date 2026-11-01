@@ -14,7 +14,7 @@
 // streaming patcher can keep a finished block (and its local view state)
 // untouched while later text arrives.
 
-import { escapeHtml, redactSensitiveText, renderMarkdown } from './common.mjs';
+import { escapeHtml, markdownFenceBodyLine, markdownFenceRegions, redactSensitiveText, renderMarkdown } from './common.mjs';
 
 export const HAUI_SCHEMA = 'hermes.adaptive-ui';
 export const HAUI_VERSION = 1;
@@ -62,8 +62,9 @@ const CHART_KINDS = Object.freeze({
 });
 
 // ---------------------------------------------------------------------------
-// Fence splitting. Same fence rule as renderMarkdown: a line starting with ```
-// opens a fence and the next such line closes it. While a reply streams, an
+// Fence splitting. Same fence rule as renderMarkdown (markdownFenceOpening): three or
+// more backticks or tildes open a fence, and a line of the same character, at least
+// as long, closes it. While a reply streams, an
 // open fence is unfinished; once it has settled, an open fence ran to the end
 // of the reply and is read as it stands.
 
@@ -90,18 +91,26 @@ export function splitAdaptiveSegments(text = '', { streaming = true } = {}) {
     if (value.trim()) segments.push({ kind: 'markdown', id: `m${proseStart}`, text: value });
     prose = [];
   };
+  const regions = new Map(markdownFenceRegions(lines).map((region) => [region.start, region]));
   for (let index = 0; index < lines.length; index += 1) {
-    const trimmed = lines[index].trim();
-    if (!trimmed.startsWith('```')) {
+    const region = regions.get(index);
+    if (!region) {
       if (!prose.length) proseStart = offsets[index];
       prose.push(lines[index]);
       continue;
     }
-    let close = -1;
-    for (let next = index + 1; next < lines.length; next += 1) {
-      if (lines[next].trim().startsWith('```')) { close = next; break; }
+    // Only a fence at the top level can hold UI blocks. A fence a list item opened (`- ~~~~md`) is that
+    // item's code, so a hermes-ui example inside it stays an example and the whole fence goes to prose.
+    const opening = region.fence.owner ? null : region.fence;
+    const close = region.closed ? region.end : -1;
+    if (!opening) {
+      if (!prose.length) proseStart = offsets[index];
+      // One push per line: a spread of a long fence would pass the engine's argument limit.
+      for (let next = index; next <= region.end; next += 1) prose.push(lines[next]);
+      index = region.end;
+      continue;
     }
-    const rawLang = trimmed.slice(3).trim().split(/\s+/)[0].toLowerCase();
+    const rawLang = opening.info.split(/\s+/)[0].toLowerCase();
     const closed = close >= 0;
     const bodyLines = lines.slice(index + 1, closed ? close : lines.length);
     const lang = adaptiveFenceLang(rawLang, closed ? bodyLines.join('\n') : '', closed);
@@ -124,7 +133,7 @@ export function splitAdaptiveSegments(text = '', { streaming = true } = {}) {
     }
     if (!prose.length) proseStart = offsets[index];
     const end = close < 0 ? lines.length - 1 : close;
-    prose.push(...lines.slice(index, end + 1));
+    for (let next = index; next <= end; next += 1) prose.push(lines[next]);
     index = end;
   }
   flush();
@@ -808,11 +817,18 @@ export function presentMarkdownParts(text = '', { settled = false } = {}) {
     markdown = [];
   };
   const followed = (end) => settled || lines.slice(end).some((line) => line.trim());
-  let inFence = false;
+  // The same fence rule as splitAdaptiveSegments and renderMarkdown: a fenced block stays one piece of
+  // Markdown, whatever its lines look like.
+  // A fence a list item opens (`- ~~~~md`) counts too, up to its close or the end of that item.
+  const regions = new Map(markdownFenceRegions(lines).map((region) => [region.start, region]));
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    if (line.trim().startsWith('```')) inFence = !inFence;
-    if (inFence) { markdown.push(line); continue; }
+    const region = regions.get(index);
+    if (region) {
+      for (let next = index; next <= region.end; next += 1) markdown.push(lines[next]);
+      index = region.end;
+      continue;
+    }
     const previousBlank = index === 0 || !lines[index - 1].trim();
     const standalone = (run) => (run.end >= lines.length || !lines[run.end].trim()) && followed(run.end);
     if (previousBlank && shortLine(line) && METRIC_LINE.test(line)) {
@@ -843,7 +859,7 @@ export function presentMarkdownParts(text = '', { settled = false } = {}) {
     if (line.includes('|') && shortLine(lines[index + 1] || '', 400) && TABLE_DIVIDER.test(lines[index + 1] || '')) {
       let end = index + 2;
       while (end < lines.length && lines[end].includes('|') && lines[end].trim()) end += 1;
-      markdown.push(...lines.slice(index, end));
+      for (let next = index; next < end; next += 1) markdown.push(lines[next]);
       const rowLines = lines.slice(index + 2, end);
       const chart = followed(end) && rowLines.every((row) => row.trim().endsWith('|') || row.split('|').length > 2) ? chartFromTable(line, rowLines) : null;
       if (chart) {
@@ -899,15 +915,31 @@ export function renderAdaptiveMarkdown(value = '', { labels = HAUI_DEFAULT_LABEL
   return html.join('');
 }
 
+// The code lines of a fence region, without its opening and closing lines or the indent of the list item
+// that holds it.
+function fenceCode(lines, region) {
+  const code = [];
+  const last = region.closed ? region.end - 1 : region.end;
+  for (let index = region.start + 1; index <= last; index += 1) code.push(markdownFenceBodyLine(lines[index], region.fence));
+  return code;
+}
+
 // Plain text: the words without Markdown formatting. Code stays in a plain
 // monospace block and generated images still show, so nothing is lost.
 export function markdownToPlainText(value = '') {
   const lines = stripAdaptiveFences(value).split('\n');
   const out = [];
-  let inFence = false;
-  for (const line of lines) {
-    if (line.trim().startsWith('```')) { inFence = !inFence; continue; }
-    if (inFence) { out.push(line); continue; }
+  // The shared fence rules: ``` or ~~~, closed only by the same character at least as long; a fence a
+  // list item opens ends with that item too, and its lines lose the item's indent.
+  const regions = new Map(markdownFenceRegions(lines).map((region) => [region.start, region]));
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const region = regions.get(index);
+    if (region) {
+      for (const code of fenceCode(lines, region)) out.push(code);
+      index = region.end;
+      continue;
+    }
     if (TABLE_DIVIDER.test(line)) continue;
     let text = line
       .replace(/^\s{0,3}#{1,6}\s+/, '')
@@ -934,24 +966,26 @@ export function renderPlainResponse(value = '') {
   const lines = stripAdaptiveFences(source).split('\n');
   const html = [];
   let paragraph = [];
-  let code = null;
   const flush = () => {
     if (paragraph.length) html.push(`<p class="plain-response">${paragraph.map((line) => esc(markdownToPlainText(line))).join('<br>')}</p>`);
     paragraph = [];
   };
-  for (const line of lines) {
-    if (line.trim().startsWith('```')) {
-      if (code) { html.push(`<pre class="plain-response-code">${esc(code.join('\n'))}</pre>`); code = null; } else { flush(); code = []; }
+  const regions = new Map(markdownFenceRegions(lines).map((region) => [region.start, region]));
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const region = regions.get(index);
+    if (region) {
+      flush();
+      html.push(`<pre class="plain-response-code">${esc(fenceCode(lines, region).join('\n'))}</pre>`);
+      index = region.end;
       continue;
     }
-    if (code) { code.push(line); continue; }
     if (!line.trim()) { flush(); continue; }
     // A generated image or media line keeps its own rendering.
     if (/^\s*(!\[[^\]]*\]\([^)]+\)|MEDIA:\s*\S+)\s*$/.test(line)) { flush(); html.push(renderMarkdown(line.trim())); continue; }
     if (TABLE_DIVIDER.test(line)) continue;
     paragraph.push(line);
   }
-  if (code) html.push(`<pre class="plain-response-code">${esc(code.join('\n'))}</pre>`);
   flush();
   return html.join('');
 }
