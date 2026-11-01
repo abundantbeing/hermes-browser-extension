@@ -1,5 +1,5 @@
 /* Generated from extension/lib/content-extraction-core.mjs, extension/lib/appearance-themes.mjs, extension/lib/site-adapters.mjs, extension/lib/inline-draft-policy.mjs, extension/lib/page-annotation-content.mjs. Do not edit directly. */
-/* extension/lib/content-extraction-core.mjs · SHA-256 e783661f786707d1 */
+/* extension/lib/content-extraction-core.mjs · SHA-256 62d0b33e7f417d7a */
 (function hermesContentExtractorRuntime(hermesGlobal) {
   'use strict';
 
@@ -164,13 +164,17 @@ const SECRET_PATTERNS = [
   { pattern: /\bPMAK-[a-f0-9]{24}-[a-f0-9]{34}\b/g, replacement: '[REDACTED_SECRET]' },
   // A Google OAuth refresh token.
   { pattern: /\b1\/\/0[A-Za-z0-9_-]{40,}/g, replacement: '[REDACTED_SECRET]' },
-  // A Telegram bot token (`123456789:AA…`), also inside an `api.telegram.org/bot<token>/` path.
-  { pattern: /\b(bot)?\d{8,12}:[A-Za-z0-9_-]{30,}/g, replacement: '$1[REDACTED_SECRET]' },
-  // A Discord bot token: base64 user id, timestamp and HMAC, dot separated.
-  { pattern: /\b[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b/g, replacement: '[REDACTED_SECRET]' },
-  // Slack and Discord incoming webhook URLs carry their secret as the last path segment.
-  { pattern: /(\/services\/T[A-Z0-9]{8,}\/B[A-Z0-9]{8,}\/)[A-Za-z0-9]{20,}/g, replacement: '$1[REDACTED_SECRET]' },
-  { pattern: /(\/api(?:\/v\d+)?\/webhooks\/\d{17,20}\/)[A-Za-z0-9_-]{60,}/g, replacement: '$1[REDACTED_SECRET]' },
+  // A Telegram bot token (`123456789:AA…`), also inside an `api.telegram.org/bot<token>/` path. A URL in
+  // page text often carries the colon percent-encoded (`%3A`, or `%253A` when encoded twice), and the
+  // `bot` may follow an encoded slash (`%2Fbot…`). The quantifiers are all bounded.
+  { pattern: /(?:\b|(?<=%2[Ff]))(bot)?\d{8,12}(?::|%(?:25)?3[Aa])[A-Za-z0-9_-]{30,}/g, replacement: '$1[REDACTED_SECRET]' },
+  // A Discord bot token: base64 user id, timestamp and HMAC, dot separated. Any punctuation before it
+  // (`/`, `-`, `.`, `_`) still counts as a boundary; only a letter or digit glued to it does not.
+  { pattern: /(?<![A-Za-z0-9])[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b/g, replacement: '[REDACTED_SECRET]' },
+  // Slack and Discord incoming webhook URLs carry their secret as the last path segment. Slashes may be
+  // percent-encoded (`%2F`, `%252F`) when the URL sits inside a query string.
+  { pattern: /((?:\/|%(?:25)?2[Ff])services(?:\/|%(?:25)?2[Ff])T[A-Z0-9]{8,}(?:\/|%(?:25)?2[Ff])B[A-Z0-9]{8,}(?:\/|%(?:25)?2[Ff]))[A-Za-z0-9]{20,}/g, replacement: '$1[REDACTED_SECRET]' },
+  { pattern: /((?:\/|%(?:25)?2[Ff])api(?:(?:\/|%(?:25)?2[Ff])v\d+)?(?:\/|%(?:25)?2[Ff])webhooks(?:\/|%(?:25)?2[Ff])\d{17,20}(?:\/|%(?:25)?2[Ff]))[A-Za-z0-9_-]{60,}/g, replacement: '$1[REDACTED_SECRET]' },
   { pattern: /\bshp(?:at|ca|pa|ss)_[a-f0-9]{32}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bwhsec_[A-Za-z0-9]{16,}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\b(?:Authorization|Proxy-Authorization)(["'`]?\s*[:=]\s*["'`]?)(?:Basic|Digest|Negotiate|NTLM|Token)\s+[^\s'"`;&,]+/gi, replacement: 'Authorization$1[REDACTED_SECRET]' },
@@ -1892,7 +1896,7 @@ const SITE_ADAPTER_API = Object.freeze({
   hermesGlobal.HermesSiteAdapters = SITE_ADAPTER_API;
 })(globalThis);
 
-/* extension/lib/inline-draft-policy.mjs · SHA-256 9fb146fc03cefc53 */
+/* extension/lib/inline-draft-policy.mjs · SHA-256 887c3ec0c988bc0d */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
 
@@ -1916,13 +1920,13 @@ const MAX_PAGE_CONTEXT_CHARS = 6_000;
 const MAX_RESULT_CHARS = 12_000;
 const ID_RE = /^[A-Za-z0-9_.:-]{8,160}$/;
 const SENSITIVE_LABEL_RE = /(?:password|passwd|passcode|one.?time|otp|verification.?code|security.?code|two.?factor|2fa|credit.?card|card.?number|cvv|cvc|expiry|payment|billing|api.?(?:key|token)|access.?token|auth.?token|session.?token|secret|private.?key|seed.?phrase|recovery.?phrase|wallet)/i;
-const SECRET_TEXT_RE = /(?:-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----|\bBearer\s+\S{8,}|\b(?:sk-|gh[pousr]_|github_pat_|AIza|xox[baprs]-)[A-Za-z0-9_-]{8,}|\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|password|secret)\s*[:=]\s*\S{4,})/i;
+const SECRET_TEXT_RE = /(?:-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----|\bBearer\s+\S{8,}|\b(?:sk-|gh[pousr]_|github_pat_|AIza|xox[baprs]-)[A-Za-z0-9_-]{8,}|\b(?:[a-z0-9]{1,20}[_-]){0,3}(?:api[_-]?key|server[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|password|secret)\s*[:=]\s*\S{4,})/i;
 // This module stays import-free (it also runs as a classic content script), so it keeps its own copy of
 // the provider key shapes the shared redactor (content-extraction-core.mjs SECRET_PATTERNS) knows. Each
 // body class and minimum length mirrors the shared pattern (hyphens, underscores, dots and `=` included),
 // so a key the redactor would mask is never judged clean here.
 // tests/redaction-hermes-token-shapes.test.mjs checks that the two agree.
-const PROVIDER_KEY_TEXT_RE = /\b(?:(?:gsk_|xai-|r8_|pplx-|fw_|fpk_|tvly-(?:dev-|prod-)?|fal_|bb_live_)[A-Za-z0-9]{20,}|syt_[A-Za-z0-9]{4,}_[A-Za-z0-9]{10,}_[A-Za-z0-9]{6}\b|ntn_[A-Za-z0-9]{40,}|lin_(?:api|oauth)_[A-Za-z0-9]{32,}|fc-[a-f0-9]{32}\b|secret_[A-Za-z0-9]{43}\b|sk_[a-f0-9]{48}\b|do[opr]_v1_[a-f0-9]{64}\b|pk-lf-[A-Za-z0-9-]{20,}|xapp-\d+-[A-Za-z0-9-]{10,}|xoxe-[A-Za-z0-9-]{10,}|pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{20,}|(?:gAAAAA|ATATT3)[A-Za-z0-9_=-]{40,}|PMAK-[a-f0-9]{24}-[a-f0-9]{34}\b|gl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-[A-Za-z0-9_.-]{20,}|GR1348941[A-Za-z0-9_-]{20,}|1\/\/0[A-Za-z0-9_-]{40,}|(?:bot)?\d{8,12}:[A-Za-z0-9_-]{30,}|[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b)/;
+const PROVIDER_KEY_TEXT_RE = /(?:\b(?:(?:gsk_|xai-|r8_|pplx-|fw_|fpk_|tvly-(?:dev-|prod-)?|fal_|bb_live_)[A-Za-z0-9]{20,}|syt_[A-Za-z0-9]{4,}_[A-Za-z0-9]{10,}_[A-Za-z0-9]{6}\b|ntn_[A-Za-z0-9]{40,}|lin_(?:api|oauth)_[A-Za-z0-9]{32,}|fc-[a-f0-9]{32}\b|secret_[A-Za-z0-9]{43}\b|sk_[a-f0-9]{48}\b|do[opr]_v1_[a-f0-9]{64}\b|pk-lf-[A-Za-z0-9-]{20,}|xapp-\d+-[A-Za-z0-9-]{10,}|xoxe-[A-Za-z0-9-]{10,}|pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{20,}|(?:gAAAAA|ATATT3)[A-Za-z0-9_=-]{40,}|PMAK-[a-f0-9]{24}-[a-f0-9]{34}\b|gl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-[A-Za-z0-9_.-]{20,}|GR1348941[A-Za-z0-9_-]{20,}|1\/\/0[A-Za-z0-9_-]{40,}|(?:bot)?\d{8,12}(?::|%(?:25)?3[Aa])[A-Za-z0-9_-]{30,})|(?<=%2[Ff])(?:bot)?\d{8,12}(?::|%(?:25)?3[Aa])[A-Za-z0-9_-]{30,}|(?<![A-Za-z0-9])[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b|(?:\/|%(?:25)?2[Ff])services(?:\/|%(?:25)?2[Ff])T[A-Z0-9]{8,}(?:\/|%(?:25)?2[Ff])B[A-Z0-9]{8,}(?:\/|%(?:25)?2[Ff])[A-Za-z0-9]{20,}|(?:\/|%(?:25)?2[Ff])api(?:(?:\/|%(?:25)?2[Ff])v\d+)?(?:\/|%(?:25)?2[Ff])webhooks(?:\/|%(?:25)?2[Ff])\d{17,20}(?:\/|%(?:25)?2[Ff])[A-Za-z0-9_-]{60,})/;
 
 function containsSecretText(value = '') {
   return SECRET_TEXT_RE.test(value) || PROVIDER_KEY_TEXT_RE.test(value);

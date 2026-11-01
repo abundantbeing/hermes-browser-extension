@@ -159,13 +159,17 @@ const SECRET_PATTERNS = [
   { pattern: /\bPMAK-[a-f0-9]{24}-[a-f0-9]{34}\b/g, replacement: '[REDACTED_SECRET]' },
   // A Google OAuth refresh token.
   { pattern: /\b1\/\/0[A-Za-z0-9_-]{40,}/g, replacement: '[REDACTED_SECRET]' },
-  // A Telegram bot token (`123456789:AA…`), also inside an `api.telegram.org/bot<token>/` path.
-  { pattern: /\b(bot)?\d{8,12}:[A-Za-z0-9_-]{30,}/g, replacement: '$1[REDACTED_SECRET]' },
-  // A Discord bot token: base64 user id, timestamp and HMAC, dot separated.
-  { pattern: /\b[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b/g, replacement: '[REDACTED_SECRET]' },
-  // Slack and Discord incoming webhook URLs carry their secret as the last path segment.
-  { pattern: /(\/services\/T[A-Z0-9]{8,}\/B[A-Z0-9]{8,}\/)[A-Za-z0-9]{20,}/g, replacement: '$1[REDACTED_SECRET]' },
-  { pattern: /(\/api(?:\/v\d+)?\/webhooks\/\d{17,20}\/)[A-Za-z0-9_-]{60,}/g, replacement: '$1[REDACTED_SECRET]' },
+  // A Telegram bot token (`123456789:AA…`), also inside an `api.telegram.org/bot<token>/` path. A URL in
+  // page text often carries the colon percent-encoded (`%3A`, or `%253A` when encoded twice), and the
+  // `bot` may follow an encoded slash (`%2Fbot…`). The quantifiers are all bounded.
+  { pattern: /(?:\b|(?<=%2[Ff]))(bot)?\d{8,12}(?::|%(?:25)?3[Aa])[A-Za-z0-9_-]{30,}/g, replacement: '$1[REDACTED_SECRET]' },
+  // A Discord bot token: base64 user id, timestamp and HMAC, dot separated. Any punctuation before it
+  // (`/`, `-`, `.`, `_`) still counts as a boundary; only a letter or digit glued to it does not.
+  { pattern: /(?<![A-Za-z0-9])[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}\b/g, replacement: '[REDACTED_SECRET]' },
+  // Slack and Discord incoming webhook URLs carry their secret as the last path segment. Slashes may be
+  // percent-encoded (`%2F`, `%252F`) when the URL sits inside a query string.
+  { pattern: /((?:\/|%(?:25)?2[Ff])services(?:\/|%(?:25)?2[Ff])T[A-Z0-9]{8,}(?:\/|%(?:25)?2[Ff])B[A-Z0-9]{8,}(?:\/|%(?:25)?2[Ff]))[A-Za-z0-9]{20,}/g, replacement: '$1[REDACTED_SECRET]' },
+  { pattern: /((?:\/|%(?:25)?2[Ff])api(?:(?:\/|%(?:25)?2[Ff])v\d+)?(?:\/|%(?:25)?2[Ff])webhooks(?:\/|%(?:25)?2[Ff])\d{17,20}(?:\/|%(?:25)?2[Ff]))[A-Za-z0-9_-]{60,}/g, replacement: '$1[REDACTED_SECRET]' },
   { pattern: /\bshp(?:at|ca|pa|ss)_[a-f0-9]{32}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\bwhsec_[A-Za-z0-9]{16,}\b/g, replacement: '[REDACTED_SECRET]' },
   { pattern: /\b(?:Authorization|Proxy-Authorization)(["'`]?\s*[:=]\s*["'`]?)(?:Basic|Digest|Negotiate|NTLM|Token)\s+[^\s'"`;&,]+/gi, replacement: 'Authorization$1[REDACTED_SECRET]' },

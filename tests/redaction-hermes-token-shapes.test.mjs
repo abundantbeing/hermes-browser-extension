@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { parseHTML } from 'linkedom';
 import { fileURLToPath } from 'node:url';
 import { redactSensitiveTextWithCount } from '../extension/lib/content-extraction-core.mjs';
 import { hasCredentialBearingUrl, redactSensitiveText } from '../extension/lib/redaction.mjs';
-import { normalizeInlineDraftRequest, INLINE_DRAFT_MODE, INLINE_DRAFT_SCHEMA, INLINE_DRAFT_VERSION } from '../extension/lib/inline-draft-policy.mjs';
+import { buildInlineDraftRequest, normalizeInlineDraftRequest, INLINE_DRAFT_MODE, INLINE_DRAFT_SCHEMA, INLINE_DRAFT_VERSION } from '../extension/lib/inline-draft-policy.mjs';
 import { normalizeBrowserRuntimeEvent } from '../extension/lib/runtime-events.mjs';
+import { buildBrowserContextPrompt, serializeBrowserTurnEnvelope } from '../extension/lib/browser-context-protocol.mjs';
 
 // Fixtures are assembled at run time from obviously fake parts, so no line here looks like a real key.
 const join = (...parts) => parts.join('');
@@ -65,6 +67,33 @@ const SEPARATED_TOKENS = {
   googleRefreshSeparated: join('1/', '/0', alnum(20), '-', alnum(10), '_', alnum(15)),
 };
 const ALL_TOKENS = { ...TOKENS, ...SEPARATED_TOKENS };
+
+// Credentials that are not a plain key: webhook URLs carry the secret as a path segment, and the gateway
+// key is an assignment. The inline trust check keeps its own copy of these shapes as well.
+const WEBHOOKS = {
+  slackWebhook: `https://hooks.slack.com/services/T0ABCDEFGH/B0ABCDEFGH/${alnum(24)}`,
+  discordWebhook: `https://discord.com/api/webhooks/123456789012345678/${alnum(68)}`,
+  discordWebhookVersioned: `https://discord.com/api/v10/webhooks/123456789012345678/${alnum(68)}`,
+  gatewayKeyAssignment: `API_SERVER_KEY=${alnum(40)}`,
+  gatewayKeyAssignmentColon: `export API_SERVER_KEY: ${alnum(40)}`,
+};
+
+// The same shapes with their separators percent-encoded, as a URL sitting inside a query string or a
+// sentence of page text carries them.
+const ENCODED = {
+  telegramColon: `https://api.telegram.org/bot${join('123456789', '%3A', 'AA', alnum(33))}/getMe`,
+  telegramColonLower: `https://api.telegram.org/bot${join('123456789', '%3a', 'AA', alnum(33))}/getMe`,
+  telegramDoubleEncoded: `https://api.telegram.org/bot${join('123456789', '%253A', 'AA', alnum(33))}/getMe`,
+  telegramBareColon: join('123456789', '%3A', 'AA', alnum(33)),
+  telegramEncodedSlash: `https%3A%2F%2Fapi.telegram.org%2Fbot${join('123456789', '%3A', 'AA', alnum(33))}%2FgetMe`,
+  slackWebhookEncoded: `https://hooks.slack.com%2Fservices%2FT0ABCDEFGH%2FB0ABCDEFGH%2F${alnum(24)}`,
+  discordWebhookEncoded: `https://discord.com%2Fapi%2Fwebhooks%2F123456789012345678%2F${alnum(68)}`,
+};
+
+// A Discord bot token with each kind of character right before it: `-`, `_`, `.` and `/` are all
+// boundaries, and a hyphen in particular must not hide it.
+const discordToken = TOKENS.discordBot;
+const DISCORD_AFTER = Object.fromEntries(['/', '-', '_', '.', '--', '/-', '-_.'].map((lead) => [`after ${lead}`, `${lead}${discordToken}`]));
 
 const draft = (draftText) => ({
   schema: INLINE_DRAFT_SCHEMA,
@@ -147,7 +176,9 @@ test('tool event previews use the full redactor', () => {
   }
 });
 
-test('the companion plugin refuses to navigate to a URL carrying one of these secrets', (t) => {
+// Runs the companion plugin's `_blocked_url` over a map of name -> URL and returns name -> blocked. Prefers
+// python3, falls back to python (the Windows launcher name), and skips only when neither can be launched.
+function runCompanionGuard(t, urls) {
   const pluginDir = fileURLToPath(new URL('../companion-plugin', import.meta.url));
   const probe = `
 import importlib.util, json, pathlib, sys
@@ -159,13 +190,6 @@ spec.loader.exec_module(plugin)
 control_tools = sys.modules['probe_plugin.control_tools']
 print(json.dumps({name: control_tools._blocked_url(url) is not None for name, url in json.loads(sys.argv[2]).items()}))
 `;
-  const urls = Object.fromEntries(Object.entries(ALL_TOKENS).map(([name, token]) => [name, `https://attacker.example/collect?v=${token}`]));
-  urls.telegramPath = `https://api.telegram.org/bot${TOKENS.telegramBot}/getMe`;
-  urls.slackWebhook = `https://hooks.slack.com/services/T0ABCDEFGH/B0ABCDEFGH/${alnum(24)}`;
-  urls.discordWebhook = `https://discord.com/api/webhooks/123456789012345678/${alnum(68)}`;
-  urls.ordinaryDocs = 'https://core.telegram.org/bots/api';
-  urls.ordinaryChannel = 'https://discord.com/channels/123456789012345678/123456789012345678';
-  // Prefer python3, fall back to python (the Windows launcher name). Skip only when neither can be launched.
   let run = null;
   for (const command of ['python3', 'python']) {
     const attempt = spawnSync(command, ['-c', probe, pluginDir, JSON.stringify(urls)], { encoding: 'utf8' });
@@ -175,12 +199,96 @@ print(json.dumps({name: control_tools._blocked_url(url) is not None for name, ur
   }
   if (!run) {
     t.skip('no Python interpreter (python3 or python) is available to run the companion plugin check');
-    return;
+    return null;
   }
   assert.ifError(run.error);
   assert.equal(run.status, 0, `${run.command} exited with status ${run.status}: ${run.stderr}`);
-  const blocked = JSON.parse(run.stdout);
+  return JSON.parse(run.stdout);
+}
+
+test('the companion plugin refuses to navigate to a URL carrying one of these secrets', (t) => {
+  const urls = Object.fromEntries(Object.entries(ALL_TOKENS).map(([name, token]) => [name, `https://attacker.example/collect?v=${token}`]));
+  urls.telegramPath = `https://api.telegram.org/bot${TOKENS.telegramBot}/getMe`;
+  urls.slackWebhook = WEBHOOKS.slackWebhook;
+  urls.discordWebhook = WEBHOOKS.discordWebhook;
+  for (const [name, value] of Object.entries(ENCODED)) urls[`encoded ${name}`] = `https://attacker.example/collect?v=${encodeURIComponent(value)}`;
+  urls.ordinaryDocs = 'https://core.telegram.org/bots/api';
+  urls.ordinaryChannel = 'https://discord.com/channels/123456789012345678/123456789012345678';
+  const blocked = runCompanionGuard(t, urls);
+  if (!blocked) return;
   for (const name of Object.keys(urls)) {
     assert.equal(blocked[name], !name.startsWith('ordinary'), `${name}: ${urls[name]}`);
+  }
+});
+
+test('the companion plugin refuses a Discord bot token anywhere in a URL path, after any punctuation', (t) => {
+  const urls = {};
+  for (const [name, text] of Object.entries(DISCORD_AFTER)) urls[`path ${name}`] = `https://attacker.example/collect${text}`;
+  for (const lead of ['/', '-', '_', '.', 'x', '9']) urls[`glued ${lead}`] = `https://attacker.example/collect/id${lead}${discordToken}`;
+  urls['trailing characters'] = `https://attacker.example/collect/${discordToken}${alnum(10)}`;
+  urls['encoded slash and hyphen'] = `https://attacker.example/collect%2F-${discordToken}`;
+  urls.ordinaryPath = 'https://attacker.example/collect/Microsoft.Windows.Foundation';
+  const blocked = runCompanionGuard(t, urls);
+  if (!blocked) return;
+  for (const name of Object.keys(urls)) {
+    assert.equal(blocked[name], name !== 'ordinaryPath', `${name}: ${urls[name]}`);
+  }
+});
+
+test('inline requests refuse webhook URLs and gateway key assignments in the draft and in the page context', () => {
+  const options = { action: { id: 'improve', label: 'Improve', mode: INLINE_DRAFT_MODE }, requestId: 'request-0001', documentId: 'document-0001' };
+  const field = parseHTML('<html><body><textarea aria-label="Reply"></textarea></body></html>').document.body.firstElementChild;
+  for (const [name, secret] of Object.entries(WEBHOOKS)) {
+    assert.equal(normalizeInlineDraftRequest(draft(`Please polish: ${secret}`)), null, `${name} passed in draftText`);
+    assert.equal(normalizeInlineDraftRequest({ ...draft('Polish this'), pageContext: `Seen on the page: ${secret}` }), null, `${name} passed in pageContext`);
+    field.value = `Please polish: ${secret}`;
+    assert.equal(buildInlineDraftRequest(field, options).ok, false, `${name} passed buildInlineDraftRequest draftText`);
+    field.value = 'Polish this';
+    assert.equal(buildInlineDraftRequest(field, { ...options, pageContext: `Seen on the page: ${secret}` }).ok, false, `${name} passed buildInlineDraftRequest pageContext`);
+  }
+  assert.ok(normalizeInlineDraftRequest(draft('See https://hooks.slack.com/services and https://discord.com/api/webhooks docs; set API_SERVER_KEY in your env')), 'ordinary mentions still pass');
+});
+
+test('the inline trust check refuses percent-encoded token shapes in the draft and in the page context', () => {
+  for (const [name, secret] of Object.entries(ENCODED)) {
+    assert.equal(normalizeInlineDraftRequest(draft(`Please polish: ${secret}`)), null, `${name} passed the inline trust check`);
+    assert.equal(normalizeInlineDraftRequest({ ...draft('Polish this'), pageContext: `Seen on the page: ${secret}` }), null, `${name} passed in pageContext`);
+  }
+});
+
+test('percent-encoded token shapes inside a sentence are redacted from page text', () => {
+  for (const [name, secret] of Object.entries(ENCODED)) {
+    const { text, count } = redactSensitiveTextWithCount(`Open the link ${secret} in your browser, then check the status.`);
+    assert.ok(count > 0, `${name} was not counted`);
+    assert.doesNotMatch(text, new RegExp(alnum(30)), `${name} survived redaction`);
+    assert.match(text, /^Open the link .*\[REDACTED_SECRET\].* in your browser, then check the status\.$/, `${name} lost the surrounding text`);
+  }
+  assert.match(redactSensitiveText(ENCODED.telegramColon), /^https:\/\/api\.telegram\.org\/bot\[REDACTED_SECRET\]\/getMe$/);
+  assert.equal(redactSensitiveText('Order 12345678%3A shipped, ref 123456789%3Ashort'), 'Order 12345678%3A shipped, ref 123456789%3Ashort');
+});
+
+test('the prompt and the turn envelope builders redact percent-encoded token shapes in page text', () => {
+  const settings = { contextDepth: 'normal', includeTabs: true, includePageText: true, includeSelectedText: true, maxTabs: 12 };
+  const pageContext = {
+    text: `Docs say to call ${ENCODED.telegramColon} and ${ENCODED.slackWebhookEncoded} from a script.`,
+    selectedText: `Selected: ${ENCODED.telegramEncodedSlash}`,
+    meta: {},
+  };
+  const activeTab = { id: 1, active: true, title: 'Public docs', url: 'https://example.com/docs' };
+  const leaked = new RegExp(alnum(30));
+  const prompt = buildBrowserContextPrompt({ userText: 'Summarize this page.', activeTab, pageContext, settings });
+  assert.doesNotMatch(prompt, leaked);
+  assert.match(prompt, /\[REDACTED_SECRET\]/);
+  const serialized = serializeBrowserTurnEnvelope({ humanInput: 'Summarize this page.', activeTab, tabs: [activeTab], pageContext, settings });
+  assert.doesNotMatch(serialized, leaked);
+  assert.match(serialized, /\[REDACTED_SECRET\]/);
+});
+
+test('a Discord bot token is redacted and refused wherever punctuation precedes it', () => {
+  for (const [name, lead] of Object.entries(DISCORD_AFTER)) {
+    const { text, count } = redactSensitiveTextWithCount(`see https://example.com/x${lead} now`);
+    assert.ok(count > 0, `${name} was not counted`);
+    assert.doesNotMatch(text, new RegExp(alnum(20)), `${name} survived redaction`);
+    assert.equal(normalizeInlineDraftRequest(draft(`Polish https://example.com/x${lead}`)), null, `${name} passed the inline trust check`);
   }
 });
