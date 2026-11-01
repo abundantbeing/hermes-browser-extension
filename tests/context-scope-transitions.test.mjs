@@ -301,3 +301,59 @@ test('the picker opens a session through the transport choice and falls back to 
   assert.match(body, /if \(openTransport\.restFallback\) \{[\s\S]*?dashboardTransport = false;/);
   assert.match(body, /\n {2}if \(!dashboardTransport\) \{\n/, 'the REST open runs after a fallback too');
 });
+
+// Runs the real commitContextScope against stubs: a scope change must not load the regular chat's cached
+// transcript over an open group chat, whose messages live in activeGroupMessages.
+async function runScopeCommit({ groupOpen }) {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const start = source.indexOf('async function commitContextScope');
+  const end = source.indexOf('\nfunction applyContextScope', start);
+  assert.ok(start >= 0 && end > start, 'commitContextScope source region must exist');
+  const calls = [];
+  const env = {
+    scopeRevision: { isCurrent: () => true },
+    scopeTransitionSnapshot: () => ({}),
+    normalizeContextScope,
+    CONTEXT_SCOPE_MODES,
+    conversationScopeForContextScope: (scope) => scope,
+    rememberNonPinnedConversationSession: () => {},
+    restoreNonPinnedConversationSession: () => null,
+    availableSessions: [],
+    DEFAULT_SETTINGS: { sessionSource: 'Browser' },
+    contextScope: normalizeContextScope({ mode: CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE }),
+    previousConversationScope: normalizeContextScope({ mode: CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE }),
+    rememberConversationScope: () => {},
+    saveConversationScopeForInstance: () => {},
+    saveContextScopeForInstance: () => {},
+    syncSelectedTabsFromContextScope: () => {},
+    currentContext: { tabs: [] },
+    renderContextScopeControls: () => {},
+    activeGroupProjection: groupOpen ? { roomId: 'launch-room' } : null,
+    loadMessagesForActiveScope: async () => { calls.push('load-regular-transcript'); return true; },
+    renderMessagesFromStorage: () => { calls.push('render'); },
+    openHermesSession: async () => { calls.push('open-session'); return true; },
+    ensureSessionForActiveScope: async () => true,
+    refreshContext: async () => { calls.push('refresh-context'); },
+    restoreScopeTransitionSnapshot: () => {},
+    browserApi: { storage: { local: { set: async () => {} } } },
+  };
+  const names = Object.keys(env);
+  // eslint-disable-next-line no-new-func
+  const commit = new Function(...names, `${source.slice(start, end)}\nreturn commitContextScope;`)(...names.map((name) => env[name]));
+  const ok = await commit({ mode: CONTEXT_SCOPE_MODES.CHAT_ONLY }, { ensureSession: false, scopeRevisionId: 1 });
+  return { ok, calls };
+}
+
+test('Chat only on an open group chat keeps the group transcript on screen', async () => {
+  const { ok, calls } = await runScopeCommit({ groupOpen: true });
+  assert.equal(ok, true);
+  assert.equal(calls.includes('load-regular-transcript'), false, 'the regular chat must not be loaded over the group');
+  assert.deepEqual(calls, ['render', 'refresh-context']);
+});
+
+test('Chat only on a regular chat still loads that chat for the new scope', async () => {
+  const { ok, calls } = await runScopeCommit({ groupOpen: false });
+  assert.equal(ok, true);
+  assert.deepEqual(calls, ['load-regular-transcript', 'refresh-context']);
+});

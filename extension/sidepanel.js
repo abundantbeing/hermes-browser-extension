@@ -5475,7 +5475,10 @@ async function commitContextScope(nextScope, { ensureSession = false, scopeRevis
   syncSelectedTabsFromContextScope(currentContext.tabs || []);
   renderContextScopeControls();
   try {
-    await loadMessagesForActiveScope({ scopeRevisionId });
+    // An open group chat owns the transcript (activeGroupMessages): a scope change redraws it instead of
+    // loading the regular chat cached for the scope over it.
+    if (activeGroupProjection) renderMessagesFromStorage();
+    else await loadMessagesForActiveScope({ scopeRevisionId });
     if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
     if (restoredSession) {
       const opened = await openHermesSession(restoredSession, { scopeRevisionId });
