@@ -140,6 +140,26 @@ console.log(JSON.stringify(result.profiles.map(row => row.name)));'''
             self.assertEqual(revisions, {'hermes-bots': 4})
             self.assertNotIn('private-value', json.dumps(meta))
 
+    def test_large_profile_file_keeps_small_bot_fields(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            (home / 'profile.yaml').write_text('x' * (profile_routes.MAX_METADATA + 1000))
+            data = {'ui_meta': {'hermes-bots': {'title': 'Worker', 'color': 'blue', 'image': 'data:image/png;base64,' + 'A' * 100_000}},
+                    '_ui_meta_revisions': {'hermes-bots': 7}}
+            with patch.dict(sys.modules, {'hermes_yaml': SimpleNamespace(safe_load=lambda _: data)}):
+                meta, revisions = profile_routes._bot_metadata(home)
+            self.assertEqual(meta, {'hermes-bots': {'title': 'Worker', 'color': 'blue'}})
+            self.assertEqual(revisions, {'hermes-bots': 7})
+
+    def test_profile_file_past_the_read_cap_is_not_parsed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            (home / 'profile.yaml').write_text('x' * 2000)
+            def refuse(_):
+                raise AssertionError('an oversized profile file must not be parsed')
+            with patch.object(profile_routes, 'MAX_PROFILE_FILE', 1000), patch.dict(sys.modules, {'hermes_yaml': SimpleNamespace(safe_load=refuse)}):
+                self.assertEqual(profile_routes._bot_metadata(home), ({}, {}))
+
     def test_unserved_profiles_do_not_appear_in_roster(self):
         with tempfile.TemporaryDirectory() as tmp:
             worker = Path(tmp) / 'worker'

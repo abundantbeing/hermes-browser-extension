@@ -19,6 +19,10 @@ AVATAR_PATH = f"{ROSTER_PATH}/{{name}}/avatar"
 ROUTE_PATHS = (ROSTER_PATH, AVATAR_PATH)
 MAX_PROFILES = 1000
 MAX_AVATAR = 2_000_000
+# profile.yaml can hold an inline picture and other plugins' data, so it may be far
+# bigger than what is returned. Read up to 1 MiB (bounded memory), then cap the
+# returned bot fields at 64 KiB, dropping only the image when it does not fit.
+MAX_PROFILE_FILE = 1_048_576
 MAX_METADATA = 65_536
 AVATAR_TYPES = (("png", "image/png"), ("jpg", "image/jpeg"), ("webp", "image/webp"))
 
@@ -54,7 +58,7 @@ def _bot_metadata(home):
     """Expose only the bot presentation fields, never arbitrary plugin metadata."""
     path = home / "profile.yaml"
     try:
-        if not _inside(home, path) or not path.is_file() or path.stat().st_size > MAX_METADATA:
+        if not _inside(home, path) or not path.is_file() or path.stat().st_size > MAX_PROFILE_FILE:
             return {}, {}
         import hermes_yaml as yaml
         data = yaml.safe_load(path.read_text(encoding="utf-8-sig")) or {}
