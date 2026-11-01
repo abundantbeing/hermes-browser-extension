@@ -176,6 +176,35 @@
     .foot-safety { width:100%; font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .panel[data-font-profile="signature"] .title, .panel[data-font-profile="signature"] .route-title, .panel[data-font-profile="signature"] .run-title, .panel[data-font-profile="signature"] .action, .panel[data-font-profile="signature"] .route strong, .panel[data-font-profile="signature"] .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
     .panel[data-font-profile="signature"] .action small, .panel[data-font-profile="signature"] .route small { text-transform:none; letter-spacing:normal; }
+    .panel[data-mode="quick"] { width:min(290px,calc(100vw - 20px)); }
+    .panel[data-mode="quick"] .head, .panel[data-mode="quick"] .context, .panel[data-mode="quick"] .foot, .panel[data-mode="bar"] .head, .panel[data-mode="bar"] .context, .panel[data-mode="bar"] .foot { display:none; }
+    .panel[data-mode="quick"] .body, .panel[data-mode="bar"] .body { padding:0; gap:0; }
+    .panel[data-mode="bar"] { max-height:none; overflow:visible; }
+    .quick-ask { display:flex; align-items:center; gap:8px; padding:9px 12px; border-bottom:1px solid var(--hb-line); }
+    .quick-input { flex:1; min-width:0; border:0; background:transparent; color:var(--hb-blue); font:calc(12.5px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); outline:none; }
+    .quick-input::placeholder { color:var(--hb-muted); }
+    .quick-label { padding:9px 12px 4px; }
+    .quick-list { display:grid; }
+    .quick-item { display:grid; grid-template-columns:20px 1fr; gap:10px; align-items:center; padding:8px 12px; border:0; background:transparent; color:var(--hb-blue); text-align:left; cursor:pointer; font-family:var(--hb-font-ui); }
+    .quick-item:hover, .quick-item:focus-visible { background:var(--hb-soft); outline:none; }
+    .quick-num { width:18px; height:18px; display:grid; place-items:center; border:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
+    .quick-item strong { display:block; font-size:calc(13px * var(--hermes-text-zoom, 1)); font-weight:600; }
+    .quick-item small { display:block; color:var(--hb-muted); font-size:calc(11px * var(--hermes-text-zoom, 1)); }
+    .quick-tools { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:8px 12px; border-top:1px solid var(--hb-line); }
+    .quick-chip { padding:3px 9px; border:1px solid var(--hb-line); border-radius:999px; background:transparent; color:var(--hb-blue); cursor:pointer; font:600 calc(10.5px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); }
+    .quick-options { margin-left:auto; width:26px; height:26px; border:1px solid var(--hb-line); border-radius:50%; background:transparent; color:var(--hb-blue); cursor:pointer; }
+    .quick-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
+    .quick-full { border:0; padding:0; background:transparent; color:var(--hb-blue); cursor:pointer; font:inherit; white-space:nowrap; }
+    .quick-back { display:flex; align-items:center; gap:8px; width:100%; padding:9px 12px; border:0; border-bottom:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); cursor:pointer; text-align:left; font-family:var(--hb-font-display); font-size:calc(17px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); }
+    .quick-opt { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--hb-line); color:var(--hb-blue); font-size:calc(12px * var(--hermes-text-zoom, 1)); }
+    .quick-opt small { display:block; color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
+    .bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:8px 10px; color:var(--hb-blue); font-size:calc(12px * var(--hermes-text-zoom, 1)); }
+    .bar-title { font-weight:700; }
+    .bar-preview { width:100%; max-height:4.6em; overflow:hidden; white-space:pre-wrap; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; color:var(--hb-blue); }
+    .bar-actions { display:flex; flex-wrap:wrap; gap:6px; margin-left:auto; }
+    .bar-actions button { padding:4px 9px; border:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); }
+    .bar-actions button.main { border-color:var(--hb-blue); background:var(--hb-blue); color:var(--hb-paper); }
+    .bar-actions button:disabled { opacity:.45; cursor:not-allowed; }
     @media (max-width:520px) { .panel { width:calc(100vw - 16px); } }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; animation:none!important; } }
   `;
@@ -451,6 +480,13 @@
     autoReplace = Boolean(enabled);
     savedAutoReplace = autoReplace;
     await browserApi.storage.local.set({ [AUTO_REPLACE_STORAGE_KEY]: autoReplace });
+  }
+
+  async function persistAssistSettings(patch) {
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
+    const next = { ...(stored?.hermesBrowserSettings || {}), ...patch };
+    assistSettings = { ...assistSettings, ...next };
+    await browserApi.storage.local.set({ hermesBrowserSettings: next });
   }
 
   async function persistDefaultRoute(route) {
@@ -758,11 +794,21 @@
     launcher.style.left = `${launcherPosition.left}px`;
     launcher.style.top = `${launcherPosition.top}px`;
     setLauncherTone(surfaceToneAt(launcherPosition.left + 12, launcherPosition.top + 12, anchor));
-    if (!panel.hidden) {
+    if (!panel.hidden && panel.dataset.mode === 'bar') {
+      // The quick menu's result bar sits just under the field (or just above it near the bottom).
+      const safe = 8;
+      const width = Math.min(Math.max(targetRect.width, 260), 560, viewportWidth - safe * 2);
+      const barHeight = panel.getBoundingClientRect().height || 60;
+      panel.style.width = `${width}px`;
+      panel.style.maxHeight = '';
+      panel.style.left = `${Math.max(safe, Math.min(viewportWidth - width - safe, targetRect.left))}px`;
+      panel.style.top = `${targetRect.bottom + 8 + barHeight <= viewportHeight - safe ? targetRect.bottom + 8 : Math.max(safe, targetRect.top - 8 - barHeight)}px`;
+    } else if (!panel.hidden) {
       // The panel opens right at the circle: just below it, lined up with its left edge, or just above it
       // when there is clearly more room there. It never jumps to a detached corner of the page.
       const safe = 8;
-      const panelWidth = Math.min(380, viewportWidth - 20);
+      const panelWidth = Math.min(panel.dataset.mode === 'quick' ? 290 : 380, viewportWidth - 20);
+      panel.style.width = '';
       const panelHeight = Math.max(260, panel.getBoundingClientRect().height || 0);
       const circleTop = launcherPosition.top;
       const circleBottom = launcherPosition.top + 24;
@@ -824,33 +870,190 @@
   // The footer: where Assist runs, automatic replacement, the Assist model, and what Assist never does.
   // The route and auto-replace are the same saved settings as Settings → Hermes Assist; the model is
   // changed there.
-  function renderFooter() {
-    const supportsSafeApply = (siteProfile?.applyMode || 'safe-apply') !== 'copy-only';
-    const routeControl = make('label', 'foot-control');
+  const ROUTE_LABELS = Object.freeze({ ask: 'Ask every time', current: 'Continue current chat', new: 'Start new Assist session', background: 'Run in background' });
+
+  function currentRoutePreference() {
+    return policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
+  }
+
+  function makeRouteSelect() {
     const routeSelect = make('select', 'route-select');
     routeSelect.setAttribute('aria-label', translateUiText('Where it runs'));
-    for (const [value, label] of [['ask', 'Ask every time'], ['current', 'Continue current chat'], ['new', 'Start new Assist session'], ['background', 'Run in background']]) {
+    for (const [value, label] of Object.entries(ROUTE_LABELS)) {
       const option = make('option', '', label);
       option.value = value;
       routeSelect.appendChild(option);
     }
-    routeSelect.value = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
+    routeSelect.value = currentRoutePreference();
     routeSelect.addEventListener('change', trustedOnly(() => { persistDefaultRoute(routeSelect.value).catch(() => {}); }));
-    routeControl.append(make('em', '', 'Runs'), routeSelect);
-    const replaceControl = make('label', 'foot-control');
+    return routeSelect;
+  }
+
+  function makeAutoReplaceToggle() {
+    const supportsSafeApply = (siteProfile?.applyMode || 'safe-apply') !== 'copy-only';
     const toggle = make('input', 'toggle');
     toggle.type = 'checkbox';
     toggle.checked = supportsSafeApply && autoReplace;
     toggle.disabled = !supportsSafeApply;
     toggle.dataset.setting = 'auto-replace';
     toggle.addEventListener('change', trustedOnly(() => { persistAutoReplace(toggle.checked).catch(() => {}); }));
-    replaceControl.append(make('em', '', 'Auto-replace'), toggle);
+    return toggle;
+  }
+
+  function assistModelName() {
+    return assistSettings.inlineAssistModel ? makeRaw('span', '', assistSettings.inlineAssistModel) : make('span', '', 'Same as chat');
+  }
+
+  function renderFooter() {
+    const routeControl = make('label', 'foot-control');
+    routeControl.append(make('em', '', 'Runs'), makeRouteSelect());
+    const replaceControl = make('label', 'foot-control');
+    replaceControl.append(make('em', '', 'Auto-replace'), makeAutoReplaceToggle());
     const modelControl = make('span', 'foot-control');
     modelControl.title = translateUiText('Change it in Settings → Hermes Assist');
-    modelControl.append(make('em', '', 'Model'), assistSettings.inlineAssistModel ? makeRaw('span', '', assistSettings.inlineAssistModel) : make('span', '', 'Same as chat'));
+    modelControl.append(make('em', '', 'Model'), assistModelName());
     footSafety.className = 'foot-safety';
     footSafety.textContent = translateUiText('Never posts or sends. Only this field changes.');
     foot.replaceChildren(routeControl, replaceControl, modelControl, footSafety);
+  }
+
+  // The quick menu: a small menu at the circle. One line to ask, the site's first four actions (1–4 run
+  // them while the menu has focus), the instant tools, options, and a way to the full panel.
+  function renderQuickMenu() {
+    activeView = { name: 'quick', args: [] };
+    panel.dataset.mode = 'quick';
+    const profile = siteProfile || refreshSiteProfile();
+    const askRow = make('div', 'quick-ask');
+    const input = make('input', 'quick-input');
+    input.type = 'text';
+    input.placeholder = translateUiText('Ask Hermes…');
+    input.setAttribute('aria-label', translateUiText('Ask Hermes'));
+    input.addEventListener('keydown', trustedOnly((event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      event.stopPropagation();
+      const text = input.value.trim();
+      if (text) beginAction({ id: 'custom', label: text.slice(0, 1000), detail: 'Custom instruction', mode: 'draft-copy-only' });
+    }));
+    askRow.append(input);
+    const label = makeRaw('span', 'section-label quick-label', profile?.label || location.hostname.replace(/^www\./, ''));
+    const list = make('div', 'quick-list');
+    pageActions().slice(0, 4).forEach((action, index) => {
+      const item = button('quick-item', '', action.label);
+      item.dataset.actionId = action.id;
+      const copy = make('span');
+      copy.append(make('strong', '', action.label), make('small', '', action.detail || action.instruction || 'Use this field only'));
+      item.append(makeRaw('span', 'quick-num', String(index + 1)), copy);
+      item.addEventListener('click', trustedOnly(() => beginAction(action)));
+      list.appendChild(item);
+    });
+    const tools = make('div', 'quick-tools');
+    localActions.forEach((action) => {
+      const chip = button('quick-chip', action.label);
+      chip.addEventListener('click', trustedOnly(() => runLocalAction(action)));
+      tools.appendChild(chip);
+    });
+    const gear = button('quick-options', '⚙', 'Assist options');
+    gear.addEventListener('click', trustedOnly(renderQuickOptions));
+    tools.appendChild(gear);
+    const quickFoot = make('div', 'quick-foot');
+    const summary = makeRaw('span', 'quick-summary', [
+      translateUiText(profile?.contextMode === 'visible' ? 'Reads thread' : 'This field only'),
+      translateUiText(ROUTE_LABELS[currentRoutePreference()]),
+      assistSettings.inlineAssistModel || translateUiText('Same as chat'),
+    ].join(' · '));
+    const full = button('quick-full', 'Full panel →');
+    full.addEventListener('click', trustedOnly(() => {
+      panel.dataset.mode = 'full';
+      renderAssist();
+    }));
+    quickFoot.append(summary, full);
+    setBody(askRow, label, list, tools, quickFoot);
+  }
+
+  // Assist's options, reached from the quick menu's gear: the same saved settings as Settings → Hermes Assist.
+  function renderQuickOptions() {
+    activeView = { name: 'quick-options', args: [] };
+    const profile = siteProfile || refreshSiteProfile();
+    const back = button('quick-back', '', 'Back to the quick menu');
+    back.append(makeRaw('span', '', '←'), make('span', '', 'Assist options'));
+    back.addEventListener('click', trustedOnly(renderQuickMenu));
+    const row = (title, detail, control) => {
+      const node = make('label', 'quick-opt');
+      const copy = make('span');
+      copy.append(make('strong', '', title));
+      if (detail) copy.append(detail instanceof globalThis.Node ? detail : make('small', '', detail));
+      node.append(copy, control);
+      return node;
+    };
+    const rows = [];
+    if (profile?.contextPolicy?.userConfigurable) {
+      const contextToggle = make('input', 'toggle');
+      contextToggle.type = 'checkbox';
+      contextToggle.checked = profile.contextMode === 'visible';
+      contextToggle.addEventListener('change', trustedOnly(() => {
+        void persistSiteContextMode(profile.adapterId, contextToggle.checked ? 'visible' : 'draft');
+      }));
+      rows.push(row('Read the visible thread', 'Off: this field only', contextToggle));
+    }
+    rows.push(row('Where it runs', '', makeRouteSelect()));
+    const model = make('span', 'foot-control');
+    model.append(assistModelName());
+    rows.push(row('Model', 'Change it in Settings → Hermes Assist', model));
+    rows.push(row('Replace text automatically', 'Undo is always one click away', makeAutoReplaceToggle()));
+    const keepChats = make('input', 'toggle');
+    keepChats.type = 'checkbox';
+    keepChats.checked = assistSettings.inlineAssistSessionRetention !== 'delete';
+    keepChats.addEventListener('change', trustedOnly(() => {
+      persistAssistSettings({ inlineAssistSessionRetention: keepChats.checked ? 'keep' : 'delete' }).catch(() => {});
+    }));
+    rows.push(row('Keep Assist chats', 'Kept under Inline assist in your history', keepChats));
+    setBody(back, ...rows);
+  }
+
+  // The quick menu's result: a slim bar under the field. When the draft was written into the field it
+  // offers Keep and Undo; when it could not be (or auto-replace is off) it previews the draft with Copy first.
+  function renderResultBar({ fieldChanged = false } = {}) {
+    activeView = { name: 'bar', args: [{ fieldChanged }] };
+    panel.dataset.mode = 'bar';
+    panel.hidden = false;
+    const bar = make('div', 'bar');
+    bar.append(make('strong', 'bar-title', appliedAutomatically ? 'Draft in place' : (fieldChanged ? 'Field changed · review required' : 'Draft ready')));
+    if (!appliedAutomatically) bar.append(makeRaw('div', 'bar-preview', resultText || translateUiText('(empty draft)')));
+    const actions = make('div', 'bar-actions');
+    const add = (label, handler, { main = false, disabled = false } = {}) => {
+      const item = button(main ? 'main' : '', label);
+      item.disabled = disabled;
+      item.addEventListener('click', trustedOnly(handler));
+      actions.appendChild(item);
+    };
+    if (appliedAutomatically) {
+      add('Keep', () => {
+        hidePanel();
+        pending = null;
+        resetResult();
+      }, { main: true });
+      add('Undo', undoResult, { disabled: !applyReceipt });
+    } else {
+      add('Copy', copyResult, { main: true });
+    }
+    add('Again', tryAgain, { disabled: !lastRunAction });
+    if (applyReceipt) add('Shorter', makeShorter);
+    if (appliedAutomatically) add('Copy', copyResult);
+    if (!appliedAutomatically) {
+      add('Full panel', () => {
+        panel.dataset.mode = 'full';
+        renderResult({ fieldChanged });
+      });
+    }
+    if (resultSessionId) {
+      add('Open session', () => {
+        panel.dataset.mode = 'full';
+        renderOpenSessionChoices();
+      });
+    }
+    bar.append(actions);
+    setBody(bar);
   }
 
   function renderAssist() {
@@ -1025,6 +1228,12 @@
   }
 
   function renderWorking() {
+    // From the quick menu the draft is written into the field when it is ready: the menu steps aside and
+    // the circle's ring shows the run.
+    if (panel.dataset.mode === 'quick') {
+      hidePanel();
+      return;
+    }
     activeView = { name: 'working', args: [] };
     contextState.textContent = translateUiText('WORKING');
     const wrap = make('div', 'working');
@@ -1108,6 +1317,7 @@
   }
 
   function renderResult({ fieldChanged = false, noModel = false } = {}) {
+    if (panel.dataset.mode === 'quick' || panel.dataset.mode === 'bar') return renderResultBar({ fieldChanged });
     activeView = { name: 'result', args: [{ fieldChanged, noModel }] };
     const actionLabel = pending?.actionId === 'custom'
       ? pending.actionLabel
@@ -1364,7 +1574,12 @@
     setLauncherBusy(false);
     panel.hidden = false;
     requestAssistFonts();
-    renderAssist();
+    if ((look?.normalizeInlineAssistOpenMode?.(assistSettings.inlineAssistOpenMode) || 'panel') === 'quick') {
+      renderQuickMenu();
+    } else {
+      panel.dataset.mode = 'full';
+      renderAssist();
+    }
     position();
   }
 
@@ -1409,6 +1624,18 @@
   launcher.addEventListener('pointerdown', onLauncherPointerDown);
   launcher.addEventListener('mousedown', onLauncherPointerDown);
   launcher.addEventListener('click', togglePanel);
+  // 1–4 run the quick menu's actions, only while the menu itself has focus (never inside the ask line,
+  // and never as page-level shortcuts).
+  panel.addEventListener('keydown', trustedOnly((event) => {
+    if (panel.dataset.mode !== 'quick' || activeView.name !== 'quick') return;
+    if (event.target?.matches?.('input, textarea, select') || !/^[1-4]$/.test(event.key)) return;
+    const item = body.querySelectorAll('.quick-item')[Number(event.key) - 1];
+    const action = item && pageActions().find((candidate) => candidate.id === item.dataset.actionId);
+    if (!action) return;
+    event.preventDefault();
+    event.stopPropagation();
+    beginAction(action);
+  }));
   close.addEventListener('click', trustedOnly(hidePanel));
   browserApi.runtime.onMessage.addListener(onResult);
   browserApi.storage.onChanged.addListener(onStorageChanged);

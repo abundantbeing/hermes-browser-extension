@@ -1,0 +1,91 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { bootAssist, focusField } from './inline-assist-dom.mjs';
+
+async function openQuick({ url, settings = {} } = {}) {
+  const env = bootAssist({ url, settings: { inlineAssistOpenMode: 'quick', inlineAssistDefaultRoute: 'background', inlineAssistModel: 'gpt-6.1-terra', ...settings } });
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  return { env, root: env.root(), panel: env.root().querySelector('.panel') };
+}
+
+const trustedKey = (env, element, key, target = element) => {
+  for (const listener of env.listenersFor(element, 'keydown')) {
+    listener.call(element, { type: 'keydown', key, target, isTrusted: true, preventDefault() {}, stopPropagation() {}, composedPath: () => [target] });
+  }
+};
+
+async function finishDraft(env, root, text = 'A drafted reply.') {
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  const request = env.sent.find((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST')?.request;
+  assert.ok(request, 'a draft was requested');
+  env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: true, text, sessionId: 's1', sessionTitle: 'Inline assist' });
+  await env.sleep(60);
+}
+
+test('the quick menu opens at the circle with an ask line, four numbered actions, chips, options and Full panel', async () => {
+  const { root, panel } = await openQuick();
+  assert.equal(panel.hidden, false);
+  assert.equal(panel.dataset.mode, 'quick');
+  assert.ok(root.querySelector('input.quick-input'), 'Ask Hermes… line');
+  const items = [...root.querySelectorAll('.quick-item')];
+  assert.equal(items.length, 4);
+  assert.deepEqual(items.map((item) => item.querySelector('.quick-num').textContent), ['1', '2', '3', '4']);
+  assert.equal(root.querySelectorAll('.quick-chip').length, 2);
+  assert.ok(root.querySelector('.quick-options'), 'gear');
+  assert.ok(root.querySelector('.quick-full'), 'Full panel');
+  assert.match(root.querySelector('.quick-summary').textContent, /gpt-6\.1-terra/);
+});
+
+test('pressing 2 in the menu runs the second action; digits typed in the ask line do not', async () => {
+  const { env, root, panel } = await openQuick();
+  env.w.document.getElementById('field').value = 'a rough first draft';
+  const input = root.querySelector('input.quick-input');
+  trustedKey(env, panel, '2', input);
+  await env.sleep(40);
+  assert.equal(env.sent.some((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST'), false);
+  const second = root.querySelectorAll('.quick-item')[1].dataset.actionId;
+  trustedKey(env, panel, '2', panel);
+  await env.sleep(60);
+  const request = env.sent.find((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST')?.request;
+  assert.equal(request?.actionId, second);
+});
+
+test('Full panel switches this run to the full panel', async () => {
+  const { env, root, panel } = await openQuick();
+  env.userClick(root.querySelector('.quick-full'));
+  await env.sleep(40);
+  assert.equal(panel.dataset.mode, 'full');
+  assert.ok(root.querySelector('.actions .action'));
+});
+
+test('the draft lands in the field with a slim bar: Keep, Undo, Again, Shorter, Copy', async () => {
+  const { env, root, panel } = await openQuick();
+  await finishDraft(env, root);
+  assert.equal(panel.dataset.mode, 'bar');
+  assert.equal(env.w.document.getElementById('field').value, 'A drafted reply.');
+  const labels = [...root.querySelectorAll('.bar-actions button')].map((item) => item.textContent.trim());
+  for (const label of ['Keep', 'Undo', 'Again', 'Shorter', 'Copy']) assert.ok(labels.includes(label), labels.join(', '));
+});
+
+test('where Assist cannot write into the field, the bar previews the draft with Copy first', async () => {
+  const { env, root, panel } = await openQuick({ url: 'https://chatgpt.com/' });
+  env.w.document.getElementById('field').value = 'write me a prompt';
+  await finishDraft(env, root, 'line one\nline two\nline three\nline four');
+  assert.equal(panel.dataset.mode, 'bar');
+  assert.equal(env.w.document.getElementById('field').value, 'write me a prompt');
+  assert.match(root.querySelector('.bar-preview').textContent, /line one/);
+  assert.equal(root.querySelector('.bar-actions button.main').textContent.trim(), 'Copy');
+});
+
+test('Esc on the bar closes it and never undoes the draft', async () => {
+  const { env, root, panel } = await openQuick();
+  await finishDraft(env, root);
+  trustedKey(env, env.w.document, 'Escape', panel);
+  await env.sleep(20);
+  assert.equal(panel.hidden, true);
+  assert.equal(env.w.document.getElementById('field').value, 'A drafted reply.');
+});
