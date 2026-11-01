@@ -2753,7 +2753,7 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
   hermesGlobal.HermesAppearancePreferences = APPEARANCE_PREFERENCES_API;
 })(globalThis);
 
-/* extension/lib/inline-assist-look.mjs · SHA-256 6714b7afac50939e */
+/* extension/lib/inline-assist-look.mjs · SHA-256 1c963390691fafae */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
 
@@ -2881,12 +2881,14 @@ const INLINE_ASSIST_FONT_FILES = Object.freeze({
 });
 const INLINE_ASSIST_FONT_PREFIX = 'HermesAssist ';
 
-function namespaceFontStack(stack) {
+// The content script passes its own per-page prefix (a random token) so a page can neither guess nor
+// pre-declare the names the panel registers.
+function namespaceFontStack(stack, prefix = INLINE_ASSIST_FONT_PREFIX) {
   const families = [];
   const renamed = String(stack || '').replace(/"([^"]+)"/g, (whole, family) => {
     if (!Object.hasOwn(INLINE_ASSIST_FONT_FILES, family)) return whole;
     if (!families.includes(family)) families.push(family);
-    return `"${INLINE_ASSIST_FONT_PREFIX}${family}"`;
+    return `"${prefix}${family}"`;
   });
   return { stack: renamed, families };
 }
@@ -2898,11 +2900,11 @@ function namespaceFontStack(stack) {
 const SIGNATURE_UI_STACK = '"Rules Variable", "Space Grotesk", "Segoe UI", system-ui, sans-serif';
 const SIGNATURE_DISPLAY_STACK = '"Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif';
 const MONO_STACK = '"HermesMono", ui-monospace, Consolas, monospace';
-function inlineAssistFontStacks(fontProfile, profileStack) {
+function inlineAssistFontStacks(fontProfile, profileStack, prefix = INLINE_ASSIST_FONT_PREFIX) {
   const signature = fontProfile === 'signature';
-  const ui = namespaceFontStack(signature ? SIGNATURE_UI_STACK : profileStack);
-  const display = signature ? namespaceFontStack(SIGNATURE_DISPLAY_STACK) : ui;
-  const mono = namespaceFontStack(MONO_STACK);
+  const ui = namespaceFontStack(signature ? SIGNATURE_UI_STACK : profileStack, prefix);
+  const display = signature ? namespaceFontStack(SIGNATURE_DISPLAY_STACK, prefix) : ui;
+  const mono = namespaceFontStack(MONO_STACK, prefix);
   return {
     ui: ui.stack,
     display: display.stack,
