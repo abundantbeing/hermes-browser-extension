@@ -95,6 +95,19 @@ function looksLikeOpaqueTicket(values = []) {
 
 const CONTEXT_DELIMITER_RE = /(?:USER_REQUEST|UNTRUSTED_BROWSER_CONTEXT)_(?:START|END)|HERMES_PAGE_COMMENTS/gi;
 
+// Services that put the secret in the URL path rather than the query: a Telegram bot API call carries the
+// bot token (`/bot123456789:AA…/getMe`), and a Slack or Discord incoming webhook URL is itself the
+// credential. Anyone holding one can post as the bot or into the channel.
+const PATH_SECRET_PATTERNS = [
+  /\/(?:file\/)?bot\d{8,12}:[A-Za-z0-9_-]{30,}(?:\/|$)/,
+  /\/services\/T[A-Z0-9]{8,}\/B[A-Z0-9]{8,}\/[A-Za-z0-9]{20,}(?:\/|$)/,
+  /\/api(?:\/v\d+)?\/webhooks\/\d{17,20}\/[A-Za-z0-9_-]{60,}(?:\/|$)/,
+];
+
+function hasPathSecret(pathname = '') {
+  return decodedUrlLayers(pathname).some((layer) => PATH_SECRET_PATTERNS.some((pattern) => pattern.test(layer)));
+}
+
 /**
  * Page-derived text is placed between fixed delimiter lines
  * (USER_REQUEST_START/END, UNTRUSTED_BROWSER_CONTEXT_START/END, the page
@@ -124,6 +137,7 @@ export function hasCredentialBearingUrl(value = '') {
   }
 
   if (parsed.username || parsed.password) return true;
+  if (hasPathSecret(parsed.pathname)) return true;
   const parameters = credentialParameters(parsed.hash, credentialParameters(parsed.search));
   const names = [...parameters.keys()];
   if (names.some((name) => CREDENTIAL_URL_PARAMETER_NAMES.has(name) || isSensitiveAssignmentKey(name))) return true;
