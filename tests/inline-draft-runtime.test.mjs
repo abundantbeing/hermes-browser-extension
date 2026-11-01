@@ -175,7 +175,7 @@ test('sidepanel claims queued requests, honors current/new/background routing, a
   assert.match(source, /createInlineBackgroundSession/);
   assert.match(source, /\{ ok: true, text, sessionId/);
   assert.match(source, /forceChatOnly:\s*true/);
-  assert.match(source, /Hermes Assist options/);
+  assert.match(source, /'assist\.options_heading'/);
   assert.match(source, /executeContextMenuRequest/);
   assert.match(source, /handleContextMenuRouteChoice/);
   assert.match(source, /askHermes\(userText/);

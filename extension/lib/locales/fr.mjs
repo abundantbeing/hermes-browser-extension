@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "L'autorisation de capture a été retirée.",
   "firefox_screenshots.failed": "Impossible de modifier l'autorisation de capture : {error}",
   "browser_control.note_screenshot_permission": "Hermes n'a pas fait la capture : Firefox demande une autorisation supplémentaire. Utilisez Autoriser les captures dans Firefox.",
+  "ui.bot.options": "Options du bot",
+  "ui.fast": "Rapide",
+  "ui.steer.this.subagent": "Orienter ce sous-agent",
+  "ui.stop.this.subagent": "Arrêter ce sous-agent",
+  "ui.not.accepting.steer": "N’accepte pas d’orientation",
+  "ui.open.generated.image.for.closer.inspection": "Ouvrir l’image générée pour l’examiner de près",
+  "ui.group.settings": "Paramètres du groupe",
 });

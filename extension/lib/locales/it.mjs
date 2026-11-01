@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "L'autorizzazione agli screenshot è stata rimossa.",
   "firefox_screenshots.failed": "Impossibile modificare l'autorizzazione agli screenshot: {error}",
   "browser_control.note_screenshot_permission": "Hermes non ha fatto lo screenshot: Firefox richiede un'autorizzazione aggiuntiva. Usa Consenti screenshot in Firefox.",
+  "ui.bot.options": "Opzioni del bot",
+  "ui.fast": "Veloce",
+  "ui.steer.this.subagent": "Indirizza questo subagente",
+  "ui.stop.this.subagent": "Ferma questo subagente",
+  "ui.not.accepting.steer": "Non accetta indicazioni",
+  "ui.open.generated.image.for.closer.inspection": "Apri l’immagine generata per vederla da vicino",
+  "ui.group.settings": "Impostazioni del gruppo",
 });
