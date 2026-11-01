@@ -2,6 +2,7 @@
 import asyncio
 import importlib.util
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -159,6 +160,64 @@ console.log(JSON.stringify(result.profiles.map(row => row.name)));'''
                 raise AssertionError('an oversized profile file must not be parsed')
             with patch.object(profile_routes, 'MAX_PROFILE_FILE', 1000), patch.dict(sys.modules, {'hermes_yaml': SimpleNamespace(safe_load=refuse)}):
                 self.assertEqual(profile_routes._bot_metadata(home), ({}, {}))
+
+    def _symlink(self, link, target, directory=False):
+        try:
+            os.symlink(target, link, target_is_directory=directory)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f'symlinks are not available here: {exc}')
+
+    def test_avatar_symlinks_leaving_the_profile_home_are_not_served(self):
+        async def exercise():
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                home = root / 'worker'
+                other = root / 'other'
+                outside = root / 'outside'
+                for folder in (home / 'assets', other / 'assets', outside):
+                    folder.mkdir(parents=True)
+                (outside / 'secret.png').write_bytes(b'PNG-outside-secret')
+                (other / 'assets' / 'avatar.png').write_bytes(b'PNG-other-profile')
+                self._symlink(home / 'assets' / 'avatar.png', outside / 'secret.png')
+                self.assertIsNone(profile_routes._avatar(home))
+                (home / 'assets' / 'avatar.png').unlink()
+                self._symlink(home / 'assets' / 'avatar.png', other / 'assets' / 'avatar.png')
+                self.assertIsNone(profile_routes._avatar(home))
+                (home / 'assets' / 'avatar.png').unlink()
+                (home / 'assets').rmdir()
+                self._symlink(home / 'assets', other / 'assets', directory=True)
+                self.assertIsNone(profile_routes._avatar(home))
+                app = web.Application()
+                profile_routes.make_wire_extra()(app.router, Adapter())
+                with patch.object(profile_routes, '_served_profiles', return_value={'worker': home, 'other': other}):
+                    async with TestClient(TestServer(app)) as client:
+                        base = '/api/plugins/hermes-browser-extension/profiles'
+                        headers = {'Authorization': 'Bearer owner-key'}
+                        leaked = await client.get(base + '/worker/avatar', headers=headers)
+                        self.assertEqual(leaked.status, 404)
+                        self.assertNotIn(b'other-profile', await leaked.read())
+                        own = await client.get(base + '/other/avatar', headers=headers)
+                        self.assertEqual(own.status, 200)
+        asyncio.run(exercise())
+
+    def test_profile_yaml_symlinks_leaving_the_profile_home_expose_no_bot_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / 'worker'
+            other = root / 'other'
+            outside = root / 'outside'
+            for folder in (home, other, outside):
+                folder.mkdir()
+            document = json.dumps({'ui_meta': {'hermes-bots': {'title': 'Not yours'}}, '_ui_meta_revisions': {'hermes-bots': 3}})
+            (outside / 'profile.yaml').write_text(document)
+            (other / 'profile.yaml').write_text(document)
+            with patch.dict(sys.modules, {'hermes_yaml': SimpleNamespace(safe_load=json.loads)}):
+                self._symlink(home / 'profile.yaml', outside / 'profile.yaml')
+                self.assertEqual(profile_routes._bot_metadata(home), ({}, {}))
+                (home / 'profile.yaml').unlink()
+                self._symlink(home / 'profile.yaml', other / 'profile.yaml')
+                self.assertEqual(profile_routes._bot_metadata(home), ({}, {}))
+                self.assertEqual(profile_routes._bot_metadata(other)[0], {'hermes-bots': {'title': 'Not yours'}})
 
     def test_unserved_profiles_do_not_appear_in_roster(self):
         with tempfile.TemporaryDirectory() as tmp:
