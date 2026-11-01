@@ -3,7 +3,7 @@ import test from 'node:test';
 import { JSDOM } from 'jsdom';
 
 import { bootAssist, focusField, loadExtensionFile } from './inline-assist-dom.mjs';
-import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
+import { createSettingsSaveHarness, sidepanelSource } from './helpers/settings-save-harness.mjs';
 import { changedPanes } from '../extension/lib/settings-panes.mjs';
 
 const settingsSection = () => new JSDOM(loadExtensionFile('sidepanel.html')).window.document.querySelector('.inline-assist-settings');
@@ -36,7 +36,7 @@ test('the side panel loads, shows and saves the icon and auto-replace settings',
   assert.match(source, /inlineAssistIconInputs: Array\.from\(document\.querySelectorAll\('input\[name="inlineAssistIcon"\]'\)\)/);
   assert.match(source, /inlineAssistAutoReplace: \$\('#inlineAssistAutoReplace'\)/);
   assert.match(source, /inlineAssistIcon: normalizeInlineAssistIcon\(settings\.inlineAssistIcon\)/);
-  assert.match(source, /inlineAssistAutoReplace: settings\.inlineAssistAutoReplace !== false/);
+  assert.match(source, /inlineAssistAutoReplace: typeof stored\[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY\] === 'boolean'/);
   assert.match(source, /input\.checked = input\.value === normalizeInlineAssistIcon\(settings\.inlineAssistIcon\)/);
   assert.match(source, /inlineAssistIcon: normalizeInlineAssistIcon\(els\.inlineAssistIconInputs\?\.find\(\(input\) => input\.checked\)\?\.value \|\| settings\.inlineAssistIcon\)/);
   assert.match(source, /inlineAssistAutoReplace: els\.inlineAssistAutoReplace \? els\.inlineAssistAutoReplace\.checked : settings\.inlineAssistAutoReplace !== false/);
@@ -53,8 +53,16 @@ test('a saved "replace automatically: off" holds in the panel, and switching it 
   toggle.checked = true;
   for (const listener of env.listenersFor(toggle, 'change')) listener.call(toggle, { type: 'change', target: toggle, isTrusted: true });
   await env.sleep();
-  const write = env.stored.find((items) => items.hermesBrowserSettings);
-  assert.equal(write?.hermesBrowserSettings.inlineAssistAutoReplace, true);
+  // Its own key: Assist never rewrites the shared settings record, which Settings and Hermes Control also save.
+  assert.deepEqual(env.stored.map((items) => ({ ...items })), [{ hermesInlineAssistAutoReplace: true }]);
+});
+
+test('the choice saved under its own key wins over the copy in the settings record', async () => {
+  const env = bootAssist({ settings: { inlineAssistAutoReplace: true }, storage: { hermesInlineAssistAutoReplace: false } });
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  assert.equal(env.root().querySelector('.panel input.toggle[data-setting="auto-replace"]').checked, false);
 });
 
 // Assist's own switch saves inlineAssistAutoReplace while the side panel is open; an unrelated Save must
@@ -62,6 +70,7 @@ test('a saved "replace automatically: off" holds in the panel, and switching it 
 async function settingsPanel(saved) {
   const h = await createSettingsSaveHarness({ settings: { inlineAssistAutoReplace: saved } });
   h.scope.settingsBaseline = null;
+  h.scope.INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = /^const INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = '([^']+)';$/m.exec(sidepanelSource)[1];
   h.els.inlineAssistAutoReplace.checked = saved;
   h.fn('captureSettingsBaseline')();
   return h;
@@ -72,9 +81,9 @@ test('a replacement choice saved from a page shows in Settings and holds through
   h.fn('adoptInlineAssistAutoReplaceChange')(false);
   assert.equal(h.els.inlineAssistAutoReplace.checked, false);
   assert.equal(changedPanes(h.scope.settingsBaseline, h.fn('settingsControlEntries')()).size, 0, 'not an unsaved edit');
-  h.store.hermesBrowserSettings = { inlineAssistAutoReplace: false };
   await h.save();
   assert.equal(h.store.hermesBrowserSettings.inlineAssistAutoReplace, false);
+  assert.equal(h.store.hermesInlineAssistAutoReplace, false, 'Save writes the key Assist reads');
 });
 
 test('an unsaved edit of the switch in Settings is not overwritten by a page', async () => {

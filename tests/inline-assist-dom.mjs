@@ -2,12 +2,12 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 // Loads the real Assist content scripts into jsdom with stubbed extension APIs. `settings` is what
-// storage holds under hermesBrowserSettings; `stored` records every storage write.
+// storage holds under hermesBrowserSettings, `storage` any other keys; `stored` records every storage write.
 const EXTENSION = new URL('../extension/', import.meta.url);
 export const loadExtensionFile = (relative) => readFileSync(new URL(relative, EXTENSION), 'utf8');
 const load = loadExtensionFile;
 
-export function bootAssist({ settings = {}, pageBackground = '', fontReply = () => Promise.resolve({ ok: true, fonts: [] }) } = {}) {
+export function bootAssist({ settings = {}, storage = {}, pageBackground = '', fontReply = () => Promise.resolve({ ok: true, fonts: [] }) } = {}) {
   const sent = [];
   const stored = [];
   const listeners = [];
@@ -45,7 +45,7 @@ export function bootAssist({ settings = {}, pageBackground = '', fontReply = () 
       onMessage: { addListener() {}, removeListener() {} },
     },
     storage: {
-      local: { get: () => Promise.resolve({ hermesBrowserSettings: { ...settings } }), set: (items) => { stored.push(items); return Promise.resolve(); } },
+      local: { get: () => Promise.resolve({ ...structuredClone(storage), hermesBrowserSettings: { ...settings } }), set: (items) => { stored.push(items); return Promise.resolve(); } },
       onChanged: { addListener: (listener) => storageListeners.push(listener), removeListener() {} },
     },
   };
