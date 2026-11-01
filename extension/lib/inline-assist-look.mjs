@@ -106,7 +106,7 @@ const face = (file, weight = '400', style = 'normal') => Object.freeze({ file, w
 const google = (name, weights) => Object.freeze(weights.map((weight) => face(`assets/fonts/google/${name}-${weight}.woff2`, String(weight))));
 export const INLINE_ASSIST_FONT_FILES = Object.freeze({
   'Rules Variable': Object.freeze([face('assets/fonts/RulesVariable.woff2', '100 900')]),
-  'Rules Gothic Compressed': Object.freeze([face('assets/fonts/RulesGothicCmp-Medium.woff2', '100 900')]),
+  'Rules Gothic Compressed': Object.freeze([face('assets/fonts/RulesGothicCmp-Medium.woff2', '500')]),
   Collapse: Object.freeze([face('assets/fonts/Collapse-Light.woff2', '300'), face('assets/fonts/Collapse-Regular.woff2', '400'), face('assets/fonts/Collapse-Bold.woff2', '700')]),
   HermesDisplay: Object.freeze([face('assets/fonts/Sigurd-Variable.woff2', '300 800')]),
   HermesMono: Object.freeze([face('assets/fonts/CourierPrime-Regular.woff2')]),
