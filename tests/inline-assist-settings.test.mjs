@@ -3,7 +3,7 @@ import test from 'node:test';
 import { JSDOM } from 'jsdom';
 
 import { bootAssist, focusField, loadExtensionFile } from './inline-assist-dom.mjs';
-import { createSettingsSaveHarness, sidepanelSource } from './helpers/settings-save-harness.mjs';
+import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
 import { changedPanes } from '../extension/lib/settings-panes.mjs';
 
 const settingsSection = () => new JSDOM(loadExtensionFile('sidepanel.html')).window.document.querySelector('.inline-assist-settings');
@@ -70,7 +70,6 @@ test('the choice saved under its own key wins over the copy in the settings reco
 async function settingsPanel(saved) {
   const h = await createSettingsSaveHarness({ settings: { inlineAssistAutoReplace: saved } });
   h.scope.settingsBaseline = null;
-  h.scope.INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = /^const INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = '([^']+)';$/m.exec(sidepanelSource)[1];
   h.els.inlineAssistAutoReplace.checked = saved;
   h.fn('captureSettingsBaseline')();
   return h;
