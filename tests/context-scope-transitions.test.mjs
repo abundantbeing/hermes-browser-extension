@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 
 import {
   CONTEXT_SCOPE_MODES,
@@ -338,10 +339,10 @@ async function runScopeCommit({ groupOpen }) {
     restoreScopeTransitionSnapshot: () => {},
     browserApi: { storage: { local: { set: async () => {} } } },
   };
-  const names = Object.keys(env);
-  // eslint-disable-next-line no-new-func
-  const commit = new Function(...names, `${source.slice(start, end)}\nreturn commitContextScope;`)(...names.map((name) => env[name]));
-  const ok = await commit({ mode: CONTEXT_SCOPE_MODES.CHAT_ONLY }, { ensureSession: false, scopeRevisionId: 1 });
+  // The stubs are the sandbox's globals, as sidepanel.js's module scope is for the real function.
+  const context = vm.createContext(env);
+  vm.runInContext(source.slice(start, end), context);
+  const ok = await context.commitContextScope({ mode: CONTEXT_SCOPE_MODES.CHAT_ONLY }, { ensureSession: false, scopeRevisionId: 1 });
   return { ok, calls };
 }
 
