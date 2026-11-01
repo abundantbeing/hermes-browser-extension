@@ -536,7 +536,8 @@ export async function writeLastKnownRoster(roster, storageApi = globalThis.chrom
   if (!storageApi?.set) return;
   const agents = Array.isArray(roster?.agents) ? roster.agents : [];
   const groupChats = Array.isArray(roster?.groupChats) ? roster.groupChats : [];
-  if (!agents.length && !groupChats.length) return;
+  // An empty roster is saved too: the gateway answered with no bots, and a later failed
+  // refresh must not bring a deleted bot's old title and picture back.
   await storageApi.set({
     [LAST_KNOWN_ROSTER_STORAGE_KEY]: {
       agents,
