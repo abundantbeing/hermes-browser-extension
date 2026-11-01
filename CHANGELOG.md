@@ -7,6 +7,7 @@
 - The sessions list stays complete after you open a chat that is running in another app (Hermes Desktop, the phone app, another window) and then start a new session. It showed 0 sessions, and Refresh failed or kept saying 0, until the panel was reopened (#139).
 - A group chat keeps its own messages when you change what page Hermes reads. Choosing Chat only, or pinning or returning to a tab, showed the last single-bot chat under the room's name until the room was reopened, and pinning a tab with a saved chat left the room (#138).
 - The controls the panel builds while it runs now follow the chosen language: the model options menu (its heading, Thinking, Fast and the effort levels), the thinking indicator's label, the subagent steer and stop controls, the group Settings button and the generated-image inspect button. They were left in English, and the labels of controls already on screen now change as soon as you pick another language. Thanks to @Sahil-SS9 (#145, #146).
+- Page text, inline Assist requests, tool previews and the Hermes plugin's navigation guard hide many more keys before anything reaches Hermes: the Telegram, Discord, Slack, Groq, xAI, Replicate, Perplexity, Tavily, Firecrawl, Notion, Linear, PyPI, ElevenLabs, Langfuse, GitLab, DigitalOcean, Atlassian, Postman and Google refresh token shapes Hermes Agent itself redacts, `API_SERVER_KEY` values, and secrets carried in a URL path (a Telegram bot URL, Slack and Discord webhooks), also when percent-encoded. Thanks to @Sahil-SS9 (#140, #141).
 
 ## [0.4.0] - 2026-10-31
 

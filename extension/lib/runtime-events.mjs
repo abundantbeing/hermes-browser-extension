@@ -1,3 +1,5 @@
+import { redactSensitiveText } from './redaction.mjs';
+
 const CONTROL_EVENT_PATTERN = /(^|\.)control(\.|$)|browser\.control/i;
 const PREVIEW_LIMIT = 240;
 
@@ -105,8 +107,10 @@ export function reduceAssistantStreamText(state = {}, event = {}, knownAssistant
   return current;
 }
 
+// Tool previews are tool input and output text: the full credential shape set applies first, then the
+// header and assignment shapes specific to event lines.
 function redactEventPreview(value = '') {
-  return String(value || '')
+  return redactSensitiveText(String(value || ''))
     .replace(/Authorization:\s*Bearer\s+[^\n]+/gi, 'Authorization: Bearer [REDACTED_BEARER]')
     .replace(/Bearer\s+[^\s,;]+/gi, 'Bearer [REDACTED_BEARER]')
     .replace(/(api[_-]?key|token|password|secret)=([^\s&]+)/gi, '$1=[REDACTED]')
