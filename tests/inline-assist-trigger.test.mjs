@@ -87,3 +87,12 @@ test('the names the panel registers in document.fonts do not say which font was 
   assert.doesNotMatch(env.root().querySelector('style.assist-fonts').textContent, bundled);
   assert.ok(env.root().querySelector('style.assist-fonts').textContent.includes(`--hb-font-ui: "${env.fonts[0]}"`), 'the stack uses the registered name');
 });
+
+test('the panel and circle set their own font, so text that only inherits it follows the choice', async () => {
+  const env = boot({ settings: { fontProfile: 'montserrat' } });
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  // --hb-font-ui changes on .panel; :host computed its font-family from the default before that.
+  assert.match(env.root().querySelector('style.assist-fonts').textContent, /\.launcher, \.panel \{[^}]*font-family: var\(--hb-font-ui\);/);
+});
