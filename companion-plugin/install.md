@@ -9,14 +9,15 @@ through a few tools. The plugin version is the `version` in `plugin.yaml`.
 ## What it is, and is not
 
 - It registers **seven context tools**, three lifecycle hooks (`pre_llm_call`,
-  `pre_tool_call`, `post_tool_call`), one bundled skill (`hermes-browser-extension`)
-  and four routes on the API server (below). It also carries Hermes Control:
-  **twenty Hermes Control tools** and two more routes (see Hermes Control below).
+  `pre_tool_call`, `post_tool_call`), one bundled skill (`hermes-browser-extension`),
+  the context and readiness routes, and read-only profile roster and avatar routes.
+  It also carries Hermes Control: **twenty Hermes Control tools** and two more
+  routes (see Hermes Control below).
 - The context tools do **not** control the browser. They are metadata-only
   diagnostics plus a short-lived, owner-scoped context cache, and fail-soft: when
   no context was delivered, every one reports "unavailable".
-- The plugin opens no outbound network connection, reads no credential and does
-  not use `nativeMessaging`. It asks for no privileged host capability
+- The plugin opens no outbound network connection, does not expose or persist API
+  credentials, and does not use `nativeMessaging`. It asks for no privileged host capability
   (`capabilities: []`), so installing it shows no consent screen.
 - Hermes Control acts in the person's own browser, but only while the extension is
   attached to a session; see below for what that means.
@@ -78,6 +79,23 @@ The wrapper acts on exactly one profile per run (lists, `all` and wildcards are
 refused), treats `default` as the Hermes root, never edits config files itself
 and never moves or deletes anything. It refuses while an older nested copy or a
 copy under the plugin's old name is present (see Upgrading).
+
+## Bot roster without a Dashboard
+
+On a gateway that lacks `/v1/profiles`, the extension tries the plugin's
+`GET /api/plugins/hermes-browser-extension/profiles` and its
+`/profiles/{name}/avatar` route on the same gateway. These GET-only routes use
+the listener's configured API key and list only profiles the listener serves.
+They expose bot presentation fields, not filesystem paths, credentials, or
+sessions. They are not registered for profile-prefixed keys.
+
+The plugin must be installed and enabled on the gateway, and the gateway must
+be restarted to register its routes. Plugin host isolation or an older runtime
+without the profile inventory/handler seam can make the routes unavailable;
+the extension then keeps its existing degraded fallback. A remote connection
+requires the plugin on the remote host. The roster does not grant access to
+other profile keys, and does not supply group-room or Dashboard WebSocket
+capabilities. Those may still require a Dashboard and separate authorization.
 
 ## Upgrading
 
@@ -147,6 +165,8 @@ GET /api/plugins/hermes-browser-extension/status
              "/api/plugins/hermes-browser-extension/context/status",
              "/api/plugins/hermes-browser-extension/control/register",
              "/api/plugins/hermes-browser-extension/control/ws",
+             "/api/plugins/hermes-browser-extension/profiles",
+             "/api/plugins/hermes-browser-extension/profiles/{name}/avatar",
              "/api/plugins/hermes-browser-extension/status"], "live": false }
 ```
 
