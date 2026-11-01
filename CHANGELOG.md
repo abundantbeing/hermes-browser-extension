@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Replies keep their Markdown structure: nested lists stay nested, a quote over several lines stays one quote, `~~~` and longer fences stay code (in Vivid UI and Plain text too), escaped `\|` pipes stay inside a table cell, and links whose address has parentheses keep their label. Very deep quotes or lists no longer stop a reply from rendering. Thanks to @Sahil-SS9 (#143, #144).
+
 ## [0.4.0] - 2026-10-31
 
 **What needs more than upstream Hermes.** A few parts of this release rely on gateway features that upstream Hermes does not have as of this release:
