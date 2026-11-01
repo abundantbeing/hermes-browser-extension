@@ -106,3 +106,16 @@ test('a picker session.list asks a session authority for stored sessions; a titl
   // A legacy sidecar refuses an unknown key.
   assert.deepEqual(sessionListParamsFor(legacy, { limit: 200 }), { limit: 200 });
 });
+
+test('session.list never sends a session authority an empty profile, which it refuses as invalid_params', async () => {
+  const { sessionListParamsFor } = await import('../extension/lib/gateway-ws.mjs');
+  const authority = { readyPayload: { session_authority: true } };
+  const legacy = { readyPayload: {} };
+  // "Detect from Hermes gateway" leaves the active profile empty.
+  assert.deepEqual(sessionListParamsFor(authority, { limit: 200, profile: '' }), { limit: 200, scope: 'stored' });
+  assert.deepEqual(sessionListParamsFor(authority, { title: 'Bot Chat', profile: '' }), { title: 'Bot Chat' });
+  // A named profile is still sent: the authority routes or strips it itself.
+  assert.deepEqual(sessionListParamsFor(authority, { limit: 200, profile: 'juniper' }), { limit: 200, profile: 'juniper', scope: 'stored' });
+  // A legacy sidecar's session.list takes profile as it always did.
+  assert.deepEqual(sessionListParamsFor(legacy, { limit: 200, profile: '' }), { limit: 200, profile: '' });
+});

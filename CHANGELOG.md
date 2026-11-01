@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- The sessions list stays complete after you open a chat that is running in another app (Hermes Desktop, the phone app, another window) and then start a new session. It showed 0 sessions, and Refresh failed or kept saying 0, until the panel was reopened (#139).
+
 ## [0.4.0] - 2026-10-31
 
 **What needs more than upstream Hermes.** A few parts of this release rely on gateway features that upstream Hermes does not have as of this release:
