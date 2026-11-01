@@ -126,16 +126,24 @@ function channel(value) {
   return unit <= 0.03928 ? unit / 12.92 : ((unit + 0.055) / 1.055) ** 2.4;
 }
 
-// WCAG relative luminance of the page behind the circle. A dark page gets a light circle; a light page,
-// or one whose background could not be found, gets a dark circle, unless the page declares a dark-only
-// colour-scheme, whose default canvas is dark.
+// The circle's two fills, as content-inline-helper.js paints them (.launcher[data-tone]).
+export const INLINE_ASSIST_CIRCLE_FILLS = Object.freeze({ light: '#f4f4f1', dark: '#141414' });
+
+const luminanceOf = (color) => 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
+const contrastRatio = (first, second) => (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+
+// The page behind the circle picks whichever fill has the higher WCAG contrast against it, so a mid or
+// light gray gets the dark circle. A page whose background could not be found gets the dark circle,
+// unless it declares a dark-only colour-scheme, whose default canvas is dark.
 export function circleToneForBackground(color, { colorScheme = '' } = {}) {
   if (!color) {
     const scheme = String(colorScheme || '').toLowerCase();
     return /\bdark\b/.test(scheme) && !/\blight\b/.test(scheme) ? 'light' : 'dark';
   }
-  const luminance = 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
-  return luminance < 0.5 ? 'light' : 'dark';
+  const page = luminanceOf(color);
+  const light = contrastRatio(page, luminanceOf(parseCssColor(INLINE_ASSIST_CIRCLE_FILLS.light)));
+  const dark = contrastRatio(page, luminanceOf(parseCssColor(INLINE_ASSIST_CIRCLE_FILLS.dark)));
+  return light > dark ? 'light' : 'dark';
 }
 
 // The packaged image the circle masks. The girl has two drawings: the outline art reads as light lines on
