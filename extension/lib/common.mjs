@@ -2780,6 +2780,9 @@ function renderListBlock(lines, start, depth = 0) {
   let index = start;
   let expected = first.number;
   while (index < lines.length) {
+    // A rule such as `* * *` or `- - -` also reads as a list marker; it ends the list, as a rule
+    // outranks a list item, and is left for renderMarkdownBlocks to draw.
+    if (index > start && isHorizontalRule(lines[index])) break;
     const item = listItemStart(lines[index]);
     if (!item || item.ordered !== first.ordered || item.indent >= first.contentOffset) break;
     // A number out of sequence starts a new list, so explicit numbering survives (`start="…"`).

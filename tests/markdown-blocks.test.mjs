@@ -275,3 +275,13 @@ test('a tab after a nested marker keeps its original width when the parent inden
     '<ul><li>parent<pre><code data-lang="make">-\trm x</code></pre></li></ul>',
   );
 });
+
+test('horizontal rules end an unordered list', () => {
+  // `* * *` and `- - -` also read as list markers; the rule wins and the list ends, as on main.
+  assert.equal(renderMarkdown('- item\n* * *\nAfter'), '<ul><li>item</li></ul><hr /><p>After</p>');
+  assert.equal(renderMarkdown('- item\n\n* * *\nAfter'), '<ul><li>item</li></ul><hr /><p>After</p>');
+  assert.equal(renderMarkdown('* item\n- - -\nAfter'), '<ul><li>item</li></ul><hr /><p>After</p>');
+  assert.equal(renderMarkdown('1. item\n---\n2. next'), '<ol><li>item</li></ol><hr /><ol start="2"><li>next</li></ol>');
+  // An indented rule inside an item still belongs to that item.
+  assert.equal(renderMarkdown('- item\n\n  * * *\n- next'), '<ul><li><p>item</p><hr /></li><li>next</li></ul>');
+});
