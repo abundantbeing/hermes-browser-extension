@@ -912,10 +912,16 @@ export function renderAdaptiveMarkdown(value = '', { labels = HAUI_DEFAULT_LABEL
 export function markdownToPlainText(value = '') {
   const lines = stripAdaptiveFences(value).split('\n');
   const out = [];
-  let inFence = false;
+  let fence = null;
   for (const line of lines) {
-    if (line.trim().startsWith('```')) { inFence = !inFence; continue; }
-    if (inFence) { out.push(line); continue; }
+    // The shared fence rules: ``` or ~~~, closed only by the same character at least as long.
+    if (fence) {
+      if (isMarkdownFenceClose(line, fence)) fence = null;
+      else out.push(line);
+      continue;
+    }
+    fence = markdownFenceOpening(line);
+    if (fence) continue;
     if (TABLE_DIVIDER.test(line)) continue;
     let text = line
       .replace(/^\s{0,3}#{1,6}\s+/, '')
@@ -943,16 +949,22 @@ export function renderPlainResponse(value = '') {
   const html = [];
   let paragraph = [];
   let code = null;
+  let fence = null;
   const flush = () => {
     if (paragraph.length) html.push(`<p class="plain-response">${paragraph.map((line) => esc(markdownToPlainText(line))).join('<br>')}</p>`);
     paragraph = [];
   };
   for (const line of lines) {
-    if (line.trim().startsWith('```')) {
-      if (code) { html.push(`<pre class="plain-response-code">${esc(code.join('\n'))}</pre>`); code = null; } else { flush(); code = []; }
+    if (code) {
+      if (isMarkdownFenceClose(line, fence)) {
+        html.push(`<pre class="plain-response-code">${esc(code.join('\n'))}</pre>`);
+        code = null;
+        fence = null;
+      } else code.push(line);
       continue;
     }
-    if (code) { code.push(line); continue; }
+    fence = markdownFenceOpening(line);
+    if (fence) { flush(); code = []; continue; }
     if (!line.trim()) { flush(); continue; }
     // A generated image or media line keeps its own rendering.
     if (/^\s*(!\[[^\]]*\]\([^)]+\)|MEDIA:\s*\S+)\s*$/.test(line)) { flush(); html.push(renderMarkdown(line.trim())); continue; }

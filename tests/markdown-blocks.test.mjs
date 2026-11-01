@@ -200,3 +200,14 @@ test('link targets keep deeper balanced parentheses and stay validated', () => {
   assert.doesNotMatch(renderMarkdown(`[a](${'('.repeat(100_000)}`), /<a /);
   assert.doesNotMatch(renderMarkdown(`[a](https://example.com/${'('.repeat(50_000)}${')'.repeat(50_000)})`), />a<\/a>/);
 });
+
+test('plain responses keep ~~~ fences and a ``` line inside a longer fence as code', async () => {
+  const { markdownToPlainText, renderPlainResponse } = await import('../extension/lib/adaptive-ui.mjs');
+  const tilde = '~~~md\n- **A:** 1\n~~~\n\nAfter';
+  assert.equal(markdownToPlainText(tilde), '- **A:** 1\n\nAfter');
+  const html = renderPlainResponse(tilde);
+  assert.match(html, /<pre class="plain-response-code">- \*\*A:\*\* 1<\/pre>/);
+  assert.match(html, /<p class="plain-response">After<\/p>/);
+  const nested = '````md\n```js\nlet x = 1;\n```\n````\nDone';
+  assert.match(renderPlainResponse(nested), /<pre class="plain-response-code">```js\nlet x = 1;\n```<\/pre><p class="plain-response">Done<\/p>/);
+});
