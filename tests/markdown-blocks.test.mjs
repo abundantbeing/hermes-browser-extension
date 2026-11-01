@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { renderMarkdown } from '../extension/lib/common.mjs';
-import { presentMarkdownParts, renderAdaptiveMarkdown, splitAdaptiveSegments } from '../extension/lib/adaptive-ui.mjs';
+import { presentMarkdownParts, renderAdaptiveMarkdown, renderPlainResponse, splitAdaptiveSegments } from '../extension/lib/adaptive-ui.mjs';
 
 test('nested lists keep their hierarchy', () => {
   assert.equal(
@@ -336,4 +336,26 @@ test('a hermes-ui example inside a list item fence stays code', () => {
   // A list item that falls back out ends its fence; a later top-level block is still lifted.
   const after = '- ~~~md\n  code\nNext\n~~~hermes-ui\n{"version":1,"blocks":[]}\n~~~';
   assert.deepEqual(splitAdaptiveSegments(after, { streaming: false }).map((segment) => segment.kind), ['markdown', 'ui']);
+  // A closing line at the left margin closes the item's fence instead of opening a new one.
+  const margin = '- ~~~~md\n  code\n~~~~\n\n~~~hermes-ui\n{"version":1,"blocks":[{"type":"text","text":"x"}]}\n~~~';
+  assert.deepEqual(splitAdaptiveSegments(margin, { streaming: false }).map((segment) => segment.kind), ['markdown', 'ui']);
+});
+
+test('a very long list item fence still renders', () => {
+  const reply = `- ~~~\n${'\n'.repeat(150000)}`;
+  assert.equal(splitAdaptiveSegments(reply, { streaming: false }).length, 1);
+  assert.match(renderPlainResponse(reply), /^<pre class="plain-response-code">/);
+});
+
+test('a list item fence stays code in Vivid and Plain text', () => {
+  const reply = '- ~~~~md\n\n  - **A:** 1\n  - **B:** 2\n\n  ~~~~\n\nAfter';
+  assert.deepEqual(presentMarkdownParts(reply, { settled: true }).map((part) => part.kind), ['markdown']);
+  assert.equal(
+    renderAdaptiveMarkdown(reply),
+    '<ul><li><pre><code data-lang="md">\n- **A:** 1\n- **B:** 2\n</code></pre></li></ul><p>After</p>',
+  );
+  assert.equal(
+    renderPlainResponse(reply),
+    '<pre class="plain-response-code">\n- **A:** 1\n- **B:** 2\n</pre><p class="plain-response">After</p>',
+  );
 });
