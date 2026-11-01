@@ -247,6 +247,30 @@ export function inlineAssistFontStacks(fontProfile, profileStack, naming = INLIN
   };
 }
 
+// Sites where the circle is hidden: an adapter id (x, gmail…) hides every hostname of that adapter, and a
+// hostname hides itself and its subdomains.
+const HIDDEN_SITES_LIMIT = 200;
+export function normalizeInlineAssistHiddenSites(value) {
+  if (!Array.isArray(value)) return [];
+  const sites = [];
+  for (const entry of value) {
+    if (typeof entry !== 'string') continue;
+    const site = entry.trim().toLowerCase().replace(/^www\./, '');
+    if (!site || !/^[a-z0-9.-]+$/.test(site) || sites.includes(site)) continue;
+    sites.push(site);
+    if (sites.length >= HIDDEN_SITES_LIMIT) break;
+  }
+  return sites;
+}
+
+export function isInlineAssistHiddenSite(hostname, adapterId, hidden) {
+  const sites = normalizeInlineAssistHiddenSites(hidden);
+  if (!sites.length) return false;
+  const host = String(hostname || '').toLowerCase().replace(/^www\./, '');
+  const adapter = String(adapterId || '').toLowerCase();
+  return sites.some((site) => (adapter && adapter !== 'generic' && site === adapter) || host === site || host.endsWith(`.${site}`));
+}
+
 export const INLINE_ASSIST_LOOK_API = Object.freeze({
   icons: INLINE_ASSIST_ICONS,
   openModes: INLINE_ASSIST_OPEN_MODES,
@@ -260,4 +284,6 @@ export const INLINE_ASSIST_LOOK_API = Object.freeze({
   inlineAssistIconAsset,
   namespaceFontStack,
   inlineAssistFontStacks,
+  normalizeInlineAssistHiddenSites,
+  isInlineAssistHiddenSite,
 });

@@ -13,6 +13,8 @@ import {
   inlineAssistFontStacks,
   namespaceFontStack,
   inlineAssistIconAsset,
+  isInlineAssistHiddenSite,
+  normalizeInlineAssistHiddenSites,
   normalizeInlineAssistIcon,
   normalizeInlineAssistOpenMode,
   parseCssColor,
@@ -190,4 +192,24 @@ test('a custom local font gets a name of its own too, kept apart from the faces 
   assert.match(stacks.ui, /^"HermesAssist-x-\d+", "Segoe UI", sans-serif$/);
   assert.deepEqual([...stacks.localFamilies], ['Comic Neue']);
   assert.equal(stacks.families.includes('Comic Neue'), false, 'not asked of the background');
+});
+
+test('hidden sites are lower-case ids or hostnames, without www., deduplicated and capped', () => {
+  assert.deepEqual(normalizeInlineAssistHiddenSites(['X', 'www.Example.com', 'example.com', '', 42, 'mail.example.com']), ['x', 'example.com', 'mail.example.com']);
+  assert.deepEqual(normalizeInlineAssistHiddenSites('nope'), []);
+  assert.equal(normalizeInlineAssistHiddenSites(Array.from({ length: 300 }, (_, index) => `site${index}.test`)).length, 200);
+});
+
+test('a hidden hostname also covers its subdomains, and only those', () => {
+  assert.equal(isInlineAssistHiddenSite('mail.example.com', 'generic', ['example.com']), true);
+  assert.equal(isInlineAssistHiddenSite('example.com', 'generic', ['example.com']), true);
+  assert.equal(isInlineAssistHiddenSite('example.com.evil.net', 'generic', ['example.com']), false);
+  assert.equal(isInlineAssistHiddenSite('notexample.com', 'generic', ['example.com']), false);
+  assert.equal(isInlineAssistHiddenSite('www.example.com', 'generic', []), false);
+});
+
+test('hidden adapter id hides every hostname of that adapter', () => {
+  assert.equal(isInlineAssistHiddenSite('twitter.com', 'x', ['x']), true);
+  assert.equal(isInlineAssistHiddenSite('x.com', 'x', ['x']), true);
+  assert.equal(isInlineAssistHiddenSite('x.com', 'x', ['gmail']), false);
 });
