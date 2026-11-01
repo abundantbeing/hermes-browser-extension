@@ -2086,4 +2086,11 @@ export default Object.freeze({
   "firefox_screenshots.removed": "ลบสิทธิ์ภาพหน้าจอแล้ว",
   "firefox_screenshots.failed": "เปลี่ยนสิทธิ์ภาพหน้าจอไม่ได้: {error}",
   "browser_control.note_screenshot_permission": "Hermes ไม่ได้ถ่ายภาพหน้าจอ: Firefox ต้องมีสิทธิ์เพิ่มเติม ใช้ อนุญาตภาพหน้าจอใน Firefox",
+  "ui.bot.options": "ตัวเลือกบอต",
+  "ui.fast": "เร็ว",
+  "ui.steer.this.subagent": "กำหนดทิศทางเอเจนต์ย่อยนี้",
+  "ui.stop.this.subagent": "หยุดเอเจนต์ย่อยนี้",
+  "ui.not.accepting.steer": "ไม่รับการกำหนดทิศทาง",
+  "ui.open.generated.image.for.closer.inspection": "เปิดรูปภาพที่สร้างขึ้นเพื่อดูใกล้ ๆ",
+  "ui.group.settings": "การตั้งค่ากลุ่ม",
 });
