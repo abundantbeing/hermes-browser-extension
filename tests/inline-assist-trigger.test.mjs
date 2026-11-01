@@ -159,3 +159,10 @@ test('an open panel shows the replacement switch Settings just saved', async () 
   env.changeStorage({ hermesInlineAssistAutoReplace: { newValue: true } });
   assert.equal(toggle().checked, true);
 });
+
+test('what can be clicked is the 24px circle placement reserved, nothing wider', () => {
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec(load('content-inline-helper.js'))[1];
+  // A pseudo-element wider than the circle would take clicks meant for a page button beside it.
+  assert.doesNotMatch(css, /\.launcher::after \{[^}]*inset:-/);
+  assert.match(css, /\.launcher\.busy::before \{[^}]*pointer-events:none/, 'the busy ring is drawn outside but never clicked');
+});

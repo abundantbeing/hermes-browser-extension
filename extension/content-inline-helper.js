@@ -100,9 +100,8 @@
     .launcher { position:fixed; z-index:2; display:grid; place-items:center; width:24px; height:24px; padding:0; border:0; border-radius:50%; background:var(--hx-fill,#141414); cursor:pointer; pointer-events:auto; opacity:.85; box-shadow:0 0 0 1px var(--hx-hair,rgba(0,0,0,.08)); transition:opacity 120ms ease,box-shadow 120ms ease; }
     .launcher[data-tone="light"] { --hx-fill:#f4f4f1; --hx-glyph:#111111; --hx-hair:rgba(255,255,255,.14); }
     .launcher[data-tone="dark"] { --hx-fill:#141414; --hx-glyph:#f4f4f1; --hx-hair:rgba(0,0,0,.08); }
-    .launcher::after { content:""; position:absolute; inset:-4px; border-radius:50%; }
     .launcher:hover, .launcher:focus-visible { opacity:1; outline:none; box-shadow:0 0 0 2px var(--hb-accent); }
-    .launcher.busy::before { content:""; position:absolute; inset:-4px; border-radius:50%; border:2px solid transparent; border-top-color:var(--hb-accent); border-right-color:var(--hb-accent); animation:spin .9s linear infinite; }
+    .launcher.busy::before { content:""; position:absolute; inset:-4px; border-radius:50%; pointer-events:none; border:2px solid transparent; border-top-color:var(--hb-accent); border-right-color:var(--hb-accent); animation:spin .9s linear infinite; }
     .launcher-label { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); white-space:nowrap; padding:3px 6px; border:1px solid var(--hb-line); background:var(--hb-paper); color:var(--hb-blue); font:600 calc(10.5px * var(--hermes-text-zoom, 1))/1.2 var(--hb-font-ui); opacity:0; pointer-events:none; transition:opacity 120ms ease; }
     .launcher:hover .launcher-label, .launcher:focus-visible .launcher-label { opacity:1; }
     .launcher-logo, .brand-logo { display:block; mask-position:center; mask-size:contain; mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; }
