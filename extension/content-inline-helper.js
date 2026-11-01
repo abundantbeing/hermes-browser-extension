@@ -329,7 +329,7 @@
     const stacks = look?.inlineAssistFontStacks?.(profile, profileStack, fontName);
     if (!stacks) return null;
     panel.dataset.fontProfile = profile;
-    fontStyle.textContent = `.launcher, .panel { --hb-font-ui: ${stacks.ui}; --hb-font-display: ${stacks.display}; --hermes-font-mono: ${stacks.mono}; --hb-display-scale: ${profile === 'signature' ? '1.3' : '1'}; }`;
+    fontStyle.textContent = `.launcher, .panel { --hb-font-ui: ${stacks.ui}; --hb-font-display: ${stacks.display}; --hermes-font-mono: ${stacks.mono}; --hb-display-scale: ${profile === 'signature' ? '1.3' : '1'}; font-family: var(--hb-font-ui); }`;
     return stacks;
   }
 
