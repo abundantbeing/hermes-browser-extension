@@ -323,6 +323,22 @@
     maskWith(brandMark.querySelector('.brand-logo'), look?.inlineAssistIconAsset?.(icon, host.dataset.mode === 'light' ? 'dark' : 'light') || 'assets/img/assist-wing.png');
   }
 
+  // The tone comes from what is under the circle once placed, since it usually sits beside the field: the
+  // page under that point, not counting Assist itself. Without elementsFromPoint, the field's own surface.
+  function surfaceToneAt(x, y, fallback) {
+    const under = typeof document.elementsFromPoint === 'function'
+      ? Array.from(document.elementsFromPoint(x, y) || []).find((element) => element !== host && !host.contains(element))
+      : null;
+    return pageToneBehind(under || fallback);
+  }
+
+  function setLauncherTone(tone) {
+    const next = tone || 'dark';
+    if (launcher.dataset.tone === next) return;
+    launcher.dataset.tone = next;
+    maskWith(launcher.querySelector('.launcher-logo'), look?.inlineAssistIconAsset?.(launcher.dataset.icon, next) || 'assets/img/assist-wing.png');
+  }
+
   function applyAssistFontStacks() {
     const profile = appearancePreferences?.normalizeFontProfile?.(assistSettings.fontProfile, assistSettings.customFontFamily) || 'signature';
     const profileStack = appearancePreferences?.fontFamilyPreview?.(profile, assistSettings.customFontFamily) || '';
@@ -439,6 +455,8 @@
 
   function onSystemThemeChanged() {
     if (assistSettings.colorMode === 'system') applyAssistAppearance();
+    // A page that follows the system theme repaints behind the circle.
+    position();
   }
 
   function refreshSiteProfile(candidate = target) {
@@ -667,6 +685,7 @@
     launcher.dataset.placement = launcherPosition.strategy || 'inside-end';
     launcher.style.left = `${launcherPosition.left}px`;
     launcher.style.top = `${launcherPosition.top}px`;
+    setLauncherTone(surfaceToneAt(launcherPosition.left + 12, launcherPosition.top + 12, anchor));
     if (!panel.hidden) {
       const safe = 8;
       const panelWidth = Math.min(500, viewportWidth - 20);
