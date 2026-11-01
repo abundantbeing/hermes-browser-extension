@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Bot Mode loads your bots and their pictures from the extension's Hermes plugin.** When the gateway has no roster routes of its own (stock Hermes serves no `GET /v1/profiles`), the panel now asks the `hermes-browser-extension` plugin, installed as described in `companion-plugin/install.md`, for each bot's title, shape, colour and picture, with the same API key, instead of listing names only. The plugin answers only for the bots that gateway serves and never returns paths or other plugins' data. Hermes needs one restart after you install or update the plugin so its routes exist; until then Bot Mode lists the bots by name, as before.
+
 ### Fixed
 
 - A clean checkout or contributor build no longer renders the signature profile with HermesDisplay instead of **Rules Gothic Compressed**. The Rules `woff2` files from the v0.4.0 release are in the repository, and Chromium and Firefox builds fail if any CSS-referenced font file is missing.
