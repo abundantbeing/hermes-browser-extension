@@ -2484,6 +2484,45 @@ function generatedImageUnavailableMarkup() {
   return '<div class="generated-image-unavailable" role="status">Generated image unavailable in this browser response.</div>';
 }
 
+// A link target may nest parentheses (`https://en.wikipedia.org/wiki/Rust_(programming_language)`). Its end
+// is found by counting them in one pass, to a fixed depth, so no pattern can backtrack on it.
+const MARKDOWN_LINK_PAREN_DEPTH = 8;
+
+function linkTargetEnd(text, start) {
+  let depth = 1;
+  for (let index = start; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === '(') {
+      depth += 1;
+      if (depth > MARKDOWN_LINK_PAREN_DEPTH) return -1;
+    } else if (char === ')') {
+      depth -= 1;
+      if (depth === 0) return index > start ? index : -1;
+    } else if (/\s/.test(char)) {
+      return -1;
+    }
+  }
+  return -1;
+}
+
+function replaceMarkdownLinks(html = '', render = (text) => text) {
+  const opener = /\[([^\]]+)\]\(/g;
+  let out = '';
+  let last = 0;
+  let match;
+  while ((match = opener.exec(html))) {
+    const end = linkTargetEnd(html, opener.lastIndex);
+    if (end < 0) {
+      opener.lastIndex = match.index + 1;
+      continue;
+    }
+    out += html.slice(last, match.index) + render(match[1], html.slice(opener.lastIndex, end));
+    last = end + 1;
+    opener.lastIndex = last;
+  }
+  return out + html.slice(last);
+}
+
 function renderInlineMarkdown(value = '') {
   const parts = String(value || '').split(/(`[^`]+`)/g);
   return parts.map((part) => {
@@ -2497,12 +2536,11 @@ function renderInlineMarkdown(value = '') {
     });
     let html = escapeHtml(withImageTokens);
     html = html.replace(/@@HERMES_IMAGE_(\d+)@@/g, (_match, index) => images[Number(index)] || '');
-    // A link target may hold balanced parentheses (`https://en.wikipedia.org/wiki/Rust_(programming_language)`).
-    html = html.replace(/\[([^\]]+)\]\(((?:[^\s()]|\([^\s()]*\))+)\)/g, (_match, text, href) => {
-          const safe = safeHref(href);
-          return safe ? `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
-        });
-        html = autolinkBareUrls(html);
+    html = replaceMarkdownLinks(html, (text, href) => {
+      const safe = safeHref(href);
+      return safe ? `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
+    });
+    html = autolinkBareUrls(html);
     // One character between the markers counts too (**3**, ~~5~~); requiring two
     // left **3** as literal asterisks and ran "**a** and **b**" into one span.
     html = html.replace(/\*\*([^*\n](?:[\s\S]*?[^*\n])??)\*\*/g, '<strong>$1</strong>');
@@ -2592,18 +2630,22 @@ export function isMarkdownFenceClose(line = '', opening = null) {
 }
 
 function listItemStart(line = '') {
-  const match = /^( *)([-*+]|(\d{1,9})[.)])( +|$)(.*)$/.exec(expandLeadingTabs(line));
+  const match = /^( *)([-*+]|(\d{1,9})[.)])([ \t]+|$)(.*)$/.exec(expandLeadingTabs(line));
   if (!match) return null;
   const [, indent, marker, number, spacing, content] = match;
-  // Content starts after the marker and its spacing; five or more spaces leave one (an indented code
+  // A tab after the marker runs to the next tab stop, counted from the marker's own column.
+  const markerEnd = indent.length + marker.length;
+  let spaceWidth = 0;
+  for (const char of spacing) spaceWidth += char === '\t' ? 4 - ((markerEnd + spaceWidth) % 4) : 1;
+  // Content starts after the marker and its spacing; five or more columns leave one (an indented code
   // start in CommonMark), and an empty item continues one column after the marker.
-  const gap = spacing.length >= 1 && spacing.length <= 4 ? spacing.length : 1;
+  const gap = spaceWidth >= 1 && spaceWidth <= 4 ? spaceWidth : 1;
   return {
     indent: indent.length,
     ordered: number !== undefined,
     number: number === undefined ? 1 : Number(number),
-    contentOffset: indent.length + marker.length + gap,
-    content: spacing.length > 4 ? `${' '.repeat(spacing.length - 1)}${content}` : content,
+    contentOffset: markerEnd + gap,
+    content: spaceWidth > 4 ? `${' '.repeat(spaceWidth - 1)}${content}` : content,
   };
 }
 
@@ -2615,7 +2657,25 @@ function stripQuoteMarker(line = '') {
   return expandLeadingTabs(line).replace(/^ {0,3}> ?/, '');
 }
 
-function renderListItem(lines = []) {
+// Quotes and list items render their content as Markdown again; past this depth the rest of a reply stays
+// text, so a hostile or runaway reply (a run of `>` or `- ` markers) can not exhaust the stack.
+const MARKDOWN_MAX_NESTING = 32;
+
+// The fence a line opens, looking through the list markers in front of it: `- ````md` opens a fence one
+// list level down, and the item that holds it must still track that fence to its close.
+function openingFence(line = '') {
+  let text = line;
+  for (let depth = 0; depth < MARKDOWN_MAX_NESTING; depth += 1) {
+    const fence = markdownFenceOpening(text);
+    if (fence) return fence;
+    const item = listItemStart(text);
+    if (!item || !/\S/.test(item.content)) return null;
+    text = `${' '.repeat(item.contentOffset)}${item.content}`;
+  }
+  return null;
+}
+
+function renderListItem(lines = [], depth = 0) {
   const items = [...lines];
   const task = /^\[([ xX])\]\s+(.*)$/.exec(items[0] || '');
   let prefix = '';
@@ -2626,7 +2686,7 @@ function renderListItem(lines = []) {
   }
   // A tight item (no blank line inside it) keeps its text inline, as a list item always has here.
   const tight = !items.some(isBlankLine);
-  return `${prefix}${renderMarkdownBlocks(items, { tight })}`;
+  return `${prefix}${renderMarkdownBlocks(items, { tight, depth: depth + 1 })}`;
 }
 
 // The lines of one list item from `start`: its first line, then every line indented to its content
@@ -2634,14 +2694,15 @@ function renderListItem(lines = []) {
 function collectListItem(lines, start, item) {
   const body = [item.content];
   let index = start + 1;
-  let fence = markdownFenceOpening(item.content);
+  let fence = openingFence(item.content);
   while (index < lines.length) {
     const line = lines[index];
     if (fence) {
       // Inside a fenced block of this item every line is code until the fence closes, at whatever
-      // indentation the reply closed it; a less indented non-blank line means it left the item.
+      // indentation the reply closed it; a less indented non-blank line means it left the item. The
+      // closing line keeps its own indentation, which a nested item's fence still needs.
       if (isMarkdownFenceClose(line, fence)) {
-        body.push(line.trim());
+        body.push(dedent(line, item.contentOffset));
         fence = null;
         index += 1;
         continue;
@@ -2661,13 +2722,13 @@ function collectListItem(lines, start, item) {
     if (indentWidth(line) < item.contentOffset) break;
     const dedented = dedent(line, item.contentOffset);
     body.push(dedented);
-    fence = markdownFenceOpening(dedented);
+    fence = openingFence(dedented);
     index += 1;
   }
   return { body, next: index };
 }
 
-function renderListBlock(lines, start) {
+function renderListBlock(lines, start, depth = 0) {
   const first = listItemStart(lines[start]);
   const items = [];
   let index = start;
@@ -2692,11 +2753,13 @@ function renderListBlock(lines, start) {
   }
   const tag = first.ordered ? 'ol' : 'ul';
   const startAttribute = first.ordered && first.number !== 1 ? ` start="${first.number}"` : '';
-  const html = `<${tag}${startAttribute}>${items.map((body) => `<li>${renderListItem(body)}</li>`).join('')}</${tag}>`;
+  const html = `<${tag}${startAttribute}>${items.map((body) => `<li>${renderListItem(body, depth)}</li>`).join('')}</${tag}>`;
   return { html, next: index };
 }
 
-function renderMarkdownBlocks(lines = [], { tight = false } = {}) {
+function renderMarkdownBlocks(lines = [], { tight = false, depth = 0 } = {}) {
+  // Past the nesting limit a quote or list marker is just text in the paragraph.
+  const nestable = depth < MARKDOWN_MAX_NESTING;
   const out = [];
   const paragraph = [];
   const flushParagraph = () => {
@@ -2763,7 +2826,7 @@ function renderMarkdownBlocks(lines = [], { tight = false } = {}) {
       out.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
       continue;
     }
-    if (isQuoteLine(line)) {
+    if (nestable && isQuoteLine(line)) {
       flushParagraph();
       // Consecutive `>` lines, a bare `>` included, are one quote; its content is Markdown too.
       const quoted = [];
@@ -2772,13 +2835,13 @@ function renderMarkdownBlocks(lines = [], { tight = false } = {}) {
         index += 1;
       }
       index -= 1;
-      const inner = renderMarkdownBlocks(quoted, { tight: !quoted.some(isBlankLine) });
+      const inner = renderMarkdownBlocks(quoted, { tight: !quoted.some(isBlankLine), depth: depth + 1 });
       if (inner) out.push(`<blockquote>${inner}</blockquote>`);
       continue;
     }
-    if (listItemStart(line) && /\S/.test(listItemStart(line).content)) {
+    if (nestable && listItemStart(line) && /\S/.test(listItemStart(line).content)) {
       flushParagraph();
-      const list = renderListBlock(lines, index);
+      const list = renderListBlock(lines, index, depth);
       out.push(list.html);
       index = list.next - 1;
       continue;

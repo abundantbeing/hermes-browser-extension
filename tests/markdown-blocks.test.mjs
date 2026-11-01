@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { renderMarkdown } from '../extension/lib/common.mjs';
-import { splitAdaptiveSegments } from '../extension/lib/adaptive-ui.mjs';
+import { presentMarkdownParts, renderAdaptiveMarkdown, splitAdaptiveSegments } from '../extension/lib/adaptive-ui.mjs';
 
 test('nested lists keep their hierarchy', () => {
   assert.equal(
@@ -111,4 +111,92 @@ test('the sanitized panel markup keeps nested lists, quote paragraphs and fenced
   const { renderMarkdownSafe } = await import('../extension/lib/sanitizer.mjs');
   const markdown = '- Parent\n  - Child\n\n> one\n>\n> two\n\n~~~sh\necho hi\n~~~';
   assert.equal(renderMarkdownSafe(markdown), renderMarkdown(markdown));
+});
+
+const blockCount = (html, tag) => html.split(`<${tag}>`).length - 1;
+
+test('quotes and lists nested far past the limit render as text instead of overflowing the stack', () => {
+  const quotes = renderMarkdown(`${'>'.repeat(10_000)} deep text`);
+  assert.match(quotes, /deep text/);
+  assert.ok(blockCount(quotes, 'blockquote') <= 64);
+  assert.match(quotes, /&gt;&gt;&gt;/);
+
+  const lists = renderMarkdown(`${'- '.repeat(10_000)}deep item`);
+  assert.match(lists, /deep item/);
+  assert.ok(blockCount(lists, 'ul') <= 64);
+
+  const indented = renderMarkdown(Array.from({ length: 2_000 }, (_, level) => `${'  '.repeat(level)}- level ${level}`).join('\n'));
+  assert.match(indented, /level 1999/);
+  assert.ok(blockCount(indented, 'ul') <= 64);
+
+  const mixed = renderMarkdown(`${'> - '.repeat(5_000)}mixed text`);
+  assert.match(mixed, /mixed text/);
+  assert.ok(blockCount(mixed, 'blockquote') + blockCount(mixed, 'ul') <= 64);
+});
+
+test('ordinary nesting depth is untouched by the limit', () => {
+  assert.equal(
+    renderMarkdown('- a\n  - b\n    - c\n      - d'),
+    '<ul><li>a<ul><li>b<ul><li>c<ul><li>d</li></ul></li></ul></li></ul></li></ul>',
+  );
+  assert.equal(renderMarkdown('> > > deep'), '<blockquote><blockquote><blockquote>deep</blockquote></blockquote></blockquote>');
+});
+
+test('a longer fence opened inside a nested item keeps its inner example and closing line', () => {
+  assert.equal(
+    renderMarkdown('- parent\n  - ````md\n    ```js\n    x\n    ```\n    ````\n  - sibling\n- next'),
+    '<ul><li>parent<ul><li><pre><code data-lang="md">```js\nx\n```</code></pre></li><li>sibling</li></ul></li><li>next</li></ul>',
+  );
+  // A fence closes only on its own character: the ``` line stays code inside a ~~~ fence one level down.
+  assert.equal(
+    renderMarkdown('1. Outer\n   - ~~~\n     ```\n     kept\n     ~~~\n   - after\n2. Next'),
+    '<ol><li>Outer<ul><li><pre><code>```\nkept</code></pre></li><li>after</li></ul></li><li>Next</li></ol>',
+  );
+  // Three levels down.
+  assert.equal(
+    renderMarkdown('- a\n  - b\n    - ````md\n      ```js\n      x\n      ```\n      ````\n    - c'),
+    '<ul><li>a<ul><li>b<ul><li><pre><code data-lang="md">```js\nx\n```</code></pre></li><li>c</li></ul></li></ul></li></ul>',
+  );
+});
+
+test('a tab after a list marker starts the item and sets its content column', () => {
+  assert.equal(renderMarkdown('-\tfirst\n-\tsecond'), '<ul><li>first</li><li>second</li></ul>');
+  assert.equal(renderMarkdown('1.\tfirst\n2.\tsecond'), '<ol><li>first</li><li>second</li></ol>');
+  assert.equal(renderMarkdown('*\tstar'), '<ul><li>star</li></ul>');
+  // `-\t` puts the content at column 4, so four spaces nest and two do not.
+  assert.equal(renderMarkdown('-\tparent\n    - child'), '<ul><li>parent<ul><li>child</li></ul></li></ul>');
+  assert.equal(renderMarkdown('-\tone\n  - two'), '<ul><li>one</li><li>two</li></ul>');
+  assert.equal(renderMarkdown('1.\tparent\n    - child'), '<ol><li>parent<ul><li>child</li></ul></li></ol>');
+  assert.equal(renderMarkdown('-\tparent\n\t-\tchild'), '<ul><li>parent<ul><li>child</li></ul></li></ul>');
+});
+
+test('Vivid UI keeps a tilde or longer fence whole instead of reading its contents as metrics', () => {
+  const html = renderAdaptiveMarkdown('~~~md\n\n- **A:** 1\n- **B:** 2\n\n~~~\n\nAfter');
+  assert.doesNotMatch(html, /haui-/);
+  assert.match(html, /^<pre><code data-lang="md">[\s\S]*- \*\*A:\*\* 1[\s\S]*<\/code><\/pre><p>After<\/p>$/);
+
+  const longer = renderAdaptiveMarkdown('````md\n```\n\n- **A:** 1\n- **B:** 2\n\n```\n````\n\nAfter');
+  assert.doesNotMatch(longer, /haui-/);
+  assert.match(longer, /<\/code><\/pre><p>After<\/p>$/);
+
+  assert.deepEqual(presentMarkdownParts('~~~\n\n- **A:** 1\n- **B:** 2\n\n~~~\n\nAfter').map((part) => part.kind), ['markdown']);
+  // Outside a fence the same run still becomes metric cards.
+  assert.match(renderAdaptiveMarkdown('- **A:** 1\n- **B:** 2\n\nAfter'), /haui-stat-grid/);
+});
+
+test('link targets keep deeper balanced parentheses and stay validated', () => {
+  assert.equal(
+    renderMarkdown('[docs](https://example.com/a_(b_(c)))'),
+    '<p><a href="https://example.com/a_(b_(c))" target="_blank" rel="noopener noreferrer">docs</a></p>',
+  );
+  assert.equal(
+    renderMarkdown('see ([docs](https://example.com/a_(b_(c_(d)))))'),
+    '<p>see (<a href="https://example.com/a_(b_(c_(d)))" target="_blank" rel="noopener noreferrer">docs</a>)</p>',
+  );
+  assert.equal(renderMarkdown('[x](javascript:alert(1))'), '<p>x</p>');
+  assert.equal(renderMarkdown('[x](javascript:a(b(c)))'), '<p>x</p>');
+  assert.doesNotMatch(renderMarkdown('[x](https://example.com/a_(b)'), />x<\/a>/);
+  // An unclosed target, or one nested absurdly deep, is plain text and returns at once.
+  assert.doesNotMatch(renderMarkdown(`[a](${'('.repeat(100_000)}`), /<a /);
+  assert.doesNotMatch(renderMarkdown(`[a](https://example.com/${'('.repeat(50_000)}${')'.repeat(50_000)})`), />a<\/a>/);
 });
