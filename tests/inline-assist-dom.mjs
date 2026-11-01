@@ -7,7 +7,7 @@ const EXTENSION = new URL('../extension/', import.meta.url);
 export const loadExtensionFile = (relative) => readFileSync(new URL(relative, EXTENSION), 'utf8');
 const load = loadExtensionFile;
 
-export function bootAssist({ settings = {}, storage = {}, pageBackground = '', fontReply = () => Promise.resolve({ ok: true, fonts: [] }) } = {}) {
+export function bootAssist({ settings = {}, storage = {}, pageBackground = '', url = 'https://page.example/', fontReply = () => Promise.resolve({ ok: true, fonts: [] }) } = {}) {
   const sent = [];
   const messageListeners = [];
   const stored = [];
@@ -15,7 +15,7 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', f
   const storageListeners = [];
   const dom = new JSDOM(
     `<!doctype html><html><body><div id="composer" style="${pageBackground ? `background-color:${pageBackground}` : ''}"><textarea id="field"></textarea></div></body></html>`,
-    { url: 'https://page.example/', runScripts: 'outside-only', pretendToBeVisual: true },
+    { url, runScripts: 'outside-only', pretendToBeVisual: true },
   );
   const w = dom.window;
   w.innerWidth = 1280;
