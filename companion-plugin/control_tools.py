@@ -62,11 +62,31 @@ _SCREENSHOT_PRUNE_INTERVAL_SECONDS = 60.0
 
 _CLOUD_METADATA_HOSTS = frozenset({"metadata.google.internal", "metadata.goog", "instance-data", "100.100.100.200"})
 _CLOUD_METADATA_NETWORKS = (ipaddress.ip_network("169.254.0.0/16"), ipaddress.ip_network("fd00:ec2::/32"))
+# A path separator as it appears in a URL, plain or percent-encoded (once or twice).
+_SLASH = r"(?:/|%(?:25)?2[Ff])"
 # Key and token shapes that must never leave in a URL a page, or a prompt injection, could read back.
 _SECRET_IN_URL = re.compile(
     r"(?:sk-[A-Za-z0-9_-]{16,}|sk_(?:live|test)_[A-Za-z0-9]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}"
     r"|xox[abprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|hf_[A-Za-z0-9]{20,}|glpat-[A-Za-z0-9_-]{16,}"
-    r"|npm_[A-Za-z0-9]{30,}|ya29\.[A-Za-z0-9_-]{20,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})"
+    r"|npm_[A-Za-z0-9]{30,}|ya29\.[A-Za-z0-9_-]{20,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"
+    # Provider, tool and chat-platform shapes Hermes Agent's agent/redact.py knows; the extension's
+    # SECRET_PATTERNS carries the same set (tests/redaction-hermes-token-shapes.test.mjs).
+    r"|(?:gsk_|xai-|r8_|pplx-|fw_|fpk_|tvly-(?:dev-|prod-)?|fal_|bb_live_)[A-Za-z0-9]{20,}"
+    r"|ntn_[A-Za-z0-9]{40,}|lin_(?:api|oauth)_[A-Za-z0-9]{32,}"
+    r"|syt_[A-Za-z0-9]{4,}_[A-Za-z0-9]{10,}_[A-Za-z0-9]{6}|fc-[a-f0-9]{32}|secret_[A-Za-z0-9]{43}|sk_[a-f0-9]{48}"
+    r"|do[opr]_v1_[a-f0-9]{64}|\d{8,12}(?::|%(?:25)?3[Aa])[A-Za-z0-9_-]{30,}"
+    # These bodies carry separators (hyphens, underscores, dots, `=`), as the shared redactor's do.
+    r"|pk-lf-[A-Za-z0-9-]{20,}|xapp-\d+-[A-Za-z0-9-]{10,}|xoxe-[A-Za-z0-9-]{10,}"
+    r"|pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{20,}|(?:gAAAAA|ATATT3)[A-Za-z0-9_=-]{40,}"
+    r"|PMAK-[a-f0-9]{24}-[a-f0-9]{34}"
+    r"|gl(?:pat|dt|rt|rtr|cbt|ptt|ft|imt|agent|soat|ffct|wt|oas)-[A-Za-z0-9_.-]{20,}"
+    r"|GR1348941[A-Za-z0-9_-]{20,}|1//0[A-Za-z0-9_-]{40,}"
+    # A Discord bot token. No boundary before or after: this guard refuses on any hit, so a token that
+    # follows `-`, `_`, `.`, a letter, or has characters appended must not get through on a boundary rule.
+    r"|[MNO][A-Za-z0-9_-]{23,27}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,40}"
+    # Slack and Discord incoming webhook URLs, with their slashes plain or percent-encoded.
+    + r"|" + _SLASH + r"services" + _SLASH + r"T[A-Z0-9]{8,}" + _SLASH + r"B[A-Z0-9]{8,}" + _SLASH + r"[A-Za-z0-9]{20,}"
+    + r"|" + _SLASH + r"api(?:" + _SLASH + r"v\d+)?" + _SLASH + r"webhooks" + _SLASH + r"\d{17,20}" + _SLASH + r"[A-Za-z0-9_-]{60,})"
 )
 
 _config: dict[str, Any] = {"broker": None, "profile": "default", "screenshot_dir": None}
