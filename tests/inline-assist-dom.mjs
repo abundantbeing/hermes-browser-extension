@@ -55,6 +55,12 @@ export function bootAssist({ settings = {}, pageBackground = '', fontReply = () 
     load() { return Promise.resolve(this); }
   };
   Object.defineProperty(w.document, 'fonts', { configurable: true, value: { add: (face) => fonts.push(face.family) } });
+  // One list per query, like a browser: a test fires 'change' on what env.w.matchMedia(query) returns.
+  const mediaQueries = new Map();
+  w.matchMedia = (query) => {
+    if (!mediaQueries.has(query)) mediaQueries.set(query, Object.assign(new w.EventTarget(), { media: query, matches: false }));
+    return mediaQueries.get(query);
+  };
   w.browser = undefined;
   for (const file of ['lib/browser-api-global.js', 'content-extractor.js', 'lib/i18n-content.js', 'content-inline-helper.js']) w.eval(load(file));
   const sleep = (ms = 25) => new Promise((resolve) => setTimeout(resolve, ms));

@@ -96,3 +96,33 @@ test('the panel and circle set their own font, so text that only inherits it fol
   // --hb-font-ui changes on .panel; :host computed its font-family from the default before that.
   assert.match(env.root().querySelector('style.assist-fonts').textContent, /\.launcher, \.panel \{[^}]*font-family: var\(--hb-font-ui\);/);
 });
+
+// What sits under the circle decides its tone: the circle usually sits beside the field, not on it.
+function bootWithSurface({ field = 'rgb(255, 255, 255)', under = 'rgb(0, 0, 0)' } = {}) {
+  const env = boot({ pageBackground: field });
+  const surface = env.w.document.createElement('div');
+  surface.id = 'surface';
+  surface.style.backgroundColor = under;
+  env.w.document.body.append(surface);
+  env.w.document.elementsFromPoint = () => [env.host(), surface, env.w.document.body];
+  return { env, surface };
+}
+
+test('a white field on a black page gets the light circle when the circle sits on the black', async () => {
+  const { env } = bootWithSurface();
+  const launcher = await focusField(env);
+  assert.equal(launcher.dataset.tone, 'light');
+  assert.match(launcher.querySelector('.launcher-logo').style.maskImage, /assist-wing\.png/);
+});
+
+test('the circle follows the page when the surface under it changes theme', async () => {
+  const { env, surface } = bootWithSurface({ under: 'rgb(255, 255, 255)' });
+  const launcher = await focusField(env);
+  assert.equal(launcher.dataset.tone, 'dark');
+  surface.style.backgroundColor = 'rgb(10, 10, 10)';
+  env.w.dispatchEvent(new env.w.Event('resize'));
+  assert.equal(launcher.dataset.tone, 'light', 'layout change');
+  surface.style.backgroundColor = 'rgb(250, 250, 250)';
+  for (const listener of env.listenersFor(env.w.matchMedia('(prefers-color-scheme: dark)'), 'change')) listener({ matches: false });
+  assert.equal(launcher.dataset.tone, 'dark', 'system theme change');
+});
