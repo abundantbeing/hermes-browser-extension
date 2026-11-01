@@ -43,7 +43,7 @@ test('font request fails → system stack, no throw', async () => {
   const panel = env.root().querySelector('.panel');
   assert.equal(panel.hidden, false, 'the panel still opens');
   assert.ok(env.sent.some((message) => message.type === 'HERMES_INLINE_FONT_REQUEST'), 'fonts were asked for on open');
-  assert.match(env.host().style.getPropertyValue('--hb-font-ui'), /system-ui, sans-serif$/);
+  assert.match(env.root().querySelector('style.assist-fonts').textContent, /--hb-font-ui: [^;]*system-ui, sans-serif;/);
 });
 
 test('the signature profile asks for the Rules faces and names them in the panel', async () => {
@@ -54,5 +54,21 @@ test('the signature profile asks for the Rules faces and names them in the panel
   const request = env.sent.find((message) => message.type === 'HERMES_INLINE_FONT_REQUEST');
   assert.ok(request.families.includes('Rules Variable'));
   assert.ok(request.families.includes('Rules Gothic Compressed'));
-  assert.match(env.host().style.getPropertyValue('--hb-font-display'), /^"HermesAssist Rules Gothic Compressed"/);
+  assert.match(env.root().querySelector('style.assist-fonts').textContent, /--hb-font-display: "HermesAssist-[0-9a-f]{8} Rules Gothic Compressed"/);
+});
+
+test('the page can not read the font choice or guess the font names', async () => {
+  const env = boot({ settings: { fontProfile: 'signature' } });
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  const host = env.host();
+  assert.equal(host.hasAttribute('data-font-profile'), false, 'no profile on the page-visible host');
+  assert.equal(host.style.getPropertyValue('--hb-font-ui'), '', 'no font stack on the page-visible host');
+  assert.equal(env.root().querySelector('.panel').dataset.fontProfile, 'signature');
+  const other = boot({ settings: { fontProfile: 'signature' } });
+  await focusField(other).then((item) => other.userClick(item));
+  await other.sleep(60);
+  const token = (text) => /HermesAssist-([0-9a-f]{8}) /.exec(text)?.[1];
+  assert.notEqual(token(env.root().querySelector('style.assist-fonts').textContent), token(other.root().querySelector('style.assist-fonts').textContent), 'each page gets its own font names');
 });

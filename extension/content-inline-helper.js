@@ -167,8 +167,8 @@
     .toggle::after { content:""; position:absolute; width:12px; height:12px; left:2px; top:2px; background:var(--hb-blue); transition:left 120ms ease,background 120ms ease; }
     .toggle:checked::after { left:18px; background:var(--hb-paper); }
     .foot { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); }
-    :host([data-font-profile="signature"]) .title, :host([data-font-profile="signature"]) .route-title, :host([data-font-profile="signature"]) .run-title, :host([data-font-profile="signature"]) .action, :host([data-font-profile="signature"]) .route strong, :host([data-font-profile="signature"]) .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
-    :host([data-font-profile="signature"]) .action small, :host([data-font-profile="signature"]) .route small { text-transform:none; letter-spacing:normal; }
+    .panel[data-font-profile="signature"] .title, .panel[data-font-profile="signature"] .route-title, .panel[data-font-profile="signature"] .run-title, .panel[data-font-profile="signature"] .action, .panel[data-font-profile="signature"] .route strong, .panel[data-font-profile="signature"] .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
+    .panel[data-font-profile="signature"] .action small, .panel[data-font-profile="signature"] .route small { text-transform:none; letter-spacing:normal; }
     @media (max-width:520px) { .panel { width:calc(100vw - 16px); } }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; animation:none!important; } }
   `;
@@ -207,7 +207,12 @@
   const footMode = make('strong', '', 'SAFE APPLY');
   foot.append(footSafety, footMode);
   panel.append(head, context, body, foot);
-  shadow.append(style, launcher, panel);
+  // The font stacks live in a stylesheet inside the closed root, set on the circle and the panel, so the
+  // page can not read the user's font choice off the host element.
+  const fontStyle = make('style', 'assist-fonts');
+  // Per-page family names: a page can not guess or pre-declare them.
+  const fontPrefix = `HermesAssist-${Array.from(globalThis.crypto?.getRandomValues?.(new Uint8Array(4)) || [Date.now() & 255, 1, 2, 3], (byte) => byte.toString(16).padStart(2, '0')).join('')} `;
+  shadow.append(style, fontStyle, launcher, panel);
   (document.documentElement || document.body).appendChild(host);
   browserApi.storage?.local?.get?.('hermesBrowserSettings').then((stored) => {
     const percent = Number(stored?.hermesBrowserSettings?.textZoomPercent);
@@ -309,13 +314,10 @@
   function applyAssistFontStacks() {
     const profile = appearancePreferences?.normalizeFontProfile?.(assistSettings.fontProfile, assistSettings.customFontFamily) || 'signature';
     const profileStack = appearancePreferences?.fontFamilyPreview?.(profile, assistSettings.customFontFamily) || '';
-    const stacks = look?.inlineAssistFontStacks?.(profile, profileStack);
+    const stacks = look?.inlineAssistFontStacks?.(profile, profileStack, fontPrefix);
     if (!stacks) return null;
-    host.dataset.fontProfile = profile;
-    host.style.setProperty('--hb-font-ui', stacks.ui);
-    host.style.setProperty('--hb-font-display', stacks.display);
-    host.style.setProperty('--hermes-font-mono', stacks.mono);
-    host.style.setProperty('--hb-display-scale', profile === 'signature' ? '1.3' : '1');
+    panel.dataset.fontProfile = profile;
+    fontStyle.textContent = `.launcher, .panel { --hb-font-ui: ${stacks.ui}; --hb-font-display: ${stacks.display}; --hermes-font-mono: ${stacks.mono}; --hb-display-scale: ${profile === 'signature' ? '1.3' : '1'}; }`;
     return stacks;
   }
 
@@ -340,7 +342,7 @@
         const binary = atob(String(font.data || ''));
         const bytes = new Uint8Array(binary.length);
         for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-        const face = new globalThis.FontFace(`${look.fontPrefix}${font.family}`, bytes.buffer, { weight: font.weight, style: font.style });
+        const face = new globalThis.FontFace(`${fontPrefix}${font.family}`, bytes.buffer, { weight: font.weight, style: font.style });
         face.load().then((loaded) => document.fonts.add(loaded)).catch(() => {});
       } catch {
         // A face that will not load leaves the stack to fall through to the next family.
