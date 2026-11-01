@@ -2901,6 +2901,27 @@ function captureSettingsBaseline() {
   renderSettingsEditedMarkers();
 }
 
+// A control the panel refilled from storage while Settings is open: its new value is the saved one, so it
+// does not read as an unsaved edit. The key is the one settingsControlEntries() gives a non-radio control.
+function adoptSettingsBaselineValue(control) {
+  const pane = control?.closest?.('[data-settings-pane]')?.dataset.settingsPane;
+  if (!settingsBaseline || !pane || !control.id) return;
+  settingsBaseline.set(`${pane}\u0000${control.id}:`, control.type === 'checkbox' ? String(control.checked) : String(control.value));
+  renderSettingsEditedMarkers();
+}
+
+// Assist's own switch on a page saves this too. The panel takes the new value in, and its checkbox shows it
+// unless the box holds an unsaved edit, so an unrelated Save does not write an older copy back.
+function adoptInlineAssistAutoReplaceChange(value) {
+  const saved = settings.inlineAssistAutoReplace !== false;
+  const next = value !== false;
+  settings = { ...settings, inlineAssistAutoReplace: next };
+  const box = els.inlineAssistAutoReplace;
+  if (!box || box.checked !== saved) return;
+  box.checked = next;
+  adoptSettingsBaselineValue(box);
+}
+
 function renderSettingsEditedMarkers() {
   const dirty = settingsBaseline ? changedPanes(settingsBaseline, settingsControlEntries()) : new Set();
   for (const card of els.settingsForm.querySelectorAll('[data-settings-category]')) {
@@ -29788,6 +29809,7 @@ function bindEvents() {
           renderBrowserControl();
         }
         adoptStoredResponsePresentation(next);
+        if (Object.hasOwn(next, 'inlineAssistAutoReplace')) adoptInlineAssistAutoReplaceChange(next.inlineAssistAutoReplace);
       }
     }
     if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)) adoptOnboardingCompletedChange(changes);

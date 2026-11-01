@@ -3,6 +3,8 @@ import test from 'node:test';
 import { JSDOM } from 'jsdom';
 
 import { bootAssist, focusField, loadExtensionFile } from './inline-assist-dom.mjs';
+import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
+import { changedPanes } from '../extension/lib/settings-panes.mjs';
 
 const settingsSection = () => new JSDOM(loadExtensionFile('sidepanel.html')).window.document.querySelector('.inline-assist-settings');
 
@@ -53,4 +55,32 @@ test('a saved "replace automatically: off" holds in the panel, and switching it 
   await env.sleep();
   const write = env.stored.find((items) => items.hermesBrowserSettings);
   assert.equal(write?.hermesBrowserSettings.inlineAssistAutoReplace, true);
+});
+
+// Assist's own switch saves inlineAssistAutoReplace while the side panel is open; an unrelated Save must
+// not write the panel's older copy back over it.
+async function settingsPanel(saved) {
+  const h = await createSettingsSaveHarness({ settings: { inlineAssistAutoReplace: saved } });
+  h.scope.settingsBaseline = null;
+  h.els.inlineAssistAutoReplace.checked = saved;
+  h.fn('captureSettingsBaseline')();
+  return h;
+}
+
+test('a replacement choice saved from a page shows in Settings and holds through an unrelated Save', async () => {
+  const h = await settingsPanel(true);
+  h.fn('adoptInlineAssistAutoReplaceChange')(false);
+  assert.equal(h.els.inlineAssistAutoReplace.checked, false);
+  assert.equal(changedPanes(h.scope.settingsBaseline, h.fn('settingsControlEntries')()).size, 0, 'not an unsaved edit');
+  h.store.hermesBrowserSettings = { inlineAssistAutoReplace: false };
+  await h.save();
+  assert.equal(h.store.hermesBrowserSettings.inlineAssistAutoReplace, false);
+});
+
+test('an unsaved edit of the switch in Settings is not overwritten by a page', async () => {
+  const h = await settingsPanel(true);
+  h.els.inlineAssistAutoReplace.checked = false;
+  h.fn('adoptInlineAssistAutoReplaceChange')(true);
+  assert.equal(h.els.inlineAssistAutoReplace.checked, false);
+  assert.equal(h.scope.settings.inlineAssistAutoReplace, true);
 });
