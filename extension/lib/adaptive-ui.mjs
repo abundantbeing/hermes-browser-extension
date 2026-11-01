@@ -14,7 +14,7 @@
 // streaming patcher can keep a finished block (and its local view state)
 // untouched while later text arrives.
 
-import { escapeHtml, isMarkdownFenceClose, markdownFenceOpening, markdownListFenceEnd, markdownListFenceOpening, redactSensitiveText, renderMarkdown } from './common.mjs';
+import { escapeHtml, isMarkdownFenceClose, markdownFenceBodyLine, markdownFenceOpening, markdownListFenceEnd, markdownListFenceOpening, redactSensitiveText, renderMarkdown } from './common.mjs';
 
 export const HAUI_SCHEMA = 'hermes.adaptive-ui';
 export const HAUI_VERSION = 1;
@@ -103,7 +103,8 @@ export function splitAdaptiveSegments(text = '', { streaming = true } = {}) {
         if (ending) { end = ending === 'close' ? next : next - 1; break; }
       }
       if (!prose.length) proseStart = offsets[index];
-      prose.push(...lines.slice(index, end + 1));
+      // One push per line: a spread of a long fence would pass the engine's argument limit.
+      for (let next = index; next <= end; next += 1) prose.push(lines[next]);
       index = end;
       continue;
     }
@@ -139,7 +140,7 @@ export function splitAdaptiveSegments(text = '', { streaming = true } = {}) {
     }
     if (!prose.length) proseStart = offsets[index];
     const end = close < 0 ? lines.length - 1 : close;
-    prose.push(...lines.slice(index, end + 1));
+    for (let next = index; next <= end; next += 1) prose.push(lines[next]);
     index = end;
   }
   flush();
@@ -825,15 +826,19 @@ export function presentMarkdownParts(text = '', { settled = false } = {}) {
   const followed = (end) => settled || lines.slice(end).some((line) => line.trim());
   // The same fence rule as splitAdaptiveSegments and renderMarkdown: a fenced block stays one piece of
   // Markdown, whatever its lines look like.
+  // A fence a list item opens (`- ~~~~md`) counts too, up to its close or the end of that item.
   let fence = null;
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     if (fence) {
-      markdown.push(line);
-      if (isMarkdownFenceClose(line, fence)) fence = null;
-      continue;
+      const end = markdownListFenceEnd(line, fence);
+      if (end !== 'outdent') {
+        markdown.push(line);
+        if (end === 'close') fence = null;
+        continue;
+      }
     }
-    fence = markdownFenceOpening(line);
+    fence = markdownListFenceOpening(line);
     if (fence) { markdown.push(line); continue; }
     const previousBlank = index === 0 || !lines[index - 1].trim();
     const standalone = (run) => (run.end >= lines.length || !lines[run.end].trim()) && followed(run.end);
@@ -865,7 +870,7 @@ export function presentMarkdownParts(text = '', { settled = false } = {}) {
     if (line.includes('|') && shortLine(lines[index + 1] || '', 400) && TABLE_DIVIDER.test(lines[index + 1] || '')) {
       let end = index + 2;
       while (end < lines.length && lines[end].includes('|') && lines[end].trim()) end += 1;
-      markdown.push(...lines.slice(index, end));
+      for (let next = index; next < end; next += 1) markdown.push(lines[next]);
       const rowLines = lines.slice(index + 2, end);
       const chart = followed(end) && rowLines.every((row) => row.trim().endsWith('|') || row.split('|').length > 2) ? chartFromTable(line, rowLines) : null;
       if (chart) {
@@ -928,13 +933,16 @@ export function markdownToPlainText(value = '') {
   const out = [];
   let fence = null;
   for (const line of lines) {
-    // The shared fence rules: ``` or ~~~, closed only by the same character at least as long.
+    // The shared fence rules: ``` or ~~~, closed only by the same character at least as long; a fence a
+    // list item opens ends with that item too, and its lines lose the item's indent.
     if (fence) {
-      if (isMarkdownFenceClose(line, fence)) fence = null;
-      else out.push(line);
-      continue;
+      const end = markdownListFenceEnd(line, fence);
+      if (end === 'close') fence = null;
+      if (!end) out.push(markdownFenceBodyLine(line, fence));
+      if (end !== 'outdent') continue;
+      fence = null;
     }
-    fence = markdownFenceOpening(line);
+    fence = markdownListFenceOpening(line);
     if (fence) continue;
     if (TABLE_DIVIDER.test(line)) continue;
     let text = line
@@ -970,14 +978,17 @@ export function renderPlainResponse(value = '') {
   };
   for (const line of lines) {
     if (code) {
-      if (isMarkdownFenceClose(line, fence)) {
-        html.push(`<pre class="plain-response-code">${esc(code.join('\n'))}</pre>`);
-        code = null;
-        fence = null;
-      } else code.push(line);
-      continue;
+      const end = markdownListFenceEnd(line, fence);
+      if (!end) {
+        code.push(markdownFenceBodyLine(line, fence));
+        continue;
+      }
+      html.push(`<pre class="plain-response-code">${esc(code.join('\n'))}</pre>`);
+      code = null;
+      fence = null;
+      if (end === 'close') continue;
     }
-    fence = markdownFenceOpening(line);
+    fence = markdownListFenceOpening(line);
     if (fence) { flush(); code = []; continue; }
     if (!line.trim()) { flush(); continue; }
     // A generated image or media line keeps its own rendering.

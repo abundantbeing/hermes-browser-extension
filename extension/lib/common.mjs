@@ -2768,12 +2768,23 @@ export function markdownListFenceOpening(line = '') {
   return openingFence(line);
 }
 
-// How a line ends a fence from `markdownListFenceOpening`: 'close' (the line belongs to the fence),
-// 'outdent' (the line falls back out of the list item holding it, so the fence ended just before it), or ''.
+// How a line ends a fence from `markdownListFenceOpening`: 'close' (the line belongs to the fence; a
+// closing line at the left margin still closes it, as in the list renderer), 'outdent' (the line falls
+// back out of the list item holding it, so the fence ended just before it), or ''.
 export function markdownListFenceEnd(line = '', opening = null) {
   if (!opening) return '';
+  if (isMarkdownFenceClose(line, opening)) return 'close';
   if (opening.owner && /\S/.test(line) && /^ */.exec(expandLeadingTabs(line))[0].length < opening.owner) return 'outdent';
-  return isMarkdownFenceClose(line, opening) ? 'close' : '';
+  return '';
+}
+
+// A line of that fence's code without the indent of the list item that holds it.
+export function markdownFenceBodyLine(line = '', opening = null) {
+  const owner = Number(opening?.owner) || 0;
+  if (!owner) return line;
+  const expanded = expandLeadingTabs(line);
+  const indent = /^ */.exec(expanded)[0].length;
+  return expanded.slice(Math.min(indent, owner));
 }
 
 function renderListItem(lines = [], depth = 0) {
