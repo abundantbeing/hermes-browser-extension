@@ -2382,21 +2382,28 @@ export function escapeHtml(value = '') {
     .replace(/'/g, '&#39;');
 }
 
+// The parentheses are counted once and the count follows the trim, so a URL ending in a long run of `)`
+// stays linear.
 function splitBareUrlTrail(raw = '') {
-  let url = String(raw || '');
-  let trail = '';
-  while (url) {
-    const last = url.slice(-1);
-    if (!/[.,;:!?]/.test(last) && last !== ')') break;
-    if (last === ')') {
-      const opens = (url.match(/\(/g) || []).length;
-      const closes = (url.match(/\)/g) || []).length;
-      if (closes <= opens) break;
-    }
-    trail = last + trail;
-    url = url.slice(0, -1);
+  const text = String(raw || '');
+  let opens = 0;
+  let closes = 0;
+  for (const char of text) {
+    if (char === '(') opens += 1;
+    else if (char === ')') closes += 1;
   }
-  return { url, trail };
+  let end = text.length;
+  while (end > 0) {
+    const last = text[end - 1];
+    if (last === ')') {
+      if (closes <= opens) break;
+      closes -= 1;
+    } else if (!/[.,;:!?]/.test(last)) {
+      break;
+    }
+    end -= 1;
+  }
+  return { url: text.slice(0, end), trail: text.slice(end) };
 }
 
 function autolinkBareUrls(html = '') {
@@ -2484,6 +2491,61 @@ function generatedImageUnavailableMarkup() {
   return '<div class="generated-image-unavailable" role="status">Generated image unavailable in this browser response.</div>';
 }
 
+// A link target may nest parentheses (`https://en.wikipedia.org/wiki/Rust_(programming_language)`). Every
+// parenthesis pair is matched in one pass over the text, to a fixed depth, so a target that fails is
+// never scanned again and no pattern can backtrack on it.
+const MARKDOWN_LINK_PAREN_DEPTH = 8;
+
+// The closing parenthesis of each `(` that follows a `]`, by index. A pair never spans whitespace.
+function linkTargetEnds(text) {
+  const ends = new Map();
+  const opens = [];
+  const heights = [];
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    if (code === 40) {
+      opens.push(index);
+      heights.push(1);
+    } else if (code === 41) {
+      if (!opens.length) continue;
+      const open = opens.pop();
+      const height = heights.pop();
+      if (heights.length) heights[heights.length - 1] = Math.max(heights[heights.length - 1], height + 1);
+      if (height <= MARKDOWN_LINK_PAREN_DEPTH && text.charCodeAt(open - 1) === 93) ends.set(open, index);
+    } else if ((code <= 32 || code > 127) && /\s/.test(text[index])) {
+      opens.length = 0;
+      heights.length = 0;
+    }
+  }
+  return ends;
+}
+
+// `[label](target)`: the label opens at the first `[` after the previous `]` and holds no `]`.
+function replaceMarkdownLinks(html = '', render = (text) => text) {
+  if (!html.includes('](')) return html;
+  const ends = linkTargetEnds(html);
+  let out = '';
+  let last = 0;
+  let from = 0;
+  let open = -1;
+  let at = html.indexOf('](');
+  while (at >= 0) {
+    const start = Math.max(from, html.lastIndexOf(']', at - 1) + 1);
+    if (open < start) open = html.indexOf('[', start);
+    if (open < 0) break;
+    const end = ends.get(at + 1);
+    if (open < at - 1 && end > at + 2) {
+      out += html.slice(last, open) + render(html.slice(open + 1, at), html.slice(at + 2, end));
+      last = end + 1;
+      from = last;
+    } else {
+      from = at + 1;
+    }
+    at = html.indexOf('](', from);
+  }
+  return out + html.slice(last);
+}
+
 function renderInlineMarkdown(value = '') {
   const parts = String(value || '').split(/(`[^`]+`)/g);
   return parts.map((part) => {
@@ -2497,11 +2559,11 @@ function renderInlineMarkdown(value = '') {
     });
     let html = escapeHtml(withImageTokens);
     html = html.replace(/@@HERMES_IMAGE_(\d+)@@/g, (_match, index) => images[Number(index)] || '');
-    html = html.replace(/\[([^\]]+)\]\(([^\s)]+)\)/g, (_match, text, href) => {
-          const safe = safeHref(href);
-          return safe ? `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
-        });
-        html = autolinkBareUrls(html);
+    html = replaceMarkdownLinks(html, (text, href) => {
+      const safe = safeHref(href);
+      return safe ? `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
+    });
+    html = autolinkBareUrls(html);
     // One character between the markers counts too (**3**, ~~5~~); requiring two
     // left **3** as literal asterisks and ran "**a** and **b**" into one span.
     html = html.replace(/\*\*([^*\n](?:[\s\S]*?[^*\n])??)\*\*/g, '<strong>$1</strong>');
@@ -2521,8 +2583,28 @@ function isTableDivider(line = '') {
   return /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(line);
 }
 
+// A table row splits on unescaped pipes; `\|` is a literal pipe inside a cell (GFM). A pipe is escaped
+// only by an odd run of backslashes: in `C:\\|ok` the backslash is itself escaped and the pipe splits.
 function tableCells(line = '') {
-  return String(line || '').trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+  const text = String(line || '').trim().replace(/^\|/, '');
+  const cells = [];
+  let cell = '';
+  let slashes = 0;
+  let endsOnPipe = false;
+  for (const char of text) {
+    endsOnPipe = false;
+    if (char === '|' && slashes % 2 === 0) {
+      cells.push(cell);
+      cell = '';
+      slashes = 0;
+      endsOnPipe = true;
+      continue;
+    }
+    cell += char;
+    slashes = char === '\\' ? slashes + 1 : 0;
+  }
+  if (!endsOnPipe) cells.push(cell);
+  return cells.map((value) => value.trim().replace(/\\\|/g, '|'));
 }
 
 function renderTableBlock(lines = []) {
@@ -2533,82 +2615,365 @@ function renderTableBlock(lines = []) {
   return `<div class="md-table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-function flushParagraph(out, paragraph) {
-  if (!paragraph.length) return;
-  out.push(`<p>${renderInlineMarkdown(paragraph.join(' '))}</p>`);
-  paragraph.length = 0;
+// Indentation is measured with tab stops of four columns; only leading whitespace is ever rewritten, so
+// tabs inside code keep their bytes.
+function expandLeadingTabs(line = '') {
+  const text = String(line || '');
+  const lead = /^[ \t]*/.exec(text)[0];
+  let width = 0;
+  for (const char of lead) width += char === '\t' ? 4 - (width % 4) : 1;
+  return `${' '.repeat(width)}${text.slice(lead.length)}`;
 }
 
-function flushList(out, list) {
-  if (!list.items.length) return;
-  const tag = list.ordered ? 'ol' : 'ul';
-  const start = list.ordered && list.start !== 1 ? ` start="${list.start}"` : '';
-  out.push(`<${tag}${start}>${list.items.map((item) => `<li>${renderListItem(item)}</li>`).join('')}</${tag}>`);
-  list.items = [];
-  list.ordered = false;
-  list.start = 1;
+function indentWidth(line = '') {
+  return /^ */.exec(expandLeadingTabs(line))[0].length;
 }
 
-function renderListItem(item = '') {
-  const task = /^\[([ xX])\]\s+(.+)$/.exec(String(item || ''));
-  if (!task) return renderInlineMarkdown(item);
-  const checked = task[1].trim().toLowerCase() === 'x';
-  return `<span class="md-task ${checked ? 'checked' : ''}" aria-hidden="true">${checked ? '✓' : '□'}</span>${renderInlineMarkdown(task[2])}`;
+// Remove up to `columns` columns of leading whitespace.
+function dedent(line = '', columns = 0) {
+  const text = String(line || '');
+  let width = 0;
+  let index = 0;
+  while (index < text.length && width < columns && (text[index] === ' ' || text[index] === '\t')) {
+    const step = text[index] === '\t' ? 4 - (width % 4) : 1;
+    if (width + step > columns) return `${' '.repeat(width + step - columns)}${text.slice(index + 1)}`;
+    width += step;
+    index += 1;
+  }
+  return text.slice(index);
 }
 
-export function renderMarkdown(value = '') {
-  const text = redactSensitiveText(String(value || ''));
-  if (!text.trim()) return '';
-  const lines = text.replace(/\r\n/g, '\n').split('\n');
+function isBlankLine(line = '') {
+  return !String(line || '').trim();
+}
+
+/**
+ * A fence opening: three or more backticks or tildes, at any indentation (replies indent fences inside
+ * list items and quotes). The fence closes on a line of the same character, at least as long, with
+ * nothing after it, so a ```js line inside a ~~~ or ```` block stays code.
+ */
+export function markdownFenceOpening(line = '') {
+  const match = /^( *)(`{3,}|~{3,})(.*)$/.exec(expandLeadingTabs(line));
+  if (!match) return null;
+  const [, indent, marker, info] = match;
+  if (marker[0] === '`' && info.includes('`')) return null;
+  return { indent: indent.length, char: marker[0], length: marker.length, info: info.trim() };
+}
+
+export function isMarkdownFenceClose(line = '', opening = null) {
+  if (!opening) return false;
+  const match = /^ *(`{3,}|~{3,})\s*$/.exec(expandLeadingTabs(line));
+  return Boolean(match && match[1][0] === opening.char && match[1].length >= opening.length);
+}
+
+// A tab after a list marker runs to the next tab stop from the marker's own column. Once the text moves left
+// (a parent item's indentation or a quote marker removed) the same tab would span another width, so each
+// marker tab becomes the spaces it covers where it stands. `column` is where the text starts in the line.
+function spaceMarkerTabs(text = '', column = 0) {
+  if (!text.includes('\t')) return text;
+  let out = '';
+  let rest = text;
+  let at = column;
+  for (let depth = 0; depth < MARKDOWN_MAX_NESTING; depth += 1) {
+    const match = /^( *)([-*+]|\d{1,9}[.)])([ \t]+)/.exec(rest);
+    if (!match) break;
+    const [whole, indent, marker, spacing] = match;
+    at += indent.length + marker.length;
+    let width = 0;
+    for (const char of spacing) width += char === '\t' ? 4 - ((at + width) % 4) : 1;
+    out += `${indent}${marker}${' '.repeat(width)}`;
+    at += width;
+    rest = rest.slice(whole.length);
+  }
+  return out + rest;
+}
+
+function listItemStart(line = '') {
+  const match = /^( *)([-*+]|(\d{1,9})[.)])([ \t]+|$)(.*)$/.exec(expandLeadingTabs(line));
+  if (!match) return null;
+  const [, indent, marker, number, spacing, content] = match;
+  // A tab after the marker runs to the next tab stop, counted from the marker's own column.
+  const markerEnd = indent.length + marker.length;
+  let spaceWidth = 0;
+  for (const char of spacing) spaceWidth += char === '\t' ? 4 - ((markerEnd + spaceWidth) % 4) : 1;
+  // Content starts after the marker and its spacing; five or more columns leave one (an indented code
+  // start in CommonMark), and an empty item continues one column after the marker.
+  const gap = spaceWidth >= 1 && spaceWidth <= 4 ? spaceWidth : 1;
+  return {
+    indent: indent.length,
+    ordered: number !== undefined,
+    number: number === undefined ? 1 : Number(number),
+    contentOffset: markerEnd + gap,
+    content: spaceMarkerTabs(spaceWidth > 4 ? `${' '.repeat(spaceWidth - 1)}${content}` : content, markerEnd + gap),
+  };
+}
+
+function isQuoteLine(line = '') {
+  return /^ {0,3}>/.test(expandLeadingTabs(line));
+}
+
+// Inside a quoted fence the line is code, so `keepTabs` leaves a tab after a list-like `1.` as it is.
+function stripQuoteMarker(line = '', { keepTabs = false } = {}) {
+  const expanded = expandLeadingTabs(line);
+  const marker = /^ {0,3}> ?/.exec(expanded)[0];
+  const text = expanded.slice(marker.length);
+  return keepTabs ? text : spaceMarkerTabs(text, marker.length);
+}
+
+// Strips the `>` markers of a quote. The lines of a fence opened inside the quote (after list markers
+// too) keep their bytes; only the line that opens it has its marker tabs spaced.
+function stripQuoteLines(lines = []) {
+  const out = lines.map((line) => stripQuoteMarker(line));
+  for (const region of markdownFenceRegions(out)) {
+    for (let index = region.start + 1; index <= region.end; index += 1) {
+      out[index] = stripQuoteMarker(lines[index], { keepTabs: true });
+    }
+  }
+  return out;
+}
+
+// Quotes and list items render their content as Markdown again; past this depth the rest of a reply stays
+// text, so a hostile or runaway reply (a run of `>` or `- ` markers) can not exhaust the stack.
+const MARKDOWN_MAX_NESTING = 32;
+
+// The fence a line opens, looking through the list markers in front of it: `- ````md` opens a fence one
+// list level down, and the item that holds it must still track that fence to its close. `owner` is the
+// column of the nested item's content (0 when no marker is in the way): that item, and the fence with it,
+// ends at the first line indented less than that.
+function openingFence(line = '') {
+  let text = line;
+  let owner = 0;
+  for (let depth = 0; depth < MARKDOWN_MAX_NESTING; depth += 1) {
+    const fence = markdownFenceOpening(text);
+    if (fence) return { ...fence, owner };
+    const item = listItemStart(text);
+    if (!item || !/\S/.test(item.content)) return null;
+    owner = item.contentOffset;
+    text = `${' '.repeat(item.contentOffset)}${item.content}`;
+  }
+  return null;
+}
+
+// How a line ends an open fence: 'close' (the line belongs to the fence), 'outdent' (the line falls back
+// out of the list item that holds it, so the fence ended just before it), or ''. As in collectListItem,
+// a fence its own top-level item opened (`- ~~~~md`) closes at any indentation, the left margin
+// included, while one a nested item opened ends with that item first.
+function fenceEnd(line, fence) {
+  const outdented = fence.owner > 0 && !isBlankLine(line) && indentWidth(line) < fence.owner;
+  if (outdented && fence.nested) return 'outdent';
+  if (isMarkdownFenceClose(line, fence)) return 'close';
+  return outdented ? 'outdent' : '';
+}
+
+// Every fenced block of a reply, read the way the renderer reads it, for code outside the renderer
+// (adaptive UI blocks, Plain text, quotes) that must not lift a block out of a fence or read code as
+// Markdown. Each region runs from the opening line (`start`) to its last line (`end`): the close when
+// `closed`, otherwise the line before the reply leaves the fence's list item, or the reply's last line.
+export function markdownFenceRegions(lines = []) {
+  const regions = [];
+  // The list items the scan is inside, outermost first: their content column and kind.
+  const items = [];
+  let open = null;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (open) {
+      const end = fenceEnd(line, open.fence);
+      if (end === 'close') {
+        regions.push({ ...open, end: index, closed: true });
+        open = null;
+        continue;
+      }
+      if (!end) continue;
+      regions.push({ ...open, end: index - 1, closed: false });
+      open = null;
+    }
+    if (isBlankLine(line)) continue;
+    const indent = indentWidth(line);
+    let left = null;
+    while (items.length && indent < items[items.length - 1].contentOffset) left = items.pop();
+    // The renderer's order: a plain fence, then a table, whose rows are table text even when one looks
+    // like a fence, then a list item.
+    const plain = markdownFenceOpening(line);
+    if (plain) {
+      open = { start: index, fence: { ...plain, owner: 0, nested: false } };
+      continue;
+    }
+    if (line.includes('|') && index + 1 < lines.length && isTableDivider(lines[index + 1])) {
+      index += 2;
+      while (index < lines.length && lines[index].includes('|') && !isBlankLine(lines[index])) index += 1;
+      index -= 1;
+      continue;
+    }
+    const parents = items.length;
+    let markers = 0;
+    if (!isHorizontalRule(line)) {
+      let text = expandLeadingTabs(line);
+      for (let depth = 0; depth < MARKDOWN_MAX_NESTING; depth += 1) {
+        const item = listItemStart(text);
+        if (!item) break;
+        // An empty marker starts no list (it is paragraph text) unless it is the next item of the list
+        // the line just left.
+        const empty = !/\S/.test(item.content);
+        const sibling = depth === 0 && left && left.ordered === item.ordered && item.indent < left.contentOffset;
+        if (empty && !sibling) break;
+        items.push({ contentOffset: item.contentOffset, ordered: item.ordered });
+        markers += 1;
+        if (empty) break;
+        text = `${' '.repeat(item.contentOffset)}${item.content}`;
+      }
+    }
+    const fence = openingFence(line);
+    if (fence) open = { start: index, fence: { ...fence, nested: fence.owner > 0 && (parents > 0 || markers > 1) } };
+  }
+  if (open) regions.push({ ...open, end: lines.length - 1, closed: false });
+  return regions;
+}
+
+// A line of a fence's code without the indent of the list item that holds it; tabs past that indent
+// keep their bytes.
+export function markdownFenceBodyLine(line = '', fence = null) {
+  return dedent(line, Number(fence?.owner) || 0);
+}
+
+function renderListItem(lines = [], depth = 0) {
+  const items = [...lines];
+  const task = /^\[([ xX])\]\s+(.*)$/.exec(items[0] || '');
+  let prefix = '';
+  if (task) {
+    const checked = task[1].trim().toLowerCase() === 'x';
+    prefix = `<span class="md-task ${checked ? 'checked' : ''}" aria-hidden="true">${checked ? '✓' : '□'}</span>`;
+    items[0] = task[2];
+  }
+  // A tight item (no blank line inside it) keeps its text inline, as a list item always has here.
+  const tight = !items.some(isBlankLine);
+  return `${prefix}${renderMarkdownBlocks(items, { tight, depth: depth + 1 })}`;
+}
+
+// The lines of one list item from `start`: its first line, then every line indented to its content
+// column (dedented to it), and blank lines that sit between such lines.
+function collectListItem(lines, start, item) {
+  const body = [item.content];
+  let index = start + 1;
+  let fence = openingFence(item.content);
+  while (index < lines.length) {
+    const line = lines[index];
+    // A fence opened by a nested item ends with that item, at the first line indented less than its content.
+    if (fence?.owner && !isBlankLine(line) && indentWidth(line) < item.contentOffset + fence.owner) fence = null;
+    if (fence) {
+      // Inside a fenced block of this item every line is code until the fence closes, at whatever
+      // indentation the reply closed it; a less indented non-blank line means it left the item. The
+      // closing line keeps its own indentation, which a nested item's fence still needs.
+      if (isMarkdownFenceClose(line, fence)) {
+        body.push(dedent(line, item.contentOffset));
+        fence = null;
+        index += 1;
+        continue;
+      }
+      if (!isBlankLine(line) && indentWidth(line) < item.contentOffset) break;
+      body.push(dedent(line, item.contentOffset));
+      index += 1;
+      continue;
+    }
+    if (isBlankLine(line)) {
+      let next = index + 1;
+      while (next < lines.length && isBlankLine(lines[next])) next += 1;
+      if (next >= lines.length || indentWidth(lines[next]) < item.contentOffset) break;
+      for (; index < next; index += 1) body.push('');
+      continue;
+    }
+    if (indentWidth(line) < item.contentOffset) break;
+    const dedented = dedent(spaceMarkerTabs(expandLeadingTabs(line)), item.contentOffset);
+    body.push(dedented);
+    fence = openingFence(dedented);
+    index += 1;
+  }
+  return { body, next: index };
+}
+
+function renderListBlock(lines, start, depth = 0) {
+  const first = listItemStart(lines[start]);
+  const items = [];
+  let index = start;
+  let expected = first.number;
+  while (index < lines.length) {
+    // A rule such as `* * *` or `- - -` also reads as a list marker; it ends the list, as a rule
+    // outranks a list item, and is left for renderMarkdownBlocks to draw.
+    if (index > start && isHorizontalRule(lines[index])) break;
+    const item = listItemStart(lines[index]);
+    if (!item || item.ordered !== first.ordered || item.indent >= first.contentOffset) break;
+    // A number out of sequence starts a new list, so explicit numbering survives (`start="…"`).
+    if (first.ordered && item.number !== expected) break;
+    const { body, next } = collectListItem(lines, index, item);
+    items.push(body);
+    expected += 1;
+    index = next;
+    // Blank lines between two items of the same list keep it one list.
+    let peek = index;
+    while (peek < lines.length && isBlankLine(lines[peek])) peek += 1;
+    const sibling = peek > index && peek < lines.length ? listItemStart(lines[peek]) : null;
+    if (sibling && sibling.ordered === first.ordered && sibling.indent < first.contentOffset
+      && (!first.ordered || sibling.number === expected)) {
+      index = peek;
+    }
+  }
+  const tag = first.ordered ? 'ol' : 'ul';
+  const startAttribute = first.ordered && first.number !== 1 ? ` start="${first.number}"` : '';
+  const html = `<${tag}${startAttribute}>${items.map((body) => `<li>${renderListItem(body, depth)}</li>`).join('')}</${tag}>`;
+  return { html, next: index };
+}
+
+function renderMarkdownBlocks(lines = [], { tight = false, depth = 0 } = {}) {
+  // Past the nesting limit a quote or list marker is just text in the paragraph.
+  const nestable = depth < MARKDOWN_MAX_NESTING;
   const out = [];
   const paragraph = [];
-  const list = { ordered: false, start: 1, items: [] };
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    const inline = renderInlineMarkdown(paragraph.join(' '));
+    out.push(tight ? inline : `<p>${inline}</p>`);
+    paragraph.length = 0;
+  };
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     const trimmed = line.trim();
-    if (trimmed.startsWith('```')) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
-      const lang = trimmed.slice(3).trim();
+    const fence = markdownFenceOpening(line);
+    if (fence) {
+      flushParagraph();
       const code = [];
       index += 1;
-      while (index < lines.length && !lines[index].trim().startsWith('```')) {
-        code.push(lines[index]);
+      while (index < lines.length && !isMarkdownFenceClose(lines[index], fence)) {
+        // Code lines lose the fence's own indentation, never more.
+        code.push(dedent(lines[index], fence.indent));
         index += 1;
       }
-      out.push(`<pre><code${lang ? ` data-lang="${escapeHtml(lang)}"` : ''}>${escapeHtml(code.join('\n'))}</code></pre>`);
+      out.push(`<pre><code${fence.info ? ` data-lang="${escapeHtml(fence.info)}"` : ''}>${escapeHtml(code.join('\n'))}</code></pre>`);
       continue;
     }
     if (!trimmed) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       continue;
     }
     const markdownImage = /^!\[([^\]]*)\]\((.+)\)$/.exec(trimmed);
     if (markdownImage) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       const image = generatedImageMarkup(markdownImage[2], markdownImage[1]);
       out.push(image || generatedImageUnavailableMarkup());
       continue;
     }
     const mediaTag = /^MEDIA:\s*(.+)$/.exec(trimmed);
     if (mediaTag) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       const image = generatedImageMarkup(mediaTag[1]);
       out.push(image || generatedImageUnavailableMarkup());
       continue;
     }
     if (isHorizontalRule(line)) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       out.push('<hr />');
       continue;
     }
     if (line.includes('|') && index + 1 < lines.length && isTableDivider(lines[index + 1])) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       const tableLines = [line, lines[index + 1]];
       index += 2;
       while (index < lines.length && lines[index].includes('|') && lines[index].trim()) {
@@ -2621,38 +2986,39 @@ export function renderMarkdown(value = '') {
     }
     const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
     if (heading) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
+      flushParagraph();
       const level = Math.min(6, heading[1].length);
       out.push(`<h${level}>${renderInlineMarkdown(heading[2])}</h${level}>`);
       continue;
     }
-    const quote = /^>\s+(.+)$/.exec(trimmed);
-    if (quote) {
-      flushParagraph(out, paragraph);
-      flushList(out, list);
-      out.push(`<blockquote>${renderInlineMarkdown(quote[1])}</blockquote>`);
+    if (nestable && isQuoteLine(line)) {
+      flushParagraph();
+      // Consecutive `>` lines, a bare `>` included, are one quote; its content is Markdown too.
+      const start = index;
+      while (index < lines.length && isQuoteLine(lines[index])) index += 1;
+      const quoted = stripQuoteLines(lines.slice(start, index));
+      index -= 1;
+      const inner = renderMarkdownBlocks(quoted, { tight: !quoted.some(isBlankLine), depth: depth + 1 });
+      if (inner) out.push(`<blockquote>${inner}</blockquote>`);
       continue;
     }
-    const bullet = /^[-*+]\s+(.+)$/.exec(trimmed);
-    const ordered = /^(\d+)[.)]\s+(.+)$/.exec(trimmed);
-    if (bullet || ordered) {
-      flushParagraph(out, paragraph);
-      const wantOrdered = Boolean(ordered);
-      const orderedIndex = ordered ? Number(ordered[1]) : 1;
-      const expectedIndex = list.start + list.items.length;
-      if (list.items.length && (list.ordered !== wantOrdered || (wantOrdered && orderedIndex !== expectedIndex))) flushList(out, list);
-      list.ordered = wantOrdered;
-      if (!list.items.length) list.start = orderedIndex;
-      list.items.push(bullet ? bullet[1] : ordered[2]);
+    if (nestable && listItemStart(line) && /\S/.test(listItemStart(line).content)) {
+      flushParagraph();
+      const list = renderListBlock(lines, index, depth);
+      out.push(list.html);
+      index = list.next - 1;
       continue;
     }
-    flushList(out, list);
     paragraph.push(trimmed);
   }
-  flushParagraph(out, paragraph);
-  flushList(out, list);
+  flushParagraph();
   return out.join('');
+}
+
+export function renderMarkdown(value = '') {
+  const text = redactSensitiveText(String(value || ''));
+  if (!text.trim()) return '';
+  return renderMarkdownBlocks(text.replace(/\r\n/g, '\n').split('\n'));
 }
 
 function modelContextTokens(model = {}) {
