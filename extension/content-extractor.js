@@ -2753,7 +2753,7 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
   hermesGlobal.HermesAppearancePreferences = APPEARANCE_PREFERENCES_API;
 })(globalThis);
 
-/* extension/lib/inline-assist-look.mjs · SHA-256 ceac581c07de4664 */
+/* extension/lib/inline-assist-look.mjs · SHA-256 e14821caf0269846 */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
 
@@ -2767,6 +2767,10 @@ const INLINE_ASSIST_OPEN_MODES = Object.freeze(['panel', 'quick']);
 function normalizeInlineAssistIcon(value) {
   return INLINE_ASSIST_ICONS.includes(value) ? value : 'wing';
 }
+
+// "Replace text automatically" has its own storage key, shared by Settings → Hermes Assist and Assist's switch,
+// so Assist never rewrites the settings record that Settings and Hermes Control also save.
+const INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = 'hermesInlineAssistAutoReplace';
 
 function normalizeInlineAssistOpenMode(value) {
   return value === 'quick' ? 'quick' : 'panel';

@@ -1,4 +1,4 @@
-import { normalizeInlineAssistIcon } from './lib/inline-assist-look.mjs';
+import { INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, normalizeInlineAssistIcon } from './lib/inline-assist-look.mjs';
 import { reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
 import { CONTROL_TOOL_FAMILIES } from './lib/control-tool-names.mjs';
 import {
@@ -2910,10 +2910,9 @@ function adoptSettingsBaselineValue(control) {
   renderSettingsEditedMarkers();
 }
 
-// "Replace text automatically" is kept under its own key, which Assist's switch on a page writes (never the
-// settings record). The panel takes a new value in, and its checkbox shows it unless the box holds an
-// unsaved edit, so an unrelated Save does not write an older copy back.
-const INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = 'hermesInlineAssistAutoReplace';
+// Assist's switch on a page writes "Replace text automatically" under its own key. The panel takes a new value
+// in, and its checkbox shows it unless the box holds an unsaved edit, so an unrelated Save does not write an
+// older copy back.
 function adoptInlineAssistAutoReplaceChange(value) {
   const saved = settings.inlineAssistAutoReplace !== false;
   const next = value !== false;

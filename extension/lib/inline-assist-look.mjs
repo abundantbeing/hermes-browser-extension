@@ -9,6 +9,10 @@ export function normalizeInlineAssistIcon(value) {
   return INLINE_ASSIST_ICONS.includes(value) ? value : 'wing';
 }
 
+// "Replace text automatically" has its own storage key, shared by Settings → Hermes Assist and Assist's switch,
+// so Assist never rewrites the settings record that Settings and Hermes Control also save.
+export const INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = 'hermesInlineAssistAutoReplace';
+
 export function normalizeInlineAssistOpenMode(value) {
   return value === 'quick' ? 'quick' : 'panel';
 }
