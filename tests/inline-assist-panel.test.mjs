@@ -82,16 +82,17 @@ test('every Assist area that scrolls floats the branded thumb over its content; 
     assert.ok(madeAs[selector], `${selector} is a known scrolling area`);
     assert.match(source, new RegExp(`attachOverlayScrollbar\\(${madeAs[selector]}[,)]`), `${selector} floats its thumb`);
   }
-  // In the page: the panel and an open dropdown carry the thumb first in them.
+  // In the page: the panel and an open dropdown carry the thumb, as their own ::before box.
   const { env, root, panel } = await openPanel();
   await env.sleep(40);
   assert.equal(panel.hasAttribute('data-overlay-scroll'), true);
-  assert.equal(panel.firstElementChild.className, 'overlay-scroll-rail');
+  assert.equal(panel.firstElementChild.className, 'head', 'the thumb adds no element');
   env.userClick(root.querySelector('.dd[data-setting="route"] .dd-button'));
   await env.sleep(40);
   const list = root.querySelector('.dd[data-setting="route"] .dd-list');
   assert.equal(list.hasAttribute('data-overlay-scroll'), true);
-  assert.equal(list.firstElementChild.className, 'overlay-scroll-rail');
+  // A sticky box only moves within its own grid cell, so a floating thumb's area is a flex column, not a grid.
+  assert.match(css, /\.dd-list \{[^}]*display:flex; flex-direction:column;/);
   assert.ok(root.querySelector('style.overlay-scrollbar').textContent.includes('scrollbar-width:none'), 'the browser bar is hidden');
 });
 

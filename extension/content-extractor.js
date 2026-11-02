@@ -3384,31 +3384,30 @@ const INLINE_ASSIST_LOOK_API = Object.freeze({
   hermesGlobal.HermesInlineAssistLook = INLINE_ASSIST_LOOK_API;
 })(globalThis);
 
-/* extension/lib/overlay-scrollbar.mjs · SHA-256 9624ae01510e31ca */
+/* extension/lib/overlay-scrollbar.mjs · SHA-256 4dd92f9f9642735f */
 (function hermesOverlayScrollbarRuntime(hermesGlobal) {
   'use strict';
 
 // Scrollbars that float over what they scroll. The browser's own bar is hidden, so nothing keeps a strip
-// beside the content (a search box or a row runs right to the edge), and the branded thumb is drawn on top
-// of the content's right edge while there is anything to scroll. Scrolling works as usual; the thumb drags.
-// Import-free: the page runtime bundles it (scripts/build-content-runtime.mjs) and the side panel imports it.
+// beside the content, and the branded thumb is the area's own ::before box: sticky at the top of what
+// shows, moved to where the scroll is, taking no room. It adds no element, so code that walks or replaces
+// the area's children never meets it. The area is a block or a flex column, never a grid or a flex row:
+// a sticky box in a grid only moves within its own cell. Import-free: the page runtime bundles it.
 
 const OVERLAY_SCROLL_ATTRIBUTE = 'data-overlay-scroll';
 
-// The thumb is the canonical branded one: 8px wide, the foreground at 45%, a strong line around it. The rail
-// is a zero-height sticky first child, so the thumb stays in view while the content scrolls under it.
+// The canonical branded thumb: 8px wide, the foreground at 45%, a strong line around it.
 const OVERLAY_SCROLLBAR_CSS = [
   '[data-overlay-scroll] { scrollbar-width:none; }',
   '[data-overlay-scroll]::-webkit-scrollbar { display:none; width:0; height:0; }',
-  '.overlay-scroll-rail { position:sticky; top:0; z-index:9; display:block; flex:none; grid-column:1 / -1; height:0; margin-top:0; margin-bottom:0; padding:0; overflow:visible; pointer-events:none; }',
-  '.overlay-scroll-thumb { position:absolute; top:0; right:0; width:8px; box-sizing:border-box; background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); pointer-events:auto; touch-action:none; }',
-  '.overlay-scroll-thumb[hidden] { display:none; }',
+  '[data-overlay-scroll]::before { content:""; position:sticky; top:0; z-index:var(--overlay-z, 9); display:none; flex:none; align-self:flex-end; box-sizing:border-box; width:8px; height:var(--overlay-size, 0px); margin:0 calc(-1 * var(--overlay-pad-right, 0px)) calc(-1 * (var(--overlay-size, 0px) + var(--overlay-gap, 0px))) auto; transform:translateY(var(--overlay-offset, 0px)); background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); cursor:default; }',
+  '[data-overlay-scroll="shown"]::before { display:block; }',
 ].join('\n');
 
 const THUMB_INSET = 2;
 const THUMB_MIN = 24;
+const THUMB_WIDTH = 8;
 
-// Where the thumb sits in the visible area and how tall it is, from how far the area is scrolled.
 function overlayThumbGeometry({ scrollTop = 0, scrollHeight = 0, clientHeight = 0, minSize = THUMB_MIN, inset = THUMB_INSET } = {}) {
   const track = Math.max(0, Number(clientHeight) - inset * 2);
   const range = Number(scrollHeight) - Number(clientHeight);
@@ -3418,24 +3417,30 @@ function overlayThumbGeometry({ scrollTop = 0, scrollHeight = 0, clientHeight = 
   return { visible: true, size, offset: Math.round(inset + (track - size) * progress) };
 }
 
-// Gives `scroller` the floating thumb. `refresh` re-places it (after content changes it cannot see);
-// `detach` gives the area its plain browser bar back. Pass watchResize:false for short-lived areas that
-// are rebuilt with each screen, so no ResizeObserver outlives them.
+function overlayLayoutSupported(style) {
+  const display = String(style?.display || '');
+  if (/grid/.test(display)) return false;
+  return !/flex/.test(display) || /column/.test(String(style?.flexDirection || ''));
+}
+
+// `refresh` re-places the thumb after changes it cannot see; `detach` gives the area its browser bar back.
+// Pass watchResize:false for areas rebuilt with each render, so no ResizeObserver outlives them.
 function attachOverlayScrollbar(scroller, { documentRef = scroller?.ownerDocument, watchResize = true } = {}) {
-  if (!scroller || !documentRef) return { refresh() {}, detach() {} };
+  const none = { refresh() {}, detach() {} };
+  if (!scroller || !documentRef) return none;
   const view = documentRef.defaultView || globalThis;
-  scroller.setAttribute(OVERLAY_SCROLL_ATTRIBUTE, '');
-  const rail = documentRef.createElement('span');
-  rail.className = 'overlay-scroll-rail';
-  rail.setAttribute('aria-hidden', 'true');
-  const thumb = documentRef.createElement('span');
-  thumb.className = 'overlay-scroll-thumb';
-  thumb.hidden = true;
-  rail.append(thumb);
+  const computed = () => view.getComputedStyle?.(scroller) || null;
+  if (computed() && !overlayLayoutSupported(computed())) return none;
   let frame = 0;
   let drag = null;
   let attached = true;
-
+  let current = { visible: false, size: 0, offset: 0 };
+  const written = new Map();
+  const write = (name, value) => {
+    if (written.get(name) === value) return;
+    written.set(name, value);
+    scroller.style.setProperty(name, value);
+  };
   const geometry = () => overlayThumbGeometry({
     scrollTop: scroller.scrollTop,
     scrollHeight: scroller.scrollHeight,
@@ -3444,19 +3449,17 @@ function attachOverlayScrollbar(scroller, { documentRef = scroller?.ownerDocumen
   const place = () => {
     frame = 0;
     if (!attached) return;
-    // Screens that replace the area's children take the rail with them: it always comes back first.
-    if (scroller.firstChild !== rail) scroller.prepend(rail);
-    const style = view.getComputedStyle?.(scroller);
-    // The rail spans the padding box, so the thumb sits at the area's inner right edge.
-    rail.style.marginLeft = `-${parseFloat(style?.paddingLeft) || 0}px`;
-    rail.style.marginRight = `-${parseFloat(style?.paddingRight) || 0}px`;
-    const next = geometry();
-    thumb.hidden = !next.visible;
-    if (!next.visible) return;
-    // Until it sticks (while padding above it is still in view) the rail sits lower than the top.
-    const railTop = rail.getBoundingClientRect().top - scroller.getBoundingClientRect().top - (scroller.clientTop || 0);
-    thumb.style.height = `${next.size}px`;
-    thumb.style.transform = `translateY(${next.offset - railTop}px)`;
+    const style = computed();
+    current = geometry();
+    const flexColumn = /flex/.test(String(style?.display || ''));
+    // The ::before box sits under the top padding until the area has scrolled past it, then sticks.
+    const stuckAt = Math.max(0, (parseFloat(style?.paddingTop) || 0) - scroller.scrollTop);
+    write('--overlay-pad-right', `${parseFloat(style?.paddingRight) || 0}px`);
+    write('--overlay-gap', flexColumn ? `${parseFloat(style?.rowGap) || 0}px` : '0px');
+    write('--overlay-size', `${current.size}px`);
+    write('--overlay-offset', `${current.offset - stuckAt}px`);
+    const state = current.visible ? 'shown' : '';
+    if (scroller.getAttribute(OVERLAY_SCROLL_ATTRIBUTE) !== state) scroller.setAttribute(OVERLAY_SCROLL_ATTRIBUTE, state);
   };
   const schedule = () => {
     if (frame || !attached) return;
@@ -3464,44 +3467,43 @@ function attachOverlayScrollbar(scroller, { documentRef = scroller?.ownerDocumen
     else place();
   };
 
+  const onThumb = (event) => {
+    if (!current.visible) return false;
+    const box = scroller.getBoundingClientRect();
+    const right = box.left + scroller.clientLeft + scroller.clientWidth;
+    const top = box.top + scroller.clientTop + current.offset;
+    return event.clientX >= right - THUMB_WIDTH && event.clientX <= right && event.clientY >= top && event.clientY <= top + current.size;
+  };
   const onPointerDown = (event) => {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || event.target !== scroller || !onThumb(event)) return;
     event.preventDefault();
-    event.stopPropagation();
     drag = { y: event.clientY, top: scroller.scrollTop };
-    thumb.setPointerCapture?.(event.pointerId);
-    thumb.dataset.dragging = '';
+    scroller.setPointerCapture?.(event.pointerId);
   };
   const onPointerMove = (event) => {
     if (!drag) return;
-    const travel = scroller.clientHeight - THUMB_INSET * 2 - geometry().size;
+    const travel = scroller.clientHeight - THUMB_INSET * 2 - current.size;
     if (travel <= 0) return;
     scroller.scrollTop = drag.top + (event.clientY - drag.y) * (scroller.scrollHeight - scroller.clientHeight) / travel;
   };
-  const endDrag = () => {
-    drag = null;
-    delete thumb.dataset.dragging;
-  };
-  thumb.addEventListener('pointerdown', onPointerDown);
-  thumb.addEventListener('pointermove', onPointerMove);
-  thumb.addEventListener('pointerup', endDrag);
-  thumb.addEventListener('pointercancel', endDrag);
-  thumb.addEventListener('lostpointercapture', endDrag);
+  const endDrag = () => { drag = null; };
+  scroller.addEventListener('pointerdown', onPointerDown);
+  scroller.addEventListener('pointermove', onPointerMove);
+  scroller.addEventListener('pointerup', endDrag);
+  scroller.addEventListener('pointercancel', endDrag);
+  scroller.addEventListener('lostpointercapture', endDrag);
   scroller.addEventListener('scroll', schedule, { passive: true });
 
-  // Content and visibility changes move the thumb; its own moves (inside the rail) and the rail coming
-  // back do not.
-  const ownChange = (record) => rail.contains(record.target)
-    || (record.type === 'childList' && record.target === scroller
-      && [...record.addedNodes, ...record.removedNodes].every((node) => node === rail));
+  // The thumb's own writes land in the area's style attribute; only other changes move it.
+  const ownWrite = (record) => record.target === scroller && record.type === 'attributes' && record.attributeName === 'style';
   const mutations = typeof view.MutationObserver === 'function'
-    ? new view.MutationObserver((records) => { if (!records.every(ownChange)) schedule(); })
+    ? new view.MutationObserver((records) => { if (!records.every(ownWrite)) schedule(); })
     : null;
   mutations?.observe(scroller, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'style', 'class', 'open'] });
   const resize = watchResize && typeof view.ResizeObserver === 'function' ? new view.ResizeObserver(schedule) : null;
   resize?.observe(scroller);
 
-  scroller.prepend(rail);
+  scroller.setAttribute(OVERLAY_SCROLL_ATTRIBUTE, '');
   schedule();
   return {
     refresh: schedule,
@@ -3511,18 +3513,48 @@ function attachOverlayScrollbar(scroller, { documentRef = scroller?.ownerDocumen
       frame = 0;
       mutations?.disconnect();
       resize?.disconnect();
+      for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'lostpointercapture']) {
+        scroller.removeEventListener(type, type === 'pointerdown' ? onPointerDown : type === 'pointermove' ? onPointerMove : endDrag);
+      }
       scroller.removeEventListener('scroll', schedule);
-      rail.remove();
+      for (const name of written.keys()) scroller.style.removeProperty(name);
       scroller.removeAttribute(OVERLAY_SCROLL_ATTRIBUTE);
     },
   };
+}
+
+// Every element under `root` that matches `selector`, now and as they are added, gets the floating thumb.
+// Those there at the start are watched for resizes; those added later are rebuilt with their screen.
+function installOverlayScrollbars(root, selector, { documentRef = root?.ownerDocument || root } = {}) {
+  const view = documentRef?.defaultView || globalThis;
+  const attached = new WeakSet();
+  const attachTo = (element, watchResize) => {
+    if (attached.has(element)) return;
+    attached.add(element);
+    attachOverlayScrollbar(element, { documentRef, watchResize });
+  };
+  const scan = (node, watchResize) => {
+    if (node?.nodeType !== 1) return;
+    if (node.matches?.(selector)) attachTo(node, watchResize);
+    if (node.firstElementChild) node.querySelectorAll(selector).forEach((element) => attachTo(element, watchResize));
+  };
+  scan(root?.documentElement || root, true);
+  const observer = typeof view.MutationObserver === 'function'
+    ? new view.MutationObserver((records) => {
+      for (const record of records) for (const node of record.addedNodes) scan(node, false);
+    })
+    : null;
+  observer?.observe(root, { childList: true, subtree: true });
+  return { disconnect: () => observer?.disconnect() };
 }
 
 const OVERLAY_SCROLLBAR_API = Object.freeze({
   attribute: OVERLAY_SCROLL_ATTRIBUTE,
   css: OVERLAY_SCROLLBAR_CSS,
   overlayThumbGeometry,
+  overlayLayoutSupported,
   attachOverlayScrollbar,
+  installOverlayScrollbars,
 });
 
   hermesGlobal.HermesOverlayScrollbar = OVERLAY_SCROLLBAR_API;
