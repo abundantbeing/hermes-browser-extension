@@ -1269,6 +1269,8 @@
 
   function renderFailure(reason) {
     setLauncherBusy(false);
+    // A run from the quick menu hid the menu while it ran: its failure shows in the bar under the field.
+    if (panel.hidden && panel.dataset.mode === 'quick') return renderFailureBar(reason);
     activeView = { name: 'failure', args: [reason] };
     contextState.textContent = translateUiText('BLOCKED');
     const title = make('h2', 'route-title', 'Assist could not run');
@@ -1276,6 +1278,27 @@
     const back = button('action', 'Back to actions');
     back.addEventListener('click', trustedOnly(renderAssist));
     setBody(title, detail, back);
+  }
+
+  function renderFailureBar(reason) {
+    activeView = { name: 'failure-bar', args: [reason] };
+    panel.dataset.mode = 'bar';
+    panel.hidden = false;
+    const bar = make('div', 'bar');
+    bar.append(make('strong', 'bar-title', 'Assist could not run'), make('div', 'bar-preview', reason || 'Hermes could not create this draft.'));
+    const actions = make('div', 'bar-actions');
+    const again = button('main', 'Try again');
+    again.addEventListener('click', trustedOnly(() => {
+      panel.dataset.mode = 'quick';
+      hidePanel();
+      tryAgain();
+    }));
+    const dismiss = button('', 'Close');
+    dismiss.addEventListener('click', trustedOnly(hidePanel));
+    actions.append(again, dismiss);
+    bar.append(actions);
+    setBody(bar);
+    position();
   }
 
   function runLocalAction(action) {

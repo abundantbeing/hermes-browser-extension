@@ -89,3 +89,21 @@ test('Esc on the bar closes it and never undoes the draft', async () => {
   assert.equal(panel.hidden, true);
   assert.equal(env.w.document.getElementById('field').value, 'A drafted reply.');
 });
+
+test('a run from the quick menu that fails shows why in the bar, with Try again', async () => {
+  const { env, root, panel } = await openQuick();
+  env.w.document.getElementById('field').value = 'a rough first draft';
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  const request = env.sent.find((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST')?.request;
+  env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: false, reason: 'Hermes Assist failed (502).' });
+  await env.sleep(60);
+  assert.equal(panel.hidden, false, 'the failure is visible');
+  assert.equal(panel.dataset.mode, 'bar');
+  assert.match(panel.textContent, /Hermes Assist failed \(502\)\./);
+  const again = [...root.querySelectorAll('.bar-actions button')].find((item) => /Try again/.test(item.textContent));
+  assert.ok(again, 'Try again');
+  env.userClick(again);
+  await env.sleep(60);
+  assert.equal(env.sent.filter((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST').length, 2, 'the same action runs again');
+});
