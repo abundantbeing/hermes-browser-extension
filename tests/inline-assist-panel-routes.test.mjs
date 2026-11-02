@@ -48,6 +48,8 @@ async function panel({ reply = 'A drafted reply.', running = false, history = [{
     viewedSessionIsRunning: () => running,
     loadSessions: async () => undefined,
     resolveInlineDraftPrompt: async (request) => buildInlineDraftPrompt(request),
+    refreshContextConsentLedger: async (source) => source,
+    inlineDraftRequestForEffectiveContext: (request) => request,
     beginHermesBrowserDraft: async (options) => {
       drafts.push(options);
       h.scope.settings = { ...h.scope.settings, sessionId: 'chat-new', sessionTitle: options.title };
@@ -166,6 +168,23 @@ for (const route of ['current', 'new']) {
     assert.equal(result.message.modelNotice, '');
   });
 }
+
+test('the page is told when the thread was not sent because page context is off for this connection', async () => {
+  const { process, sent, h } = await panel();
+  h.scope.gatewayCapabilities = { sessionChat: true, sessionModelLock: true };
+  h.scope.refreshContextConsentLedger = async (source) => source;
+  h.scope.inlineDraftRequestForEffectiveContext = (request) => ({ ...request, pageContext: '', pageUrl: '', fieldLabel: '' });
+  await process(rawRequest('current'));
+  const withheld = sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT');
+  assert.equal(withheld.message.contextWithheld, true);
+
+  const shared = await panel();
+  shared.h.scope.gatewayCapabilities = { sessionChat: true, sessionModelLock: true };
+  shared.h.scope.refreshContextConsentLedger = async (source) => source;
+  shared.h.scope.inlineDraftRequestForEffectiveContext = (request) => request;
+  await shared.process(rawRequest('current'));
+  assert.equal(shared.sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').message.contextWithheld, false);
+});
 
 test('with no Assist model the chat\'s model runs, at the effort picked for Assist', async () => {
   const { process, asks, h } = await panel();

@@ -117,6 +117,50 @@ test('the footer is a tidy grid: four equal cells, label above control, the safe
   assert.deepEqual(cells, ['Runs', 'Auto-replace', 'Model', 'Effort']);
 });
 
+test('the Bounded row says how much it read, shows exactly what Hermes gets, and sends that', async () => {
+  const env = bootAssist({ url: 'https://github.com/o/r/issues/7', settings: { inlineAssistDefaultRoute: 'background' } });
+  env.w.document.body.insertAdjacentHTML('afterbegin', `<h1 data-testid="issue-title">Crash on start</h1>
+    <div data-testid="issue-body"><a data-testid="issue-body-header-author">ada</a><div data-testid="markdown-body">It crashes with password: hunter22 set.</div></div>
+    <div data-testid="comment-viewer-outer-box-1"><div data-testid="comment-header"><a href="/bob">bob</a></div><div data-testid="markdown-body">Same here.</div></div>`);
+  env.userClick(await focusField(env));
+  await env.sleep(60);
+  const root = env.root();
+  assert.match(root.querySelector('.setting').textContent, /Reads 2 messages · \d+ characters · saved for GitHub/);
+  const peek = root.querySelector('.context-peek');
+  assert.equal(peek.textContent, 'See what Hermes reads');
+  assert.equal(root.querySelector('.context-preview'), null);
+  env.userClick(peek);
+  await env.sleep();
+  const preview = root.querySelector('.context-preview');
+  assert.match(preview.textContent, /^GitHub issue #7 in o\/r: Crash on start/);
+  assert.match(preview.textContent, /bob:\nSame here\./);
+  assert.match(preview.textContent, /It crashes with \[secret removed\] set\./);
+  assert.equal(peek.textContent, 'Hide what Hermes reads');
+  assert.equal(preview.hasAttribute('data-overlay-scroll'), true, 'the long preview floats the branded thumb');
+  env.userClick(root.querySelector('.actions .action'));
+  await env.sleep(60);
+  const request = env.sent.find((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST')?.request;
+  assert.ok(request, 'a thread quoting a password still drafts');
+  assert.equal(request.pageContext, preview.textContent, 'Hermes gets what the preview shows');
+});
+
+test('a draft written without the page says so, and why', async () => {
+  const { env, root } = await openPanel();
+  env.userClick(root.querySelector('.actions .action'));
+  await env.sleep(60);
+  const request = env.sent.find((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST')?.request;
+  env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: true, text: 'A drafted reply.', contextWithheld: true });
+  await env.sleep(60);
+  assert.match(root.textContent, /Hermes wrote this without the page: page context is off for this connection\. Turn it on in the side panel to include the thread\./);
+});
+
+test('the background run tells the page when the consent gate kept the thread back', () => {
+  const background = loadExtensionFile('background.js');
+  const runner = background.match(/async function runInlineDraftInServiceWorker\([\s\S]*?\n\}/)?.[0] || '';
+  assert.match(runner, /contextWithheld = Boolean\(request\.pageContext\) && !gatedRequest\.allowed;/);
+  assert.match(runner, /sendDirectInlineResult\(tabId, request, \{[^}]*contextWithheld,/);
+});
+
 test('the header is one row: the side panel wing, the name over what Assist is on, the state and a small ×', async () => {
   const css = assistCss();
   assert.match(css, /\.head \{[^}]*grid-template-columns:46px minmax\(0,1fr\) auto 32px;/);

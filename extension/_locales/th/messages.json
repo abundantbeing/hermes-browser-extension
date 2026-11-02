@@ -5943,6 +5943,10 @@
     "message": "Hermes จะหยุดก่อนแก้ไข checkout ที่มีการเปลี่ยนแปลงที่ยังไม่ได้ commit",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes เขียนสิ่งนี้โดยไม่มีหน้าเว็บ: บริบทของหน้าปิดอยู่สำหรับการเชื่อมต่อนี้ เปิดในแผงด้านข้างเพื่อรวมบทสนทนา",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "ซ่อน",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "ซ่อนวงกลมบนไซต์นี้",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "ซ่อนสิ่งที่ Hermes อ่าน",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "สูง",
@@ -6987,6 +6995,18 @@
     "message": "การอ่านการตั้งค่าการเชื่อมต่อและประวัติเซสชันตามรูปแบบบัญญัติ",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "อ่าน {chars} อักขระรอบช่อง · บันทึกสำหรับ {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "อ่าน {count} ข้อความ · {chars} อักขระ · บันทึกสำหรับ {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "อ่าน 1 ข้อความ · {chars} อักขระ · บันทึกสำหรับ {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "อ่านเธรด",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "ความปลอดภัย",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "ดูสิ่งที่ Hermes อ่าน",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "เลือก",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "พื้นที่ทำงาน",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "เขียนโดยไม่มีหน้าเว็บ: บริบทของหน้าปิดอยู่สำหรับการเชื่อมต่อนี้",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "เอ็กแอล",

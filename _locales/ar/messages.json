@@ -5943,6 +5943,10 @@
     "message": "سيتوقف Hermes قبل تغيير مساحة عمل تحتوي على تغييرات غير مُلتزم بها.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "كتب Hermes هذا دون الصفحة: سياق الصفحة متوقف لهذا الاتصال. شغّله في اللوحة الجانبية لتضمين المحادثة.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "يخفي",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "إخفاء الدائرة في هذا الموقع",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "أخفِ ما يقرؤه Hermes",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "عالي",
@@ -6987,6 +6995,18 @@
     "message": "قراءة إعدادات الاتصال وسجل الجلسة الأساسي.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "يقرأ الأحرف حول الحقل: {chars} · محفوظ لـ {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "يقرأ الرسائل: {count} · الأحرف: {chars} · محفوظ لـ {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "يقرأ رسالة واحدة · الأحرف: {chars} · محفوظ لـ {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "يقرأ المحادثة",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "حماية",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "اعرض ما يقرؤه Hermes",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "يختار",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "مساحات العمل",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "كُتب دون الصفحة: سياق الصفحة متوقف لهذا الاتصال.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

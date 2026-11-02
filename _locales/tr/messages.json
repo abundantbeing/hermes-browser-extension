@@ -5943,6 +5943,10 @@
     "message": "Hermes kirli bir ödemeyi değiştirmeden önce duracaktır.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes bunu sayfa olmadan yazdı: bu bağlantı için sayfa bağlamı kapalı. Konuşmayı dahil etmek için yan panelden açın.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "Gizle",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "Bu sitede daireyi gizle",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Hermes’in okuduklarını gizle",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "Yüksek",
@@ -6987,6 +6995,18 @@
     "message": "Bağlantı ayarlarını ve kurallı oturum geçmişini okuma.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "Alanın çevresinde {chars} karakter okur · {site} için kaydedildi",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "{count} mesaj okur · {chars} karakter · {site} için kaydedildi",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "1 mesaj okur · {chars} karakter · {site} için kaydedildi",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "Konuyu okur",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "Güvenlik",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Hermes’in okuduklarını gör",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "Seç",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "Çalışma alanları",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "Sayfa olmadan yazıldı: bu bağlantı için sayfa bağlamı kapalı.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

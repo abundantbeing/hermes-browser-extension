@@ -18,6 +18,7 @@
   if (globalThis.__HERMES_INLINE_HELPER_GENERATION__ !== generation) return;
   const translateUiText = (value) => i18n.translateText(value);
 
+  const PAGE_CONTEXT_CHARS = 12_000;
   const REQUEST = 'HERMES_INLINE_DRAFT_REQUEST';
   const RESULT = 'HERMES_INLINE_DRAFT_RESULT';
   const SESSION_STATUS = 'HERMES_INLINE_SESSION_STATUS';
@@ -179,6 +180,10 @@
     .route small { display:block; margin-top:3px; color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); line-height:1.35; }
     .route .tag { display:block; margin-top:4px; color:var(--hb-blue); font-size:calc(8px * var(--hermes-text-zoom, 1)); letter-spacing:.11em; text-transform:uppercase; }
     .arrow { font-size:calc(18px * var(--hermes-text-zoom, 1)); }
+    .context-peek-wrap { display:flex; flex-direction:column; gap:6px; margin-top:-4px; }
+    .context-peek { align-self:flex-start; padding:2px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font-size:calc(10.5px * var(--hermes-text-zoom, 1)); text-decoration:underline; }
+    .context-peek:hover, .context-peek:focus-visible { color:var(--hb-blue); outline:none; }
+    .context-preview { border:1px solid var(--hb-line); padding:8px 9px; font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
     .privacy { margin-top:2px; border:1px solid var(--hb-line); padding:9px; }
     .working { display:grid; place-items:center; min-height:170px; text-align:center; }
     .working-mark { width:34px; height:34px; border:3px solid var(--hb-line); border-top-color:var(--hb-blue); border-radius:50%; animation:spin .8s linear infinite; }
@@ -282,6 +287,7 @@
     .quick-opt small { display:block; color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
     .bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:8px 10px; color:var(--hb-blue); font-size:calc(12px * var(--hermes-text-zoom, 1)); }
     .bar-title { font-weight:700; }
+    .bar-note { width:100%; margin:0; color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
     .bar-head { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; }
     .bar-return { display:inline-flex; align-items:center; gap:5px; padding:2px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); white-space:nowrap; }
     .bar-return:hover, .bar-return:focus-visible { color:var(--hb-blue); outline:none; text-decoration:underline; }
@@ -364,6 +370,7 @@
   let resultSessionId = '';
   let resultSessionTitle = '';
   let resultModelNotice = '';
+  let resultContextWithheld = false;
   let applyReceipt = null;
   let autoReplace = true;
   let appliedAutomatically = false;
@@ -682,13 +689,47 @@
     return `${adapter} · ${surface} · ${current.eligible ? current.text.length : 0} characters`;
   }
 
-  function boundedContextForTarget({ explicitGenericCapture = false } = {}) {
-    if (!target) return '';
+  // What Hermes gets from the page, as the panel shows it: the thread, with any secret the page quotes taken out.
+  function boundedContext({ explicitGenericCapture = false } = {}) {
+    if (!target) return { text: '', messages: 0 };
     const profile = siteProfile || refreshSiteProfile();
     const captureProfile = explicitGenericCapture && profile?.adapterId === 'generic'
       ? { ...profile, contextMode: 'visible' }
       : profile;
-    return String(adapters?.captureInlineSiteContext?.(document, target, captureProfile) || '').slice(0, 6_000);
+    const captured = adapters?.inlineSiteContext?.(document, target, captureProfile)
+      || { text: String(adapters?.captureInlineSiteContext?.(document, target, captureProfile) || ''), messages: 0 };
+    const redacted = extractor?.redactSensitiveTextWithCount?.(captured.text)?.text ?? captured.text;
+    return { text: String(policy.withoutSecretText?.(redacted) ?? redacted).slice(0, PAGE_CONTEXT_CHARS), messages: captured.messages || 0 };
+  }
+
+  function contextSummary({ text, messages }, site) {
+    const template = messages > 1
+      ? 'Reads {count} messages · {chars} characters · saved for {site}'
+      : messages === 1
+        ? 'Reads 1 message · {chars} characters · saved for {site}'
+        : 'Reads {chars} characters around the field · saved for {site}';
+    return translateUiText(template).replace('{count}', String(messages)).replace('{chars}', String(text.length)).replace('{site}', site);
+  }
+
+  function contextPeek(text) {
+    const wrap = make('div', 'context-peek-wrap');
+    const toggle = button('context-peek', 'See what Hermes reads');
+    toggle.setAttribute('aria-expanded', 'false');
+    let shown = null;
+    toggle.addEventListener('click', trustedOnly(() => {
+      if (shown) {
+        shown.remove();
+        shown = null;
+      } else {
+        shown = makeRaw('div', 'preview context-preview', text);
+        wrap.append(shown);
+        overlayScrollbar?.attachOverlayScrollbar(shown, { watchResize: false });
+      }
+      toggle.textContent = translateUiText(shown ? 'Hide what Hermes reads' : 'See what Hermes reads');
+      toggle.setAttribute('aria-expanded', String(Boolean(shown)));
+    }));
+    wrap.append(toggle);
+    return wrap;
   }
 
   function isTargetVisible(element) {
@@ -954,6 +995,7 @@
     resultSessionId = '';
     resultSessionTitle = '';
     resultModelNotice = '';
+    resultContextWithheld = false;
     applyReceipt = null;
     appliedAutomatically = false;
   }
@@ -1407,6 +1449,7 @@
     }));
     head.append(make('strong', 'bar-title', appliedAutomatically ? 'Draft in place' : (fieldChanged ? 'Field changed · review required' : 'Draft ready')), toFull);
     bar.append(head);
+    if (resultContextWithheld) bar.append(make('p', 'bar-note', 'Written without the page: page context is off for this connection.'));
     if (!appliedAutomatically) bar.append(makeRaw('div', 'bar-preview', resultText || translateUiText('(empty draft)')));
     const actions = make('div', 'bar-actions');
     const add = (label, handler, { main = false, disabled = false } = {}) => {
@@ -1451,7 +1494,7 @@
   function renderAssist() {
     activeView = { name: 'assist', args: [] };
     const profile = siteProfile || refreshSiteProfile();
-    const contextText = boundedContextForTarget();
+    const context = boundedContext();
     const usesVisibleContext = profile?.contextMode === 'visible';
     contextDetail.textContent = translateUiText(currentContextLabel());
     contextState.textContent = translateUiText(usesVisibleContext ? 'BOUNDED' : 'DRAFT ONLY');
@@ -1465,7 +1508,7 @@
         ? `Use visible ${String(profile.surface || 'page').replace(/-/g, ' ')} context`
         : 'Use focused draft only';
       const contextDescription = usesVisibleContext
-        ? `${contextText.length} bounded context characters · saved for ${profile.label}`
+        ? contextSummary(context, profile.label)
         : `Strict default · no visible ${profile.label} conversation context`;
       contextCopy.append(make('strong', '', contextTitle), make('br'), make('small', '', contextDescription));
       const contextToggle = make('input', 'toggle');
@@ -1477,6 +1520,7 @@
       }));
       contextSetting.append(contextCopy, contextToggle);
       nodes.push(contextSetting);
+      if (usesVisibleContext && context.text) nodes.push(contextPeek(context.text));
       if (usesVisibleContext && profile.contextPolicy.warning) nodes.push(make('p', 'privacy', profile.contextPolicy.warning));
     }
 
@@ -1644,7 +1688,7 @@
     lastRunAction = action;
     const requestId = `req-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
     const profile = siteProfile || refreshSiteProfile();
-    const pageContext = boundedContextForTarget({ explicitGenericCapture: action.id === 'draft-for-context' });
+    const pageContext = boundedContext({ explicitGenericCapture: action.id === 'draft-for-context' }).text;
     const supportsSafeApply = profile?.applyMode !== 'copy-only';
     const built = policy.buildInlineDraftRequest(target, {
       action,
@@ -1749,6 +1793,7 @@
     resultSessionId = String(message.sessionId || '');
     resultSessionTitle = String(message.sessionTitle || (message.noModel ? 'Local utility · no model' : 'Inline assist'));
     resultModelNotice = String(message.modelNotice || '');
+    resultContextWithheld = message.contextWithheld === true;
     const current = policy.classifyEditable(target);
     const fieldChanged = !current.eligible || current.text !== pending.draftText;
     if (resultText && pending.autoReplace && !fieldChanged) {
@@ -1813,6 +1858,11 @@
       const routingNotice = make('p', 'privacy', `Model routing · ${resultModelNotice}`);
       routingNotice.setAttribute('role', 'status');
       card.append(routingNotice);
+    }
+    if (resultContextWithheld) {
+      const withheldNotice = make('p', 'privacy', 'Hermes wrote this without the page: page context is off for this connection. Turn it on in the side panel to include the thread.');
+      withheldNotice.setAttribute('role', 'status');
+      card.append(withheldNotice);
     }
     const label = make('span', 'section-label', 'Result preview');
     const preview = makeRaw('div', 'preview', resultText || translateUiText('(empty draft)'));

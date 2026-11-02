@@ -5943,6 +5943,10 @@
     "message": "Hermes irá parar antes de alterar uma verificação suja.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "O Hermes escreveu isto sem a página: o contexto da página está desligado para esta conexão. Ative no painel lateral para incluir a conversa.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "Esconder",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "Ocultar o círculo neste site",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Ocultar o que o Hermes lê",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "Alto",
@@ -6987,6 +6995,18 @@
     "message": "Lendo configurações de conexão e histórico de sessão canônica.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "Lê {chars} caracteres ao redor do campo · salvo para {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "Lê {count} mensagens · {chars} caracteres · salvo para {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "Lê 1 mensagem · {chars} caracteres · salvo para {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "Lê a conversa",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "Segurança",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Ver o que o Hermes lê",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "Selecione",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "Espaços de trabalho",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "Escrito sem a página: o contexto da página está desligado para esta conexão.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

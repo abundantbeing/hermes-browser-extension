@@ -5943,6 +5943,10 @@
     "message": "Hermes 會在變更有未提交變更的工作目錄前停止。",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes 在沒有頁面的情況下寫了這段內容：此連線已關閉頁面脈絡。在側邊面板中開啟即可包含對話。",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "隱藏",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "在此網站隱藏圓圈",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "隱藏 Hermes 讀取的內容",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "高",
@@ -6987,6 +6995,18 @@
     "message": "正在讀取連線設定和規範工作階段歷史。",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "讀取輸入框周圍的 {chars} 個字元 · 已為 {site} 儲存",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "讀取 {count} 則訊息 · {chars} 個字元 · 已為 {site} 儲存",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "讀取 1 則訊息 · {chars} 個字元 · 已為 {site} 儲存",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "讀取對話",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "安全",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "查看 Hermes 讀取的內容",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "選擇",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "工作區",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "未使用頁面撰寫：此連線已關閉頁面脈絡。",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "特大",

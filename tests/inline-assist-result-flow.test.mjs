@@ -70,6 +70,16 @@ test('the bar offers Longer beside Shorter, and the way back to the full panel i
   assert.ok(root.querySelector('.follow-ups'), 'the full result');
 });
 
+test('the bar says when the draft was written without the page', async () => {
+  const { env, root } = await boot({ inlineAssistOpenMode: 'quick' });
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  const request = requests(env).at(-1);
+  env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: true, text: 'A drafted reply.', contextWithheld: true });
+  await env.sleep(60);
+  assert.equal(root.querySelector('.bar .bar-note')?.textContent, 'Written without the page: page context is off for this connection.');
+});
+
 test('Again from the bar asks where to run in the quick menu\'s layout, with Back and Close, and leaves the draft in place', async () => {
   const { env, root, panel, field } = await boot({ inlineAssistOpenMode: 'quick', inlineAssistDefaultRoute: 'ask' });
   env.userClick(root.querySelector('.quick-item'));

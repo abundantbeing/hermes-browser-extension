@@ -5943,6 +5943,10 @@
     "message": "Hermes stopt voordat een vuile kassa wordt gewijzigd.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes schreef dit zonder de pagina: paginacontext staat uit voor deze verbinding. Zet het aan in het zijpaneel om het gesprek mee te nemen.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "Verbergen",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "Cirkel verbergen op deze site",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Verberg wat Hermes leest",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "Hoog",
@@ -6987,6 +6995,18 @@
     "message": "Verbindingsinstellingen en canonieke sessiegeschiedenis lezen.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "Leest {chars} tekens rond het veld · opgeslagen voor {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "Leest {count} berichten · {chars} tekens · opgeslagen voor {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "Leest 1 bericht · {chars} tekens · opgeslagen voor {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "Leest de thread",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "Beveiliging",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Bekijk wat Hermes leest",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "Selecteer",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "Werkruimtes",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "Geschreven zonder de pagina: paginacontext staat uit voor deze verbinding.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

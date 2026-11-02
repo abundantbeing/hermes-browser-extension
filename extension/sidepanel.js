@@ -28134,6 +28134,12 @@ async function resolveInlineDraftPrompt(request, source = settings) {
   return buildInlineDraftPrompt(inlineDraftRequestForEffectiveContext(request, sendTimeSettings));
 }
 
+async function inlineDraftContextWithheld(request, source = settings) {
+  if (!request?.pageContext) return false;
+  const sendTimeSettings = await refreshContextConsentLedger({ ...source });
+  return !inlineDraftRequestForEffectiveContext(request, sendTimeSettings).pageContext;
+}
+
 // The draft Assist puts in the field: Hermes's final reply. A turn can also hold text the agent wrote
 // before a tool call, which the chat shows with it; that is not part of the draft. Read from the chat's
 // stored history, newest first, stopping at this turn's own message.
@@ -28197,10 +28203,11 @@ async function processInlineDraftRequest(rawRequest) {
       await sendInlineDraftResult({ ...request, tabId }, { ok: false, reason: 'The originating page changed before Hermes could draft.' });
       return false;
     }
+    const contextWithheld = await inlineDraftContextWithheld(request);
     if (request.route === INLINE_DRAFT_ROUTES.BACKGROUND) {
       const { answer, session } = await runInlineDraftInBackground(request, () => resolveInlineDraftPrompt(request));
       const text = sanitizeInlineDraftResult(answer);
-      resultSent = await sendInlineDraftResult({ ...request, tabId }, { ok: true, text, sessionId: session.id, sessionTitle: session.title });
+      resultSent = await sendInlineDraftResult({ ...request, tabId }, { ok: true, text, contextWithheld, sessionId: session.id, sessionTitle: session.title });
       await loadSessions({ quiet: true });
       return resultSent;
     }
@@ -28243,6 +28250,7 @@ async function processInlineDraftRequest(rawRequest) {
         resultSent = await sendInlineDraftResult({ ...request, tabId }, {
           ok: true,
           text,
+          contextWithheld,
           sessionId: inlineSessionId,
           sessionTitle: inlineSessionTitle,
           modelNotice: inlineAssistModelNotice,

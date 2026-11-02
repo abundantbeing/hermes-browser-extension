@@ -177,7 +177,7 @@ test('sidepanel claims queued requests, honors current/new/background routing, a
   assert.match(source, /request\.route\s*===\s*INLINE_DRAFT_ROUTES\.BACKGROUND/);
   assert.match(source, /request\.route\s*===\s*INLINE_DRAFT_ROUTES\.NEW/);
   assert.match(source, /createInlineBackgroundSession/);
-  assert.match(source, /\{ ok: true, text, sessionId/);
+  assert.match(source, /\{ ok: true, text, contextWithheld, sessionId/);
   assert.match(source, /forceChatOnly:\s*true/);
   assert.match(source, /'assist\.options_heading'/);
   assert.match(source, /executeContextMenuRequest/);

@@ -5943,6 +5943,10 @@
     "message": "Hermes गंदा चेकआउट बदलने से पहले रुक जाएगा।",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes ने यह पेज के बिना लिखा: इस कनेक्शन के लिए पेज संदर्भ बंद है। बातचीत शामिल करने के लिए इसे साइड पैनल में चालू करें।",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "छिपाना",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "इस साइट पर सर्कल छिपाएँ",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "छिपाएँ कि Hermes क्या पढ़ता है",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "उच्च",
@@ -6987,6 +6995,18 @@
     "message": "कनेक्शन सेटिंग्स और विहित सत्र इतिहास पढ़ना।",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "फ़ील्ड के आसपास {chars} अक्षर पढ़ता है · {site} के लिए सहेजा गया",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "{count} संदेश पढ़ता है · {chars} अक्षर · {site} के लिए सहेजा गया",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "1 संदेश पढ़ता है · {chars} अक्षर · {site} के लिए सहेजा गया",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "थ्रेड पढ़ता है",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "सुरक्षा",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "देखें कि Hermes क्या पढ़ता है",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "चुनना",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "कार्यस्थानों",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "पेज के बिना लिखा गया: इस कनेक्शन के लिए पेज संदर्भ बंद है।",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "एक्स्ट्रा लार्ज",

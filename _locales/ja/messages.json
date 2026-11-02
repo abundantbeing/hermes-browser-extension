@@ -5943,6 +5943,10 @@
     "message": "Hermes はダーティ チェックアウトを変更する前に停止します。",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes はページなしでこれを書きました。この接続ではページのコンテキストがオフです。スレッドを含めるにはサイドパネルでオンにしてください。",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "非表示",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "このサイトでは円を非表示にする",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Hermes が読む内容を隠す",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "高",
@@ -6987,6 +6995,18 @@
     "message": "接続設定と正規のセッション履歴を読み取ります。",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "入力欄の周りの {chars} 文字を読み取り · {site} 用に保存",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "{count} 件のメッセージを読み取り · {chars} 文字 · {site} 用に保存",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "1 件のメッセージを読み取り · {chars} 文字 · {site} 用に保存",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "スレッドを読む",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "安全",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Hermes が読む内容を表示",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "選択",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "ワークスペース",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "ページなしで書かれました。この接続ではページのコンテキストがオフです。",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

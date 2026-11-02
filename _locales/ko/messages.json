@@ -5943,6 +5943,10 @@
     "message": "Hermes는 더티 체크아웃을 변경하기 전에 중지됩니다.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes가 페이지 없이 작성했습니다. 이 연결에서 페이지 컨텍스트가 꺼져 있습니다. 대화를 포함하려면 사이드 패널에서 켜세요.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "숨기기",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "이 사이트에서 원 숨기기",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Hermes가 읽는 내용 숨기기",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "높음",
@@ -6987,6 +6995,18 @@
     "message": "연결 설정 및 표준 세션 기록을 읽는 중입니다.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "입력란 주변 {chars}자 읽음 · {site}에 저장됨",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "메시지 {count}개 읽음 · {chars}자 · {site}에 저장됨",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "메시지 1개 읽음 · {chars}자 · {site}에 저장됨",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "스레드 읽음",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "보안",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Hermes가 읽는 내용 보기",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "선택하다",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "작업공간",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "페이지 없이 작성됨: 이 연결에서 페이지 컨텍스트가 꺼져 있습니다.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "특대",

@@ -5943,6 +5943,10 @@
     "message": "Hermes akan berhenti sebelum mengubah checkout kotor.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes menulis ini tanpa halaman: konteks halaman nonaktif untuk koneksi ini. Aktifkan di panel samping untuk menyertakan percakapan.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "Bersembunyi",
     "description": "Runtime interface message ui.hide"
@@ -5954,6 +5958,10 @@
   "runtime_ui_hide_the_circle_on_this_site": {
     "message": "Sembunyikan lingkaran di situs ini",
     "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Sembunyikan yang dibaca Hermes",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "Tinggi",
@@ -6987,6 +6995,18 @@
     "message": "Membaca pengaturan koneksi dan riwayat sesi kanonik.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
   },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "Membaca {chars} karakter di sekitar kolom · disimpan untuk {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "Membaca {count} pesan · {chars} karakter · disimpan untuk {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "Membaca 1 pesan · {chars} karakter · disimpan untuk {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
   "runtime_ui_reads_thread": {
     "message": "Membaca utas",
     "description": "Runtime interface message ui.reads.thread"
@@ -7378,6 +7398,10 @@
   "runtime_ui_security": {
     "message": "Keamanan",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Lihat yang dibaca Hermes",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "Memilih",
@@ -8378,6 +8402,10 @@
   "runtime_ui_workspaces": {
     "message": "Ruang kerja",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "Ditulis tanpa halaman: konteks halaman nonaktif untuk koneksi ini.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

@@ -377,6 +377,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
     let resolvedSessionId = '';
     let resolvedTitle = '';
     let text = '';
+    let contextWithheld = false;
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let createdThisAttempt = false;
@@ -412,6 +413,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
           ledger: consentStored[CONTEXT_CONSENT_STORAGE_KEY] || null,
           controller: String(browserApi.runtime.id || 'hermes-browser'),
         });
+        contextWithheld = Boolean(request.pageContext) && !gatedRequest.allowed;
         const chatResponse = await client.fetch(`/api/sessions/${encodeURIComponent(resolvedSessionId)}/chat`, {
           method: 'POST',
           body: JSON.stringify({
@@ -462,6 +464,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
     await sendDirectInlineResult(tabId, request, {
       ok: true,
       text,
+      contextWithheld,
       sessionId: retainedSessionId,
       sessionTitle: retainedSessionTitle,
       modelNotice,
