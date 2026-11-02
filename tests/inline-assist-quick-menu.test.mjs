@@ -107,3 +107,14 @@ test('a run from the quick menu that fails shows why in the bar, with Try again'
   await env.sleep(60);
   assert.equal(env.sent.filter((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST').length, 2, 'the same action runs again');
 });
+
+test('the options button is the pixel settings cog, centred in its circle', async () => {
+  const { root } = await openQuick();
+  const gear = root.querySelector('.quick-options');
+  const icon = gear.querySelector('svg[data-icon="settings-cog"]');
+  assert.ok(icon, 'the pixelarticons settings cog, as on the side panel’s Settings button');
+  assert.equal(gear.textContent.trim(), '', 'no text glyph');
+  assert.equal(gear.getAttribute('aria-label'), 'Assist options');
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec((await import('./inline-assist-dom.mjs')).loadExtensionFile('content-inline-helper.js'))[1];
+  assert.match(/\.quick-options \{[^}]*\}/.exec(css)[0], /display:grid; place-items:center; padding:0;/);
+});

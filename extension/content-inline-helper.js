@@ -60,6 +60,21 @@
     return element;
   }
 
+  // pixelarticons settings-cog, as the side panel's Settings button draws it.
+  function settingsCog() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '14');
+    svg.setAttribute('height', '14');
+    svg.setAttribute('fill', 'currentColor');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.dataset.icon = 'settings-cog';
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M4 20h3v-2h4v4h2v-4h4v2h-2v4H9v-4H7v2H2v-5h2v3Zm18 2h-5v-2h3v-3h2v5ZM6 11H2v2h4v4H4v-2H0V9h4V7h2v4Zm14-2h4v6h-4v2h-2v-4h4v-2h-4V7h2v2Zm-6 7h-4v-2h4v2Zm-4-2H8v-4h2v4Zm6 0h-2v-4h2v4Zm-2-4h-4V8h4v2ZM7 4H4v3H2V2h5v2Zm8 0h2V2h5v5h-2V4h-3v2h-4V2h-2v4H7V4h2V0h6v4Z');
+    svg.append(path);
+    return svg;
+  }
+
   function logo(className) {
     const mark = make('span', className);
     mark.setAttribute('role', 'img');
@@ -192,7 +207,7 @@
     .quick-item small { display:block; color:var(--hb-muted); font-size:calc(11px * var(--hermes-text-zoom, 1)); }
     .quick-tools { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:8px 12px; border-top:1px solid var(--hb-line); }
     .quick-chip { padding:3px 9px; border:1px solid var(--hb-line); border-radius:999px; background:transparent; color:var(--hb-blue); cursor:pointer; font:600 calc(10.5px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); }
-    .quick-options { margin-left:auto; width:26px; height:26px; border:1px solid var(--hb-line); border-radius:50%; background:transparent; color:var(--hb-blue); cursor:pointer; }
+    .quick-options { display:grid; place-items:center; padding:0; margin-left:auto; width:26px; height:26px; border:1px solid var(--hb-line); border-radius:50%; background:transparent; color:var(--hb-blue); cursor:pointer; }
     .quick-foot { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
     .quick-full { border:0; padding:0; background:transparent; color:var(--hb-blue); cursor:pointer; font:inherit; white-space:nowrap; }
     .quick-back { display:flex; align-items:center; gap:8px; width:100%; padding:9px 12px; border:0; border-bottom:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); cursor:pointer; text-align:left; font-family:var(--hb-font-display); font-size:calc(17px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); }
@@ -962,7 +977,8 @@
       chip.addEventListener('click', trustedOnly(() => runLocalAction(action)));
       tools.appendChild(chip);
     });
-    const gear = button('quick-options', '⚙', 'Assist options');
+    const gear = button('quick-options', '', 'Assist options');
+    gear.append(settingsCog());
     gear.addEventListener('click', trustedOnly(renderQuickOptions));
     tools.appendChild(gear);
     const quickFoot = make('div', 'quick-foot');
