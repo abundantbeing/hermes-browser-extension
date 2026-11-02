@@ -1992,7 +1992,7 @@
     else if (activeView.name === 'open-session') renderOpenSessionChoices();
     else if (activeView.name === 'webapp-unavailable') renderWebappUnavailable(...activeView.args);
     else if (activeView.name === 'webapp-opened') renderWebappOpened(...activeView.args);
-    else renderAssist();
+    else showView(activeView, panel.dataset.mode);
   }
 
   document.addEventListener('focusin', onFocus, true);
