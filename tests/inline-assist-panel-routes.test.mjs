@@ -97,11 +97,12 @@ test('Start new Assist session opens a new chat named for Assist and the site, t
   assert.match(result.message.sessionTitle, /^Hermes Assist · YouTube · /);
 });
 
-test('two Assist titles made in the same second still differ, since the gateway refuses a repeated title', async () => {
-  const { h } = await panel();
-  const title = h.fn('assistSessionTitle');
-  const at = new Date('2026-11-02T04:13:21Z');
-  assert.notEqual(title(rawRequest('new', { requestId: 'req-aaaa' }), at), title(rawRequest('new', { requestId: 'req-bbbb' }), at));
+test('two Start new Assist session chats made in the same second get different titles, as the gateway requires', async () => {
+  const { process, drafts } = await panel();
+  await process(rawRequest('new', { requestId: 'req-new-aaaa' }));
+  await process(rawRequest('new', { requestId: 'req-new-bbbb' }));
+  assert.equal(drafts.length, 2);
+  assert.notEqual(drafts[0].title, drafts[1].title);
 });
 
 test('the same request reaching a freshly opened panel twice sends one turn', async () => {

@@ -1,7 +1,34 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { SIDE_PANEL_REFUSED_REASON, handOffInlineDraftToSidePanel } from '../extension/lib/inline-assist-handoff.mjs';
+import { readFile } from 'node:fs/promises';
+
+import { SIDE_PANEL_REFUSED_REASON, assistSessionTitle, handOffInlineDraftToSidePanel } from '../extension/lib/inline-assist-handoff.mjs';
+
+test('an Assist chat is named for Assist, its site as people write it, and a readable time', () => {
+  const at = new Date(2026, 10, 2, 4, 13, 21);
+  const title = assistSessionTitle({ adapterId: 'youtube', pageUrl: 'https://www.youtube.com/watch?v=abc123' }, { date: at, suffix: 'abcd' });
+  assert.match(title, /^Hermes Assist · YouTube · /);
+  assert.match(title, /4:13:21/);
+  assert.match(title, / · abcd$/);
+  assert.doesNotMatch(title, /\d{4}-\d{2}-\d{2}|\.\d{3}/, 'no raw timestamp');
+});
+
+test('a site without its own adapter is named by its host', () => {
+  const title = assistSessionTitle({ adapterId: 'generic', pageUrl: 'https://news.example.com/story' }, { suffix: 'abcd' });
+  assert.match(title, /^Hermes Assist · news\.example\.com · /);
+});
+
+test('background runs and side-panel chats share the same Assist name', async () => {
+  const [background, sidepanel] = await Promise.all([
+    readFile(new URL('../extension/background.js', import.meta.url), 'utf8'),
+    readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8'),
+  ]);
+  assert.match(background, /const sessionTitle = assistSessionTitle\(request, \{ suffix: sessionId\.slice\(-4\) \}\);/);
+  assert.doesNotMatch(background, /toISOString\(\)\.replace\('T', ' '\)/);
+  assert.match(sidepanel, /assistSessionTitle\(request, \{ suffix: String\(request\.requestId \|\| ''\)\.slice\(-4\) \}\)/);
+  assert.doesNotMatch(sidepanel, /\nfunction assistSessionTitle\(/);
+});
 
 function sessionStorage() {
   const store = {};

@@ -147,7 +147,7 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /assistModelFallbackNotice/);
   assert.match(source, /modelNotice/);
   assert.match(source, /inlineAssistSessionRetention === 'delete'/);
-  assert.match(source, /new Date\(\)\.toISOString/);
+  assert.match(source, /assistSessionTitle\(request, \{ suffix: sessionId\.slice\(-4\) \}\)/);
   assert.match(source, /resolveBrowserApi/);
   assert.match(source, /browserApi\.storage\.session/);
   assert.doesNotMatch(source, /(?<![\w.])chrome\.storage/);

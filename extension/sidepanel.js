@@ -10,6 +10,7 @@ import {
   withoutInlineAssistSite,
 } from './lib/inline-assist-look.mjs';
 import { assistRequestSummary, reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
+import { assistSessionTitle } from './lib/inline-assist-handoff.mjs';
 import { CONTROL_TOOL_FAMILIES } from './lib/control-tool-names.mjs';
 import {
   AUDIO_TRANSCRIBE_ENDPOINT,
@@ -28056,21 +28057,6 @@ async function resolveInlineDraftPrompt(request, source = settings) {
   return buildInlineDraftPrompt(inlineDraftRequestForEffectiveContext(request, sendTimeSettings));
 }
 
-// "Hermes Assist · YouTube · Nov 02, 4:13:21 AM · aaaa": named for Assist and its site, and unique, since the
-// gateway refuses a title it already has.
-function assistSessionTitle(request, date = new Date()) {
-  let site = inlineSiteLabel(request.adapterId);
-  if (!site || site === 'generic') {
-    try {
-      site = inlineSiteForHost(new URL(request.pageUrl).hostname).label;
-    } catch {
-      site = '';
-    }
-  }
-  const stamp = date.toLocaleString(undefined, { month: 'short', day: '2-digit', hour: 'numeric', minute: '2-digit', second: '2-digit' });
-  return `Hermes Assist · ${site || 'Browser'} · ${stamp} · ${String(request.requestId || '').slice(-4)}`;
-}
-
 // Continue current chat and Start new Assist session: a visible turn in this panel, shown as what was asked
 // and where; the reply also goes back to the field.
 async function processInlineDraftRequest(rawRequest) {
@@ -28108,7 +28094,7 @@ async function processInlineDraftRequest(rawRequest) {
     // Start new Assist session is the panel's New session button, then the send. Continue current chat into a
     // chat with nothing in it yet (a tab's first panel) starts that chat the same way, so it is named for Assist.
     if (request.route === INLINE_DRAFT_ROUTES.NEW || !messages.length) {
-      await beginHermesBrowserDraft({ title: assistSessionTitle(request), focus: false });
+      await beginHermesBrowserDraft({ title: assistSessionTitle(request, { suffix: String(request.requestId || '').slice(-4) }), focus: false });
     }
     const inlineAssistRoute = buildAssistModelRouteRequest(settings, gatewayCapabilities).policy;
     const inlineAssistModelNotice = inlineAssistRoute.mode === 'gateway-default-fallback'

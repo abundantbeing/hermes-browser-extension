@@ -34,7 +34,7 @@ import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
 import { HERMES_WEB_LAUNCH_LOOK_MESSAGE, HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
 import { INLINE_ASSIST_FONT_REQUEST, createInlineAssistFontServer } from './lib/inline-assist-font-server.mjs';
 import { createInlineAssistModelServer } from './lib/inline-assist-models.mjs';
-import { handOffInlineDraftToSidePanel } from './lib/inline-assist-handoff.mjs';
+import { assistSessionTitle, handOffInlineDraftToSidePanel } from './lib/inline-assist-handoff.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -362,8 +362,6 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         activeProfile: settings.activeProfile || settings.profile || '',
       }),
     });
-    const adapterLabel = String(request.adapterId || 'Browser').replace(/(^|[-_\s])([a-z])/g, (_, lead, letter) => `${lead}${letter.toUpperCase()}`);
-    const titleStamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
     const gatewayCapabilities = await loadAssistGatewayCapabilities(client);
     const { policy: assistPolicy, request: routeRequest } = buildAssistModelRouteRequest(
       settings,
@@ -383,7 +381,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
       let createdThisAttempt = false;
       // A fresh id for each attempt: Hermes never reuses the id of a session it deleted.
       const sessionId = assistSessionId();
-      const sessionTitle = `Hermes Assist · ${adapterLabel} · ${titleStamp} · ${sessionId.slice(-4)}`;
+      const sessionTitle = assistSessionTitle(request, { suffix: sessionId.slice(-4) });
       resolvedSessionId = sessionId;
       resolvedTitle = sessionTitle;
       try {
