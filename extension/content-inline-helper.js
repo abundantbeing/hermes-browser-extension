@@ -158,6 +158,10 @@
     .custom { width:100%; min-height:40px; resize:vertical; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); padding:9px; font:calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hb-font-ui); }
     .custom-row { display:grid; grid-template-columns:1fr auto; gap:7px; align-items:stretch; }
     .custom-go { min-width:76px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-blue); color:var(--hb-paper); cursor:pointer; font-size:calc(11px * var(--hermes-text-zoom, 1)); font-weight:700; }
+    .sheet-nav { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .sheet-back { display:inline-flex; align-items:center; gap:6px; min-height:28px; padding:4px 10px 4px 8px; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.2 var(--hb-font-ui); }
+    .sheet-close { display:grid; place-items:center; width:28px; height:28px; padding:0; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font-size:calc(18px * var(--hermes-text-zoom, 1)); line-height:1; }
+    .sheet-back:hover, .sheet-back:focus-visible, .sheet-close:hover, .sheet-close:focus-visible { outline:none; border-color:var(--hb-accent); background:var(--hb-soft); }
     .route-title { margin:0; color:var(--hb-blue); font-family:var(--hb-font-display); font-size:calc(20px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); line-height:1.05; }
     .route { display:grid; grid-template-columns:42px 1fr 18px; gap:9px; align-items:center; width:100%; padding:11px; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); cursor:pointer; text-align:left; }
     .route.recommended { border:2px solid var(--hb-blue); background:var(--hb-soft); }
@@ -343,6 +347,10 @@
   let appliedAutomatically = false;
   let rememberRoute = false;
   let activeView = { name: 'assist', args: [] };
+  // Where the chooser's Back goes (the screen and mode it was opened from), and what runs once a place is
+  // picked (Again undoes the draft in the field only then).
+  let routingBack = null;
+  let pendingPrepare = null;
   let panelScrollSuspended = false;
   let targetResizeObserver = null;
   let targetMutationObserver = null;
@@ -1304,8 +1312,15 @@
     } else {
       add('Copy', copyResult, { main: true });
     }
-    add('Again', tryAgain, { disabled: !lastRunAction });
-    if (applyReceipt) add('Shorter', makeShorter);
+    // Again and Shorter run as from the quick menu: the bar steps aside while Hermes works, and the chooser's
+    // Back comes back to this bar.
+    const rerun = (run) => () => {
+      const back = { view: activeView, mode: 'bar' };
+      panel.dataset.mode = 'quick';
+      run({ back });
+    };
+    add('Again', rerun(tryAgain), { disabled: !lastRunAction });
+    if (applyReceipt) add('Shorter', rerun(makeShorter));
     if (appliedAutomatically) add('Copy', copyResult);
     if (!appliedAutomatically) {
       add('Full panel', () => {
@@ -1409,25 +1424,71 @@
     setBody(...nodes);
   }
 
-  async function beginAction(action) {
+  // `prepare` runs once Hermes is about to run (false stops it); `back` is where the chooser's Back returns.
+  async function beginAction(action, { prepare = null, back = null } = {}) {
     if (!target) return;
     pendingAction = action;
+    pendingPrepare = typeof prepare === 'function' ? prepare : null;
+    routingBack = back || { view: activeView, mode: panel.dataset.mode };
     const status = await browserApi.runtime.sendMessage({ type: SESSION_STATUS }).catch(() => null);
     const decision = policy.routeDecision?.({
       preference: assistSettings.inlineAssistDefaultRoute,
       hasActiveSession: Boolean(status?.hasActiveSession),
     }) || 'ask';
     if (decision === 'ask') renderRouting(status || {});
-    else requestDraft(action, decision);
+    else runPrepared(action, decision);
+  }
+
+  function runPrepared(action, route) {
+    const prepare = pendingPrepare;
+    pendingPrepare = null;
+    routingBack = null;
+    if (prepare && prepare() === false) return undefined;
+    return requestDraft(action, route);
+  }
+
+  // Back on the chooser: the screen it was opened from, as it was (nothing was undone yet).
+  function leaveRouting() {
+    const back = routingBack;
+    routingBack = null;
+    pendingPrepare = null;
+    pendingAction = null;
+    showView(back?.view, back?.mode);
+  }
+
+  // A screen shown again as it was: the bar, the quick menu or its options, a result, or the actions.
+  function showView(view = null, mode = '') {
+    panel.dataset.mode = mode || 'full';
+    const args = view?.args || [];
+    if (view?.name === 'bar') return renderResultBar(...args);
+    if (view?.name === 'failure-bar') return renderFailureBar(...args);
+    if (view?.name === 'quick') return renderQuickMenu();
+    if (view?.name === 'quick-options') return renderQuickOptions();
+    if (view?.name === 'result') return renderResult(...args);
+    if (view?.name === 'failure') return renderFailure(...args);
+    return renderAssist();
   }
 
   function renderRouting(session = {}) {
+    // Never in the bar's tight layout: from the bar the chooser takes the quick menu's.
+    if (panel.dataset.mode === 'bar') panel.dataset.mode = 'quick';
     activeView = { name: 'routing', args: [session] };
     contextDetail.textContent = translateUiText(session.hasActiveSession
       ? `Active chat · ${Number(session.messageCount || 0) || 'existing'} messages`
       : 'No active chat');
     contextState.textContent = translateUiText('CHOOSE');
     contextState.className = '';
+    // Back to where it was opened from; Close where the panel's own header (with its ×) is hidden.
+    const nav = make('div', 'sheet-nav');
+    const back = button('sheet-back', '', 'Back');
+    back.append(makeRaw('span', '', '←'), make('span', '', 'Back'));
+    back.addEventListener('click', trustedOnly(leaveRouting));
+    nav.append(back);
+    if (panel.dataset.mode !== 'full') {
+      const closeSheet = button('sheet-close', '×', 'Close Hermes Assist');
+      closeSheet.addEventListener('click', trustedOnly(hidePanel));
+      nav.append(closeSheet);
+    }
     const title = make('h2', 'route-title', 'Where should Hermes work?');
     const note = make('p', 'note', 'Hermes will never replace or switch an existing conversation without this choice.');
     const routes = [
@@ -1445,7 +1506,7 @@
       routeButton.append(make('span', 'route-num', route.num), copy, make('span', 'arrow', '→'));
       routeButton.addEventListener('click', trustedOnly(async () => {
         if (rememberRoute) await persistDefaultRoute(route.route);
-        await requestDraft(pendingAction, route.route);
+        await runPrepared(pendingAction, route.route);
       }));
       return routeButton;
     });
@@ -1459,7 +1520,7 @@
     rememberSetting.append(rememberCopy, rememberToggle);
     const privacy = make('p', 'privacy');
     privacy.append('Background runs stay in session history under ', make('strong', '', 'Inline assist'), '. They receive this bounded field snapshot—not other form values.');
-    setBody(title, note, ...routeNodes, rememberSetting, privacy);
+    setBody(nav, title, note, ...routeNodes, rememberSetting, privacy);
   }
 
   async function requestDraft(action, route) {
@@ -1497,7 +1558,8 @@
   function renderWorking() {
     // From the quick menu the draft is written into the field when it is ready: the menu steps aside and
     // the circle's ring shows the run.
-    if (panel.dataset.mode === 'quick') {
+    if (panel.dataset.mode === 'quick' || panel.dataset.mode === 'bar') {
+      panel.dataset.mode = 'quick';
       hidePanel();
       return;
     }
@@ -1671,25 +1733,41 @@
     setBody(success, card, label, preview, actions, followUps);
   }
 
-  // Run the same action again from the text the user had: an applied draft is undone first.
-  function tryAgain() {
+  // Run the same action again from the text the user had. An applied draft is undone only once Hermes is
+  // about to run, so backing out of the chooser leaves it in the field.
+  function tryAgain({ back = null } = {}) {
     const action = lastRunAction;
     if (!action) return undefined;
-    if (applyReceipt) {
+    const undoApplied = () => {
+      if (!applyReceipt) return true;
       const undone = policy.undoResult(target, applyReceipt);
-      if (!undone.ok) return renderFailure('Undo was blocked because the field changed after the replacement.');
+      if (!undone.ok) {
+        renderFailure('Undo was blocked because the field changed after the replacement.');
+        return false;
+      }
       applyReceipt = null;
       appliedAutomatically = false;
-    }
-    return action.local ? runLocalAction(action) : beginAction(action);
+      return true;
+    };
+    if (action.local) return undoApplied() ? runLocalAction(action) : undefined;
+    return beginAction(action, { prepare: undoApplied, back });
   }
 
-  // Shorten the draft that is now in the field (offered only once it was applied there).
-  function makeShorter() {
-    const shorten = genericActions.find((item) => item.id === 'shorten');
-    applyReceipt = null;
-    appliedAutomatically = false;
-    if (shorten) beginAction(shorten);
+  // Shorter reworks the draft that is now in the field (offered only once it was applied there).
+  function reworkDraft(action, back) {
+    if (!action) return undefined;
+    return beginAction(action, {
+      back,
+      prepare: () => {
+        applyReceipt = null;
+        appliedAutomatically = false;
+        return true;
+      },
+    });
+  }
+
+  function makeShorter({ back = null } = {}) {
+    return reworkDraft(genericActions.find((item) => item.id === 'shorten'), back);
   }
 
   function applyResult() {
