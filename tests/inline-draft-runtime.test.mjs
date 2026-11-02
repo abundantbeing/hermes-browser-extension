@@ -220,3 +220,11 @@ test('Hermes Assist scroll surfaces use the canonical sharp themed scrollbar', a
   assert.doesNotMatch(scrollbarBlock, /scrollbar-(?:width|color)/);
   assert.doesNotMatch(scrollbarBlock, /border-radius/);
 });
+
+test('a background Assist retry creates a new session id, since Hermes never reuses a deleted one', async () => {
+  const background = await read('extension/background.js');
+  const runner = background.match(/async function runInlineDraftInServiceWorker\([\s\S]*?\n\}/)?.[0] || '';
+  const loop = runner.slice(runner.indexOf('for (let attempt = 0;'));
+  assert.ok(loop.length > 0, 'the retry loop');
+  assert.match(loop.slice(0, loop.indexOf("client.fetch('/api/sessions'")), /const sessionId = assistSessionId\(\);/, 'a fresh id before each create');
+});

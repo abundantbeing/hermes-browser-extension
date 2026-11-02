@@ -358,11 +358,8 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         activeProfile: settings.activeProfile || settings.profile || '',
       }),
     });
-    const sessionId = assistSessionId();
     const adapterLabel = String(request.adapterId || 'Browser').replace(/(^|[-_\s])([a-z])/g, (_, lead, letter) => `${lead}${letter.toUpperCase()}`);
     const titleStamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
-    const titleNonce = sessionId.slice(-4);
-    const sessionTitle = `Hermes Assist · ${adapterLabel} · ${titleStamp} · ${titleNonce}`;
     const gatewayCapabilities = await loadAssistGatewayCapabilities(client);
     const { policy: assistPolicy, request: routeRequest } = buildAssistModelRouteRequest(
       settings,
@@ -374,12 +371,17 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
     let modelNotice = assistPolicy.mode === 'gateway-default-fallback'
       ? assistModelFallbackNotice(requestedSelection, 'this gateway does not advertise exact model routing')
       : '';
-    let resolvedSessionId = sessionId;
-    let resolvedTitle = sessionTitle;
+    let resolvedSessionId = '';
+    let resolvedTitle = '';
     let text = '';
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let createdThisAttempt = false;
+      // A fresh id for each attempt: Hermes never reuses the id of a session it deleted.
+      const sessionId = assistSessionId();
+      const sessionTitle = `Hermes Assist · ${adapterLabel} · ${titleStamp} · ${sessionId.slice(-4)}`;
+      resolvedSessionId = sessionId;
+      resolvedTitle = sessionTitle;
       try {
         const createResponse = await client.fetch('/api/sessions', {
           method: 'POST',
