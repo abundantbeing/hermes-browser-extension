@@ -842,14 +842,12 @@
     launcher.style.top = `${launcherPosition.top}px`;
     setLauncherTone(surfaceToneAt(launcherPosition.left + 12, launcherPosition.top + 12, anchor));
     if (!panel.hidden && panel.dataset.mode === 'bar') {
-      // The quick menu's result bar sits just under the field (or just above it near the bottom).
-      const safe = 8;
-      const width = Math.min(Math.max(targetRect.width, 260), 560, viewportWidth - safe * 2);
-      const barHeight = panel.getBoundingClientRect().height || 60;
-      panel.style.width = `${width}px`;
+      // The quick menu's result bar: under the field and clear of the circle (inlineResultBarPlacement).
+      const bar = policy.inlineResultBarPlacement(targetRect, { top: launcherPosition.top, left: launcherPosition.left, width: 24, height: 24 }, { width: viewportWidth, height: viewportHeight }, { barHeight: panel.getBoundingClientRect().height || 60 });
+      panel.style.width = `${bar.width}px`;
       panel.style.maxHeight = '';
-      panel.style.left = `${Math.max(safe, Math.min(viewportWidth - width - safe, targetRect.left))}px`;
-      panel.style.top = `${targetRect.bottom + 8 + barHeight <= viewportHeight - safe ? targetRect.bottom + 8 : Math.max(safe, targetRect.top - 8 - barHeight)}px`;
+      panel.style.left = `${bar.left}px`;
+      panel.style.top = `${bar.top}px`;
     } else if (!panel.hidden) {
       // The panel opens right at the circle: just below it, lined up with its left edge, or just above it
       // when there is clearly more room there. It never jumps to a detached corner of the page.

@@ -370,6 +370,22 @@ export function inlineLauncherPlacement(anchorRect = {}, viewport = {}, options 
 //                minGapBelow (default 20) below the control so it never touches it
 // No placement when the control has no size, the circle would leave the viewport's safe area, or it
 // would cover the field's text or an obstacle (a send button); the caller then uses the generic rule.
+// The quick menu's result bar: under the field, lined up with it, and under the circle too when the circle
+// sits below the field (YouTube, X), so it never covers the circle. Near the bottom of the screen it goes above
+// both instead.
+export function inlineResultBarPlacement(fieldRect = {}, circleRect = null, viewport = {}, { barHeight = 60, gap = 8, safe = 8 } = {}) {
+  const viewportWidth = Number(viewport.width) || 0;
+  const viewportHeight = Number(viewport.height) || 0;
+  const width = Math.min(Math.max(Number(fieldRect.width) || 0, 260), 560, viewportWidth - safe * 2);
+  const circleTop = circleRect ? Number(circleRect.top) : Infinity;
+  const circleBottom = circleRect ? Number(circleRect.top) + (Number(circleRect.height) || 24) : -Infinity;
+  const below = Math.max(Number(fieldRect.bottom) || 0, circleBottom) + gap;
+  const above = Math.min(Number(fieldRect.top) || 0, circleTop) - gap - barHeight;
+  const top = below + barHeight <= viewportHeight - safe ? below : Math.max(safe, above);
+  const left = Math.max(safe, Math.min(viewportWidth - width - safe, Number(fieldRect.left) || 0));
+  return { top, left, width };
+}
+
 export function inlineSlotPlacement(slot = {}, viewport = {}, options = {}) {
   const size = Math.max(20, Number(options.size || 24));
   const safe = Math.max(0, Number(options.safe ?? 8));
@@ -620,6 +636,7 @@ export const INLINE_DRAFT_API = Object.freeze({
   inlineLauncherPosition,
   inlineLauncherPlacement,
   inlineSlotPlacement,
+  inlineResultBarPlacement,
   applyResult: applyInlineDraftResult,
   undoResult: undoInlineDraftResult,
   runLocalTransform: runInlineLocalTransform,

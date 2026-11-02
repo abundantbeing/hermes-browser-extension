@@ -459,3 +459,18 @@ test('an action that writes from the page runs on an empty field; one that edits
   assert.match(buildInlineDraftPrompt(timestamp.request), /Draft the text that belongs in the focused field/);
   assert.ok(inlineDraft.normalizeInlineDraftRequest(timestamp.request), 'the background accepts it');
 });
+
+test('the result bar sits under the field and under the circle when the circle is below the field', () => {
+  const viewport = { width: 1280, height: 900 };
+  // YouTube: the field ends at 124 and the circle sits under it, at 167–191, beside the emoji button.
+  const youtube = inlineDraft.inlineResultBarPlacement({ left: 176, top: 95, right: 980, bottom: 124, width: 804, height: 29 }, { left: 228, top: 167, width: 24, height: 24 }, viewport, { barHeight: 90 });
+  assert.equal(youtube.top, 199, '8px under the circle, not over it');
+  assert.equal(youtube.left, 176);
+  assert.equal(youtube.width, 560);
+  // A circle beside the field changes nothing: 8px under the field.
+  const beside = inlineDraft.inlineResultBarPlacement({ left: 100, top: 100, right: 500, bottom: 200, width: 400, height: 100 }, { left: 508, top: 176, width: 24, height: 24 }, viewport, { barHeight: 90 });
+  assert.equal(beside.top, 208);
+  // Near the bottom of the screen it goes above both.
+  const low = inlineDraft.inlineResultBarPlacement({ left: 100, top: 760, right: 500, bottom: 800, width: 400, height: 40 }, { left: 100, top: 808, width: 24, height: 24 }, viewport, { barHeight: 90 });
+  assert.equal(low.top, 760 - 8 - 90);
+});
