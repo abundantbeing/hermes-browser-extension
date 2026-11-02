@@ -23502,6 +23502,8 @@ function renderInlineAssistSites() {
       }
       select.value = state;
       row.append(select);
+      // The same branded dropdown as every other Settings select, not the browser's list.
+      mountBrandedSelect(select);
     } else {
       const fixed = document.createElement('span');
       fixed.className = 'inline-assist-site-state';
@@ -23524,7 +23526,7 @@ function renderInlineAssistSites() {
 
 function focusInlineAssistSite(site) {
   const row = [...(els.inlineAssistSites?.children || [])].find((item) => item.dataset.site === site);
-  (row?.querySelector('select') || row?.querySelector('button') || els.inlineAssistAddSite)?.focus();
+  (row?.querySelector('.branded-select-button') || row?.querySelector('select') || row?.querySelector('button') || els.inlineAssistAddSite)?.focus();
 }
 
 function handleInlineAssistSiteChange(event) {

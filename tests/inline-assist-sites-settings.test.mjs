@@ -19,6 +19,10 @@ const constant = (name) => new Function(`return ${sidepanelSource.match(new RegE
 
 async function sitesPanel({ hidden = [], contextPrefs = {}, tabs = [] } = {}) {
   const h = await createSettingsSaveHarness();
+  // branded-select.mjs builds its button with the page's own document and events.
+  globalThis.document = h.document;
+  globalThis.Event = h.document.defaultView.Event;
+  globalThis.MutationObserver = h.document.defaultView.MutationObserver;
   h.scope.inlineAssistHiddenSites = hidden;
   h.scope.INLINE_ASSIST_SITE_STATES = constant('INLINE_ASSIST_SITE_STATES');
   h.scope.inlineSiteContextPreferences = contextPrefs;
@@ -112,4 +116,11 @@ test('a change from a page follows into an unedited list, and never over unsaved
   edited.h.fn('adoptInlineAssistSitesChange')({ hidden: ['page.example', 'new.example'] });
   assert.deepEqual(edited.rows().map((item) => item.dataset.site), []);
   assert.deepEqual(edited.h.scope.inlineAssistHiddenSites, ['page.example', 'new.example']);
+});
+
+test('each site’s setting uses the side panel’s branded dropdown, not the browser’s select list', async () => {
+  const { row } = await sitesPanel({ contextPrefs: { gmail: 'visible' } });
+  const select = row('gmail').querySelector('select');
+  assert.ok(select.brandedSelect, 'mounted as a branded select');
+  assert.ok(row('gmail').querySelector('.branded-select'), 'the branded button sits in the row');
 });
