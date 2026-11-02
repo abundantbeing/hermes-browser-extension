@@ -12347,3 +12347,108 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
 .assist-open-thumb b { display: block; height: 7px; background: rgba(255, 248, 220, .7); }
 .assist-open-thumb .thumb-panel b { height: 14px; background: rgba(255, 248, 220, .18); }
 .assist-open-thumb .thumb-panel b:first-child { background: #fff8dc; }
+
+/* Hermes Assist settings rows: what the setting is on the left, its control on the right, in one group with
+   hairlines between the rows. The controls keep their own look (the selects, the model picker button and the
+   switch); only their place changes. */
+.assist-setting-rows {
+  display: grid;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.18);
+  background: var(--hermes-paper);
+}
+.settings-dialog .assist-setting-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 10px;
+  border-top: 1px solid rgba(var(--hermes-ink-rgb),0.12);
+}
+.settings-dialog .assist-setting-row:first-child { border-top: 0; }
+.settings-dialog .assist-setting-row:has(input[type="checkbox"]) { cursor: pointer; }
+.assist-setting-row .settings-toggle-copy small { display: block; margin-top: 3px; }
+.assist-setting-row > select,
+.assist-setting-row > #inlineAssistModelButton {
+  width: auto;
+  min-width: 0;
+  max-width: 11rem;
+  margin-top: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.assist-setting-row > #inlineAssistModelButton { min-height: 34px; padding-block: 7px; }
+.assist-setting-row:focus-within { outline: 2px solid rgba(var(--hermes-accent-rgb),0.5); outline-offset: -2px; }
+.assist-setting-row:has(input:checked) .settings-switch {
+  border-color: var(--hermes-accent);
+  background: var(--hermes-primary-bg);
+}
+.assist-setting-row:has(input:checked) .settings-switch::after {
+  transform: translateX(14px);
+  background: var(--hermes-primary-fg);
+}
+
+/* Sites: each one a pill, "site · setting ×", with Add as the last pill. */
+.inline-assist-sites { display: grid; gap: 8px; }
+.inline-assist-sites .settings-toggle-copy small { display: block; margin-top: 3px; }
+.inline-assist-sites-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.inline-assist-sites-list { display: contents; margin: 0; padding: 0; list-style: none; }
+.inline-assist-sites-list[hidden] { display: none; }
+.inline-assist-site {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  padding: 2px 3px 2px 10px;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.24);
+  border-radius: 999px;
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+  line-height: 1.3;
+}
+.inline-assist-site-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inline-assist-site-name::after { content: " ·"; color: var(--hermes-muted); }
+.inline-assist-site .inline-assist-site-state {
+  margin: 0;
+  padding: 2px 2px 2px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--hermes-muted);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.inline-assist-site select.inline-assist-site-state { width: auto; cursor: pointer; }
+.inline-assist-site-remove {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hermes-muted);
+  font-size: calc(13px * var(--hermes-text-zoom, 1));
+  line-height: 1;
+  cursor: pointer;
+}
+.inline-assist-site-remove:hover,
+.inline-assist-site-remove:focus-visible { background: rgba(var(--hermes-ink-rgb),0.1); color: var(--hermes-ink); }
+.settings-dialog .inline-assist-site-add {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 3px 10px;
+  border: 1px dashed rgba(var(--hermes-ink-rgb),0.32);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hermes-ink);
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+  line-height: 1.3;
+  cursor: pointer;
+}
+.settings-dialog .inline-assist-site-add:hover,
+.settings-dialog .inline-assist-site-add:focus-visible { border-style: solid; border-color: var(--hermes-accent); }

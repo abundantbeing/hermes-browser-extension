@@ -1500,47 +1500,59 @@
               </label>
             </div>
           </fieldset>
-          <label>
-            <span data-i18n="ui.default.session.route">Default session route</span>
-            <select id="inlineAssistDefaultRoute">
-              <option value="ask" data-i18n="ui.ask.every.time">Ask every time</option>
-              <option value="current" data-i18n="ui.continue.current.chat">Continue current chat</option>
-              <option value="new" data-i18n="ui.start.new.assist.session">Start new Assist session</option>
-              <option value="background" data-i18n="ui.run.in.background">Run in background</option>
-            </select>
-          </label>
-          <div class="inline-assist-model-setting">
-            <span data-i18n="ui.hermes.assist.model">Hermes Assist model</span>
-            <button id="inlineAssistModelButton" class="model-menu-button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose the model used by Hermes Assist" disabled data-i18n-title="ui.choose.the.model.used.by.hermes.assist">
-              <span id="inlineAssistModelLabel">Choose Assist model</span><span aria-hidden="true">⌄</span>
-            </button>
-            <input id="inlineAssistModel" type="hidden" />
-          </div>
-          <label class="settings-toggle-card">
-            <span class="settings-toggle-copy">
-              <strong data-i18n="ui.replace.text.automatically">Replace text automatically</strong>
-              <small data-i18n="ui.undo.is.always.one.click.away">Undo is always one click away</small>
-            </span>
-            <input id="inlineAssistAutoReplace" class="settings-switch-input" type="checkbox" />
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-          <label>
-            <span data-i18n="ui.assist.session.history">Assist session history</span>
-            <select id="inlineAssistSessionRetention">
-              <option value="keep" data-i18n="ui.keep.assist.sessions">Keep Assist sessions</option>
-              <option value="delete" data-i18n="ui.delete.after.the.draft.returns">Delete after the draft returns</option>
-            </select>
-          </label>
-          <div class="inline-assist-sites">
-            <div class="inline-assist-sites-head">
+          <!-- Each row: what it is on the left, its control on the right. -->
+          <div class="assist-setting-rows">
+            <label class="assist-setting-row">
               <span class="settings-toggle-copy">
-                <strong data-i18n="ui.sites">Sites</strong>
-                <small data-i18n="ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden">Where Assist reads the thread, and where the circle stays hidden.</small>
+                <strong data-i18n="ui.where.it.runs">Where it runs</strong>
+                <small data-i18n="ui.asked.once.then.remembered">Asked once, then remembered</small>
               </span>
-              <button id="inlineAssistAddSite" class="secondary" type="button" data-i18n="ui.add.this.site">+ Add this site</button>
+              <select id="inlineAssistDefaultRoute">
+                <option value="ask" data-i18n="ui.ask.every.time">Ask every time</option>
+                <option value="current" data-i18n="ui.continue.current.chat">Continue current chat</option>
+                <option value="new" data-i18n="ui.start.new.assist.session">Start new Assist session</option>
+                <option value="background" data-i18n="ui.run.in.background">Run in background</option>
+              </select>
+            </label>
+            <div class="assist-setting-row inline-assist-model-setting">
+              <span class="settings-toggle-copy">
+                <strong data-i18n="ui.model.68c2cc7f">Model</strong>
+                <small data-i18n="ui.used.only.by.assist">Used only by Assist</small>
+              </span>
+              <button id="inlineAssistModelButton" class="model-menu-button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose the model used by Hermes Assist" disabled data-i18n-title="ui.choose.the.model.used.by.hermes.assist">
+                <span id="inlineAssistModelLabel">Choose Assist model</span><span aria-hidden="true">⌄</span>
+              </button>
+              <input id="inlineAssistModel" type="hidden" />
             </div>
-            <!-- The rows only show #inlineAssistSitesValue, which is what Save and the edited markers read. -->
-            <ul id="inlineAssistSites" class="inline-assist-sites-list" data-settings-live hidden></ul>
+            <label class="assist-setting-row">
+              <span class="settings-toggle-copy">
+                <strong data-i18n="ui.replace.text.automatically">Replace text automatically</strong>
+                <small data-i18n="ui.undo.is.always.one.click.away">Undo is always one click away</small>
+              </span>
+              <input id="inlineAssistAutoReplace" class="settings-switch-input" type="checkbox" />
+              <span class="settings-switch" aria-hidden="true"></span>
+            </label>
+            <label class="assist-setting-row">
+              <span class="settings-toggle-copy">
+                <strong data-i18n="ui.keep.assist.chats">Keep Assist chats</strong>
+                <small data-i18n="ui.kept.under.inline.assist.in.your.history">Kept under Inline assist in your history</small>
+              </span>
+              <select id="inlineAssistSessionRetention">
+                <option value="keep" data-i18n="ui.keep.assist.sessions">Keep Assist sessions</option>
+                <option value="delete" data-i18n="ui.delete.after.the.draft.returns">Delete after the draft returns</option>
+              </select>
+            </label>
+          </div>
+          <div class="inline-assist-sites">
+            <span class="settings-toggle-copy">
+              <strong data-i18n="ui.sites">Sites</strong>
+              <small data-i18n="ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden">Where Assist reads the thread, and where the circle stays hidden.</small>
+            </span>
+            <div class="inline-assist-sites-chips">
+              <!-- The pills only show #inlineAssistSitesValue, which is what Save and the edited markers read. -->
+              <ul id="inlineAssistSites" class="inline-assist-sites-list" data-settings-live hidden></ul>
+              <button id="inlineAssistAddSite" class="inline-assist-site-add" type="button" data-i18n="ui.add.this.site">+ Add this site</button>
+            </div>
             <p id="inlineAssistSitesEmpty" class="hint" data-i18n="ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open">No sites yet. Change one from the Assist panel on a page, or add the site you have open.</p>
             <p id="inlineAssistSitesHint" class="hint" data-i18n="ui.open.a.web.page.first.then.add.it.here" hidden>Open a web page first, then add it here.</p>
             <input id="inlineAssistSitesValue" type="hidden" />

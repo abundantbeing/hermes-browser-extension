@@ -169,3 +169,16 @@ test('the Sites list merges where Assist reads the thread with where the circle 
   assert.equal(inlineAssistSiteEntries(removed).some((entry) => entry.site === 'gmail'), false);
   assert.deepEqual(model.hidden, ['reddit', 'forum.example'], 'the original model is not changed');
 });
+
+test('Where it runs, Model, Replace text automatically and Keep Assist chats are rows: the name left, the control right', () => {
+  const section = settingsSection();
+  for (const id of ['#inlineAssistDefaultRoute', '#inlineAssistModelButton', '#inlineAssistAutoReplace', '#inlineAssistSessionRetention']) {
+    const row = section.querySelector(id).closest('.assist-setting-row');
+    assert.ok(row, `${id} sits in a row`);
+    assert.ok(row.firstElementChild.matches('.settings-toggle-copy'), `${id}: the name comes first`);
+  }
+  const css = loadExtensionFile('sidepanel.css');
+  assert.match(css, /\n\.settings-dialog \.assist-setting-row \{[^}]*grid-template-columns: minmax\(0, 1fr\) auto;/);
+  assert.match(css, /\n\.inline-assist-site \{[^}]*border-radius: 999px;/, 'sites are pills');
+  assert.ok(section.querySelector('.inline-assist-sites-chips #inlineAssistAddSite'), 'Add this site is the last pill');
+});
