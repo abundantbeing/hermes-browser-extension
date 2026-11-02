@@ -246,3 +246,15 @@ test('opaque provider model identifiers stay case-sensitive', () => {
     /did not acknowledge/i,
   );
 });
+
+test('a session that confirms the selected model without naming its provider is accepted', () => {
+  // Hermes' session create returns the locked model (model + has_model_config) but no provider field.
+  const selection = { model: 'claude-haiku-5-5', provider: 'anthropic' };
+  assert.deepEqual(
+    assertAssistModelSelectionAcknowledged({ object: 'hermes.session', session: { model: 'claude-haiku-5-5', has_model_config: true } }, selection),
+    selection,
+  );
+  assert.throws(() => assertAssistModelSelectionAcknowledged({ session: { model: 'claude-haiku-5-5', provider: 'openrouter' } }, selection), /did not acknowledge/i, 'a different named provider');
+  assert.throws(() => assertAssistModelSelectionAcknowledged({ session: { model: 'gpt-6.1-terra' } }, selection), /did not acknowledge/i, 'a different model');
+  assert.throws(() => assertAssistModelSelectionAcknowledged({ session: {} }, selection), /did not acknowledge/i, 'no model at all');
+});

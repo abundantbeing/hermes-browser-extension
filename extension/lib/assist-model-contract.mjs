@@ -151,12 +151,14 @@ export function assertAssistModelSelectionAcknowledged(payload = {}, selection =
   const runtime = acknowledgedRuntime(payload);
   const actualModel = clean(runtime.model);
   const actualProvider = clean(runtime.provider);
-  if (actualModel !== expectedModel || actualProvider !== expectedProvider) {
+  // Hermes' session create confirms the locked model but does not name its provider. A missing provider is
+  // accepted when the model matches; a different model, or a different named provider, is refused.
+  if (actualModel !== expectedModel || (actualProvider && actualProvider !== expectedProvider)) {
     throw new Error(
       `Hermes Assist refused to run because Hermes did not acknowledge the selected model (${expectedProvider} / ${expectedModel}). `
       + `Hermes acknowledged ${actualProvider || 'no provider'} / ${actualModel || 'no model'}. `
       + 'Update or restart Hermes Agent before trying again.',
     );
   }
-  return { model: actualModel, provider: actualProvider };
+  return { model: actualModel, provider: actualProvider || expectedProvider };
 }
