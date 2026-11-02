@@ -28086,6 +28086,24 @@ async function resolveInlineDraftPrompt(request, source = settings) {
   return buildInlineDraftPrompt(inlineDraftRequestForEffectiveContext(request, sendTimeSettings));
 }
 
+// The draft Assist puts in the field: Hermes's final reply. A turn can also hold text the agent wrote
+// before a tool call, which the chat shows with it; that is not part of the draft. Read from the chat's
+// stored history, newest first, stopping at this turn's own message.
+async function finalInlineDraftReply(sessionId, answer) {
+  try {
+    const { messages: rows = [] } = await fetchSessionMessagesQuietly(sessionId);
+    for (let index = rows.length - 1; index >= 0; index -= 1) {
+      const row = rows[index] || {};
+      if (row.role === 'user') break;
+      const toolCalls = Array.isArray(row.tool_calls) && row.tool_calls.length > 0;
+      if (row.role === 'assistant' && String(row.content || '').trim() && !toolCalls) return String(row.content);
+    }
+  } catch {
+    // No history to read: the reply as it streamed.
+  }
+  return answer;
+}
+
 // This panel's settings with Assist's own as saved (model, effort, thinking): the page writes them.
 async function savedInlineAssistSettings() {
   const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
@@ -28162,7 +28180,7 @@ async function processInlineDraftRequest(rawRequest) {
       modelRoute,
       displayUserText: assistRequestSummary(prompt) || `Hermes Assist · ${request.actionLabel}`,
       onComplete: async (answer) => {
-        const text = sanitizeInlineDraftResult(answer);
+        const text = sanitizeInlineDraftResult(await finalInlineDraftReply(inlineSessionId, answer));
         resultSent = await sendInlineDraftResult({ ...request, tabId }, {
           ok: true,
           text,

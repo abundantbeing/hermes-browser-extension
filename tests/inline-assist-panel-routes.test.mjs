@@ -228,3 +228,35 @@ test('an effort picked on the page reaches an open panel\'s settings, so its nex
   assert.equal(h.scope.settings.inlineAssistReasoningEffort, 'ultra');
   assert.equal(h.scope.settings.inlineAssistThinkingEnabled, true);
 });
+
+test('the draft sent back to the field is Hermes\'s final reply, not text written before a tool call', async () => {
+  const { process, sent, h } = await panel({ reply: 'First take.\n\nFinal reply.' });
+  h.scope.fetchSessionMessagesQuietly = async () => ({ messages: [
+    { role: 'user', content: 'Earlier' },
+    { role: 'assistant', content: 'An earlier answer.' },
+    { role: 'user', content: 'Hermes Assist · Draft a reply' },
+    { role: 'assistant', content: 'First take.', tool_calls: [{ id: 'call_1' }] },
+    { role: 'tool', content: '{"skill":"unslop"}' },
+    { role: 'assistant', content: 'Final reply.' },
+  ] });
+  await process(rawRequest('current'));
+  const result = sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT');
+  assert.equal(result.message.text, 'Final reply.');
+});
+
+test('when the chat\'s history cannot be read, the draft is the reply as it streamed', async () => {
+  const { process, sent, h } = await panel({ reply: 'Streamed reply.' });
+  h.scope.fetchSessionMessagesQuietly = async () => { throw new Error('offline'); };
+  await process(rawRequest('current'));
+  assert.equal(sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').message.text, 'Streamed reply.');
+});
+
+test('a turn whose final reply is not stored yet never takes an earlier turn\'s answer', async () => {
+  const { process, sent, h } = await panel({ reply: 'This turn.' });
+  h.scope.fetchSessionMessagesQuietly = async () => ({ messages: [
+    { role: 'assistant', content: 'An earlier answer.' },
+    { role: 'user', content: 'Hermes Assist · Draft a reply' },
+  ] });
+  await process(rawRequest('current'));
+  assert.equal(sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').message.text, 'This turn.');
+});
