@@ -119,6 +119,7 @@ test('the footer is a tidy grid: four equal cells, label above control, the safe
 
 test('the instant tools share their row in equal parts, with no gap left over', () => {
   assert.match(assistCss(), /\.local-actions \{[^}]*display:grid; grid-template-columns:repeat\(auto-fit,minmax\(0,1fr\)\);/);
+  assert.match(assistCss(), /\.local-actions \.action \{[^}]*text-align:center;/, 'each label sits in the middle of its button');
 });
 
 test('the instruction box is one line that grows as you type, with a short hint and a button its height', async () => {
