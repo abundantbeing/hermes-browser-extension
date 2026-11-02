@@ -19,6 +19,7 @@ const SITES = [
   ['reddit.html', 'https://www.reddit.com/r/test/comments/1/x/'],
   ['linkedin.html', 'https://www.linkedin.com/feed/'],
   ['github.html', 'https://github.com/o/r/issues/1'],
+  ['github-wide-toolbar.html', 'https://github.com/o/r/pull/147'],
 ];
 const fieldIn = (document) => document.querySelector('[contenteditable="true"], textarea');
 
@@ -28,7 +29,8 @@ for (const [name, url] of SITES) {
     const profile = inspectInlineSite(document, fieldIn(document), { url });
     const slot = profile.placement.slot;
     assert.ok(slot, `${name} found no slot`);
-    assert.equal(slot.element, document.querySelector('[data-expect-slot]'));
+    // Compared by markup: a failing assert on two DOM nodes would try to print both whole trees.
+    assert.ok(slot.element === document.querySelector('[data-expect-slot]'), `${name}: slot is ${slot.element?.outerHTML?.slice(0, 120)}`);
     const row = document.querySelector('[data-expect-row]');
     if (row) assert.equal(slot.rowElement, row);
     assert.deepEqual(profile.placement.preferred, ['corner-outside', 'corner-inside', 'below-end']);
@@ -101,6 +103,14 @@ test('ChatGPT: the circle sits 12px before the dictate button', async () => {
   assert.equal(launcher.dataset.placement, 'before');
   assert.equal(launcher.style.left, '830px');
   assert.equal(launcher.style.top, '682px');
+});
+
+test('GitHub: the circle sits just before the first toolbar button, not before the toolbar box', async () => {
+  const env = boot('github-wide-toolbar.html', 'https://github.com/o/r/pull/147');
+  const launcher = await focusedLauncher(env);
+  assert.equal(launcher.dataset.placement, 'before');
+  // H starts at 412: 8px gap, 24px circle.
+  assert.equal(launcher.style.left, '380px');
 });
 
 test('any other site: 8px outside the field’s bottom-right corner', async () => {

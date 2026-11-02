@@ -691,9 +691,15 @@ function inlineSlot(target, adapterId) {
     return element ? { element, strategy: 'before', gap: 8, obstacles: [] } : null;
   }
   if (adapterId === 'github') {
-    // Comment form: at the front of the Markdown toolbar.
+    // Comment form: at the front of the Markdown toolbar. github.com stretches the toolbar box across the
+    // header and lines its buttons up at the far end, so the circle goes before the first button that is
+    // showing, not before the box.
     const form = target.closest?.('form, .CommentBox, [class*="MarkdownEditor"]');
-    const element = firstMatch(form, ['markdown-toolbar', '[aria-label="Formatting tools"]', '[role="toolbar"]']);
+    const toolbar = firstMatch(form, ['markdown-toolbar', '[aria-label="Formatting tools"]', '[role="toolbar"]']);
+    // Visibility is checked only where there is layout (the toolbar itself has a size).
+    const laidOut = (toolbar?.getBoundingClientRect?.()?.width || 0) > 0;
+    const shown = (element) => !laidOut || (element.getBoundingClientRect?.()?.width || 0) > 0;
+    const element = Array.from(toolbar?.querySelectorAll?.('button, [role="button"]') || []).find(shown) || toolbar;
     return element ? { element, strategy: 'before', gap: 8, obstacles: [] } : null;
   }
   return null;
