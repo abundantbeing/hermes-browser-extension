@@ -127,9 +127,15 @@
     .launcher[data-icon="girl"] .launcher-logo { width:22px; height:22px; }
     .launcher[hidden], .panel[hidden] { display:none; }
     .panel { position:fixed; z-index:1; width:min(380px,calc(100vw - 20px)); max-height:min(680px,calc(100vh - 20px)); overflow:auto; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); pointer-events:auto; box-shadow:0 18px 50px rgba(0,0,0,.32), 0 0 0 1px color-mix(in srgb,var(--hb-blue) 14%,transparent); }
+    /* The branded scrollbar on every area that scrolls, as in the side panel: a thin thumb in the theme's ink, a
+       clear track and no arrow buttons. Firefox, which has no ::-webkit-scrollbar, gets the same colours. */
     .panel, .preview, .custom { scrollbar-gutter:stable; }
-    .panel::-webkit-scrollbar, .preview::-webkit-scrollbar, .custom::-webkit-scrollbar { width:8px; }
-    .panel::-webkit-scrollbar-thumb, .preview::-webkit-scrollbar-thumb, .custom::-webkit-scrollbar-thumb { background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); }
+    .panel::-webkit-scrollbar, .preview::-webkit-scrollbar, .custom::-webkit-scrollbar, .dd-list::-webkit-scrollbar { width:8px; height:8px; }
+    .panel::-webkit-scrollbar-thumb, .preview::-webkit-scrollbar-thumb, .custom::-webkit-scrollbar-thumb, .dd-list::-webkit-scrollbar-thumb { background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); }
+    .panel::-webkit-scrollbar-track, .preview::-webkit-scrollbar-track, .custom::-webkit-scrollbar-track, .dd-list::-webkit-scrollbar-track { background:transparent; }
+    .panel::-webkit-scrollbar-button, .preview::-webkit-scrollbar-button, .custom::-webkit-scrollbar-button, .dd-list::-webkit-scrollbar-button { display:none; width:0; height:0; }
+    .panel::-webkit-scrollbar-corner, .preview::-webkit-scrollbar-corner, .custom::-webkit-scrollbar-corner, .dd-list::-webkit-scrollbar-corner { background:transparent; }
+    @supports not selector(::-webkit-scrollbar) { .panel, .preview, .custom, .dd-list { scrollbar-width:thin; scrollbar-color:rgba(var(--hermes-fg-rgb),0.45) transparent; } }
     .head { display:grid; grid-template-columns:30px 1fr 44px; gap:12px; align-items:center; padding:14px; border-bottom:1px solid var(--hb-line); }
     .brand-mark { display:grid; place-items:center; width:30px; height:30px; padding:0; border-radius:50%; background:var(--hb-blue); }
     .brand-logo { width:22px; height:22px; background:var(--hb-paper); }
