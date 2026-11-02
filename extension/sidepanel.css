@@ -12317,6 +12317,7 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
 /* Hermes Assist button icon: each card shows the two circles the content script picks between, the light
    one (for dark pages) and the dark one (for light pages), bare on the card. A hairline ring keeps each
    circle visible on a card of its own colour. */
+.inline-assist-settings .settings-choice-group legend { margin-bottom: 10px; }
 .assist-icon-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .settings-dialog .settings-choice-card.assist-icon-card { justify-items: center; text-align: center; }
 .assist-icon-preview { display: flex; justify-content: center; gap: 8px; }

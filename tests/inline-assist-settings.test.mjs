@@ -128,3 +128,9 @@ test('an icon picked here and not saved yet is not overwritten by another panel'
   assert.equal(h.els.inlineAssistIconInputs.find((input) => input.checked)?.value, 'staff');
   assert.equal(h.scope.settings.inlineAssistIcon, 'girl');
 });
+
+test('the Assist choice headings keep a gap above their cards', () => {
+  // A fieldset legend is not a grid item, so the group's gap never reaches it: it needs its own margin.
+  const css = loadExtensionFile('sidepanel.css');
+  assert.match(css, /\n\.inline-assist-settings \.settings-choice-group legend \{[^}]*margin-bottom: 10px;/);
+});
