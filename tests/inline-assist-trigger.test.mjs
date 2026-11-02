@@ -186,3 +186,17 @@ test('a custom local font is read from the computer under a random name, never b
   assert.match(local[0], /^HermesAssist-[0-9a-f]{8}-[0-9a-f]{6}$/);
   assert.ok(css.includes(`--hb-font-ui: "${local[0]}"`));
 });
+
+test('an edit action on an empty field says to type something first, not that the field is not eligible', async () => {
+  const env = boot({ settings: { inlineAssistDefaultRoute: 'background' } });
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  const improve = [...env.root().querySelectorAll('.actions .action')].find((item) => /Improve writing/.test(item.textContent));
+  env.userClick(improve);
+  await env.sleep(60);
+  assert.equal(env.sent.some((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST'), false);
+  const status = env.root().querySelector('.status').textContent;
+  assert.match(status, /works on what is already in the field/);
+  assert.doesNotMatch(status, /not eligible/);
+});

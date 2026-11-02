@@ -957,9 +957,10 @@
       redact: (text) => extractor?.redactSensitiveTextWithCount?.(text) || { text, count: 0 },
     });
     if (!built.ok) {
-      return renderFailure(built.reason === 'sensitive-content'
-        ? 'Hermes blocked this field because it appears to contain sensitive content.'
-        : 'This field is not eligible for inline drafting.');
+      if (built.reason === 'sensitive-content') return renderFailure('Hermes blocked this field because it appears to contain sensitive content.');
+      // Improve, Shorten, Fix grammar and Change tone rewrite the field's text; only the Draft actions start from nothing.
+      if (built.reason === 'empty-draft') return renderFailure(`${translateUiText(action.label)} works on what is already in the field. Type something first, or pick a Draft action to start from nothing.`);
+      return renderFailure('This field is not eligible for inline drafting.');
     }
     pending = { ...built.request, applyMode: supportsSafeApply ? 'safe-apply' : 'copy-only' };
     resetResult();
