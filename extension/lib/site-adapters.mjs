@@ -713,6 +713,10 @@ function isHermesWeb(document, url) {
 function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
   if (!target) return [];
   const all = (root, selector) => Array.from(root?.querySelectorAll?.(selector) || []);
+  if (chatComposer) {
+    const slot = trailingControlsSlot(target);
+    return slot ? [slot] : [];
+  }
   if (adapterId === 'x') {
     // Reply, post and quote composers: the media toolbar under the editable, the account avatar beside it.
     // X nests its editor deep, so the composer is looked for well up the tree.
@@ -720,7 +724,11 @@ function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
     const toolbar = composer?.querySelector('[data-testid="toolBar"]');
     if (!toolbar) return [];
     const send = all(composer, '[data-testid="tweetButtonInline"], [data-testid="tweetButton"]');
-    const tools = all(toolbar, 'button, [role="button"]').filter((element) => !send.includes(element));
+    // The media buttons only: the character counter and the add-post button by Reply are not tools, and
+    // the circle covers none of the toolbar's controls.
+    const media = firstMatch(toolbar, ['[data-testid="ScrollSnap-List"]', 'nav[role="navigation"]', 'nav']) || toolbar;
+    const tools = all(media, 'button, [role="button"]').filter((element) => !send.includes(element));
+    const controls = [...all(toolbar, 'button, [role="button"], [role="progressbar"]'), ...send];
     const slots = [];
     // Centred under the avatar on the media row. The avatar is the composer's own: beside the editable,
     // at its height, not the avatar of the post being replied to.
@@ -729,10 +737,10 @@ function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
       const box = laidOutBox(element);
       return !box || !field || (box.right <= field.left + 4 && Math.abs(box.top - field.top) < 90);
     });
-    if (avatar) slots.push({ element: avatar, rowElement: toolbar, strategy: 'below-center', gap: 12, minGapBelow: 20, obstacles: [...send, ...tools] });
+    if (avatar) slots.push({ element: avatar, rowElement: toolbar, strategy: 'below-center', gap: 12, minGapBelow: 20, obstacles: controls });
     // Where the media buttons start right under the avatar (the pop-out reply), at the end of them instead.
     const lastTool = tools.filter((element) => laidOutBox(element) || !field).at(-1);
-    if (lastTool) slots.push({ element: lastTool, rowElement: toolbar, strategy: 'after', gap: 12, obstacles: send });
+    if (lastTool) slots.push({ element: lastTool, rowElement: toolbar, strategy: 'after', gap: 12, obstacles: controls.filter((element) => element !== lastTool) });
     return slots;
   }
   const slot = inlineSlot(target, adapterId, { chatComposer, all });
@@ -855,7 +863,9 @@ export function inspectInlineSite(document, target, options = {}) {
   const privateSurface = PRIVATE_INLINE_SITES.has(adapterId) || surface === 'direct-message';
   const defaultMode = privateSurface ? 'draft' : adapterId === 'generic' ? 'draft' : 'visible';
   const contextMode = preferences[adapterId] || defaultMode;
-  const chatComposer = CHAT_COMPOSER_SITES.has(adapterId) || (adapterId === 'generic' && isHermesWeb(document, url));
+  const chatComposer = CHAT_COMPOSER_SITES.has(adapterId)
+    || (adapterId === 'generic' && isHermesWeb(document, url))
+    || (adapterId === 'x' && /^\/i\/grok(\/|$)/.test(url?.pathname || ''));
   const slots = inlineSlots(target, adapterId, { chatComposer });
   const anchorElement = inlineAnchor(target, adapterId);
   const obstacleElements = adapterId === 'chatgpt'

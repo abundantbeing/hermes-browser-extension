@@ -21,6 +21,7 @@ const SITES = [
   ['hermes-web.html', 'http://127.0.0.1:9119/webapp/window'],
   ['github-issue.html', 'https://github.com/o/r/issues/2'],
   ['linkedin-share.html', 'https://www.linkedin.com/feed/'],
+  ['x-grok.html', 'https://x.com/i/grok'],
   ['youtube.html', 'https://www.youtube.com/watch?v=abc'],
   ['gmail.html', 'https://mail.google.com/mail/u/0/#inbox?compose=new'],
   ['reddit.html', 'https://www.reddit.com/r/test/comments/1/x/'],
@@ -225,3 +226,34 @@ test('a hostname names its adapter and the label Settings shows for it', async (
   assert.equal(inlineSiteLabel('youtube'), 'YouTube');
   assert.equal(inlineSiteLabel('notes.example.org'), 'notes.example.org');
 });
+
+test('Grok on x.com: just before the Auto picker, as in any chat composer', async () => {
+  const launcher = await focusedLauncher(boot('x-grok.html', 'https://x.com/i/grok'));
+  assert.equal(launcher.dataset.placement, 'before');
+  assert.equal(launcher.style.left, '698px');
+  assert.equal(launcher.style.top, '114px');
+});
+
+
+// Hard rule: the circle never covers one of the site's own controls (a button, a link, X's character
+// counter). Every composer fixture is checked.
+const CONTROLS = 'button, [role="button"], a[aria-label], [role="progressbar"]';
+for (const [name, url] of [
+  ...SITES,
+  ['x-reply-modal.html', 'https://x.com/compose/post'],
+  ['generic.html', 'https://forum.example/new'],
+]) {
+  test(`${name}: the circle covers none of the site's controls`, async () => {
+    const env = boot(name, url);
+    const launcher = await focusedLauncher(env);
+    assert.equal(launcher.hidden, false, `${name}: the circle shows`);
+    const size = launcher.dataset.size === 'small' ? 20 : 24;
+    const left = parseFloat(launcher.style.left);
+    const top = parseFloat(launcher.style.top);
+    const covered = [...env.w.document.querySelectorAll(CONTROLS)].filter((control) => {
+      const box = control.getBoundingClientRect();
+      return box.width > 0 && left < box.right && left + size > box.left && top < box.bottom && top + size > box.top;
+    });
+    assert.deepEqual(covered.map((control) => control.getAttribute('aria-label') || control.textContent.trim() || control.tagName), [], `${name}: covered`);
+  });
+}
