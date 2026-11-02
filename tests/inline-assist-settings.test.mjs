@@ -209,3 +209,15 @@ test('an open-mode pick made here and not saved yet is not overwritten by anothe
   h.fn('adoptInlineAssistOpenModeChange')('panel');
   assert.equal(h.els.inlineAssistOpenModeInputs.find((input) => input.checked)?.value, 'quick');
 });
+
+test('an Assist model picked on a page shows in Settings and holds through an unrelated Save', async () => {
+  const h = await createSettingsSaveHarness({ settings: { inlineAssistModel: 'anthropic::claude-haiku-5-5', inlineAssistRawModel: 'claude-haiku-5-5', inlineAssistProvider: 'anthropic' } });
+  h.scope.settingsBaseline = null;
+  h.scope.renderInlineAssistModelOptions = () => { h.els.inlineAssistModel.value = h.scope.settings.inlineAssistModel; };
+  h.els.inlineAssistModel.value = 'anthropic::claude-haiku-5-5';
+  h.fn('captureSettingsBaseline')();
+  h.fn('adoptInlineAssistModelChange')({ inlineAssistModel: 'openai-codex::gpt-6.1-terra', inlineAssistRawModel: 'gpt-6.1-terra', inlineAssistProvider: 'openai-codex' });
+  assert.equal(h.els.inlineAssistModel.value, 'openai-codex::gpt-6.1-terra');
+  assert.equal(changedPanes(h.scope.settingsBaseline, h.fn('settingsControlEntries')()).size, 0, 'not an unsaved edit');
+  assert.equal(h.scope.settings.inlineAssistProvider, 'openai-codex');
+});

@@ -2956,6 +2956,21 @@ function adoptInlineAssistOpenModeChange(value) {
   }
 }
 
+// The Assist model, which Assist's own picker on a page also saves (model, raw model and provider).
+function adoptInlineAssistModelChange(next = {}) {
+  const input = els.inlineAssistModel;
+  const saved = String(settings.inlineAssistModel || '');
+  settings = {
+    ...settings,
+    inlineAssistModel: String(next.inlineAssistModel || ''),
+    inlineAssistRawModel: String(next.inlineAssistRawModel || ''),
+    inlineAssistProvider: String(next.inlineAssistProvider || ''),
+  };
+  if (!input || input.value !== saved) return;
+  renderInlineAssistModelOptions();
+  adoptSettingsBaselineValue(input);
+}
+
 // And for Keep Assist chats, which the quick menu's options also change on the page.
 function adoptInlineAssistSessionRetentionChange(value) {
   const saved = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
@@ -30025,6 +30040,7 @@ function bindEvents() {
         adoptStoredResponsePresentation(next);
         if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
         if (Object.hasOwn(next, 'inlineAssistOpenMode')) adoptInlineAssistOpenModeChange(next.inlineAssistOpenMode);
+        if (Object.hasOwn(next, 'inlineAssistModel') && next.inlineAssistModel !== settings.inlineAssistModel) adoptInlineAssistModelChange(next);
         if (Object.hasOwn(next, 'inlineAssistSessionRetention')) adoptInlineAssistSessionRetentionChange(next.inlineAssistSessionRetention);
       }
     }
