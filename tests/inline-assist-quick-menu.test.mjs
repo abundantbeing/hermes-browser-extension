@@ -118,3 +118,15 @@ test('the options button is the pixel settings cog, centred in its circle', asyn
   const css = /style\.textContent = `([\s\S]*?)`;/.exec((await import('./inline-assist-dom.mjs')).loadExtensionFile('content-inline-helper.js'))[1];
   assert.match(/\.quick-options \{[^}]*\}/.exec(css)[0], /display:grid; place-items:center; padding:0;/);
 });
+
+test('a screen opened from the quick menu, such as Where should Hermes work?, keeps the panel padding', async () => {
+  const { env, root, panel } = await openQuick({ settings: { inlineAssistDefaultRoute: 'ask' } });
+  env.w.document.getElementById('field').value = 'a rough first draft';
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(80);
+  assert.match(root.querySelector('.route-title')?.textContent || '', /Where should Hermes work/i);
+  assert.equal(panel.dataset.mode, 'quick');
+  assert.equal(panel.dataset.view, 'routing');
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec((await import('./inline-assist-dom.mjs')).loadExtensionFile('content-inline-helper.js'))[1];
+  assert.match(css, /\.panel\[data-mode="quick"\]:not\(\[data-view="quick"\]\):not\(\[data-view="quick-options"\]\) \.body \{ padding:12px; gap:11px; \}/);
+});

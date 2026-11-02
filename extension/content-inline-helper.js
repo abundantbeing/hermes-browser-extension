@@ -210,6 +210,7 @@
     .panel[data-mode="quick"] { width:min(290px,calc(100vw - 20px)); }
     .panel[data-mode="quick"] .head, .panel[data-mode="quick"] .context, .panel[data-mode="quick"] .foot, .panel[data-mode="bar"] .head, .panel[data-mode="bar"] .context, .panel[data-mode="bar"] .foot { display:none; }
     .panel[data-mode="quick"] .body, .panel[data-mode="bar"] .body { padding:0; gap:0; }
+    .panel[data-mode="quick"]:not([data-view="quick"]):not([data-view="quick-options"]) .body { padding:12px; gap:11px; }
     .panel[data-mode="bar"] { max-height:none; overflow:visible; }
     .quick-ask { display:flex; align-items:center; gap:8px; padding:9px 12px; border-bottom:1px solid var(--hb-line); }
     .quick-input { flex:1; min-width:0; border:0; background:transparent; color:var(--hb-blue); font:calc(12.5px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); outline:none; }
@@ -902,6 +903,9 @@
   }
 
   function setBody(...nodes) {
+    // Which screen shows: the quick menu and its options lay themselves out, every other screen keeps the
+    // panel's padding even when it opened from the quick menu.
+    panel.dataset.view = activeView?.name || '';
     body.replaceChildren(...nodes);
     renderFooter();
     position();
