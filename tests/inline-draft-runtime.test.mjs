@@ -134,7 +134,7 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /HERMES_INLINE_SESSION_STATUS/);
   assert.match(source, /sender\?\.tab\?\.id/);
   assert.match(source, /runInlineDraftInServiceWorker/);
-  assert.match(source, /\[INLINE_DRAFT_ROUTES\.BACKGROUND, INLINE_DRAFT_ROUTES\.NEW\]\.includes\(request\.route\)/);
+  assert.match(source, /if \(request\.route === INLINE_DRAFT_ROUTES\.BACKGROUND\) return runInlineDraftInServiceWorker/);
   assert.match(source, /source: restSessionCreateSource\(\)/);
   assert.match(source, /buildAssistModelRouteRequest/);
   assert.match(source, /normalizeGatewayCapabilities/);
@@ -151,7 +151,7 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /resolveBrowserApi/);
   assert.match(source, /browserApi\.storage\.session/);
   assert.doesNotMatch(source, /(?<![\w.])chrome\.storage/);
-  assert.match(source, /openHermesPanel\(sender\.tab, \{ allowFallback: false \}\)/);
+  assert.match(source, /openAssistSidePanelFromGesture\(sender\.tab\)/);
   assert.match(source, /expiresAt/);
   assert.match(source, /createContextMenuController/);
   assert.match(source, /contextMenuController\.handleClick/);
@@ -229,13 +229,29 @@ test('a background Assist retry creates a new session id, since Hermes never reu
   assert.match(loop.slice(0, loop.indexOf("client.fetch('/api/sessions'")), /const sessionId = assistSessionId\(\);/, 'a fresh id before each create');
 });
 
-test('Continue current chat goes to the side panel and never opens a full tab', async () => {
+test('only Run in background runs in the service worker; Continue and New hand off to the side panel', async () => {
   const background = await read('extension/background.js');
-  const queue = background.match(/async function queueInlineDraftRequest\([\s\S]*?\n\}/)?.[0] || '';
-  // An open side panel takes the queued request itself; nothing is opened.
-  assert.match(queue, /if \(await sidePanelIsOpen\(\)\) return \{ ok: true, requestId: request\.requestId \};/);
-  // Otherwise only a real side panel may open: no fallback tab, and the page is told what to do.
-  assert.match(queue, /openHermesPanel\(sender\.tab, \{ allowFallback: false \}\)/);
-  assert.doesNotMatch(queue, /openHermesPanel\(sender\.tab\)\s*[,\]]/);
+  const queue = background.match(/\nfunction queueInlineDraftRequest\([\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(queue, 'queueInlineDraftRequest is synchronous, so the side panel opens inside the click');
+  assert.match(queue, /if \(request\.route === INLINE_DRAFT_ROUTES\.BACKGROUND\) return runInlineDraftInServiceWorker\(request, sender, tabId\);/);
+  assert.doesNotMatch(queue, /INLINE_DRAFT_ROUTES\.NEW\]?\.includes|\[INLINE_DRAFT_ROUTES\.BACKGROUND, INLINE_DRAFT_ROUTES\.NEW\]/);
+  assert.match(queue, /handOffInlineDraftToSidePanel\(\{[\s\S]*openSidePanel: \(\) => openAssistSidePanelFromGesture\(sender\.tab\)/);
+  assert.doesNotMatch(queue, /\bawait\b/);
+  assert.doesNotMatch(queue, /openHermesPanel\(/);
   assert.match(background, /async function sidePanelIsOpen\(\) \{[\s\S]*?getContexts\?\.\(\{ contextTypes: \['SIDE_PANEL'\] \}\)/);
+});
+
+test('Assist opens only a real side panel, never a full tab or a popup window', async () => {
+  const background = await read('extension/background.js');
+  const opener = background.match(/\nfunction openAssistSidePanelFromGesture\([\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(opener, 'the Assist opener');
+  assert.match(opener, /openSidePanelWithConfirmation\(/);
+  assert.doesNotMatch(opener, /\bawait\b/);
+  assert.doesNotMatch(opener, /openHermesPanelFallback|openOrFocusPanelTab|windows\.create|tabs\.create/);
+});
+
+test('a finished background run no longer opens its chat afterwards, outside the click', async () => {
+  const background = await read('extension/background.js');
+  const runner = background.match(/async function runInlineDraftInServiceWorker\([\s\S]*?\n\}/)?.[0] || '';
+  assert.doesNotMatch(runner, /queueOpenSessionRequest/);
 });

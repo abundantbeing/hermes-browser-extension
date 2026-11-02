@@ -34,6 +34,7 @@ import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
 import { HERMES_WEB_LAUNCH_LOOK_MESSAGE, HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
 import { INLINE_ASSIST_FONT_REQUEST, createInlineAssistFontServer } from './lib/inline-assist-font-server.mjs';
 import { createInlineAssistModelServer } from './lib/inline-assist-models.mjs';
+import { handOffInlineDraftToSidePanel } from './lib/inline-assist-handoff.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -466,9 +467,6 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
       sessionTitle: retainedSessionTitle,
       modelNotice,
     });
-    if (request.route === INLINE_DRAFT_ROUTES.NEW && retainedSessionId) {
-      await queueOpenSessionRequest({ sessionId: retainedSessionId }, sender);
-    }
     return { ok: true, requestId: request.requestId, background: request.route === INLINE_DRAFT_ROUTES.BACKGROUND, sessionId: retainedSessionId };
   } catch (error) {
     const reason = error?.message || String(error);
@@ -477,34 +475,53 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
   }
 }
 
-async function queueInlineDraftRequest(message, sender) {
+// Synchronous up to the side panel's open call: the click on the page counts only until the first await.
+function queueInlineDraftRequest(message, sender) {
   const tabId = Number(sender?.tab?.id);
   if (!Number.isFinite(tabId) || tabId <= 0 || Number(sender?.frameId || 0) !== 0) {
-    return { ok: false, reason: 'Inline draft requests must come from the top-level active page.' };
+    return Promise.resolve({ ok: false, reason: 'Inline draft requests must come from the top-level active page.' });
   }
   const request = normalizeInlineDraftRequest(message?.request);
-  if (!request) return { ok: false, reason: 'Inline draft request failed validation.' };
-  if (!browserApi.storage?.session) return { ok: false, reason: 'Session-only draft handoff is unavailable in this browser.' };
-  const queued = {
-    ...request,
-    tabId,
-    windowId: Number(sender?.tab?.windowId) || null,
-    expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
-  };
-  if ([INLINE_DRAFT_ROUTES.BACKGROUND, INLINE_DRAFT_ROUTES.NEW].includes(request.route)) {
-    return runInlineDraftInServiceWorker(request, sender, tabId);
+  if (!request) return Promise.resolve({ ok: false, reason: 'Inline draft request failed validation.' });
+  if (request.route === INLINE_DRAFT_ROUTES.BACKGROUND) return runInlineDraftInServiceWorker(request, sender, tabId);
+  if (!browserApi.storage?.session) return Promise.resolve({ ok: false, reason: 'Session-only draft handoff is unavailable in this browser.' });
+  // Continue current chat and Start new Assist session run in the side panel, where the user sees the turn.
+  return handOffInlineDraftToSidePanel({
+    queued: {
+      ...request,
+      tabId,
+      windowId: Number(sender?.tab?.windowId) || null,
+      expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
+    },
+    storageKey: INLINE_DRAFT_STORAGE_KEY,
+    sessionStorage: browserApi.storage.session,
+    openSidePanel: () => openAssistSidePanelFromGesture(sender.tab),
+    sidePanelIsOpen,
+  });
+}
+
+// The real side panel for Assist, opened inside the page click (the same scope as openHermesPanelFromGesture).
+// Resolves whether it opened; never falls back to a full tab or a popup window.
+function openAssistSidePanelFromGesture(tab) {
+  const browserId = detectBrowserId();
+  if (browserId === 'opera' || browserId === 'firefox') {
+    return Promise.resolve(openNativeSidebar({ windowId: tab?.windowId ?? null })).then(Boolean, () => false);
   }
-  await browserApi.storage.session.set({ [INLINE_DRAFT_STORAGE_KEY]: queued });
-  // An open side panel takes the queued request itself; nothing is opened.
-  if (await sidePanelIsOpen()) return { ok: true, requestId: request.requestId };
-  // Otherwise only a real side panel may open. The click that started this is spent by now, so the browser
-  // may refuse; Assist then says so instead of opening the extension in a full tab.
-  const opened = await openHermesPanel(sender.tab, { allowFallback: false }).catch(() => false);
-  if (opened === false || !(await sidePanelIsOpen())) {
-    await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
-    return { ok: false, reason: 'Open the Hermes side panel, then choose Continue current chat again. Or pick Run in background.' };
-  }
-  return { ok: true, requestId: request.requestId };
+  if (!browserApi.sidePanel?.open) return Promise.resolve(false);
+  const panelResidencyMode = cachedPanelResidencyMode;
+  const tabId = Number(tab?.id);
+  const useTabAttached = panelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED && Number.isFinite(tabId) && tabId > 0;
+  const panelUrl = browserApi.runtime.getURL(buildSidePanelPath({
+    mode: panelResidencyMode,
+    tabId: useTabAttached ? tabId : null,
+    defaultPath: defaultSidePanelPath(),
+  }));
+  return openSidePanelWithConfirmation({
+    sidePanelApi: browserApi.sidePanel,
+    runtimeApi: browserApi.runtime,
+    openOptions: useTabAttached ? { tabId } : { windowId: Number(tab?.windowId) },
+    panelUrl,
+  });
 }
 
 // Whether a Hermes side panel is open in any window (Chrome 116+; elsewhere it reads as closed).
