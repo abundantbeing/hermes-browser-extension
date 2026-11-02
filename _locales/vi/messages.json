@@ -6187,6 +6187,10 @@
     "message": "BỘ SIDECAR ĐỊA PHƯƠNG / BẢNG CHROME",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
   },
+  "runtime_ui_longer": {
+    "message": "Dài hơn",
+    "description": "Runtime interface message ui.longer"
+  },
   "runtime_ui_low": {
     "message": "Thấp",
     "description": "Runtime interface message ui.low"

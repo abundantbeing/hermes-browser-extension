@@ -6187,6 +6187,10 @@
     "message": "LOKAL SIDECAR / KROMPANEL",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
   },
+  "runtime_ui_longer": {
+    "message": "Længere",
+    "description": "Runtime interface message ui.longer"
+  },
   "runtime_ui_low": {
     "message": "Lav",
     "description": "Runtime interface message ui.low"

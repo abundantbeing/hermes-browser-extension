@@ -6187,6 +6187,10 @@
     "message": "ไซด์คาร์ท้องถิ่น / แผงโครเมียม",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
   },
+  "runtime_ui_longer": {
+    "message": "ยาวขึ้น",
+    "description": "Runtime interface message ui.longer"
+  },
   "runtime_ui_low": {
     "message": "ต่ำ",
     "description": "Runtime interface message ui.low"

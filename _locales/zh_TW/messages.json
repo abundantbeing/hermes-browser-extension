@@ -6187,6 +6187,10 @@
     "message": "本機邊車 / CHROME 面板",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
   },
+  "runtime_ui_longer": {
+    "message": "更長",
+    "description": "Runtime interface message ui.longer"
+  },
   "runtime_ui_low": {
     "message": "低",
     "description": "Runtime interface message ui.low"

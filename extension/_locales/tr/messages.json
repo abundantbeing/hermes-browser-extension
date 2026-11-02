@@ -6187,6 +6187,10 @@
     "message": "YEREL SIDECAR / CHROME PANELİ",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
   },
+  "runtime_ui_longer": {
+    "message": "Daha uzun",
+    "description": "Runtime interface message ui.longer"
+  },
   "runtime_ui_low": {
     "message": "Düşük",
     "description": "Runtime interface message ui.low"

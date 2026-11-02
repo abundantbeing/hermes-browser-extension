@@ -6187,6 +6187,10 @@
     "message": "SIDECAR LOCAL / PAINEL CROMADO",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
   },
+  "runtime_ui_longer": {
+    "message": "Mais longo",
+    "description": "Runtime interface message ui.longer"
+  },
   "runtime_ui_low": {
     "message": "Baixo",
     "description": "Runtime interface message ui.low"

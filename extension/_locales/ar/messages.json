@@ -6187,6 +6187,10 @@
     "message": "السيارة الجانبية المحلية / لوحة الكروم",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
   },
+  "runtime_ui_longer": {
+    "message": "أطول",
+    "description": "Runtime interface message ui.longer"
+  },
   "runtime_ui_low": {
     "message": "قليل",
     "description": "Runtime interface message ui.low"

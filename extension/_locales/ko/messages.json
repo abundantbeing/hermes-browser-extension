@@ -6187,6 +6187,10 @@
     "message": "로컬 사이드카 / Chrome 패널",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
   },
+  "runtime_ui_longer": {
+    "message": "더 길게",
+    "description": "Runtime interface message ui.longer"
+  },
   "runtime_ui_low": {
     "message": "낮음",
     "description": "Runtime interface message ui.low"
