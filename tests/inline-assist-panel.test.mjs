@@ -104,3 +104,15 @@ test('the full panel failure screen has a plain secondary Back to actions button
   assert.match(css, /\.failure-back \{[^}]*background:transparent;[^}]*\}/);
   assert.match(css, /\.failure-detail \{[^}]*overflow-wrap:anywhere;[^}]*\}/);
 });
+
+const assistCss = () => /style\.textContent = `([\s\S]*?)`;/.exec(loadExtensionFile('content-inline-helper.js'))[1];
+
+test('the footer is a tidy grid: four equal cells, label above control, the safety line across both', async () => {
+  const css = assistCss();
+  assert.match(css, /\.foot \{[^}]*display:grid; grid-template-columns:repeat\(2,minmax\(0,1fr\)\);/);
+  assert.match(css, /\.foot-control \{[^}]*display:grid;[^}]*align-content:start;/);
+  assert.match(css, /\.foot-safety \{[^}]*grid-column:1 \/ -1;/);
+  const { root } = await openPanel();
+  const cells = [...root.querySelectorAll('.foot .foot-control')].map((cell) => cell.querySelector('em')?.textContent);
+  assert.deepEqual(cells, ['Runs', 'Auto-replace', 'Model', 'Effort']);
+});
