@@ -33,6 +33,7 @@ import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-c
 import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
 import { HERMES_WEB_LAUNCH_LOOK_MESSAGE, HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
 import { INLINE_ASSIST_FONT_REQUEST, createInlineAssistFontServer } from './lib/inline-assist-font-server.mjs';
+import { createInlineAssistModelServer } from './lib/inline-assist-models.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -275,6 +276,8 @@ const contextMenuController = createContextMenuController({
 });
 // Fonts for the Hermes Assist panel, which a web page may not load from the extension directly.
 const handleInlineAssistFontRequest = createInlineAssistFontServer({ runtime: browserApi.runtime });
+// The model picker in Assist on a page: the verified model list, and saving the one picked.
+const inlineAssistModels = createInlineAssistModelServer({ runtime: browserApi.runtime, storage: browserApi.storage.local });
 const themeMarketplaceController = createThemeMarketplaceController({
   client: createVscodeMarketplaceClient(),
   storageArea: browserApi.storage.local,
@@ -1134,6 +1137,8 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
       ? hermesWebOpening.handleLaunchLook(sender)
     : message?.type === INLINE_ASSIST_FONT_REQUEST
       ? handleInlineAssistFontRequest(message, sender)
+    : inlineAssistModels.handles(message?.type)
+      ? inlineAssistModels.handle(message, sender)
     : message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
       ? queueInlineDraftRequest(message, sender)
       : message?.type === 'HERMES_INLINE_SESSION_STATUS'
