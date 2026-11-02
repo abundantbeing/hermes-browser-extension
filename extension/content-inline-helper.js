@@ -214,6 +214,22 @@
     .dd-option[hidden] { display:none; }
     .dd-note { margin:0; padding:8px 10px; color:var(--hb-muted); font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .foot-safety { width:100%; font-size:calc(10px * var(--hermes-text-zoom, 1)); }
+    .effort { --effort-progress:0; display:inline-flex; align-items:center; gap:8px; min-width:0; }
+    .effort-opt .effort { flex:1; max-width:200px; }
+    .effort-track { position:relative; flex:1; min-width:96px; height:22px; }
+    .effort.compact .effort-track { flex:none; width:84px; min-width:0; }
+    .effort-lane { position:absolute; top:8px; bottom:8px; left:5px; right:5px; border:1px solid var(--hb-line); background:color-mix(in srgb,var(--hb-blue) 7%,transparent); pointer-events:none; }
+    .effort-fill { position:absolute; inset:0; background:color-mix(in srgb,var(--hb-blue) 22%,transparent); transform:scaleX(var(--effort-progress)); transform-origin:left center; transition:transform 160ms cubic-bezier(.2,.8,.2,1); }
+    .effort-stop { position:absolute; top:50%; left:clamp(1px,var(--effort-stop),calc(100% - 1px)); width:3px; height:3px; background:color-mix(in srgb,var(--hb-blue) 55%,transparent); transform:translate(-50%,-50%); }
+    .effort-stop[data-reached="true"] { background:var(--hb-blue); }
+    .effort-range { position:relative; display:block; width:100%; height:22px; margin:0; padding:0; border:0; border-radius:0; background:transparent; appearance:none; -webkit-appearance:none; cursor:ew-resize; touch-action:pan-y; }
+    .effort-range:focus-visible { outline:2px solid var(--hb-accent); outline-offset:1px; }
+    .effort-range::-webkit-slider-runnable-track { height:22px; border:0; background:transparent; }
+    .effort-range::-webkit-slider-thumb { -webkit-appearance:none; width:10px; height:18px; margin-top:2px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-blue); box-shadow:0 0 0 2px var(--hb-paper); }
+    .effort-range::-moz-range-track { height:22px; border:0; background:transparent; }
+    .effort-range::-moz-range-progress { background:transparent; }
+    .effort-range::-moz-range-thumb { width:8px; height:16px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-blue); box-shadow:0 0 0 2px var(--hb-paper); }
+    .effort-value { min-width:58px; color:var(--hb-blue); font-weight:600; white-space:nowrap; }
     .panel[data-font-profile="signature"] .title, .panel[data-font-profile="signature"] .route-title, .panel[data-font-profile="signature"] .run-title, .panel[data-font-profile="signature"] .action, .panel[data-font-profile="signature"] .route strong, .panel[data-font-profile="signature"] .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
     .panel[data-font-profile="signature"] .action small, .panel[data-font-profile="signature"] .route small { text-transform:none; letter-spacing:normal; }
     .panel[data-mode="quick"] { width:min(290px,calc(100vw - 20px)); }
@@ -500,6 +516,7 @@
     for (const toggle of panel.querySelectorAll('input.toggle[data-setting="auto-replace"]')) {
       if (!toggle.disabled) toggle.checked = autoReplace;
     }
+    for (const slider of panel.querySelectorAll('.effort[data-setting="effort"]')) slider.refreshEffort?.();
     applyAssistAppearance();
     host.dataset.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     host.dataset.inlineAssistSessionRetention = String(assistSettings.inlineAssistSessionRetention || 'retain');
@@ -1063,6 +1080,69 @@
     });
   }
 
+  // The reasoning effort Assist runs with, on the side panel's slider: one step per level, the level shown
+  // while it moves, saved when it is let go. It is Assist's own setting, like the model above it.
+  function makeEffortSlider({ compact = false } = {}) {
+    const efforts = look?.efforts || [];
+    const last = Math.max(efforts.length - 1, 1);
+    const wrap = make('span', `effort${compact ? ' compact' : ''}`);
+    wrap.dataset.setting = 'effort';
+    const track = make('span', 'effort-track');
+    const lane = make('span', 'effort-lane');
+    lane.setAttribute('aria-hidden', 'true');
+    lane.append(make('span', 'effort-fill'));
+    const stops = efforts.map((_, index) => {
+      const stop = make('i', 'effort-stop');
+      stop.style.setProperty('--effort-stop', `${index / last * 100}%`);
+      lane.append(stop);
+      return stop;
+    });
+    const range = make('input', 'effort-range');
+    range.type = 'range';
+    range.min = '0';
+    range.max = String(efforts.length - 1);
+    range.step = '1';
+    range.setAttribute('aria-label', translateUiText('Reasoning effort'));
+    range.title = translateUiText('Higher effort can take more time and tokens.');
+    track.append(lane, range);
+    const shown = make('strong', 'effort-value');
+    let committed = look?.inlineAssistEffortIndex?.(assistSettings.inlineAssistReasoningEffort) ?? 1;
+    const show = (index) => {
+      const step = Math.max(0, Math.min(efforts.length - 1, Math.round(Number(index) || 0)));
+      const label = translateUiText(efforts[step]?.label || '');
+      range.value = String(step);
+      range.setAttribute('aria-valuetext', label);
+      shown.textContent = label;
+      wrap.style.setProperty('--effort-progress', String(step / last));
+      wrap.dataset.effortValue = efforts[step]?.value || '';
+      stops.forEach((stop, position) => { stop.dataset.reached = String(position <= step); });
+    };
+    range.addEventListener('input', trustedOnly(() => show(range.value)));
+    range.addEventListener('change', trustedOnly(() => {
+      const step = Number(range.value);
+      if (step === committed || !efforts[step]) return;
+      committed = step;
+      show(step);
+      persistAssistSettings({ inlineAssistReasoningEffort: efforts[step].value, inlineAssistThinkingEnabled: true }).catch(() => {});
+    }));
+    // A change saved elsewhere (Settings, another tab) moves the slider, unless it is being dragged.
+    wrap.refreshEffort = () => {
+      if (shadow.activeElement === range) return;
+      committed = look?.inlineAssistEffortIndex?.(assistSettings.inlineAssistReasoningEffort) ?? 1;
+      show(committed);
+    };
+    show(committed);
+    wrap.append(track, shown);
+    return wrap;
+  }
+
+  // The model and effort Assist runs with, as one line: the model's own name, not its provider key.
+  function assistModelSummary() {
+    const model = String(assistSettings.inlineAssistRawModel || assistSettings.inlineAssistModel || '') || translateUiText('Same as chat');
+    const effort = look?.efforts?.[look?.inlineAssistEffortIndex?.(assistSettings.inlineAssistReasoningEffort) ?? 1];
+    return effort ? `${model} · ${translateUiText(effort.label)}` : model;
+  }
+
   function makeAutoReplaceToggle() {
     const supportsSafeApply = (siteProfile?.applyMode || 'safe-apply') !== 'copy-only';
     const toggle = make('input', 'toggle');
@@ -1081,9 +1161,11 @@
     replaceControl.append(make('em', '', 'Auto-replace'), makeAutoReplaceToggle());
     const modelControl = make('span', 'foot-control');
     modelControl.append(make('em', '', 'Model'), makeModelSelect());
+    const effortControl = make('label', 'foot-control');
+    effortControl.append(make('em', '', 'Effort'), makeEffortSlider({ compact: true }));
     footSafety.className = 'foot-safety';
     footSafety.textContent = translateUiText('Never posts or sends. Only this field changes.');
-    foot.replaceChildren(routeControl, replaceControl, modelControl, footSafety);
+    foot.replaceChildren(routeControl, replaceControl, modelControl, effortControl, footSafety);
   }
 
   // The quick menu: a small menu at the circle. One line to ask, the site's first four actions (1–4 run
@@ -1130,7 +1212,7 @@
     const summary = makeRaw('span', 'quick-summary', [
       translateUiText(profile?.contextMode === 'visible' ? 'Reads thread' : 'This field only'),
       translateUiText(ROUTE_LABELS[currentRoutePreference()]),
-      assistSettings.inlineAssistModel || translateUiText('Same as chat'),
+      assistModelSummary(),
     ].join(' · '));
     const full = button('quick-full', 'Full panel →');
     full.addEventListener('click', trustedOnly(() => {
@@ -1168,6 +1250,9 @@
     }
     rows.push(row('Where it runs', '', makeRouteSelect()));
     rows.push(row('Model', 'Used only by Assist', makeModelSelect()));
+    const effortRow = row('Effort', '', makeEffortSlider());
+    effortRow.classList.add('effort-opt');
+    rows.push(effortRow);
     rows.push(row('Replace text automatically', 'Undo is always one click away', makeAutoReplaceToggle()));
     const keepChats = make('input', 'toggle');
     keepChats.type = 'checkbox';

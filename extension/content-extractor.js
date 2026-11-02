@@ -2933,7 +2933,7 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
   hermesGlobal.HermesAppearancePreferences = APPEARANCE_PREFERENCES_API;
 })(globalThis);
 
-/* extension/lib/inline-assist-look.mjs · SHA-256 dfe4176069e047f6 */
+/* extension/lib/inline-assist-look.mjs · SHA-256 c35c62e3dba14d0a */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
 
@@ -3250,8 +3250,30 @@ function withoutInlineAssistSite(model, site) {
   return inlineAssistSitesModel(contextPrefs, next.hidden.filter((entry) => entry !== key));
 }
 
+// The reasoning efforts Assist's slider steps through, lowest first: the side panel's own levels
+// (MODEL_REASONING_EFFORTS), repeated here because the page runtime cannot import.
+const INLINE_ASSIST_EFFORTS = Object.freeze([
+  Object.freeze({ value: 'minimal', label: 'Minimal' }),
+  Object.freeze({ value: 'low', label: 'Low' }),
+  Object.freeze({ value: 'medium', label: 'Medium' }),
+  Object.freeze({ value: 'high', label: 'High' }),
+  Object.freeze({ value: 'xhigh', label: 'Extra high' }),
+  Object.freeze({ value: 'max', label: 'Max' }),
+  Object.freeze({ value: 'ultra', label: 'Ultra' }),
+]);
+
+// Assist's saved effort as a slider step. Unset or unknown is Low, Assist's default.
+function inlineAssistEffortIndex(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  const normalized = ['extra-high', 'extra_high', 'extra high'].includes(raw) ? 'xhigh' : raw;
+  const index = INLINE_ASSIST_EFFORTS.findIndex((effort) => effort.value === normalized);
+  return index >= 0 ? index : 1;
+}
+
 const INLINE_ASSIST_LOOK_API = Object.freeze({
   icons: INLINE_ASSIST_ICONS,
+  efforts: INLINE_ASSIST_EFFORTS,
+  inlineAssistEffortIndex,
   openModes: INLINE_ASSIST_OPEN_MODES,
   fontFiles: INLINE_ASSIST_FONT_FILES,
   fontPrefix: INLINE_ASSIST_FONT_PREFIX,
