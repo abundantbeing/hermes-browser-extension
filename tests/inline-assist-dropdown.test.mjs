@@ -124,3 +124,8 @@ test('a long model list has a search box that narrows it', async () => {
   assert.equal(visible.length, 10);
   assert.ok(visible.every((item) => /gpt/.test(item.textContent)));
 });
+
+test('in the footer, where the dropdowns sit on the left, the list opens toward the right so it stays inside the panel', async () => {
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec((await import('./inline-assist-dom.mjs')).loadExtensionFile('content-inline-helper.js'))[1];
+  assert.match(css, /\.foot \.dd-list \{ left:0; right:auto; \}/);
+});

@@ -203,6 +203,7 @@
     .dd-list { position:absolute; z-index:6; right:0; bottom:calc(100% + 6px); display:grid; min-width:max(100%, 190px); max-width:280px; max-height:240px; overflow:auto; border:1px solid var(--hb-line); background:var(--hb-paper); box-shadow:0 8px 24px rgba(0,0,0,.35); }
     .dd-list[hidden] { display:none; }
     .quick-opt .dd-list { top:calc(100% + 6px); bottom:auto; }
+    .foot .dd-list { left:0; right:auto; }
     .dd-option { display:grid; gap:2px; min-height:0; padding:7px 10px; border:0; border-top:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); font:inherit; text-align:left; white-space:normal; cursor:pointer; }
     .dd-option:first-child, .dd-note + .dd-option { border-top:0; }
     .dd-option strong { font-weight:600; }
