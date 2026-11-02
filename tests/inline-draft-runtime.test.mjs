@@ -151,7 +151,7 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /resolveBrowserApi/);
   assert.match(source, /browserApi\.storage\.session/);
   assert.doesNotMatch(source, /(?<![\w.])chrome\.storage/);
-  assert.match(source, /openHermesPanel\(sender\.tab\)/);
+  assert.match(source, /openHermesPanel\(sender\.tab, \{ allowFallback: false \}\)/);
   assert.match(source, /expiresAt/);
   assert.match(source, /createContextMenuController/);
   assert.match(source, /contextMenuController\.handleClick/);
@@ -227,4 +227,15 @@ test('a background Assist retry creates a new session id, since Hermes never reu
   const loop = runner.slice(runner.indexOf('for (let attempt = 0;'));
   assert.ok(loop.length > 0, 'the retry loop');
   assert.match(loop.slice(0, loop.indexOf("client.fetch('/api/sessions'")), /const sessionId = assistSessionId\(\);/, 'a fresh id before each create');
+});
+
+test('Continue current chat goes to the side panel and never opens a full tab', async () => {
+  const background = await read('extension/background.js');
+  const queue = background.match(/async function queueInlineDraftRequest\([\s\S]*?\n\}/)?.[0] || '';
+  // An open side panel takes the queued request itself; nothing is opened.
+  assert.match(queue, /if \(await sidePanelIsOpen\(\)\) return \{ ok: true, requestId: request\.requestId \};/);
+  // Otherwise only a real side panel may open: no fallback tab, and the page is told what to do.
+  assert.match(queue, /openHermesPanel\(sender\.tab, \{ allowFallback: false \}\)/);
+  assert.doesNotMatch(queue, /openHermesPanel\(sender\.tab\)\s*[,\]]/);
+  assert.match(background, /async function sidePanelIsOpen\(\) \{[\s\S]*?getContexts\?\.\(\{ contextTypes: \['SIDE_PANEL'\] \}\)/);
 });

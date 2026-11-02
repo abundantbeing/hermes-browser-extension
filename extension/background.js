@@ -494,11 +494,27 @@ async function queueInlineDraftRequest(message, sender) {
   if ([INLINE_DRAFT_ROUTES.BACKGROUND, INLINE_DRAFT_ROUTES.NEW].includes(request.route)) {
     return runInlineDraftInServiceWorker(request, sender, tabId);
   }
-  await Promise.all([
-    browserApi.storage.session.set({ [INLINE_DRAFT_STORAGE_KEY]: queued }),
-    openHermesPanel(sender.tab),
-  ]);
+  await browserApi.storage.session.set({ [INLINE_DRAFT_STORAGE_KEY]: queued });
+  // An open side panel takes the queued request itself; nothing is opened.
+  if (await sidePanelIsOpen()) return { ok: true, requestId: request.requestId };
+  // Otherwise only a real side panel may open. The click that started this is spent by now, so the browser
+  // may refuse; Assist then says so instead of opening the extension in a full tab.
+  const opened = await openHermesPanel(sender.tab, { allowFallback: false }).catch(() => false);
+  if (opened === false || !(await sidePanelIsOpen())) {
+    await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
+    return { ok: false, reason: 'Open the Hermes side panel, then choose Continue current chat again. Or pick Run in background.' };
+  }
   return { ok: true, requestId: request.requestId };
+}
+
+// Whether a Hermes side panel is open in any window (Chrome 116+; elsewhere it reads as closed).
+async function sidePanelIsOpen() {
+  try {
+    const contexts = await browserApi.runtime.getContexts?.({ contextTypes: ['SIDE_PANEL'] });
+    return Array.isArray(contexts) && contexts.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 async function inlineSessionStatus() {
@@ -548,6 +564,8 @@ async function queueOpenSessionRequest(message, sender) {
       expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
     },
   });
+  // An open side panel opens the session itself.
+  if (await sidePanelIsOpen()) return { ok: true, sessionId, surface };
   const opened = await openHermesPanel(tab, { allowFallback: false });
   if (opened === false) {
     await browserApi.storage.session.remove(OPEN_SESSION_STORAGE_KEY);
