@@ -27798,6 +27798,7 @@ ${streamError.message}`);
     // Every branch below reports the failure in the transcript or the composer. An accepted turn
     // may still store a late reply, so that one alone keeps the refresh.
     if (error?.requestAccepted !== true) holdPostTurnRefresh = true;
+    if (error?.requestAccepted !== true && !isAbortError(error)) turnOptions.onNotAccepted?.(error);
     if (error?.attachmentFailure) {
       if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
         els.input.value = userText;
@@ -28152,6 +28153,15 @@ async function resolveInlineDraftPrompt(request, source = settings) {
   return buildInlineDraftPrompt(inlineDraftRequestForEffectiveContext(request, sendTimeSettings));
 }
 
+let inlineDraftPanelWindowId = null;
+
+async function sidePanelWindowId() {
+  if (inlineDraftPanelWindowId === null) {
+    inlineDraftPanelWindowId = Number((await browserApi.windows?.getCurrent?.().catch(() => null))?.id) || 0;
+  }
+  return inlineDraftPanelWindowId;
+}
+
 async function inlineDraftContextWithheld(request, source = settings) {
   if (!request?.pageContext) return false;
   const sendTimeSettings = await refreshContextConsentLedger({ ...source });
@@ -28206,6 +28216,9 @@ async function processInlineDraftRequest(rawRequest) {
     return false;
   }
   if (isAttachedPanelResidency() && Number(sidePanelParams.tabId) !== tabId) return false;
+  const requestWindowId = Number(rawRequest?.windowId) || 0;
+  const panelWindowId = await sidePanelWindowId();
+  if (requestWindowId && panelWindowId && requestWindowId !== panelWindowId) return false;
   if (request.requestId === lastInlineDraftRequestId) return false;
   if (sending) {
     globalThis.setTimeout(() => consumePendingInlineDraftRequest(), 750);
@@ -28255,13 +28268,15 @@ async function processInlineDraftRequest(rawRequest) {
     const inlineSessionId = String(settings.sessionId || '');
     const inlineSessionTitle = String(settings.sessionTitle || 'Hermes Assist');
     const prompt = await resolveInlineDraftPrompt(request);
-    const didSend = await askHermes(prompt, [], {
+    let refusedBeforeAccept = null;
+    const sendTurn = (route) => askHermes(prompt, [], {
       forceChatOnly: true,
       resolveUserText: () => resolveInlineDraftPrompt(request),
       preserveComposer: true,
       disableCommandParsing: true,
       disableAutoTitle: true,
-      modelRoute,
+      modelRoute: route,
+      onNotAccepted: (error) => { refusedBeforeAccept = error; },
       displayUserText: assistRequestSummary(prompt) || `Hermes Assist · ${request.actionLabel}`,
       onComplete: async (answer) => {
         const text = sanitizeInlineDraftResult(await finalInlineDraftReply(inlineSessionId, answer));
@@ -28275,6 +28290,13 @@ async function processInlineDraftRequest(rawRequest) {
         });
       },
     });
+    let didSend = await sendTurn(modelRoute);
+    if (!didSend && !resultSent && refusedBeforeAccept && modelRoute?.model) {
+      inlineAssistModelNotice = assistModelFallbackNotice(inlineAssistRoute.selection, refusedBeforeAccept.message || 'the gateway refused the selected model', "this chat's model");
+      const { model: _model, provider: _provider, require_model_lock: _lock, ...effortOnly } = modelRoute;
+      refusedBeforeAccept = null;
+      didSend = await sendTurn(effortOnly);
+    }
     if (!didSend && !resultSent) {
       await sendInlineDraftResult({ ...request, tabId }, {
         ok: false,

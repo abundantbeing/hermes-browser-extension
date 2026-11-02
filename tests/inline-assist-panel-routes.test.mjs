@@ -29,7 +29,7 @@ function rawRequest(route, overrides = {}) {
 }
 
 // The real processInlineDraftRequest from sidepanel.js; the chat itself (askHermes, a new chat) is recorded.
-async function panel({ reply = 'A drafted reply.', running = false, history = [{ role: 'user', content: 'Earlier message' }] } = {}) {
+async function panel({ reply = 'A drafted reply.', running = false, refuseModel = false, windowId = 0, history = [{ role: 'user', content: 'Earlier message' }] } = {}) {
   const h = await createSettingsSaveHarness({ settings: { sessionId: 'chat-current', sessionTitle: 'My chat' } });
   const sent = [];
   const asks = [];
@@ -58,12 +58,19 @@ async function panel({ reply = 'A drafted reply.', running = false, history = [{
     askHermes: async (text, attachments, options) => {
       asks.push({ text, options, sessionId: h.scope.settings.sessionId });
       if (running) return false;
+      // The gateway refuses the turn's own model before taking the turn (its provider stopped working).
+      if (refuseModel && options.modelRoute?.model) {
+        options.onNotAccepted?.(Object.assign(new Error('Model gpt-6.1-terra is not available.'), { requestAccepted: false }));
+        return false;
+      }
       await new Promise((resolve) => setTimeout(resolve, 5));
       await options.onComplete?.(reply);
       return true;
     },
   });
   h.scope.browserApi.storage.session = { remove: async (key) => { removed.push(key); } };
+  h.scope.inlineDraftPanelWindowId = null;
+  if (windowId) h.scope.browserApi.windows = { getCurrent: async () => ({ id: windowId }) };
   h.scope.browserApi.tabs = {
     get: async (tabId) => ({ id: tabId, url: PAGE }),
     sendMessage: async (tabId, message) => { sent.push({ tabId, message }); },
@@ -184,6 +191,29 @@ test('the page is told when the thread was not sent because page context is off 
   shared.h.scope.inlineDraftRequestForEffectiveContext = (request) => request;
   await shared.process(rawRequest('current'));
   assert.equal(shared.sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').message.contextWithheld, false);
+});
+
+test('a request from a page in another window is left for that window\'s side panel', async () => {
+  const other = await panel({ windowId: 8 });
+  assert.equal(await other.process(rawRequest('new', { windowId: 7 })), false);
+  assert.equal(other.asks.length, 0, 'no turn sent from the wrong window');
+  assert.deepEqual(other.removed, [], 'and the request is left for the right panel');
+  const own = await panel({ windowId: 7 });
+  assert.equal(await own.process(rawRequest('new', { windowId: 7 })), true);
+  assert.equal(own.asks.length, 1);
+});
+
+test('when the gateway refuses the Assist model before taking the turn, the turn runs on the chat\'s model at Assist\'s effort, and says so', async () => {
+  const { process, asks, sent, h } = await panel({ refuseModel: true });
+  h.scope.gatewayCapabilities = { sessionChat: true, sessionModelLock: true };
+  await h.scope.browserApi.storage.local.set({ hermesBrowserSettings: { ...h.scope.settings, ...PAGE_SAVED_ASSIST } });
+  assert.equal(await process(rawRequest('current')), true);
+  assert.equal(asks.length, 2, 'one retry');
+  assert.equal(asks[1].options.modelRoute.model, undefined, 'on the chat\'s model');
+  assert.equal(asks[1].options.modelRoute.model_options.reasoning.effort, 'high', 'at Assist\'s effort');
+  const result = sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT');
+  assert.equal(result.message.ok, true);
+  assert.match(result.message.modelNotice, /gpt-6\.1-terra.*Used this chat's model instead\./);
 });
 
 test('with no Assist model the chat\'s model runs, at the effort picked for Assist', async () => {
