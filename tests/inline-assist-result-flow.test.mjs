@@ -51,7 +51,7 @@ test('an odd number of result buttons never leaves a hole: the last one takes th
   assert.match(css, /\.result-actions > button:last-child:nth-child\(odd\) \{ grid-column:1 \/ -1; \}/);
 });
 
-test('the bar under the field offers Longer beside Shorter and Full panel last, draft in place or not', async () => {
+test('the bar offers Longer beside Shorter, and the way back to the full panel is a link at its top, not one more button', async () => {
   const { env, root, panel } = await boot({ inlineAssistOpenMode: 'quick' });
   env.userClick(root.querySelector('.quick-item'));
   await env.sleep(60);
@@ -59,8 +59,12 @@ test('the bar under the field offers Longer beside Shorter and Full panel last, 
   assert.equal(panel.dataset.mode, 'bar');
   const bar = labels(root, '.bar-actions button');
   assert.equal(bar[bar.indexOf('Shorter') + 1], 'Longer');
-  assert.equal(bar.at(-1), 'Full panel');
-  env.userClick(buttonNamed(root, '.bar-actions button', 'Full panel'));
+  assert.ok(!bar.includes('Full panel'), bar.join(', '));
+  const back = root.querySelector('.bar-head .bar-return');
+  assert.ok(back, 'a Return to full panel link beside the title');
+  assert.equal(back.textContent.trim(), '←Return to full panel');
+  assert.equal(root.querySelector('.bar-head .bar-title').textContent, 'Draft in place');
+  env.userClick(back);
   await env.sleep();
   assert.equal(panel.dataset.mode, 'full');
   assert.ok(root.querySelector('.follow-ups'), 'the full result');

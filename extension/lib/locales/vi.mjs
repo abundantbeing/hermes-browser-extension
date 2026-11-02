@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Giữ",
   "ui.again": "Lần nữa",
   "ui.full.panel": "Bảng đầy đủ",
+  "ui.return.to.full.panel": "Quay lại bảng đầy đủ",
   "ui.when.you.click.it": "Khi bạn nhấp",
   "ui.quick.menu": "Menu nhanh",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Một menu nhỏ cạnh vòng tròn. Gõ hoặc chọn một thao tác; bản nháp vào thẳng ô.",

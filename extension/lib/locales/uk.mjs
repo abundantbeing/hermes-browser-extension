@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Залишити",
   "ui.again": "Ще раз",
   "ui.full.panel": "Повна панель",
+  "ui.return.to.full.panel": "Повернутися до повної панелі",
   "ui.when.you.click.it": "Після натискання",
   "ui.quick.menu": "Швидке меню",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Невелике меню біля кола. Введіть або виберіть дію — чернетка одразу з'явиться в полі.",

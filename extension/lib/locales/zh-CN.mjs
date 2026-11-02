@@ -922,6 +922,7 @@ export default Object.freeze({
   "ui.keep": "保留",
   "ui.again": "再来",
   "ui.full.panel": "完整面板",
+  "ui.return.to.full.panel": "返回完整面板",
   "ui.when.you.click.it": "点击时",
   "ui.quick.menu": "快捷菜单",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "圆圈旁的小菜单。输入或选择操作，草稿直接写入输入框。",

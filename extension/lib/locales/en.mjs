@@ -926,6 +926,7 @@ export default Object.freeze({
   "ui.keep": "Keep",
   "ui.again": "Again",
   "ui.full.panel": "Full panel",
+  "ui.return.to.full.panel": "Return to full panel",
   "ui.when.you.click.it": "When you click it",
   "ui.quick.menu": "Quick menu",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "A small menu at the circle. Type or pick an action; the draft goes straight into the field.",

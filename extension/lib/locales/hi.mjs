@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "रखें",
   "ui.again": "फिर से",
   "ui.full.panel": "पूरा पैनल",
+  "ui.return.to.full.panel": "पूरे पैनल पर लौटें",
   "ui.when.you.click.it": "क्लिक करने पर",
   "ui.quick.menu": "क्विक मेन्यू",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "सर्कल के पास एक छोटा मेन्यू। लिखें या कोई कार्रवाई चुनें; ड्राफ़्ट सीधे फ़ील्ड में जाता है।",

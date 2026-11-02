@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "เก็บ",
   "ui.again": "อีกครั้ง",
   "ui.full.panel": "แผงเต็ม",
+  "ui.return.to.full.panel": "กลับไปที่แผงเต็ม",
   "ui.when.you.click.it": "เมื่อคลิก",
   "ui.quick.menu": "เมนูด่วน",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "เมนูเล็กๆ ที่วงกลม พิมพ์หรือเลือกการทำงาน แล้วร่างจะเข้าไปในช่องทันที",

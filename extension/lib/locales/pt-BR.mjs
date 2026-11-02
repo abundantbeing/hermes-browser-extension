@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Manter",
   "ui.again": "De novo",
   "ui.full.panel": "Painel completo",
+  "ui.return.to.full.panel": "Voltar ao painel completo",
   "ui.when.you.click.it": "Ao clicar",
   "ui.quick.menu": "Menu rápido",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Um menu pequeno no círculo. Digite ou escolha uma ação; o rascunho vai direto para o campo.",

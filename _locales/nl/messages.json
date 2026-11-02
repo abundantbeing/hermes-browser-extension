@@ -7163,6 +7163,10 @@
     "message": "Opnieuw proberen",
     "description": "Runtime interface message ui.retry"
   },
+  "runtime_ui_return_to_full_panel": {
+    "message": "Terug naar volledig paneel",
+    "description": "Runtime interface message ui.return.to.full.panel"
+  },
   "runtime_ui_return_to_page": {
     "message": "Terug naar pagina",
     "description": "Runtime interface message ui.return.to.page"

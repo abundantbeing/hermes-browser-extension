@@ -7163,6 +7163,10 @@
     "message": "Prøv igen",
     "description": "Runtime interface message ui.retry"
   },
+  "runtime_ui_return_to_full_panel": {
+    "message": "Tilbage til fuldt panel",
+    "description": "Runtime interface message ui.return.to.full.panel"
+  },
   "runtime_ui_return_to_page": {
     "message": "Vend tilbage til siden",
     "description": "Runtime interface message ui.return.to.page"

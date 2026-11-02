@@ -7163,6 +7163,10 @@
     "message": "重試",
     "description": "Runtime interface message ui.retry"
   },
+  "runtime_ui_return_to_full_panel": {
+    "message": "返回完整面板",
+    "description": "Runtime interface message ui.return.to.full.panel"
+  },
   "runtime_ui_return_to_page": {
     "message": "返回頁面",
     "description": "Runtime interface message ui.return.to.page"

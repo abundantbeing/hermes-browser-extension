@@ -7163,6 +7163,10 @@
     "message": "Réessayer",
     "description": "Runtime interface message ui.retry"
   },
+  "runtime_ui_return_to_full_panel": {
+    "message": "Retour au panneau complet",
+    "description": "Runtime interface message ui.return.to.full.panel"
+  },
   "runtime_ui_return_to_page": {
     "message": "Retour à la page",
     "description": "Runtime interface message ui.return.to.page"

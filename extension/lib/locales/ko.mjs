@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "유지",
   "ui.again": "다시",
   "ui.full.panel": "전체 패널",
+  "ui.return.to.full.panel": "전체 패널로 돌아가기",
   "ui.when.you.click.it": "클릭하면",
   "ui.quick.menu": "빠른 메뉴",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "원 옆의 작은 메뉴. 입력하거나 작업을 고르면 초안이 바로 입력란에 들어갑니다.",

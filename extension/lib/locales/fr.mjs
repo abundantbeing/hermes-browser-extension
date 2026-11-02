@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Garder",
   "ui.again": "Encore",
   "ui.full.panel": "Panneau complet",
+  "ui.return.to.full.panel": "Retour au panneau complet",
   "ui.when.you.click.it": "Quand vous cliquez",
   "ui.quick.menu": "Menu rapide",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Un petit menu près du cercle. Tapez ou choisissez une action ; le brouillon va directement dans le champ.",

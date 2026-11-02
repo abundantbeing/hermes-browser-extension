@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "احتفاظ",
   "ui.again": "مرة أخرى",
   "ui.full.panel": "اللوحة الكاملة",
+  "ui.return.to.full.panel": "العودة إلى اللوحة الكاملة",
   "ui.when.you.click.it": "عند النقر",
   "ui.quick.menu": "قائمة سريعة",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "قائمة صغيرة عند الدائرة. اكتب أو اختر إجراءً، وتذهب المسودة مباشرة إلى الحقل.",

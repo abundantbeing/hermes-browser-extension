@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Behold",
   "ui.again": "Igen",
   "ui.full.panel": "Fuldt panel",
+  "ui.return.to.full.panel": "Tilbage til fuldt panel",
   "ui.when.you.click.it": "Når du klikker",
   "ui.quick.menu": "Hurtigmenu",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "En lille menu ved cirklen. Skriv eller vælg en handling; udkastet går direkte i feltet.",

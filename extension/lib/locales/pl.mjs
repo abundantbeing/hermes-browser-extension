@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Zachowaj",
   "ui.again": "Jeszcze raz",
   "ui.full.panel": "Pełny panel",
+  "ui.return.to.full.panel": "Wróć do pełnego panelu",
   "ui.when.you.click.it": "Po kliknięciu",
   "ui.quick.menu": "Szybkie menu",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Małe menu przy kółku. Wpisz lub wybierz akcję; szkic trafia prosto do pola.",

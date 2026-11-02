@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Conserva",
   "ui.again": "Ancora",
   "ui.full.panel": "Pannello completo",
+  "ui.return.to.full.panel": "Torna al pannello completo",
   "ui.when.you.click.it": "Quando fai clic",
   "ui.quick.menu": "Menu rapido",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Un piccolo menu accanto al cerchio. Scrivi o scegli un'azione; la bozza va dritta nel campo.",

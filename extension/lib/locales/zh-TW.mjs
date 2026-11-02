@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "保留",
   "ui.again": "再來",
   "ui.full.panel": "完整面板",
+  "ui.return.to.full.panel": "返回完整面板",
   "ui.when.you.click.it": "點擊時",
   "ui.quick.menu": "快捷選單",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "圓圈旁的小選單。輸入或選擇動作，草稿直接寫入輸入框。",

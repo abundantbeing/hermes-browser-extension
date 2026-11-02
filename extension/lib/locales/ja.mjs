@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "残す",
   "ui.again": "もう一度",
   "ui.full.panel": "フルパネル",
+  "ui.return.to.full.panel": "フルパネルに戻る",
   "ui.when.you.click.it": "クリックしたとき",
   "ui.quick.menu": "クイックメニュー",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "円のそばに小さなメニュー。入力するかアクションを選ぶと、下書きがそのまま欄に入ります。",

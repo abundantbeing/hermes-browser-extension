@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Tut",
   "ui.again": "Tekrar",
   "ui.full.panel": "Tam panel",
+  "ui.return.to.full.panel": "Tam panele dön",
   "ui.when.you.click.it": "Tıkladığında",
   "ui.quick.menu": "Hızlı menü",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Dairenin yanında küçük bir menü. Yaz ya da bir eylem seç; taslak doğrudan alana gider.",

@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Оставить",
   "ui.again": "Ещё раз",
   "ui.full.panel": "Полная панель",
+  "ui.return.to.full.panel": "Вернуться к полной панели",
   "ui.when.you.click.it": "По нажатию",
   "ui.quick.menu": "Быстрое меню",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Небольшое меню у круга. Введите или выберите действие — черновик сразу появится в поле.",

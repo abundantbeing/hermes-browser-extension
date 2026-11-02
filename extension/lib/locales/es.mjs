@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Conservar",
   "ui.again": "Otra vez",
   "ui.full.panel": "Panel completo",
+  "ui.return.to.full.panel": "Volver al panel completo",
   "ui.when.you.click.it": "Al hacer clic",
   "ui.quick.menu": "Menú rápido",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Un menú pequeño junto al círculo. Escribe o elige una acción; el borrador va directo al campo.",

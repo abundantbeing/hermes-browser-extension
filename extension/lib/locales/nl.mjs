@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Bewaren",
   "ui.again": "Opnieuw",
   "ui.full.panel": "Volledig paneel",
+  "ui.return.to.full.panel": "Terug naar volledig paneel",
   "ui.when.you.click.it": "Als je erop klikt",
   "ui.quick.menu": "Snelmenu",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Een klein menu bij de cirkel. Typ of kies een actie; het concept komt direct in het veld.",

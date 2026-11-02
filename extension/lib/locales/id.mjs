@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Simpan",
   "ui.again": "Lagi",
   "ui.full.panel": "Panel lengkap",
+  "ui.return.to.full.panel": "Kembali ke panel lengkap",
   "ui.when.you.click.it": "Saat diklik",
   "ui.quick.menu": "Menu cepat",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Menu kecil di lingkaran. Ketik atau pilih tindakan; draf langsung masuk ke kolom.",

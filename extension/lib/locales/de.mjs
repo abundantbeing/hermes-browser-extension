@@ -933,6 +933,7 @@ export default Object.freeze({
   "ui.keep": "Behalten",
   "ui.again": "Nochmal",
   "ui.full.panel": "Volles Panel",
+  "ui.return.to.full.panel": "Zurück zum vollen Panel",
   "ui.when.you.click.it": "Beim Klick darauf",
   "ui.quick.menu": "Schnellmenü",
   "ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field": "Ein kleines Menü am Kreis. Tippe oder wähle eine Aktion; der Entwurf landet direkt im Feld.",

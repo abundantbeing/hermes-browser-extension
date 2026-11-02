@@ -269,6 +269,9 @@
     .quick-opt small { display:block; color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
     .bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:8px 10px; color:var(--hb-blue); font-size:calc(12px * var(--hermes-text-zoom, 1)); }
     .bar-title { font-weight:700; }
+    .bar-head { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; }
+    .bar-return { display:inline-flex; align-items:center; gap:5px; padding:2px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); white-space:nowrap; }
+    .bar-return:hover, .bar-return:focus-visible { color:var(--hb-blue); outline:none; text-decoration:underline; }
     .bar-preview { width:100%; max-height:4.6em; overflow:hidden; white-space:pre-wrap; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; color:var(--hb-blue); }
     .bar-actions { display:flex; flex-wrap:wrap; gap:6px; margin-left:auto; }
     .bar-actions button { padding:4px 9px; border:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); }
@@ -1324,7 +1327,15 @@
     panel.dataset.mode = 'bar';
     panel.hidden = false;
     const bar = make('div', 'bar');
-    bar.append(make('strong', 'bar-title', appliedAutomatically ? 'Draft in place' : (fieldChanged ? 'Field changed · review required' : 'Draft ready')));
+    const head = make('div', 'bar-head');
+    const toFull = button('bar-return', '', 'Return to full panel');
+    toFull.append(makeRaw('span', '', '←'), make('span', '', 'Return to full panel'));
+    toFull.addEventListener('click', trustedOnly(() => {
+      panel.dataset.mode = 'full';
+      renderResult({ fieldChanged });
+    }));
+    head.append(make('strong', 'bar-title', appliedAutomatically ? 'Draft in place' : (fieldChanged ? 'Field changed · review required' : 'Draft ready')), toFull);
+    bar.append(head);
     if (!appliedAutomatically) bar.append(makeRaw('div', 'bar-preview', resultText || translateUiText('(empty draft)')));
     const actions = make('div', 'bar-actions');
     const add = (label, handler, { main = false, disabled = false } = {}) => {
@@ -1362,10 +1373,6 @@
         renderOpenSessionChoices();
       });
     }
-    add('Full panel', () => {
-      panel.dataset.mode = 'full';
-      renderResult({ fieldChanged });
-    });
     bar.append(actions);
     setBody(bar);
   }
