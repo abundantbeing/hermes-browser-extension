@@ -43,7 +43,7 @@ test('task-stack lists use the sharp transparent-track Hermes scrollbar', async 
   const sidepanelCss = await read('extension/sidepanel.css');
 
   for (const source of [sidepanelCss]) {
-    assert.match(source, /\.task-stack-list\s*\{[^}]*scrollbar-gutter:\s*stable;/s);
+    assert.doesNotMatch(source, /\.task-stack-list\s*\{[^}]*scrollbar-gutter/s);
     assert.match(source, /\.task-stack-list::-webkit-scrollbar\s*\{[^}]*width:\s*8px;/s);
     assert.match(source, /\.task-stack-list::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*rgba\(var\(--hermes-fg-rgb\),\s*0?\.45\);[^}]*border:\s*1px solid var\(--hermes-line-strong\);/s);
     assert.doesNotMatch(source, /\.task-stack-list::-webkit-scrollbar-track/);

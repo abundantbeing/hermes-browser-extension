@@ -247,6 +247,7 @@ import {
   withAppearancePreferenceUpdate,
 } from './lib/appearance-preferences.mjs';
 import { mountBrandedSelect } from './lib/branded-select.mjs';
+import { OVERLAY_SCROLLBAR_CSS, installOverlayScrollbars } from './lib/overlay-scrollbar.mjs';
 import { createEffortControl } from './lib/effort-control.mjs';
 import { probeSignatureFonts } from './lib/font-availability.mjs';
 import { refreshHermesContextRegistry } from './lib/hermes-context-sync.mjs';
@@ -28104,6 +28105,17 @@ async function finalInlineDraftReply(sessionId, answer) {
   return answer;
 }
 
+// The side panel's vertical scroll areas, each floating the branded thumb over its content.
+const OVERLAY_SCROLL_AREAS = '.app-scroll, .settings-dialog, .browser-control-dialog, .tool-call-list, .task-stack-list, .subagent-stack-stream, .bot-mode-cron-list, .marketplace-theme-results, .branded-select-list';
+
+function mountOverlayScrollbars() {
+  const style = document.createElement('style');
+  style.id = 'overlayScrollbarStyle';
+  style.textContent = OVERLAY_SCROLLBAR_CSS;
+  document.head.append(style);
+  installOverlayScrollbars(document.body, OVERLAY_SCROLL_AREAS);
+}
+
 // This panel's settings with Assist's own as saved (model, effort, thinking): the page writes them.
 async function savedInlineAssistSettings() {
   const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
@@ -30570,6 +30582,7 @@ subscribeLocale(() => {
     translateDetail: lastVisibleStatus.translateDetail,
   });
 });
+mountOverlayScrollbars();
 await initI18n();
 hbeBootEmit('panel:i18n-ready');
 bindEvents();
