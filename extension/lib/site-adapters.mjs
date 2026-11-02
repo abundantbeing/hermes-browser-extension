@@ -109,8 +109,12 @@ function uniqueTexts(nodes = [], maxItems = 40, maxChars = MAX_CONTEXT_CHARS) {
   return parts;
 }
 
+// Actions that write new text from the page run on an empty field: every "Draft …" action, and these, which
+// answer what the page shows. The rest edit the text already in the field (tone, shorten, structure).
+const PAGE_DRAFT_ACTIONS = new Set(['youtube-timestamp', 'github-diagnostics', 'gmail-asks', 'outlook-asks', 'slack-thread']);
 function action(id, label, instruction) {
-  return Object.freeze({ id, label, instruction, mode: 'draft-copy-only' });
+  const startsFromPage = /^Draft\b/.test(label) || PAGE_DRAFT_ACTIONS.has(id);
+  return Object.freeze({ id, label, instruction, mode: 'draft-copy-only', startsFromPage });
 }
 
 function baseResult(adapterId, label, policy, route, capabilities, actions, context = {}) {

@@ -446,3 +446,16 @@ test('context-only drafting degrades to a generic safe prompt when consent strip
   assert.equal(payload.page_context, '');
   assert.match(prompt, /without assuming page-specific details/i);
 });
+
+test('an action that writes from the page runs on an empty field; one that edits the text needs text', () => {
+  const field = one('<textarea aria-label="Add a comment"></textarea>');
+  const base = { route: 'background', requestId: 'req-page-draft-0001', documentId: 'doc-page-draft-0001', pageContext: 'Video: launch walkthrough. Transcript 0:00 intro, 2:15 setup.' };
+  const timestamp = buildInlineDraftRequest(field, { ...base, action: { id: 'youtube-timestamp', label: 'Add useful timestamp', mode: 'draft-copy-only', startsFromPage: true } });
+  assert.equal(timestamp.ok, true, 'Add useful timestamp writes from the video');
+  assert.equal(timestamp.request.startsFromPage, true);
+  const hook = buildInlineDraftRequest(field, { ...base, action: { id: 'x-post-hook', label: 'Strengthen the hook', mode: 'draft-copy-only', startsFromPage: false } });
+  assert.deepEqual([hook.ok, hook.reason], [false, 'empty-draft'], 'Strengthen the hook edits text that is not there');
+  // The background checks the request again: a page draft with an empty field must pass there too.
+  assert.match(buildInlineDraftPrompt(timestamp.request), /Draft the text that belongs in the focused field/);
+  assert.ok(inlineDraft.normalizeInlineDraftRequest(timestamp.request), 'the background accepts it');
+});

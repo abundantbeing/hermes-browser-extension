@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 e53e0fd8eeae4d75 */
+/* extension/lib/site-adapters.mjs · SHA-256 5387a7575a7c997b */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1179,8 +1179,12 @@ function uniqueTexts(nodes = [], maxItems = 40, maxChars = MAX_CONTEXT_CHARS) {
   return parts;
 }
 
+// Actions that write new text from the page run on an empty field: every "Draft …" action, and these, which
+// answer what the page shows. The rest edit the text already in the field (tone, shorten, structure).
+const PAGE_DRAFT_ACTIONS = new Set(['youtube-timestamp', 'github-diagnostics', 'gmail-asks', 'outlook-asks', 'slack-thread']);
 function action(id, label, instruction) {
-  return Object.freeze({ id, label, instruction, mode: 'draft-copy-only' });
+  const startsFromPage = /^Draft\b/.test(label) || PAGE_DRAFT_ACTIONS.has(id);
+  return Object.freeze({ id, label, instruction, mode: 'draft-copy-only', startsFromPage });
 }
 
 function baseResult(adapterId, label, policy, route, capabilities, actions, context = {}) {
@@ -1896,7 +1900,7 @@ const SITE_ADAPTER_API = Object.freeze({
   hermesGlobal.HermesSiteAdapters = SITE_ADAPTER_API;
 })(globalThis);
 
-/* extension/lib/inline-draft-policy.mjs · SHA-256 887c3ec0c988bc0d */
+/* extension/lib/inline-draft-policy.mjs · SHA-256 1d907700ccc114b2 */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
 
@@ -2004,11 +2008,18 @@ function safeId(value = '') {
   return ID_RE.test(text) ? text : '';
 }
 
+// An action that writes from the page (a reply, a comment, a timestamp from the video) runs on an empty field;
+// one that edits the user's text (improve, shorten, tone) needs text to work on. Site actions say which they
+// are; the generic draft actions and a typed request always write from the page.
+function startsFromPage(actionId, declared) {
+  return declared === true || actionId === 'draft-for-context' || actionId.startsWith('draft-') || actionId === 'custom';
+}
+
 function safeAction(action = {}) {
   if (action?.mode !== INLINE_DRAFT_MODE) return null;
   const id = compact(action?.id, 80);
   if (!/^[a-z0-9][a-z0-9-]{1,79}$/i.test(id)) return null;
-  return { id, label: compact(action?.label || id, 1000), mode: INLINE_DRAFT_MODE };
+  return { id, label: compact(action?.label || id, 1000), mode: INLINE_DRAFT_MODE, startsFromPage: startsFromPage(id, action?.startsFromPage) };
 }
 
 function normalizeInlineDraftRoute(value = '') {
@@ -2039,7 +2050,7 @@ function buildInlineDraftRequest(element, options = {}) {
   if (!requestId || !documentId) return { ok: false, reason: 'invalid-binding' };
   const draftText = compact(editableText(element), MAX_DRAFT_CHARS);
   const pageContext = compact(options.pageContext, MAX_PAGE_CONTEXT_CHARS);
-  const contextDraft = action.id === 'draft-for-context' || action.id.startsWith('draft-') || action.id === 'custom';
+  const contextDraft = action.startsFromPage;
   if (!draftText && !contextDraft) return { ok: false, reason: 'empty-draft' };
   if (!draftText && !pageContext && !editable.label && !contextDraft) return { ok: false, reason: 'missing-context' };
   const redact = typeof options.redact === 'function' ? options.redact : (text) => ({ text, count: 0 });
@@ -2061,6 +2072,7 @@ function buildInlineDraftRequest(element, options = {}) {
       documentId,
       actionId: action.id,
       actionLabel: action.label,
+      startsFromPage: contextDraft,
       route: normalizeInlineDraftRoute(options.route),
       autoReplace: options.autoReplace !== false,
       draftText,
@@ -2081,7 +2093,7 @@ function normalizeInlineDraftRequest(value = {}) {
   const actionId = compact(value.actionId, 80);
   const draftText = compact(value.draftText, MAX_DRAFT_CHARS);
   const pageContext = compact(value.pageContext, MAX_PAGE_CONTEXT_CHARS);
-  const contextDraft = actionId === 'draft-for-context' || actionId.startsWith('draft-') || actionId === 'custom';
+  const contextDraft = startsFromPage(actionId, value.startsFromPage);
   if (!requestId
     || !documentId
     || !actionId
@@ -2097,6 +2109,7 @@ function normalizeInlineDraftRequest(value = {}) {
     documentId,
     actionId,
     actionLabel: compact(value.actionLabel || actionId, 1000),
+    startsFromPage: contextDraft,
     route: normalizeInlineDraftRoute(value.route),
     autoReplace: value.autoReplace !== false,
     draftText,
@@ -2119,7 +2132,7 @@ function buildInlineDraftPrompt(request = {}) {
     draft_text: normalized.draftText,
     page_context: normalized.pageContext,
   };
-  const contextDraft = normalized.actionId === 'draft-for-context' || normalized.actionId.startsWith('draft-') || normalized.actionId === 'custom';
+  const contextDraft = normalized.startsFromPage;
   const draftingFromContext = !normalized.draftText && Boolean(normalized.pageContext);
   const draftingWithoutAmbientContext = contextDraft
     && !normalized.draftText

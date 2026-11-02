@@ -545,3 +545,19 @@ test('high-risk web messengers remain explicit conservative fallback profiles', 
     assert.equal(profile.applyMode, 'copy-only');
   }
 });
+
+test('each site action says whether it writes from the page or edits the text in the field', () => {
+  const actionsOn = (url, html = '<textarea aria-label="Add a comment"></textarea>') => {
+    const document = doc(html, url);
+    return Object.fromEntries(inspectInlineSite(document, document.querySelector('textarea'), { url }).actions.map((item) => [item.id, item.startsFromPage]));
+  };
+  const youtube = actionsOn('https://www.youtube.com/watch?v=abc123');
+  assert.equal(youtube['youtube-timestamp'], true, 'Add useful timestamp writes from the video');
+  assert.ok(Object.values(youtube).every(Boolean), 'every YouTube action writes from the page');
+  const reddit = actionsOn('https://www.reddit.com/r/test/comments/1/x/');
+  assert.equal(reddit['draft-reply'], true);
+  assert.equal(reddit['reddit-tldr'], false, 'a TL;DR of the draft needs the draft');
+  const github = actionsOn('https://github.com/a/b/pull/1');
+  assert.equal(github['github-diagnostics'], true, 'asking for diagnostics writes from the page');
+  assert.equal(github['github-structure'], false, 'structuring needs the draft');
+});
