@@ -5,6 +5,8 @@ import vm from 'node:vm';
 
 import english from '../extension/lib/locales/en.mjs';
 import { ROSTER_SOURCES, botAvatarRoute } from '../extension/lib/bot-roster-source.mjs';
+import { readLastKnownRoster, writeLastKnownRoster } from '../extension/lib/desktop-roster.mjs';
+import { buildNamesOnlyRoster } from '../extension/lib/bot-roster-names.mjs';
 
 // Issue #103, Bot Mode part: in Remote API mode the roster and the avatars come from the
 // gateway's own /v1/profiles routes (the API key works on a remote gateway), and nothing in
@@ -105,6 +107,49 @@ test('Remote API without a key, or on a gateway without /v1/profiles, still repo
   assert.equal(older.context.botModeRosterSource, '');
   assert.equal(older.seen.connectionRequests.length, 0);
   assert.equal(older.seen.loopback.length, 0);
+});
+
+test('a successful empty API roster is authoritative and is not replaced by health guesses', async () => {
+  const { context, seen } = rosterHarness({ roster: { profiles: [] } });
+  const result = await context.run({ quiet: true });
+  assert.equal(result.status, 'ready');
+  assert.equal(result.detail, '0 PROFILES LOADED.');
+  assert.equal(context.botModeRoster.length, 0);
+  assert.equal(seen.healthProbes, 0);
+});
+
+test('an empty API roster forgets the saved bots, so a later failed refresh cannot bring their details back', async () => {
+  const stored = {};
+  const storage = {
+    get: async (key) => ({ [key]: stored[key] }),
+    set: async (values) => { Object.assign(stored, values); },
+  };
+  const { context } = rosterHarness({ roster: { profiles: [{ name: 'luxord', has_avatar: true }] } });
+  Object.assign(context, {
+    readLastKnownRoster: () => readLastKnownRoster(storage),
+    writeLastKnownRoster: (roster) => writeLastKnownRoster(roster, storage),
+    buildNamesOnlyRoster,
+    splitBotRosterRows: (payload) => ({
+      agents: payload.profiles.map((row) => ({ profileName: row.name, title: 'Luxord the Bold', hasAvatar: row.has_avatar === true })),
+      groupChats: [],
+    }),
+  });
+  await context.run({ quiet: true });
+  assert.equal(context.botModeRoster[0].title, 'Luxord the Bold');
+
+  context.fetchRosterFromGatewayApi = async () => ({ profiles: [] });
+  await context.run({ quiet: true });
+  assert.equal(context.botModeRoster.length, 0);
+
+  context.fetchRosterFromGatewayApi = async () => { throw Object.assign(new Error('gateway-roster-503'), { status: 503 }); };
+  context.fetchRosterFromGateway = async () => {
+    throw Object.assign(new Error('gateway-profiles-degraded'), { metadata: { profileNames: ['luxord'] } });
+  };
+  await context.run({ quiet: true });
+  assert.deepEqual(context.botModeRoster.map((row) => row.profileName), ['luxord']);
+  assert.equal(context.botModeRoster[0].namesOnly, true, 'only the name survives; the old title and picture are gone');
+  assert.notEqual(context.botModeRoster[0].title, 'Luxord the Bold');
+  assert.equal(context.botModeRoster[0].hasAvatar, false);
 });
 
 test('a roster reply that arrives after the connection changed is dropped', async () => {

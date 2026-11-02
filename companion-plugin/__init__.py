@@ -7,11 +7,8 @@ has been captured, all tools gracefully report unavailable.
 
 It passively caches browser context from conversation messages (embedded by
 the extension as Browser Context Protocol prompt blocks) and from explicit
-tool calls. Its HTTP surface is six routes on the API server: a read-only
-readiness route (name, version, profile, tool names; status_route.py), the
-browser-context side channel (context status, context upload, declarative action
-descriptors; context_routes.py) and the two Hermes Control routes the extension
-attaches through (control_routes.py).
+tool calls. Its HTTP surface includes readiness, browser-context, Hermes Control,
+and read-only profile roster and avatar routes on the API server.
 
 It also carries Hermes Control for a Hermes whose core has no extension control:
 one tool per browser action (control_tools.py), served by a broker
@@ -23,7 +20,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import context_routes, control_routes, control_tools, hooks, status_route, tools
+from . import context_routes, control_routes, control_tools, hooks, profile_routes, status_route, tools
 from .context_store import BrowserContextStore
 from .control_broker import get_control_broker
 
@@ -173,8 +170,9 @@ def register(ctx) -> None:
         wire_extra=_chain(
             context_routes.make_wire_extra(STORE, version=version),
             control_routes.make_wire_extra(get_control_broker(), profile=profile),
+            profile_routes.make_wire_extra(),
         ),
-        routes=(*status_route.ROUTE_PATHS, *control_routes.ROUTE_PATHS),
+        routes=(*status_route.ROUTE_PATHS, *control_routes.ROUTE_PATHS, *profile_routes.ROUTE_PATHS),
     )
 
     # ── Bundled skill ──────────────────────────────────────────────────

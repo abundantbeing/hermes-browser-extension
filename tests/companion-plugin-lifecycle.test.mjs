@@ -785,7 +785,7 @@ test('the plugin claims a closed set of routes, and control only through Hermes 
   const claims = ['companion-plugin/install.md', 'companion-plugin/skills/hermes-browser-extension/SKILL.md', 'companion-plugin/plugin.yaml', 'DATA-FLOW.md']
     .map((file) => readFileSync(file, 'utf8')).join('\n');
   assert.doesNotMatch(claims, /\/v1\/browser|\/api\/browser|browser_context_upload|browser_context_provider|plugin_actions/);
-  assert.doesNotMatch(claims, /\/api\/plugins\/hermes-browser-extension\/(?!status|context|actions|control\/(?:register|ws)\b)/);
+  assert.doesNotMatch(claims, /\/api\/plugins\/hermes-browser-extension\/(?!status|context|actions|profiles(?:\/\{name\}\/avatar)?\b|control\/(?:register|ws)\b)/);
   const install = readFileSync('companion-plugin/install.md', 'utf8');
   assert.match(install, /context tools do \*\*not\*\* control the browser/);
   assert.match(install, /\/api\/plugins\/hermes-browser-extension\/control\/register/);

@@ -562,14 +562,10 @@ function listFilesRecursive(dir) {
 test('no network, route, or browser-control capability in companion plugin files', () => {
   const pluginFiles = listFilesRecursive('companion-plugin')
     .filter((file) => /\.(py|yaml|md)$/.test(file));
-  // status_route.py, context_routes.py and control_routes.py are the only files
-  // that touch aiohttp: they import `web` to answer a request the API server already
-  // accepted. They open no connection; status_route.py adds one GET route,
-  // context_routes.py two GETs and one POST (the browser-context envelope upload)
-  // and control_routes.py one POST and one GET (the Hermes Control register and the
-  // controller socket the extension opens inbound), no other verb.
-  const server = pluginFiles.filter((file) => /\/(status_route|context_routes|control_routes)\.py$/.test(file));
-  assert.equal(server.length, 3);
+  // The existing route modules and the profile route answer inbound API calls;
+  // none may open outbound connections or expose mutating profile endpoints.
+  const server = pluginFiles.filter((file) => /\/(status_route|context_routes|control_routes|profile_routes)\.py$/.test(file));
+  assert.equal(server.length, 4);
   for (const file of server) {
     const serverSource = readFileSync(file, 'utf8');
     assert.match(serverSource, /from aiohttp import web/);
