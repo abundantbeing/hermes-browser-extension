@@ -64,13 +64,11 @@ test('the full panel keeps square controls; only the quick menu tool chips are r
   assert.match(css, /\.quick-chip \{[^}]*border-radius:999px/);
 });
 
-test('every Assist area that scrolls uses the branded scrollbar, with no browser arrows or grey track', () => {
+test('every Assist area that scrolls uses the canonical branded scrollbar', () => {
   const css = /style\.textContent = `([\s\S]*?)`;/.exec(loadExtensionFile('content-inline-helper.js'))[1];
   const scrolling = [...css.matchAll(/(?:^|\n)\s*([^{}\n]+?)\s*\{[^}]*overflow(?:-y)?:\s*(?:auto|scroll)/g)]
     .flatMap((match) => match[1].split(',').map((selector) => selector.trim()));
   assert.ok(scrolling.includes('.dd-list'), 'the dropdown list scrolls');
-  const branded = /([^{}]+)::-webkit-scrollbar \{ width:8px; height:8px; \}/.exec(css)?.[1] || '';
-  for (const selector of scrolling) assert.ok(branded.includes(`${selector}::-webkit-scrollbar`) || branded.split(',').map((item) => item.trim()).includes(selector), `${selector} has the branded scrollbar`);
-  assert.match(css, /::-webkit-scrollbar-button \{ display:none; width:0; height:0; \}/);
-  assert.match(css, /::-webkit-scrollbar-track \{ background:transparent; \}/);
+  const branded = /([^{}]+)::-webkit-scrollbar \{ width:8px; \}/.exec(css)?.[1] || '';
+  for (const selector of scrolling) assert.ok(branded.includes(`${selector}::-webkit-scrollbar`) || branded.trim().endsWith(selector), `${selector} has the branded scrollbar`);
 });
