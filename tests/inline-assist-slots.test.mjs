@@ -121,11 +121,13 @@ test('X, nested as deep as x.com nests its editor: still under the avatar on the
   assert.equal(launcher.style.top, '243px');
 });
 
-test('X pop-out reply: the media buttons start under the avatar, so the circle goes at the end of them', async () => {
+test('X pop-out reply: at the end of the media buttons, the size of X\'s icons, in their rhythm and on their line', async () => {
   const launcher = await focusedLauncher(boot('x-reply-modal.html', 'https://x.com/compose/post'));
   assert.equal(launcher.dataset.placement, 'after');
-  // Tag location ends at 301: 12px gap; centred on the media row (328, 36 tall).
-  assert.equal(launcher.style.left, '313px');
+  assert.equal(launcher.dataset.size, 'small');
+  // The icons sit 40px apart (centres 47, 87, ... 287): the circle's centre is the next step, 327, and it is
+  // centred on the last icon's own box (327, 34 tall), not on the taller toolbar row.
+  assert.equal(launcher.style.left, '317px');
   assert.equal(launcher.style.top, '334px');
 });
 

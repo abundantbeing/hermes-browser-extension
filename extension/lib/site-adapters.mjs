@@ -738,9 +738,18 @@ function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
       return !box || !field || (box.right <= field.left + 4 && Math.abs(box.top - field.top) < 90);
     });
     if (avatar) slots.push({ element: avatar, rowElement: toolbar, strategy: 'below-center', gap: 12, minGapBelow: 20, obstacles: controls });
-    // Where the media buttons start right under the avatar (the pop-out reply), at the end of them instead.
-    const lastTool = tools.filter((element) => laidOutBox(element) || !field).at(-1);
-    if (lastTool) slots.push({ element: lastTool, rowElement: toolbar, strategy: 'after', gap: 12, obstacles: controls.filter((element) => element !== lastTool) });
+    // Where the media buttons start right under the avatar (the pop-out reply), at the end of them instead:
+    // the size of X's icons, on the last icon's line, one more step in their spacing.
+    const shown = tools.filter((element) => laidOutBox(element) || !field);
+    const lastTool = shown.at(-1);
+    if (lastTool) {
+      const size = X_ICON_SIZE;
+      const last = laidOutBox(lastTool);
+      const before = laidOutBox(shown.at(-2));
+      const step = last && before ? (last.left + last.width / 2) - (before.left + before.width / 2) : 0;
+      const gap = step > 0 ? Math.max(6, Math.min(24, Math.round(step - last.width / 2 - size / 2))) : 12;
+      slots.push({ element: lastTool, strategy: 'after', gap, size, obstacles: controls.filter((element) => element !== lastTool) });
+    }
     return slots;
   }
   const slot = inlineSlot(target, adapterId, { chatComposer, all });
@@ -748,6 +757,7 @@ function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
 }
 
 const X_AVATAR = '[data-testid^="UserAvatar-Container"], img[src*="profile_images"]';
+const X_ICON_SIZE = 20;
 
 function inlineSlot(target, adapterId, { chatComposer = false, all }) {
   if (chatComposer) return trailingControlsSlot(target);
