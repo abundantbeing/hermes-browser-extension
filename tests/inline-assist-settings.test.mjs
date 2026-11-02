@@ -8,6 +8,19 @@ import { changedPanes } from '../extension/lib/settings-panes.mjs';
 
 const settingsSection = () => new JSDOM(loadExtensionFile('sidepanel.html')).window.document.querySelector('.inline-assist-settings');
 
+test('each icon card shows the bare light and dark circles, with no tile behind them', () => {
+  const css = loadExtensionFile('sidepanel.css');
+  const rule = (selector) => {
+    const start = css.indexOf(`\n${selector} {`);
+    return start < 0 ? '' : css.slice(start, css.indexOf('}', start));
+  };
+  for (const swatch of ['.assist-icon-swatch', '.assist-icon-swatch-dark', '.assist-icon-swatch-light']) {
+    assert.doesNotMatch(rule(swatch), /background|border-radius: 8px|box-shadow/, `${swatch} paints no tile`);
+  }
+  assert.match(rule('.assist-icon-swatch-dark::before'), /background: #f4f4f1/, 'the light circle');
+  assert.match(rule('.assist-icon-swatch-light::before'), /background: #141414/, 'the dark circle');
+});
+
 test('Settings offers the three button icons, each previewed on a dark and a white page', () => {
   const section = settingsSection();
   const radios = [...section.querySelectorAll('input[name="inlineAssistIcon"]')];
