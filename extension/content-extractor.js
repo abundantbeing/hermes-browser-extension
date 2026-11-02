@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 3be7f5944f46c0cb */
+/* extension/lib/site-adapters.mjs · SHA-256 c20dbcf87a58d2cb */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -2249,8 +2249,7 @@ function xAssistContext(document, target, surface, url, above) {
   if (surface !== 'reply') return null;
   const scope = target.closest('[role="dialog"]') || target.closest('main, [role="main"]') || document.body;
   const articles = Array.from(scope?.querySelectorAll?.('article') || [])
-    .filter((article) => !article.contains(target) && !article.parentElement?.closest?.('article') && above(article))
-    .slice(-10);
+    .filter((article) => !article.contains(target) && !article.parentElement?.closest?.('article') && above(article));
   const entries = articles.map(xPostEntry).filter((entry) => entry.text);
   if (!entries.length) return null;
   const answered = entries[entries.length - 1];

@@ -1179,8 +1179,7 @@ function xAssistContext(document, target, surface, url, above) {
   if (surface !== 'reply') return null;
   const scope = target.closest('[role="dialog"]') || target.closest('main, [role="main"]') || document.body;
   const articles = Array.from(scope?.querySelectorAll?.('article') || [])
-    .filter((article) => !article.contains(target) && !article.parentElement?.closest?.('article') && above(article))
-    .slice(-10);
+    .filter((article) => !article.contains(target) && !article.parentElement?.closest?.('article') && above(article));
   const entries = articles.map(xPostEntry).filter((entry) => entry.text);
   if (!entries.length) return null;
   const answered = entries[entries.length - 1];

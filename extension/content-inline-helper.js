@@ -369,6 +369,7 @@
   let pendingAction = null;
   let lastRunAction = null;
   let pending = null;
+  let pendingField = null;
   let handledResultRequestId = '';
   let resultText = '';
   let resultSessionId = '';
@@ -1455,6 +1456,7 @@
     }));
     head.append(make('strong', 'bar-title', appliedAutomatically ? 'Draft in place' : (fieldChanged ? 'Field changed · review required' : 'Draft ready')), toFull);
     bar.append(head);
+    if (resultModelNotice) bar.append(makeRaw('p', 'bar-note', `${translateUiText('Model routing')} · ${resultModelNotice}`));
     if (resultContextWithheld) bar.append(make('p', 'bar-note', 'Written without the page: page context is off for this connection.'));
     if (!appliedAutomatically) bar.append(makeRaw('div', 'bar-preview', resultText || translateUiText('(empty draft)')));
     const actions = make('div', 'bar-actions');
@@ -1714,6 +1716,7 @@
       return renderFailure('This field is not eligible for inline drafting.');
     }
     pending = { ...built.request, applyMode: supportsSafeApply ? 'safe-apply' : 'copy-only' };
+    pendingField = target;
     resetResult();
     setLauncherBusy(true);
     renderWorking();
@@ -1763,7 +1766,6 @@
     const again = button('main', 'Try again');
     again.addEventListener('click', trustedOnly(() => {
       panel.dataset.mode = 'quick';
-      hidePanel();
       tryAgain();
     }));
     const dismiss = button('', 'Close');
@@ -1777,6 +1779,8 @@
   function runLocalAction(action) {
     const current = policy.classifyEditable(target);
     if (!current.eligible) return renderFailure('The original field is no longer available.');
+    lastRunAction = action;
+    pendingField = target;
     pending = {
       requestId: `local-${Date.now()}`,
       documentId,
@@ -1800,9 +1804,11 @@
     resultSessionTitle = String(message.sessionTitle || (message.noModel ? 'Local utility · no model' : 'Inline assist'));
     resultModelNotice = String(message.modelNotice || '');
     resultContextWithheld = message.contextWithheld === true;
-    const current = policy.classifyEditable(target);
+    // The draft belongs to the field the run came from, even if another one took focus while Hermes worked.
+    if (pendingField?.isConnected && pendingField !== target) setTarget(pendingField);
+    const current = policy.classifyEditable(pendingField?.isConnected ? pendingField : target);
     const fieldChanged = !current.eligible || current.text !== pending.draftText;
-    if (resultText && pending.autoReplace && !fieldChanged) {
+    if (resultText && pending.autoReplace && !fieldChanged && (!pendingField || pendingField === target)) {
       const applied = policy.applyResult(target, { draftText: pending.draftText, resultText, adapterId: pending.adapterId });
       if (applied.ok) {
         applyReceipt = applied.receipt;

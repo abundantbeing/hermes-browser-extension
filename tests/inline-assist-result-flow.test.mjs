@@ -70,6 +70,63 @@ test('the bar offers Longer beside Shorter, and the way back to the full panel i
   assert.ok(root.querySelector('.follow-ups'), 'the full result');
 });
 
+test('a quick-menu draft goes back to the field it came from, even when another field with the same text has focus', async () => {
+  const { env, root, field } = await boot({ inlineAssistOpenMode: 'quick' });
+  const other = env.w.document.createElement('textarea');
+  other.value = ORIGINAL;
+  env.w.document.body.append(other);
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  other.focus();
+  await env.sleep(40);
+  await deliverLast(env, 'The drafted reply.');
+  assert.equal(field.value, 'The drafted reply.');
+  assert.equal(other.value, ORIGINAL, 'the other field is untouched');
+});
+
+test('Try again on the failure bar with Ask every time shows the chooser', async () => {
+  const { env, root, panel } = await boot({ inlineAssistOpenMode: 'quick', inlineAssistDefaultRoute: 'background' });
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  const request = requests(env).at(-1);
+  env.changeStorage({ hermesBrowserSettings: { newValue: { inlineAssistDefaultRoute: 'ask', inlineAssistOpenMode: 'quick', inlineAssistModel: 'gpt-6.1-terra' } } });
+  await env.sleep(20);
+  env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: false, reason: 'The gateway refused.' });
+  await env.sleep(60);
+  env.userClick(buttonNamed(root, '.bar-actions button', 'Try again'));
+  await env.sleep(60);
+  assert.equal(panel.hidden, false, 'the chooser is on screen');
+  assert.ok(root.querySelector('.route-title'), 'Where should Hermes work?');
+});
+
+test('Again after an instant tool runs that tool, not the model action before it', async () => {
+  const { env, root, field } = await boot();
+  env.userClick(root.querySelector('.actions .action'));
+  await env.sleep(60);
+  await deliverLast(env);
+  env.userClick(root.querySelector('.head .close'));
+  await env.sleep(40);
+  field.value = 'Line one   \n\n\n\nLine two';
+  env.userClick(root.querySelector('.launcher'));
+  await env.sleep(60);
+  env.userClick(root.querySelector('.local-actions .action'));
+  await env.sleep(40);
+  const sent = requests(env).length;
+  env.userClick(buttonNamed(root, '.follow-ups button', 'Try again'));
+  await env.sleep(40);
+  assert.equal(requests(env).length, sent, 'no model request: Again reran the instant tool');
+});
+
+test('the bar shows the model fallback notice too', async () => {
+  const { env, root } = await boot({ inlineAssistOpenMode: 'quick' });
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  const request = requests(env).at(-1);
+  env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: true, text: 'A drafted reply.', modelNotice: 'Used this chat\'s model instead.' });
+  await env.sleep(60);
+  assert.match(root.querySelector('.bar').textContent, /Model routing · Used this chat's model instead\./);
+});
+
 test('the bar says when the draft was written without the page', async () => {
   const { env, root } = await boot({ inlineAssistOpenMode: 'quick' });
   env.userClick(root.querySelector('.quick-item'));

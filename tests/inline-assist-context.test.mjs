@@ -105,6 +105,15 @@ test('an X reply reads the conversation above the box, newest last, with who wro
   assert.doesNotMatch(text, /400 likes|A reply below the box/);
 });
 
+test('an X conversation of more than ten posts keeps the opening post when the thread fits', () => {
+  const posts = Array.from({ length: 12 }, (_, index) => `<article data-testid="tweet"><div data-testid="User-Name"><span>User ${index}</span><span>@u${index}</span></div><div data-testid="tweetText">Post number ${index}.</div></article>`).join('');
+  const { read } = page(`<main role="main">${posts}<div><span>Post your reply</span><div data-testid="tweetTextarea_0" contenteditable="true" role="textbox" aria-label="Post text" data-field></div></div></main>`, 'https://x.com/u0/status/1');
+  const { text, messages } = read();
+  assert.equal(messages, 12);
+  assert.match(text, /User 0 \(@u0\):\nPost number 0\./);
+  assert.doesNotMatch(text, /left out/);
+});
+
 test('an X reply in the pop-out reads only the post in the dialog, not the timeline behind it', () => {
   const { read } = page(`<main role="main"><article data-testid="tweet"><div data-testid="tweetText">Timeline post behind the dialog.</div></article></main>
     <div role="dialog"><article data-testid="tweet"><div data-testid="User-Name"><span>Ada</span><span>@ada</span></div><div data-testid="tweetText">The post being replied to.</div></article>
