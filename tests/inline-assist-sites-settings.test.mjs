@@ -4,6 +4,7 @@ import { JSDOM } from 'jsdom';
 
 import { loadExtensionFile } from './inline-assist-dom.mjs';
 import { createSettingsSaveHarness, sidepanelSource } from './helpers/settings-save-harness.mjs';
+import { inlineSiteFromInput } from '../extension/lib/site-adapters.mjs';
 
 test('Settings → Hermes Assist has the Sites list, which saves itself, with a line saying what each choice means', () => {
   const section = new JSDOM(loadExtensionFile('sidepanel.html')).window.document.querySelector('.inline-assist-settings');
@@ -101,10 +102,52 @@ for (const [url, site, label, state] of [['https://www.x.com/home', 'x', 'X', 'd
     if (state === 'hidden') assert.deepEqual(h.store.hermesInlineAssistHiddenSites, [site]);
     else assert.deepEqual(h.store.hermesInlineSiteContextPreferences, { [site]: state });
     if (state === 'hidden') assert.deepEqual([...model().hidden], [site]);
-    assert.equal(h.els.inlineAssistAddSite.textContent, `assist.sites.listed ${JSON.stringify({ site: label })}`, 'and then that it is listed');
-    assert.equal(h.els.inlineAssistAddSite.disabled, true);
+    assert.equal(h.els.inlineAssistAddSite.hidden, true, 'and then steps aside: the row is there');
   });
 }
+
+test('a typed site resolves to a site Assist knows by name or address, or to any other website', () => {
+  assert.equal(inlineSiteFromInput('Facebook'), 'facebook');
+  assert.equal(inlineSiteFromInput('facebook.com'), 'facebook');
+  assert.equal(inlineSiteFromInput('https://www.linkedin.com/feed/'), 'linkedin');
+  assert.equal(inlineSiteFromInput('twitter'), 'x');
+  assert.equal(inlineSiteFromInput('  News.YCombinator.com/item?id=1 '), 'news.ycombinator.com');
+  assert.equal(inlineSiteFromInput('hello'), '');
+  assert.equal(inlineSiteFromInput('not a site!'), '');
+  assert.equal(inlineSiteFromInput(''), '');
+});
+
+test('Add a site adds any website typed in: a known site with its choices, any other hidden', async () => {
+  const { h, row } = await sitesPanel();
+  const add = async (text, viaEnter = false) => {
+    h.els.inlineAssistSiteInput.value = text;
+    if (viaEnter) h.fn('handleInlineAssistSiteInputKey')({ key: 'Enter', preventDefault() {} });
+    else await h.fn('addTypedSiteToInlineAssistSites')();
+    await settle();
+  };
+  await add('facebook.com');
+  assert.deepEqual([...row('facebook').querySelector('select').options].map((option) => option.value), ['visible', 'draft', 'hidden']);
+  assert.deepEqual(h.store.hermesInlineSiteContextPreferences, { facebook: 'draft' });
+  assert.equal(h.els.inlineAssistSiteInput.value, '', 'the box empties for the next one');
+  await add('news.ycombinator.com', true);
+  assert.match(row('news.ycombinator.com').textContent, /Circle hidden/);
+  assert.deepEqual(h.store.hermesInlineAssistHiddenSites, ['news.ycombinator.com']);
+  await add('facebook');
+  assert.equal(h.els.inlineAssistSites.querySelectorAll('.inline-assist-site[data-site="facebook"]').length, 1, 'no second Facebook row');
+  await add('hello');
+  assert.equal(h.els.inlineAssistSiteInputHint.hidden, false, 'says to type a web address');
+  assert.equal(h.els.inlineAssistSiteInput.value, 'hello', 'and keeps what was typed');
+});
+
+test('the Sites rows are one box each: the choice and a square remove button inside it, the same height', () => {
+  const html = new JSDOM(loadExtensionFile('sidepanel.html')).window.document;
+  const box = html.querySelector('.inline-assist-sites .inline-assist-site-new');
+  assert.ok(box.querySelector('input#inlineAssistSiteInput[type="text"]'), 'a box to type a site in');
+  assert.ok(box.querySelector('button#inlineAssistAddTyped'), 'with Add beside it');
+  const css = loadExtensionFile('sidepanel.css');
+  assert.match(css, /\.inline-assist-site \.branded-select-button \{[^}]*min-height: 34px;/);
+  assert.match(css, /\.inline-assist-site-remove \{[^}]*width: 34px;[^}]*height: 34px;[^}]*border: 1px solid/);
+});
 
 test('Add this site on a page that is not a website says so and adds nothing', async () => {
   const { h, rows, edits } = await sitesPanel({ tabs: [{ id: 3, url: 'chrome://extensions/', title: 'Extensions' }] });

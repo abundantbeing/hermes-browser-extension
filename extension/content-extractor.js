@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 c67a1f6539279961 */
+/* extension/lib/site-adapters.mjs · SHA-256 3be7f5944f46c0cb */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1442,6 +1442,28 @@ function inlineSiteForHost(hostname = '') {
   const host = String(hostname || '').toLowerCase().replace(/^www\./, '');
   const adapterId = adapterIdForHost(host);
   return { adapterId, label: adapterId === 'generic' ? host : inlineSiteLabel(adapterId) };
+}
+
+// A site typed into Settings → Hermes Assist → Sites: a site Assist knows by its name ("Gmail") or any
+// address of it, else any other website by its hostname. '' when it is neither.
+function inlineSiteFromInput(value = '') {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  const named = Object.keys(INLINE_SITE_LABELS).find((id) => id !== 'generic' && (id === raw || INLINE_SITE_LABELS[id].toLowerCase() === raw));
+  if (named) return named;
+  let host = '';
+  try {
+    host = new URL(/^[a-z][a-z0-9+.-]*:\/\//.test(raw) ? raw : `https://${raw}`).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+  if (!host.includes('.')) {
+    const guessed = adapterIdForHost(`${host}.com`);
+    return guessed === 'generic' ? '' : guessed;
+  }
+  if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(host)) return '';
+  const adapterId = adapterIdForHost(host);
+  return adapterId === 'generic' ? host : adapterId;
 }
 
 function adapterIdForHost(host = '') {

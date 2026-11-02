@@ -374,6 +374,28 @@ export function inlineSiteForHost(hostname = '') {
   return { adapterId, label: adapterId === 'generic' ? host : inlineSiteLabel(adapterId) };
 }
 
+// A site typed into Settings → Hermes Assist → Sites: a site Assist knows by its name ("Gmail") or any
+// address of it, else any other website by its hostname. '' when it is neither.
+export function inlineSiteFromInput(value = '') {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  const named = Object.keys(INLINE_SITE_LABELS).find((id) => id !== 'generic' && (id === raw || INLINE_SITE_LABELS[id].toLowerCase() === raw));
+  if (named) return named;
+  let host = '';
+  try {
+    host = new URL(/^[a-z][a-z0-9+.-]*:\/\//.test(raw) ? raw : `https://${raw}`).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+  if (!host.includes('.')) {
+    const guessed = adapterIdForHost(`${host}.com`);
+    return guessed === 'generic' ? '' : guessed;
+  }
+  if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(host)) return '';
+  const adapterId = adapterIdForHost(host);
+  return adapterId === 'generic' ? host : adapterId;
+}
+
 function adapterIdForHost(host = '') {
   const normalized = String(host || '').toLowerCase();
   if (normalized === 'github.com' || normalized.endsWith('.github.com')) return 'github';

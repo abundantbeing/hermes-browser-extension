@@ -778,7 +778,7 @@ import {
 import { rewindSessionToMessage, usesAuthorityRewind } from './lib/session-rewind.mjs';
 import { botChatDeliveryFrame, botChatRefusalState, isPendingBotChatDelivery, movedAsideBotChat, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
 import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-pick.mjs';
-import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
+import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteFromInput, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
@@ -1247,6 +1247,9 @@ const els = {
   inlineAssistSitesEmpty: $('#inlineAssistSitesEmpty'),
   inlineAssistSitesHint: $('#inlineAssistSitesHint'),
   inlineAssistAddSite: $('#inlineAssistAddSite'),
+  inlineAssistSiteInput: $('#inlineAssistSiteInput'),
+  inlineAssistAddTyped: $('#inlineAssistAddTyped'),
+  inlineAssistSiteInputHint: $('#inlineAssistSiteInputHint'),
   inlineAssistModel: $('#inlineAssistModel'),
   inlineAssistModelButton: $('#inlineAssistModelButton'),
   inlineAssistModelLabel: $('#inlineAssistModelLabel'),
@@ -23520,19 +23523,14 @@ async function refreshInlineAssistOpenSite() {
   renderInlineAssistAddSite();
 }
 
-// Add this site names the open tab's site, and says so once it is listed.
+// The open tab's site gets its own Add button until it is in the list; any site can be typed in.
 function renderInlineAssistAddSite() {
   const button = els.inlineAssistAddSite;
   if (!button) return;
   const site = inlineAssistOpenSite;
-  if (!site) {
-    button.textContent = t('ui.add.this.site');
-    button.disabled = false;
-    return;
-  }
-  const listed = inlineAssistSiteEntries(readInlineAssistSitesModel()).some((entry) => entry.site === site);
-  button.textContent = t(listed ? 'assist.sites.listed' : 'assist.sites.add', { site: inlineSiteLabel(site) });
-  button.disabled = listed;
+  const listed = Boolean(site) && inlineAssistSiteEntries(readInlineAssistSitesModel()).some((entry) => entry.site === site);
+  button.hidden = !site || listed;
+  if (site) button.textContent = t('assist.sites.add', { site: inlineSiteLabel(site) });
 }
 
 function syncInlineAssistSitesForm() {
@@ -23627,11 +23625,31 @@ async function addActiveSiteToInlineAssistSites() {
     renderInlineAssistAddSite();
     return;
   }
+  addSiteToInlineAssistSites(site);
+}
+
+function addSiteToInlineAssistSites(site) {
   const model = readInlineAssistSitesModel();
   if (!inlineAssistSiteEntries(model).some((entry) => entry.site === site)) {
     writeInlineAssistSitesModel(withInlineAssistSiteState(model, site, inlineAssistSiteReadsThreads(site) ? 'draft' : 'hidden'), { edited: true });
   }
   focusInlineAssistSite(site);
+}
+
+function addTypedSiteToInlineAssistSites() {
+  const input = els.inlineAssistSiteInput;
+  if (!input) return;
+  const site = inlineSiteFromInput(input.value);
+  if (els.inlineAssistSiteInputHint) els.inlineAssistSiteInputHint.hidden = Boolean(site);
+  if (!site) return;
+  input.value = '';
+  addSiteToInlineAssistSites(site);
+}
+
+function handleInlineAssistSiteInputKey(event) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  addTypedSiteToInlineAssistSites();
 }
 
 // The page's Assist panel changes these too (Hide the circle on this site, Read the visible thread). They
@@ -28837,6 +28855,8 @@ function bindEvents() {
   els.inlineAssistSites?.addEventListener('change', handleInlineAssistSiteChange);
   els.inlineAssistSites?.addEventListener('click', handleInlineAssistSiteRemove);
   els.inlineAssistAddSite?.addEventListener('click', () => void addActiveSiteToInlineAssistSites());
+  els.inlineAssistAddTyped?.addEventListener('click', addTypedSiteToInlineAssistSites);
+  els.inlineAssistSiteInput?.addEventListener('keydown', handleInlineAssistSiteInputKey);
   document.getElementById('settingsOpenModelPickerButton')?.addEventListener('click', openSettingsModelPicker);
   document.getElementById('settingsRefreshModelsButton')?.addEventListener('click', (event) => {
     const button = event.currentTarget;

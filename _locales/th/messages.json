@@ -3951,6 +3951,14 @@
     "message": "เพิ่ม",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "เพิ่มเว็บไซต์",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "เพิ่มเว็บไซต์ เช่น facebook.com",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -8094,6 +8102,10 @@
   "runtime_ui_type": {
     "message": "ประเภท",
     "description": "Runtime interface message ui.type"
+  },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "พิมพ์ที่อยู่เว็บ เช่น facebook.com หรือชื่อเว็บไซต์ เช่น Gmail",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
   },
   "runtime_ui_ui": {
     "message": "UI",

@@ -3951,6 +3951,14 @@
     "message": "新增",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "新增網站",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "新增網站，例如 facebook.com",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -8094,6 +8102,10 @@
   "runtime_ui_type": {
     "message": "型別",
     "description": "Runtime interface message ui.type"
+  },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "輸入網址（如 facebook.com）或網站名稱（如 Gmail）。",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
   },
   "runtime_ui_ui": {
     "message": "介面",

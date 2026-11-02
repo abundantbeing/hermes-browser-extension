@@ -3951,6 +3951,14 @@
     "message": "추가",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "사이트 추가",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "사이트 추가 (예: facebook.com)",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -8094,6 +8102,10 @@
   "runtime_ui_type": {
     "message": "유형",
     "description": "Runtime interface message ui.type"
+  },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "facebook.com 같은 웹 주소나 Gmail 같은 사이트 이름을 입력하세요.",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
   },
   "runtime_ui_ui": {
     "message": "UI",

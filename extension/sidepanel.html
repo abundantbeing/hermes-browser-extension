@@ -1550,8 +1550,13 @@
             </span>
             <div class="inline-assist-sites-chips">
               <ul id="inlineAssistSites" class="inline-assist-sites-list" hidden></ul>
-              <button id="inlineAssistAddSite" class="inline-assist-site-add" type="button" data-i18n="ui.add.this.site">+ Add this site</button>
+              <div class="inline-assist-site-new">
+                <input id="inlineAssistSiteInput" type="text" autocomplete="off" spellcheck="false" placeholder="Add a site, like facebook.com" data-i18n-placeholder="ui.add.a.site.like.facebook.com" aria-label="Add a site" data-i18n-aria-label="ui.add.a.site" />
+                <button id="inlineAssistAddTyped" class="inline-assist-site-add-typed" type="button" data-i18n="ui.add">Add</button>
+              </div>
+              <button id="inlineAssistAddSite" class="inline-assist-site-add" type="button" data-i18n="ui.add.this.site" hidden>+ Add this site</button>
             </div>
+            <p id="inlineAssistSiteInputHint" class="hint" data-i18n="ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail" hidden>Type a web address, like facebook.com, or a site name, like Gmail.</p>
             <p id="inlineAssistSitesLegend" class="hint" data-i18n="ui.sites.legend">Reads thread: Assist also reads the conversation on screen. This field only: only what is in the field. Circle hidden: no circle on that site. Changes save right away.</p>
             <p id="inlineAssistSitesEmpty" class="hint" data-i18n="ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open">No sites yet. Change one from the Assist panel on a page, or add the site you have open.</p>
             <p id="inlineAssistSitesHint" class="hint" data-i18n="ui.open.a.web.page.first.then.add.it.here" hidden>Open a web page first, then add it here.</p>
