@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 b14ade94c4fbda92 */
+/* extension/lib/site-adapters.mjs · SHA-256 426fbf22937d9426 */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1709,32 +1709,108 @@ function composerAround(target, selectors, levels = 12) {
   return null;
 }
 
+function laidOutBox(element) {
+  const box = element?.getBoundingClientRect?.();
+  return box && box.width > 0 && box.height > 0 ? box : null;
+}
+
+// A composer's own controls that are showing, the field and anything inside it left out.
+function shownControls(root, target) {
+  return Array.from(root?.querySelectorAll?.('button, [role="button"], a[aria-label]') || [])
+    .filter((element) => element !== target && !target?.contains?.(element) && !element.contains?.(target))
+    .map((element) => ({ element, box: laidOutBox(element) }))
+    .filter((item) => item.box);
+}
+
+// Chat composers (ChatGPT, Claude, Perplexity, Grok, Hermes Web): just before the controls on the right of
+// the composer's own row (the model or effort picker, else the microphone), so the circle covers neither
+// the text nor a control. Which control that is depends on the layout (ChatGPT's effort pill widens to
+// "Thinking effort", a model picker comes and goes), so it is read from where the controls are: the
+// leftmost of the right-hand ones on the composer's lowest row of controls.
+function trailingControlsSlot(target, { gap = 8 } = {}) {
+  let composer = target?.parentElement || null;
+  for (let depth = 0; composer && depth < 10; depth += 1, composer = composer.parentElement) {
+    if (composer === target.ownerDocument?.body) return null;
+    if (shownControls(composer, target).length >= 2) break;
+  }
+  const box = laidOutBox(composer);
+  if (!box) return null;
+  const controls = shownControls(composer, target);
+  const middle = box.left + box.width / 2;
+  const centre = (item) => item.box.top + item.box.height / 2;
+  const right = controls.filter((item) => item.box.left + item.box.width / 2 > middle);
+  if (!right.length) return null;
+  const lowest = Math.max(...right.map(centre));
+  const row = right.filter((item) => Math.abs(centre(item) - lowest) <= item.box.height / 2);
+  const first = row.reduce((best, item) => (item.box.left < best.box.left ? item : best));
+  // The site's own buttons share the field's box (a one-line pill), so the circle may too.
+  return { element: first.element, strategy: 'before', gap, overField: true, obstacles: controls.map((item) => item.element) };
+}
+
+// Composers with a row of tools under the editor (LinkedIn's share box): just after the last of those tools,
+// on their row. The tools are the first row of controls below the editor that starts on its left.
+function toolRowEndSlot(target, { gap = 12 } = {}) {
+  const field = laidOutBox(target);
+  if (!field) return null;
+  let node = target.parentElement;
+  for (let depth = 0; node && depth < 12; depth += 1, node = node.parentElement) {
+    const below = shownControls(node, target).filter((item) => item.box.top >= field.bottom - 4);
+    if (below.length < 2) continue;
+    const top = Math.min(...below.map((item) => item.box.top));
+    const row = below.filter((item) => item.box.top - top < item.box.height / 2 && item.box.left < field.left + field.width * 0.75);
+    if (!row.length) return null;
+    const last = row.reduce((best, item) => (item.box.left > best.box.left ? item : best));
+    return { element: last.element, strategy: 'after', gap, obstacles: below.map((item) => item.element) };
+  }
+  return null;
+}
+
+const CHAT_COMPOSER_SITES = new Set(['chatgpt', 'claude', 'perplexity', 'grok']);
+
+// Hermes Web, the web app a Hermes gateway serves: its composer is a chat composer as well.
+function isHermesWeb(document, url) {
+  if (/^\/webapp(\/|$)/.test(url?.pathname || '')) return true;
+  return String(document?.title || '').trim() === 'Hermes' && Boolean(document?.querySelector?.('[data-tour]'));
+}
+
 // The site slot: one of the composer's own controls that the Assist circle sits beside, so it lands in a
 // row of buttons the site already has instead of on the text, the avatar or a send button. Selectors
 // prefer stable attributes (data-testid, aria-label, roles, element names); when a site changes its
 // markup and nothing matches, the slot is null and the content script uses the generic corner rule.
-function inlineSlot(target, adapterId) {
-  if (!target) return null;
+// The slots are tried in order; the first that fits takes the circle.
+function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
+  if (!target) return [];
   const all = (root, selector) => Array.from(root?.querySelectorAll?.(selector) || []);
   if (adapterId === 'x') {
-    // Reply, post and quote composers: the account avatar beside the editable, the media toolbar below it.
-    const composer = composerAround(target, ['[data-testid="toolBar"]', '[data-testid^="UserAvatar-Container"]']);
-    if (!composer) return null;
-    return {
-      element: composer.querySelector('[data-testid^="UserAvatar-Container"]'),
-      rowElement: composer.querySelector('[data-testid="toolBar"]'),
-      strategy: 'below-center',
-      gap: 12,
-      minGapBelow: 20,
-      obstacles: all(composer, '[data-testid="tweetButtonInline"], [data-testid="tweetButton"]'),
-    };
+    // Reply, post and quote composers: the media toolbar under the editable, the account avatar beside it.
+    // X nests its editor deep, so the composer is looked for well up the tree.
+    const composer = composerAround(target, ['[data-testid="toolBar"]'], 30);
+    const toolbar = composer?.querySelector('[data-testid="toolBar"]');
+    if (!toolbar) return [];
+    const send = all(composer, '[data-testid="tweetButtonInline"], [data-testid="tweetButton"]');
+    const tools = all(toolbar, 'button, [role="button"]').filter((element) => !send.includes(element));
+    const slots = [];
+    // Centred under the avatar on the media row. The avatar is the composer's own: beside the editable,
+    // at its height, not the avatar of the post being replied to.
+    const field = laidOutBox(target);
+    const avatar = all(composerAround(target, [X_AVATAR], 30), X_AVATAR).find((element) => {
+      const box = laidOutBox(element);
+      return !box || !field || (box.right <= field.left + 4 && Math.abs(box.top - field.top) < 90);
+    });
+    if (avatar) slots.push({ element: avatar, rowElement: toolbar, strategy: 'below-center', gap: 12, minGapBelow: 20, obstacles: [...send, ...tools] });
+    // Where the media buttons start right under the avatar (the pop-out reply), at the end of them instead.
+    const lastTool = tools.filter((element) => laidOutBox(element) || !field).at(-1);
+    if (lastTool) slots.push({ element: lastTool, rowElement: toolbar, strategy: 'after', gap: 12, obstacles: send });
+    return slots;
   }
-  if (adapterId === 'chatgpt') {
-    // The composer's tool row: just before the dictate button (or voice / send when dictation is absent).
-    const form = target.closest?.('form');
-    const element = firstMatch(form, ['button[aria-label="Dictate button"]', 'button[aria-label*="Dictate" i]', '[data-testid="composer-speech-button"]', '[data-testid="send-button"]', '#composer-submit-button']);
-    return element ? { element, strategy: 'before', gap: 12, obstacles: [] } : null;
-  }
+  const slot = inlineSlot(target, adapterId, { chatComposer, all });
+  return slot ? [slot] : [];
+}
+
+const X_AVATAR = '[data-testid^="UserAvatar-Container"], img[src*="profile_images"]';
+
+function inlineSlot(target, adapterId, { chatComposer = false, all }) {
+  if (chatComposer) return trailingControlsSlot(target);
   if (adapterId === 'youtube') {
     // Comment box footer: just after the emoji button, far from Cancel and Comment.
     const box = target.closest?.('ytd-commentbox');
@@ -1742,11 +1818,13 @@ function inlineSlot(target, adapterId) {
     return element ? { element, strategy: 'after', gap: 12, obstacles: all(box, '#cancel-button, #submit-button') } : null;
   }
   if (adapterId === 'gmail') {
-    // Compose toolbar: just after the Send group (Send plus its "More send options" dropdown).
+    // Compose toolbar: just after More options (the ⋮ at the end of the writing tools), so the circle covers
+    // none of them. The toolbar is the row around Send that holds More options.
     const compose = target.closest?.('[role="dialog"], .M9, form') || target.ownerDocument;
     const send = firstMatch(compose, ['[role="button"][data-tooltip^="Send"]', '[role="button"][aria-label^="Send"]']);
-    const group = send?.parentElement?.querySelector?.('[aria-label="More send options"]') ? send.parentElement : send;
-    return group ? { element: group, strategy: 'after', gap: 12, obstacles: [] } : null;
+    const row = send ? composerAround(send, ['[role="button"][aria-label="More options"]'], 8) : null;
+    const more = row?.querySelector('[role="button"][aria-label="More options"]');
+    return more ? { element: more, strategy: 'after', gap: 8, obstacles: all(row, '[role="button"]').filter((element) => element !== more) } : null;
   }
   if (adapterId === 'reddit') {
     // Comment composer: just after the formatting toggle at the end of the left icon group.
@@ -1755,17 +1833,26 @@ function inlineSlot(target, adapterId) {
     return element ? { element, strategy: 'after', gap: 12, obstacles: all(composer, 'button[type="submit"], button[slot="submit-button"], button[slot="cancel-button"]') } : null;
   }
   if (adapterId === 'linkedin') {
-    // Comment pill: just before the emoji button inside it.
-    const form = target.closest?.('.comments-comment-box__form, form');
-    const element = firstMatch(form, ['button[aria-label*="Emoji" i]']);
-    return element ? { element, strategy: 'before', gap: 8, obstacles: [] } : null;
+    // Comment pill: just before the emoji button inside it, a size smaller so it fits the pill. The site's
+    // own buttons sit inside the editable's box there, so the circle may too.
+    const pill = composerAround(target, ['button[aria-label*="Emoji" i]'], 8);
+    const emoji = pill?.querySelector('button[aria-label*="Emoji" i]');
+    const field = laidOutBox(target);
+    const emojiBox = laidOutBox(emoji);
+    const inPill = emoji && (!field || !emojiBox || (emojiBox.top < field.bottom + 8 && emojiBox.bottom > field.top - 8));
+    if (inPill) return { element: emoji, strategy: 'before', gap: 10, size: 20, overField: true, obstacles: all(pill, 'button').filter((element) => element !== emoji) };
+    // Start a post (the share box): just after the last of the tools under the editor (the + that opens
+    // more of them, or the × once they are open).
+    return toolRowEndSlot(target);
   }
   if (adapterId === 'github') {
     // Comment form: at the front of the Markdown toolbar. github.com stretches the toolbar box across the
     // header and lines its buttons up at the far end, so the circle goes before the first button that is
     // showing, not before the box.
-    const form = target.closest?.('form, .CommentBox, [class*="MarkdownEditor"]');
-    const toolbar = firstMatch(form, ['markdown-toolbar', '[aria-label="Formatting tools"]', '[role="toolbar"]']);
+    // The toolbar is found from the field: on an issue the comment box is not a form around it.
+    const toolbars = ['markdown-toolbar', '[aria-label="Formatting tools"]', '[role="toolbar"]'];
+    const form = composerAround(target, [toolbars.join(', ')], 12) || target.closest?.('form, .CommentBox, [class*="MarkdownEditor"]');
+    const toolbar = firstMatch(form, toolbars);
     // Visibility is checked only where there is layout (the toolbar itself has a size).
     const laidOut = (toolbar?.getBoundingClientRect?.()?.width || 0) > 0;
     const shown = (element) => !laidOut || (element.getBoundingClientRect?.()?.width || 0) > 0;
@@ -1836,6 +1923,8 @@ function inspectInlineSite(document, target, options = {}) {
   const privateSurface = PRIVATE_INLINE_SITES.has(adapterId) || surface === 'direct-message';
   const defaultMode = privateSurface ? 'draft' : adapterId === 'generic' ? 'draft' : 'visible';
   const contextMode = preferences[adapterId] || defaultMode;
+  const chatComposer = CHAT_COMPOSER_SITES.has(adapterId) || (adapterId === 'generic' && isHermesWeb(document, url));
+  const slots = inlineSlots(target, adapterId, { chatComposer });
   const anchorElement = inlineAnchor(target, adapterId);
   const obstacleElements = adapterId === 'chatgpt'
     ? Array.from(anchorElement?.querySelectorAll?.('button, [role="button"], select') || [])
@@ -1860,9 +1949,10 @@ function inspectInlineSite(document, target, options = {}) {
     placement: {
       anchorElement,
       obstacleElements,
-      // The site's own control to sit beside; when it is missing the generic corner rule applies:
-      // outside the field's bottom-right corner, else inside that corner, else just under the field.
-      slot: inlineSlot(target, adapterId),
+      // The site's own controls to sit beside, tried in order; when none fits the generic corner rule
+      // applies: outside the field's bottom-right corner, else inside that corner, else just under it.
+      slot: slots[0] || null,
+      slots,
       preferred: ['corner-outside', 'corner-inside', 'below-end'],
     },
   };

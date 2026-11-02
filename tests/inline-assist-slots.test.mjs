@@ -13,7 +13,14 @@ const FIXTURES = new URL('./fixtures/assist/', import.meta.url);
 const fixture = (name) => readFileSync(new URL(name, FIXTURES), 'utf8');
 const SITES = [
   ['x-reply.html', 'https://x.com/someone/status/1'],
+  ['x-reply-deep.html', 'https://x.com/someone/status/1'],
   ['chatgpt.html', 'https://chatgpt.com/'],
+  ['chatgpt-pill.html', 'https://chatgpt.com/'],
+  ['claude.html', 'https://claude.ai/new'],
+  ['perplexity.html', 'https://www.perplexity.ai/'],
+  ['hermes-web.html', 'http://127.0.0.1:9119/webapp/window'],
+  ['github-issue.html', 'https://github.com/o/r/issues/2'],
+  ['linkedin-share.html', 'https://www.linkedin.com/feed/'],
   ['youtube.html', 'https://www.youtube.com/watch?v=abc'],
   ['gmail.html', 'https://mail.google.com/mail/u/0/#inbox?compose=new'],
   ['reddit.html', 'https://www.reddit.com/r/test/comments/1/x/'],
@@ -23,9 +30,18 @@ const SITES = [
 ];
 const fieldIn = (document) => document.querySelector('[contenteditable="true"], textarea');
 
+// Each element's box from its data-rect, for the slots that are read from the layout.
+function withBoxes(document) {
+  for (const element of document.querySelectorAll('*')) {
+    const [left, top, width, height] = String(element.getAttribute('data-rect') || '0 0 0 0').split(/\s+/).map(Number);
+    element.getBoundingClientRect = () => ({ x: left, y: top, left, top, width, height, right: left + width, bottom: top + height });
+  }
+  return document;
+}
+
 for (const [name, url] of SITES) {
   test(`${name}: the circle's slot is the composer's own control`, () => {
-    const { document } = parseHTML(`<!doctype html><html><body>${fixture(name)}</body></html>`);
+    const document = withBoxes(parseHTML(`<!doctype html><html><body>${fixture(name)}</body></html>`).document);
     const profile = inspectInlineSite(document, fieldIn(document), { url });
     const slot = profile.placement.slot;
     assert.ok(slot, `${name} found no slot`);
@@ -89,21 +105,86 @@ test('X: the circle sits under the avatar on the media row, 20px clear of it', a
 test('slot element replaced → placement follows the new element', async () => {
   const env = boot('x-reply.html', 'https://x.com/someone/status/1');
   await focusedLauncher(env);
-  const avatar = env.w.document.querySelector('[data-testid^="UserAvatar-Container"]');
+  const avatar = env.w.document.querySelector('[data-testid="UserAvatar-Container-hermes"]');
   const moved = avatar.cloneNode(true);
-  moved.setAttribute('data-rect', '16 300 40 40');
+  moved.setAttribute('data-rect', '20 170 40 40');
   avatar.replaceWith(moved);
   await env.sleep(400);
-  assert.equal(env.launcher().style.top, '360px');
+  assert.equal(env.launcher().style.left, '28px');
 });
 
-test('ChatGPT: the circle sits 12px before the dictate button', async () => {
+test('X, nested as deep as x.com nests its editor: still under the avatar on the media row', async () => {
+  const launcher = await focusedLauncher(boot('x-reply-deep.html', 'https://x.com/someone/status/1'));
+  assert.equal(launcher.dataset.placement, 'below-center');
+  assert.equal(launcher.style.left, '24px');
+  assert.equal(launcher.style.top, '243px');
+});
+
+test('X pop-out reply: the media buttons start under the avatar, so the circle goes at the end of them', async () => {
+  const launcher = await focusedLauncher(boot('x-reply-modal.html', 'https://x.com/compose/post'));
+  assert.equal(launcher.dataset.placement, 'after');
+  // Tag location ends at 301: 12px gap; centred on the media row (328, 36 tall).
+  assert.equal(launcher.style.left, '313px');
+  assert.equal(launcher.style.top, '334px');
+});
+
+test('ChatGPT: the circle sits just before the controls on the right of its row', async () => {
   const env = boot('chatgpt.html', 'https://chatgpt.com/');
   const launcher = await focusedLauncher(env);
   assert.equal(launcher.dataset.placement, 'before');
-  assert.equal(launcher.style.left, '830px');
+  assert.equal(launcher.style.left, '834px');
   assert.equal(launcher.style.top, '682px');
 });
+
+test('ChatGPT one-line pill: just before the effort pill, and it moves when the pill widens to Thinking effort', async () => {
+  const env = boot('chatgpt-pill.html', 'https://chatgpt.com/');
+  const launcher = await focusedLauncher(env);
+  assert.equal(launcher.dataset.placement, 'before');
+  assert.equal(launcher.style.left, '728px');
+  assert.equal(launcher.style.top, '614px');
+  const pill = env.w.document.querySelector('[data-expect-slot]');
+  pill.setAttribute('data-rect', '700 608 140 36');
+  pill.textContent = 'Thinking effort';
+  await env.sleep(400);
+  assert.equal(launcher.style.left, '668px');
+});
+
+for (const [name, url, left, top] of [
+  ['claude.html', 'https://claude.ai/new', '768px', '234px'],
+  ['perplexity.html', 'https://www.perplexity.ai/', '880px', '379px'],
+  ['hermes-web.html', 'http://127.0.0.1:9119/webapp/window', '568px', '636px'],
+]) {
+  test(`${name}: just before the controls on the right of the composer's row, never on a control`, async () => {
+    const launcher = await focusedLauncher(boot(name, url));
+    assert.equal(launcher.dataset.placement, 'before');
+    assert.equal(launcher.style.left, left);
+    assert.equal(launcher.style.top, top);
+  });
+}
+
+test('Gmail: just after More options, covering none of the writing tools', async () => {
+  const launcher = await focusedLauncher(boot('gmail.html', 'https://mail.google.com/mail/u/0/#inbox?compose=new'));
+  assert.equal(launcher.dataset.placement, 'after');
+  assert.equal(launcher.style.left, '1008px');
+  assert.equal(launcher.style.top, '730px');
+});
+
+test('GitHub issue: before the first toolbar button, as on a pull request', async () => {
+  const launcher = await focusedLauncher(boot('github-issue.html', 'https://github.com/o/r/issues/2'));
+  assert.equal(launcher.dataset.placement, 'before');
+  assert.equal(launcher.style.left, '486px');
+  assert.equal(launcher.style.top, '76px');
+});
+
+test('LinkedIn comment: a smaller circle just before the emoji button, not on it', async () => {
+  const launcher = await focusedLauncher(boot('linkedin.html', 'https://www.linkedin.com/feed/'));
+  assert.equal(launcher.dataset.placement, 'before');
+  assert.equal(launcher.dataset.size, 'small');
+  // Emoji starts at 712: 10px gap, 20px circle, centred on its 24px row.
+  assert.equal(launcher.style.left, '682px');
+  assert.equal(launcher.style.top, '312px');
+});
+
 
 test('GitHub: the circle sits just before the first toolbar button, not before the toolbar box', async () => {
   const env = boot('github-wide-toolbar.html', 'https://github.com/o/r/pull/147');

@@ -128,6 +128,10 @@
     .launcher-logo { width:18px; height:18px; background:var(--hx-glyph,#f4f4f1); }
     .launcher[data-icon="girl"] .launcher-logo, .brand-mark[data-icon="girl"] .brand-logo { border-radius:50%; mask-size:cover; -webkit-mask-size:cover; }
     .launcher[data-icon="girl"] .launcher-logo { width:22px; height:22px; }
+    /* A size smaller where a site's row is tight (LinkedIn's comment pill). */
+    .launcher[data-size="small"] { width:20px; height:20px; }
+    .launcher[data-size="small"] .launcher-logo { width:15px; height:15px; }
+    .launcher[data-size="small"][data-icon="girl"] .launcher-logo { width:18px; height:18px; }
     .launcher[hidden], .panel[hidden] { display:none; }
     .panel { position:fixed; z-index:1; width:min(380px,calc(100vw - 20px)); max-height:min(680px,calc(100vh - 20px)); overflow:auto; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); pointer-events:auto; box-shadow:0 18px 50px rgba(0,0,0,.32), 0 0 0 1px color-mix(in srgb,var(--hb-blue) 14%,transparent); }
     /* The panel, the result preview and the dropdown lists float the branded thumb over their content
@@ -749,8 +753,10 @@
     include(target);
     include(anchor);
     obstacles.forEach(include);
-    include(profile?.placement?.slot?.element);
-    include(profile?.placement?.slot?.rowElement);
+    for (const slot of placementSlots(profile)) {
+      include(slot?.element);
+      include(slot?.rowElement);
+    }
     let ancestor = anchor?.parentElement || target.parentElement;
     for (let depth = 0; ancestor && depth < 3; depth += 1) {
       include(ancestor);
@@ -804,20 +810,33 @@
   // The site's own control the circle sits beside (see site-adapters inlineSlot). A slot whose control
   // is gone, hidden or would put the circle on the text or a send button gives no placement, and the
   // caller falls back to the generic corner rule.
-  function slotPlacement(slot, viewport, targetRect, obstacleRects) {
-    if (!slot?.element?.isConnected || typeof policy.inlineSlotPlacement !== 'function') return null;
+  // The site's slots, tried in order: the first that fits takes the circle, at its size (smaller where the
+  // site's row is tight). A slot among buttons that sit inside the field's own box may overlap the field.
+  function slotPlacement(slots, viewport, targetRect, obstacleRects) {
+    if (typeof policy.inlineSlotPlacement !== 'function') return null;
     const visibleRect = (element) => {
       const box = element?.isConnected ? element.getBoundingClientRect() : null;
       return box && box.width > 0 && box.height > 0 ? box : null;
     };
-    const slotObstacles = Array.from(slot.obstacles || []).map(visibleRect).filter(Boolean);
-    return policy.inlineSlotPlacement({
-      strategy: slot.strategy,
-      rect: visibleRect(slot.element),
-      rowRect: visibleRect(slot.rowElement),
-      gap: slot.gap,
-      minGapBelow: slot.minGapBelow,
-    }, viewport, { size: 24, targetRect, obstacleRects: [...obstacleRects, ...slotObstacles] });
+    for (const slot of slots || []) {
+      if (!slot?.element?.isConnected) continue;
+      const size = Number(slot.size) || 24;
+      const slotObstacles = Array.from(slot.obstacles || []).map(visibleRect).filter(Boolean);
+      const placed = policy.inlineSlotPlacement({
+        strategy: slot.strategy,
+        rect: visibleRect(slot.element),
+        rowRect: visibleRect(slot.rowElement),
+        gap: slot.gap,
+        minGapBelow: slot.minGapBelow,
+      }, viewport, { size, targetRect: slot.overField ? null : targetRect, obstacleRects: [...obstacleRects, ...slotObstacles] });
+      if (placed) return { ...placed, size };
+    }
+    return null;
+  }
+
+  function placementSlots(profile) {
+    const placement = profile?.placement;
+    return placement?.slots || (placement?.slot ? [placement.slot] : []);
   }
 
   function position() {
@@ -835,7 +854,7 @@
     let profile = siteProfile || refreshSiteProfile();
     // Sites re-render their composers (X swaps the avatar and toolbar nodes): a slot whose control left
     // the page is looked up again rather than dropped.
-    if (profile?.placement?.slot?.element && !profile.placement.slot.element.isConnected) profile = refreshSiteProfile();
+    if (placementSlots(profile).some((slot) => slot?.element && !slot.element.isConnected)) profile = refreshSiteProfile();
     const anchor = profile?.placement?.anchorElement?.isConnected
       ? profile.placement.anchorElement
       : target;
@@ -857,7 +876,7 @@
       offsetLeft: visualViewport?.offsetLeft || 0,
       offsetTop: visualViewport?.offsetTop || 0,
     };
-    const launcherPosition = slotPlacement(profile?.placement?.slot, viewport, targetRect, obstacleRects)
+    const launcherPosition = slotPlacement(placementSlots(profile), viewport, targetRect, obstacleRects)
       || (typeof policy.inlineLauncherPlacement === 'function'
         ? policy.inlineLauncherPlacement(rect, viewport, {
           targetRect,
@@ -871,14 +890,17 @@
       return;
     }
     resumePanelAfterScroll();
+    const circle = Number(launcherPosition.size) || 24;
     launcher.hidden = false;
     launcher.dataset.placement = launcherPosition.strategy || 'inside-end';
+    if (circle < 24) launcher.dataset.size = 'small';
+    else delete launcher.dataset.size;
     launcher.style.left = `${launcherPosition.left}px`;
     launcher.style.top = `${launcherPosition.top}px`;
-    setLauncherTone(surfaceToneAt(launcherPosition.left + 12, launcherPosition.top + 12, anchor));
+    setLauncherTone(surfaceToneAt(launcherPosition.left + circle / 2, launcherPosition.top + circle / 2, anchor));
     if (!panel.hidden && panel.dataset.mode === 'bar') {
       // The quick menu's result bar: under the field and clear of the circle (inlineResultBarPlacement).
-      const bar = policy.inlineResultBarPlacement(targetRect, { top: launcherPosition.top, left: launcherPosition.left, width: 24, height: 24 }, { width: viewportWidth, height: viewportHeight }, { barHeight: panel.getBoundingClientRect().height || 60 });
+      const bar = policy.inlineResultBarPlacement(targetRect, { top: launcherPosition.top, left: launcherPosition.left, width: circle, height: circle }, { width: viewportWidth, height: viewportHeight }, { barHeight: panel.getBoundingClientRect().height || 60 });
       panel.style.width = `${bar.width}px`;
       panel.style.maxHeight = '';
       panel.style.left = `${bar.left}px`;
@@ -891,7 +913,7 @@
       panel.style.width = '';
       const panelHeight = Math.max(260, panel.getBoundingClientRect().height || 0);
       const circleTop = launcherPosition.top;
-      const circleBottom = launcherPosition.top + 24;
+      const circleBottom = launcherPosition.top + circle;
       const roomBelow = viewportHeight - circleBottom - 8 - safe;
       const roomAbove = circleTop - 8 - safe;
       const below = roomBelow >= Math.min(panelHeight, 300) || roomBelow >= roomAbove;
