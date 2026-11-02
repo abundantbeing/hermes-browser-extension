@@ -211,17 +211,17 @@ test('inline helper consumes each matching result request at most once', async (
   assert.match(source, /handledResultRequestId = message\.requestId/);
 });
 
-test('Hermes Assist scroll surfaces use the canonical sharp themed scrollbar', async () => {
+test('Hermes Assist scroll surfaces float the branded thumb over their content, with no strip kept for it', async () => {
   const source = await read('extension/content-inline-helper.js');
-  assert.match(source, /\.panel, \.preview, \.custom, \.dd-list \{ scrollbar-gutter:stable; \}/);
-  assert.match(source, /\.panel::-webkit-scrollbar, \.preview::-webkit-scrollbar, \.custom::-webkit-scrollbar, \.dd-list::-webkit-scrollbar \{ width:8px; \}/);
-  assert.match(source, /\.panel::-webkit-scrollbar-thumb, \.preview::-webkit-scrollbar-thumb, \.custom::-webkit-scrollbar-thumb, \.dd-list::-webkit-scrollbar-thumb \{ background:rgba\(var\(--hermes-fg-rgb\),0\.45\); border:1px solid var\(--hermes-line-strong\); \}/);
-  assert.match(source, /--hermes-fg-rgb/);
-  assert.match(source, /--hermes-line-strong/);
-  const scrollbarBlock = source.match(/\.panel, \.preview, \.custom, \.dd-list \{ scrollbar-gutter:stable; \}[\s\S]*?\.head \{/)?.[0] || '';
-  assert.doesNotMatch(scrollbarBlock, /::-webkit-scrollbar-(?:track|button|corner)/);
-  assert.doesNotMatch(scrollbarBlock, /scrollbar-(?:width|color)/);
-  assert.doesNotMatch(scrollbarBlock, /border-radius/);
+  // No area keeps an empty strip beside its content for a scrollbar.
+  assert.doesNotMatch(source, /scrollbar-gutter/);
+  assert.match(source, /overlayScrollbar\?\.attachOverlayScrollbar\(panel\);/);
+  assert.match(source, /overlayScrollbar\?\.attachOverlayScrollbar\(list, \{ watchResize: false \}\);/);
+  assert.match(source, /overlayScrollbar\?\.attachOverlayScrollbar\(preview, \{ watchResize: false \}\);/);
+  // The textarea cannot hold the thumb: it keeps the canonical sharp bar, nothing more.
+  assert.match(source, /\.custom::-webkit-scrollbar \{ width:8px; \}/);
+  assert.match(source, /\.custom::-webkit-scrollbar-thumb \{ background:rgba\(var\(--hermes-fg-rgb\),0\.45\); border:1px solid var\(--hermes-line-strong\); \}/);
+  assert.doesNotMatch(source, /::-webkit-scrollbar-(?:track|button|corner)/);
 });
 
 test('a background Assist retry creates a new session id, since Hermes never reuses a deleted one', async () => {

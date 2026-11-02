@@ -44,6 +44,12 @@ const AUTHORED_MODULES = Object.freeze([
     apiName: 'INLINE_ASSIST_LOOK_API',
   },
   {
+    path: 'extension/lib/overlay-scrollbar.mjs',
+    runtimeName: 'hermesOverlayScrollbarRuntime',
+    globalName: 'HermesOverlayScrollbar',
+    apiName: 'OVERLAY_SCROLLBAR_API',
+  },
+  {
     path: 'extension/lib/page-annotation-content.mjs',
     runtimeName: 'hermesPageAnnotationRuntime',
     globalName: 'HermesPageAnnotation',

@@ -12,6 +12,7 @@
   const i18n = globalThis.HermesI18nContent;
   const look = globalThis.HermesInlineAssistLook;
   const appearancePreferences = globalThis.HermesAppearancePreferences;
+  const overlayScrollbar = globalThis.HermesOverlayScrollbar;
   if (!policy?.classifyEditable || !policy?.buildInlineDraftRequest || !policy?.applyResult || !appearance?.resolveInlineAssistTheme || !i18n?.ready) return;
   await i18n.ready;
   if (globalThis.__HERMES_INLINE_HELPER_GENERATION__ !== generation) return;
@@ -129,11 +130,11 @@
     .launcher[data-icon="girl"] .launcher-logo { width:22px; height:22px; }
     .launcher[hidden], .panel[hidden] { display:none; }
     .panel { position:fixed; z-index:1; width:min(380px,calc(100vw - 20px)); max-height:min(680px,calc(100vh - 20px)); overflow:auto; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); pointer-events:auto; box-shadow:0 18px 50px rgba(0,0,0,.32), 0 0 0 1px color-mix(in srgb,var(--hb-blue) 14%,transparent); }
-    /* The canonical sharp scrollbar on every area that scrolls, the dropdown lists included: with
-       ::-webkit-scrollbar styled, the browser draws no arrows or grey track of its own. */
-    .panel, .preview, .custom, .dd-list { scrollbar-gutter:stable; }
-    .panel::-webkit-scrollbar, .preview::-webkit-scrollbar, .custom::-webkit-scrollbar, .dd-list::-webkit-scrollbar { width:8px; }
-    .panel::-webkit-scrollbar-thumb, .preview::-webkit-scrollbar-thumb, .custom::-webkit-scrollbar-thumb, .dd-list::-webkit-scrollbar-thumb { background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); }
+    /* The panel, the result preview and the dropdown lists float the branded thumb over their content
+       (lib/overlay-scrollbar.mjs): no strip is kept beside a search box or a row. The instruction box is a
+       textarea, which cannot hold the thumb, so it keeps the canonical sharp bar, with no strip reserved. */
+    .custom::-webkit-scrollbar { width:8px; }
+    .custom::-webkit-scrollbar-thumb { background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); }
     .head { display:grid; grid-template-columns:30px 1fr 44px; gap:12px; align-items:center; padding:14px; border-bottom:1px solid var(--hb-line); }
     .brand-mark { display:grid; place-items:center; width:30px; height:30px; padding:0; border-radius:50%; background:var(--hb-blue); }
     .brand-logo { width:22px; height:22px; background:var(--hb-paper); }
@@ -208,7 +209,7 @@
     .quick-opt .dd-list { top:calc(100% + 6px); bottom:auto; }
     .foot .dd-list { left:0; right:auto; }
     .dd-option { display:grid; gap:2px; min-height:0; padding:7px 10px; border:0; border-top:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); font:inherit; text-align:left; white-space:normal; cursor:pointer; }
-    .dd-option:first-child, .dd-note + .dd-option { border-top:0; }
+    .dd-option:first-of-type, .dd-note + .dd-option { border-top:0; }
     .dd-option strong { font-weight:600; }
     .dd-option small { color:var(--hb-muted); font-size:calc(9.5px * var(--hermes-text-zoom, 1)); }
     .dd-option:hover, .dd-option:focus-visible { outline:none; background:var(--hb-soft); }
@@ -307,6 +308,7 @@
   const footSafety = make('span', 'foot-safety', 'Never posts or sends. Only this field changes.');
   foot.append(footSafety);
   panel.append(head, context, body, foot);
+  overlayScrollbar?.attachOverlayScrollbar(panel);
   // The font stacks live in a stylesheet inside the closed root, set on the circle and the panel, so the
   // page can not read the user's font choice off the host element.
   const fontStyle = make('style', 'assist-fonts');
@@ -325,7 +327,9 @@
     }
     return fontNames.get(family);
   };
-  shadow.append(style, fontStyle, launcher, panel);
+  const overlayStyle = make('style', 'overlay-scrollbar');
+  overlayStyle.textContent = overlayScrollbar?.css || '';
+  shadow.append(style, overlayStyle, fontStyle, launcher, panel);
   (document.documentElement || document.body).appendChild(host);
   browserApi.storage?.local?.get?.('hermesBrowserSettings').then((stored) => {
     const percent = Number(stored?.hermesBrowserSettings?.textZoomPercent);
@@ -968,6 +972,7 @@
     const shown = makeRaw('span', 'dd-value', valueLabel || value || '');
     trigger.append(shown, make('i', 'dd-chevron'));
     const list = make('div', 'dd-list');
+    const listScroll = overlayScrollbar?.attachOverlayScrollbar(list, { watchResize: false });
     list.setAttribute('role', 'listbox');
     list.setAttribute('aria-label', translateUiText(label));
     list.hidden = true;
@@ -1010,6 +1015,7 @@
         }));
         list.append(option);
       }
+      listScroll?.refresh();
     };
     const open = async () => {
       closeOpenDropdown?.();
@@ -1702,6 +1708,7 @@
     }
     const label = make('span', 'section-label', 'Result preview');
     const preview = makeRaw('div', 'preview', resultText || translateUiText('(empty draft)'));
+    overlayScrollbar?.attachOverlayScrollbar(preview, { watchResize: false });
     const actions = make('div', 'result-actions');
     const keep = button('main', copyOnly ? 'Copy to use' : (policy.inlineDraftPrimaryActionLabel?.({
       originalText: pending?.draftText || '',

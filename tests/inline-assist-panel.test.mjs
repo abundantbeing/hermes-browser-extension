@@ -64,13 +64,35 @@ test('the full panel keeps square controls; only the quick menu tool chips are r
   assert.match(css, /\.quick-chip \{[^}]*border-radius:999px/);
 });
 
-test('every Assist area that scrolls uses the canonical branded scrollbar', () => {
-  const css = /style\.textContent = `([\s\S]*?)`;/.exec(loadExtensionFile('content-inline-helper.js'))[1];
+test('every Assist area that scrolls floats the branded thumb over its content; none keeps a strip for it', async () => {
+  const source = loadExtensionFile('content-inline-helper.js');
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec(source)[1];
+  assert.doesNotMatch(css, /scrollbar-gutter/);
   const scrolling = [...css.matchAll(/(?:^|\n)\s*([^{}\n]+?)\s*\{[^}]*overflow(?:-y)?:\s*(?:auto|scroll)/g)]
     .flatMap((match) => match[1].split(',').map((selector) => selector.trim()));
   assert.ok(scrolling.includes('.dd-list'), 'the dropdown list scrolls');
-  const branded = /([^{}]+)::-webkit-scrollbar \{ width:8px; \}/.exec(css)?.[1] || '';
-  for (const selector of scrolling) assert.ok(branded.includes(`${selector}::-webkit-scrollbar`) || branded.trim().endsWith(selector), `${selector} has the branded scrollbar`);
+  // Each scrolling area is given the floating thumb where it is made, except the instruction textarea,
+  // which cannot hold one and keeps the canonical sharp bar.
+  const madeAs = { '.panel': 'panel', '.preview': 'preview', '.dd-list': 'list' };
+  for (const selector of scrolling) {
+    if (selector === '.custom') {
+      assert.match(css, /\.custom::-webkit-scrollbar \{ width:8px; \}/);
+      continue;
+    }
+    assert.ok(madeAs[selector], `${selector} is a known scrolling area`);
+    assert.match(source, new RegExp(`attachOverlayScrollbar\\(${madeAs[selector]}[,)]`), `${selector} floats its thumb`);
+  }
+  // In the page: the panel and an open dropdown carry the thumb first in them.
+  const { env, root, panel } = await openPanel();
+  await env.sleep(40);
+  assert.equal(panel.hasAttribute('data-overlay-scroll'), true);
+  assert.equal(panel.firstElementChild.className, 'overlay-scroll-rail');
+  env.userClick(root.querySelector('.dd[data-setting="route"] .dd-button'));
+  await env.sleep(40);
+  const list = root.querySelector('.dd[data-setting="route"] .dd-list');
+  assert.equal(list.hasAttribute('data-overlay-scroll'), true);
+  assert.equal(list.firstElementChild.className, 'overlay-scroll-rail');
+  assert.ok(root.querySelector('style.overlay-scrollbar').textContent.includes('scrollbar-width:none'), 'the browser bar is hidden');
 });
 
 test('the full panel failure screen has a plain secondary Back to actions button', () => {
