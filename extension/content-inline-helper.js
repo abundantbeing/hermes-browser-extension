@@ -252,6 +252,7 @@
     .quick-ask { display:flex; align-items:center; gap:8px; padding:9px 12px; border-bottom:1px solid var(--hb-line); }
     .quick-input { flex:1; min-width:0; border:0; background:transparent; color:var(--hb-blue); font:calc(12.5px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); outline:none; }
     .quick-input::placeholder { color:var(--hb-muted); }
+    .pop-ghost { position:fixed; z-index:1; box-sizing:border-box; pointer-events:none; border:1px solid var(--hb-blue); background:var(--hb-paper); box-shadow:0 18px 50px rgba(0,0,0,.32); }
     .quick-label { padding:9px 12px 4px; }
     .quick-list { display:grid; }
     .quick-item { display:grid; grid-template-columns:20px 1fr; gap:10px; align-items:center; padding:8px 12px; border:0; background:transparent; color:var(--hb-blue); text-align:left; cursor:pointer; font-family:var(--hb-font-ui); }
@@ -952,7 +953,52 @@
     appliedAutomatically = false;
   }
 
+  // Opening and closing pop like a bubble from the circle: a widening or shrinking circle, in pixel dither
+  // steps between sparse dots and solid. Closing leaves a shell that vanishes while the panel itself closes
+  // at once, so nothing waits on it. None of it runs when reduced motion is asked for.
+  const POP_OPEN_MS = 200;
+  const POP_CLOSE_MS = 160;
+  const DITHER_SPARSE = 'conic-gradient(#000 0 25%, transparent 0 100%)';
+  const DITHER_HALF = 'repeating-conic-gradient(#000 0 25%, transparent 0 50%)';
+  const DITHER_DENSE = 'conic-gradient(transparent 0 25%, #000 0 100%)';
+
+  function popAllowed() {
+    return typeof panel.animate === 'function' && globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches !== true;
+  }
+
+  function popFrames(box, steps) {
+    const circle = launcher.hidden ? null : launcher.getBoundingClientRect();
+    const x = Math.round(circle ? circle.left + circle.width / 2 - box.left : 0);
+    const y = Math.round(circle ? circle.top + circle.height / 2 - box.top : 0);
+    const reach = Math.ceil(Math.max(...[[0, 0], [box.width, 0], [0, box.height], [box.width, box.height]].map(([cx, cy]) => Math.hypot(cx - x, cy - y))));
+    const at = (radius) => `circle(${radius}px at ${x}px ${y}px)`;
+    const dither = (image) => ({ maskImage: image, webkitMaskImage: image, maskSize: '4px 4px', webkitMaskSize: '4px 4px' });
+    return steps.map(([offset, radius, image]) => ({ offset, ...(radius === null ? {} : { clipPath: at(radius === 'reach' ? reach : radius) }), ...dither(image) }));
+  }
+
+  function popOpen() {
+    if (!popAllowed() || panel.hidden) return;
+    const box = panel.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    panel.animate(popFrames(box, [[0, 12, DITHER_SPARSE], [0.35, null, DITHER_HALF], [0.65, null, DITHER_DENSE], [1, 'reach', 'none']]), { duration: POP_OPEN_MS, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  }
+
+  function popClose() {
+    if (!popAllowed() || panel.hidden) return;
+    const box = panel.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const shell = make('div', 'pop-ghost');
+    Object.assign(shell.style, { left: `${box.left}px`, top: `${box.top}px`, width: `${box.width}px`, height: `${box.height}px` });
+    shadow.append(shell);
+    const done = () => shell.remove();
+    const animation = shell.animate(popFrames(box, [[0, 'reach', DITHER_DENSE], [0.4, null, DITHER_HALF], [1, 12, DITHER_SPARSE]]), { duration: POP_CLOSE_MS, easing: 'cubic-bezier(.4,0,.8,.4)', fill: 'forwards' });
+    animation.onfinish = done;
+    animation.oncancel = done;
+    setTimeout(done, POP_CLOSE_MS + 200);
+  }
+
   function hidePanel() {
+    popClose();
     panel.hidden = true;
     panelScrollSuspended = false;
     panel.style.visibility = '';
@@ -2030,6 +2076,7 @@
       renderAssist();
     }
     position();
+    popOpen();
   }
 
   function applyLocalizedFrame() {
