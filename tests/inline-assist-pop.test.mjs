@@ -43,7 +43,7 @@ test('the panel pops out of the circle: a widening circle, in dither steps from 
 test('closing leaves a dithered shell that shrinks back into the circle, while the panel itself closes at once', async () => {
   const { env, calls, root, panel } = await open();
   calls.length = 0;
-  env.userClick(env.root().querySelector('.launcher'));
+  env.userClick(root.querySelector('.quick-close'));
   assert.equal(panel.hidden, true, 'closed straight away');
   const vanish = calls.find((call) => call.element.classList.contains('pop-ghost'));
   assert.ok(vanish, 'a shell vanishes in its place');
@@ -54,7 +54,33 @@ test('closing leaves a dithered shell that shrinks back into the circle, while t
 
 test('with reduced motion asked for, the panel opens and closes without the pop', async () => {
   const { env, calls, root } = await open({}, { reducedMotion: true });
-  env.userClick(env.root().querySelector('.launcher'));
+  env.userClick(root.querySelector('.quick-close'));
   assert.equal(calls.length, 0);
 });
 
+test('the quick menu has its own close button', async () => {
+  const { env, root, panel } = await open();
+  const close = root.querySelector('.quick-ask .quick-close');
+  assert.ok(close);
+  assert.equal(close.getAttribute('aria-label'), 'Close Hermes Assist');
+  env.userClick(close);
+  assert.equal(panel.hidden, true);
+});
+
+const pressOnPage = (env, target = env.w.document.body) => {
+  for (const listener of env.listenersFor(env.w.document, 'pointerdown')) {
+    listener({ type: 'pointerdown', isTrusted: true, target, composedPath: () => [target, env.w.document.body, env.w.document] });
+  }
+};
+
+test('a press outside the quick menu closes it, as a menu does', async () => {
+  const { env, panel } = await open();
+  pressOnPage(env);
+  assert.equal(panel.hidden, true);
+});
+
+test('a press outside the full panel leaves it open', async () => {
+  const { env, panel } = await open({ inlineAssistOpenMode: 'panel' });
+  pressOnPage(env);
+  assert.equal(panel.hidden, false);
+});

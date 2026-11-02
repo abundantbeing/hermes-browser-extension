@@ -252,6 +252,8 @@
     .quick-ask { display:flex; align-items:center; gap:8px; padding:9px 12px; border-bottom:1px solid var(--hb-line); }
     .quick-input { flex:1; min-width:0; border:0; background:transparent; color:var(--hb-blue); font:calc(12.5px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); outline:none; }
     .quick-input::placeholder { color:var(--hb-muted); }
+    .quick-close { display:grid; place-items:center; flex:none; width:22px; height:22px; padding:0; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-muted); cursor:pointer; font-size:calc(15px * var(--hermes-text-zoom, 1)); line-height:1; }
+    .quick-close:hover, .quick-close:focus-visible { color:var(--hb-blue); border-color:var(--hb-accent); outline:none; }
     .pop-ghost { position:fixed; z-index:1; box-sizing:border-box; pointer-events:none; border:1px solid var(--hb-blue); background:var(--hb-paper); box-shadow:0 18px 50px rgba(0,0,0,.32); }
     .quick-label { padding:9px 12px 4px; }
     .quick-list { display:grid; }
@@ -1290,7 +1292,9 @@
       const text = input.value.trim();
       if (text) beginAction({ id: 'custom', label: text.slice(0, 1000), detail: 'Custom instruction', mode: 'draft-copy-only' });
     }));
-    askRow.append(input);
+    const closeMenu = button('quick-close', '×', 'Close Hermes Assist');
+    closeMenu.addEventListener('click', trustedOnly(hidePanel));
+    askRow.append(input, closeMenu);
     const label = makeRaw('span', 'section-label quick-label', profile?.label || location.hostname.replace(/^www\./, ''));
     const list = make('div', 'quick-list');
     pageActions().slice(0, 4).forEach((action, index) => {
@@ -2023,6 +2027,13 @@
     if (origin === target || target.contains?.(origin)) stabilizePosition(420);
   }
 
+  // A press outside the quick menu closes it, as a menu does; the full panel and the bar stay open.
+  function onPagePointerDown(event) {
+    if (event.isTrusted !== true || panel.hidden || panel.dataset.mode !== 'quick') return;
+    if (event.composedPath?.().includes(host)) return;
+    hidePanel();
+  }
+
   function onKey(event) {
     if (event.isTrusted !== true) return;
     if (event.key !== 'Escape') return;
@@ -2107,6 +2118,7 @@
   document.addEventListener('focusin', onFocus, true);
   document.addEventListener('input', onEditableInput, true);
   document.addEventListener('keydown', onKey, true);
+  document.addEventListener('pointerdown', onPagePointerDown, true);
   globalThis.addEventListener('resize', position);
   globalThis.addEventListener('scroll', position, true);
   visualViewport?.addEventListener?.('resize', position);
@@ -2143,6 +2155,7 @@
     document.removeEventListener('focusin', onFocus, true);
     document.removeEventListener('input', onEditableInput, true);
     document.removeEventListener('keydown', onKey, true);
+    document.removeEventListener('pointerdown', onPagePointerDown, true);
     globalThis.removeEventListener('resize', position);
     globalThis.removeEventListener('scroll', position, true);
     visualViewport?.removeEventListener?.('resize', position);
