@@ -944,6 +944,7 @@ export default Object.freeze({
   "ui.more.actions": "更多操作",
   "ui.fewer.actions": "收起操作",
   "ui.shorter": "更短",
+  "ui.longer": "更长",
   "ui.button.icon": "按钮图标",
   "ui.wing": "翅膀",
   "ui.clean.at.any.size": "任何尺寸都清晰",

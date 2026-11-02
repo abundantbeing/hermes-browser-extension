@@ -955,6 +955,7 @@ export default Object.freeze({
   "ui.more.actions": "작업 더 보기",
   "ui.fewer.actions": "작업 줄이기",
   "ui.shorter": "더 짧게",
+  "ui.longer": "더 길게",
   "ui.button.icon": "버튼 아이콘",
   "ui.wing": "날개",
   "ui.clean.at.any.size": "어떤 크기에서도 선명함",

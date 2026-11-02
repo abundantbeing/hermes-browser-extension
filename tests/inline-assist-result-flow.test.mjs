@@ -83,3 +83,43 @@ test('Back on the chooser from the full panel returns to the actions', async () 
   await env.sleep();
   assert.ok(root.querySelector('.actions .action'), 'the actions again');
 });
+
+test('the full panel\'s follow-ups come in pairs: Shorter has Longer beside it', async () => {
+  const { env, root } = await boot();
+  env.userClick(root.querySelector('.actions .action'));
+  await env.sleep(60);
+  await deliverLast(env);
+  assert.deepEqual(labels(root, '.follow-ups button'), ['Try again', 'Quick menu', 'Shorter', 'Longer']);
+});
+
+test('Longer asks Hermes to expand the draft that is in the field', async () => {
+  const { env, root } = await boot();
+  env.userClick(root.querySelector('.actions .action'));
+  await env.sleep(60);
+  await deliverLast(env, 'Short draft.');
+  env.userClick(buttonNamed(root, '.follow-ups button', 'Longer'));
+  await env.sleep(60);
+  const request = requests(env).at(-1);
+  assert.equal(request.actionId, 'expand');
+  assert.equal(request.draftText, 'Short draft.');
+});
+
+test('an odd number of result buttons never leaves a hole: the last one takes the whole row', () => {
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec(loadExtensionFile('content-inline-helper.js'))[1];
+  assert.match(css, /\.result-actions > button:last-child:nth-child\(odd\) \{ grid-column:1 \/ -1; \}/);
+});
+
+test('the bar under the field offers Longer beside Shorter and Full panel last, draft in place or not', async () => {
+  const { env, root, panel } = await boot({ inlineAssistOpenMode: 'quick' });
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  await deliverLast(env);
+  assert.equal(panel.dataset.mode, 'bar');
+  const bar = labels(root, '.bar-actions button');
+  assert.equal(bar[bar.indexOf('Shorter') + 1], 'Longer');
+  assert.equal(bar.at(-1), 'Full panel');
+  env.userClick(buttonNamed(root, '.bar-actions button', 'Full panel'));
+  await env.sleep();
+  assert.equal(panel.dataset.mode, 'full');
+  assert.ok(root.querySelector('.follow-ups'), 'the full result');
+});

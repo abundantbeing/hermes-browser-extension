@@ -40,6 +40,8 @@
     { id: 'clean-formatting', label: 'Clean formatting', detail: 'Whitespace cleanup · no model', local: true },
     { id: 'bullet-list', label: 'Make bullets', detail: 'Deterministic list · no model', local: true },
   ];
+  // Longer, the pair of Shorter after a draft: Hermes expands the draft in the field.
+  const expandAction = { id: 'expand', label: 'Expand', mode: 'draft-copy-only' };
 
   function make(tag, className = '', text = '') {
     const element = document.createElement(tag);
@@ -184,7 +186,8 @@
     .result-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
     .result-actions button { min-height:39px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); cursor:pointer; font-family:var(--hb-font-display); font-size:calc(12px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); font-weight:700; }
     .result-actions .main { background:var(--hb-blue); color:var(--hb-paper); }
-    .result-actions[data-action-count="3"] button:last-child { grid-column:1 / -1; }
+    /* Two columns of buttons never leave a hole: an odd last one takes the whole row. */
+    .result-actions > button:last-child:nth-child(odd) { grid-column:1 / -1; }
     .setting { display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--hb-line); padding:9px; color:var(--hb-blue); font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .setting small { color:var(--hb-muted); }
     .toggle { appearance:none; width:34px; height:18px; margin:0; border:1px solid var(--hb-blue); background:var(--hb-paper); position:relative; cursor:pointer; }
@@ -1312,28 +1315,29 @@
     } else {
       add('Copy', copyResult, { main: true });
     }
-    // Again and Shorter run as from the quick menu: the bar steps aside while Hermes works, and the chooser's
-    // Back comes back to this bar.
+    // Again, Shorter and Longer run as from the quick menu: the bar steps aside while Hermes works, and the
+    // chooser's Back comes back to this bar.
     const rerun = (run) => () => {
       const back = { view: activeView, mode: 'bar' };
       panel.dataset.mode = 'quick';
       run({ back });
     };
     add('Again', rerun(tryAgain), { disabled: !lastRunAction });
-    if (applyReceipt) add('Shorter', rerun(makeShorter));
-    if (appliedAutomatically) add('Copy', copyResult);
-    if (!appliedAutomatically) {
-      add('Full panel', () => {
-        panel.dataset.mode = 'full';
-        renderResult({ fieldChanged });
-      });
+    if (applyReceipt) {
+      add('Shorter', rerun(makeShorter));
+      add('Longer', rerun(makeLonger));
     }
+    if (appliedAutomatically) add('Copy', copyResult);
     if (resultSessionId) {
       add('Open session', () => {
         panel.dataset.mode = 'full';
         renderOpenSessionChoices();
       });
     }
+    add('Full panel', () => {
+      panel.dataset.mode = 'full';
+      renderResult({ fieldChanged });
+    });
     bar.append(actions);
     setBody(bar);
   }
@@ -1699,7 +1703,6 @@
     const label = make('span', 'section-label', 'Result preview');
     const preview = makeRaw('div', 'preview', resultText || translateUiText('(empty draft)'));
     const actions = make('div', 'result-actions');
-    actions.dataset.actionCount = resultSessionId ? '4' : '3';
     const keep = button('main', copyOnly ? 'Copy to use' : (policy.inlineDraftPrimaryActionLabel?.({
       originalText: pending?.draftText || '',
       appliedAutomatically,
@@ -1716,8 +1719,8 @@
     open.addEventListener('click', trustedOnly(renderOpenSessionChoices));
     actions.append(keep, undo, copyButton);
     if (resultSessionId) actions.append(open);
-    // Try again and Quick menu always (back to the bar, the draft still up); Shorter once the draft is in the
-    // field, since it shortens what the field holds.
+    // Try again and Quick menu always (back to the bar, the draft still up); Shorter and Longer once the draft
+    // is in the field, since they rework what the field holds. The buttons come in pairs.
     const followUps = make('div', 'result-actions follow-ups');
     const again = button('', 'Try again');
     again.disabled = !lastRunAction;
@@ -1728,7 +1731,9 @@
     if (applyReceipt) {
       const shorter = button('', 'Shorter');
       shorter.addEventListener('click', trustedOnly(makeShorter));
-      followUps.append(shorter);
+      const longer = button('', 'Longer');
+      longer.addEventListener('click', trustedOnly(makeLonger));
+      followUps.append(shorter, longer);
     }
     setBody(success, card, label, preview, actions, followUps);
   }
@@ -1753,7 +1758,7 @@
     return beginAction(action, { prepare: undoApplied, back });
   }
 
-  // Shorter reworks the draft that is now in the field (offered only once it was applied there).
+  // Shorter and Longer rework the draft that is now in the field (offered only once it was applied there).
   function reworkDraft(action, back) {
     if (!action) return undefined;
     return beginAction(action, {
@@ -1768,6 +1773,10 @@
 
   function makeShorter({ back = null } = {}) {
     return reworkDraft(genericActions.find((item) => item.id === 'shorten'), back);
+  }
+
+  function makeLonger({ back = null } = {}) {
+    return reworkDraft(expandAction, back);
   }
 
   function applyResult() {

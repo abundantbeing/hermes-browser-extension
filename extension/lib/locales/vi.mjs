@@ -955,6 +955,7 @@ export default Object.freeze({
   "ui.more.actions": "Thêm thao tác",
   "ui.fewer.actions": "Bớt thao tác",
   "ui.shorter": "Ngắn hơn",
+  "ui.longer": "Dài hơn",
   "ui.button.icon": "Biểu tượng nút",
   "ui.wing": "Đôi cánh",
   "ui.clean.at.any.size": "Rõ nét ở mọi kích thước",

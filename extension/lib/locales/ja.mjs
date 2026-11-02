@@ -955,6 +955,7 @@ export default Object.freeze({
   "ui.more.actions": "その他のアクション",
   "ui.fewer.actions": "表示を減らす",
   "ui.shorter": "短くする",
+  "ui.longer": "長くする",
   "ui.button.icon": "ボタンのアイコン",
   "ui.wing": "翼",
   "ui.clean.at.any.size": "どのサイズでもくっきり",

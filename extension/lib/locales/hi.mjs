@@ -955,6 +955,7 @@ export default Object.freeze({
   "ui.more.actions": "और कार्रवाइयाँ",
   "ui.fewer.actions": "कम कार्रवाइयाँ",
   "ui.shorter": "छोटा",
+  "ui.longer": "लंबा",
   "ui.button.icon": "बटन आइकन",
   "ui.wing": "पंख",
   "ui.clean.at.any.size": "हर आकार में साफ़",

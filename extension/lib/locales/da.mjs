@@ -955,6 +955,7 @@ export default Object.freeze({
   "ui.more.actions": "Flere handlinger",
   "ui.fewer.actions": "Færre handlinger",
   "ui.shorter": "Kortere",
+  "ui.longer": "Længere",
   "ui.button.icon": "Knapikon",
   "ui.wing": "Vinge",
   "ui.clean.at.any.size": "Skarp i alle størrelser",
