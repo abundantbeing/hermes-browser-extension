@@ -1,6 +1,6 @@
 // The Assist model picker on a page: the models the side panel already verified for this connection (its
-// model catalog cache), and the setting a pick saves. The page asks the background, which reads storage; a
-// pick is saved only when it names a model from that list.
+// model catalog cache). The background only lists them; it never changes settings for a content script, so
+// the page saves its own pick from this list, as it saves its effort and route.
 import {
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   globalModelCatalogCacheKey,
@@ -9,7 +9,6 @@ import {
 } from './model-discovery.mjs';
 
 export const INLINE_ASSIST_MODELS_REQUEST = 'HERMES_INLINE_ASSIST_MODELS';
-export const INLINE_ASSIST_SET_MODEL = 'HERMES_INLINE_ASSIST_SET_MODEL';
 
 const selectable = (model) => model.runtimeSelectable !== false && model.source !== 'sessions' && model.source !== 'observed';
 
@@ -44,25 +43,13 @@ export function assistModelSettingsFor(choice = {}) {
 
 export function createInlineAssistModelServer({ runtime, storage }) {
   const fromThisExtension = (sender) => sender?.id === runtime?.id && Boolean(sender?.tab);
-  async function read() {
-    const stored = await storage.get(['hermesBrowserSettings', MODEL_CATALOG_CACHE_STORAGE_KEY]);
-    const settings = stored?.hermesBrowserSettings || {};
-    return { settings, choices: assistModelChoices(stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY], settings) };
-  }
   return {
-    handles: (type) => type === INLINE_ASSIST_MODELS_REQUEST || type === INLINE_ASSIST_SET_MODEL,
+    handles: (type) => type === INLINE_ASSIST_MODELS_REQUEST,
     async handle(message, sender) {
       if (!fromThisExtension(sender)) return { ok: false, reason: 'Only Hermes Assist on a page can ask for its models.' };
-      const { settings, choices } = await read();
-      if (message?.type === INLINE_ASSIST_MODELS_REQUEST) {
-        return { ok: true, models: choices, selectedId: String(settings.inlineAssistModel || '') };
-      }
-      const choice = choices.find((item) => item.id === String(message?.id || ''));
-      if (!choice) return { ok: false, reason: 'That model is not in the list Hermes verified for this connection.' };
-      // Read again right before the write so the rest of the record is as fresh as it can be.
-      const latest = (await storage.get('hermesBrowserSettings'))?.hermesBrowserSettings || settings;
-      await storage.set({ hermesBrowserSettings: { ...latest, ...assistModelSettingsFor(choice) } });
-      return { ok: true, model: choice };
+      const stored = await storage.get(['hermesBrowserSettings', MODEL_CATALOG_CACHE_STORAGE_KEY]);
+      const settings = stored?.hermesBrowserSettings || {};
+      return { ok: true, models: assistModelChoices(stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY], settings), selectedId: String(settings.inlineAssistModel || '') };
     },
   };
 }

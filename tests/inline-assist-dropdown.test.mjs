@@ -16,7 +16,7 @@ async function open({ mode = 'panel', settings = {} } = {}) {
     settings: { inlineAssistOpenMode: mode, inlineAssistDefaultRoute: 'background', inlineAssistModel: 'anthropic::claude-haiku-5-5', ...settings },
     replies: {
       HERMES_INLINE_ASSIST_MODELS: () => ({ ok: true, models: MODELS, selectedId: 'anthropic::claude-haiku-5-5' }),
-      HERMES_INLINE_ASSIST_SET_MODEL: (message) => { picked.push(message.id); return { ok: true, model: MODELS.find((item) => item.id === message.id) }; },
+      HERMES_INLINE_ASSIST_SET_MODEL: (message) => { picked.push(message.id); return { ok: true }; },
     },
   });
   const launcher = await focusField(env);
@@ -66,7 +66,9 @@ for (const mode of ['panel', 'quick']) {
     assert.equal(options(box)[0].getAttribute('aria-selected'), 'true', 'the current model is marked');
     env.userClick(options(box)[1]);
     await env.sleep(60);
-    assert.deepEqual(picked, ['openai-codex::gpt-6.1-terra']);
+    assert.deepEqual(picked, [], 'the background is not asked to write settings');
+    const write = env.stored.findLast((items) => items.hermesBrowserSettings)?.hermesBrowserSettings;
+    assert.deepEqual([write?.inlineAssistModel, write?.inlineAssistRawModel, write?.inlineAssistProvider], ['openai-codex::gpt-6.1-terra', 'gpt-6.1-terra', 'openai-codex']);
     assert.match(trigger.textContent, /gpt-6\.1-terra/);
   });
 }

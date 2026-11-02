@@ -6,7 +6,6 @@ import {
   assistModelSettingsFor,
   createInlineAssistModelServer,
   INLINE_ASSIST_MODELS_REQUEST,
-  INLINE_ASSIST_SET_MODEL,
 } from '../extension/lib/inline-assist-models.mjs';
 
 const settings = { gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', activeProfile: 'default', inlineAssistModel: 'anthropic::claude-haiku-5-5' };
@@ -56,7 +55,7 @@ function fakeRuntime(stored) {
   };
 }
 
-test('the background lists models for a page of this extension and saves the one picked', async () => {
+test('the background only lists models for a page of this extension; it never writes settings for one', async () => {
   const env = fakeRuntime({ hermesBrowserSettings: { ...settings, other: 'kept' }, hermesBrowserModelCatalogCache: cache });
   const server = createInlineAssistModelServer({ runtime: env.runtime, storage: env.storage });
   const sender = { id: 'ext', tab: { id: 4 } };
@@ -64,13 +63,9 @@ test('the background lists models for a page of this extension and saves the one
   assert.equal(listed.ok, true);
   assert.equal(listed.selectedId, 'anthropic::claude-haiku-5-5');
   assert.equal(listed.models.length, 2);
-  const picked = await server.handle({ type: INLINE_ASSIST_SET_MODEL, id: 'openai-codex::gpt-6.1-terra' }, sender);
-  assert.equal(picked.ok, true);
-  assert.equal(env.stored.hermesBrowserSettings.inlineAssistModel, 'openai-codex::gpt-6.1-terra');
-  assert.equal(env.stored.hermesBrowserSettings.inlineAssistProvider, 'openai-codex');
-  assert.equal(env.stored.hermesBrowserSettings.other, 'kept', 'the rest of the settings stay');
-  const unknown = await server.handle({ type: INLINE_ASSIST_SET_MODEL, id: 'nope::missing' }, sender);
-  assert.equal(unknown.ok, false, 'only a model from the verified list');
+  // A content script is never trusted to change settings through the background.
+  assert.equal(server.handles('HERMES_INLINE_ASSIST_SET_MODEL'), false);
+  assert.equal(env.stored.hermesBrowserSettings.inlineAssistModel, 'anthropic::claude-haiku-5-5', 'nothing written');
   const stranger = await server.handle({ type: INLINE_ASSIST_MODELS_REQUEST }, { id: 'other-extension', tab: { id: 4 } });
   assert.equal(stranger.ok, false, 'never for another extension');
 });

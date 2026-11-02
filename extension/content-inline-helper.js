@@ -26,7 +26,6 @@
   const CONTEXT_ACTION = 'HERMES_INLINE_CONTEXT_ACTION';
   const FONT_REQUEST = 'HERMES_INLINE_FONT_REQUEST';
   const MODELS_REQUEST = 'HERMES_INLINE_ASSIST_MODELS';
-  const SET_MODEL = 'HERMES_INLINE_ASSIST_SET_MODEL';
   const extensionRoot = String(browserApi.runtime.getManifest()?.side_panel?.default_path || '').startsWith('extension/') ? 'extension/' : '';
   const logoUrl = browserApi.runtime.getURL(`${extensionRoot}assets/img/hermes-browser-extension-icon-ink.png`);
   const documentId = `doc-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
@@ -1216,6 +1215,7 @@
   // The model Assist runs on: the models the side panel verified for this connection, changed right here.
   function makeModelSelect() {
     const value = String(assistSettings.inlineAssistModel || '');
+    let listed = [];
     const toItem = (model) => ({ value: model.id, label: model.label || model.rawModelId || model.id, detail: model.providerLabel || model.provider || '' });
     return makeDropdown({
       setting: 'model',
@@ -1225,12 +1225,13 @@
       loadOptions: async () => {
         const reply = await browserApi.runtime.sendMessage({ type: MODELS_REQUEST });
         if (!reply?.ok) return { items: [], note: reply?.reason || '' };
-        return { items: (reply.models || []).map(toItem), current: reply.selectedId || value };
+        listed = reply.models || [];
+        return { items: listed.map(toItem), current: reply.selectedId || value };
       },
       onPick: async (item) => {
-        const reply = await browserApi.runtime.sendMessage({ type: SET_MODEL, id: item.value }).catch(() => null);
-        if (!reply?.ok) return false;
-        assistSettings = { ...assistSettings, inlineAssistModel: reply.model.id, inlineAssistRawModel: reply.model.rawModelId, inlineAssistProvider: reply.model.provider };
+        const model = listed.find((entry) => entry.id === item.value);
+        if (!model) return false;
+        await persistAssistSettings({ inlineAssistModel: model.id, inlineAssistRawModel: model.rawModelId || model.id, inlineAssistProvider: model.provider || '' });
         return true;
       },
     });
