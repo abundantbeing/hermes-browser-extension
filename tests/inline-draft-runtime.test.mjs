@@ -144,6 +144,9 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /deleteUnacknowledgedAssistSession/);
   assert.match(source, /Cleanup also failed/);
   assert.match(source, /\.\.\.attemptRouteRequest/);
+  // Falling back off the chosen model keeps Assist's effort.
+  assert.match(source, /attemptRouteRequest = assistEffortRequest\(settings\);/);
+  assert.doesNotMatch(source, /attemptRouteRequest = \{\};/);
   assert.match(source, /assistModelFallbackNotice/);
   assert.match(source, /modelNotice/);
   assert.match(source, /inlineAssistSessionRetention === 'delete'/);

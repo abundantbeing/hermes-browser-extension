@@ -39,6 +39,7 @@ import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
   assertAssistModelSelectionAcknowledged,
+  assistEffortRequest,
   assistModelFallbackNotice,
   buildAssistModelRouteRequest,
 } from './lib/assist-model-contract.mjs';
@@ -443,7 +444,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         }
         modelNotice = assistModelFallbackNotice(attemptSelection, error?.message || 'the selected route was rejected');
         attemptSelection = null;
-        attemptRouteRequest = {};
+        attemptRouteRequest = assistEffortRequest(settings);
       }
     }
 
