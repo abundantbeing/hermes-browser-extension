@@ -355,6 +355,14 @@
     "message": "ถอยกลับไปเป็นค่าเริ่มต้นของเกตเวย์เมื่อเส้นทางที่แน่นอนไม่พร้อมใช้งาน",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ เพิ่ม {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} อยู่ในรายการแล้ว",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "แนบไฟล์ขนาดไม่เกิน 25 MiB ได้",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "ไซต์",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "อ่านเธรด: Assist อ่านบทสนทนาบนหน้าจอด้วย เฉพาะช่องนี้: เฉพาะสิ่งที่อยู่ในช่อง ซ่อนวงกลมแล้ว: ไม่มีวงกลมบนเว็บไซต์นั้น การเปลี่ยนแปลงบันทึกทันที",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "ขนาด",

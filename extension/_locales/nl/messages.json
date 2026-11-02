@@ -355,6 +355,14 @@
     "message": "Valt terug naar de gatewaystandaard wanneer exacte routering niet beschikbaar is",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ {site} toevoegen",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} staat in de lijst",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Je kunt bestanden tot 25 MiB bijvoegen.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Sites",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Leest de thread: Assist leest ook het gesprek op het scherm. Alleen dit veld: alleen wat in het veld staat. Cirkel verborgen: geen cirkel op die site. Wijzigingen worden meteen opgeslagen.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Grootte",

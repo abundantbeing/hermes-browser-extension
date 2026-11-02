@@ -355,6 +355,14 @@
     "message": "Quay trở lại mặc định cổng khi không có định tuyến chính xác",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Thêm {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} đã có trong danh sách",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Có thể đính kèm tệp tối đa 25 MiB.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Trang web",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Đọc chuỗi: Assist cũng đọc cuộc trò chuyện trên màn hình. Chỉ ô này: chỉ nội dung trong ô. Vòng tròn đã ẩn: không có vòng tròn trên trang đó. Thay đổi được lưu ngay.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Kích thước",

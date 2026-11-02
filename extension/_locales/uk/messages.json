@@ -355,6 +355,14 @@
     "message": "Повертається до стандартного шлюзу, якщо точна маршрутизація недоступна",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Додати {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} уже в списку",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Можна прикріплювати файли розміром до 25 МіБ.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Сайти",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Читає гілку: Assist також читає розмову на екрані. Лише це поле: лише те, що в полі. Коло приховано: на цьому сайті кола немає. Зміни зберігаються одразу.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Розмір",

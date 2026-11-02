@@ -355,6 +355,14 @@
     "message": "Falder tilbage til gateway-standarden, når nøjagtig routing ikke er tilgængelig",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Tilføj {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} er på listen",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Filer på op til 25 MiB kan vedhæftes.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Websteder",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Læser tråden: Assist læser også samtalen på skærmen. Kun dette felt: kun det, der står i feltet. Cirkel skjult: ingen cirkel på det websted. Ændringer gemmes med det samme.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Størrelse",

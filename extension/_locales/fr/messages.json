@@ -355,6 +355,14 @@
     "message": "Utilise le modèle par défaut de la passerelle lorsque le routage exact n’est pas disponible",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Ajouter {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} est dans la liste",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Vous pouvez joindre des fichiers jusqu’à 25 Mio.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Sites",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Lit le fil : Assist lit aussi la conversation à l’écran. Ce champ seulement : seulement ce qui est dans le champ. Cercle masqué : aucun cercle sur ce site. Les changements sont enregistrés tout de suite.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Taille",

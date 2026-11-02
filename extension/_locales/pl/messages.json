@@ -355,6 +355,14 @@
     "message": "Wraca do domyślnej bramy, gdy dokładne trasowanie jest niedostępne",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Dodaj {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} jest na liście",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Można załączać pliki do 25 MiB.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Witryny",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Czyta wątek: Assist czyta też rozmowę na ekranie. Tylko to pole: tylko to, co jest w polu. Kółko ukryte: bez kółka na tej stronie. Zmiany zapisują się od razu.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Rozmiar",

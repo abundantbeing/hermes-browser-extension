@@ -5,12 +5,16 @@ import { JSDOM } from 'jsdom';
 import { loadExtensionFile } from './inline-assist-dom.mjs';
 import { createSettingsSaveHarness, sidepanelSource } from './helpers/settings-save-harness.mjs';
 
-test('Settings → Hermes Assist has the Sites list; its rows only show the value Save reads', () => {
+test('Settings → Hermes Assist has the Sites list, which saves itself, with a line saying what each choice means', () => {
   const section = new JSDOM(loadExtensionFile('sidepanel.html')).window.document.querySelector('.inline-assist-settings');
-  assert.ok(section.querySelector('#inlineAssistSites[data-settings-live]'), 'the list');
+  assert.ok(section.querySelector('.inline-assist-sites[data-settings-live] #inlineAssistSites'), 'the list');
   assert.ok(section.querySelector('#inlineAssistAddSite'), 'the Add this site button');
-  assert.equal(section.querySelector('#inlineAssistSitesValue')?.type, 'hidden', 'the value Save and unsaved edits track');
-  assert.equal(section.querySelector('#inlineAssistSitesValue').closest('[data-settings-live]'), null);
+  assert.equal(section.querySelector('#inlineAssistSitesValue')?.type, 'hidden');
+  assert.ok(section.querySelector('#inlineAssistSitesValue').closest('[data-settings-live]'), 'no Save needed');
+  const legend = section.querySelector('#inlineAssistSitesLegend');
+  assert.match(legend.textContent, /Reads thread:.*This field only:.*Circle hidden:.*right away/s);
+  const css = loadExtensionFile('sidepanel.css');
+  assert.doesNotMatch(css, /\.inline-assist-site-name::after/, 'no separator dot that reads as a full stop after the name');
 });
 
 // The real sidepanel functions against the real markup (see helpers/settings-save-harness.mjs).
@@ -26,9 +30,11 @@ async function sitesPanel({ hidden = [], contextPrefs = {}, tabs = [] } = {}) {
   h.scope.inlineAssistHiddenSites = hidden;
   h.scope.INLINE_ASSIST_SITE_STATES = constant('INLINE_ASSIST_SITE_STATES');
   h.scope.inlineSiteContextPreferences = contextPrefs;
+  h.scope.inlineAssistOpenSite = '';
   h.scope.settingsBaseline = null;
   h.scope.Event = h.document.defaultView.Event;
   h.scope.browserApi.tabs = { query: async () => tabs };
+  h.scope.browserApi.storage.onChanged = { addListener() {} };
   // As bindEvents() wires them.
   h.els.inlineAssistSites.addEventListener('change', h.fn('handleInlineAssistSiteChange'));
   h.els.inlineAssistSites.addEventListener('click', h.fn('handleInlineAssistSiteRemove'));
@@ -53,35 +59,45 @@ test('each site shows its setting: known sites pick thread reading or hidden, ot
   assert.ok(row('page.example').querySelector('button.inline-assist-site-remove'));
 });
 
-test('changing a site updates the saved value and counts as an unsaved edit', async () => {
-  const { row, model, edits } = await sitesPanel({ contextPrefs: { gmail: 'visible', x: 'draft' } });
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+test('changing a site saves it straight away, with nothing left for Save', async () => {
+  const { h, row, model, edits } = await sitesPanel({ contextPrefs: { gmail: 'visible', x: 'draft' } });
   const select = row('x').querySelector('select');
   select.value = 'hidden';
   select.dispatchEvent(new select.ownerDocument.defaultView.Event('change', { bubbles: true }));
+  await settle();
   assert.deepEqual([...model().hidden], ['x']);
-  assert.deepEqual({ ...model().contextPrefs }, { gmail: 'visible' });
-  assert.equal(edits.length, 1);
+  assert.deepEqual(h.store.hermesInlineAssistHiddenSites, ['x']);
+  assert.deepEqual(h.store.hermesInlineSiteContextPreferences, { gmail: 'visible' });
+  assert.equal(edits.length, 0, 'not an unsaved edit');
   assert.equal(row('x').querySelector('select'), select, 'the row stays, so focus stays on the select');
 });
 
-test('Remove drops the site from both lists', async () => {
-  const { h, rows, model, edits } = await sitesPanel({ hidden: ['page.example', 'gmail'], contextPrefs: { gmail: 'visible' } });
+test('Remove drops the site from both lists and saves', async () => {
+  const { h, rows, model } = await sitesPanel({ hidden: ['page.example', 'gmail'], contextPrefs: { gmail: 'visible' } });
   rows().find((item) => item.dataset.site === 'gmail').querySelector('button.inline-assist-site-remove').click();
+  await settle();
   assert.deepEqual(rows().map((item) => item.dataset.site), ['page.example']);
   assert.deepEqual([...model().hidden], ['page.example']);
   assert.deepEqual({ ...model().contextPrefs }, {});
-  assert.equal(edits.length, 1);
+  assert.deepEqual(h.store.hermesInlineAssistHiddenSites, ['page.example']);
   assert.equal(h.document.activeElement?.closest?.('.inline-assist-site')?.dataset.site, 'page.example');
 });
 
-for (const [url, site, state] of [['https://www.x.com/home', 'x', 'draft'], ['https://forum.page.example/new', 'forum.page.example', 'hidden']]) {
-  test(`Add this site adds ${site} as ${state}`, async () => {
-    const { h, row, model, edits } = await sitesPanel({ tabs: [{ id: 3, url, title: 'Page' }] });
+for (const [url, site, label, state] of [['https://www.x.com/home', 'x', 'X', 'draft'], ['https://forum.page.example/new', 'forum.page.example', 'forum.page.example', 'hidden']]) {
+  test(`Add this site names ${label}, adds it as ${state} and saves it`, async () => {
+    const { h, row, model } = await sitesPanel({ tabs: [{ id: 3, url, title: 'Page' }] });
+    await h.fn('refreshInlineAssistOpenSite')();
+    assert.equal(h.els.inlineAssistAddSite.textContent, `assist.sites.add ${JSON.stringify({ site: label })}`, 'the button says which site');
     await h.fn('addActiveSiteToInlineAssistSites')();
+    await settle();
     assert.ok(row(site), 'the row');
+    if (state === 'hidden') assert.deepEqual(h.store.hermesInlineAssistHiddenSites, [site]);
+    else assert.deepEqual(h.store.hermesInlineSiteContextPreferences, { [site]: state });
     if (state === 'hidden') assert.deepEqual([...model().hidden], [site]);
-    else assert.deepEqual({ ...model().contextPrefs }, { [site]: state });
-    assert.equal(edits.length, 1);
+    assert.equal(h.els.inlineAssistAddSite.textContent, `assist.sites.listed ${JSON.stringify({ site: label })}`, 'and then that it is listed');
+    assert.equal(h.els.inlineAssistAddSite.disabled, true);
   });
 }
 
@@ -104,7 +120,7 @@ test('Save writes hidden sites into the settings and thread reading into its own
   assert.deepEqual(h.store.hermesInlineSiteContextPreferences, { gmail: 'visible' });
 });
 
-test('a change from a page follows into an unedited list, and never over unsaved edits', async () => {
+test('a change from a page follows into the list, after the list\'s own saved changes too', async () => {
   const fresh = await sitesPanel({ hidden: ['page.example'] });
   fresh.h.fn('adoptInlineAssistSitesChange')({ hidden: ['page.example', 'new.example'] });
   assert.deepEqual(fresh.rows().map((item) => item.dataset.site), ['new.example', 'page.example']);
@@ -113,9 +129,9 @@ test('a change from a page follows into an unedited list, and never over unsaved
 
   const edited = await sitesPanel({ hidden: ['page.example'] });
   edited.rows()[0].querySelector('button.inline-assist-site-remove').click();
-  edited.h.fn('adoptInlineAssistSitesChange')({ hidden: ['page.example', 'new.example'] });
-  assert.deepEqual(edited.rows().map((item) => item.dataset.site), []);
-  assert.deepEqual(edited.h.scope.inlineAssistHiddenSites, ['page.example', 'new.example']);
+  await settle();
+  edited.h.fn('adoptInlineAssistSitesChange')({ hidden: ['new.example'] });
+  assert.deepEqual(edited.rows().map((item) => item.dataset.site), ['new.example']);
 });
 
 test('each site’s setting uses the side panel’s branded dropdown, not the browser’s select list', async () => {

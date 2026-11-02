@@ -355,6 +355,14 @@
     "message": "Kembali ke default gateway ketika perutean yang tepat tidak tersedia",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Tambahkan {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} sudah ada di daftar",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "File hingga 25 MiB dapat dilampirkan.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Situs",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Membaca utas: Assist juga membaca percakapan di layar. Hanya kolom ini: hanya isi kolom. Lingkaran tersembunyi: tidak ada lingkaran di situs itu. Perubahan langsung tersimpan.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Ukuran",

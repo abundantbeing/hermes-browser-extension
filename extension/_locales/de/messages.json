@@ -355,6 +355,14 @@
     "message": "Fällt auf die Gateway-Standardeinstellung zurück, wenn kein genaues Routing verfügbar ist",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ {site} hinzufügen",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} ist in der Liste",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Dateien bis zu 25 MiB können angehängt werden.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Websites",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Liest den Verlauf: Assist liest auch das sichtbare Gespräch. Nur dieses Feld: nur das, was im Feld steht. Kreis ausgeblendet: kein Kreis auf dieser Website. Änderungen werden sofort gespeichert.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Größe",

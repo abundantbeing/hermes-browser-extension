@@ -355,6 +355,14 @@
     "message": "精確路由不可用時，會退回到閘道器預設值",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ 新增 {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} 已在清單中",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "可附加最大25 MiB的檔案。",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "網站",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "讀取對話：Assist 也會讀取螢幕上的對話。僅此輸入框：只用輸入框裡的內容。圓圈已隱藏：該網站不顯示圓圈。變更會立即儲存。",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "大小",

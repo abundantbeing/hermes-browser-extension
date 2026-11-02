@@ -355,6 +355,14 @@
     "message": "सटीक रूटिंग अनुपलब्ध होने पर गेटवे डिफ़ॉल्ट पर वापस आ जाता है",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ {site} जोड़ें",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} सूची में है",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "25 MiB तक की फ़ाइलें संलग्न की जा सकती हैं।",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "साइटें",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "थ्रेड पढ़ता है: Assist स्क्रीन पर दिख रही बातचीत भी पढ़ता है। सिर्फ़ यह फ़ील्ड: सिर्फ़ वही जो फ़ील्ड में है। सर्कल छिपा है: उस साइट पर कोई सर्कल नहीं। बदलाव तुरंत सहेजे जाते हैं।",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "आकार",

@@ -355,6 +355,14 @@
     "message": "Ritorna all'impostazione predefinita del gateway quando il routing esatto non è disponibile",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Aggiungi {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} è nell’elenco",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Puoi allegare file fino a 25 MiB.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Siti",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Legge il thread: Assist legge anche la conversazione sullo schermo. Solo questo campo: solo ciò che c’è nel campo. Cerchio nascosto: nessun cerchio su quel sito. Le modifiche si salvano subito.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Dimensioni",

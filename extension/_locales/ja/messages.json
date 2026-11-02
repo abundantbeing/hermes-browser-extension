@@ -355,6 +355,14 @@
     "message": "正確なルーティングが利用できない場合は、ゲートウェイのデフォルトにフォールバックします",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ {site} を追加",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} は一覧にあります",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "25 MiBまでのファイルを添付できます。",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "サイト",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "スレッドを読む: Assist は画面上の会話も読みます。この欄のみ: 欄の内容だけを使います。円は非表示: そのサイトでは円を出しません。変更はすぐに保存されます。",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "サイズ",

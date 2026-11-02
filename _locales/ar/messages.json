@@ -355,6 +355,14 @@
     "message": "يعود إلى البوابة الافتراضية عندما لا يتوفر التوجيه الدقيق",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ إضافة {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} موجود في القائمة",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "يمكن إرفاق ملفات حتى 25 ميبيبايت.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "المواقع",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "يقرأ المحادثة: يقرأ Assist أيضًا المحادثة الظاهرة. هذا الحقل فقط: ما في الحقل فقط. الدائرة مخفية: لا دائرة على ذلك الموقع. تُحفظ التغييرات فورًا.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "مقاس",

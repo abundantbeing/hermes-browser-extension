@@ -355,6 +355,14 @@
     "message": "Tam yönlendirme kullanılamadığında ağ geçidi varsayılanına geri döner",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ {site} ekle",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} listede",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "25 MiB’a kadar dosya eklenebilir.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Siteler",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Konuyu okur: Assist ekrandaki konuşmayı da okur. Yalnızca bu alan: yalnızca alandakiler. Daire gizli: o sitede daire yok. Değişiklikler hemen kaydedilir.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Boyut",

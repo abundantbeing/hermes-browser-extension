@@ -355,6 +355,14 @@
     "message": "Возвращается к шлюзу по умолчанию, когда точная маршрутизация недоступна.",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Добавить {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} уже в списке",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Можно прикреплять файлы размером до 25 МиБ.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Сайты",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Читает ветку: Assist также читает переписку на экране. Только это поле: только то, что в поле. Круг скрыт: на этом сайте круга нет. Изменения сохраняются сразу.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Размер",

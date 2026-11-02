@@ -355,6 +355,14 @@
     "message": "Usa el valor predeterminado de la puerta de enlace cuando el enrutamiento exacto no está disponible",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Añadir {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} ya está en la lista",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Puedes adjuntar archivos de hasta 25 MiB.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -7578,6 +7586,10 @@
   "runtime_ui_sites": {
     "message": "Sitios",
     "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Lee el hilo: Assist también lee la conversación en pantalla. Solo este campo: solo lo que hay en el campo. Círculo oculto: sin círculo en ese sitio. Los cambios se guardan al momento.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Tamaño",

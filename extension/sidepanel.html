@@ -1543,16 +1543,16 @@
               </select>
             </label>
           </div>
-          <div class="inline-assist-sites">
+          <div class="inline-assist-sites" data-settings-live>
             <span class="settings-toggle-copy">
               <strong data-i18n="ui.sites">Sites</strong>
               <small data-i18n="ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden">Where Assist reads the thread, and where the circle stays hidden.</small>
             </span>
             <div class="inline-assist-sites-chips">
-              <!-- The pills only show #inlineAssistSitesValue, which is what Save and the edited markers read. -->
-              <ul id="inlineAssistSites" class="inline-assist-sites-list" data-settings-live hidden></ul>
+              <ul id="inlineAssistSites" class="inline-assist-sites-list" hidden></ul>
               <button id="inlineAssistAddSite" class="inline-assist-site-add" type="button" data-i18n="ui.add.this.site">+ Add this site</button>
             </div>
+            <p id="inlineAssistSitesLegend" class="hint" data-i18n="ui.sites.legend">Reads thread: Assist also reads the conversation on screen. This field only: only what is in the field. Circle hidden: no circle on that site. Changes save right away.</p>
             <p id="inlineAssistSitesEmpty" class="hint" data-i18n="ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open">No sites yet. Change one from the Assist panel on a page, or add the site you have open.</p>
             <p id="inlineAssistSitesHint" class="hint" data-i18n="ui.open.a.web.page.first.then.add.it.here" hidden>Open a web page first, then add it here.</p>
             <input id="inlineAssistSitesValue" type="hidden" />

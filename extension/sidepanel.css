@@ -12404,8 +12404,7 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
   font-size: calc(12px * var(--hermes-text-zoom, 1));
   line-height: 1.3;
 }
-.inline-assist-site-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.inline-assist-site-name::after { content: " ·"; color: var(--hermes-muted); }
+.inline-assist-site-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .inline-assist-site .inline-assist-site-state {
   margin: 0;
   padding: 2px 2px 2px 4px;

@@ -3188,6 +3188,7 @@ function showSettingsPane(pane, { field = '', focus = true } = {}) {
     paneEl.hidden = paneEl.dataset.settingsPane !== settingsActivePane;
   }
   els.settingsDialog.dataset.settingsView = settingsActivePane || 'home';
+  if (settingsActivePane === 'assist') void refreshInlineAssistOpenSite();
   els.settingsDialog.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   if (settingsActivePane === 'models') renderSettingsModelSummary();
   // The pane shows the open session's context; ask for a fresh reading (no-op when recent).
@@ -23480,7 +23481,58 @@ function writeInlineAssistSitesModel(model, { edited = false, render = true } = 
   if (!input) return;
   input.value = JSON.stringify(inlineAssistSitesModel(model?.contextPrefs, model?.hidden));
   if (render) renderInlineAssistSites();
-  if (edited) input.dispatchEvent(new Event('input', { bubbles: true }));
+  if (edited) void saveInlineAssistSitesNow();
+}
+
+// The list saves itself, like the page's own Assist options: a change applies straight away.
+async function saveInlineAssistSitesNow() {
+  const input = els.inlineAssistSitesValue;
+  const model = readInlineAssistSitesModel(input);
+  inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(model.contextPrefs);
+  inlineAssistHiddenSites = normalizeInlineAssistHiddenSites(model.hidden);
+  input.dataset.syncedValue = input.value;
+  adoptSettingsBaselineValue(input);
+  renderInlineAssistAddSite();
+  await trackInstantSave('assist', browserApi.storage.local.set({
+    [INLINE_SITE_CONTEXT_STORAGE_KEY]: inlineSiteContextPreferences,
+    [INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]: inlineAssistHiddenSites,
+  })).catch(() => {});
+}
+
+// The site of the open tab, as the Sites list keys it: its adapter, or its hostname. '' for other pages.
+function inlineAssistSiteForUrl(value) {
+  try {
+    const url = new URL(value || '');
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    const { adapterId } = inlineSiteForHost(host);
+    return adapterId === 'generic' ? host : adapterId;
+  } catch {
+    return '';
+  }
+}
+
+let inlineAssistOpenSite = '';
+
+async function refreshInlineAssistOpenSite() {
+  const tab = await activeTab().catch(() => null);
+  inlineAssistOpenSite = inlineAssistSiteForUrl(tab?.url);
+  renderInlineAssistAddSite();
+}
+
+// Add this site names the open tab's site, and says so once it is listed.
+function renderInlineAssistAddSite() {
+  const button = els.inlineAssistAddSite;
+  if (!button) return;
+  const site = inlineAssistOpenSite;
+  if (!site) {
+    button.textContent = t('ui.add.this.site');
+    button.disabled = false;
+    return;
+  }
+  const listed = inlineAssistSiteEntries(readInlineAssistSitesModel()).some((entry) => entry.site === site);
+  button.textContent = t(listed ? 'assist.sites.listed' : 'assist.sites.add', { site: inlineSiteLabel(site) });
+  button.disabled = listed;
 }
 
 function syncInlineAssistSitesForm() {
@@ -23538,6 +23590,7 @@ function renderInlineAssistSites() {
   }));
   list.hidden = !entries.length;
   if (els.inlineAssistSitesEmpty) els.inlineAssistSitesEmpty.hidden = entries.length > 0;
+  renderInlineAssistAddSite();
 }
 
 function focusInlineAssistSite(site) {
@@ -23567,19 +23620,13 @@ function handleInlineAssistSiteRemove(event) {
 async function addActiveSiteToInlineAssistSites() {
   if (els.inlineAssistSitesHint) els.inlineAssistSitesHint.hidden = true;
   const tab = await activeTab().catch(() => null);
-  let host = '';
-  try {
-    const url = new URL(tab?.url || '');
-    if (url.protocol === 'http:' || url.protocol === 'https:') host = url.hostname.toLowerCase().replace(/^www\./, '');
-  } catch {
-    host = '';
-  }
-  if (!host) {
+  const site = inlineAssistSiteForUrl(tab?.url);
+  inlineAssistOpenSite = site;
+  if (!site) {
     if (els.inlineAssistSitesHint) els.inlineAssistSitesHint.hidden = false;
+    renderInlineAssistAddSite();
     return;
   }
-  const { adapterId } = inlineSiteForHost(host);
-  const site = adapterId === 'generic' ? host : adapterId;
   const model = readInlineAssistSitesModel();
   if (!inlineAssistSiteEntries(model).some((entry) => entry.site === site)) {
     writeInlineAssistSitesModel(withInlineAssistSiteState(model, site, inlineAssistSiteReadsThreads(site) ? 'draft' : 'hidden'), { edited: true });
