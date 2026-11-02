@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 426fbf22937d9426 */
+/* extension/lib/site-adapters.mjs · SHA-256 95433023ec7be1cf */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1728,10 +1728,12 @@ function shownControls(root, target) {
 // "Thinking effort", a model picker comes and goes), so it is read from where the controls are: the
 // leftmost of the right-hand ones on the composer's lowest row of controls.
 function trailingControlsSlot(target, { gap = 8 } = {}) {
+  // The composer has a box of its own: chatgpt.com wraps the field and its controls in a display:contents
+  // box, which has none, so the walk goes on to the form.
   let composer = target?.parentElement || null;
   for (let depth = 0; composer && depth < 10; depth += 1, composer = composer.parentElement) {
     if (composer === target.ownerDocument?.body) return null;
-    if (shownControls(composer, target).length >= 2) break;
+    if (laidOutBox(composer) && shownControls(composer, target).length >= 2) break;
   }
   const box = laidOutBox(composer);
   if (!box) return null;
