@@ -234,6 +234,19 @@ test('Grok on x.com: just before the Auto picker, as in any chat composer', asyn
   assert.equal(launcher.style.top, '114px');
 });
 
+test('X draws its toolbar a moment after focus: the circle goes to its spot then, before any typing', async () => {
+  const env = boot('x-reply-deep.html', 'https://x.com/someone/status/1');
+  const toolbar = env.w.document.querySelector('[data-testid="toolBar"]');
+  const row = toolbar.parentElement;
+  toolbar.remove();
+  const launcher = await focusedLauncher(env);
+  assert.notEqual(launcher.dataset.placement, 'below-center', 'no toolbar yet');
+  row.append(toolbar);
+  await env.sleep(300);
+  assert.equal(launcher.dataset.placement, 'below-center');
+  assert.equal(launcher.style.left, '24px');
+  assert.equal(launcher.style.top, '243px');
+});
 
 // Hard rule: the circle never covers one of the site's own controls (a button, a link, X's character
 // counter). Every composer fixture is checked.

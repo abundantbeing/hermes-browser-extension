@@ -740,6 +740,14 @@
     stabilizationFrame = requestAnimationFrame(tick);
   }
 
+  function slotSearchRoot(field) {
+    const boundary = field.closest?.('[role="dialog"], [data-testid="cellInnerDiv"], article, form');
+    if (boundary) return boundary;
+    let node = field;
+    for (let depth = 0; depth < 12 && node.parentElement && node.parentElement !== document.body; depth += 1) node = node.parentElement;
+    return node;
+  }
+
   function observeTargetLayout() {
     disconnectTargetObservers();
     if (!target) return;
@@ -774,14 +782,22 @@
     }
     // Watch the whole composer when the circle sits beside one of its controls, so a re-rendered control
     // moves the circle with it.
-    let composerRoot = profile?.placement?.slot?.element || null;
+    let composerRoot = placementSlots(profile)[0]?.element || null;
     while (composerRoot && !composerRoot.contains?.(target)) composerRoot = composerRoot.parentElement;
-    const layoutRoot = composerRoot && composerRoot !== document.body && composerRoot !== document.documentElement
+    const usable = (element) => element && element !== document.body && element !== document.documentElement;
+    // A site that draws its composer's buttons a moment after focus (X) has no slot yet: the area around
+    // the field is watched until it has one, so the circle moves there before any typing.
+    const awaitingSlot = !usable(composerRoot) && profile?.adapterId && profile.adapterId !== 'generic';
+    const layoutRoot = usable(composerRoot)
       ? composerRoot
-      : (anchor || observed[observed.length - 1]);
+      : (awaitingSlot ? slotSearchRoot(target) : (anchor || observed[observed.length - 1]));
     if (layoutRoot && typeof MutationObserver === 'function') {
       targetMutationObserver = new MutationObserver(() => {
         refreshSiteProfile();
+        if (awaitingSlot && placementSlots(siteProfile).length) {
+          observeTargetLayout();
+          return;
+        }
         schedulePosition();
         stabilizePosition(240);
       });
