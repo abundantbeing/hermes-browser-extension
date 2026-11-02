@@ -117,6 +117,21 @@ test('the footer is a tidy grid: four equal cells, label above control, the safe
   assert.deepEqual(cells, ['Runs', 'Auto-replace', 'Model', 'Effort']);
 });
 
+test('the Auto-replace cell reads like the others: what it does in words, the switch at its right edge', async () => {
+  const css = assistCss();
+  assert.match(css, /\.foot-value \{[^}]*display:flex;[^}]*justify-content:space-between;/);
+  assert.match(css, /\.foot-value \.toggle \{[^}]*order:2;/, 'the switch sits where the dropdowns have their arrow');
+  // The words follow the switch itself, so they stay right when Settings changes it without a click.
+  assert.match(css, /\.foot-value \.toggle:checked ~ \.foot-state-off, \.foot-value \.toggle:not\(:checked\) ~ \.foot-state-on \{ display:none; \}/);
+  const { root } = await openPanel();
+  const cell = root.querySelector('.foot .foot-replace');
+  assert.equal(cell.tagName, 'LABEL', 'a press anywhere in the cell flips the switch');
+  const value = cell.querySelector('.foot-value');
+  assert.ok(value.querySelector('input.toggle[data-setting="auto-replace"]'));
+  assert.equal(value.querySelector('.foot-state-on').textContent, 'Replaces the text');
+  assert.equal(value.querySelector('.foot-state-off').textContent, 'Shows a preview');
+});
+
 test('the instant tools share their row in equal parts, with no gap left over', () => {
   assert.match(assistCss(), /\.local-actions \{[^}]*display:grid; grid-template-columns:repeat\(auto-fit,minmax\(0,1fr\)\);/);
   assert.match(assistCss(), /\.local-actions \.action \{[^}]*text-align:center;/, 'each label sits in the middle of its button');

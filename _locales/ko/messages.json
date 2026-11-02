@@ -7111,6 +7111,10 @@
     "message": "원래 필드를 안전하게 교체했습니다.",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
   },
+  "runtime_ui_replaces_the_text": {
+    "message": "텍스트 교체",
+    "description": "Runtime interface message ui.replaces.the.text"
+  },
   "runtime_ui_reply": {
     "message": "회신하다",
     "description": "Runtime interface message ui.reply"
@@ -7566,6 +7570,10 @@
   "runtime_ui_show_or_hide_status": {
     "message": "상태 표시/숨기기",
     "description": "Runtime interface message ui.show.or.hide.status"
+  },
+  "runtime_ui_shows_a_preview": {
+    "message": "미리보기 표시",
+    "description": "Runtime interface message ui.shows.a.preview"
   },
   "runtime_ui_side_panel": {
     "message": "측면 패널",

@@ -1093,6 +1093,8 @@ export default Object.freeze({
   "ui.main": "Belangrijkste",
   "ui.make.this.more.confident.without.sounding.aggressive": "Maak dit zelfverzekerder zonder agressief te klinken...",
   "ui.say.what.to.change": "Zeg wat er moet veranderen…",
+  "ui.replaces.the.text": "Vervangt de tekst",
+  "ui.shows.a.preview": "Toont een voorbeeld",
   "ui.manual": "Handmatig",
   "ui.manual.setup": "Handmatige installatie",
   "ui.manual.setup.required": "Handmatige installatie vereist",

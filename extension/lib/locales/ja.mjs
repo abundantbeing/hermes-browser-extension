@@ -1093,6 +1093,8 @@ export default Object.freeze({
   "ui.main": "メイン",
   "ui.make.this.more.confident.without.sounding.aggressive": "攻撃的に聞こえることなく、より自信を持って表現できるようにします…",
   "ui.say.what.to.change": "変えたい点を入力…",
+  "ui.replaces.the.text": "テキストを置き換え",
+  "ui.shows.a.preview": "プレビューを表示",
   "ui.manual": "マニュアル",
   "ui.manual.setup": "手動セットアップ",
   "ui.manual.setup.required": "手動セットアップが必要です",

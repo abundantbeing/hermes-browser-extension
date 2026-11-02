@@ -1093,6 +1093,8 @@ export default Object.freeze({
   "ui.main": "Chính",
   "ui.make.this.more.confident.without.sounding.aggressive": "Làm cho điều này trở nên tự tin hơn mà không có vẻ hung hăng…",
   "ui.say.what.to.change": "Nói điều cần đổi…",
+  "ui.replaces.the.text": "Thay văn bản",
+  "ui.shows.a.preview": "Hiện bản xem trước",
   "ui.manual": "Hướng dẫn sử dụng",
   "ui.manual.setup": "Thiết lập thủ công",
   "ui.manual.setup.required": "Cần thiết lập thủ công",

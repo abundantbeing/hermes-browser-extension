@@ -1093,6 +1093,8 @@ export default Object.freeze({
   "ui.main": "رئيسي",
   "ui.make.this.more.confident.without.sounding.aggressive": "اجعل هذا الأمر أكثر ثقة دون أن تبدو عدوانيًا...",
   "ui.say.what.to.change": "قل ما الذي تريد تغييره…",
+  "ui.replaces.the.text": "يستبدل النص",
+  "ui.shows.a.preview": "يعرض معاينة",
   "ui.manual": "يدوي",
   "ui.manual.setup": "الإعداد اليدوي",
   "ui.manual.setup.required": "الإعداد اليدوي مطلوب",

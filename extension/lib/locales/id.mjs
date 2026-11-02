@@ -1093,6 +1093,8 @@ export default Object.freeze({
   "ui.main": "Utama",
   "ui.make.this.more.confident.without.sounding.aggressive": "Jadikan ini lebih percaya diri tanpa terdengar agresif…",
   "ui.say.what.to.change": "Katakan apa yang diubah…",
+  "ui.replaces.the.text": "Mengganti teks",
+  "ui.shows.a.preview": "Menampilkan pratinjau",
   "ui.manual": "petunjuk",
   "ui.manual.setup": "Pengaturan manual",
   "ui.manual.setup.required": "Diperlukan pengaturan manual",

@@ -7111,6 +7111,10 @@
     "message": "Orijinal alanı güvenli bir şekilde değiştirdi",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
   },
+  "runtime_ui_replaces_the_text": {
+    "message": "Metni değiştirir",
+    "description": "Runtime interface message ui.replaces.the.text"
+  },
   "runtime_ui_reply": {
     "message": "Yanıtla",
     "description": "Runtime interface message ui.reply"
@@ -7566,6 +7570,10 @@
   "runtime_ui_show_or_hide_status": {
     "message": "Durumu göster veya gizle",
     "description": "Runtime interface message ui.show.or.hide.status"
+  },
+  "runtime_ui_shows_a_preview": {
+    "message": "Önizleme gösterir",
+    "description": "Runtime interface message ui.shows.a.preview"
   },
   "runtime_ui_side_panel": {
     "message": "Yan panel",

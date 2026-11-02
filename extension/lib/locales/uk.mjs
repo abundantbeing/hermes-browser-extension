@@ -1093,6 +1093,8 @@ export default Object.freeze({
   "ui.main": "Головна",
   "ui.make.this.more.confident.without.sounding.aggressive": "Зробіть це більш впевненим, не звучачи агресивно...",
   "ui.say.what.to.change": "Скажіть, що змінити…",
+  "ui.replaces.the.text": "Замінює текст",
+  "ui.shows.a.preview": "Показує перегляд",
   "ui.manual": "Вручну",
   "ui.manual.setup": "Ручне налаштування",
   "ui.manual.setup.required": "Потрібне ручне налаштування",

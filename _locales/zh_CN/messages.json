@@ -7111,6 +7111,10 @@
     "message": "已安全替换原字段",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
   },
+  "runtime_ui_replaces_the_text": {
+    "message": "替换文本",
+    "description": "Runtime interface message ui.replaces.the.text"
+  },
   "runtime_ui_reply": {
     "message": "回复",
     "description": "Runtime interface message ui.reply"
@@ -7566,6 +7570,10 @@
   "runtime_ui_show_or_hide_status": {
     "message": "显示或隐藏状态",
     "description": "Runtime interface message ui.show.or.hide.status"
+  },
+  "runtime_ui_shows_a_preview": {
+    "message": "显示预览",
+    "description": "Runtime interface message ui.shows.a.preview"
   },
   "runtime_ui_side_panel": {
     "message": "侧面板",

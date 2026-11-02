@@ -1093,6 +1093,8 @@ export default Object.freeze({
   "ui.main": "Hoved",
   "ui.make.this.more.confident.without.sounding.aggressive": "Gør dette mere selvsikkert uden at lyde aggressivt...",
   "ui.say.what.to.change": "Sig, hvad der skal ændres…",
+  "ui.replaces.the.text": "Erstatter teksten",
+  "ui.shows.a.preview": "Viser forhåndsvisning",
   "ui.manual": "Manuel",
   "ui.manual.setup": "Manuel opsætning",
   "ui.manual.setup.required": "Manuel opsætning påkrævet",

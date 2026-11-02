@@ -7111,6 +7111,10 @@
     "message": "Sostituito il campo originale in modo sicuro",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
   },
+  "runtime_ui_replaces_the_text": {
+    "message": "Sostituisce il testo",
+    "description": "Runtime interface message ui.replaces.the.text"
+  },
   "runtime_ui_reply": {
     "message": "Rispondi",
     "description": "Runtime interface message ui.reply"
@@ -7566,6 +7570,10 @@
   "runtime_ui_show_or_hide_status": {
     "message": "Mostra o nascondi stato",
     "description": "Runtime interface message ui.show.or.hide.status"
+  },
+  "runtime_ui_shows_a_preview": {
+    "message": "Mostra un’anteprima",
+    "description": "Runtime interface message ui.shows.a.preview"
   },
   "runtime_ui_side_panel": {
     "message": "Pannello laterale",

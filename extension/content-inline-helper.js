@@ -229,7 +229,12 @@
     .foot-safety { grid-column:1 / -1; font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .foot-control .dd { display:block; width:100%; }
     .foot-control .dd-button { width:100%; justify-content:space-between; padding:2px 0; }
-    .foot-control .toggle { justify-self:start; }
+    .foot-replace { cursor:pointer; }
+    .foot-value { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
+    .foot-value .toggle { order:2; flex:none; }
+    .foot-state { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+    .foot-value .toggle:checked ~ .foot-state-off, .foot-value .toggle:not(:checked) ~ .foot-state-on { display:none; }
+    .foot-value .toggle:disabled ~ .foot-state { color:var(--hb-muted); }
     .foot-control .effort { width:100%; }
     .effort { --effort-progress:0; display:inline-flex; align-items:center; gap:8px; min-width:0; }
     .effort-opt .effort { flex:1; max-width:200px; }
@@ -1268,8 +1273,10 @@
   function renderFooter() {
     const routeControl = make('span', 'foot-control');
     routeControl.append(make('em', '', 'Runs'), makeRouteSelect());
-    const replaceControl = make('label', 'foot-control');
-    replaceControl.append(make('em', '', 'Auto-replace'), makeAutoReplaceToggle());
+    const replaceValue = make('span', 'foot-value');
+    replaceValue.append(makeAutoReplaceToggle(), make('span', 'foot-state foot-state-on', 'Replaces the text'), make('span', 'foot-state foot-state-off', 'Shows a preview'));
+    const replaceControl = make('label', 'foot-control foot-replace');
+    replaceControl.append(make('em', '', 'Auto-replace'), replaceValue);
     const modelControl = make('span', 'foot-control');
     modelControl.append(make('em', '', 'Model'), makeModelSelect());
     const effortControl = make('label', 'foot-control');

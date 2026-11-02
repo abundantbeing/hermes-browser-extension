@@ -1093,6 +1093,8 @@ export default Object.freeze({
   "ui.main": "principal",
   "ui.make.this.more.confident.without.sounding.aggressive": "Haz esto con más confianza sin sonar agresivo...",
   "ui.say.what.to.change": "Di qué cambiar…",
+  "ui.replaces.the.text": "Reemplaza el texto",
+  "ui.shows.a.preview": "Muestra vista previa",
   "ui.manual": "manuales",
   "ui.manual.setup": "Configuración manual",
   "ui.manual.setup.required": "Se requiere configuración manual",
