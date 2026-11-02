@@ -206,6 +206,9 @@
     .dd-option small { color:var(--hb-muted); font-size:calc(9.5px * var(--hermes-text-zoom, 1)); }
     .dd-option:hover, .dd-option:focus-visible { outline:none; background:var(--hb-soft); }
     .dd-option[aria-selected="true"] { box-shadow:inset 3px 0 0 var(--hb-accent); background:var(--hb-soft); }
+    .failure-detail { margin:0; overflow-wrap:anywhere; line-height:1.45; }
+    .failure-back { align-self:flex-start; min-height:0; padding:7px 12px; border:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); font:600 calc(11px * var(--hermes-text-zoom, 1))/1.2 var(--hb-font-ui); cursor:pointer; }
+    .failure-back:hover, .failure-back:focus-visible { outline:none; border-color:var(--hb-accent); background:var(--hb-soft); }
     .dd-search { position:sticky; top:0; z-index:1; width:100%; box-sizing:border-box; margin:0; padding:7px 10px; border:0; border-bottom:1px solid var(--hb-line); background:var(--hb-paper); color:var(--hb-blue); font:inherit; outline:none; }
     .dd-search:focus-visible { box-shadow:inset 0 0 0 2px var(--hb-accent); }
     .dd-option[hidden] { display:none; }
@@ -1425,13 +1428,14 @@
 
   function renderFailure(reason) {
     setLauncherBusy(false);
-    // A run from the quick menu hid the menu while it ran: its failure shows in the bar under the field.
-    if (panel.hidden && panel.dataset.mode === 'quick') return renderFailureBar(reason);
+    // A run from the quick menu (which hid the menu while it ran) or from the bar under the field shows its
+    // failure in that bar.
+    if ((panel.hidden && panel.dataset.mode === 'quick') || (!panel.hidden && panel.dataset.mode === 'bar')) return renderFailureBar(reason);
     activeView = { name: 'failure', args: [reason] };
     contextState.textContent = translateUiText('BLOCKED');
     const title = make('h2', 'route-title', 'Assist could not run');
-    const detail = make('p', 'status', reason || 'Hermes could not create this draft.');
-    const back = button('action', 'Back to actions');
+    const detail = make('p', 'status failure-detail', reason || 'Hermes could not create this draft.');
+    const back = button('failure-back', 'Back to actions');
     back.addEventListener('click', trustedOnly(renderAssist));
     setBody(title, detail, back);
   }

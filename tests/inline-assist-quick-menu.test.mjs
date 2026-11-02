@@ -130,3 +130,25 @@ test('a screen opened from the quick menu, such as Where should Hermes work?, ke
   const css = /style\.textContent = `([\s\S]*?)`;/.exec((await import('./inline-assist-dom.mjs')).loadExtensionFile('content-inline-helper.js'))[1];
   assert.match(css, /\.panel\[data-mode="quick"\]:not\(\[data-view="quick"\]\):not\(\[data-view="quick-options"\]\) \.body \{ padding:12px; gap:11px; \}/);
 });
+
+test('the bar under the field sits clear of the circle', async () => {
+  const { env, root, panel } = await openQuick();
+  await finishDraft(env, root);
+  const launcher = root.querySelector('.launcher');
+  const circleBottom = Number.parseFloat(launcher.style.top) + 24;
+  assert.ok(Number.parseFloat(panel.style.top) >= circleBottom + 8 || Number.parseFloat(panel.style.top) + panel.getBoundingClientRect().height <= Number.parseFloat(launcher.style.top) - 8, `bar top ${panel.style.top}, circle ${launcher.style.top}`);
+});
+
+test('a run started from the bar that fails stays a slim bar, with a plain Back button', async () => {
+  const { env, root, panel } = await openQuick();
+  await finishDraft(env, root);
+  const again = [...root.querySelectorAll('.bar-actions button')].find((item) => /Again/.test(item.textContent));
+  env.userClick(again);
+  await env.sleep(60);
+  const request = env.sent.filter((message) => message.type === 'HERMES_INLINE_DRAFT_REQUEST').at(-1).request;
+  env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: false, reason: 'Hermes Assist failed (502).' });
+  await env.sleep(60);
+  assert.equal(panel.dataset.mode, 'bar');
+  assert.equal(root.querySelector('.route-title'), null, 'not the full panel failure screen');
+  assert.match(root.querySelector('.bar-preview').textContent, /Hermes Assist failed \(502\)/);
+});

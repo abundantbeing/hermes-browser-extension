@@ -72,3 +72,12 @@ test('every Assist area that scrolls uses the canonical branded scrollbar', () =
   const branded = /([^{}]+)::-webkit-scrollbar \{ width:8px; \}/.exec(css)?.[1] || '';
   for (const selector of scrolling) assert.ok(branded.includes(`${selector}::-webkit-scrollbar`) || branded.trim().endsWith(selector), `${selector} has the branded scrollbar`);
 });
+
+test('the full panel failure screen has a plain secondary Back to actions button', () => {
+  const source = loadExtensionFile('content-inline-helper.js');
+  const failure = source.match(/function renderFailure\(reason\) \{[\s\S]*?\n  \}/)?.[0] || '';
+  assert.match(failure, /button\('failure-back', 'Back to actions'\)/);
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec(source)[1];
+  assert.match(css, /\.failure-back \{[^}]*background:transparent;[^}]*\}/);
+  assert.match(css, /\.failure-detail \{[^}]*overflow-wrap:anywhere;[^}]*\}/);
+});
