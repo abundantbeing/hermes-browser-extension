@@ -15,6 +15,11 @@ test('Settings → Hermes Assist has the Sites list, which saves itself, with a 
   assert.match(legend.textContent, /Reads thread:.*This field only:.*Circle hidden:.*right away/s);
   const css = loadExtensionFile('sidepanel.css');
   assert.doesNotMatch(css, /\.inline-assist-site-name::after/, 'no separator dot that reads as a full stop after the name');
+  // One site per row, the name taking the room and the choice beside it, so a name is not cut short.
+  assert.match(css, /\.inline-assist-sites-chips \{[^}]*flex-direction: column;/);
+  assert.match(css, /\.inline-assist-site \{[^}]*display: flex;[^}]*width: 100%;/);
+  assert.match(css, /\.inline-assist-site-name \{[^}]*flex: 1 1 auto;/);
+  assert.match(css, /\.inline-assist-site \.branded-select \{[^}]*flex: none; width: auto;/, 'the choice keeps its own width');
 });
 
 // The real sidepanel functions against the real markup (see helpers/settings-save-harness.mjs).
