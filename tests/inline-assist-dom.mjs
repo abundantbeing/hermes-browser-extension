@@ -7,7 +7,7 @@ const EXTENSION = new URL('../extension/', import.meta.url);
 export const loadExtensionFile = (relative) => readFileSync(new URL(relative, EXTENSION), 'utf8');
 const load = loadExtensionFile;
 
-export function bootAssist({ settings = {}, storage = {}, pageBackground = '', url = 'https://page.example/', fontReply = () => Promise.resolve({ ok: true, fonts: [] }) } = {}) {
+export function bootAssist({ settings = {}, storage = {}, pageBackground = '', url = 'https://page.example/', fontReply = () => Promise.resolve({ ok: true, fonts: [] }), replies = {} } = {}) {
   const sent = [];
   const messageListeners = [];
   const stored = [];
@@ -40,6 +40,8 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', u
       sendMessage: (message) => {
         sent.push(message);
         if (message?.type === 'HERMES_INLINE_FONT_REQUEST') return fontReply();
+        // A test answers any other background message by its type.
+        if (replies[message?.type]) return Promise.resolve(replies[message.type](message));
         if (message?.type === 'HERMES_INLINE_SESSION_STATUS') return Promise.resolve({ ok: true, hasActiveSession: false });
         return Promise.resolve({ ok: true });
       },

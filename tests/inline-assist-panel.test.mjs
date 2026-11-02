@@ -18,9 +18,9 @@ test('the full panel is 380px wide', () => {
 test('the footer holds where it runs, auto-replace, the model and the safety line', async () => {
   const { root } = await openPanel();
   const foot = root.querySelector('.foot');
-  const route = foot.querySelector('select.route-select');
+  const route = foot.querySelector('.dd[data-setting="route"]');
   assert.ok(route, 'route control in the footer');
-  assert.equal(route.value, 'background');
+  assert.match(route.textContent, /Run in background/);
   assert.ok(foot.querySelector('input.toggle[data-setting="auto-replace"]'), 'auto-replace in the footer');
   assert.match(foot.textContent, /gpt-6\.1-terra/);
   assert.match(foot.textContent, /Never posts or sends\. Only this field changes\./);

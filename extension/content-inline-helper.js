@@ -23,6 +23,8 @@
   const OPEN_SESSION = 'HERMES_INLINE_OPEN_SESSION';
   const CONTEXT_ACTION = 'HERMES_INLINE_CONTEXT_ACTION';
   const FONT_REQUEST = 'HERMES_INLINE_FONT_REQUEST';
+  const MODELS_REQUEST = 'HERMES_INLINE_ASSIST_MODELS';
+  const SET_MODEL = 'HERMES_INLINE_ASSIST_SET_MODEL';
   const extensionRoot = String(browserApi.runtime.getManifest()?.side_panel?.default_path || '').startsWith('extension/') ? 'extension/' : '';
   const logoUrl = browserApi.runtime.getURL(`${extensionRoot}assets/img/hermes-browser-extension-icon-ink.png`);
   const documentId = `doc-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
@@ -186,8 +188,22 @@
     .foot { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); }
     .foot-control { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--hb-line); color:var(--hb-blue); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); white-space:nowrap; }
     .foot-control em { font-style:normal; color:var(--hb-muted); }
-    .route-select { border:0; background:transparent; color:var(--hb-blue); font:inherit; cursor:pointer; }
-    .route-select option { color:#111; }
+    .dd { position:relative; display:inline-block; min-width:0; }
+    .dd-button { display:inline-flex; align-items:center; gap:6px; max-width:100%; min-height:0; padding:2px 4px; border:0; background:transparent; color:var(--hb-blue); font:inherit; text-align:left; cursor:pointer; }
+    .dd-value { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .dd-chevron { flex:none; width:6px; height:6px; margin-top:-3px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:rotate(45deg); }
+    .dd-button[aria-expanded="true"] .dd-chevron { margin-top:3px; transform:rotate(225deg); }
+    .dd-button:focus-visible { outline:2px solid var(--hb-accent); outline-offset:1px; }
+    .dd-list { position:absolute; z-index:6; right:0; bottom:calc(100% + 6px); display:grid; min-width:max(100%, 190px); max-width:280px; max-height:240px; overflow:auto; border:1px solid var(--hb-line); background:var(--hb-paper); box-shadow:0 8px 24px rgba(0,0,0,.35); }
+    .dd-list[hidden] { display:none; }
+    .quick-opt .dd-list { top:calc(100% + 6px); bottom:auto; }
+    .dd-option { display:grid; gap:2px; min-height:0; padding:7px 10px; border:0; border-top:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); font:inherit; text-align:left; white-space:normal; cursor:pointer; }
+    .dd-option:first-child, .dd-note + .dd-option { border-top:0; }
+    .dd-option strong { font-weight:600; }
+    .dd-option small { color:var(--hb-muted); font-size:calc(9.5px * var(--hermes-text-zoom, 1)); }
+    .dd-option:hover, .dd-option:focus-visible { outline:none; background:var(--hb-soft); }
+    .dd-option[aria-selected="true"] { box-shadow:inset 3px 0 0 var(--hb-accent); background:var(--hb-soft); }
+    .dd-note { margin:0; padding:8px 10px; color:var(--hb-muted); font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .foot-safety { width:100%; font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .panel[data-font-profile="signature"] .title, .panel[data-font-profile="signature"] .route-title, .panel[data-font-profile="signature"] .run-title, .panel[data-font-profile="signature"] .action, .panel[data-font-profile="signature"] .route strong, .panel[data-font-profile="signature"] .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
     .panel[data-font-profile="signature"] .action small, .panel[data-font-profile="signature"] .route small { text-transform:none; letter-spacing:normal; }
@@ -892,25 +908,125 @@
   }
 
   // The footer: where Assist runs, automatic replacement, the Assist model, and what Assist never does.
-  // The route and auto-replace are the same saved settings as Settings → Hermes Assist; the model is
-  // changed there.
+  // The route, auto-replace and model are the same saved settings as Settings → Hermes Assist.
   const ROUTE_LABELS = Object.freeze({ ask: 'Ask every time', current: 'Continue current chat', new: 'Start new Assist session', background: 'Run in background' });
 
   function currentRoutePreference() {
     return policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
   }
 
+  // Assist's own dropdown, in the panel's look instead of the browser's select list. `loadOptions` (async)
+  // fills it each time it opens; `onPick` saves a choice and returns false when it did not take.
+  function makeDropdown({ setting, label, value, valueLabel, options = [], loadOptions = null, onPick }) {
+    const box = make('span', 'dd');
+    box.dataset.setting = setting;
+    const trigger = button('dd-button', '', label);
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    const shown = makeRaw('span', 'dd-value', valueLabel || value || '');
+    trigger.append(shown, make('i', 'dd-chevron'));
+    const list = make('div', 'dd-list');
+    list.setAttribute('role', 'listbox');
+    list.setAttribute('aria-label', translateUiText(label));
+    list.hidden = true;
+    let current = value;
+    let choices = options;
+    const close = ({ focus = false } = {}) => {
+      list.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      if (focus) trigger.focus();
+    };
+    const fill = (items, note = '') => {
+      list.replaceChildren();
+      if (note) list.append(make('p', 'dd-note', note));
+      for (const item of items) {
+        const option = button('dd-option', '', item.label);
+        option.setAttribute('role', 'option');
+        option.dataset.value = item.value;
+        option.setAttribute('aria-selected', String(item.value === current));
+        option.append(makeRaw('strong', '', translateUiText(item.label)));
+        if (item.detail) option.append(makeRaw('small', '', item.detail));
+        option.addEventListener('click', trustedOnly(async () => {
+          const taken = await onPick(item);
+          if (taken === false) return;
+          current = item.value;
+          shown.textContent = translateUiText(item.label);
+          close({ focus: true });
+        }));
+        list.append(option);
+      }
+    };
+    const open = async () => {
+      fill(choices, loadOptions ? translateUiText('Loading…') : '');
+      list.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      if (loadOptions) {
+        const loaded = await loadOptions().catch(() => null);
+        if (list.hidden) return;
+        if (loaded?.items?.length) {
+          choices = loaded.items;
+          if (loaded.current) current = loaded.current;
+          fill(choices);
+        } else fill([], loaded?.note || translateUiText('No models yet. Open the side panel once so Hermes can list them.'));
+      }
+      (list.querySelector('[aria-selected="true"]') || list.querySelector('[role="option"]'))?.focus();
+    };
+    trigger.addEventListener('click', trustedOnly(() => (list.hidden ? open() : close())));
+    box.addEventListener('keydown', trustedOnly((event) => {
+      const items = [...list.querySelectorAll('[role="option"]')];
+      const at = items.indexOf(shadow.activeElement ?? event.target);
+      if (event.key === 'Escape' && !list.hidden) {
+        event.preventDefault();
+        event.stopPropagation();
+        close({ focus: true });
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        event.stopPropagation();
+        if (list.hidden) return void open();
+        const next = items[(Math.max(at, 0) + (event.key === 'ArrowDown' ? 1 : items.length - 1)) % Math.max(items.length, 1)];
+        next?.focus();
+      } else if (event.key === 'Tab' && !list.hidden) close();
+    }));
+    box.addEventListener('focusout', (event) => {
+      if (!list.hidden && !box.contains(event.relatedTarget)) close();
+    });
+    box.append(trigger, list);
+    return box;
+  }
+
   function makeRouteSelect() {
-    const routeSelect = make('select', 'route-select');
-    routeSelect.setAttribute('aria-label', translateUiText('Where it runs'));
-    for (const [value, label] of Object.entries(ROUTE_LABELS)) {
-      const option = make('option', '', label);
-      option.value = value;
-      routeSelect.appendChild(option);
-    }
-    routeSelect.value = currentRoutePreference();
-    routeSelect.addEventListener('change', trustedOnly(() => { persistDefaultRoute(routeSelect.value).catch(() => {}); }));
-    return routeSelect;
+    const value = currentRoutePreference();
+    return makeDropdown({
+      setting: 'route',
+      label: 'Where it runs',
+      value,
+      valueLabel: translateUiText(ROUTE_LABELS[value]),
+      options: Object.entries(ROUTE_LABELS).map(([key, text]) => ({ value: key, label: text })),
+      onPick: (item) => persistDefaultRoute(item.value).catch(() => false),
+    });
+  }
+
+  // The model Assist runs on: the models the side panel verified for this connection, changed right here.
+  function makeModelSelect() {
+    const value = String(assistSettings.inlineAssistModel || '');
+    const toItem = (model) => ({ value: model.id, label: model.label || model.rawModelId || model.id, detail: model.providerLabel || model.provider || '' });
+    return makeDropdown({
+      setting: 'model',
+      label: 'Model',
+      value,
+      valueLabel: value ? String(assistSettings.inlineAssistRawModel || value) : translateUiText('Same as chat'),
+      loadOptions: async () => {
+        const reply = await browserApi.runtime.sendMessage({ type: MODELS_REQUEST });
+        if (!reply?.ok) return { items: [], note: reply?.reason || '' };
+        return { items: (reply.models || []).map(toItem), current: reply.selectedId || value };
+      },
+      onPick: async (item) => {
+        const reply = await browserApi.runtime.sendMessage({ type: SET_MODEL, id: item.value }).catch(() => null);
+        if (!reply?.ok) return false;
+        assistSettings = { ...assistSettings, inlineAssistModel: reply.model.id, inlineAssistRawModel: reply.model.rawModelId, inlineAssistProvider: reply.model.provider };
+        return true;
+      },
+    });
   }
 
   function makeAutoReplaceToggle() {
@@ -924,18 +1040,13 @@
     return toggle;
   }
 
-  function assistModelName() {
-    return assistSettings.inlineAssistModel ? makeRaw('span', '', assistSettings.inlineAssistModel) : make('span', '', 'Same as chat');
-  }
-
   function renderFooter() {
-    const routeControl = make('label', 'foot-control');
+    const routeControl = make('span', 'foot-control');
     routeControl.append(make('em', '', 'Runs'), makeRouteSelect());
     const replaceControl = make('label', 'foot-control');
     replaceControl.append(make('em', '', 'Auto-replace'), makeAutoReplaceToggle());
     const modelControl = make('span', 'foot-control');
-    modelControl.title = translateUiText('Change it in Settings → Hermes Assist');
-    modelControl.append(make('em', '', 'Model'), assistModelName());
+    modelControl.append(make('em', '', 'Model'), makeModelSelect());
     footSafety.className = 'foot-safety';
     footSafety.textContent = translateUiText('Never posts or sends. Only this field changes.');
     foot.replaceChildren(routeControl, replaceControl, modelControl, footSafety);
@@ -1022,9 +1133,7 @@
       rows.push(row('Read the visible thread', 'Off: this field only', contextToggle));
     }
     rows.push(row('Where it runs', '', makeRouteSelect()));
-    const model = make('span', 'foot-control');
-    model.append(assistModelName());
-    rows.push(row('Model', 'Change it in Settings → Hermes Assist', model));
+    rows.push(row('Model', 'Used only by Assist', makeModelSelect()));
     rows.push(row('Replace text automatically', 'Undo is always one click away', makeAutoReplaceToggle()));
     const keepChats = make('input', 'toggle');
     keepChats.type = 'checkbox';
