@@ -136,3 +136,95 @@ test('Continue current chat into a chat with nothing in it yet names that chat f
   assert.match(drafts[0].title, /^Hermes Assist · YouTube · /);
   assert.equal(asks[0].sessionId, 'chat-new');
 });
+
+// What the page's Assist options saved while this panel was open (the panel's own copy is older).
+const PAGE_SAVED_ASSIST = {
+  inlineAssistModel: 'openai-codex::gpt-6.1-terra',
+  inlineAssistRawModel: 'gpt-6.1-terra',
+  inlineAssistProvider: 'openai-codex',
+  inlineAssistReasoningEffort: 'high',
+  inlineAssistThinkingEnabled: true,
+};
+const ASSIST_TURN = {
+  model: 'gpt-6.1-terra',
+  provider: 'openai-codex',
+  require_model_lock: false,
+  reasoning_effort: 'high',
+  fast: false,
+  model_options: { reasoning: { enabled: true, effort: 'high' }, reasoning_effort: 'high', fast: false, service_tier: null },
+};
+
+for (const route of ['current', 'new']) {
+  test(`${route === 'current' ? 'Continue current chat' : 'Start new Assist session'} runs the turn on the model and effort picked for Assist`, async () => {
+    const { process, asks, sent, h } = await panel();
+    h.scope.gatewayCapabilities = { sessionChat: true, sessionModelLock: true };
+    await h.scope.browserApi.storage.local.set({ hermesBrowserSettings: { ...h.scope.settings, ...PAGE_SAVED_ASSIST } });
+    assert.equal(await process(rawRequest(route)), true);
+    // For that turn only: the chat keeps its own model lock for the next message.
+    assert.deepEqual(asks[0].options.modelRoute, ASSIST_TURN);
+    const result = sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT');
+    assert.equal(result.message.modelNotice, '');
+  });
+}
+
+test('with no Assist model the chat\'s model runs, at the effort picked for Assist', async () => {
+  const { process, asks, h } = await panel();
+  h.scope.gatewayCapabilities = { sessionChat: true, sessionModelLock: true };
+  await h.scope.browserApi.storage.local.set({ hermesBrowserSettings: { ...h.scope.settings, inlineAssistModel: '', inlineAssistRawModel: '', inlineAssistProvider: '', inlineAssistReasoningEffort: 'minimal' } });
+  await process(rawRequest('current'));
+  assert.equal(asks[0].options.modelRoute.model, undefined);
+  assert.equal(asks[0].options.modelRoute.model_options.reasoning.effort, 'minimal');
+});
+
+test('over the dashboard connection, which cannot switch a chat\'s model for one turn, the page is told which model ran', async () => {
+  const { process, asks, sent, h } = await panel();
+  h.scope.gatewayCapabilities = { sessionChat: true, sessionModelLock: true };
+  h.scope.usesDashboardWsChatTransport = () => true;
+  await h.scope.browserApi.storage.local.set({ hermesBrowserSettings: { ...h.scope.settings, ...PAGE_SAVED_ASSIST } });
+  await process(rawRequest('current'));
+  assert.equal(asks[0].options.modelRoute, null);
+  const result = sent.find((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT');
+  assert.match(result.message.modelNotice, /could not enforce openai-codex \/ gpt-6\.1-terra .*Used this chat's model instead\./);
+});
+
+test('a turn request carries the Assist override while that turn is sent, and the chat\'s own model otherwise', async () => {
+  const { h } = await panel();
+  Object.assign(h.scope, {
+    currentModelRequestId: () => 'chat-model',
+    currentModelProviderSlug: () => 'chat-provider',
+    currentModelOptionsPayload: () => ({ reasoning: { enabled: true, effort: 'medium' } }),
+    currentSelectedModel: () => null,
+  });
+  const fields = h.fn('turnModelFields');
+  h.scope.turnModelRoute = null;
+  assert.equal(fields().model, 'chat-model');
+  assert.equal(fields().require_model_lock, true);
+  h.scope.turnModelRoute = ASSIST_TURN;
+  assert.deepEqual(fields(), { model: 'gpt-6.1-terra', provider: 'openai-codex', model_options: ASSIST_TURN.model_options, require_model_lock: false });
+  // No Assist model: the chat's model, at Assist's effort.
+  h.scope.turnModelRoute = { model_options: { reasoning: { enabled: true, effort: 'minimal' } } };
+  assert.equal(fields().model, 'chat-model');
+  assert.equal(fields().model_options.reasoning.effort, 'minimal');
+
+  const { sidepanelSource } = await import('./helpers/settings-save-harness.mjs');
+  const ask = sidepanelSource.slice(sidepanelSource.indexOf('async function askHermes('), sidepanelSource.indexOf('\n}\n', sidepanelSource.indexOf('async function askHermes(')));
+  assert.match(ask, /turnModelRoute = dashboardTransport \? null : \(turnOptions\.modelRoute \|\| null\);\n {2}try \{/);
+  assert.match(ask, /\} finally \{\n {4}turnModelRoute = null;/);
+  for (const name of ['streamSessionChatRest', 'fallbackSessionChat']) {
+    const body = sidepanelSource.slice(sidepanelSource.indexOf(`async function ${name}(`), sidepanelSource.indexOf('\n}\n', sidepanelSource.indexOf(`async function ${name}(`)));
+    assert.match(body, /\.\.\.turnModelFields\(\)/, name);
+    assert.doesNotMatch(body, /model: currentModelRequestId\(\)/, name);
+  }
+  for (const name of ['streamChatCompletions', 'fallbackChatCompletions']) {
+    const body = sidepanelSource.slice(sidepanelSource.indexOf(`async function ${name}(`), sidepanelSource.indexOf('\n}\n', sidepanelSource.indexOf(`async function ${name}(`)));
+    assert.match(body, /\.\.\.turnCompletionModelFields\(\)/, name);
+  }
+});
+
+test('an effort picked on the page reaches an open panel\'s settings, so its next save keeps it', async () => {
+  const { h } = await panel();
+  h.scope.renderInlineAssistRuntimeOptions = () => {};
+  h.fn('adoptInlineAssistEffortChange')({ inlineAssistReasoningEffort: 'ultra', inlineAssistThinkingEnabled: true });
+  assert.equal(h.scope.settings.inlineAssistReasoningEffort, 'ultra');
+  assert.equal(h.scope.settings.inlineAssistThinkingEnabled, true);
+});

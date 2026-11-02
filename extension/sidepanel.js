@@ -211,6 +211,7 @@ import { mountContextMenuEditor } from './lib/context-menu-editor-client.mjs';
 import { CONTEXT_MENU_REQUEST_CLAIM } from './lib/context-menu-controller.mjs';
 import {
   assertAssistModelSelectionAcknowledged,
+  assistChatTurnOverride,
   assistModelFallbackNotice,
   assistModelRoutingSupported,
   buildAssistModelRouteRequest,
@@ -1469,6 +1470,9 @@ const approvedForeignSessionIds = new Set();
 let pendingForeignTurn = null;
 let pendingContextMenuRequest = null;
 let sending = false;
+// The model fields of the turn being sent, when they are not the chat's own: a Hermes Assist turn runs on
+// Assist's model and effort (assistChatTurnOverride). Set for one askHermes send, cleared when it ends.
+let turnModelRoute = null;
 let queuedTurn = null;
 let activeAbortController = null;
 // Live follow of a session that is already running when the panel opens it.
@@ -2970,6 +2974,16 @@ function adoptInlineAssistModelChange(next = {}) {
   if (!input || input.value !== saved) return;
   renderInlineAssistModelOptions();
   adoptSettingsBaselineValue(input);
+}
+
+// And for Assist's effort, which the slider in the page's Assist options changes.
+function adoptInlineAssistEffortChange(next = {}) {
+  settings = {
+    ...settings,
+    inlineAssistReasoningEffort: normalizeReasoningEffort(next.inlineAssistReasoningEffort || 'low'),
+    inlineAssistThinkingEnabled: next.inlineAssistThinkingEnabled !== false,
+  };
+  renderInlineAssistRuntimeOptions();
 }
 
 // And for Keep Assist chats, which the quick menu's options also change on the page.
@@ -25834,6 +25848,36 @@ function currentModelOptionsPayload() {
   return buildHermesModelOptions(settings);
 }
 
+// The model, provider, options and lock a turn request carries: the chat's own, or the one-turn override
+// of the turn being sent (a Hermes Assist turn), which Hermes runs without saving it as the chat's lock.
+function turnModelFields() {
+  const chat = {
+    model: currentModelRequestId(),
+    provider: currentModelProviderSlug() || undefined,
+    model_options: currentModelOptionsPayload(),
+    require_model_lock: shouldRequireModelLock({
+      provider: currentModelProviderSlug(),
+      model: currentModelRequestId(),
+      defaultModel: DEFAULT_SETTINGS.model,
+      gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
+    }),
+  };
+  if (!turnModelRoute) return chat;
+  if (!turnModelRoute.model) return { ...chat, model_options: turnModelRoute.model_options || chat.model_options };
+  return {
+    model: turnModelRoute.model,
+    provider: turnModelRoute.provider || undefined,
+    model_options: turnModelRoute.model_options || chat.model_options,
+    require_model_lock: turnModelRoute.require_model_lock === true,
+  };
+}
+
+// The same fields for /v1/chat/completions, which takes no lock.
+function turnCompletionModelFields() {
+  const { require_model_lock: _lock, ...fields } = turnModelFields();
+  return fields;
+}
+
 // Which names the model has for the Hermes Control tools: the controller says once it is connected;
 // before that, the route it would take (Hermes core first, then the plugin).
 function currentControlToolFamily() {
@@ -25845,10 +25889,11 @@ function currentControlToolFamily() {
 }
 
 function currentHermesBrowserSystemPrompt() {
+  const turn = turnModelFields();
   const runtimeSelection = buildHermesRuntimeSelectionNote({
-    model: currentModelRequestId(),
-    provider: currentModelProviderSlug() || 'Hermes runtime',
-    modelOptions: currentModelOptionsPayload(),
+    model: turn.model,
+    provider: turn.provider || 'Hermes runtime',
+    modelOptions: turn.model_options,
   });
   const styleNote = responseStyleInstructions(settings.responseStyle);
   return `${hermesBrowserSystemPrompt(currentControlToolFamily())}\n\n${runtimeSelection}${styleNote ? `\n\n${styleNote}` : ''}`;
@@ -26499,15 +26544,7 @@ async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAtta
       signal,
       body: JSON.stringify({
             client_runtime_version: modelSelectionVersion,
-            model: currentModelRequestId(),
-            provider: currentModelProviderSlug() || undefined,
-            model_options: currentModelOptionsPayload(),
-            require_model_lock: shouldRequireModelLock({
-              provider: currentModelProviderSlug(),
-              model: currentModelRequestId(),
-              defaultModel: DEFAULT_SETTINGS.model,
-              gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
-            }),
+            ...turnModelFields(),
             message: outboundContent(prompt, turnAttachments),
             system_message: turnSystemMessage(voiceLive),
           }),
@@ -26548,9 +26585,7 @@ async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachme
       },
       body: JSON.stringify({
         client_runtime_version: modelSelectionVersion,
-        model: currentModelRequestId(),
-        provider: currentModelProviderSlug() || undefined,
-        model_options: currentModelOptionsPayload(),
+        ...turnCompletionModelFields(),
         stream: true,
         messages: [
           { role: 'system', content: turnSystemMessage(voiceLive) },
@@ -27025,15 +27060,7 @@ async function fallbackSessionChat(prompt, turnAttachments = attachments, { onRu
   const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/chat`, {
     method: 'POST',
     body: JSON.stringify({
-          model: currentModelRequestId(),
-          provider: currentModelProviderSlug() || undefined,
-          model_options: currentModelOptionsPayload(),
-          require_model_lock: shouldRequireModelLock({
-            provider: currentModelProviderSlug(),
-            model: currentModelRequestId(),
-            defaultModel: DEFAULT_SETTINGS.model,
-            gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
-          }),
+          ...turnModelFields(),
           message: outboundContent(prompt, turnAttachments),
           system_message: turnSystemMessage(voiceLive),
         }),
@@ -27058,9 +27085,7 @@ async function fallbackChatCompletions(prompt, turnAttachments = attachments, { 
       ...(safeActiveProfile() ? { 'X-Hermes-Profile': safeActiveProfile() } : {}),
     },
     body: JSON.stringify({
-      model: currentModelRequestId(),
-      provider: currentModelProviderSlug() || undefined,
-      model_options: currentModelOptionsPayload(),
+      ...turnCompletionModelFields(),
       stream: false,
       messages: [
         { role: 'system', content: turnSystemMessage(voiceLive) },
@@ -27236,6 +27261,9 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     clearTimeout(slowReplyTimer);
     if (slowNoticeShown) setStatus('ok', 'Model responding', 'Hermes is replying now.', { translateDetail: false });
   };
+  // A Hermes Assist turn names its own model and effort for this send (REST only: the dashboard socket runs
+  // a chat on the model it was created with).
+  turnModelRoute = dashboardTransport ? null : (turnOptions.modelRoute || null);
   try {
     let preparedAttachments = await saveImageAttachmentsForTurn(turnAttachments);
     if (!runIsViewed()) throw new Error('Session changed before submission. The original draft is held and was not sent.');
@@ -27860,6 +27888,7 @@ ${streamError.message}`);
       addMessage('system', `Hermes Browser Extension error: ${error?.message || String(error)}`);
     }
   } finally {
+    turnModelRoute = null;
     clearTimeout(slowReplyTimer);
     promptPoller?.stop();
     if (promptRunId) promptController.settleScope('rest', promptRunId);
@@ -28057,6 +28086,13 @@ async function resolveInlineDraftPrompt(request, source = settings) {
   return buildInlineDraftPrompt(inlineDraftRequestForEffectiveContext(request, sendTimeSettings));
 }
 
+// This panel's settings with Assist's own as saved (model, effort, thinking): the page writes them.
+async function savedInlineAssistSettings() {
+  const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
+  const saved = stored?.hermesBrowserSettings || {};
+  return { ...settings, ...Object.fromEntries(Object.entries(saved).filter(([key]) => key.startsWith('inlineAssist'))) };
+}
+
 // Continue current chat and Start new Assist session: a visible turn in this panel, shown as what was asked
 // and where; the reply also goes back to the field.
 async function processInlineDraftRequest(rawRequest) {
@@ -28096,15 +28132,24 @@ async function processInlineDraftRequest(rawRequest) {
     if (request.route === INLINE_DRAFT_ROUTES.NEW || !messages.length) {
       await beginHermesBrowserDraft({ title: assistSessionTitle(request, { suffix: String(request.requestId || '').slice(-4) }), focus: false });
     }
-    const inlineAssistRoute = buildAssistModelRouteRequest(settings, gatewayCapabilities).policy;
-    const inlineAssistModelNotice = inlineAssistRoute.mode === 'gateway-default-fallback'
-      ? assistModelFallbackNotice(
+    // The turn runs on Assist's own model and effort. The page's Assist options save them while this panel
+    // is open, so they are read as saved, not from this panel's copy.
+    const assistSettings = await savedInlineAssistSettings();
+    const inlineAssistRoute = buildAssistModelRouteRequest(assistSettings, gatewayCapabilities).policy;
+    const dashboardTurn = usesDashboardWsChatTransport();
+    const modelRoute = dashboardTurn ? null : assistChatTurnOverride(assistSettings, gatewayCapabilities);
+    let inlineAssistModelNotice = '';
+    if (inlineAssistRoute.mode === 'gateway-default-fallback') {
+      inlineAssistModelNotice = assistModelFallbackNotice(
         inlineAssistRoute.requestedSelection,
         isRemoteWsMode()
           ? 'dashboard transport uses the gateway-selected runtime model'
           : 'this gateway does not advertise exact model routing',
-      )
-      : '';
+        "this chat's model",
+      );
+    } else if (dashboardTurn && inlineAssistRoute.selection) {
+      inlineAssistModelNotice = assistModelFallbackNotice(inlineAssistRoute.selection, 'the dashboard connection runs a chat on its own model', "this chat's model");
+    }
     const inlineSessionId = String(settings.sessionId || '');
     const inlineSessionTitle = String(settings.sessionTitle || 'Hermes Assist');
     const prompt = await resolveInlineDraftPrompt(request);
@@ -28114,6 +28159,7 @@ async function processInlineDraftRequest(rawRequest) {
       preserveComposer: true,
       disableCommandParsing: true,
       disableAutoTitle: true,
+      modelRoute,
       displayUserText: assistRequestSummary(prompt) || `Hermes Assist · ${request.actionLabel}`,
       onComplete: async (answer) => {
         const text = sanitizeInlineDraftResult(answer);
@@ -30001,6 +30047,7 @@ function bindEvents() {
         if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
         if (Object.hasOwn(next, 'inlineAssistOpenMode')) adoptInlineAssistOpenModeChange(next.inlineAssistOpenMode);
         if (Object.hasOwn(next, 'inlineAssistModel') && next.inlineAssistModel !== settings.inlineAssistModel) adoptInlineAssistModelChange(next);
+        if (Object.hasOwn(next, 'inlineAssistReasoningEffort') && next.inlineAssistReasoningEffort !== settings.inlineAssistReasoningEffort) adoptInlineAssistEffortChange(next);
         if (Object.hasOwn(next, 'inlineAssistSessionRetention')) adoptInlineAssistSessionRetentionChange(next.inlineAssistSessionRetention);
       }
     }
