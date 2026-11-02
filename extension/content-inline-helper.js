@@ -178,7 +178,8 @@
   launcher.append(logo('launcher-logo'), launcherLabel);
   launcher.dataset.icon = 'wing';
   launcher.dataset.tone = 'dark';
-  launcher.title = translateUiText('Open Hermes Assist');
+  // The label above the circle is its only tooltip: a title would add the browser's own under the cursor.
+  launcher.setAttribute('aria-label', translateUiText('Open Hermes Assist'));
   launcher.hidden = true;
 
   const panel = make('section', 'panel');
@@ -1297,7 +1298,6 @@
   }
 
   function applyLocalizedFrame() {
-    launcher.title = translateUiText('Open Hermes Assist');
     launcher.setAttribute('aria-label', translateUiText('Open Hermes Assist'));
     panel.setAttribute('aria-label', translateUiText('Hermes Assist'));
     for (const mark of [launcher.querySelector('.launcher-logo'), brandMark.querySelector('.brand-logo')]) {

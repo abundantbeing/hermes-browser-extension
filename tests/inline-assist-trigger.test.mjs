@@ -200,3 +200,11 @@ test('an edit action on an empty field says to type something first, not that th
   assert.match(status, /works on what is already in the field/);
   assert.doesNotMatch(status, /not eligible/);
 });
+
+test('hovering the circle shows one label, not the browser tooltip as well', async () => {
+  const env = boot();
+  const launcher = await focusField(env);
+  assert.equal(launcher.hasAttribute('title'), false, 'no native tooltip under the circle');
+  assert.equal(launcher.querySelector('.launcher-label')?.textContent, 'Hermes Assist');
+  assert.equal(launcher.getAttribute('aria-label'), 'Open Hermes Assist', 'screen readers still hear what it does');
+});
