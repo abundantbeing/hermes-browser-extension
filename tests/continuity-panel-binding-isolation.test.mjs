@@ -38,6 +38,7 @@ function storageListener(initialSettings) {
     adoptInlineAssistIconChange() {},
     INLINE_SITE_CONTEXT_STORAGE_KEY: 'hermesInlineSiteContextPreferences',
     adoptInlineAssistSitesChange() {},
+    INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY: 'hermesInlineAssistHiddenSites',
     adoptOnboardingCompletedChange() {},
     adoptStoredResponsePresentation() {},
     updateConnectionPrompt() {},

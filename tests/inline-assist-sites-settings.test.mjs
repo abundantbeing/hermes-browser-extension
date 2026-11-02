@@ -18,7 +18,8 @@ test('Settings → Hermes Assist has the Sites list; its rows only show the valu
 const constant = (name) => new Function(`return ${sidepanelSource.match(new RegExp(`^const ${name} = (.+);$`, 'm'))[1]}`)();
 
 async function sitesPanel({ hidden = [], contextPrefs = {}, tabs = [] } = {}) {
-  const h = await createSettingsSaveHarness({ settings: { inlineAssistHiddenSites: hidden } });
+  const h = await createSettingsSaveHarness();
+  h.scope.inlineAssistHiddenSites = hidden;
   h.scope.INLINE_ASSIST_SITE_STATES = constant('INLINE_ASSIST_SITE_STATES');
   h.scope.inlineSiteContextPreferences = contextPrefs;
   h.scope.settingsBaseline = null;
@@ -94,7 +95,8 @@ test('Save writes hidden sites into the settings and thread reading into its own
   select.value = 'hidden';
   select.dispatchEvent(new select.ownerDocument.defaultView.Event('change', { bubbles: true }));
   await h.save();
-  assert.deepEqual(h.store.hermesBrowserSettings.inlineAssistHiddenSites, ['page.example', 'x']);
+  assert.deepEqual(h.store.hermesInlineAssistHiddenSites, ['page.example', 'x']);
+  assert.equal(Object.hasOwn(h.store.hermesBrowserSettings, 'inlineAssistHiddenSites'), false, 'not in the settings record');
   assert.deepEqual(h.store.hermesInlineSiteContextPreferences, { gmail: 'visible' });
 });
 
@@ -109,5 +111,5 @@ test('a change from a page follows into an unedited list, and never over unsaved
   edited.rows()[0].querySelector('button.inline-assist-site-remove').click();
   edited.h.fn('adoptInlineAssistSitesChange')({ hidden: ['page.example', 'new.example'] });
   assert.deepEqual(edited.rows().map((item) => item.dataset.site), []);
-  assert.deepEqual(edited.h.scope.settings.inlineAssistHiddenSites, ['page.example', 'new.example']);
+  assert.deepEqual(edited.h.scope.inlineAssistHiddenSites, ['page.example', 'new.example']);
 });

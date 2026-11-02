@@ -297,6 +297,8 @@
   // rewrites the settings record Settings and Hermes Control also save. Unset, the record's copy decides.
   const AUTO_REPLACE_STORAGE_KEY = 'hermesInlineAssistAutoReplace';
   let savedAutoReplace = null;
+  const HIDDEN_SITES_STORAGE_KEY = 'hermesInlineAssistHiddenSites';
+  let hiddenSites = [];
   const visualViewport = globalThis.visualViewport || null;
   let assistSettings = {
     inlineAssistEnabled: true,
@@ -448,7 +450,7 @@
 
   // The user hid the circle on this site (by its adapter, or this hostname and its subdomains).
   function circleHiddenHere() {
-    return Boolean(look?.isInlineAssistHiddenSite?.(location.hostname, siteProfile?.adapterId, assistSettings.inlineAssistHiddenSites));
+    return Boolean(look?.isInlineAssistHiddenSite?.(location.hostname, siteProfile?.adapterId, hiddenSites));
   }
 
   function applyAssistSettings() {
@@ -472,9 +474,10 @@
   }
 
   async function loadAssistSettings() {
-    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY, AUTO_REPLACE_STORAGE_KEY]).catch(() => ({}));
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY, AUTO_REPLACE_STORAGE_KEY, HIDDEN_SITES_STORAGE_KEY]).catch(() => ({}));
     assistSettings = { ...assistSettings, ...(stored?.hermesBrowserSettings || {}) };
     savedAutoReplace = typeof stored?.[AUTO_REPLACE_STORAGE_KEY] === 'boolean' ? stored[AUTO_REPLACE_STORAGE_KEY] : null;
+    hiddenSites = look?.normalizeInlineAssistHiddenSites?.(stored?.[HIDDEN_SITES_STORAGE_KEY]) || [];
     siteContextPreferences = adapters?.normalizeInlineSiteContextPreferences?.(stored?.[SITE_CONTEXT_STORAGE_KEY]) || {};
     assistSettings.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
     refreshSiteProfile();
@@ -527,6 +530,7 @@
       const value = changes[AUTO_REPLACE_STORAGE_KEY].newValue;
       savedAutoReplace = typeof value === 'boolean' ? value : null;
     }
+    if (changes?.[HIDDEN_SITES_STORAGE_KEY]) hiddenSites = look?.normalizeInlineAssistHiddenSites?.(changes[HIDDEN_SITES_STORAGE_KEY].newValue) || [];
     if (changes?.[SITE_CONTEXT_STORAGE_KEY]) {
       siteContextPreferences = adapters?.normalizeInlineSiteContextPreferences?.(changes[SITE_CONTEXT_STORAGE_KEY].newValue) || {};
       refreshSiteProfile();
@@ -1021,8 +1025,8 @@
     hideSite.addEventListener('change', trustedOnly(() => {
       if (!hideSite.checked) return;
       const site = profile?.adapterId && profile.adapterId !== 'generic' ? profile.adapterId : location.hostname.replace(/^www\./, '');
-      const hidden = look?.normalizeInlineAssistHiddenSites?.([...(assistSettings.inlineAssistHiddenSites || []), site]) || [site];
-      persistAssistSettings({ inlineAssistHiddenSites: hidden }).catch(() => {});
+      hiddenSites = look?.normalizeInlineAssistHiddenSites?.([...hiddenSites, site]) || [site];
+      browserApi.storage.local.set({ [HIDDEN_SITES_STORAGE_KEY]: hiddenSites }).catch(() => {});
       launcher.hidden = true;
       hidePanel();
     }));

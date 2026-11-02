@@ -1,5 +1,6 @@
 import {
   INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY,
+  INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY,
   inlineAssistSiteEntries,
   inlineAssistSitesModel,
   normalizeInlineAssistHiddenSites,
@@ -23093,8 +23094,9 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, INLINE_SITE_CONTEXT_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, INLINE_SITE_CONTEXT_STORAGE_KEY, INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]);
   inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(stored[INLINE_SITE_CONTEXT_STORAGE_KEY]);
+  inlineAssistHiddenSites = normalizeInlineAssistHiddenSites(stored[INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -23400,17 +23402,18 @@ function renderTranscriptProviderField() {
   if (els.transcriptProviderField) els.transcriptProviderField.hidden = !custom;
 }
 
-// Settings → Hermes Assist → Sites: where Assist reads the visible thread (kept per site under its own
-// storage key, which the page's Assist panel also writes) and where the circle is hidden (a setting). The
+// Settings → Hermes Assist → Sites: where Assist reads the visible thread and where the circle is hidden,
+// each kept under its own storage key, which the page's Assist panel also writes. The
 // hidden #inlineAssistSitesValue holds both as JSON, so Save and the edited markers treat the list like
 // any other control; the rows only show it.
 let inlineSiteContextPreferences = {};
+let inlineAssistHiddenSites = [];
 const INLINE_ASSIST_SITE_STATES = [['visible', 'Reads thread'], ['draft', 'This field only'], ['hidden', 'Circle hidden']];
 
-function readInlineAssistSitesModel() {
+function readInlineAssistSitesModel(input = els.inlineAssistSitesValue) {
   let stored = null;
   try {
-    stored = JSON.parse(els.inlineAssistSitesValue?.value || 'null');
+    stored = JSON.parse(input?.value || 'null');
   } catch {
     stored = null;
   }
@@ -23426,7 +23429,7 @@ function writeInlineAssistSitesModel(model, { edited = false, render = true } = 
 }
 
 function syncInlineAssistSitesForm() {
-  writeInlineAssistSitesModel(inlineAssistSitesModel(inlineSiteContextPreferences, settings.inlineAssistHiddenSites));
+  writeInlineAssistSitesModel(inlineAssistSitesModel(inlineSiteContextPreferences, inlineAssistHiddenSites));
   if (els.inlineAssistSitesValue) els.inlineAssistSitesValue.dataset.syncedValue = els.inlineAssistSitesValue.value;
 }
 
@@ -23530,7 +23533,7 @@ async function addActiveSiteToInlineAssistSites() {
 // The page's Assist panel changes these too (Hide the circle on this site, Read the visible thread). They
 // are taken in, and an open list follows unless it holds unsaved edits.
 function adoptInlineAssistSitesChange({ hidden, contextPrefs } = {}) {
-  if (hidden !== undefined) settings = { ...settings, inlineAssistHiddenSites: normalizeInlineAssistHiddenSites(hidden) };
+  if (hidden !== undefined) inlineAssistHiddenSites = normalizeInlineAssistHiddenSites(hidden);
   if (contextPrefs !== undefined) inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(contextPrefs);
   const input = els.inlineAssistSitesValue;
   if (!input || input.value !== input.dataset.syncedValue) return;
@@ -23684,7 +23687,6 @@ async function saveSettingsFromForm() {
     inlineAssistIcon: normalizeInlineAssistIcon(els.inlineAssistIconInputs?.find((input) => input.checked)?.value || settings.inlineAssistIcon),
     inlineAssistOpenMode: normalizeInlineAssistOpenMode(els.inlineAssistOpenModeInputs?.find((input) => input.checked)?.value || settings.inlineAssistOpenMode),
     inlineAssistAutoReplace: els.inlineAssistAutoReplace ? els.inlineAssistAutoReplace.checked : settings.inlineAssistAutoReplace !== false,
-    inlineAssistHiddenSites: normalizeInlineAssistHiddenSites(readInlineAssistSitesModel().hidden),
     ...assistBinding,
     inlineAssistSessionRetention: els.inlineAssistSessionRetention?.value === 'delete' ? 'delete' : 'keep',
     inlineAssistThinkingEnabled: settings.inlineAssistThinkingEnabled !== false,
@@ -23771,8 +23773,11 @@ async function saveSettingsFromForm() {
   applyAppearanceSettings();
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]: settings.inlineAssistAutoReplace !== false });
-  inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(readInlineAssistSitesModel().contextPrefs);
+  const sitesModel = readInlineAssistSitesModel(els.inlineAssistSitesValue);
+  inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(sitesModel.contextPrefs);
   await browserApi.storage.local.set({ [INLINE_SITE_CONTEXT_STORAGE_KEY]: inlineSiteContextPreferences });
+  inlineAssistHiddenSites = normalizeInlineAssistHiddenSites(sitesModel.hidden);
+  await browserApi.storage.local.set({ [INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]: inlineAssistHiddenSites });
   await applyWebappCredentialPreference();
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
     || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
@@ -29995,10 +30000,10 @@ function bindEvents() {
         }
         adoptStoredResponsePresentation(next);
         if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
-        if (Object.hasOwn(next, 'inlineAssistHiddenSites')) adoptInlineAssistSitesChange({ hidden: next.inlineAssistHiddenSites });
       }
     }
     if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);
+    if (Object.hasOwn(changes, INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY)) adoptInlineAssistSitesChange({ hidden: changes[INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]?.newValue });
     if (Object.hasOwn(changes, INLINE_SITE_CONTEXT_STORAGE_KEY)) adoptInlineAssistSitesChange({ contextPrefs: changes[INLINE_SITE_CONTEXT_STORAGE_KEY]?.newValue });
     if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)) adoptOnboardingCompletedChange(changes);
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();

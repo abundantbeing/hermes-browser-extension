@@ -2905,7 +2905,7 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
   hermesGlobal.HermesAppearancePreferences = APPEARANCE_PREFERENCES_API;
 })(globalThis);
 
-/* extension/lib/inline-assist-look.mjs · SHA-256 713b26cbbd1210df */
+/* extension/lib/inline-assist-look.mjs · SHA-256 dfe4176069e047f6 */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
 
@@ -2923,6 +2923,9 @@ function normalizeInlineAssistIcon(value) {
 // "Replace text automatically" has its own storage key, shared by Settings → Hermes Assist and Assist's switch,
 // so Assist never rewrites the settings record that Settings and Hermes Control also save.
 const INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY = 'hermesInlineAssistAutoReplace';
+// The sites where the circle is hidden have their own key for the same reason: the page's "Hide the circle on
+// this site" and Settings → Hermes Assist → Sites both write them.
+const INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY = 'hermesInlineAssistHiddenSites';
 
 function normalizeInlineAssistOpenMode(value) {
   return value === 'quick' ? 'quick' : 'panel';
