@@ -28105,8 +28105,9 @@ async function processInlineDraftRequest(rawRequest) {
       await loadSessions({ quiet: true });
       return resultSent;
     }
-    // Start new Assist session is the panel's New session button, then the send.
-    if (request.route === INLINE_DRAFT_ROUTES.NEW) {
+    // Start new Assist session is the panel's New session button, then the send. Continue current chat into a
+    // chat with nothing in it yet (a tab's first panel) starts that chat the same way, so it is named for Assist.
+    if (request.route === INLINE_DRAFT_ROUTES.NEW || !messages.length) {
       await beginHermesBrowserDraft({ title: assistSessionTitle(request), focus: false });
     }
     const inlineAssistRoute = buildAssistModelRouteRequest(settings, gatewayCapabilities).policy;

@@ -29,7 +29,7 @@ function rawRequest(route, overrides = {}) {
 }
 
 // The real processInlineDraftRequest from sidepanel.js; the chat itself (askHermes, a new chat) is recorded.
-async function panel({ reply = 'A drafted reply.', running = false } = {}) {
+async function panel({ reply = 'A drafted reply.', running = false, history = [{ role: 'user', content: 'Earlier message' }] } = {}) {
   const h = await createSettingsSaveHarness({ settings: { sessionId: 'chat-current', sessionTitle: 'My chat' } });
   const sent = [];
   const asks = [];
@@ -41,6 +41,7 @@ async function panel({ reply = 'A drafted reply.', running = false } = {}) {
     inlineDraftHandoffsReady: true,
     lastInlineDraftRequestId: '',
     sending: false,
+    messages: history,
     gatewayCapabilities: {},
     isAttachedPanelResidency: () => false,
     isRemoteWsMode: () => false,
@@ -125,4 +126,12 @@ test('a chat still running elsewhere says so on the page instead of a vague fail
   assert.equal(result.message.ok, false);
   assert.match(result.message.reason, /still working in this chat/);
   assert.match(result.message.reason, /Start new Assist session/);
+});
+
+test('Continue current chat into a chat with nothing in it yet names that chat for Assist too', async () => {
+  const { process, asks, drafts } = await panel({ history: [] });
+  assert.equal(await process(rawRequest('current')), true);
+  assert.equal(drafts.length, 1);
+  assert.match(drafts[0].title, /^Hermes Assist · YouTube · /);
+  assert.equal(asks[0].sessionId, 'chat-new');
 });
