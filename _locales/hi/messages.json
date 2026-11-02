@@ -3951,6 +3951,10 @@
     "message": "भेजने से पहले स्लैश कमांड के बाद निर्देश जोड़ें।",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ यह साइट जोड़ें",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "समायोजित करना",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "कुछ ब्राउज़र एक्सटेंशन साइडबार के अंदर माइक्रोफ़ोन कैप्चर को ब्लॉक कर देते हैं। यह दृश्यमान एक्सटेंशन टैब उसी Hermes Browser Extension मूल से रिकॉर्ड करता है जब Hermes STT उपलब्ध होता है, या जब कनेक्टेड रनटाइम ऑडियो ट्रांसक्रिप्शन को उजागर नहीं करता है तो ब्राउज़र स्पीच फ़ॉलबैक का उपयोग करता है।",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "सर्कल छिपा है",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "कक्षा",
@@ -5931,6 +5939,10 @@
     "message": "सत्र रेल छिपाएँ",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "इस साइट पर सर्कल छिपाएँ",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "उच्च",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "कोई सत्र नहीं मिला",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "अभी कोई साइट नहीं है। किसी पेज पर Assist पैनल से कोई साइट बदलें, या जो साइट खुली है उसे जोड़ें।",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "कोई भाषण कैप्चर नहीं किया गया",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "सबसे पहले एक सामान्य पेज टैब खोलें.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "पहले कोई वेब पेज खोलें, फिर उसे यहाँ जोड़ें।",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "पूरा दृश्य खोलें",
@@ -7543,6 +7563,10 @@
     "message": "साइट",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "साइटें",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "आकार",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "पुनः रिकॉर्डिंग का प्रयास करें.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "सेटिंग्स → Hermes Assist में इसे फिर से चालू करें",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "बंद करें",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "क्लिक करने पर",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Assist थ्रेड कहाँ पढ़ता है, और सर्कल कहाँ छिपा रहता है।",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "यह कहाँ चलता है",

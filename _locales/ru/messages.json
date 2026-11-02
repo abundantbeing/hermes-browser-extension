@@ -3951,6 +3951,10 @@
     "message": "Добавьте инструкции после косой черты перед отправкой.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ Добавить этот сайт",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "Настроить",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "Некоторые браузеры блокируют захват микрофона внутри боковых панелей расширений. Эта видимая вкладка расширения записывает из того же источника, что и Hermes Browser Extension, когда доступен Hermes STT, или использует резервную версию речи браузера, когда подключенная среда выполнения не предоставляет транскрипцию звука.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "Круг скрыт",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "Сорт",
@@ -5931,6 +5939,10 @@
     "message": "Скрыть ленту сессий",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "Скрыть круг на этом сайте",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "Высокий",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "Сеансы не найдены",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "Сайтов пока нет. Измените один из панели Assist на странице или добавьте открытый сайт.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "Речь не записана",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "Сначала откройте вкладку обычной страницы.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "Сначала откройте веб-страницу, затем добавьте её сюда.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "Открыть полный вид",
@@ -7543,6 +7563,10 @@
     "message": "Сайт",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "Сайты",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "Размер",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "Попробуйте записать еще раз.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "Включите снова в Настройки → Hermes Assist",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "Выключить",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "По нажатию",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Где Assist читает ветку и где круг остаётся скрытым.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "Где работает",

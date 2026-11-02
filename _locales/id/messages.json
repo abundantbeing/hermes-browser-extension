@@ -3951,6 +3951,10 @@
     "message": "Tambahkan instruksi setelah perintah garis miring sebelum mengirim.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ Tambahkan situs ini",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "Menyesuaikan",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "Beberapa browser memblokir pengambilan mikrofon di dalam sidebar ekstensi. Tab ekstensi yang terlihat ini merekam dari asal yang sama dengan Hermes Browser Extension ketika Hermes STT tersedia, atau menggunakan penggantian ucapan browser ketika runtime yang terhubung tidak mengekspos transkripsi audio.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "Lingkaran tersembunyi",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "Kelas",
@@ -5931,6 +5939,10 @@
     "message": "Sembunyikan rel sesi",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "Sembunyikan lingkaran di situs ini",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "Tinggi",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "Tidak ada sesi yang ditemukan",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "Belum ada situs. Ubah salah satu dari panel Assist di sebuah halaman, atau tambahkan situs yang sedang dibuka.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "Tidak ada ucapan yang terekam",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "Buka tab halaman normal terlebih dahulu.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "Buka halaman web dulu, lalu tambahkan di sini.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "Buka tampilan penuh",
@@ -7543,6 +7563,10 @@
     "message": "Lokasi",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "Situs",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "Ukuran",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "Coba rekam lagi.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "Aktifkan lagi di Setelan → Hermes Assist",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "Mematikan",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "Saat diklik",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Tempat Assist membaca utas, dan tempat lingkaran tetap tersembunyi.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "Tempat berjalan",

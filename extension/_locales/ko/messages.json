@@ -3951,6 +3951,10 @@
     "message": "보내기 전에 슬래시 명령어 뒤에 지시사항을 추가하세요.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ 이 사이트 추가",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "조정",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "일부 브라우저는 확장 사이드바 내부의 마이크 캡처를 차단합니다. 이 표시되는 확장 탭은 Hermes STT를 사용할 수 있을 때 동일한 Hermes Browser Extension 원본에서 기록하거나, 연결된 런타임이 오디오 전사를 노출하지 않을 때 브라우저 음성 대체를 사용합니다.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "원 숨김",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "클래스",
@@ -5931,6 +5939,10 @@
     "message": "세션 레일 숨기기",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "이 사이트에서 원 숨기기",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "높음",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "세션을 찾을 수 없습니다.",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "아직 사이트가 없습니다. 페이지의 Assist 패널에서 하나를 변경하거나, 열려 있는 사이트를 추가하세요.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "음성이 캡처되지 않았습니다.",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "먼저 일반 페이지 탭을 엽니다.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "먼저 웹 페이지를 연 다음 여기에 추가하세요.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "전체 보기 열기",
@@ -7543,6 +7563,10 @@
     "message": "대지",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "사이트",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "크기",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "다시 녹음해 보세요.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "설정 → Hermes Assist에서 다시 켜기",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "끄다",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "클릭하면",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Assist가 스레드를 읽는 곳, 그리고 원이 숨겨지는 곳.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "실행 위치",

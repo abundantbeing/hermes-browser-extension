@@ -3951,6 +3951,10 @@
     "message": "Tilføj instruktioner efter skråstreg-kommandoen før afsendelse.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ Tilføj dette websted",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "Tilpasse",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "Nogle browsere blokerer mikrofonoptagelse i udvidelsessidebjælker. Denne synlige udvidelsesfane optager fra den samme oprindelse som Hermes Browser Extension, når Hermes STT er tilgængelig, eller bruger browserens taletilbagegang, når den tilsluttede runtime ikke afslører lydtransskription.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "Cirkel skjult",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "klasse",
@@ -5931,6 +5939,10 @@
     "message": "Skjul sessionsskinne",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "Skjul cirklen på dette websted",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "Høj",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "Ingen sessioner fundet",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "Ingen websteder endnu. Ændr et fra Assist-panelet på en side, eller tilføj det websted, du har åbent.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "Ingen tale fanget",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "Åbn en normal sidefane først.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "Åbn først en webside, og tilføj den så her.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "Åbn fuld visning",
@@ -7543,6 +7563,10 @@
     "message": "websted",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "Websteder",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "Størrelse",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "Prøv at optage igen.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "Slå den til igen under Indstillinger → Hermes Assist",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "Sluk",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "Når du klikker",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Hvor Assist læser tråden, og hvor cirklen forbliver skjult.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "Hvor det kører",

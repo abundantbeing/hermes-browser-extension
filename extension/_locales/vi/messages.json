@@ -3951,6 +3951,10 @@
     "message": "Thêm hướng dẫn sau lệnh gạch chéo trước khi gửi.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ Thêm trang web này",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "điều chỉnh",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "Một số trình duyệt chặn tính năng thu micrô bên trong thanh bên của tiện ích mở rộng. Tab tiện ích mở rộng hiển thị này ghi lại từ cùng một nguồn gốc với Hermes Browser Extension khi Hermes STT khả dụng hoặc sử dụng tính năng dự phòng giọng nói của trình duyệt khi thời gian chạy được kết nối không hiển thị bản ghi âm thanh.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "Vòng tròn đã ẩn",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "lớp học",
@@ -5931,6 +5939,10 @@
     "message": "Ẩn đường ray phiên",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "Ẩn vòng tròn trên trang web này",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "Cao",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "Không tìm thấy phiên nào",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "Chưa có trang web nào. Đổi một trang web từ bảng Assist khi đang ở trang đó, hoặc thêm trang web bạn đang mở.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "Không có lời nói nào được ghi lại",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "Trước tiên hãy mở tab trang bình thường.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "Hãy mở một trang web trước, rồi thêm vào đây.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "Mở chế độ xem đầy đủ",
@@ -7543,6 +7563,10 @@
     "message": "Trang web",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "Trang web",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "Kích thước",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "Hãy thử ghi lại.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "Bật lại trong Cài đặt → Hermes Assist",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "Tắt",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "Khi bạn nhấp",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Nơi Assist đọc chuỗi, và nơi vòng tròn luôn bị ẩn.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "Chạy ở đâu",

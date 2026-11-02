@@ -3951,6 +3951,10 @@
     "message": "送信する前に、スラッシュコマンドの後ろに指示を追加してください。",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ このサイトを追加",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "調整",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "一部のブラウザでは、拡張機能サイドバー内のマイク キャプチャがブロックされます。この表示される拡張機能タブは、Hermes STT が使用可能な場合は同じ Hermes Browser Extension オリジンから記録し、接続されたランタイムが音声転写を公開しない場合はブラウザ音声フォールバックを使用します。",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "円は非表示",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "クラス",
@@ -5931,6 +5939,10 @@
     "message": "セッションレールを隠す",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "このサイトでは円を非表示にする",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "高",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "セッションが見つかりませんでした",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "サイトはまだありません。ページ上の Assist パネルから変更するか、開いているサイトを追加してください。",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "音声はキャプチャされませんでした",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "まず通常のページタブを開きます。",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "先にウェブページを開いてから、ここに追加してください。",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "フルビューを開く",
@@ -7543,6 +7563,10 @@
     "message": "サイト",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "サイト",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "サイズ",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "もう一度録音してみてください。",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "設定 → Hermes Assist でオンに戻す",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "消す",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "クリックしたとき",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Assist がスレッドを読む場所と、円を隠したままにする場所。",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "実行する場所",

@@ -3951,6 +3951,10 @@
     "message": "Fügen Sie vor dem Senden Anweisungen nach dem Schrägstrich-Befehl hinzu.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ Diese Website hinzufügen",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "Anpassen",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "Einige Browser blockieren die Mikrofonaufnahme in den Seitenleisten der Erweiterung. Diese sichtbare Erweiterungsregisterkarte zeichnet vom selben Ursprung der Hermes Browser Extension aus auf, wenn Hermes STT verfügbar ist, oder verwendet Browser-Sprach-Fallback, wenn die verbundene Laufzeit keine Audiotranskription verfügbar macht.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "Kreis ausgeblendet",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "Klasse",
@@ -5931,6 +5939,10 @@
     "message": "Sitzungsschiene ausblenden",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "Kreis auf dieser Website ausblenden",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "Hoch",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "Keine Sitzungen gefunden",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "Noch keine Websites. Ändere eine im Assist-Panel auf einer Seite oder füge die geöffnete Website hinzu.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "Keine Rede erfasst",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "Öffnen Sie zunächst einen normalen Seitentab.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "Öffne zuerst eine Webseite und füge sie dann hier hinzu.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "Vollansicht öffnen",
@@ -7543,6 +7563,10 @@
     "message": "Website",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "Websites",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "Größe",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "Versuchen Sie es erneut mit der Aufnahme.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "In Einstellungen → Hermes Assist wieder einschalten",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "Ausschalten",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "Beim Klick darauf",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Wo Assist den Verlauf liest und wo der Kreis ausgeblendet bleibt.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "Wo es läuft",

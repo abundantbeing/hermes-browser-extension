@@ -3951,6 +3951,10 @@
     "message": "傳送前在斜槓指令後新增指令。",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ 新增此網站",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "調整",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "某些瀏覽器會阻止擴充側邊欄中的麥克風捕獲。當 Hermes STT 可用時，此可見擴充選項卡記錄來自相同 Hermes Browser Extension 來源，或當連線的運作時不公開音訊轉錄時使用瀏覽器語音回退。",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "圓圈已隱藏",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "類",
@@ -5931,6 +5939,10 @@
     "message": "隱藏工作階段欄",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "在此網站隱藏圓圈",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "高",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "未找到工作階段",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "尚無網站。可在頁面上的 Assist 面板中變更，或新增你目前開啟的網站。",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "未擷取到語音",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "請先開啟普通頁面分頁。",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "請先開啟一個網頁，再於此新增。",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "開啟完整檢視",
@@ -7543,6 +7563,10 @@
     "message": "站點",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "網站",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "大小",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "請重試錄音。",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "在 設定 → Hermes Assist 中重新開啟",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "關閉",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "點擊時",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Assist 讀取對話的網站，以及圓圈保持隱藏的網站。",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "執行位置",

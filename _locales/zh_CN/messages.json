@@ -3951,6 +3951,10 @@
     "message": "发送前在斜杠命令后添加指令。",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
   },
+  "runtime_ui_add_this_site": {
+    "message": "+ 添加此网站",
+    "description": "Runtime interface message ui.add.this.site"
+  },
   "runtime_ui_adjust": {
     "message": "调整",
     "description": "Runtime interface message ui.adjust"
@@ -4490,6 +4494,10 @@
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
     "message": "某些浏览器会阻止扩展侧边栏中的麦克风捕获。当 Hermes STT 可用时，此可见扩展选项卡记录来自同一 Hermes Browser Extension 源，或者当连接的运行时不公开音频转录时使用浏览器语音回退。",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_circle_hidden": {
+    "message": "圆圈已隐藏",
+    "description": "Runtime interface message ui.circle.hidden"
   },
   "runtime_ui_class": {
     "message": "类",
@@ -5931,6 +5939,10 @@
     "message": "隐藏会话栏",
     "description": "Runtime interface message ui.hide.sessions.rail"
   },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "在此网站隐藏圆圈",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
   "runtime_ui_high": {
     "message": "高",
     "description": "Runtime interface message ui.high"
@@ -6439,6 +6451,10 @@
     "message": "未找到会话",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "还没有网站。可在页面上的 Assist 面板中更改，或添加你当前打开的网站。",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "未捕获到语音",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6546,6 +6562,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "请先打开普通页面标签页。",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "请先打开一个网页，再在此添加。",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "打开完整视图",
@@ -7543,6 +7563,10 @@
     "message": "站点",
     "description": "Runtime interface message ui.site"
   },
+  "runtime_ui_sites": {
+    "message": "网站",
+    "description": "Runtime interface message ui.sites"
+  },
   "runtime_ui_size": {
     "message": "大小",
     "description": "Runtime interface message ui.size"
@@ -7991,6 +8015,10 @@
     "message": "请重试录音。",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "在 设置 → Hermes Assist 中重新开启",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "关闭",
     "description": "Runtime interface message ui.turn.off"
@@ -8258,6 +8286,10 @@
   "runtime_ui_when_you_click_it": {
     "message": "点击时",
     "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Assist 在哪些网站读取对话，以及在哪些网站隐藏圆圈。",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
   },
   "runtime_ui_where_it_runs": {
     "message": "运行位置",
