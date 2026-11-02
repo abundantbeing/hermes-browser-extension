@@ -3,7 +3,24 @@ import test from 'node:test';
 
 import { readFile } from 'node:fs/promises';
 
-import { SIDE_PANEL_REFUSED_REASON, assistSessionTitle, handOffInlineDraftToSidePanel } from '../extension/lib/inline-assist-handoff.mjs';
+import { SIDE_PANEL_REFUSED_REASON, assistSessionTitle, handOffInlineDraftToSidePanel, openSidePanelInClick } from '../extension/lib/inline-assist-handoff.mjs';
+
+test('a side panel the browser opened counts as open even without its opened event (Comet)', async () => {
+  const calls = [];
+  const sidePanel = {
+    open: (options) => { calls.push(options); return Promise.resolve(); },
+    onOpened: { addListener() {}, removeListener() {} },
+  };
+  const opening = openSidePanelInClick(sidePanel, { tabId: 7 });
+  assert.deepEqual(calls, [{ tabId: 7 }], 'open is called inside the click, before any await');
+  assert.equal(await opening, true);
+});
+
+test('a side panel the browser refused, or cannot open, is not open', async () => {
+  assert.equal(await openSidePanelInClick({ open: () => Promise.reject(new Error('needs a user gesture')) }, { tabId: 7 }), false);
+  assert.equal(await openSidePanelInClick({ open: () => { throw new Error('bad options'); } }, { tabId: 7 }), false);
+  assert.equal(await openSidePanelInClick(undefined, { tabId: 7 }), false);
+});
 
 test('an Assist chat is named for Assist, its site as people write it, and a readable time', () => {
   const at = new Date(2026, 10, 2, 4, 13, 21);

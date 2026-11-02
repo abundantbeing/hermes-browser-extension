@@ -22,6 +22,17 @@ export function assistSessionTitle(request = {}, { date = new Date(), suffix = '
   return [`Hermes Assist · ${site || 'Browser'} · ${stamp}`, suffix].filter(Boolean).join(' · ');
 }
 
+// The browser's own side panel, opened inside the click. A resolved open is the answer: Comet shows the panel
+// without sending sidePanel.onOpened, and waiting for that event is what used to put a full tab beside it.
+export function openSidePanelInClick(sidePanelApi, openOptions) {
+  try {
+    if (typeof sidePanelApi?.open !== 'function') return Promise.resolve(false);
+    return Promise.resolve(sidePanelApi.open(openOptions)).then(() => true, () => false);
+  } catch {
+    return Promise.resolve(false);
+  }
+}
+
 export const SIDE_PANEL_REFUSED_REASON = 'The Hermes side panel did not open. Open it, then choose your Assist action again. Or pick Run in background.';
 
 export function handOffInlineDraftToSidePanel({ queued, storageKey, sessionStorage, openSidePanel, sidePanelIsOpen }) {

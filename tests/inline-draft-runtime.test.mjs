@@ -245,7 +245,10 @@ test('Assist opens only a real side panel, never a full tab or a popup window', 
   const background = await read('extension/background.js');
   const opener = background.match(/\nfunction openAssistSidePanelFromGesture\([\s\S]*?\n\}/)?.[0] || '';
   assert.ok(opener, 'the Assist opener');
-  assert.match(opener, /openSidePanelWithConfirmation\(/);
+  // A resolved open is the answer: waiting for sidePanel.onOpened, which Comet does not send, is what put a
+  // full tab beside the panel.
+  assert.match(opener, /openSidePanelInClick\(browserApi\.sidePanel, /);
+  assert.doesNotMatch(opener, /openSidePanelWithConfirmation/);
   assert.doesNotMatch(opener, /\bawait\b/);
   assert.doesNotMatch(opener, /openHermesPanelFallback|openOrFocusPanelTab|windows\.create|tabs\.create/);
 });

@@ -34,7 +34,7 @@ import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
 import { HERMES_WEB_LAUNCH_LOOK_MESSAGE, HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
 import { INLINE_ASSIST_FONT_REQUEST, createInlineAssistFontServer } from './lib/inline-assist-font-server.mjs';
 import { createInlineAssistModelServer } from './lib/inline-assist-models.mjs';
-import { assistSessionTitle, handOffInlineDraftToSidePanel } from './lib/inline-assist-handoff.mjs';
+import { assistSessionTitle, handOffInlineDraftToSidePanel, openSidePanelInClick } from './lib/inline-assist-handoff.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -505,21 +505,9 @@ function openAssistSidePanelFromGesture(tab) {
   if (browserId === 'opera' || browserId === 'firefox') {
     return Promise.resolve(openNativeSidebar({ windowId: tab?.windowId ?? null })).then(Boolean, () => false);
   }
-  if (!browserApi.sidePanel?.open) return Promise.resolve(false);
-  const panelResidencyMode = cachedPanelResidencyMode;
   const tabId = Number(tab?.id);
-  const useTabAttached = panelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED && Number.isFinite(tabId) && tabId > 0;
-  const panelUrl = browserApi.runtime.getURL(buildSidePanelPath({
-    mode: panelResidencyMode,
-    tabId: useTabAttached ? tabId : null,
-    defaultPath: defaultSidePanelPath(),
-  }));
-  return openSidePanelWithConfirmation({
-    sidePanelApi: browserApi.sidePanel,
-    runtimeApi: browserApi.runtime,
-    openOptions: useTabAttached ? { tabId } : { windowId: Number(tab?.windowId) },
-    panelUrl,
-  });
+  const useTabAttached = cachedPanelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED && Number.isFinite(tabId) && tabId > 0;
+  return openSidePanelInClick(browserApi.sidePanel, useTabAttached ? { tabId } : { windowId: Number(tab?.windowId) });
 }
 
 // Whether a Hermes side panel is open in any window (Chrome 116+; elsewhere it reads as closed).
