@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "ซ่อนวงกลมแล้ว",
   "ui.hide.the.circle.on.this.site": "ซ่อนวงกลมบนไซต์นี้",
   "ui.turn.it.back.on.in.settings.hermes.assist": "เปิดกลับได้ที่ การตั้งค่า → Hermes Assist",
+  "ui.asked.once.then.remembered": "ถามครั้งเดียว แล้วจำไว้",
+  "ui.used.only.by.assist": "ใช้โดย Assist เท่านั้น",
   "ui.where.it.runs": "ทำงานที่ไหน",
   "ui.auto.replace": "แทนที่อัตโนมัติ",
   "ui.change.it.in.settings.hermes.assist": "เปลี่ยนได้ที่ การตั้งค่า → Hermes Assist",

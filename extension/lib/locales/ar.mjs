@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "الدائرة مخفية",
   "ui.hide.the.circle.on.this.site": "إخفاء الدائرة في هذا الموقع",
   "ui.turn.it.back.on.in.settings.hermes.assist": "أعد تشغيلها من الإعدادات ← Hermes Assist",
+  "ui.asked.once.then.remembered": "يُسأل مرة واحدة ثم يُحفظ",
+  "ui.used.only.by.assist": "يستخدمه Assist فقط",
   "ui.where.it.runs": "أين يعمل",
   "ui.auto.replace": "استبدال تلقائي",
   "ui.change.it.in.settings.hermes.assist": "غيّره من الإعدادات ← Hermes Assist",

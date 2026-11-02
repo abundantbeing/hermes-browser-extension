@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "원 숨김",
   "ui.hide.the.circle.on.this.site": "이 사이트에서 원 숨기기",
   "ui.turn.it.back.on.in.settings.hermes.assist": "설정 → Hermes Assist에서 다시 켜기",
+  "ui.asked.once.then.remembered": "한 번 묻고 그다음부터 기억합니다",
+  "ui.used.only.by.assist": "Assist에서만 사용합니다",
   "ui.where.it.runs": "실행 위치",
   "ui.auto.replace": "자동 바꾸기",
   "ui.change.it.in.settings.hermes.assist": "설정 → Hermes Assist에서 변경",

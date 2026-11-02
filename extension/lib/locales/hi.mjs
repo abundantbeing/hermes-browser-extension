@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "सर्कल छिपा है",
   "ui.hide.the.circle.on.this.site": "इस साइट पर सर्कल छिपाएँ",
   "ui.turn.it.back.on.in.settings.hermes.assist": "सेटिंग्स → Hermes Assist में इसे फिर से चालू करें",
+  "ui.asked.once.then.remembered": "एक बार पूछा जाता है, फिर याद रखा जाता है",
+  "ui.used.only.by.assist": "केवल Assist इसका उपयोग करता है",
   "ui.where.it.runs": "यह कहाँ चलता है",
   "ui.auto.replace": "अपने-आप बदलें",
   "ui.change.it.in.settings.hermes.assist": "सेटिंग्स → Hermes Assist में बदलें",

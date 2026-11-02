@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "Daire gizli",
   "ui.hide.the.circle.on.this.site": "Bu sitede daireyi gizle",
   "ui.turn.it.back.on.in.settings.hermes.assist": "Ayarlar → Hermes Assist bölümünden yeniden aç",
+  "ui.asked.once.then.remembered": "Bir kez sorulur, sonra hatırlanır",
+  "ui.used.only.by.assist": "Yalnızca Assist kullanır",
   "ui.where.it.runs": "Nerede çalışır",
   "ui.auto.replace": "Otomatik değiştir",
   "ui.change.it.in.settings.hermes.assist": "Ayarlar → Hermes Assist bölümünden değiştirin",

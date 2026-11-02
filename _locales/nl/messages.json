@@ -4159,6 +4159,10 @@
     "message": "Vraag het Hermes…",
     "description": "Runtime interface message ui.ask.hermes.ellipsis"
   },
+  "runtime_ui_asked_once_then_remembered": {
+    "message": "Eén keer gevraagd, daarna onthouden",
+    "description": "Runtime interface message ui.asked.once.then.remembered"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist kon niet worden uitgevoerd",
     "description": "Runtime interface message ui.assist.could.not.run"
@@ -8110,6 +8114,10 @@
   "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
     "message": "Gebruik dit bij het indienen van GitHub-problemen of ondersteuningsrapporten.",
     "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_used_only_by_assist": {
+    "message": "Alleen gebruikt door Assist",
+    "description": "Runtime interface message ui.used.only.by.assist"
   },
   "runtime_ui_user": {
     "message": "Gebruiker",

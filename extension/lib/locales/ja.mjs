@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "円は非表示",
   "ui.hide.the.circle.on.this.site": "このサイトでは円を非表示にする",
   "ui.turn.it.back.on.in.settings.hermes.assist": "設定 → Hermes Assist でオンに戻す",
+  "ui.asked.once.then.remembered": "一度だけ確認し、以後は記憶します",
+  "ui.used.only.by.assist": "Assist だけが使用します",
   "ui.where.it.runs": "実行する場所",
   "ui.auto.replace": "自動で置き換え",
   "ui.change.it.in.settings.hermes.assist": "設定 → Hermes Assist で変更",

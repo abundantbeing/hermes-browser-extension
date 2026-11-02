@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "Lingkaran tersembunyi",
   "ui.hide.the.circle.on.this.site": "Sembunyikan lingkaran di situs ini",
   "ui.turn.it.back.on.in.settings.hermes.assist": "Aktifkan lagi di Setelan → Hermes Assist",
+  "ui.asked.once.then.remembered": "Ditanya sekali, lalu diingat",
+  "ui.used.only.by.assist": "Hanya dipakai oleh Assist",
   "ui.where.it.runs": "Tempat berjalan",
   "ui.auto.replace": "Ganti otomatis",
   "ui.change.it.in.settings.hermes.assist": "Ubah di Setelan → Hermes Assist",

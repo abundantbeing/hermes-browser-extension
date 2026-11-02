@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "Cirkel skjult",
   "ui.hide.the.circle.on.this.site": "Skjul cirklen på dette websted",
   "ui.turn.it.back.on.in.settings.hermes.assist": "Slå den til igen under Indstillinger → Hermes Assist",
+  "ui.asked.once.then.remembered": "Spørges én gang, huskes derefter",
+  "ui.used.only.by.assist": "Bruges kun af Assist",
   "ui.where.it.runs": "Hvor det kører",
   "ui.auto.replace": "Erstat automatisk",
   "ui.change.it.in.settings.hermes.assist": "Skift det under Indstillinger → Hermes Assist",

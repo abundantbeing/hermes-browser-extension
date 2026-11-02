@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "Círculo oculto",
   "ui.hide.the.circle.on.this.site": "Ocultar o círculo neste site",
   "ui.turn.it.back.on.in.settings.hermes.assist": "Ative de novo em Configurações → Hermes Assist",
+  "ui.asked.once.then.remembered": "Perguntado uma vez e depois lembrado",
+  "ui.used.only.by.assist": "Usado apenas pelo Assist",
   "ui.where.it.runs": "Onde é executado",
   "ui.auto.replace": "Substituição automática",
   "ui.change.it.in.settings.hermes.assist": "Altere em Configurações → Hermes Assist",

@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "Коло приховано",
   "ui.hide.the.circle.on.this.site": "Приховати коло на цьому сайті",
   "ui.turn.it.back.on.in.settings.hermes.assist": "Увімкніть знову в Налаштування → Hermes Assist",
+  "ui.asked.once.then.remembered": "Запитується один раз, потім запам’ятовується",
+  "ui.used.only.by.assist": "Використовується лише Assist",
   "ui.where.it.runs": "Де працює",
   "ui.auto.replace": "Автозаміна",
   "ui.change.it.in.settings.hermes.assist": "Змініть у Налаштування → Hermes Assist",

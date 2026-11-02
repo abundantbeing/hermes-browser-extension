@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "圓圈已隱藏",
   "ui.hide.the.circle.on.this.site": "在此網站隱藏圓圈",
   "ui.turn.it.back.on.in.settings.hermes.assist": "在 設定 → Hermes Assist 中重新開啟",
+  "ui.asked.once.then.remembered": "只詢問一次，之後記住",
+  "ui.used.only.by.assist": "僅供 Assist 使用",
   "ui.where.it.runs": "執行位置",
   "ui.auto.replace": "自動取代",
   "ui.change.it.in.settings.hermes.assist": "在 設定 → Hermes Assist 中變更",

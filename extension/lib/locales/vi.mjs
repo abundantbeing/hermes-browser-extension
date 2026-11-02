@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "Vòng tròn đã ẩn",
   "ui.hide.the.circle.on.this.site": "Ẩn vòng tròn trên trang web này",
   "ui.turn.it.back.on.in.settings.hermes.assist": "Bật lại trong Cài đặt → Hermes Assist",
+  "ui.asked.once.then.remembered": "Hỏi một lần, sau đó ghi nhớ",
+  "ui.used.only.by.assist": "Chỉ Assist sử dụng",
   "ui.where.it.runs": "Chạy ở đâu",
   "ui.auto.replace": "Tự động thay thế",
   "ui.change.it.in.settings.hermes.assist": "Đổi trong Cài đặt → Hermes Assist",

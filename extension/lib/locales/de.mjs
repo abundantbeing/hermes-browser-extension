@@ -945,6 +945,8 @@ export default Object.freeze({
   "ui.circle.hidden": "Kreis ausgeblendet",
   "ui.hide.the.circle.on.this.site": "Kreis auf dieser Website ausblenden",
   "ui.turn.it.back.on.in.settings.hermes.assist": "In Einstellungen → Hermes Assist wieder einschalten",
+  "ui.asked.once.then.remembered": "Einmal gefragt, dann gemerkt",
+  "ui.used.only.by.assist": "Nur von Assist verwendet",
   "ui.where.it.runs": "Wo es läuft",
   "ui.auto.replace": "Automatisch ersetzen",
   "ui.change.it.in.settings.hermes.assist": "In Einstellungen → Hermes Assist ändern",
