@@ -163,6 +163,7 @@
     .more-actions { justify-self:start; padding:4px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font-size:calc(10.5px * var(--hermes-text-zoom, 1)); text-decoration:underline; }
     .action[hidden] { display:none; }
     .custom { display:block; width:100%; height:34px; min-height:34px; max-height:96px; resize:none; overflow-y:auto; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); padding:8px 9px; font:calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hb-font-ui); }
+    .custom:focus-visible { outline:2px solid var(--hb-blue); outline-offset:-2px; }
     .custom-row { display:grid; grid-template-columns:1fr auto; gap:7px; align-items:start; }
     .custom-go { min-width:76px; min-height:34px; height:34px; padding:0 12px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-blue); color:var(--hb-paper); cursor:pointer; font-size:calc(11px * var(--hermes-text-zoom, 1)); font-weight:700; }
     .sheet-nav { display:flex; align-items:center; justify-content:space-between; gap:8px; }
@@ -1514,7 +1515,8 @@
     custom.placeholder = translateUiText('Say what to change…');
     custom.addEventListener('input', trustedOnly(() => {
       custom.style.height = 'auto';
-      custom.style.height = `${Math.min(96, custom.scrollHeight)}px`;
+      const borders = custom.offsetHeight - custom.clientHeight;
+      custom.style.height = `${Math.min(96, custom.scrollHeight + borders)}px`;
     }));
     custom.setAttribute('aria-label', translateUiText('Custom Hermes Assist instruction'));
     const customGo = button('custom-go', 'Ask Hermes');
