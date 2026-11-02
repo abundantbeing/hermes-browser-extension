@@ -182,3 +182,27 @@ test('Where it runs, Model, Replace text automatically and Keep Assist chats are
   assert.match(css, /\n\.inline-assist-site \{[^}]*border-radius: 999px;/, 'sites are pills');
   assert.ok(section.querySelector('.inline-assist-sites-chips #inlineAssistAddSite'), 'Add this site is the last pill');
 });
+
+test('a Quick or Full choice and a Keep Assist chats change saved elsewhere show here and hold through an unrelated Save', async () => {
+  const h = await createSettingsSaveHarness({ settings: { inlineAssistOpenMode: 'panel', inlineAssistSessionRetention: 'keep' } });
+  h.scope.settingsBaseline = null;
+  for (const input of h.els.inlineAssistOpenModeInputs) input.checked = input.value === 'panel';
+  h.els.inlineAssistSessionRetention.value = 'keep';
+  h.fn('captureSettingsBaseline')();
+  h.fn('adoptInlineAssistOpenModeChange')('quick');
+  h.fn('adoptInlineAssistSessionRetentionChange')('delete');
+  assert.equal(h.els.inlineAssistOpenModeInputs.find((input) => input.checked)?.value, 'quick');
+  assert.equal(h.els.inlineAssistSessionRetention.value, 'delete');
+  assert.equal(changedPanes(h.scope.settingsBaseline, h.fn('settingsControlEntries')()).size, 0, 'not unsaved edits');
+  await h.save();
+  assert.equal(h.store.hermesBrowserSettings.inlineAssistOpenMode, 'quick');
+  assert.equal(h.store.hermesBrowserSettings.inlineAssistSessionRetention, 'delete');
+});
+
+test('an open-mode pick made here and not saved yet is not overwritten by another panel', async () => {
+  const h = await createSettingsSaveHarness({ settings: { inlineAssistOpenMode: 'panel' } });
+  h.scope.settingsBaseline = null;
+  for (const input of h.els.inlineAssistOpenModeInputs) input.checked = input.value === 'quick';
+  h.fn('adoptInlineAssistOpenModeChange')('panel');
+  assert.equal(h.els.inlineAssistOpenModeInputs.find((input) => input.checked)?.value, 'quick');
+});

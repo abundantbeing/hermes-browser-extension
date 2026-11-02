@@ -36,6 +36,8 @@ function storageListener(initialSettings) {
     INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY: 'hermesInlineAssistAutoReplace',
     adoptInlineAssistAutoReplaceChange() {},
     adoptInlineAssistIconChange() {},
+    adoptInlineAssistOpenModeChange() {},
+    adoptInlineAssistSessionRetentionChange() {},
     INLINE_SITE_CONTEXT_STORAGE_KEY: 'hermesInlineSiteContextPreferences',
     adoptInlineAssistSitesChange() {},
     INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY: 'hermesInlineAssistHiddenSites',

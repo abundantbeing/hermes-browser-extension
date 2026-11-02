@@ -2943,6 +2943,30 @@ function adoptInlineAssistIconChange(value) {
   }
 }
 
+// The same for what clicking the circle opens (Quick menu or Full panel).
+function adoptInlineAssistOpenModeChange(value) {
+  const saved = normalizeInlineAssistOpenMode(settings.inlineAssistOpenMode);
+  const next = normalizeInlineAssistOpenMode(value);
+  settings = { ...settings, inlineAssistOpenMode: next };
+  const inputs = els.inlineAssistOpenModeInputs || [];
+  if (!inputs.length || inputs.find((input) => input.checked)?.value !== saved) return;
+  for (const input of inputs) {
+    input.checked = input.value === next;
+    adoptSettingsBaselineValue(input);
+  }
+}
+
+// And for Keep Assist chats, which the quick menu's options also change on the page.
+function adoptInlineAssistSessionRetentionChange(value) {
+  const saved = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
+  const next = value === 'delete' ? 'delete' : 'keep';
+  settings = { ...settings, inlineAssistSessionRetention: next };
+  const select = els.inlineAssistSessionRetention;
+  if (!select || select.value !== saved) return;
+  select.value = next;
+  adoptSettingsBaselineValue(select);
+}
+
 // Assist's switch on a page writes "Replace text automatically" under its own key. The panel takes a new value
 // in, and its checkbox shows it unless the box holds an unsaved edit, so an unrelated Save does not write an
 // older copy back.
@@ -30000,6 +30024,8 @@ function bindEvents() {
         }
         adoptStoredResponsePresentation(next);
         if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
+        if (Object.hasOwn(next, 'inlineAssistOpenMode')) adoptInlineAssistOpenModeChange(next.inlineAssistOpenMode);
+        if (Object.hasOwn(next, 'inlineAssistSessionRetention')) adoptInlineAssistSessionRetentionChange(next.inlineAssistSessionRetention);
       }
     }
     if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);
