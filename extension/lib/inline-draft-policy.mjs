@@ -14,7 +14,7 @@ export const INLINE_DRAFT_ROUTE_PREFERENCES = Object.freeze({
 });
 
 const MAX_DRAFT_CHARS = 8_000;
-const MAX_PAGE_CONTEXT_CHARS = 6_000;
+const MAX_PAGE_CONTEXT_CHARS = 12_000;
 const MAX_RESULT_CHARS = 12_000;
 const ID_RE = /^[A-Za-z0-9_.:-]{8,160}$/;
 const SENSITIVE_LABEL_RE = /(?:password|passwd|passcode|one.?time|otp|verification.?code|security.?code|two.?factor|2fa|credit.?card|card.?number|cvv|cvc|expiry|payment|billing|api.?(?:key|token)|access.?token|auth.?token|session.?token|secret|private.?key|seed.?phrase|recovery.?phrase|wallet)/i;
@@ -28,6 +28,15 @@ const PROVIDER_KEY_TEXT_RE = /(?:\b(?:(?:gsk_|xai-|r8_|pplx-|fw_|fpk_|tvly-(?:de
 
 function containsSecretText(value = '') {
   return SECRET_TEXT_RE.test(value) || PROVIDER_KEY_TEXT_RE.test(value);
+}
+
+// A thread that quotes a key or a password still gives Hermes the rest of the thread; the field's own text
+// is never cleaned this way, so a secret typed there still blocks the draft.
+export function withoutSecretText(value = '') {
+  return [SECRET_TEXT_RE, PROVIDER_KEY_TEXT_RE].reduce(
+    (text, pattern) => text.replace(new RegExp(pattern.source, `${pattern.flags.replace('g', '')}g`), '[secret removed]'),
+    String(value || ''),
+  );
 }
 
 function compact(value = '', max = 500) {
@@ -636,6 +645,7 @@ export const INLINE_DRAFT_API = Object.freeze({
   buildInlineDraftRequest,
   normalizeInlineDraftRequest,
   buildInlineDraftPrompt,
+  withoutSecretText,
   sanitizeInlineDraftResult,
   inlineDraftPrimaryActionLabel,
   inlineLauncherPosition,

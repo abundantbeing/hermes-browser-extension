@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 2a0a607d2ab78bff */
+/* extension/lib/site-adapters.mjs · SHA-256 c67a1f6539279961 */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1134,7 +1134,8 @@ function isVisibleElement(node) {
   const view = node.ownerDocument?.defaultView;
   if (typeof view?.getComputedStyle === 'function'
     && typeof node.getClientRects === 'function'
-    && node.getClientRects().length === 0) return false;
+    && node.getClientRects().length === 0
+    && view.getComputedStyle(node)?.display !== 'contents') return false;
   return true;
 }
 
@@ -1913,7 +1914,7 @@ function contextRootFor(target, adapterId, surface = '') {
   if (PRIVATE_INLINE_SITES.has(adapterId)) {
     return target.closest?.('main, [role="main"]') || target.closest?.('[role="dialog"]') || target.parentElement;
   }
-  return target.closest?.('article, [data-message-id], ytd-comment-thread-renderer, main, [role="main"]') || target.parentElement;
+  return target.closest?.('article, [role="article"], [data-urn*="urn:li:activity"], [data-id*="urn:li:activity"], .feed-shared-update-v2, shreddit-comment, [data-message-id], ytd-comment-thread-renderer, main, [role="main"]') || target.parentElement;
 }
 
 // Where Assist reads the visible thread, per site adapter: written by the Assist panel on a page and by
@@ -2004,10 +2005,457 @@ function visibleContextText(root, target, max = 6_000) {
   return bounded(parts.join(' '), max);
 }
 
-function captureInlineSiteContext(document, target, profile = null) {
+// --- What Assist reads: the thread the field belongs to ------------------------------------------
+//
+// Hermes gets what the page is, what is being written, and the thread's messages, each with who wrote it
+// and when. A long thread keeps the opening post, the message being answered and the newest messages, and
+// says how many were left out. Sites without a reader send the text nearest the field.
+const ASSIST_CONTEXT_CHARS = 12_000;
+const ASSIST_ENTRY_CHARS = 2_500;
+const ASSIST_OPENING_CHARS = 3_500;
+const ASSIST_BLOCK_TAGS = new Set(['address', 'article', 'aside', 'blockquote', 'br', 'dd', 'details', 'div', 'dl', 'dt',
+  'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'ol', 'p',
+  'pre', 'section', 'summary', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'ul']);
+const ASSIST_SKIP_TAGS = new Set(['script', 'style', 'noscript', 'template', 'input', 'textarea', 'select', 'button', 'nav', 'svg', 'iframe']);
+const ASSIST_SKIP_ROLES = new Set(['navigation', 'toolbar', 'menu', 'menubar', 'tablist', 'banner', 'button', 'tooltip']);
+const COUNT_LINE = /^[\d.,]+\s*[KMB]?$/i;
+
+function readableText(node, max = ASSIST_ENTRY_CHARS, skip = null) {
+  if (!node) return '';
+  const parts = [];
+  const visit = (current, preformatted) => {
+    if (current.nodeType === 3) {
+      const value = String(current.nodeValue || '').replace(/\u00a0/g, ' ');
+      parts.push(preformatted ? value : value.replace(/\s+/g, ' '));
+      return;
+    }
+    if (current.nodeType !== 1) return;
+    const tag = String(current.tagName || '').toLowerCase();
+    if (ASSIST_SKIP_TAGS.has(tag) || skip?.(current)) return;
+    const block = ASSIST_BLOCK_TAGS.has(tag);
+    if (block) parts.push('\n');
+    for (const child of Array.from(current.childNodes || [])) visit(child, preformatted || tag === 'pre');
+    if (block) parts.push('\n');
+  };
+  visit(node, false);
+  const text = parts.join('').split('\n').map((line) => line.replace(/[\t\f\v ]+/g, ' ').trim()).join('\n')
+    .replace(/\n{3,}/g, '\n\n').trim();
+  return text.length <= max ? text : `${text.slice(0, max - 2).trimEnd()} …`;
+}
+
+function contextTime(value = '') {
+  const raw = bounded(value, 60);
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? raw : `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+}
+
+// Whether a node comes before the field in the page, from one pass over the page's elements.
+function aboveField(document, target) {
+  const position = new Map();
+  Array.from(document?.querySelectorAll?.('*') || []).forEach((element, index) => position.set(element, index));
+  const fieldAt = position.get(target);
+  return (node) => {
+    const at = position.get(node);
+    if (at === undefined || fieldAt === undefined) {
+      return typeof node?.compareDocumentPosition !== 'function' || Boolean(node.compareDocumentPosition(target) & 4);
+    }
+    return at < fieldAt && !node.contains?.(target);
+  };
+}
+
+// The first selector, in the order given, with a match that has text: a selector list would return the
+// first match in page order, which on real pages is often an empty twin (a miniplayer h1, an avatar link).
+function firstText(root, selectors, max = 300, read = (node) => textOf(node, max)) {
+  for (const selector of selectors) {
+    for (const node of Array.from(root?.querySelectorAll?.(selector) || [])) {
+      const text = read(node);
+      if (text) return text;
+    }
+  }
+  return '';
+}
+
+function fieldLabel(target) {
+  return bounded(target?.getAttribute?.('aria-label') || target?.getAttribute?.('placeholder') || '', 120);
+}
+
+function renderContextEntry(entry, replying) {
+  const who = [entry.author || 'Someone', entry.time].filter(Boolean).join(' · ');
+  const notes = [entry.note, replying ? 'you are replying to this' : ''].filter(Boolean).join('; ');
+  return `${who}${notes ? ` (${notes})` : ''}:\n${entry.text}`;
+}
+
+function composeAssistContext({ header = [], writing = '', notes = [], blocks = [], entries = [], replyingTo = -1 }, max = ASSIST_CONTEXT_CHARS) {
+  const head = [...header, writing && `You are writing ${writing}.`, ...notes, ...blocks].filter(Boolean).join('\n\n');
+  const rendered = entries.map((entry, index) => renderContextEntry(entry, index === replyingTo));
+  const budget = max - head.length - 2;
+  const kept = new Set();
+  let used = 0;
+  const keep = (index) => {
+    if (index < 0 || index >= rendered.length || kept.has(index)) return true;
+    const cost = rendered[index].length + 2;
+    if (used + cost > budget) return false;
+    kept.add(index);
+    used += cost;
+    return true;
+  };
+  keep(replyingTo);
+  keep(0);
+  for (let index = rendered.length - 1; index > 0; index -= 1) if (!keep(index)) break;
+  const body = [];
+  let skipped = 0;
+  rendered.forEach((text, index) => {
+    if (!kept.has(index)) { skipped += 1; return; }
+    if (skipped) body.push(`[${skipped} earlier message${skipped === 1 ? '' : 's'} left out to fit]`);
+    skipped = 0;
+    body.push(text);
+  });
+  if (skipped) body.push(`[${skipped} later message${skipped === 1 ? '' : 's'} left out to fit]`);
+  return [head, ...body].filter(Boolean).join('\n\n').slice(0, max);
+}
+
+const GITHUB_WRITING = {
+  'issue-comment': 'a comment on this issue',
+  'pull-request-comment': 'a comment on this pull request',
+  'discussion-comment': 'a reply in this discussion',
+  'pull-request-review': 'a review comment on the code above',
+  'pull-request-summary': 'the summary of a review of this pull request',
+};
+const GITHUB_BODY = '.js-comment-body, [data-testid="issue-body"] [data-testid="markdown-body"], [data-testid^="comment-viewer-outer-box-"] [data-testid="markdown-body"]';
+const GITHUB_COMMENT = '[data-testid^="comment-viewer-outer-box-"], [data-testid="issue-body"], .review-comment, .timeline-comment-group, .timeline-comment, .js-comment-container, .TimelineItem';
+
+function githubCommentEntry(body) {
+  const container = body.closest(GITHUB_COMMENT) || body.parentElement;
+  const author = firstText(container, ['[data-testid="issue-body-header-author"]', '.author', '[data-testid="comment-header"] [data-testid="avatar-link"]', '[data-testid="comment-header"] a[href^="/"]', 'a[data-hovercard-type="user"]'], 80)
+    .replace(/^(.+) \(\1\)$/, '$1');
+  const time = container?.querySelector?.('relative-time[datetime], time[datetime]')?.getAttribute?.('datetime') || '';
+  const opening = Boolean(container?.matches?.('[data-testid="issue-body"]'));
+  return { author, time: contextTime(time), text: readableText(body, opening ? ASSIST_OPENING_CHARS : ASSIST_ENTRY_CHARS), opening, body };
+}
+
+function githubDiffLines(target) {
+  const row = target.closest('tr');
+  const lines = [];
+  for (let current = row?.previousElementSibling; current && lines.length < 14; current = current.previousElementSibling) {
+    const cell = current.querySelector?.('.blob-code-inner');
+    if (!cell) continue;
+    const mark = cell.matches?.('.blob-code-addition') ? '+ ' : cell.matches?.('.blob-code-deletion') ? '- ' : '  ';
+    lines.unshift(`${mark}${String(cell.textContent || '').replace(/\s+$/, '')}`);
+  }
+  return lines;
+}
+
+function githubAssistContext(document, target, surface, url, above) {
+  const writing = GITHUB_WRITING[surface];
+  if (!writing) return null;
+  const route = url?.pathname?.match(/^\/([^/]+)\/([^/]+)\/(issues|pull|discussions)\/(\d+)/i);
+  const kind = { issues: 'issue', pull: 'pull request', discussions: 'discussion' }[route?.[3]?.toLowerCase()] || 'page';
+  const title = firstText(document, ['[data-testid="issue-title"]', 'bdi.js-issue-title', '.js-issue-title', 'h1'], 300).replace(/[\s·–-]*#\s*\d+\s*$/, '');
+  const state = firstText(document, ['[data-testid="header-state"]', '.gh-header-meta .State', '.State'], 40);
+  const header = [`GitHub ${kind}${route ? ` #${route[4]} in ${route[1]}/${route[2]}` : ''}${state ? ` (${state})` : ''}${title ? `: ${title}` : ''}`];
+  const thread = target.closest('.js-inline-comments-container, tr.inline-comments, .js-resolvable-timeline-thread-container');
+  const scope = surface === 'pull-request-review' ? (thread || null) : document;
+  const bodies = scope ? Array.from(scope.querySelectorAll(GITHUB_BODY)) : [];
+  const entries = bodies
+    .filter((body, index) => !body.closest('form') && !bodies.slice(0, index).some((other) => other.contains(body)) && above(body))
+    .map(githubCommentEntry)
+    .filter((entry) => entry.text);
+  if (entries[0] && (entries[0].opening || kind !== 'page') && surface !== 'pull-request-review') entries[0].note = 'opening post';
+  const notes = [];
+  const hidden = textOf(document.querySelector('[data-testid^="issue-timeline-load-more-count"], .js-timeline-progressive-focus-container .ajax-pagination-btn, .ajax-pagination-form button'), 200).match(/([\d,]+)\s+(?:remaining|hidden)/i);
+  if (hidden) notes.push(`GitHub is hiding ${hidden[1]} items in the middle of this thread; they are not included.`);
+  const blocks = [];
+  if (surface === 'pull-request-review') {
+    const file = target.closest('[data-tagsearch-path], [data-path]');
+    const filePath = file?.getAttribute?.('data-tagsearch-path') || file?.getAttribute?.('data-path') || '';
+    const lines = githubDiffLines(target);
+    if (lines.length) blocks.push(`${filePath ? `File ${filePath}, the` : 'The'} lines above the comment:\n${lines.join('\n')}`);
+  }
+  const replying = thread && entries.length ? entries.length - 1 : -1;
+  return { header, writing, notes, blocks, entries, replyingTo: replying };
+}
+
+function xAuthor(article) {
+  const name = article.querySelector('[data-testid="User-Name"]');
+  if (!name) return '';
+  const pieces = [];
+  const collect = (node) => {
+    if (node.nodeType === 3) {
+      const text = bounded(node.nodeValue || '', 80);
+      if (text) pieces.push(text);
+    } else if (node.nodeType === 1 && String(node.tagName).toLowerCase() !== 'time') {
+      for (const child of Array.from(node.childNodes || [])) collect(child);
+    }
+  };
+  collect(name);
+  const handle = pieces.find((piece) => /^@\w+/.test(piece)) || '';
+  const display = pieces.find((piece) => piece !== handle && piece !== '·') || '';
+  return [display, handle && `(${handle})`].filter(Boolean).join(' ');
+}
+
+function xPostEntry(article) {
+  const texts = Array.from(article.querySelectorAll('[data-testid="tweetText"]'));
+  const extras = [];
+  for (const image of Array.from(article.querySelectorAll('[data-testid="tweetPhoto"] img[alt]'))) {
+    const alt = bounded(image.getAttribute('alt'), 300);
+    if (alt && alt.toLowerCase() !== 'image') extras.push(`[Image: ${alt}]`);
+  }
+  const card = textOf(article.querySelector('[data-testid="card.wrapper"]'), 300);
+  if (card) extras.push(`[Link: ${card}]`);
+  let text = readableText(texts[0], ASSIST_ENTRY_CHARS);
+  if (texts[1]) extras.push(`[Quoting: ${readableText(texts[1], 1_000)}]`);
+  let author = xAuthor(article);
+  if (!texts.length) {
+    const lines = readableText(article, ASSIST_ENTRY_CHARS, (node) => node.getAttribute?.('role') === 'group')
+      .split('\n').filter((line) => line && !COUNT_LINE.test(line));
+    const handleAt = lines.findIndex((line) => /^@\w+$/.test(line));
+    if (handleAt >= 0) {
+      author ||= [lines[handleAt - 1], `(${lines[handleAt]})`].filter(Boolean).join(' ');
+      lines.splice(0, handleAt + 1);
+    }
+    text = lines.filter((line) => !/^\d{1,2}:\d{2}\s*[AP]M\s*·/i.test(line)).join('\n');
+  }
+  return {
+    author,
+    time: contextTime(article.querySelector('time[datetime]')?.getAttribute('datetime') || ''),
+    text: [text, ...extras].filter(Boolean).join('\n'),
+  };
+}
+
+function xAssistContext(document, target, surface, url, above) {
+  if (surface !== 'reply') return null;
+  const scope = target.closest('[role="dialog"]') || target.closest('main, [role="main"]') || document.body;
+  const articles = Array.from(scope?.querySelectorAll?.('article') || [])
+    .filter((article) => !article.contains(target) && !article.parentElement?.closest?.('article') && above(article))
+    .slice(-10);
+  const entries = articles.map(xPostEntry).filter((entry) => entry.text);
+  if (!entries.length) return null;
+  const answered = entries[entries.length - 1];
+  return { header: ['X conversation'], writing: `a reply to ${answered.author || 'the post above'}`, entries, replyingTo: entries.length - 1 };
+}
+
+function gmailAssistBody(body, stripQuotes) {
+  if (!stripQuotes || typeof body.cloneNode !== 'function') return gmailBodyText(body, ASSIST_ENTRY_CHARS);
+  const copy = body.cloneNode(true);
+  for (const quote of Array.from(copy.querySelectorAll('.gmail_quote, blockquote[type="cite"], .gmail_extra'))) quote.remove();
+  return gmailBodyText(copy, ASSIST_ENTRY_CHARS) || gmailBodyText(body, ASSIST_ENTRY_CHARS);
+}
+
+function gmailAssistContext(document, target, surface) {
+  if (!['reply', 'forward'].includes(surface)) return null;
+  let nodes = Array.from(document.querySelectorAll('[data-message-id]'));
+  if (!nodes.length) nodes = Array.from(document.querySelectorAll('[data-legacy-message-id], .adn'));
+  const seen = new Set();
+  const messages = nodes.map((message) => {
+    const body = message.querySelector(GMAIL_BODY_SELECTOR);
+    if (!body || seen.has(body) || body.contains(target) || body.isContentEditable === true || body.getAttribute?.('contenteditable') === 'true') return null;
+    seen.add(body);
+    return { message, body };
+  }).filter(Boolean).slice(-GMAIL_MESSAGE_LIMIT);
+  const entries = messages.map(({ message, body }) => ({
+    author: gmailMessageSender(message),
+    time: gmailMessageDate(message),
+    text: gmailAssistBody(body, messages.length > 1),
+  })).filter((entry) => entry.text);
+  if (!entries.length) return null;
+  const subject = gmailSubject(document);
+  return {
+    header: [subject ? `Email thread: ${subject}` : 'Email thread'],
+    writing: surface === 'forward' ? 'a forward of this email' : 'a reply to this email thread',
+    entries,
+    replyingTo: entries.length - 1,
+  };
+}
+
+function youtubeCommentEntry(comment, note = '') {
+  return {
+    author: textOf(comment.querySelector('#author-text'), 80),
+    time: textOf(comment.querySelector('#published-time-text'), 40),
+    text: readableText(comment.querySelector('#content-text'), ASSIST_ENTRY_CHARS),
+    note,
+  };
+}
+
+function youtubeAssistContext(document, target, surface, url, above) {
+  if (!['comment', 'comment-reply'].includes(surface)) return null;
+  const title = firstText(document, ['ytd-watch-metadata #title h1', '#title h1', 'h1'], 300);
+  const channel = firstText(document, ['ytd-watch-metadata ytd-channel-name #text', 'ytd-channel-name #text'], 120);
+  const description = firstText(document, ['#description-inline-expander yt-attributed-string', '#description-inline-expander', 'ytd-watch-metadata ytd-text-inline-expander', '#description'], 1_500, (node) => bounded(node.textContent || '', 1_500))
+    .replace(/\s*(?:…|\.\.\.)\s*more\b/i, '').replace(/\s*Show less\s*$/i, '');
+  const entries = description ? [{ author: channel || 'The channel', text: description, note: 'video description' }] : [];
+  const thread = target.closest('ytd-comment-thread-renderer');
+  let writing = 'a comment on this video';
+  let replyingTo = -1;
+  if (thread) {
+    const answered = target.closest('ytd-comment-view-model, ytd-comment-renderer');
+    const comments = Array.from(thread.querySelectorAll('ytd-comment-view-model, ytd-comment-renderer'))
+      .filter((comment) => comment === answered || above(comment));
+    entries.push(...comments.map((comment) => youtubeCommentEntry(comment)).filter((entry) => entry.text));
+    replyingTo = entries.length - 1;
+    const author = answered ? textOf(answered.querySelector('#author-text'), 80) : '';
+    writing = author ? `a reply to ${author}'s comment` : 'a reply in this comment thread';
+  } else {
+    const top = Array.from(document.querySelectorAll('ytd-comment-thread-renderer')).slice(0, 5)
+      .map((item) => item.querySelector('ytd-comment-view-model, ytd-comment-renderer'))
+      .filter(Boolean)
+      .map((comment) => youtubeCommentEntry(comment, 'top comment'));
+    entries.push(...top.filter((entry) => entry.text));
+  }
+  if (!entries.length && !title) return null;
+  return { header: [`YouTube video: ${title || 'this video'}${channel ? `, by ${channel}` : ''}`], writing, entries, replyingTo };
+}
+
+function redditCommentEntry(comment, note = '') {
+  const body = Array.from(comment.querySelectorAll('[slot="comment"]')).find((node) => node.closest('shreddit-comment') === comment);
+  const author = comment.getAttribute('author');
+  return { author: author ? `u/${author}` : '', time: contextTime(comment.getAttribute('created') || ''), text: readableText(body, ASSIST_ENTRY_CHARS), note };
+}
+
+function redditAssistContext(document, target) {
+  const post = document.querySelector('shreddit-post');
+  if (!post) return null;
+  const title = bounded(post.getAttribute('post-title') || textOf(post.querySelector('[slot="title"], h1'), 300), 300);
+  const community = bounded(post.getAttribute('subreddit-prefixed-name') || '', 80);
+  const author = post.getAttribute('author');
+  const link = String(post.getAttribute('content-href') || '');
+  const postText = readableText(post.querySelector('[slot="text-body"]'), ASSIST_OPENING_CHARS)
+    || (link ? `Link: ${bounded(link.startsWith('/') ? `https://www.reddit.com${link}` : link, 300)}` : '');
+  const entries = [{ author: author ? `u/${author}` : '', time: contextTime(post.getAttribute('created-timestamp') || ''), text: postText || title, note: 'the post' }];
+  const answered = target.closest('shreddit-comment');
+  let writing = 'a comment on this post';
+  if (answered) {
+    const chain = [];
+    for (let comment = answered; comment; comment = comment.parentElement?.closest?.('shreddit-comment')) chain.unshift(comment);
+    entries.push(...chain.map((comment) => redditCommentEntry(comment)).filter((entry) => entry.text));
+    writing = `a reply to u/${answered.getAttribute('author') || 'someone'}'s comment`;
+  } else {
+    entries.push(...Array.from(document.querySelectorAll('shreddit-comment[depth="0"]')).slice(0, 5)
+      .map((comment) => redditCommentEntry(comment, 'top comment')).filter((entry) => entry.text));
+  }
+  return {
+    header: [`Reddit post${community ? ` in ${community}` : ''}: ${title}`],
+    writing,
+    entries,
+    replyingTo: answered ? entries.length - 1 : 0,
+  };
+}
+
+const LINKEDIN_POST = '[data-urn*="urn:li:activity"], [data-id*="urn:li:activity"], .feed-shared-update-v2, .fie-impression-container';
+const LINKEDIN_COMMENT = '.comments-comment-entity, .comments-comment-item, article.comments-comment-item';
+
+function linkedinAssistContext(document, target, surface) {
+  if (surface !== 'comment') return null;
+  const post = target.closest(LINKEDIN_POST);
+  if (!post) return null;
+  const outsideComments = (read) => (node) => (node.closest(LINKEDIN_COMMENT) ? '' : read(node));
+  const author = firstText(post, ['.update-components-actor__title span[aria-hidden="true"]', '.update-components-actor__name', '.feed-shared-actor__name'], 120, outsideComments((node) => textOf(node, 120)));
+  const postText = firstText(post, ['.update-components-text', '.feed-shared-update-v2__description', '.feed-shared-inline-show-more-text', '.feed-shared-text'], ASSIST_OPENING_CHARS, outsideComments((node) => readableText(node, ASSIST_OPENING_CHARS)))
+    || readableText(post, ASSIST_OPENING_CHARS, (node) => node.matches?.(`${LINKEDIN_COMMENT}, .comments-comment-box`));
+  const entries = [{ author, text: postText, note: 'the post' }];
+  const answered = target.closest(LINKEDIN_COMMENT);
+  if (answered) {
+    entries.push({
+      author: firstText(answered, ['.comments-comment-meta__description-title', '.comments-post-meta__name-text', '.comments-comment-meta__actor'], 120),
+      text: firstText(answered, ['.comments-comment-item__main-content', '.update-components-text'], ASSIST_ENTRY_CHARS, (node) => readableText(node, ASSIST_ENTRY_CHARS)),
+    });
+  }
+  return {
+    header: ['LinkedIn post'],
+    writing: answered ? `a reply to ${entries[1].author || 'the comment above'}` : `a comment on ${author ? `${author}'s` : 'this'} post`,
+    entries: entries.filter((entry) => entry.text),
+    replyingTo: answered ? 1 : 0,
+  };
+}
+
+const ASSIST_CONTEXT_READERS = Object.freeze({
+  github: githubAssistContext,
+  x: xAssistContext,
+  gmail: gmailAssistContext,
+  youtube: youtubeAssistContext,
+  reddit: redditAssistContext,
+  linkedin: linkedinAssistContext,
+});
+
+function selfVisible(node) {
+  if (node.hidden || node.getAttribute?.('aria-hidden') === 'true') return false;
+  const inlineStyle = String(node.getAttribute?.('style') || '').toLowerCase().replace(/\s+/g, '');
+  if (inlineStyle.includes('display:none') || inlineStyle.includes('visibility:hidden')) return false;
+  const view = node.ownerDocument?.defaultView;
+  if (typeof view?.getComputedStyle !== 'function') return true;
+  const computed = view.getComputedStyle(node);
+  if (computed?.display === 'none' || computed?.visibility === 'hidden' || computed?.visibility === 'collapse') return false;
+  return computed?.display === 'contents' || typeof node.getClientRects !== 'function' || node.getClientRects().length > 0;
+}
+
+// The text around the field, nearest first when there is too much: what is just above a composer is what it
+// answers (a chat's newest messages, a form's question). The start of the area is kept too, for its title.
+function textAroundField(root, target, max) {
+  const before = [];
+  const after = [];
+  let passed = false;
+  let afterSize = 0;
+  const visit = (node, isRoot) => {
+    if (!node) return;
+    if (node === target) { passed = true; return; }
+    if (node.nodeType === 3) {
+      const text = String(node.nodeValue || '').replace(/\s+/g, ' ').trim();
+      if (!text) return;
+      if (!passed) before.push(text);
+      else if (afterSize < 1_000) { after.push(text); afterSize += text.length + 1; }
+      return;
+    }
+    if (node.nodeType !== 1 || (passed && afterSize >= 1_000)) return;
+    const tag = String(node.tagName || '').toLowerCase();
+    const holdsTarget = node.contains?.(target);
+    if (!holdsTarget && (ASSIST_SKIP_TAGS.has(tag) || ASSIST_SKIP_ROLES.has(node.getAttribute?.('role') || ''))) return;
+    if (!isRoot && !holdsTarget && (node.isContentEditable || node.getAttribute?.('contenteditable') === 'true' || !selfVisible(node))) return;
+    const block = ASSIST_BLOCK_TAGS.has(tag);
+    if (block) (passed ? after : before).push('\n');
+    for (const child of Array.from(node.childNodes || [])) visit(child, false);
+    if (block) (passed ? after : before).push('\n');
+  };
+  visit(root, true);
+  const tidy = (parts) => parts.join(' ').split('\n').map((line) => line.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+  let above = tidy(before);
+  const below = tidy(after).slice(0, 1_000);
+  const room = max - (below ? below.length + 40 : 0);
+  if (above.length > room) {
+    const head = above.slice(0, 1_200).trimEnd();
+    const tailLength = Math.max(0, room - head.length - 60);
+    above = `${head}\n[${above.length - head.length - tailLength} characters left out to fit]\n${above.slice(above.length - tailLength).trimStart()}`;
+  }
+  return [above, below && `After the field:\n${below}`].filter(Boolean).join('\n\n');
+}
+
+function genericAssistContext(document, target, profile) {
+  const root = profile.contextElement || target.parentElement;
+  const label = fieldLabel(target);
+  const writing = `You are writing ${label ? `in the field "${label}"` : 'in a text field on this page'}.`;
+  const title = bounded(document?.title || '', 200);
+  const head = [title && `Page: ${title}`, writing].filter(Boolean).join('\n');
+  const text = textAroundField(root, target, ASSIST_CONTEXT_CHARS - head.length - 2);
+  return text ? `${head}\n\n${text}` : '';
+}
+
+function inlineSiteContext(document, target, profile = null) {
   const resolved = profile || inspectInlineSite(document, target);
-  if (resolved.contextMode !== 'visible') return '';
-  return visibleContextText(resolved.contextElement, target, 6_000);
+  if (!target || resolved.contextMode !== 'visible') return { text: '', messages: 0 };
+  const url = parsedUrl(document?.URL || document?.baseURI || '');
+  let thread = null;
+  try {
+    thread = ASSIST_CONTEXT_READERS[resolved.adapterId]?.(document, target, resolved.surface, url, aboveField(document, target)) || null;
+  } catch {
+    thread = null;
+  }
+  if (thread && (thread.entries?.length || thread.blocks?.length)) {
+    return { text: composeAssistContext(thread), messages: thread.entries.length };
+  }
+  return { text: genericAssistContext(document, target, resolved), messages: 0 };
+}
+
+function captureInlineSiteContext(document, target, profile = null) {
+  return inlineSiteContext(document, target, profile).text;
 }
 
 function inspectSite(document, options = {}) {
@@ -2100,6 +2548,7 @@ const SITE_ADAPTER_API = Object.freeze({
   inspectSite,
   inspectInlineSite,
   captureInlineSiteContext,
+  inlineSiteContext,
   normalizeInlineSiteContextPreferences,
   isGmailThreadUrl,
   applySiteAdapterPolicy,
@@ -2110,7 +2559,7 @@ const SITE_ADAPTER_API = Object.freeze({
   hermesGlobal.HermesSiteAdapters = SITE_ADAPTER_API;
 })(globalThis);
 
-/* extension/lib/inline-draft-policy.mjs · SHA-256 d04688a0ce1bd1ac */
+/* extension/lib/inline-draft-policy.mjs · SHA-256 3b713f0281fdfd86 */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
 
@@ -2130,7 +2579,7 @@ const INLINE_DRAFT_ROUTE_PREFERENCES = Object.freeze({
 });
 
 const MAX_DRAFT_CHARS = 8_000;
-const MAX_PAGE_CONTEXT_CHARS = 6_000;
+const MAX_PAGE_CONTEXT_CHARS = 12_000;
 const MAX_RESULT_CHARS = 12_000;
 const ID_RE = /^[A-Za-z0-9_.:-]{8,160}$/;
 const SENSITIVE_LABEL_RE = /(?:password|passwd|passcode|one.?time|otp|verification.?code|security.?code|two.?factor|2fa|credit.?card|card.?number|cvv|cvc|expiry|payment|billing|api.?(?:key|token)|access.?token|auth.?token|session.?token|secret|private.?key|seed.?phrase|recovery.?phrase|wallet)/i;
@@ -2144,6 +2593,15 @@ const PROVIDER_KEY_TEXT_RE = /(?:\b(?:(?:gsk_|xai-|r8_|pplx-|fw_|fpk_|tvly-(?:de
 
 function containsSecretText(value = '') {
   return SECRET_TEXT_RE.test(value) || PROVIDER_KEY_TEXT_RE.test(value);
+}
+
+// A thread that quotes a key or a password still gives Hermes the rest of the thread; the field's own text
+// is never cleaned this way, so a secret typed there still blocks the draft.
+function withoutSecretText(value = '') {
+  return [SECRET_TEXT_RE, PROVIDER_KEY_TEXT_RE].reduce(
+    (text, pattern) => text.replace(new RegExp(pattern.source, `${pattern.flags.replace('g', '')}g`), '[secret removed]'),
+    String(value || ''),
+  );
 }
 
 function compact(value = '', max = 500) {
@@ -2752,6 +3210,7 @@ const INLINE_DRAFT_API = Object.freeze({
   buildInlineDraftRequest,
   normalizeInlineDraftRequest,
   buildInlineDraftPrompt,
+  withoutSecretText,
   sanitizeInlineDraftResult,
   inlineDraftPrimaryActionLabel,
   inlineLauncherPosition,
