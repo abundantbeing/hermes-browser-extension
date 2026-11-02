@@ -81,6 +81,23 @@ test('where Assist cannot write into the field, the bar previews the draft with 
   assert.equal(root.querySelector('.bar-actions button.main').textContent.trim(), 'Copy');
 });
 
+test('Quick menu, beside Try again in the full panel, goes back to the bar with the draft still up', async () => {
+  const { env, root, panel } = await openQuick({ url: 'https://chatgpt.com/' });
+  env.w.document.getElementById('field').value = 'write me a prompt';
+  await finishDraft(env, root, 'line one\nline two');
+  const full = [...root.querySelectorAll('.bar-actions button')].find((item) => item.textContent.trim() === 'Full panel');
+  env.userClick(full);
+  await env.sleep(20);
+  assert.equal(panel.dataset.mode, 'full');
+  const followUps = [...root.querySelectorAll('.follow-ups button')].map((item) => item.textContent.trim());
+  assert.deepEqual(followUps.slice(0, 2), ['Try again', 'Quick menu']);
+  env.userClick([...root.querySelectorAll('.follow-ups button')][1]);
+  await env.sleep(20);
+  assert.equal(panel.dataset.mode, 'bar');
+  assert.match(root.querySelector('.bar-preview').textContent, /line one/);
+  assert.ok([...root.querySelectorAll('.bar-actions button')].some((item) => item.textContent.trim() === 'Full panel'), 'the way back to the full panel stays');
+});
+
 test('Esc on the bar closes it and never undoes the draft', async () => {
   const { env, root, panel } = await openQuick();
   await finishDraft(env, root);

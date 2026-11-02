@@ -1569,12 +1569,15 @@
     open.addEventListener('click', trustedOnly(renderOpenSessionChoices));
     actions.append(keep, undo, copyButton);
     if (resultSessionId) actions.append(open);
-    // Try again always; Shorter once the draft is in the field, since it shortens what the field holds.
+    // Try again and Quick menu always (back to the bar, the draft still up); Shorter once the draft is in the
+    // field, since it shortens what the field holds.
     const followUps = make('div', 'result-actions follow-ups');
     const again = button('', 'Try again');
     again.disabled = !lastRunAction;
     again.addEventListener('click', trustedOnly(tryAgain));
-    followUps.append(again);
+    const quick = button('', 'Quick menu');
+    quick.addEventListener('click', trustedOnly(() => renderResultBar({ fieldChanged })));
+    followUps.append(again, quick);
     if (applyReceipt) {
       const shorter = button('', 'Shorter');
       shorter.addEventListener('click', trustedOnly(makeShorter));
