@@ -185,6 +185,22 @@ test('LinkedIn comment: a smaller circle just before the emoji button, not on it
   assert.equal(launcher.style.top, '312px');
 });
 
+test('LinkedIn Start a post, drawn inside a shadow root: the circle shows, after the last tool under the editor', async () => {
+  const env = boot('generic.html', 'https://www.linkedin.com/feed/');
+  await env.sleep();
+  const launcher = env.launcher();
+  const outlet = env.w.document.createElement('div');
+  outlet.id = 'interop-outlet';
+  env.w.document.body.append(outlet);
+  const root = outlet.attachShadow({ mode: 'open' });
+  root.innerHTML = fixture('linkedin-share.html');
+  root.querySelector('.ql-editor').focus();
+  await env.sleep(80);
+  assert.equal(launcher.hidden, false);
+  assert.equal(launcher.dataset.placement, 'after');
+  assert.equal(launcher.style.left, '244px');
+  assert.equal(launcher.style.top, '378px');
+});
 
 test('GitHub: the circle sits just before the first toolbar button, not before the toolbar box', async () => {
   const env = boot('github-wide-toolbar.html', 'https://github.com/o/r/pull/147');

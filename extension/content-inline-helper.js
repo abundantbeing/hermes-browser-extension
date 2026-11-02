@@ -1679,9 +1679,11 @@
 
   function onResult(message) {
     if (message?.type === CONTEXT_ACTION) {
-      const current = policy.classifyEditable(document.activeElement);
+      let focused = document.activeElement;
+      while (focused?.shadowRoot?.activeElement) focused = focused.shadowRoot.activeElement;
+      const current = policy.classifyEditable(focused);
       if (current.eligible) {
-        setTarget(document.activeElement);
+        setTarget(focused);
         openPanel();
         const action = [...pageActions(), ...localActions].find((item) => item.id === message.actionId);
         if (action?.local) runLocalAction(action);
@@ -1934,14 +1936,22 @@
     );
   }
 
+  // The element the event really came from: inside an open shadow root (LinkedIn's Start a post editor)
+  // the event's target is only the shadow root's host.
+  function eventOrigin(event) {
+    const first = event.composedPath?.()[0];
+    return first?.nodeType === 1 ? first : event.target;
+  }
+
   function onFocus(event) {
     if (event.composedPath?.().includes(host)) return;
-    setTarget(event.target);
+    setTarget(eventOrigin(event));
   }
 
   function onEditableInput(event) {
     if (!target || event.composedPath?.().includes(host)) return;
-    if (event.target === target || target.contains?.(event.target)) stabilizePosition(420);
+    const origin = eventOrigin(event);
+    if (origin === target || target.contains?.(origin)) stabilizePosition(420);
   }
 
   function onKey(event) {
