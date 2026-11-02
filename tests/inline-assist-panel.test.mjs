@@ -117,6 +117,22 @@ test('the footer is a tidy grid: four equal cells, label above control, the safe
   assert.deepEqual(cells, ['Runs', 'Auto-replace', 'Model', 'Effort']);
 });
 
+test('the header is one row: the side panel wing, the name over what Assist is on, the state and a small ×', async () => {
+  const css = assistCss();
+  assert.match(css, /\.head \{[^}]*grid-template-columns:46px minmax\(0,1fr\) auto 32px;/);
+  assert.match(css, /\.close \{[^}]*width:32px; height:32px;/);
+  assert.doesNotMatch(css, /\.context \{/, 'no separate context row');
+  const { root, panel } = await openPanel();
+  const head = panel.querySelector('.head');
+  assert.deepEqual([...head.children].map((child) => child.classList[0]), ['brand-wing', 'head-copy', 'head-state', 'close']);
+  assert.match(head.querySelector('.brand-wing').style.maskImage, /hermes-wing-mark\.svg/, 'the wing the side panel shows');
+  assert.equal(head.querySelector('.head-copy .title').textContent, 'Hermes Assist');
+  assert.ok(head.querySelector('.head-copy .head-detail').textContent.trim(), 'the site line sits under the name');
+  assert.equal(head.querySelector('.head-state').textContent, 'DRAFT ONLY');
+  assert.equal(root.querySelector('.kicker'), null, 'no Hermes Browser line above the name');
+  assert.equal(panel.querySelector('.context'), null);
+});
+
 test('the Auto-replace cell reads like the others: what it does in words, the switch at its right edge', async () => {
   const css = assistCss();
   assert.match(css, /\.foot-value \{[^}]*display:flex;[^}]*justify-content:space-between;/);

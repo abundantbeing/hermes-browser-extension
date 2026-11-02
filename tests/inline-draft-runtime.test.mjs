@@ -29,7 +29,7 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.match(source, /width:24px; height:24px/);
   assert.match(source, /\.launcher \{[^}]*padding:0;/s);
   assert.match(source, /\.launcher-logo \{ width:18px; height:18px;/);
-  assert.match(source, /\.brand-logo \{ width:22px; height:22px;/);
+  assert.match(source, /\.brand-wing \{[^}]*width:46px; height:20px;/);
   assert.match(source, /--hb-logo', tokens\.logo/);
   assert.match(source, /browserApi\.storage\.local\.get/);
   assert.match(source, /browserApi\.storage\.onChanged/);

@@ -18,6 +18,12 @@ test('every trigger icon is packaged and pages may load it', () => {
   }
 });
 
+test('the panel header wing is the side panel one, packaged and loadable by pages', () => {
+  const asset = 'assets/img/hermes-wing-mark.svg';
+  assert.ok(existsSync(new URL(asset, root)));
+  assert.ok(pageResources.includes(asset), `${asset} is not web-accessible`);
+});
+
 test('no bundled font is ever web-accessible', () => {
   for (const entry of manifest.web_accessible_resources) {
     for (const resource of entry.resources) assert.doesNotMatch(resource, /assets\/fonts\//, resource);

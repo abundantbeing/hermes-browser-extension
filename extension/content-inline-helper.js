@@ -124,9 +124,9 @@
     .launcher.busy::before { content:""; position:absolute; inset:-4px; border-radius:50%; pointer-events:none; border:2px solid transparent; border-top-color:var(--hb-accent); border-right-color:var(--hb-accent); animation:spin .9s linear infinite; }
     .launcher-label { position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); white-space:nowrap; padding:3px 6px; border:1px solid var(--hb-line); background:var(--hb-paper); color:var(--hb-blue); font:600 calc(10.5px * var(--hermes-text-zoom, 1))/1.2 var(--hb-font-ui); opacity:0; pointer-events:none; transition:opacity 120ms ease; }
     .launcher:hover .launcher-label, .launcher:focus-visible .launcher-label { opacity:1; }
-    .launcher-logo, .brand-logo { display:block; mask-position:center; mask-size:contain; mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; }
+    .launcher-logo { display:block; mask-position:center; mask-size:contain; mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; }
     .launcher-logo { width:18px; height:18px; background:var(--hx-glyph,#f4f4f1); }
-    .launcher[data-icon="girl"] .launcher-logo, .brand-mark[data-icon="girl"] .brand-logo { border-radius:50%; mask-size:cover; -webkit-mask-size:cover; }
+    .launcher[data-icon="girl"] .launcher-logo { border-radius:50%; mask-size:cover; -webkit-mask-size:cover; }
     .launcher[data-icon="girl"] .launcher-logo { width:22px; height:22px; }
     /* A size smaller where a site's row is tight (LinkedIn's comment pill). */
     .launcher[data-size="small"] { width:20px; height:20px; }
@@ -139,15 +139,15 @@
        textarea, which cannot hold the thumb, so it keeps the canonical sharp bar, with no strip reserved. */
     .custom::-webkit-scrollbar { width:8px; }
     .custom::-webkit-scrollbar-thumb { background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); }
-    .head { display:grid; grid-template-columns:30px 1fr 44px; gap:12px; align-items:center; padding:14px; border-bottom:1px solid var(--hb-line); }
-    .brand-mark { display:grid; place-items:center; width:30px; height:30px; padding:0; border-radius:50%; background:var(--hb-blue); }
-    .brand-logo { width:22px; height:22px; background:var(--hb-paper); }
-    .brand-mark[data-icon="girl"] .brand-logo { width:28px; height:28px; }
-    .kicker, .section-label { display:block; color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); letter-spacing:.16em; text-transform:uppercase; }
-    .title { display:block; margin-top:4px; font-family:var(--hb-font-display); font-size:calc(22px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); line-height:1; color:var(--hb-blue); }
-    .close { width:44px; height:44px; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font-size:calc(28px * var(--hermes-text-zoom, 1)); line-height:1; display:grid; place-items:center; transition:background 120ms ease,border-color 120ms ease,color 120ms ease; }
+    .head { display:grid; grid-template-columns:46px minmax(0,1fr) auto 32px; gap:11px; align-items:center; padding:11px 12px 11px 14px; border-bottom:1px solid var(--hb-line); }
+    .brand-wing { display:block; width:46px; height:20px; background:var(--hb-blue); mask-position:left center; mask-size:contain; mask-repeat:no-repeat; -webkit-mask-position:left center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; }
+    .head-copy { min-width:0; }
+    .head-detail { display:block; margin-top:4px; overflow:hidden; color:var(--hb-muted); font-size:calc(10px * var(--hermes-text-zoom, 1)); white-space:nowrap; text-overflow:ellipsis; }
+    .head-state { color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); font-weight:700; letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
+    .section-label { display:block; color:var(--hb-muted); font-size:calc(9px * var(--hermes-text-zoom, 1)); letter-spacing:.16em; text-transform:uppercase; }
+    .title { display:block; font-family:var(--hb-font-display); font-size:calc(20px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); line-height:1; color:var(--hb-blue); }
+    .close { width:32px; height:32px; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font-size:calc(20px * var(--hermes-text-zoom, 1)); line-height:1; display:grid; place-items:center; transition:background 120ms ease,border-color 120ms ease,color 120ms ease; }
     .close:hover, .close:focus-visible { background:var(--hb-blue); color:var(--hb-paper); border-color:var(--hb-blue); outline:2px solid var(--hb-blue); outline-offset:2px; }
-    .context { display:grid; grid-template-columns:1fr auto; gap:10px; padding:9px 12px; border-bottom:1px solid var(--hb-line); color:var(--hb-muted); font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .secure { color:var(--hb-blue); font-weight:800; }
     .body { display:flex; flex-direction:column; gap:11px; padding:12px; }
     .note, .status, .privacy, .run-copy { margin:0; color:var(--hb-muted); font-size:calc(11px * var(--hermes-text-zoom, 1)); line-height:1.45; }
@@ -255,7 +255,7 @@
     .panel[data-font-profile="signature"] .title, .panel[data-font-profile="signature"] .route-title, .panel[data-font-profile="signature"] .run-title, .panel[data-font-profile="signature"] .action, .panel[data-font-profile="signature"] .route strong, .panel[data-font-profile="signature"] .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
     .panel[data-font-profile="signature"] .action small, .panel[data-font-profile="signature"] .route small { text-transform:none; letter-spacing:normal; }
     .panel[data-mode="quick"] { width:min(290px,calc(100vw - 20px)); }
-    .panel[data-mode="quick"] .head, .panel[data-mode="quick"] .context, .panel[data-mode="quick"] .foot, .panel[data-mode="bar"] .head, .panel[data-mode="bar"] .context, .panel[data-mode="bar"] .foot { display:none; }
+    .panel[data-mode="quick"] .head, .panel[data-mode="quick"] .foot, .panel[data-mode="bar"] .head, .panel[data-mode="bar"] .foot { display:none; }
     .panel[data-mode="quick"] .body, .panel[data-mode="bar"] .body { padding:0; gap:0; }
     .panel[data-mode="quick"]:not([data-view="quick"]):not([data-view="quick-options"]) .body { padding:12px; gap:11px; }
     .panel[data-mode="bar"] { max-height:none; overflow:visible; }
@@ -310,24 +310,19 @@
   panel.hidden = true;
 
   const head = make('header', 'head');
-  const brandMark = make('div', 'brand-mark');
-  brandMark.appendChild(logo('brand-logo'));
-  head.appendChild(brandMark);
-  const brandCopy = make('div');
-  const brandKicker = make('span', 'kicker', 'Hermes Browser');
+  const brandWing = logo('brand-wing');
+  const brandCopy = make('div', 'head-copy');
   const brandTitle = make('strong', 'title', 'Hermes Assist');
-  brandCopy.append(brandKicker, brandTitle);
+  const contextDetail = make('span', 'head-detail', 'Focused draft');
+  brandCopy.append(brandTitle, contextDetail);
+  const contextState = make('span', 'head-state secure', 'PRIVATE');
   const close = button('close', '×', 'Close Hermes Assist');
-  head.append(brandCopy, close);
-  const context = make('div', 'context');
-  const contextDetail = make('span', '', 'Focused draft');
-  const contextState = make('span', 'secure', 'PRIVATE');
-  context.append(contextDetail, contextState);
+  head.append(brandWing, brandCopy, contextState, close);
   const body = make('div', 'body');
   const foot = make('footer', 'foot');
   const footSafety = make('span', 'foot-safety', 'Never posts or sends. Only this field changes.');
   foot.append(footSafety);
-  panel.append(head, context, body, foot);
+  panel.append(head, body, foot);
   overlayScrollbar?.attachOverlayScrollbar(panel);
   // The font stacks live in a stylesheet inside the closed root, set on the circle and the panel, so the
   // page can not read the user's font choice off the host element.
@@ -457,9 +452,7 @@
     launcher.dataset.icon = icon;
     launcher.dataset.tone = tone || 'dark';
     maskWith(launcher.querySelector('.launcher-logo'), look?.inlineAssistIconAsset?.(icon, launcher.dataset.tone) || 'assets/img/assist-wing.png');
-    // The panel's own mark is a circle in the theme's ink: light on dark themes, dark on light ones.
-    brandMark.dataset.icon = icon;
-    maskWith(brandMark.querySelector('.brand-logo'), look?.inlineAssistIconAsset?.(icon, host.dataset.mode === 'light' ? 'dark' : 'light') || 'assets/img/assist-wing.png');
+    maskWith(brandWing, 'assets/img/hermes-wing-mark.svg');
   }
 
   // The tone comes from what is under the circle once placed, since it usually sits beside the field: the
@@ -1462,7 +1455,7 @@
     const usesVisibleContext = profile?.contextMode === 'visible';
     contextDetail.textContent = translateUiText(currentContextLabel());
     contextState.textContent = translateUiText(usesVisibleContext ? 'BOUNDED' : 'DRAFT ONLY');
-    contextState.className = 'secure';
+    contextState.classList.add('secure');
 
     const nodes = [];
     if (profile?.contextPolicy?.userConfigurable) {
@@ -1600,7 +1593,7 @@
       ? `Active chat · ${Number(session.messageCount || 0) || 'existing'} messages`
       : 'No active chat');
     contextState.textContent = translateUiText('CHOOSE');
-    contextState.className = '';
+    contextState.classList.remove('secure');
     // Back to where it was opened from; Close where the panel's own header (with its ×) is hidden.
     const nav = make('div', 'sheet-nav');
     const back = button('sheet-back', '', 'Back');
@@ -1802,7 +1795,7 @@
       : translateUiText(pending?.actionLabel || 'Result');
     contextDetail.textContent = `${translateUiText(noModel ? 'Local utility' : 'Inline assist')} · ${actionLabel}`;
     contextState.textContent = translateUiText('COMPLETE');
-    contextState.className = 'secure';
+    contextState.classList.add('secure');
     const copyOnly = pending?.applyMode === 'copy-only';
     const success = make('div', 'success');
     success.append(make('i'), make('span', '', copyOnly
@@ -1937,7 +1930,7 @@
     if (!resultSessionId) return;
     activeView = { name: 'open-session', args: [] };
     contextState.textContent = translateUiText('CHOOSE');
-    contextState.className = '';
+    contextState.classList.remove('secure');
     const title = make('h2', 'route-title', 'Where should this session open?');
     const note = make('p', 'note', 'Open the retained Assist session in the extension side panel or in Hermes Web.');
     const options = [
@@ -2111,10 +2104,9 @@
   function applyLocalizedFrame() {
     launcher.setAttribute('aria-label', translateUiText('Open Hermes Assist'));
     panel.setAttribute('aria-label', translateUiText('Hermes Assist'));
-    for (const mark of [launcher.querySelector('.launcher-logo'), brandMark.querySelector('.brand-logo')]) {
+    for (const mark of [launcher.querySelector('.launcher-logo'), brandWing]) {
       mark?.setAttribute('aria-label', translateUiText('Hermes Browser Extension'));
     }
-    brandKicker.textContent = translateUiText('Hermes Browser');
     brandTitle.textContent = translateUiText('Hermes Assist');
     close.setAttribute('aria-label', translateUiText('Close Hermes Assist'));
     footSafety.textContent = translateUiText('Never posts or sends. Only this field changes.');
