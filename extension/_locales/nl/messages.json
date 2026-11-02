@@ -7331,6 +7331,10 @@
     "message": "Zeg \"Hey Hermes\" voor een handsfree spraakverzoek in één draai. Always-on-detectie blijft op deze machine staan.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "Zeg wat er moet veranderen…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Schaal de interfacetekst zonder de browserzoom te wijzigen.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

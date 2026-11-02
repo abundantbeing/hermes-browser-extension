@@ -1092,6 +1092,7 @@ export default Object.freeze({
   "ui.low": "ต่ำ",
   "ui.main": "หลัก",
   "ui.make.this.more.confident.without.sounding.aggressive": "ทำให้มั่นใจมากขึ้นโดยไม่ดูก้าวร้าว...",
+  "ui.say.what.to.change": "บอกว่าจะเปลี่ยนอะไร…",
   "ui.manual": "คู่มือ",
   "ui.manual.setup": "การตั้งค่าด้วยตนเอง",
   "ui.manual.setup.required": "จำเป็นต้องตั้งค่าด้วยตนเอง",

@@ -1092,6 +1092,7 @@ export default Object.freeze({
   "ui.low": "Bajo",
   "ui.main": "principal",
   "ui.make.this.more.confident.without.sounding.aggressive": "Haz esto con más confianza sin sonar agresivo...",
+  "ui.say.what.to.change": "Di qué cambiar…",
   "ui.manual": "manuales",
   "ui.manual.setup": "Configuración manual",
   "ui.manual.setup.required": "Se requiere configuración manual",

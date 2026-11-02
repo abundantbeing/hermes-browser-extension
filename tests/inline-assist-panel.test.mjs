@@ -120,3 +120,20 @@ test('the footer is a tidy grid: four equal cells, label above control, the safe
 test('the instant tools share their row in equal parts, with no gap left over', () => {
   assert.match(assistCss(), /\.local-actions \{[^}]*display:grid; grid-template-columns:repeat\(auto-fit,minmax\(0,1fr\)\);/);
 });
+
+test('the instruction box is one line that grows as you type, with a short hint and a button its height', async () => {
+  const css = assistCss();
+  assert.match(css, /\.custom \{[^}]*height:34px;[^}]*resize:none;/);
+  assert.match(css, /\.custom-go \{[^}]*min-height:34px;/);
+  const { env, root } = await openPanel();
+  const box = root.querySelector('textarea.custom');
+  assert.equal(box.rows, 1);
+  assert.equal(box.placeholder, 'Say what to change…');
+  Object.defineProperty(box, 'scrollHeight', { configurable: true, value: 70 });
+  box.value = 'one\ntwo\nthree';
+  for (const listener of env.listenersFor(box, 'input')) listener.call(box, { type: 'input', target: box, isTrusted: true });
+  assert.equal(box.style.height, '70px');
+  Object.defineProperty(box, 'scrollHeight', { configurable: true, value: 400 });
+  for (const listener of env.listenersFor(box, 'input')) listener.call(box, { type: 'input', target: box, isTrusted: true });
+  assert.equal(box.style.height, '96px', 'it stops growing at four lines and scrolls');
+});

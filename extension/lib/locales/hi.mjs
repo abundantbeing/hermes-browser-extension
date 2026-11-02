@@ -1092,6 +1092,7 @@ export default Object.freeze({
   "ui.low": "कम",
   "ui.main": "मुख्य",
   "ui.make.this.more.confident.without.sounding.aggressive": "आक्रामक लगे बिना इसे और अधिक आश्वस्त बनाएं...",
+  "ui.say.what.to.change": "बताएं क्या बदलना है…",
   "ui.manual": "नियमावली",
   "ui.manual.setup": "मैन्युअल सेटअप",
   "ui.manual.setup.required": "मैन्युअल सेटअप आवश्यक है",

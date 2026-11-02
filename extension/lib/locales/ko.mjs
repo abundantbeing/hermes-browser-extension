@@ -1092,6 +1092,7 @@ export default Object.freeze({
   "ui.low": "낮음",
   "ui.main": "기본",
   "ui.make.this.more.confident.without.sounding.aggressive": "공격적으로 들리지 않으면서 좀 더 자신감 있게…",
+  "ui.say.what.to.change": "바꿀 내용을 적어 주세요…",
   "ui.manual": "수동",
   "ui.manual.setup": "수동 설정",
   "ui.manual.setup.required": "수동 설정 필요",

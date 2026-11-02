@@ -7331,6 +7331,10 @@
     "message": "Eller serbest, tek dönüşlü sesli istek için \"Hey Hermes\" deyin. Her zaman açık algılama bu makinede kalır.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "Neyin değişeceğini yazın…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Tarayıcı yakınlaştırmasını değiştirmeden arayüz kopyasını ölçeklendirin.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

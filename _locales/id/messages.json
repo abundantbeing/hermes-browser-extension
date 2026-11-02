@@ -7331,6 +7331,10 @@
     "message": "Ucapkan “Hai Hermes” untuk permintaan suara satu putaran secara handsfree. Deteksi selalu aktif tetap ada di mesin ini.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "Katakan apa yang diubah…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Skala salinan antarmuka tanpa mengubah zoom browser.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

@@ -7331,6 +7331,10 @@
     "message": "Nói “Hey Hermes” để yêu cầu thoại một lần, rảnh tay. Tính năng phát hiện luôn bật vẫn còn trên máy này.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "Nói điều cần đổi…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Sao chép giao diện tỷ lệ mà không thay đổi thu phóng trình duyệt.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

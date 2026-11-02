@@ -1092,6 +1092,7 @@ export default Object.freeze({
   "ui.low": "Düşük",
   "ui.main": "Ana Sayfa",
   "ui.make.this.more.confident.without.sounding.aggressive": "Agresif görünmeden bunu daha güvenli hale getirin…",
+  "ui.say.what.to.change": "Neyin değişeceğini yazın…",
   "ui.manual": "Manuel",
   "ui.manual.setup": "Manuel kurulum",
   "ui.manual.setup.required": "Manuel kurulum gerekli",

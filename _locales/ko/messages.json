@@ -7331,6 +7331,10 @@
     "message": "“Hey Hermes”라고 말하면 핸즈프리 단일 턴 음성 요청을 할 수 있습니다. 상시 감지는 이 컴퓨터에서만 유지됩니다.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "바꿀 내용을 적어 주세요…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "브라우저 확대/축소를 변경하지 않고 인터페이스 사본을 확장합니다.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

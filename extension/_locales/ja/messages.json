@@ -7331,6 +7331,10 @@
     "message": "「Hey Hermes」と言って、ハンズフリーのワンターン音声リクエストを行います。このマシンでは常時検出が継続されます。",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "変えたい点を入力…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "ブラウザのズームを変更せずにインターフェイスのコピーを拡大縮小します。",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

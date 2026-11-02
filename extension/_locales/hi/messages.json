@@ -7331,6 +7331,10 @@
     "message": "हैंड्स-फ़्री, वन-टर्न ध्वनि अनुरोध के लिए \"अरे Hermes\" कहें। इस मशीन पर हमेशा ऑन डिटेक्शन रहता है।",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "बताएं क्या बदलना है…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "ब्राउज़र ज़ूम बदले बिना स्केल इंटरफ़ेस कॉपी।",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

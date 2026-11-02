@@ -7331,6 +7331,10 @@
     "message": "Powiedz „Hej Hermes”, aby otrzymać polecenie głosowe bez użycia rąk. Zawsze włączone wykrywanie pozostaje na tym komputerze.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "Napisz, co zmienić…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Skaluj tekst interfejsu bez zmiany powiększenia przeglądarki.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

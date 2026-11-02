@@ -162,9 +162,9 @@
     .local-actions .action small { display:none; }
     .more-actions { justify-self:start; padding:4px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font-size:calc(10.5px * var(--hermes-text-zoom, 1)); text-decoration:underline; }
     .action[hidden] { display:none; }
-    .custom { width:100%; min-height:40px; resize:vertical; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); padding:9px; font:calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hb-font-ui); }
-    .custom-row { display:grid; grid-template-columns:1fr auto; gap:7px; align-items:stretch; }
-    .custom-go { min-width:76px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-blue); color:var(--hb-paper); cursor:pointer; font-size:calc(11px * var(--hermes-text-zoom, 1)); font-weight:700; }
+    .custom { display:block; width:100%; height:34px; min-height:34px; max-height:96px; resize:none; overflow-y:auto; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); padding:8px 9px; font:calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hb-font-ui); }
+    .custom-row { display:grid; grid-template-columns:1fr auto; gap:7px; align-items:start; }
+    .custom-go { min-width:76px; min-height:34px; height:34px; padding:0 12px; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-blue); color:var(--hb-paper); cursor:pointer; font-size:calc(11px * var(--hermes-text-zoom, 1)); font-weight:700; }
     .sheet-nav { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .sheet-back { display:inline-flex; align-items:center; gap:6px; min-height:28px; padding:4px 10px 4px 8px; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.2 var(--hb-font-ui); }
     .sheet-close { display:grid; place-items:center; width:28px; height:28px; padding:0; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font-size:calc(18px * var(--hermes-text-zoom, 1)); line-height:1; }
@@ -1510,7 +1510,12 @@
     const customLabel = make('span', 'section-label', 'Or tell Hermes exactly what you need');
     const customRow = make('div', 'custom-row');
     const custom = make('textarea', 'custom');
-    custom.placeholder = translateUiText('Make this more confident without sounding aggressive…');
+    custom.rows = 1;
+    custom.placeholder = translateUiText('Say what to change…');
+    custom.addEventListener('input', trustedOnly(() => {
+      custom.style.height = 'auto';
+      custom.style.height = `${Math.min(96, custom.scrollHeight)}px`;
+    }));
     custom.setAttribute('aria-label', translateUiText('Custom Hermes Assist instruction'));
     const customGo = button('custom-go', 'Ask Hermes');
     const submitCustom = () => {

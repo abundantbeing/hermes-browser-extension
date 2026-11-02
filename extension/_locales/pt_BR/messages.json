@@ -7331,6 +7331,10 @@
     "message": "Diga “Ei, Hermes” para uma solicitação de voz com viva-voz e uma única vez. A detecção sempre ativa permanece nesta máquina.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "Diga o que mudar…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Dimensione a cópia da interface sem alterar o zoom do navegador.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

@@ -7331,6 +7331,10 @@
     "message": "Pronuncia \"Ehi Hermes\" per una richiesta vocale a mani libere con un solo turno. Il rilevamento sempre attivo rimane su questa macchina.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "Di’ cosa cambiare…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Ridimensiona il testo dell’interfaccia senza modificare lo zoom del browser.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

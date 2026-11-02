@@ -7331,6 +7331,10 @@
     "message": "พูดว่า “Hey Hermes” เพื่อส่งคำขอเสียงแบบไม่ต้องใช้มือเพียงรอบเดียว การตรวจจับแบบเปิดตลอดเวลาจะอยู่บนเครื่องนี้",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "บอกว่าจะเปลี่ยนอะไร…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "ปรับขนาดการคัดลอกอินเทอร์เฟซโดยไม่ต้องเปลี่ยนการซูมของเบราว์เซอร์",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

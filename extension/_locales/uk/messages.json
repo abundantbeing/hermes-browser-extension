@@ -7331,6 +7331,10 @@
     "message": "Скажіть «Привіт, Hermes», щоб отримати голосовий запит у режимі «вільні руки». Завжди ввімкнене виявлення залишається на цій машині.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "Скажіть, що змінити…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Масштабуйте копію інтерфейсу без зміни масштабу браузера.",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"

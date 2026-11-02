@@ -1081,6 +1081,7 @@ export default Object.freeze({
   "ui.low": "低",
   "ui.main": "主分支",
   "ui.make.this.more.confident.without.sounding.aggressive": "让这段文字更自信，但不要显得咄咄逼人…",
+  "ui.say.what.to.change": "说明要改什么…",
   "ui.manual": "手动",
   "ui.manual.setup": "手动设置",
   "ui.manual.setup.required": "需要手动设置",

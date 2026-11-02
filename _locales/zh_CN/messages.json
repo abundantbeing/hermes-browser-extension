@@ -7331,6 +7331,10 @@
     "message": "说“Hey Hermes”即可免手操作地发起一轮语音请求。持续监听仅在此设备上进行。",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
   },
+  "runtime_ui_say_what_to_change": {
+    "message": "说明要改什么…",
+    "description": "Runtime interface message ui.say.what.to.change"
+  },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "缩放界面文字而不更改浏览器缩放。",
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
