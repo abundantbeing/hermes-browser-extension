@@ -89,8 +89,11 @@ function safePageUrl(value = '') {
   try {
     const url = new URL(String(value || ''));
     if (!['http:', 'https:', 'file:'].includes(url.protocol) || url.username || url.password) return '';
+    // Query strings can carry tokens, so they go; a YouTube video id is kept, since the page is the video.
+    const video = /(^|\.)youtube\.com$/i.test(url.hostname) ? url.searchParams.get('v') : '';
     url.search = '';
     url.hash = '';
+    if (video && /^[\w-]{6,20}$/.test(video)) url.searchParams.set('v', video);
     return url.toString();
   } catch {
     return '';
@@ -225,6 +228,8 @@ export function buildInlineDraftPrompt(request = {}) {
     field_label: normalized.fieldLabel,
     draft_text: normalized.draftText,
     page_context: normalized.pageContext,
+    // The page the field is on, so the stored request can be shown as "what was asked, and where".
+    ...(normalized.pageUrl ? { page_url: normalized.pageUrl } : {}),
   };
   const contextDraft = normalized.startsFromPage;
   const draftingFromContext = !normalized.draftText && Boolean(normalized.pageContext);
