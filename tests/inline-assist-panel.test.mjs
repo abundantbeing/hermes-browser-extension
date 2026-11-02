@@ -116,3 +116,7 @@ test('the footer is a tidy grid: four equal cells, label above control, the safe
   const cells = [...root.querySelectorAll('.foot .foot-control')].map((cell) => cell.querySelector('em')?.textContent);
   assert.deepEqual(cells, ['Runs', 'Auto-replace', 'Model', 'Effort']);
 });
+
+test('the instant tools share their row in equal parts, with no gap left over', () => {
+  assert.match(assistCss(), /\.local-actions \{[^}]*display:grid; grid-template-columns:repeat\(auto-fit,minmax\(0,1fr\)\);/);
+});
