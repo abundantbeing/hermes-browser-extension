@@ -330,6 +330,11 @@
   foot.append(footSafety);
   panel.append(head, body, foot);
   overlayScrollbar?.attachOverlayScrollbar(panel);
+  // Above the circle the panel is placed by its height, which settles after it opens (fonts, late rows).
+  const panelResizeObserver = typeof globalThis.ResizeObserver === 'function'
+    ? new globalThis.ResizeObserver(() => { if (!panel.hidden) schedulePosition(); })
+    : null;
+  panelResizeObserver?.observe(panel);
   // The font stacks live in a stylesheet inside the closed root, set on the circle and the panel, so the
   // page can not read the user's font choice off the host element.
   const fontStyle = make('style', 'assist-fonts');
@@ -2221,6 +2226,7 @@
     visualViewport?.removeEventListener?.('resize', position);
     visualViewport?.removeEventListener?.('scroll', position);
     disconnectTargetObservers();
+    panelResizeObserver?.disconnect();
     browserApi.runtime.onMessage.removeListener(onResult);
     browserApi.storage.onChanged.removeListener(onStorageChanged);
     unsubscribeI18n();

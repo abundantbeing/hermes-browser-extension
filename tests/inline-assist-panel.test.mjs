@@ -117,6 +117,28 @@ test('the footer is a tidy grid: four equal cells, label above control, the safe
   assert.deepEqual(cells, ['Runs', 'Auto-replace', 'Model', 'Effort']);
 });
 
+test('the panel above the circle is placed again when its height settles, so a press never lands on moved content', async () => {
+  const env = bootAssist({ settings: { inlineAssistDefaultRoute: 'background' } });
+  const field = env.w.document.getElementById('field');
+  field.getBoundingClientRect = () => ({ x: 20, y: 800, top: 800, left: 20, bottom: 840, right: 320, width: 300, height: 40, toJSON() {} });
+  const launcher = await focusField(env);
+  // Opened after the circle's settling time following focus, as a person does: from here only a size change
+  // can move the panel.
+  await env.sleep(1_400);
+  env.userClick(launcher);
+  await env.sleep(60);
+  const panel = env.root().querySelector('.panel');
+  let height = 674;
+  panel.getBoundingClientRect = () => ({ x: 20, y: 0, top: 0, left: 20, bottom: height, right: 400, width: 380, height, toJSON() {} });
+  env.resized(panel);
+  await env.sleep(60);
+  const tall = parseFloat(panel.style.top);
+  height = 620;
+  env.resized(panel);
+  await env.sleep(60);
+  assert.equal(parseFloat(panel.style.top) - tall, 54, 'it keeps 8px above the circle at its real height');
+});
+
 test('the Bounded row says how much it read, shows exactly what Hermes gets, and sends that', async () => {
   const env = bootAssist({ url: 'https://github.com/o/r/issues/7', settings: { inlineAssistDefaultRoute: 'background' } });
   env.w.document.body.insertAdjacentHTML('afterbegin', `<h1 data-testid="issue-title">Crash on start</h1>

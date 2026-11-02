@@ -69,6 +69,15 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', u
     if (!mediaQueries.has(query)) mediaQueries.set(query, Object.assign(new w.EventTarget(), { media: query, matches: false }));
     return mediaQueries.get(query);
   };
+  // Size observers fire only when a test says an element changed size (env.resized).
+  const resizeObservers = [];
+  w.ResizeObserver = class ResizeObserver {
+    constructor(callback) { this.callback = callback; this.elements = new Set(); resizeObservers.push(this); }
+    observe(element) { this.elements.add(element); }
+    unobserve(element) { this.elements.delete(element); }
+    disconnect() { this.elements.clear(); }
+  };
+  const resized = (element) => { for (const observer of resizeObservers) if (observer.elements.has(element)) observer.callback([{ target: element }], observer); };
   w.browser = undefined;
   for (const file of ['lib/browser-api-global.js', 'content-extractor.js', 'lib/i18n-content.js', 'content-inline-helper.js']) w.eval(load(file));
   const sleep = (ms = 25) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -82,7 +91,7 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', u
   const changeStorage = (changes) => { for (const listener of storageListeners) listener(changes, 'local'); };
   // Hands the content script a message from the background, as the result of a draft arrives.
   const deliver = (message) => messageListeners.forEach((fn) => fn(message, {}, () => {}));
-  return { w, sent, stored, fonts, fontSources, changeStorage, sleep, userClick, listenersFor, deliver, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
+  return { w, sent, stored, fonts, fontSources, changeStorage, sleep, userClick, listenersFor, deliver, resized, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
 }
 
 export async function focusField(env) {
