@@ -203,6 +203,9 @@
     .dd-option small { color:var(--hb-muted); font-size:calc(9.5px * var(--hermes-text-zoom, 1)); }
     .dd-option:hover, .dd-option:focus-visible { outline:none; background:var(--hb-soft); }
     .dd-option[aria-selected="true"] { box-shadow:inset 3px 0 0 var(--hb-accent); background:var(--hb-soft); }
+    .dd-search { position:sticky; top:0; z-index:1; width:100%; box-sizing:border-box; margin:0; padding:7px 10px; border:0; border-bottom:1px solid var(--hb-line); background:var(--hb-paper); color:var(--hb-blue); font:inherit; outline:none; }
+    .dd-search:focus-visible { box-shadow:inset 0 0 0 2px var(--hb-accent); }
+    .dd-option[hidden] { display:none; }
     .dd-note { margin:0; padding:8px 10px; color:var(--hb-muted); font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .foot-safety { width:100%; font-size:calc(10px * var(--hermes-text-zoom, 1)); }
     .panel[data-font-profile="signature"] .title, .panel[data-font-profile="signature"] .route-title, .panel[data-font-profile="signature"] .run-title, .panel[data-font-profile="signature"] .action, .panel[data-font-profile="signature"] .route strong, .panel[data-font-profile="signature"] .result-actions button { text-transform:uppercase; font-weight:500; letter-spacing:.02em; }
@@ -919,6 +922,9 @@
     return policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
   }
 
+  // The one Assist dropdown that is open, so Escape can close it before closing Assist.
+  let closeOpenDropdown = null;
+
   // Assist's own dropdown, in the panel's look instead of the browser's select list. `loadOptions` (async)
   // fills it each time it opens; `onPick` saves a choice and returns false when it did not take.
   function makeDropdown({ setting, label, value, valueLabel, options = [], loadOptions = null, onPick }) {
@@ -938,11 +944,24 @@
     const close = ({ focus = false } = {}) => {
       list.hidden = true;
       trigger.setAttribute('aria-expanded', 'false');
+      if (closeOpenDropdown === close) closeOpenDropdown = null;
       if (focus) trigger.focus();
     };
     const fill = (items, note = '') => {
       list.replaceChildren();
       if (note) list.append(make('p', 'dd-note', note));
+      // A long list (the models) gets a search box that narrows it as you type.
+      if (items.length > 8) {
+        const search = make('input', 'dd-search');
+        search.type = 'search';
+        search.placeholder = translateUiText('Search');
+        search.setAttribute('aria-label', translateUiText('Search'));
+        search.addEventListener('input', trustedOnly(() => {
+          const query = search.value.trim().toLowerCase();
+          for (const option of list.querySelectorAll('[role="option"]')) option.hidden = Boolean(query) && !option.textContent.toLowerCase().includes(query);
+        }));
+        list.append(search);
+      }
       for (const item of items) {
         const option = button('dd-option', '', item.label);
         option.setAttribute('role', 'option');
@@ -961,9 +980,11 @@
       }
     };
     const open = async () => {
+      closeOpenDropdown?.();
       fill(choices, loadOptions ? translateUiText('Loading…') : '');
       list.hidden = false;
       trigger.setAttribute('aria-expanded', 'true');
+      closeOpenDropdown = close;
       if (loadOptions) {
         const loaded = await loadOptions().catch(() => null);
         if (list.hidden) return;
@@ -973,7 +994,8 @@
           fill(choices);
         } else fill([], loaded?.note || translateUiText('No models yet. Open the side panel once so Hermes can list them.'));
       }
-      (list.querySelector('[aria-selected="true"]') || list.querySelector('[role="option"]'))?.focus();
+      (list.querySelector('input.dd-search') || list.querySelector('[aria-selected="true"]') || list.querySelector('[role="option"]'))?.focus();
+      list.querySelector('[aria-selected="true"]')?.scrollIntoView?.({ block: 'nearest' });
     };
     trigger.addEventListener('click', trustedOnly(() => (list.hidden ? open() : close())));
     box.addEventListener('keydown', trustedOnly((event) => {
@@ -987,7 +1009,11 @@
         event.preventDefault();
         event.stopPropagation();
         if (list.hidden) return void open();
-        const next = items[(Math.max(at, 0) + (event.key === 'ArrowDown' ? 1 : items.length - 1)) % Math.max(items.length, 1)];
+        const shownItems = items.filter((item) => !item.hidden);
+        const from = shownItems.indexOf(items[at]);
+        const next = from < 0
+          ? shownItems[event.key === 'ArrowDown' ? 0 : shownItems.length - 1]
+          : shownItems[(from + (event.key === 'ArrowDown' ? 1 : shownItems.length - 1)) % Math.max(shownItems.length, 1)];
         next?.focus();
       } else if (event.key === 'Tab' && !list.hidden) close();
     }));
@@ -1711,7 +1737,13 @@
 
   function onKey(event) {
     if (event.isTrusted !== true) return;
-    if (event.key === 'Escape') hidePanel();
+    if (event.key !== 'Escape') return;
+    // The first Escape closes an open Assist dropdown, the next one closes Assist.
+    if (closeOpenDropdown) {
+      closeOpenDropdown({ focus: true });
+      return;
+    }
+    hidePanel();
   }
 
   function containAssistInteraction(event) {

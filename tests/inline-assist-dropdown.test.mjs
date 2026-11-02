@@ -85,3 +85,42 @@ test('the dropdown works from the keyboard: arrows move, Enter picks, Escape clo
   await env.sleep(20);
   assert.equal(trigger.getAttribute('aria-expanded'), 'false');
 });
+
+test('Escape with a dropdown open closes the dropdown, not Assist', async () => {
+  const { env, root } = await open({ mode: 'quick' });
+  const trigger = dropdown(root, 'route').querySelector('button.dd-button');
+  env.userClick(trigger);
+  await env.sleep(20);
+  const escape = () => {
+    for (const listener of env.listenersFor(env.w.document, 'keydown')) listener.call(env.w.document, { type: 'keydown', key: 'Escape', isTrusted: true, target: trigger, composedPath: () => [trigger], preventDefault() {}, stopPropagation() {} });
+  };
+  escape();
+  await env.sleep(20);
+  assert.equal(trigger.getAttribute('aria-expanded'), 'false', 'the dropdown closed');
+  assert.equal(root.querySelector('.panel').hidden, false, 'Assist stays open');
+  escape();
+  await env.sleep(20);
+  assert.equal(root.querySelector('.panel').hidden, true, 'a second Escape closes Assist');
+});
+
+test('a long model list has a search box that narrows it', async () => {
+  const many = Array.from({ length: 30 }, (_, index) => ({ id: `p::model-${index}`, rawModelId: `model-${index}`, provider: 'p', label: index % 3 ? `model-${index}` : `gpt-${index}`, providerLabel: 'P' }));
+  const env = bootAssist({
+    settings: { inlineAssistOpenMode: 'panel', inlineAssistDefaultRoute: 'background' },
+    replies: { HERMES_INLINE_ASSIST_MODELS: () => ({ ok: true, models: many, selectedId: '' }) },
+  });
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  const box = dropdown(env.root(), 'model');
+  env.userClick(box.querySelector('button.dd-button'));
+  await env.sleep(60);
+  const search = box.querySelector('input.dd-search');
+  assert.ok(search, 'a search box for a long list');
+  search.value = 'gpt';
+  for (const listener of env.listenersFor(search, 'input')) listener.call(search, { type: 'input', target: search, isTrusted: true });
+  await env.sleep(20);
+  const visible = options(box).filter((item) => !item.hidden);
+  assert.equal(visible.length, 10);
+  assert.ok(visible.every((item) => /gpt/.test(item.textContent)));
+});
