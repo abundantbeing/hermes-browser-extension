@@ -172,3 +172,17 @@ test('a half-transparent gray over a white page gets the dark circle', async () 
   const launcher = await focusField(env);
   assert.equal(launcher.dataset.tone, 'dark');
 });
+
+test('a custom local font is read from the computer under a random name, never by its own name', async () => {
+  const env = boot({ settings: { fontProfile: 'custom-local', customFontFamily: 'Comic Neue' } });
+  const launcher = await focusField(env);
+  env.userClick(launcher);
+  await env.sleep(60);
+  const css = env.root().querySelector('style.assist-fonts').textContent;
+  // A page that declares @font-face "Comic Neue" can neither replace the font nor learn which name Assist uses.
+  assert.doesNotMatch(css, /Comic Neue/);
+  const local = [...env.fontSources].find(([, source]) => source === 'local("Comic Neue")');
+  assert.ok(local, 'registered from the local font');
+  assert.match(local[0], /^HermesAssist-[0-9a-f]{8}-[0-9a-f]{6}$/);
+  assert.ok(css.includes(`--hb-font-ui: "${local[0]}"`));
+});

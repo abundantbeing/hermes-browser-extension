@@ -91,9 +91,10 @@ test('bundled families in a stack are renamed so they never clash with the page'
   assert.deepEqual(namespaceFontStack('"Rules Variable", "Segoe UI", sans-serif'), {
     stack: '"HermesAssist Rules Variable", "Segoe UI", sans-serif',
     families: ['Rules Variable'],
+    localFamilies: [],
   });
-  assert.deepEqual(namespaceFontStack('var(--hermes-font-mono)'), { stack: 'var(--hermes-font-mono)', families: [] });
-  assert.deepEqual(namespaceFontStack('Georgia, "Times New Roman", serif'), { stack: 'Georgia, "Times New Roman", serif', families: [] });
+  assert.deepEqual(namespaceFontStack('var(--hermes-font-mono)'), { stack: 'var(--hermes-font-mono)', families: [], localFamilies: [] });
+  assert.deepEqual(namespaceFontStack('Georgia, "Times New Roman", serif'), { stack: 'Georgia, "Times New Roman", serif', families: [], localFamilies: [] });
 });
 
 test('the signature profile pairs Rules Variable text with Rules Gothic Compressed headings', () => {
@@ -149,6 +150,7 @@ test('given a namer, bundled families get names that do not carry the family', (
   assert.deepEqual(namespaceFontStack('"Rules Variable", "Space Grotesk", "Segoe UI", sans-serif', (family) => names.get(family)), {
     stack: '"HermesAssist-1a2b3c4d 7f01", "HermesAssist-1a2b3c4d 09ee", "Segoe UI", sans-serif',
     families: ['Rules Variable', 'Space Grotesk'],
+    localFamilies: [],
   });
   const stacks = inlineAssistFontStacks('signature', '', (family) => `X ${family.length}`);
   assert.doesNotMatch(`${stacks.ui} ${stacks.display} ${stacks.mono}`, /Rules|Grotesk|HermesDisplay|HermesMono/);
@@ -180,4 +182,12 @@ test('see-through backgrounds are blended over what is under them before the ton
   const stacked = blendSurface([parseCssColor('rgba(0, 0, 0, 0.5)'), parseCssColor('rgb(255, 255, 255)'), parseCssColor('rgb(0, 0, 0)')]);
   assert.ok(Math.abs(stacked.r - 128) <= 1, 'stops at the first opaque layer');
   assert.equal(blendSurface([]), null, 'nothing painted: the caller decides from the colour-scheme');
+});
+
+test('a custom local font gets a name of its own too, kept apart from the faces the extension sends', () => {
+  const stacks = inlineAssistFontStacks('custom-local', '"Comic Neue", "Segoe UI", sans-serif', (key) => `HermesAssist-x-${key.length}`, { localFamily: 'Comic Neue' });
+  assert.doesNotMatch(stacks.ui, /Comic Neue/);
+  assert.match(stacks.ui, /^"HermesAssist-x-\d+", "Segoe UI", sans-serif$/);
+  assert.deepEqual([...stacks.localFamilies], ['Comic Neue']);
+  assert.equal(stacks.families.includes('Comic Neue'), false, 'not asked of the background');
 });

@@ -349,7 +349,8 @@
   function applyAssistFontStacks() {
     const profile = appearancePreferences?.normalizeFontProfile?.(assistSettings.fontProfile, assistSettings.customFontFamily) || 'signature';
     const profileStack = appearancePreferences?.fontFamilyPreview?.(profile, assistSettings.customFontFamily) || '';
-    const stacks = look?.inlineAssistFontStacks?.(profile, profileStack, fontName);
+    const localFamily = profile === 'custom-local' ? appearancePreferences?.sanitizeLocalFontFamily?.(assistSettings.customFontFamily) || '' : '';
+    const stacks = look?.inlineAssistFontStacks?.(profile, profileStack, fontName, { localFamily });
     if (!stacks) return null;
     panel.dataset.fontProfile = profile;
     fontStyle.textContent = `.launcher, .panel { --hb-font-ui: ${stacks.ui}; --hb-font-display: ${stacks.display}; --hermes-font-mono: ${stacks.mono}; --hb-display-scale: ${profile === 'signature' ? '1.3' : '1'}; font-family: var(--hb-font-ui); }`;
@@ -361,6 +362,7 @@
   // through to the system fonts at their end.
   function requestAssistFonts() {
     const stacks = applyAssistFontStacks();
+    registerLocalAssistFonts(stacks?.localFamilies);
     const key = stacks?.families?.join('|') || '';
     if (!key || key === requestedFontFamilies) return;
     requestedFontFamilies = key;
@@ -368,6 +370,23 @@
       .then(() => browserApi.runtime.sendMessage({ type: FONT_REQUEST, families: stacks.families }))
       .then((reply) => registerAssistFonts(reply?.fonts))
       .catch(() => {});
+  }
+
+  // A custom local font is read from the computer with local() under its random name, so a page that declares
+  // @font-face with the same family name can neither replace it nor see which name Assist asks for.
+  const registeredLocalFonts = new Set();
+  function registerLocalAssistFonts(families) {
+    if (!Array.isArray(families) || typeof globalThis.FontFace !== 'function' || !document.fonts?.add) return;
+    for (const family of families) {
+      if (registeredLocalFonts.has(family)) continue;
+      registeredLocalFonts.add(family);
+      try {
+        const face = new globalThis.FontFace(fontName(`local:${family}`), `local(${JSON.stringify(family)})`);
+        face.load().then((loaded) => document.fonts.add(loaded)).catch(() => {});
+      } catch {
+        // Not installed or not readable: the stack falls through to the system fonts after it.
+      }
+    }
   }
 
   function registerAssistFonts(fonts) {

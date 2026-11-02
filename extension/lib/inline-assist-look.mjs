@@ -207,16 +207,23 @@ export const INLINE_ASSIST_FONT_PREFIX = 'HermesAssist ';
 
 // `naming` is a prefix, or a function giving each family its registered name. The content script passes
 // a function that gives every family its own random name for the page, since the names it registers in
-// document.fonts are readable by the page and must not say which font the user chose.
-export function namespaceFontStack(stack, naming = INLINE_ASSIST_FONT_PREFIX) {
+// document.fonts are readable by the page and must not say which font the user chose. `localFamilies` are
+// fonts installed on the computer (a custom local font): they are renamed under the key `local:<family>`
+// and listed apart, since the caller registers them with local() rather than asking for their bytes.
+export function namespaceFontStack(stack, naming = INLINE_ASSIST_FONT_PREFIX, { localFamilies = [] } = {}) {
   const nameFor = typeof naming === 'function' ? naming : (family) => `${naming}${family}`;
   const families = [];
+  const locals = [];
   const renamed = String(stack || '').replace(/"([^"]+)"/g, (whole, family) => {
+    if (localFamilies.includes(family)) {
+      if (!locals.includes(family)) locals.push(family);
+      return `"${nameFor(`local:${family}`)}"`;
+    }
     if (!Object.hasOwn(INLINE_ASSIST_FONT_FILES, family)) return whole;
     if (!families.includes(family)) families.push(family);
     return `"${nameFor(family)}"`;
   });
-  return { stack: renamed, families };
+  return { stack: renamed, families, localFamilies: locals };
 }
 
 // The panel's text, heading and code stacks for a font profile. The caller passes the profile's own
@@ -226,9 +233,9 @@ export function namespaceFontStack(stack, naming = INLINE_ASSIST_FONT_PREFIX) {
 const SIGNATURE_UI_STACK = '"Rules Variable", "Space Grotesk", "Segoe UI", system-ui, sans-serif';
 const SIGNATURE_DISPLAY_STACK = '"Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif';
 const MONO_STACK = '"HermesMono", ui-monospace, Consolas, monospace';
-export function inlineAssistFontStacks(fontProfile, profileStack, naming = INLINE_ASSIST_FONT_PREFIX) {
+export function inlineAssistFontStacks(fontProfile, profileStack, naming = INLINE_ASSIST_FONT_PREFIX, { localFamily = '' } = {}) {
   const signature = fontProfile === 'signature';
-  const ui = namespaceFontStack(signature ? SIGNATURE_UI_STACK : profileStack, naming);
+  const ui = namespaceFontStack(signature ? SIGNATURE_UI_STACK : profileStack, naming, { localFamilies: localFamily ? [localFamily] : [] });
   const display = signature ? namespaceFontStack(SIGNATURE_DISPLAY_STACK, naming) : ui;
   const mono = namespaceFontStack(MONO_STACK, naming);
   return {
@@ -236,6 +243,7 @@ export function inlineAssistFontStacks(fontProfile, profileStack, naming = INLIN
     display: display.stack,
     mono: mono.stack,
     families: [...new Set([...ui.families, ...display.families, ...mono.families])],
+    localFamilies: ui.localFamilies,
   };
 }
 

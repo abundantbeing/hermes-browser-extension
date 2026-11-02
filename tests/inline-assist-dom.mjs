@@ -51,8 +51,12 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', f
   };
   // The faces the panel registers, by the family name the page would see in document.fonts.
   const fonts = [];
+  const fontSources = new Map();
   w.FontFace = class FontFace {
-    constructor(family) { this.family = family; }
+    constructor(family, source) {
+      this.family = family;
+      if (typeof source === 'string') fontSources.set(family, source);
+    }
     load() { return Promise.resolve(this); }
   };
   Object.defineProperty(w.document, 'fonts', { configurable: true, value: { add: (face) => fonts.push(face.family) } });
@@ -73,7 +77,7 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', f
   const listenersFor = (element, type) => listeners.filter((item) => item.target === element && item.type === type).map((item) => item.listener);
   // Another surface (the side panel, another tab) wrote to storage.
   const changeStorage = (changes) => { for (const listener of storageListeners) listener(changes, 'local'); };
-  return { w, sent, stored, fonts, changeStorage, sleep, userClick, listenersFor, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
+  return { w, sent, stored, fonts, fontSources, changeStorage, sleep, userClick, listenersFor, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };
 }
 
 export async function focusField(env) {
