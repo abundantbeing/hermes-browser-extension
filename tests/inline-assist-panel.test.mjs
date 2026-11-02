@@ -57,3 +57,9 @@ test('a finished draft offers Try again, and Shorter once it is in the field', a
   assert.ok(labels.includes('Try again'), labels.join(', '));
   assert.ok(labels.includes('Shorter'), labels.join(', '));
 });
+
+test('the full panel keeps square controls; only the quick menu tool chips are rounded', () => {
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec(loadExtensionFile('content-inline-helper.js'))[1];
+  assert.doesNotMatch(/\.local-actions \.action \{[^}]*\}/.exec(css)?.[0] || '', /border-radius/);
+  assert.match(css, /\.quick-chip \{[^}]*border-radius:999px/);
+});

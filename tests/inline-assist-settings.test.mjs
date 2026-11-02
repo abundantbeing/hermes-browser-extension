@@ -179,7 +179,10 @@ test('Where it runs, Model, Replace text automatically and Keep Assist chats are
   }
   const css = loadExtensionFile('sidepanel.css');
   assert.match(css, /\n\.settings-dialog \.assist-setting-row \{[^}]*grid-template-columns: minmax\(0, 1fr\) auto;/);
-  assert.match(css, /\n\.inline-assist-site \{[^}]*border-radius: 999px;/, 'sites are pills');
+  // Square like every other control in the panel: no rounded pills.
+  assert.doesNotMatch(css, /\n\.inline-assist-site \{[^}]*border-radius/, 'sites are square');
+  assert.doesNotMatch(css, /\n\.settings-dialog \.inline-assist-site-add \{[^}]*border-radius/, 'Add is square');
+  assert.doesNotMatch(css, /\n\.inline-assist-site-remove \{[^}]*border-radius/, 'remove is square');
   assert.ok(section.querySelector('.inline-assist-sites-chips #inlineAssistAddSite'), 'Add this site is the last pill');
 });
 

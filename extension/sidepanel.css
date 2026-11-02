@@ -12388,7 +12388,7 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
   background: var(--hermes-primary-fg);
 }
 
-/* Sites: each one a pill, "site · setting ×", with Add as the last pill. */
+/* Sites: each one a square tag, "site · setting ×", with a dashed Add tag last. */
 .inline-assist-sites { display: grid; gap: 8px; }
 .inline-assist-sites .settings-toggle-copy small { display: block; margin-top: 3px; }
 .inline-assist-sites-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -12401,7 +12401,6 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
   max-width: 100%;
   padding: 2px 3px 2px 10px;
   border: 1px solid rgba(var(--hermes-ink-rgb),0.24);
-  border-radius: 999px;
   background: var(--hermes-paper);
   color: var(--hermes-ink);
   font-size: calc(12px * var(--hermes-text-zoom, 1));
@@ -12428,7 +12427,6 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 50%;
   background: transparent;
   color: var(--hermes-muted);
   font-size: calc(13px * var(--hermes-text-zoom, 1));
@@ -12443,7 +12441,6 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
   letter-spacing: 0;
   padding: 3px 10px;
   border: 1px dashed rgba(var(--hermes-ink-rgb),0.32);
-  border-radius: 999px;
   background: transparent;
   color: var(--hermes-ink);
   font-size: calc(12px * var(--hermes-text-zoom, 1));

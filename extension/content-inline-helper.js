@@ -132,7 +132,7 @@
     .action.primary small { color:color-mix(in srgb,var(--hb-paper) 74%,transparent); }
     .action:hover, .action:focus-visible, .route:hover, .route:focus-visible, .result-actions button:hover, .result-actions button:focus-visible { outline:2px solid var(--hb-blue); outline-offset:-2px; }
     .local-actions { display:flex; flex-wrap:wrap; gap:7px; }
-    .local-actions .action { min-height:0; padding:5px 11px; border:1px solid var(--hb-line); border-radius:999px; background:var(--hb-soft); font-family:var(--hb-font-ui); font-size:calc(11.5px * var(--hermes-text-zoom, 1)); font-weight:600; text-transform:none; letter-spacing:normal; }
+    .local-actions .action { min-height:0; padding:5px 11px; border:1px solid var(--hb-line); background:var(--hb-soft); font-family:var(--hb-font-ui); font-size:calc(11.5px * var(--hermes-text-zoom, 1)); font-weight:600; text-transform:none; letter-spacing:normal; }
     .local-actions .action small { display:none; }
     .more-actions { justify-self:start; padding:4px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font-size:calc(10.5px * var(--hermes-text-zoom, 1)); text-decoration:underline; }
     .action[hidden] { display:none; }
