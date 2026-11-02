@@ -519,6 +519,9 @@ export function normalizeHistoryUserMessage(message = '') {
   const envelope = readTurnEnvelope(rawText);
   if (envelope) {
     const humanText = envelope.humanText ?? '';
+    // An Assist request the side panel sent as a turn: the same short form as one sent directly.
+    const assistTurn = assistRequestSummary(humanText);
+    if (assistTurn) return { text: assistTurn, attachments: [], hadEnvelope: true, strippedProtocol: true };
     const text = cleanEnvelopeHumanText(humanText);
     const attachments = dedupeAttachments([
       ...envelope.items,

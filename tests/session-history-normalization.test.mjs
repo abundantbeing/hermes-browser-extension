@@ -312,3 +312,17 @@ test('a stored Hermes Assist request shows as what was asked and where, never as
   const pasted = 'Edit the user-selected draft text please, here is my JSON {"a":1}';
   assert.equal(normalizeHistoryUserMessage({ role: 'user', content: pasted }).text, pasted, 'ordinary text that only looks similar is left alone');
 });
+
+test('an Assist request sent through the side panel (inside its turn envelope) shows the same short form', async () => {
+  const { buildInlineDraftPrompt, INLINE_DRAFT_SCHEMA, INLINE_DRAFT_VERSION, INLINE_DRAFT_MODE } = await import('../extension/lib/inline-draft-policy.mjs');
+  const { serializeBrowserTurnEnvelope } = await import('../extension/lib/browser-context-protocol.mjs');
+  const prompt = buildInlineDraftPrompt({
+    schema: INLINE_DRAFT_SCHEMA, version: INLINE_DRAFT_VERSION, mode: INLINE_DRAFT_MODE,
+    requestId: 'req-assist-display-0002', documentId: 'doc-assist-display-0002',
+    actionId: 'draft-reply', actionLabel: 'Draft a reply', startsFromPage: true, route: 'current',
+    draftText: '', fieldLabel: 'Add a comment…', adapterId: 'youtube', pageContext: 'Video transcript…',
+    pageUrl: 'https://www.youtube.com/watch?v=abc123',
+  });
+  const stored = serializeBrowserTurnEnvelope({ humanInput: prompt, contextScope: { mode: 'chat-only' } });
+  assert.equal(normalizeHistoryUserMessage({ role: 'user', content: stored }).text, 'Hermes Assist · Draft a reply\nhttps://www.youtube.com/watch?v=abc123');
+});
