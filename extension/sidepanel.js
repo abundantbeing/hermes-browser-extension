@@ -9,7 +9,7 @@ import {
   withInlineAssistSiteState,
   withoutInlineAssistSite,
 } from './lib/inline-assist-look.mjs';
-import { reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
+import { assistRequestSummary, reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
 import { CONTROL_TOOL_FAMILIES } from './lib/control-tool-names.mjs';
 import {
   AUDIO_TRANSCRIBE_ENDPOINT,
@@ -27908,6 +27908,10 @@ ${streamError.message}`);
 }
 
 let inlineDraftProcessing = false;
+// Off until startup has connected and restored the chat; the startup check then takes what is queued.
+let inlineDraftHandoffsReady = false;
+// A panel opened for a request hears of it twice (the storage change and the startup check): one turn.
+let lastInlineDraftRequestId = '';
 
 function inlineDraftPageKey(value = '') {
   try {
@@ -28035,49 +28039,6 @@ async function runInlineDraftInBackground(request, resolvePrompt) {
   return { answer: extractAssistantText(payload), session };
 }
 
-async function runInlineDraftInCurrentSession(request) {
-  await ensureHermesSession();
-  const prompt = await resolveInlineDraftPrompt(request);
-  const { policy, request: exactRouteRequest } = buildAssistModelRouteRequest(settings, gatewayCapabilities);
-  const requestedSelection = policy.selection || policy.requestedSelection || null;
-  let attemptSelection = policy.selection;
-  let routeRequest = exactRouteRequest;
-  let modelNotice = policy.mode === 'gateway-default-fallback'
-    ? assistModelFallbackNotice(requestedSelection, 'this gateway does not advertise exact model routing')
-    : '';
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/chat`, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...routeRequest,
-        message: prompt,
-        system_message: currentHermesBrowserSystemPrompt(),
-      }),
-    });
-    const payload = await readJsonResponse(response);
-    if (!response.ok) {
-      const reason = payload?.error?.message || payload?.error || `Hermes Assist failed (${response.status}).`;
-      if (attemptSelection && attempt === 0) {
-        modelNotice = assistModelFallbackNotice(attemptSelection, String(reason));
-        attemptSelection = null;
-        routeRequest = {};
-        continue;
-      }
-      throw new Error(reason);
-    }
-    const answer = extractAssistantText(payload);
-    try {
-      assertAssistModelSelectionAcknowledged(payload, attemptSelection);
-    } catch (modelError) {
-      if (!answer) throw modelError;
-      modelNotice = assistModelFallbackNotice(attemptSelection, 'the gateway returned the draft without acknowledging the selected model');
-    }
-    return { answer, modelNotice };
-  }
-  throw new Error('Hermes Assist could not complete the selected-model fallback.');
-}
-
 function inlineDraftRequestForEffectiveContext(request, source = settings) {
   const gate = effectiveContextGate(contextScope, source);
   if (gate.scope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) return request;
@@ -28095,8 +28056,25 @@ async function resolveInlineDraftPrompt(request, source = settings) {
   return buildInlineDraftPrompt(inlineDraftRequestForEffectiveContext(request, sendTimeSettings));
 }
 
+// "Hermes Assist · YouTube · Nov 02, 4:13:21 AM · aaaa": named for Assist and its site, and unique, since the
+// gateway refuses a title it already has.
+function assistSessionTitle(request, date = new Date()) {
+  let site = inlineSiteLabel(request.adapterId);
+  if (!site || site === 'generic') {
+    try {
+      site = inlineSiteForHost(new URL(request.pageUrl).hostname).label;
+    } catch {
+      site = '';
+    }
+  }
+  const stamp = date.toLocaleString(undefined, { month: 'short', day: '2-digit', hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  return `Hermes Assist · ${site || 'Browser'} · ${stamp} · ${String(request.requestId || '').slice(-4)}`;
+}
+
+// Continue current chat and Start new Assist session: a visible turn in this panel, shown as what was asked
+// and where; the reply also goes back to the field.
 async function processInlineDraftRequest(rawRequest) {
-  if (!rawRequest || inlineDraftProcessing) return false;
+  if (!rawRequest || inlineDraftProcessing || !inlineDraftHandoffsReady) return false;
   const request = normalizeInlineDraftRequest(rawRequest);
   const tabId = Number(rawRequest?.tabId);
   const expiresAt = Number(rawRequest?.expiresAt);
@@ -28105,21 +28083,21 @@ async function processInlineDraftRequest(rawRequest) {
     return false;
   }
   if (isAttachedPanelResidency() && Number(sidePanelParams.tabId) !== tabId) return false;
+  if (request.requestId === lastInlineDraftRequestId) return false;
   if (sending) {
     globalThis.setTimeout(() => consumePendingInlineDraftRequest(), 750);
     return false;
   }
-  const tab = await browserApi.tabs.get(tabId).catch(() => null);
-  if (!tab || inlineDraftPageKey(tab.url || tab.pendingUrl) !== inlineDraftPageKey(request.pageUrl)) {
-    await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
-    await sendInlineDraftResult({ ...request, tabId }, { ok: false, reason: 'The originating page changed before Hermes could draft.' });
-    return false;
-  }
-
   inlineDraftProcessing = true;
-  await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
+  lastInlineDraftRequestId = request.requestId;
   let resultSent = false;
   try {
+    await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
+    const tab = await browserApi.tabs.get(tabId).catch(() => null);
+    if (!tab || inlineDraftPageKey(tab.url || tab.pendingUrl) !== inlineDraftPageKey(request.pageUrl)) {
+      await sendInlineDraftResult({ ...request, tabId }, { ok: false, reason: 'The originating page changed before Hermes could draft.' });
+      return false;
+    }
     if (request.route === INLINE_DRAFT_ROUTES.BACKGROUND) {
       const { answer, session } = await runInlineDraftInBackground(request, () => resolveInlineDraftPrompt(request));
       const text = sanitizeInlineDraftResult(answer);
@@ -28127,21 +28105,9 @@ async function processInlineDraftRequest(rawRequest) {
       await loadSessions({ quiet: true });
       return resultSent;
     }
-    if (request.route === INLINE_DRAFT_ROUTES.CURRENT && !isRemoteWsMode()) {
-      const { answer, modelNotice } = await runInlineDraftInCurrentSession(request);
-      const text = sanitizeInlineDraftResult(answer);
-      resultSent = await sendInlineDraftResult({ ...request, tabId }, {
-        ok: true,
-        text,
-        sessionId: String(settings.sessionId || ''),
-        sessionTitle: String(settings.sessionTitle || 'Inline assist'),
-        modelNotice,
-      });
-      await loadSessions({ quiet: true });
-      return resultSent;
-    }
+    // Start new Assist session is the panel's New session button, then the send.
     if (request.route === INLINE_DRAFT_ROUTES.NEW) {
-      await beginHermesBrowserDraft({ title: `Inline assist · ${request.adapterId || 'Browser'}`, focus: false });
+      await beginHermesBrowserDraft({ title: assistSessionTitle(request), focus: false });
     }
     const inlineAssistRoute = buildAssistModelRouteRequest(settings, gatewayCapabilities).policy;
     const inlineAssistModelNotice = inlineAssistRoute.mode === 'gateway-default-fallback'
@@ -28153,7 +28119,7 @@ async function processInlineDraftRequest(rawRequest) {
       )
       : '';
     const inlineSessionId = String(settings.sessionId || '');
-    const inlineSessionTitle = String(settings.sessionTitle || 'Inline assist');
+    const inlineSessionTitle = String(settings.sessionTitle || 'Hermes Assist');
     const prompt = await resolveInlineDraftPrompt(request);
     const didSend = await askHermes(prompt, [], {
       forceChatOnly: true,
@@ -28161,7 +28127,7 @@ async function processInlineDraftRequest(rawRequest) {
       preserveComposer: true,
       disableCommandParsing: true,
       disableAutoTitle: true,
-      displayUserText: `Inline draft · ${request.actionLabel}`,
+      displayUserText: assistRequestSummary(prompt) || `Hermes Assist · ${request.actionLabel}`,
       onComplete: async (answer) => {
         const text = sanitizeInlineDraftResult(answer);
         resultSent = await sendInlineDraftResult({ ...request, tabId }, {
@@ -28174,7 +28140,12 @@ async function processInlineDraftRequest(rawRequest) {
       },
     });
     if (!didSend && !resultSent) {
-      await sendInlineDraftResult({ ...request, tabId }, { ok: false, reason: 'Hermes is not connected or the selected session cannot accept this draft.' });
+      await sendInlineDraftResult({ ...request, tabId }, {
+        ok: false,
+        reason: viewedSessionIsRunning()
+          ? 'Hermes is still working in this chat. Try again when it finishes, or pick Start new Assist session.'
+          : 'Hermes is not connected or the selected session cannot accept this draft.',
+      });
     }
     return didSend;
   } catch (error) {
@@ -30557,6 +30528,7 @@ renderBrowserControl();
 await refreshBrowserControlStatus();
 scheduleBrowserControlPoll();
 try {
+  inlineDraftHandoffsReady = true;
   await consumePendingInlineDraftRequest();
   await consumePendingContextMenuRequest();
   await consumePendingOpenSessionRequest();

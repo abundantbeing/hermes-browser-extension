@@ -496,7 +496,7 @@ const ASSIST_PROMPT_LEADS = [
   'Draft the text that belongs in the focused field',
   'Edit the user-selected draft text using the active Hermes agent',
 ];
-function assistRequestSummary(raw = '') {
+export function assistRequestSummary(raw = '') {
   const text = String(raw || '').trim();
   if (!ASSIST_PROMPT_LEADS.some((lead) => text.startsWith(lead))) return null;
   const json = text.slice(text.indexOf('\n{') + 1);
