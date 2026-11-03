@@ -51,15 +51,17 @@ test('every picture from one tool call gets a card, not just the first', () => {
   assert.match(sidepanelSource, /function appendGeneratedImageCards\(node, sources = \[\]\)/);
   assert.match(sidepanelSource, /const \[first, \.\.\.rest\] = queue;/);
   assert.match(sidepanelSource, /if \(rest\.length\) appendGeneratedImageCards\(node, rest\);/);
-  // Every live tool-activity path now hands over every candidate: the two
-  // setToolActivity reveal sites plus the streaming tool callback.
+  // Every live tool-activity path now hands over every candidate: the setToolActivity
+  // reveal site plus the streaming tool callback.
   assert.equal(
     (sidepanelSource.match(/rawGeneratedImageCandidatesFromResult\(activity\.result\)/g) || []).length,
-    3,
+    2,
   );
   assert.doesNotMatch(sidepanelSource, /resolvedGeneratedImageSourcesFromResult\(activity\.result\)\[0\]/);
-  // A recovered multi-image turn appends the extras too.
-  assert.match(sidepanelSource, /if \(imageSources\.length > 1\) appendGeneratedImageCards\(node, imageSources\.slice\(1\)\);/);
+  // A recovered multi-image turn pairs its pictures with the waiting generations and
+  // appends the extras as cards.
+  assert.match(sidepanelSource, /const plan = planImageReveals\(\{ pendingCount: waiting\.length/);
+  assert.match(sidepanelSource, /if \(plan\.cards\.length\) appendGeneratedImageCards\(node, plan\.cards\);/);
 });
 
 test('hydrated and generated pictures share the same inspect affordance', () => {

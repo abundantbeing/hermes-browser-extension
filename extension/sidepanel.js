@@ -81,7 +81,6 @@ import {
   safeTab,
   sanitizeGatewayDiagnosticText,
   shouldRequireModelLock,
-  shouldReuseImageGenerationActivity,
   shouldFallbackToWebSpeechForTranscription,
   shouldOpenVoiceDictationPageForSpeechError,
   shouldUseLocalDashboardAudioTranscription,
@@ -282,12 +281,14 @@ import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToo
 import { emptyTurnReasoning, formatTurnDuration, liveTurnStartedAt, reduceTurnReasoning, replyTextAfterCommentary, storedTurnSummaries, turnReasoningFromRestEvent } from './lib/turn-activity.mjs';
 import { bindDashboardReasoning, ensureSessionShowsReasoning } from './lib/turn-reasoning-socket.mjs';
 import { discoverLiveSessions, readIdleRowSubagents, readLiveAttachSnapshot, rosterAfterFailure, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
-import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
+import { appendUserImageAttachments, extractHistoryMediaAttachments, extractMediaTags, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { createRestFollowState, messageCountFromSessionPayload, restFollowDue, restFollowStep } from './lib/session-follow.mjs';
 import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAGE_LIMIT } from './lib/session-paging.mjs';
 import { CORS_ORIGINS_SETTING, materializeSessionRoute, restSessionCreateSource, sessionRouteError, sessionRouteOriginRefusal } from './lib/session-materialization.mjs';
 import { createUserFileAttachment, createPageContextAttachment, appendUserFileAttachments, stageUserFiles, attachmentFileContext, attachmentSourceKey, rememberUserFileAttachments, restoreUserFileAttachments, openUserFileAttachment, downloadUserFileAttachment } from './lib/user-file-attachments.mjs';
 import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactDownloadSource, resolveArtifactFileSource } from './lib/media-source.mjs';
+import { createBoundedMediaCache } from './lib/media-data-cache.mjs';
+import { planImageReveals } from './lib/image-reveal-plan.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import { artifactActionPlan, artifactFailureNotice } from './lib/artifact-actions.mjs';
 import { revealArtifactOnComputer } from './lib/artifact-folder.mjs';
@@ -20539,18 +20540,43 @@ async function resolveDashboardMediaBaseUrl() {
   });
 }
 
-// Stored images live on the Hermes machine. A gateway that advertises media_api
-// serves them over the API credential this panel already holds; older gateways
-// fall through to the Desktop dashboard route below. A miss never throws.
-async function fetchGatewayMediaDataUrl(filePath = '') {
-  if (!gatewayCapabilities.mediaRead || !settings.apiKey || !filePath) return '';
+// Stored images live on the Hermes machine. The gateway that runs the turn serves them
+// over the API credential this panel holds, so it is tried whenever that credential is
+// set, whether or not the panel has confirmed the route yet. The Desktop dashboard is
+// only a fallback. Each picture is downloaded once per gateway and path: repaints and
+// reveals reuse the cached data URL. A file the gateway cannot serve is not requested
+// again at every repaint: a missing route or file is remembered for the session, and a
+// transient failure for a short while.
+const gatewayMediaCache = createBoundedMediaCache();
+const gatewayMediaRetryAt = new Map();
+const GATEWAY_MEDIA_RETRY_MS = 10_000;
+
+function fetchGatewayMediaDataUrl(filePath = '') {
+  if (!settings.apiKey || !filePath) return Promise.resolve('');
+  const key = `${settings.gatewayUrl || ''}\n${filePath}`;
+  if (Date.now() < (gatewayMediaRetryAt.get(key) || 0)) return Promise.resolve('');
+  return gatewayMediaCache.getOrLoad(key, () => downloadGatewayMediaDataUrl(filePath, key));
+}
+
+async function downloadGatewayMediaDataUrl(filePath, key) {
+  const retryLater = (ms) => gatewayMediaRetryAt.set(key, Date.now() + ms);
   try {
     const response = await apiFetch(`/api/media?path=${encodeURIComponent(filePath)}`, { method: 'GET' });
-    if (!response.ok) return '';
+    if (!response.ok) {
+      // 404 and 405 mean the route or the file is absent, which will not change this session.
+      retryLater(response.status === 404 || response.status === 405 ? Infinity : GATEWAY_MEDIA_RETRY_MS);
+      return '';
+    }
     const payload = await readJsonResponse(response);
     const dataUrl = String(payload?.data_url || '').trim();
-    return dataUrl.startsWith('data:image/') ? dataUrl : '';
+    if (!dataUrl.startsWith('data:image/')) {
+      retryLater(GATEWAY_MEDIA_RETRY_MS);
+      return '';
+    }
+    gatewayMediaRetryAt.delete(key);
+    return dataUrl;
   } catch {
+    retryLater(GATEWAY_MEDIA_RETRY_MS);
     return '';
   }
 }
@@ -20572,7 +20598,7 @@ async function hydrateSessionMedia(messageList = []) {
     }
   }
   if (!pending.length) return;
-  if (gatewayCapabilities.mediaRead) {
+  if (settings.apiKey) {
     await Promise.all(pending.map(async (attachment) => {
       const dataUrl = await fetchGatewayMediaDataUrl(attachment.pathRef);
       if (dataUrl) attachment.dataUrl = dataUrl;
@@ -20602,7 +20628,7 @@ async function hydrateSessionMediaInElement(element) {
   if (!element?.querySelectorAll) return;
   const nodes = [...element.querySelectorAll('[data-session-media][data-media-path]')];
   if (!nodes.length) return;
-  if (gatewayCapabilities.mediaRead) {
+  if (settings.apiKey) {
     const doc = element.ownerDocument || document;
     await Promise.all(nodes.map(async (node) => {
       const filePath = node.getAttribute('data-media-path') || '';
@@ -21567,15 +21593,40 @@ function extractRenderableImageSource(content = '') {
   return String(image?.getAttribute('src') || '').trim();
 }
 
-function activeImageGenerationPlaceholder(node) {
-  return node?.querySelector('.message-tool-activity .image-gen-placeholder') || null;
+function imageGenerationPlaceholders(node) {
+  return [...(node?.querySelectorAll?.('.message-tool-activity .image-gen-placeholder') || [])];
 }
 
-// A local media path is not a browser URL. Hermes-managed paths are served by
-// the dashboard's /api/media route (as a data URL), which is how a finished
-// generation can dissolve into the real picture in the panel. Anything else
-// stays an honest filename chip: the route refuses to read outside the media
-// roots, and inventing a source would be a lie.
+function isRevealedImagePlaceholder(placeholder) {
+  return Boolean(placeholder?.querySelector('.generated-image-reveal-source'));
+}
+
+// Drops the generations that have not revealed a picture and stops their animation.
+// A picture that already revealed stays in the bubble.
+function dropUnrevealedImagePlaceholders(node) {
+  for (const placeholder of imageGenerationPlaceholders(node)) {
+    if (isRevealedImagePlaceholder(placeholder)) continue;
+    placeholder._dispose?.();
+    placeholder.remove();
+  }
+  const slot = node?.querySelector?.('.message-tool-activity');
+  if (slot && !slot.childElementCount) slot.remove();
+}
+
+// Removes the whole activity slot, revealed pictures included. Used when the reply shows
+// those same pictures inline, so no picture appears twice.
+function removeToolActivitySlot(node) {
+  const slot = node?.querySelector?.('.message-tool-activity');
+  if (!slot) return;
+  for (const placeholder of slot.querySelectorAll('.image-gen-placeholder')) placeholder._dispose?.();
+  slot.remove();
+}
+
+// A local media path is not a browser URL. Hermes-managed paths are served as
+// data URLs by the gateway's /api/media route, or by the dashboard's copy of it,
+// which is how a finished generation dissolves into the real picture in the
+// panel. Anything else stays an honest filename chip: the routes refuse to read
+// outside the media roots, and inventing a source would be a lie.
 async function resolveGeneratedImageSource(source = '') {
   const text = String(source || '').trim();
   if (!text) return '';
@@ -21583,6 +21634,11 @@ async function resolveGeneratedImageSource(source = '') {
   if (direct) return direct;
   const plan = mediaSourcePlan(text);
   if (plan.transport !== 'dashboard-media') return '';
+  // The gateway that ran the turn serves the same file, so it is tried first.
+  // The Desktop dashboard is only the fallback: a generation must still reveal
+  // when the dashboard is not running.
+  const fromGateway = await fetchGatewayMediaDataUrl(text);
+  if (fromGateway) return fromGateway;
   try {
     const baseUrl = await resolveDashboardMediaBaseUrl();
     if (!baseUrl) return '';
@@ -21678,11 +21734,28 @@ async function revealGeneratedImage(placeholder, source = '') {
   }
 }
 
-async function revealGeneratedImageFromContent(node, content = '') {
-  const placeholder = activeImageGenerationPlaceholder(node);
-  const source = extractRenderableImageSource(content);
-  if (!placeholder || !source) return false;
-  return revealGeneratedImage(placeholder, source);
+// Turn end. The pictures the reply names (MEDIA tags, or an image in its markdown) and any
+// the session recovery found go into the waiting generations in the order they started,
+// one after another, each dissolving in as it arrives. A reply that names its pictures
+// shows them inline, so once they have revealed the slot is removed rather than showing
+// each picture twice.
+async function settleTurnImages(node, { content = '', imageSources = [] } = {}) {
+  const replyText = String(content || '');
+  const named = [
+    ...extractMediaTags(replyText).media
+      .map((item) => item.source)
+      .filter((source) => classifyMediaKind(source) === 'image'),
+    extractRenderableImageSource(replyText),
+  ].filter(Boolean);
+  const handoff = named.length > 0;
+  const recovered = (Array.isArray(imageSources) ? imageSources : []).filter((source) => !named.includes(source));
+  const waiting = imageGenerationPlaceholders(node).filter((item) => !isRevealedImagePlaceholder(item));
+  const plan = planImageReveals({ pendingCount: waiting.length, sources: handoff ? named : recovered, handoff });
+  for (const { placeholderIndex, source } of plan.reveals) {
+    await revealGeneratedImage(waiting[placeholderIndex], source);
+  }
+  if (plan.cards.length) appendGeneratedImageCards(node, plan.cards);
+  if (handoff) removeToolActivitySlot(node);
 }
 
 function imageVisualSeed(activity = {}) {
@@ -21818,12 +21891,13 @@ function renderToolActivity(activity = {}) {
 
 function setToolActivity(node, activity = null) {
   if (!node) return;
-  let slot = node.querySelector('.message-tool-activity');
   if (!activity) {
-    slot?.querySelector('.image-gen-placeholder')?._dispose?.();
-    slot?.remove();
+    dropUnrevealedImagePlaceholders(node);
     return;
   }
+  // Ordinary tool calls never belong in the bubble; only image generations do.
+  if (activity.history || !/image_generate/i.test(activity.rawName || '')) return;
+  let slot = node.querySelector('.message-tool-activity');
   if (!slot) {
     slot = document.createElement('div');
     slot.className = 'message-tool-activity';
@@ -21831,44 +21905,29 @@ function setToolActivity(node, activity = null) {
     if (content?.nextSibling) node.insertBefore(slot, content.nextSibling);
     else node.appendChild(slot);
   }
-
-  const existingImage = slot.querySelector('.image-gen-placeholder');
-  const isImageGeneration = !activity.history && /image_generate/i.test(activity.rawName || '');
-  const previousImageActivity = {
-    rawName: slot.dataset.imageActivityName || '',
-    activityId: slot.dataset.imageActivityId || '',
-    status: slot.dataset.imageActivityStatus || '',
-  };
-  if (isImageGeneration && existingImage && shouldReuseImageGenerationActivity(previousImageActivity, activity)) {
-    slot.dataset.imageActivityId = activity.activityId || previousImageActivity.activityId;
-    slot.dataset.imageActivityStatus = activity.status || 'progress';
-    existingImage.dataset.toolStatus = activity.status || 'progress';
-    const completedSources = rawGeneratedImageCandidatesFromResult(activity.result);
-    if (completedSources.length) void revealGeneratedImages(node, existingImage, completedSources);
-    return;
+  // Each generation keeps its own placeholder, found by its call id. A new start never
+  // disposes another generation's card, and a finish updates only its own card.
+  const key = String(activity.activityId || '').trim();
+  const finished = /^(completed|finished|done|success|error|failed)$/i.test(String(activity.status || ''));
+  const completedSources = rawGeneratedImageCandidatesFromResult(activity.result);
+  const cards = imageGenerationPlaceholders(node);
+  let placeholder = key ? cards.find((item) => item.dataset.activityKey === key) || null : null;
+  if (!placeholder && !key && finished) {
+    // A finish without a call id belongs to the newest generation still waiting.
+    placeholder = [...cards].reverse().find((item) => !isRevealedImagePlaceholder(item)) || null;
   }
-  if (existingImage && !isImageGeneration) {
-    return;
+  if (!placeholder) {
+    // A finish for a generation this panel never saw start has nothing to show.
+    if (finished && !completedSources.length) return;
+    placeholder = renderImageGenPlaceholder({ ...activity, visualSeed: imageVisualSeed(activity) });
+    placeholder.dataset.activityKey = key;
+    slot.appendChild(placeholder);
+    placeholder._start?.();
   }
-
-  let nextActivity = activity;
-  if (isImageGeneration) {
-    nextActivity = { ...activity, visualSeed: imageVisualSeed(activity) };
-    slot.dataset.imageActivityName = activity.rawName || 'image_generate';
-    slot.dataset.imageActivityId = activity.activityId || '';
-    slot.dataset.imageActivityStatus = activity.status || 'progress';
-  } else {
-    delete slot.dataset.imageActivityName;
-    delete slot.dataset.imageActivityId;
-    delete slot.dataset.imageActivityStatus;
+  placeholder.dataset.toolStatus = activity.status || 'progress';
+  if (completedSources.length && !isRevealedImagePlaceholder(placeholder)) {
+    void revealGeneratedImages(node, placeholder, completedSources);
   }
-
-  existingImage?._dispose?.();
-  const toolActivity = renderToolActivity(nextActivity);
-  slot.replaceChildren(toolActivity);
-  toolActivity._start?.();
-  const completedSources = isImageGeneration ? rawGeneratedImageCandidatesFromResult(activity.result) : [];
-  if (completedSources.length) void revealGeneratedImages(node, toolActivity, completedSources);
   scrollMessageStreamToBottom();
 }
 
@@ -22607,12 +22666,13 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
   }
   let pending = '';
   let activity = null;
+  // Generations this turn started or finished, by call id, so a rebind puts all of them back.
+  const imageActivities = new Map();
   let calls = [];
   let toolHost = null;
   let toolScrollTop = 0;
   let running = true;
   let frame = 0;
-  let revealPromise = null;
   let reasoning = emptyTurnReasoning();
   let reasoningFrame = 0;
   // Ticks the turn's elapsed time beside the tool count while tools are shown.
@@ -22639,18 +22699,10 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
       cancelAnimationFrame(frame);
       frame = 0;
     }
-    const existingImage = activeImageGenerationPlaceholder(node);
-    const imageSource = extractRenderableImageSource(pending);
-    const recoveryImageSource = imageSource || imageSources[0] || '';
-    if (imageSources.length > 1) appendGeneratedImageCards(node, imageSources.slice(1));
-    if (existingImage && recoveryImageSource) {
-      revealPromise ||= imageSource
-        ? revealGeneratedImageFromContent(node, pending)
-        : revealGeneratedImage(existingImage, recoveryImageSource);
-      await revealPromise;
-    }
-    const renderedRecoveredImage = Boolean(existingImage?.querySelector('.generated-image-reveal-source'));
-    if (!renderedRecoveredImage || imageSource) setToolActivity(node, null);
+    // Every picture the turn names goes into its generation, then the reply takes over.
+    await settleTurnImages(node, { content: pending, imageSources });
+    // Drops the generations that never produced a picture; revealed pictures stay.
+    setToolActivity(node, null);
     node.hermesStreaming = false;
     setMessageContent(node, pending);
     const row = node.closest('.message-row');
@@ -22738,15 +22790,23 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     reasoning = next;
     if (!reasoningFrame) reasoningFrame = requestAnimationFrame(paintReasoning);
   }
+  function rememberImageActivity(tool) {
+    const key = String(tool?.activityId || '').trim();
+    if (!key) return;
+    imageActivities.set(key, { ...(imageActivities.get(key) || {}), ...tool });
+  }
   function updateTool(tool = null) {
     activity = tool;
     // A new tool starts a new paragraph of reasoning.
     if (tool && !/^(completed|failed|done|error)$/i.test(String(tool.status || ''))) reasoning = reduceTurnReasoning(reasoning, { kind: 'boundary' });
     if (tool) calls = mergeToolCallActivity(calls, tool);
     renderCalls();
-    // Keep the generated-image preview, but ordinary tool calls belong in
-    // the disclosure outside the assistant bubble.
-    setToolActivity(node, /image_generate/i.test(tool?.rawName || '') ? tool : null);
+    // Only a generated picture keeps a place in the bubble. Ordinary tool calls belong in the
+    // disclosure outside it and must not disturb the pictures already waiting there.
+    if (/image_generate/i.test(tool?.rawName || '')) {
+      rememberImageActivity(tool);
+      setToolActivity(node, tool);
+    }
   }
   function rebind(nextNode) {
     if (node !== nextNode) {
@@ -22760,7 +22820,8 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     paintStream();
     renderCalls();
     paintReasoning();
-    setToolActivity(node, /image_generate/i.test(activity?.rawName || '') ? activity : null);
+    // Put every generation of this turn back on the new bubble, not only the latest.
+    for (const tool of imageActivities.values()) setToolActivity(node, tool);
   }
   function dispose() {
     // Terminal error paths never flush; stop the diffusion canvas and drop the

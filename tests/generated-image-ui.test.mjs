@@ -25,8 +25,8 @@ test('side-panel user image attachments render inside the sent user message', ()
 });
 
 test('generated image result is handed to the existing animation before final inline rendering', () => {
-  assert.match(sidepanelSource, /revealGeneratedImageFromContent/);
-  assert.match(sidepanelSource, /activeImageGenerationPlaceholder/);
+  assert.match(sidepanelSource, /settleTurnImages/);
+  assert.match(sidepanelSource, /imageGenerationPlaceholders/);
   assert.match(sidepanelSource, /extractRenderableImageSource/);
   assert.match(sidepanelSource, /placeholder\._reveal/);
   assert.match(sidepanelSource, /generated-image-revealing/);
@@ -35,13 +35,14 @@ test('generated image result is handed to the existing animation before final in
   assert.match(cssSource, /\.image-gen-placeholder\.generated-image-revealing/);
 });
 
-test('follow-up non-image tool events preserve an active image placeholder until its final reveal', () => {
+test('ordinary tool events never touch the image placeholders, and the turn settles them once', () => {
   assert.match(
     sidepanelSource,
-    /if \(existingImage && !isImageGeneration\) \{\s*return;\s*\}/s,
+    /if \(\/image_generate\/i\.test\(tool\?\.rawName \|\| ''\)\) \{\s*rememberImageActivity\(tool\);\s*setToolActivity\(node, tool\);\s*\}/,
   );
-  assert.match(sidepanelSource, /existingImage\?\._dispose\?\.\(\);/);
-  assert.match(sidepanelSource, /await revealPromise;/);
+  assert.match(sidepanelSource, /await settleTurnImages\(node, \{ content: pending, imageSources \}\);/);
+  assert.match(sidepanelSource, /setToolActivity\(node, null\);\s*node\.hermesStreaming = false;/);
+  assert.match(sidepanelSource, /function dropUnrevealedImagePlaceholders/);
 });
 
 test('placeholder and final image support landscape square portrait and natural dimensions', () => {

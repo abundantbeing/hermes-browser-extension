@@ -141,7 +141,8 @@ test('sidepanel uses one persistent seeded diffusion placeholder per image call'
 
   assert.match(source, /createDiffusionCanvas/);
   assert.match(source, /diffusionVariantForSeed/);
-  assert.match(source, /shouldReuseImageGenerationActivity/);
+  assert.match(source, /imageGenerationPlaceholders/);
+  assert.match(source, /placeholder\.dataset\.activityKey = key;/);
   assert.match(source, /imageVisualSeed/);
   assert.match(source, /crypto\?\.getRandomValues|crypto\.getRandomValues/);
   assert.doesNotMatch(source, /if \(activity\.activityId\) return String\(activity\.activityId\)/);
@@ -157,5 +158,5 @@ test('sidepanel uses one persistent seeded diffusion placeholder per image call'
   assert.match(source, /RESOLVING/);
   assert.match(source, /FINALIZING/);
   assert.match(source, /root\._dispose/);
-  assert.match(source, /slot\?\.querySelector\('\.image-gen-placeholder'\)\?\._dispose\?\./);
+  assert.match(source, /placeholder\._dispose\?\.\(\);/);
 });
