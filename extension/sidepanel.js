@@ -20603,6 +20603,14 @@ async function hydrateSessionMedia(messageList = []) {
   }));
 }
 
+// A loaded picture or player takes over the source the placeholder was painted from, so the
+// next paint of the same reply sees that block unchanged and keeps it. Without it, the patch
+// pours the placeholder's markup back into the picture's own element.
+function replaceHydratedMediaNode(node, replacement) {
+  if (node.hermesSourceHtml !== undefined) replacement.hermesSourceHtml = node.hermesSourceHtml;
+  node.replaceWith(replacement);
+}
+
 async function hydrateSessionMediaInElement(element) {
   if (!element?.querySelectorAll) return;
   const nodes = [...element.querySelectorAll('[data-session-media][data-media-path]')];
@@ -20624,7 +20632,7 @@ async function hydrateSessionMediaInElement(element) {
       image.loading = 'lazy';
       image.dataset.slot = 'aui_generated-image';
       figure.append(image);
-      node.replaceWith(figure);
+      replaceHydratedMediaNode(node, figure);
       wrapGeneratedImagesForInspection(figure.parentElement || figure);
     }));
     if (!element.querySelectorAll('[data-session-media][data-media-path]').length) return;
@@ -20663,7 +20671,7 @@ async function hydrateSessionMediaInElement(element) {
       image.loading = 'lazy';
       image.dataset.slot = 'aui_generated-image';
       figure.append(image);
-      node.replaceWith(figure);
+      replaceHydratedMediaNode(node, figure);
       wrapGeneratedImagesForInspection(figure.parentElement || figure);
       return;
     }
@@ -20690,7 +20698,7 @@ async function hydrateSessionMediaInElement(element) {
         node.classList.add('unavailable');
         if (video.isConnected) video.replaceWith(node);
       }, { once: true });
-      node.replaceWith(video);
+      replaceHydratedMediaNode(node, video);
     }
   }));
 }

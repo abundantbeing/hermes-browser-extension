@@ -67,7 +67,7 @@ test('every picture from one tool call gets a card, not just the first', () => {
 test('hydrated and generated pictures share the same inspect affordance', () => {
   assert.match(sidepanelSource, /function wrapGeneratedImagesForInspection\(root\)/);
   assert.match(sidepanelSource, /wrapGeneratedImagesForInspection\(element\);\s*\n\s*void hydrateSessionMediaInElement\(element\);/);
-  assert.match(sidepanelSource, /node\.replaceWith\(figure\);\s*\n\s*wrapGeneratedImagesForInspection\(figure\.parentElement \|\| figure\);/);
+  assert.match(sidepanelSource, /replaceHydratedMediaNode\(node, figure\);\s*\n\s*wrapGeneratedImagesForInspection\(figure\.parentElement \|\| figure\);/);
 });
 
 test('extra generated-image cards dissolve in and respect reduced motion', () => {
