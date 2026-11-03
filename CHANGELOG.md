@@ -6,6 +6,10 @@
 
 - **Bot Mode loads your bots and their pictures from the extension's Hermes plugin.** When the gateway has no roster routes of its own (stock Hermes serves no `GET /v1/profiles`), the panel now asks the `hermes-browser-extension` plugin, installed as described in `companion-plugin/install.md`, for each bot's title, shape, colour and picture, with the same API key, instead of listing names only. The plugin answers only for the bots that gateway serves and never returns paths or other plugins' data. Hermes needs one restart after you install or update the plugin so its routes exist; until then Bot Mode lists the bots by name, as before.
 
+### Changed
+
+- **The Hermes plugin's `tab_*` Hermes Control tools stay in Hermes' tool list for the whole chat.** They used to appear only while a browser was attached, so attaching or detaching one changed the tool list mid-chat and broke Hermes' prompt caching, which costs more on every later turn. They still act only in the browser attached to that chat: with none attached, a call answers that no browser is connected and Hermes says so. On a Hermes that carries Hermes Control itself (0.22.5 and earlier) with it switched on, the extension uses that, and the plugin no longer registers its `tab_*` tools there at all. Update the plugin for each profile and restart the gateway once.
+
 ### Fixed
 
 - A clean checkout or contributor build no longer renders the signature profile with HermesDisplay instead of **Rules Gothic Compressed**. The Rules `woff2` files from the v0.4.0 release are in the repository, and Chromium and Firefox builds fail if any CSS-referenced font file is missing.

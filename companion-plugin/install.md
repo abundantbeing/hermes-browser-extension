@@ -311,6 +311,8 @@ GET  /api/plugins/hermes-browser-extension/control/ws   (WebSocket; the ticket r
   and the other `browser_*` names, and Hermes refuses a second plugin's tool under
   a name already taken, so these tools have their own names. A Hermes that still
   carries extension control itself (0.22.5 and earlier) offers its own `browser_*`
-  control tools; the extension then attaches to that, and these stay hidden.
+  control tools. Where that control is switched on (`browser.extension_control.enabled`),
+  the extension attaches to it, and the plugin does not register these tools at all;
+  that is decided once when the gateway loads the plugin.
 - The routes exist only after the gateway restarts with the plugin enabled, and not
   under `plugins.isolation: host`. The Cloud and dashboard transport is not covered.
