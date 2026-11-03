@@ -165,6 +165,23 @@ for (const [name, url, left, top] of [
   });
 }
 
+// The Webapp (hermes webapp) is served at its own origin's root and names its tab after the open chat.
+for (const title of ['Hermes', 'Fix the flaky test · Hermes', '● Fix the flaky test · Hermes', '(2) ⚠ Plan the launch — work · Hermes']) {
+  test(`Hermes Webapp at its own origin (tab "${title}"): before the model picker, never on it`, async () => {
+    const env = boot('hermes-web.html', 'http://127.0.0.1:9120/#/');
+    env.w.document.title = title;
+    const launcher = await focusedLauncher(env);
+    assert.equal(launcher.dataset.placement, 'before');
+    assert.equal(launcher.style.left, '568px');
+    assert.equal(launcher.style.top, '636px');
+  });
+}
+
+test('a page that is not Hermes but has a tour marker is not taken for the Webapp', () => {
+  const document = withBoxes(parseHTML(`<!doctype html><html><head><title>Docs · Acme</title></head><body>${fixture('hermes-web.html')}</body></html>`).document);
+  assert.equal(inspectInlineSite(document, fieldIn(document), { url: 'https://acme.example/#/' }).placement.slot, null);
+});
+
 test('Gmail: just after More options, covering none of the writing tools', async () => {
   const launcher = await focusedLauncher(boot('gmail.html', 'https://mail.google.com/mail/u/0/#inbox?compose=new'));
   assert.equal(launcher.dataset.placement, 'after');
@@ -257,6 +274,7 @@ for (const [name, url] of [
   ...SITES,
   ['x-reply-modal.html', 'https://x.com/compose/post'],
   ['generic.html', 'https://forum.example/new'],
+  ['generic-button.html', 'https://forum.example/new'],
 ]) {
   test(`${name}: the circle covers none of the site's controls`, async () => {
     const env = boot(name, url);

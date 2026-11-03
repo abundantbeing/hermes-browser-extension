@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 c20dbcf87a58d2cb */
+/* extension/lib/site-adapters.mjs · SHA-256 602c050e5abf1b0b */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1793,9 +1793,23 @@ function toolRowEndSlot(target, { gap = 12 } = {}) {
 const CHAT_COMPOSER_SITES = new Set(['chatgpt', 'claude', 'perplexity', 'grok']);
 
 // Hermes Web, the web app a Hermes gateway serves: its composer is a chat composer as well.
+// The site's own controls around the field, which no placement may cover (the generic corner rule
+// included): those in the nearest box above the field that has any.
+function controlsAroundField(target, anchor) {
+  let node = (anchor || target)?.parentElement || null;
+  for (let depth = 0; node && depth < 4; depth += 1, node = node.parentElement) {
+    if (node === target?.ownerDocument?.body) break;
+    const controls = Array.from(node.querySelectorAll?.('button, [role="button"], a[aria-label], select, [role="progressbar"]') || [])
+      .filter((element) => element !== target && !target?.contains?.(element) && !element.contains?.(target));
+    if (controls.length) return controls.slice(0, 40);
+  }
+  return [];
+}
+
+// The Webapp on its own origin names its tab after the open chat ("● Fix the flaky test · Hermes").
 function isHermesWeb(document, url) {
   if (/^\/webapp(\/|$)/.test(url?.pathname || '')) return true;
-  return String(document?.title || '').trim() === 'Hermes' && Boolean(document?.querySelector?.('[data-tour]'));
+  return /(?:^|\s·\s)Hermes(?: HUD)?$/.test(String(document?.title || '').trim()) && Boolean(document?.querySelector?.('[data-tour]'));
 }
 
 // The site slot: one of the composer's own controls that the Assist circle sits beside, so it lands in a
@@ -1974,7 +1988,7 @@ function inspectInlineSite(document, target, options = {}) {
   const obstacleElements = adapterId === 'chatgpt'
     ? Array.from(anchorElement?.querySelectorAll?.('button, [role="button"], select') || [])
       .filter((element) => element !== target && !target?.contains?.(element))
-    : [];
+    : controlsAroundField(target, anchorElement);
   const warning = adapterId === 'protonmail'
     ? 'Visible decrypted mail may be sent to your selected Hermes model.'
     : privateSurface
