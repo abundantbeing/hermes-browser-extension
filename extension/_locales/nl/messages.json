@@ -4179,9 +4179,33 @@
     "message": "Eén keer gevraagd, daarna onthouden",
     "description": "Runtime interface message ui.asked.once.then.remembered"
   },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} werkt met wat al in het veld staat. Typ eerst iets, of kies een conceptactie om vanaf nul te beginnen.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "Je kunt dit altijd wijzigen in Instellingen → Hermes Assist.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes kon dit concept niet maken.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist kon niet worden uitgevoerd",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "Laden…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "Modelroutering",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "Nog geen modellen. Open het zijpaneel één keer zodat Hermes ze kan tonen.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Hulpopties",
@@ -4190,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Assistentiesessiegeschiedenis",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "Strikte standaard · geen zichtbare gesprekscontext van {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "Alleen het actieve concept gebruiken",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "Deze keuze de volgende keer gebruiken",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "Zichtbare context van {site} gebruiken",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Wat moet Hermes doen op {site}?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Wat moet Hermes doen op deze site?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "Assistent",

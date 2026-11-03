@@ -4179,9 +4179,33 @@
     "message": "只询问一次，之后记住",
     "description": "Runtime interface message ui.asked.once.then.remembered"
   },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} 作用于输入框中已有的内容。请先输入一些内容，或选择一个起草操作从头开始。",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "你可以随时在 设置 → Hermes Assist 中更改。",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes 无法创建此草稿。",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist 无法运行",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "正在加载…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "模型路由",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "还没有模型。请打开一次侧边栏，让 Hermes 列出它们。",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Assist 选项",
@@ -4190,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Assist 会话历史",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "严格默认 · 不使用可见的 {site} 对话上下文",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "仅使用当前聚焦的草稿",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "下次使用这个选择",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "使用可见的 {site} 上下文",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Hermes 应该在 {site} 上做什么？",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Hermes 应该在此网站上做什么？",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "助手",

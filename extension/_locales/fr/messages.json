@@ -4179,9 +4179,33 @@
     "message": "Demandé une fois, puis mémorisé",
     "description": "Runtime interface message ui.asked.once.then.remembered"
   },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} agit sur ce qui se trouve déjà dans le champ. Écrivez d’abord quelque chose, ou choisissez une action de brouillon pour partir de zéro.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "Vous pouvez le changer à tout moment dans Paramètres → Hermes Assist.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes n’a pas pu créer ce brouillon.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "L'assistance n'a pas pu fonctionner",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "Chargement…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "Routage du modèle",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "Aucun modèle pour l’instant. Ouvrez le panneau latéral une fois pour que Hermes puisse les lister.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Options d'assistance",
@@ -4190,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Historique des sessions d'assistance",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "Par défaut strict · aucun contexte de conversation visible de {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "Utiliser uniquement le brouillon actif",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "Utiliser ce choix la prochaine fois",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "Utiliser le contexte visible de {site}",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Que doit faire Hermes sur {site} ?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Que doit faire Hermes sur ce site ?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "Assistant",

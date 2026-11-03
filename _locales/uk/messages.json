@@ -4179,9 +4179,33 @@
     "message": "Запитується один раз, потім запам’ятовується",
     "description": "Runtime interface message ui.asked.once.then.remembered"
   },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} працює з тим, що вже є в полі. Спершу щось напишіть або виберіть дію чернетки, щоб почати з нуля.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "Це можна змінити будь-коли в Налаштування → Hermes Assist.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes не зміг створити цю чернетку.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist не міг запуститися",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "Завантаження…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "Маршрутизація моделі",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "Моделей ще немає. Відкрийте бічну панель один раз, щоб Hermes міг їх показати.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Параметри допомоги",
@@ -4190,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Історія сеансу допомоги",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "Суворий типовий режим · без видимого контексту розмови {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "Використовувати лише поточну чернетку",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "Використати цей вибір наступного разу",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "Використовувати видимий контекст {site}",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Що Hermes має зробити на {site}?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Що Hermes має зробити на цьому сайті?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "помічник",

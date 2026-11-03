@@ -4179,9 +4179,33 @@
     "message": "Spørges én gang, huskes derefter",
     "description": "Runtime interface message ui.asked.once.then.remembered"
   },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} virker på det, der allerede står i feltet. Skriv noget først, eller vælg en udkast-handling for at starte fra bunden.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "Du kan altid ændre det i Indstillinger → Hermes Assist.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes kunne ikke lave dette udkast.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist kunne ikke køre",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "Indlæser…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "Modelrouting",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "Ingen modeller endnu. Åbn sidepanelet én gang, så Hermes kan vise dem.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Assist muligheder",
@@ -4190,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Assist sessionshistorik",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "Streng standard · ingen synlig samtalekontekst fra {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "Brug kun det fokuserede udkast",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "Brug dette valg næste gang",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "Brug synlig kontekst fra {site}",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Hvad skal Hermes gøre på {site}?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Hvad skal Hermes gøre på dette websted?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "Assistent",

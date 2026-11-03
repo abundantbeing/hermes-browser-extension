@@ -4179,9 +4179,33 @@
     "message": "يُسأل مرة واحدة ثم يُحفظ",
     "description": "Runtime interface message ui.asked.once.then.remembered"
   },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "يعمل {action} على ما هو موجود في الحقل بالفعل. اكتب شيئًا أولًا، أو اختر إجراء صياغة للبدء من لا شيء.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "يمكنك تغييره في أي وقت من الإعدادات ← Hermes Assist.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "تعذّر على Hermes إنشاء هذه المسودة.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "تعذر تشغيل Assist",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "جارٍ التحميل…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "توجيه النموذج",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "لا توجد نماذج بعد. افتح اللوحة الجانبية مرة واحدة حتى يتمكن Hermes من عرضها.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "خيارات Assist",
@@ -4190,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "سجل جلسات Assist",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "الإعداد الافتراضي الصارم · بلا سياق محادثة ظاهر من {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "استخدام المسودة المحددة فقط",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "استخدام هذا الاختيار في المرة القادمة",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "استخدام سياق {site} الظاهر",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "ماذا يجب أن يفعل Hermes على {site}؟",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "ماذا يجب أن يفعل Hermes على هذا الموقع؟",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "مساعد",

@@ -4179,9 +4179,33 @@
     "message": "ถามครั้งเดียว แล้วจำไว้",
     "description": "Runtime interface message ui.asked.once.then.remembered"
   },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} ใช้กับข้อความที่มีอยู่ในช่องแล้ว พิมพ์อะไรสักอย่างก่อน หรือเลือกการร่างเพื่อเริ่มจากศูนย์",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "คุณเปลี่ยนได้ทุกเมื่อที่ การตั้งค่า → Hermes Assist",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes สร้างฉบับร่างนี้ไม่ได้",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "ไม่สามารถเรียกใช้ Assist ได้",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "กำลังโหลด…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "การกำหนดเส้นทางโมเดล",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "ยังไม่มีโมเดล เปิดแผงด้านข้างหนึ่งครั้งเพื่อให้ Hermes แสดงรายการได้",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "ตัวเลือก Assist",
@@ -4190,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "ประวัติเซสชัน Assist",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "ค่าเริ่มต้นแบบเข้มงวด · ไม่ใช้บริบทการสนทนาที่มองเห็นของ {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "ใช้เฉพาะฉบับร่างที่โฟกัสอยู่",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "ใช้ตัวเลือกนี้ในครั้งถัดไป",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "ใช้บริบทที่มองเห็นของ {site}",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Hermes ควรทำอะไรบน {site}?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Hermes ควรทำอะไรบนเว็บไซต์นี้?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "ผู้ช่วย",

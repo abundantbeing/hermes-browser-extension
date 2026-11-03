@@ -1513,16 +1513,16 @@
       const contextSetting = make('label', 'setting');
       const contextCopy = make('span');
       const contextTitle = usesVisibleContext
-        ? `Use visible ${String(profile.surface || 'page').replace(/-/g, ' ')} context`
+        ? translateUiText('Use visible {site} context').replace('{site}', String(profile.surface || 'page').replace(/-/g, ' '))
         : 'Use focused draft only';
       const contextDescription = usesVisibleContext
         ? contextSummary(context, profile.label)
-        : `Strict default · no visible ${profile.label} conversation context`;
+        : translateUiText('Strict default · no visible {site} conversation context').replace('{site}', profile.label);
       contextCopy.append(make('strong', '', contextTitle), make('br'), make('small', '', contextDescription));
       const contextToggle = make('input', 'toggle');
       contextToggle.type = 'checkbox';
       contextToggle.checked = usesVisibleContext;
-      contextToggle.setAttribute('aria-label', translateUiText(`Use visible ${profile.label} context`));
+      contextToggle.setAttribute('aria-label', translateUiText('Use visible {site} context').replace('{site}', profile.label));
       contextToggle.addEventListener('change', trustedOnly(() => {
         void persistSiteContextMode(profile.adapterId, contextToggle.checked ? 'visible' : 'draft');
       }));
@@ -1532,7 +1532,7 @@
       if (usesVisibleContext && profile.contextPolicy.warning) nodes.push(make('p', 'privacy', profile.contextPolicy.warning));
     }
 
-    const label = make('span', 'section-label', `What should Hermes do on ${profile?.label || 'this site'}?`);
+    const label = make('span', 'section-label', profile?.label ? translateUiText('What should Hermes do on {site}?').replace('{site}', profile.label) : 'What should Hermes do on this site?');
     const actionsNode = make('div', 'actions');
     // Up to four actions in the grid; the rest wait behind More actions.
     const actionButtons = pageActions().map((action, index) => {
@@ -1712,7 +1712,7 @@
     if (!built.ok) {
       if (built.reason === 'sensitive-content') return renderFailure('Hermes blocked this field because it appears to contain sensitive content.');
       // Improve, Shorten, Fix grammar and Change tone rewrite the field's text; only the Draft actions start from nothing.
-      if (built.reason === 'empty-draft') return renderFailure(`${translateUiText(action.label)} works on what is already in the field. Type something first, or pick a Draft action to start from nothing.`);
+      if (built.reason === 'empty-draft') return renderFailure(translateUiText('{action} works on what is already in the field. Type something first, or pick a Draft action to start from nothing.').replace('{action}', translateUiText(action.label)));
       return renderFailure('This field is not eligible for inline drafting.');
     }
     pending = { ...built.request, applyMode: supportsSafeApply ? 'safe-apply' : 'copy-only' };
@@ -1867,7 +1867,7 @@
       : (fieldChanged ? 'The field changed while Hermes worked, so automatic replacement was blocked.' : 'Review the result before applying it.'));
     card.append(row, title, copy);
     if (resultModelNotice) {
-      const routingNotice = make('p', 'privacy', `Model routing · ${resultModelNotice}`);
+      const routingNotice = makeRaw('p', 'privacy', `${translateUiText('Model routing')} · ${resultModelNotice}`);
       routingNotice.setAttribute('role', 'status');
       card.append(routingNotice);
     }

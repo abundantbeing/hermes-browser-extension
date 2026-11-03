@@ -4179,9 +4179,33 @@
     "message": "एक बार पूछा जाता है, फिर याद रखा जाता है",
     "description": "Runtime interface message ui.asked.once.then.remembered"
   },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} फ़ील्ड में पहले से मौजूद टेक्स्ट पर काम करता है। पहले कुछ लिखें, या शुरू से लिखने के लिए कोई ड्राफ़्ट कार्रवाई चुनें।",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "आप इसे कभी भी सेटिंग्स → Hermes Assist में बदल सकते हैं।",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes यह ड्राफ़्ट नहीं बना सका।",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist नहीं चल सका",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "लोड हो रहा है…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "मॉडल रूटिंग",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "अभी कोई मॉडल नहीं। साइड पैनल एक बार खोलें ताकि Hermes उन्हें दिखा सके।",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "सहायता विकल्प",
@@ -4190,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "सहायता सत्र इतिहास",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "सख्त डिफ़ॉल्ट · {site} की बातचीत का कोई दिखाई देने वाला संदर्भ नहीं",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "केवल फ़ोकस किया गया ड्राफ़्ट इस्तेमाल करें",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "अगली बार यही विकल्प इस्तेमाल करें",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "{site} का दिखाई देने वाला संदर्भ इस्तेमाल करें",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Hermes को {site} पर क्या करना चाहिए?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Hermes को इस साइट पर क्या करना चाहिए?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "सहायक",
