@@ -284,16 +284,25 @@
     .quick-back { display:flex; align-items:center; gap:8px; width:100%; padding:9px 12px; border:0; border-bottom:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); cursor:pointer; text-align:left; font-family:var(--hb-font-display); font-size:calc(17px * var(--hermes-text-zoom, 1) * var(--hb-display-scale, 1)); }
     .quick-opt { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--hb-line); color:var(--hb-blue); font-size:calc(12px * var(--hermes-text-zoom, 1)); }
     .quick-opt small { display:block; color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
-    .bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:8px 10px; color:var(--hb-blue); font-size:calc(12px * var(--hermes-text-zoom, 1)); }
-    .bar-title { font-weight:700; }
-    .bar-note { width:100%; margin:0; color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
-    .bar-head { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; }
-    .bar-return { display:inline-flex; align-items:center; gap:5px; padding:2px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); white-space:nowrap; }
+    .bar { display:grid; color:var(--hb-blue); font-size:calc(12px * var(--hermes-text-zoom, 1)); }
+    .bar-head { display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--hb-line); }
+    .bar-name { display:flex; align-items:center; gap:8px; min-width:0; }
+    .bar-mark { flex:none; width:16px; height:16px; background:var(--hb-blue); mask-position:center; mask-size:contain; mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; }
+    .bar-mark[data-icon="girl"] { width:18px; height:18px; border-radius:50%; mask-size:cover; -webkit-mask-size:cover; }
+    .bar-title { font-weight:700; font-size:calc(13px * var(--hermes-text-zoom, 1)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .bar-return { display:inline-flex; align-items:center; gap:5px; margin-left:auto; padding:2px 0; border:0; background:transparent; color:var(--hb-muted); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); white-space:nowrap; }
     .bar-return:hover, .bar-return:focus-visible { color:var(--hb-blue); outline:none; text-decoration:underline; }
-    .bar-preview { width:100%; max-height:4.6em; overflow:hidden; white-space:pre-wrap; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; color:var(--hb-blue); }
-    .bar-actions { display:flex; flex-wrap:wrap; gap:6px; margin-left:auto; }
-    .bar-actions button { padding:4px 9px; border:1px solid var(--hb-line); background:transparent; color:var(--hb-blue); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1.3 var(--hb-font-ui); }
-    .bar-actions button.main { border-color:var(--hb-blue); background:var(--hb-blue); color:var(--hb-paper); }
+    .bar-note { margin:0; padding:8px 12px 0; color:var(--hb-muted); font-size:calc(10.5px * var(--hermes-text-zoom, 1)); }
+    .bar-preview { margin:0; padding:9px 12px 0; max-height:calc(4.6em + 9px); overflow:hidden; white-space:pre-wrap; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; color:var(--hb-blue); }
+    .bar-actions { display:grid; gap:8px; padding:10px 12px 12px; }
+    .bar-main { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .bar-main button { height:32px; padding:0 10px; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font:700 calc(12px * var(--hermes-text-zoom, 1))/1 var(--hb-font-ui); }
+    .bar-main button.main { border-color:var(--hb-blue); background:var(--hb-blue); color:var(--hb-paper); }
+    .bar-tools { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); border:1px solid var(--hb-line); }
+    .bar-tools button { height:28px; min-width:0; padding:0 4px; border:0; border-left:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font:600 calc(11px * var(--hermes-text-zoom, 1))/1 var(--hb-font-ui); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .bar-tools button:first-child { border-left:0; }
+    .bar-main button:hover, .bar-main button:focus-visible, .bar-tools button:hover, .bar-tools button:focus-visible { outline:none; background:var(--hb-soft); }
+    .bar-main button.main:hover, .bar-main button.main:focus-visible { background:var(--hb-blue); box-shadow:inset 0 0 0 2px var(--hb-paper); }
     .bar-actions button:disabled { opacity:.45; cursor:not-allowed; }
     @media (max-width:520px) { .panel { width:calc(100vw - 16px); } }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; animation:none!important; } }
@@ -1454,28 +1463,22 @@
       panel.dataset.mode = 'full';
       renderResult({ fieldChanged });
     }));
-    head.append(make('strong', 'bar-title', appliedAutomatically ? 'Draft in place' : (fieldChanged ? 'Field changed · review required' : 'Draft ready')), toFull);
+    head.append(barTitle(appliedAutomatically ? 'Draft in place' : (fieldChanged ? 'Field changed · review required' : 'Draft ready')), toFull);
     bar.append(head);
     if (resultModelNotice) bar.append(makeRaw('p', 'bar-note', `${translateUiText('Model routing')} · ${resultModelNotice}`));
     if (resultContextWithheld) bar.append(make('p', 'bar-note', 'Written without the page: page context is off for this connection.'));
     if (!appliedAutomatically) bar.append(makeRaw('div', 'bar-preview', resultText || translateUiText('(empty draft)')));
+    // The decision first, as one pair (Undo, then Keep filled); the ways to change the draft after it, as one
+    // joined strip of equal cells, so neither row ever leaves a hole.
     const actions = make('div', 'bar-actions');
-    const add = (label, handler, { main = false, disabled = false } = {}) => {
+    const decide = make('div', 'bar-main');
+    const tools = make('div', 'bar-tools');
+    const add = (row, label, handler, { main = false, disabled = false } = {}) => {
       const item = button(main ? 'main' : '', label);
       item.disabled = disabled;
       item.addEventListener('click', trustedOnly(handler));
-      actions.appendChild(item);
+      row.appendChild(item);
     };
-    if (appliedAutomatically) {
-      add('Keep', () => {
-        hidePanel();
-        pending = null;
-        resetResult();
-      }, { main: true });
-      add('Undo', undoResult, { disabled: !applyReceipt });
-    } else {
-      add('Copy', copyResult, { main: true });
-    }
     // Again, Shorter and Longer run as from the quick menu: the bar steps aside while Hermes works, and the
     // chooser's Back comes back to this bar.
     const rerun = (run) => () => {
@@ -1483,20 +1486,46 @@
       panel.dataset.mode = 'quick';
       run({ back });
     };
-    add('Again', rerun(tryAgain), { disabled: !lastRunAction });
-    if (applyReceipt) {
-      add('Shorter', rerun(makeShorter));
-      add('Longer', rerun(makeLonger));
+    if (appliedAutomatically) {
+      add(decide, 'Undo', undoResult, { disabled: !applyReceipt });
+      add(decide, 'Keep', () => {
+        hidePanel();
+        pending = null;
+        resetResult();
+      }, { main: true });
+      add(tools, 'Again', rerun(tryAgain), { disabled: !lastRunAction });
+    } else {
+      add(decide, 'Again', rerun(tryAgain), { disabled: !lastRunAction });
+      add(decide, 'Copy', copyResult, { main: true });
     }
-    if (appliedAutomatically) add('Copy', copyResult);
+    if (applyReceipt) {
+      add(tools, 'Shorter', rerun(makeShorter));
+      add(tools, 'Longer', rerun(makeLonger));
+    }
+    if (appliedAutomatically) add(tools, 'Copy', copyResult);
     if (resultSessionId) {
-      add('Open session', () => {
+      add(tools, 'Open session', () => {
         panel.dataset.mode = 'full';
         renderOpenSessionChoices();
       });
     }
+    actions.append(decide);
+    if (tools.childElementCount) actions.append(tools);
     bar.append(actions);
     setBody(bar);
+  }
+
+  // The bar's title line: the circle's own icon (Settings → Hermes Assist → Button icon) beside what
+  // happened, drawn in the panel's ink, so its light or dark version follows the panel, not the page.
+  function barTitle(text) {
+    const title = make('span', 'bar-name');
+    const mark = make('span', 'bar-mark');
+    mark.setAttribute('aria-hidden', 'true');
+    const icon = look?.normalizeInlineAssistIcon?.(assistSettings.inlineAssistIcon) || 'wing';
+    mark.dataset.icon = icon;
+    maskWith(mark, look?.inlineAssistIconAsset?.(icon, host.dataset.mode === 'dark' ? 'dark' : 'light') || 'assets/img/assist-wing.png');
+    title.append(mark, make('strong', 'bar-title', text));
+    return title;
   }
 
   function renderAssist() {
@@ -1761,16 +1790,20 @@
     panel.dataset.mode = 'bar';
     panel.hidden = false;
     const bar = make('div', 'bar');
-    bar.append(make('strong', 'bar-title', 'Assist could not run'), make('div', 'bar-preview', reason || 'Hermes could not create this draft.'));
+    const head = make('div', 'bar-head');
+    head.append(barTitle('Assist could not run'));
+    bar.append(head, make('div', 'bar-preview', reason || 'Hermes could not create this draft.'));
     const actions = make('div', 'bar-actions');
+    const decide = make('div', 'bar-main');
+    const dismiss = button('', 'Close');
+    dismiss.addEventListener('click', trustedOnly(hidePanel));
     const again = button('main', 'Try again');
     again.addEventListener('click', trustedOnly(() => {
       panel.dataset.mode = 'quick';
       tryAgain();
     }));
-    const dismiss = button('', 'Close');
-    dismiss.addEventListener('click', trustedOnly(hidePanel));
-    actions.append(again, dismiss);
+    decide.append(dismiss, again);
+    actions.append(decide);
     bar.append(actions);
     setBody(bar);
     position();

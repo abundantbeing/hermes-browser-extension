@@ -51,6 +51,48 @@ test('an odd number of result buttons never leaves a hole: the last one takes th
   assert.match(css, /\.result-actions > button:last-child:nth-child\(odd\) \{ grid-column:1 \/ -1; \}/);
 });
 
+test('the bar decides first, Undo beside a filled Keep, then changes the draft from one joined strip', async () => {
+  const { env, root } = await boot({ inlineAssistOpenMode: 'quick' });
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  await deliverLast(env);
+  assert.deepEqual(labels(root, '.bar-actions > .bar-main button'), ['Undo', 'Keep']);
+  assert.equal(root.querySelector('.bar-main button.main').textContent.trim(), 'Keep');
+  assert.deepEqual(labels(root, '.bar-actions > .bar-tools button'), ['Again', 'Shorter', 'Longer', 'Copy', 'Open session']);
+  assert.ok(root.querySelector('.bar-head .bar-name .bar-mark'), 'the Assist mark beside the title');
+  // One pair and one strip of equal cells: no row of loose buttons, so no row leaves a hole.
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec(loadExtensionFile('content-inline-helper.js'))[1];
+  assert.match(css, /\.bar-main \{ display:grid; grid-template-columns:1fr 1fr;/);
+  assert.match(css, /\.bar-tools \{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax\(0,1fr\);/);
+  assert.doesNotMatch(css, /\.bar-actions \{ display:flex/);
+});
+
+test("the bar's mark is the icon chosen for the circle (Wing, Staff or Nous girl), never the extension logo", async () => {
+  for (const [icon, asset] of [['wing', /assist-wing\.png/], ['staff', /assist-staff\.svg/], ['girl', /assist-girl-solid\.png/]]) {
+    const { env, root } = await boot({ inlineAssistOpenMode: 'quick', inlineAssistIcon: icon, appearanceTheme: 'mono', colorMode: 'light' });
+    env.userClick(root.querySelector('.quick-item'));
+    await env.sleep(60);
+    await deliverLast(env);
+    const mark = root.querySelector('.bar-head .bar-mark');
+    const image = mark.style.maskImage || mark.style.webkitMaskImage || '';
+    assert.match(image, asset, icon);
+    assert.doesNotMatch(image, /hermes-browser-extension-icon/, icon);
+    assert.equal(mark.dataset.icon, icon);
+  }
+});
+
+test('the failure bar is the same card: its title beside the mark, then Close beside a filled Try again', async () => {
+  const { env, root } = await boot({ inlineAssistOpenMode: 'quick' });
+  env.userClick(root.querySelector('.quick-item'));
+  await env.sleep(60);
+  const request = requests(env).at(-1);
+  env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: false, reason: 'The gateway is offline.' });
+  await env.sleep(60);
+  assert.equal(root.querySelector('.bar-head .bar-title').textContent, 'Assist could not run');
+  assert.deepEqual(labels(root, '.bar-actions > .bar-main button'), ['Close', 'Try again']);
+  assert.equal(root.querySelector('.bar-main button.main').textContent.trim(), 'Try again');
+});
+
 test('the bar offers Longer beside Shorter, and the way back to the full panel is a link at its top, not one more button', async () => {
   const { env, root, panel } = await boot({ inlineAssistOpenMode: 'quick' });
   env.userClick(root.querySelector('.quick-item'));
