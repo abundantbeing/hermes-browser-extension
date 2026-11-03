@@ -12,8 +12,8 @@ and read-only profile roster and avatar routes on the API server.
 
 It also carries Hermes Control for a Hermes whose core has no extension control:
 one tool per browser action (control_tools.py), served by a broker
-(control_broker.py) the extension registers with. The tools act only in the
-browser of the session that attached it, and only while it is attached.
+(control_broker.py) the extension registers with. The tools are always listed
+and act only in the browser of the session that attached it, while it is attached.
 """
 
 from __future__ import annotations
@@ -142,8 +142,8 @@ def register(ctx) -> None:
     )
 
     # ── Hermes Control tools ───────────────────────────────────────────
-    # Offered only while a controller is attached; a name another toolset owns
-    # (a Hermes that still has control in core) is skipped by Hermes.
+    # Always listed (no attach-dependent check, so the tool list never changes mid-conversation);
+    # a name another toolset owns (a Hermes that still has control in core) is skipped by Hermes.
     try:
         profile = getattr(ctx, "profile_name", "default")
     except Exception:

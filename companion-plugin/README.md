@@ -65,8 +65,8 @@ the full tool reference.
 
 ## What it adds to Hermes
 
-- **Twenty Hermes Control tools**, offered only while your browser is attached
-  to the chat: `tab_list`, `tab_create`, `tab_activate`, `tab_close`,
+- **Twenty Hermes Control tools**, always listed and acting only while your
+  browser is attached to the chat: `tab_list`, `tab_create`, `tab_activate`, `tab_close`,
   `tab_group`, `tab_ungroup` to manage tabs, and `tab_navigate`, `tab_back`,
   `tab_snapshot`, `tab_screenshot`, `tab_click`, `tab_type`, `tab_fill`,
   `tab_select`, `tab_press`, `tab_hover`, `tab_drag`, `tab_scroll`,

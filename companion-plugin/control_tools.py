@@ -11,8 +11,9 @@ Fail-soft and fail-closed at once. With no controller attached, a controller for
 another session, several controllers for this one, an offline browser, a timeout
 or a refusal, the handler returns a plain error result the model can act on; it
 never raises into the agent and never reaches a browser that is not this
-session's. The tools are offered only while some controller is attached
-(``check_fn``); the extension, not this module, decides what the person approves.
+session's. The tools are always listed, so the tool list never changes during a
+conversation (prompt caching); with no browser attached a call answers
+``no_browser``. The extension, not this module, decides what the person approves.
 """
 
 from __future__ import annotations
@@ -127,28 +128,6 @@ def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default
 
 def _broker() -> ControlBroker:
     return _config["broker"] or get_control_broker()
-
-
-def control_available() -> bool:
-    """The tools' ``check_fn``: true only while some controller has a live transport."""
-    try:
-        return _broker().any_connected()
-    except Exception:
-        return False
-
-
-def _refresh_tool_listing(_connected: bool) -> None:
-    """Hermes memoizes its tool list per toolset and config, not per ``check_fn`` result
-    (``model_tools.get_tool_definitions``), so a list built before a controller attached would keep
-    the control tools hidden after one does. Drop that memo when control comes or goes; a Hermes
-    without the memo has nothing to drop."""
-    try:
-        import model_tools
-    except ImportError:
-        return
-    clear = getattr(model_tools, "_clear_tool_defs_cache", None)
-    if callable(clear):
-        clear()
 
 
 def _failure(code: str, message: str) -> str:
@@ -403,18 +382,6 @@ def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, 
     and no other catalog plugin; a Hermes that still has extension control in core keeps its own
     browser_* tools, and the extension then attaches to core's broker, so these stay hidden there."""
     configure(broker=broker, profile=profile, screenshot_dir=Path(data_dir) / "control-screenshots" if data_dir else None)
-    _broker().add_presence_listener(_refresh_tool_listing)
-    check_fn: Callable[[], bool] = control_available
-    try:
-        import tools.registry as hermes_registry
-
-        # The attach state changes with the person's switch, not on a human timescale. A Hermes
-        # with runtime_check_fn keys its tool-list memo on the answer; an older one only stops
-        # caching the check, and the presence listener above drops its memo instead.
-        mark = getattr(hermes_registry, "runtime_check_fn", None) or hermes_registry.no_cache_check_fn
-        check_fn = mark(control_available)
-    except Exception:
-        pass
     for action in CONTROL_ACTIONS:
         tool = TOOL_FOR_ACTION[action]
         ctx.register_tool(
@@ -422,7 +389,6 @@ def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, 
             toolset=TOOLSET,
             schema=CONTROL_SCHEMAS[tool],
             handler=make_handler(action),
-            check_fn=check_fn,
             description=f"Hermes Control: {tool} in the person's own browser, through the Hermes Browser Extension.",
             emoji="🖱️",
         )

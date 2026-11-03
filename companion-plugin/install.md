@@ -289,10 +289,11 @@ GET  /api/plugins/hermes-browser-extension/control/ws   (WebSocket; the ticket r
   click or the person opened it): the result counts it under
   `opened_tabs_not_attached`, and the person attaches it if needed. Refs
   belong to the tab they came from.
-- **Offered only while attached.** The tools appear only while some controller is
-  attached, and a call reaches only the controller registered for its own Hermes
-  session and profile; another session's, none, or more than one answer a plain
-  error. The agent is told to say so, never to look for another browser.
+- **Listed always, acting only while attached.** The tools stay in the tool list for
+  the whole conversation, so attaching or detaching a browser never changes the list
+  (prompt caching). A call reaches only the controller registered for its own Hermes
+  session and profile; another session's, none (`no_browser`), or more than one
+  answer a plain error. The agent is told to say so, never to look for another browser.
 - **One credential per session.** A session is bound to the credential that first
   attached its controller, through a dropped connection and for a short grace
   after (until an explicit detach). Another credential is refused (409) at
