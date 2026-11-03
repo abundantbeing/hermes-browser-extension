@@ -287,7 +287,7 @@ import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAG
 import { CORS_ORIGINS_SETTING, materializeSessionRoute, restSessionCreateSource, sessionRouteError, sessionRouteOriginRefusal } from './lib/session-materialization.mjs';
 import { createUserFileAttachment, createPageContextAttachment, appendUserFileAttachments, stageUserFiles, attachmentFileContext, attachmentSourceKey, rememberUserFileAttachments, restoreUserFileAttachments, openUserFileAttachment, downloadUserFileAttachment } from './lib/user-file-attachments.mjs';
 import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactDownloadSource, resolveArtifactFileSource } from './lib/media-source.mjs';
-import { createBoundedMediaCache } from './lib/media-data-cache.mjs';
+import { createGatewayMediaReader } from './lib/media-data-cache.mjs';
 import { isFinishedImageStatus, pickImageGenerationCard, planImageReveals } from './lib/image-reveal-plan.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import { artifactActionPlan, artifactFailureNotice } from './lib/artifact-actions.mjs';
@@ -20543,42 +20543,21 @@ async function resolveDashboardMediaBaseUrl() {
 // Stored images live on the Hermes machine. The gateway that runs the turn serves them
 // over the API credential this panel holds, so it is tried whenever that credential is
 // set, whether or not the panel has confirmed the route yet. The Desktop dashboard is
-// only a fallback. Each picture is downloaded once per gateway and path: repaints and
-// reveals reuse the cached data URL. A file the gateway cannot serve is not requested
-// again at every repaint: a missing route or file is remembered for the session, and a
-// transient failure for a short while.
-const gatewayMediaCache = createBoundedMediaCache();
-const gatewayMediaRetryAt = new Map();
-const GATEWAY_MEDIA_RETRY_MS = 10_000;
+// only a fallback. Each picture is downloaded once per connection and path, and the
+// connection is everything apiFetch sends as: the gateway, the profile and the
+// credential. Another account or profile on the same gateway asks the gateway itself.
+const gatewayMediaReader = createGatewayMediaReader({
+  request: (filePath) => apiFetch(`/api/media?path=${encodeURIComponent(filePath)}`, { method: 'GET' }),
+  readJson: readJsonResponse,
+});
+
+function gatewayMediaIdentity() {
+  return JSON.stringify([settings.gatewayUrl || '', settings.activeProfile || '', settings.apiKey || '']);
+}
 
 function fetchGatewayMediaDataUrl(filePath = '') {
   if (!settings.apiKey || !filePath) return Promise.resolve('');
-  const key = `${settings.gatewayUrl || ''}\n${filePath}`;
-  if (Date.now() < (gatewayMediaRetryAt.get(key) || 0)) return Promise.resolve('');
-  return gatewayMediaCache.getOrLoad(key, () => downloadGatewayMediaDataUrl(filePath, key));
-}
-
-async function downloadGatewayMediaDataUrl(filePath, key) {
-  const retryLater = (ms) => gatewayMediaRetryAt.set(key, Date.now() + ms);
-  try {
-    const response = await apiFetch(`/api/media?path=${encodeURIComponent(filePath)}`, { method: 'GET' });
-    if (!response.ok) {
-      // 404 and 405 mean the route or the file is absent, which will not change this session.
-      retryLater(response.status === 404 || response.status === 405 ? Infinity : GATEWAY_MEDIA_RETRY_MS);
-      return '';
-    }
-    const payload = await readJsonResponse(response);
-    const dataUrl = String(payload?.data_url || '').trim();
-    if (!dataUrl.startsWith('data:image/')) {
-      retryLater(GATEWAY_MEDIA_RETRY_MS);
-      return '';
-    }
-    gatewayMediaRetryAt.delete(key);
-    return dataUrl;
-  } catch {
-    retryLater(GATEWAY_MEDIA_RETRY_MS);
-    return '';
-  }
+  return gatewayMediaReader.read(filePath, gatewayMediaIdentity());
 }
 
 async function hydrateSessionMedia(messageList = []) {
