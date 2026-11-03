@@ -39,6 +39,8 @@ async function panel({ reply = 'A drafted reply.', running = false, refuseModel 
     INLINE_DRAFT_STORAGE_KEY: 'hermesBrowserInlineDraftRequest',
     inlineDraftProcessing: false,
     deferredInlineDraftRequests: [],
+    inlineDraftDraining: false,
+    deferredInlineDraftTimer: 0,
     inlineDraftHandoffsReady: true,
     lastInlineDraftRequestId: '',
     sending: false,
@@ -231,6 +233,29 @@ test('a request arriving while another runs is kept and runs when that one finis
   assert.equal(asks.length, 2);
   const done = sent.filter((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').map((item) => item.message.requestId);
   assert.deepEqual(done, ['req-cur-a1', 'req-cur-b2']);
+});
+
+test('a request arriving as a run ends waits behind the ones already kept', async () => {
+  const { asks, sent, process } = await panel();
+  const first = process(rawRequest('current', { requestId: 'req-cur-a1' }));
+  await new Promise((resolve) => setTimeout(resolve, 1));
+  await process(rawRequest('current', { requestId: 'req-cur-b2' }));
+  await first;
+  assert.equal(await process(rawRequest('new', { requestId: 'req-new-c3' })), false, 'behind the kept one');
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  const done = sent.filter((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').map((item) => item.message.requestId);
+  assert.deepEqual(done, ['req-cur-a1', 'req-cur-b2', 'req-new-c3']);
+  assert.deepEqual(asks.map((ask) => ask.sessionId), ['chat-current', 'chat-current', 'chat-new'], 'the kept Continue current chat stays in the current chat');
+});
+
+test('a request that comes while this panel is sending is kept and runs once the send ends', async () => {
+  const { h, asks, sent, process } = await panel();
+  h.scope.sending = true;
+  assert.equal(await process(rawRequest('current', { requestId: 'req-cur-a1' })), false);
+  setTimeout(() => { h.scope.sending = false; }, 100);
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  assert.equal(asks.length, 1);
+  assert.deepEqual(sent.filter((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').map((item) => item.message.requestId), ['req-cur-a1']);
 });
 
 test('a kept request from another window does not hold up the next one kept for this window', async () => {

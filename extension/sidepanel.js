@@ -28010,6 +28010,8 @@ ${streamError.message}`);
 let inlineDraftProcessing = false;
 // Requests that came in while another was running; the shared storage key holds only the latest.
 const deferredInlineDraftRequests = [];
+let inlineDraftDraining = false;
+let deferredInlineDraftTimer = 0;
 // Off until startup has connected and restored the chat; the startup check then takes what is queued.
 let inlineDraftHandoffsReady = false;
 // A panel opened for a request hears of it twice (the storage change and the startup check): one turn.
@@ -28209,18 +28211,27 @@ async function savedInlineAssistSettings() {
   return { ...settings, ...Object.fromEntries(Object.entries(saved).filter(([key]) => key.startsWith('inlineAssist'))) };
 }
 
-// Continue current chat and Start new Assist session: a visible turn in this panel, shown as what was asked
-// and where; the reply also goes back to the field.
-function deferInlineDraftRequest(rawRequest) {
+// A new request waits behind kept ones; a kept one that meets a run goes back to the front.
+function inlineDraftRequestMustWait(queued) {
+  return inlineDraftProcessing || (!queued && (inlineDraftDraining || deferredInlineDraftRequests.length > 0));
+}
+
+function deferInlineDraftRequest(rawRequest, queued) {
   const requestId = String(rawRequest?.requestId || '');
   if (!requestId || requestId === lastInlineDraftRequestId) return false;
-  if (!deferredInlineDraftRequests.some((queued) => queued.requestId === requestId)) deferredInlineDraftRequests.push(rawRequest);
+  if (!deferredInlineDraftRequests.some((kept) => kept.requestId === requestId)) {
+    if (queued) deferredInlineDraftRequests.unshift(rawRequest);
+    else deferredInlineDraftRequests.push(rawRequest);
+  }
+  if (!inlineDraftProcessing && !inlineDraftDraining && !sending) scheduleDeferredInlineDraftRun(0);
   return false;
 }
 
-async function processInlineDraftRequest(rawRequest) {
+// Continue current chat and Start new Assist session: a visible turn in this panel, shown as what was asked
+// and where; the reply also goes back to the field.
+async function processInlineDraftRequest(rawRequest, { queued = false } = {}) {
   if (!rawRequest || !inlineDraftHandoffsReady) return false;
-  if (inlineDraftProcessing) return deferInlineDraftRequest(rawRequest);
+  if (inlineDraftRequestMustWait(queued)) return deferInlineDraftRequest(rawRequest, queued);
   const request = normalizeInlineDraftRequest(rawRequest);
   const tabId = Number(rawRequest?.tabId);
   const expiresAt = Number(rawRequest?.expiresAt);
@@ -28231,11 +28242,12 @@ async function processInlineDraftRequest(rawRequest) {
   if (isAttachedPanelResidency() && Number(sidePanelParams.tabId) !== tabId) return false;
   const requestWindowId = Number(rawRequest?.windowId) || 0;
   const panelWindowId = await sidePanelWindowId();
-  if (inlineDraftProcessing) return deferInlineDraftRequest(rawRequest);
+  if (inlineDraftRequestMustWait(queued)) return deferInlineDraftRequest(rawRequest, queued);
   if (requestWindowId && panelWindowId && requestWindowId !== panelWindowId) return false;
   if (request.requestId === lastInlineDraftRequestId) return false;
   if (sending) {
-    globalThis.setTimeout(() => consumePendingInlineDraftRequest(), 750);
+    deferInlineDraftRequest(rawRequest, true);
+    scheduleDeferredInlineDraftRun(750);
     return false;
   }
   inlineDraftProcessing = true;
@@ -28325,19 +28337,29 @@ async function processInlineDraftRequest(rawRequest) {
     return false;
   } finally {
     inlineDraftProcessing = false;
-    if (deferredInlineDraftRequests.length) globalThis.setTimeout(runDeferredInlineDraftRequests, 0);
+    if (deferredInlineDraftRequests.length && !inlineDraftDraining) scheduleDeferredInlineDraftRun(0);
   }
 }
 
-// Takes kept requests in order until one runs; that run takes the rest when it finishes.
+function scheduleDeferredInlineDraftRun(delay) {
+  globalThis.clearTimeout(deferredInlineDraftTimer);
+  deferredInlineDraftTimer = globalThis.setTimeout(runDeferredInlineDraftRequests, delay);
+}
+
+// Takes kept requests in order, one run at a time, while new arrivals wait behind them.
 async function runDeferredInlineDraftRequests() {
-  while (deferredInlineDraftRequests.length && !inlineDraftProcessing) {
-    const before = lastInlineDraftRequestId;
-    await processInlineDraftRequest(deferredInlineDraftRequests.shift()).catch((error) => {
-      console.warn('[Hermes Browser] Inline draft handoff failed:', error);
-    });
-    if (lastInlineDraftRequestId !== before) return;
+  if (inlineDraftDraining) return;
+  inlineDraftDraining = true;
+  try {
+    while (deferredInlineDraftRequests.length && !inlineDraftProcessing && !sending) {
+      await processInlineDraftRequest(deferredInlineDraftRequests.shift(), { queued: true }).catch((error) => {
+        console.warn('[Hermes Browser] Inline draft handoff failed:', error);
+      });
+    }
+  } finally {
+    inlineDraftDraining = false;
   }
+  if (deferredInlineDraftRequests.length && sending && !inlineDraftProcessing) scheduleDeferredInlineDraftRun(750);
 }
 
 async function consumePendingInlineDraftRequest() {
