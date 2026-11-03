@@ -329,3 +329,22 @@ test('display_text rejection from a strict-contract core is recognised and retri
   assert.match(source, /isDisplayTextRejection\(error\)[\s\S]{0,200}markUnsupported\(quirkGatewayUrl, GATEWAY_QUIRK\.PROMPT_DISPLAY_TEXT\)/);
   assert.doesNotMatch(source, /displayTextUnsupported/);
 });
+
+test('only a gateway answer refusing the turn before its run started counts as refused before start', () => {
+  const { turnRefusedBeforeStart } = turnRecovery;
+  const refused = hermesRequestError({ status: 400, body: '{"error":"Model gpt-6.1-terra is not available."}', operation: 'Hermes stream' });
+  assert.equal(turnRefusedBeforeStart(refused, { started: false }), true);
+  assert.equal(turnRefusedBeforeStart(refused, { started: true }), false, 'a run that started is never sent again');
+  const streamError = Object.assign(new Error('Tool crashed'), { requestRejected: true, streamError: true });
+  assert.equal(turnRefusedBeforeStart(streamError, { started: false }), false, 'an error event inside the stream');
+  assert.equal(turnRefusedBeforeStart(Object.assign(new Error('closed'), { requestAccepted: true }), { started: false }), false);
+  assert.equal(turnRefusedBeforeStart(new Error('socket closed'), { started: false }), false, 'no answer from the gateway');
+  assert.equal(turnRefusedBeforeStart(hermesRequestError({ status: 502 }), { started: false }), false);
+});
+
+test('askHermes reports a refusal only for a turn whose run never started', () => {
+  const ask = sidepanelSource.slice(sidepanelSource.indexOf('async function askHermes('), sidepanelSource.indexOf('\n}\n', sidepanelSource.indexOf('async function askHermes(')));
+  assert.match(ask, /onRun: \(runId\) => \{\n {12}turnRunStarted = true;/);
+  assert.match(ask, /if \(turnRefusedBeforeStart\(error, \{ started: turnRunStarted \}\)\) turnOptions\.onNotAccepted\?\.\(error\);/);
+  assert.doesNotMatch(ask, /requestAccepted !== true && !isAbortError\(error\)\) turnOptions\.onNotAccepted/);
+});

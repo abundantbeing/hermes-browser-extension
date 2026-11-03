@@ -60,7 +60,7 @@ async function panel({ reply = 'A drafted reply.', running = false, refuseModel 
       if (running) return false;
       // The gateway refuses the turn's own model before taking the turn (its provider stopped working).
       if (refuseModel && options.modelRoute?.model) {
-        options.onNotAccepted?.(Object.assign(new Error('Model gpt-6.1-terra is not available.'), { requestAccepted: false }));
+        options.onNotAccepted?.(Object.assign(new Error('Model gpt-6.1-terra is not available.'), { httpStatus: 400, requestRejected: true }));
         return false;
       }
       await new Promise((resolve) => setTimeout(resolve, 5));
@@ -201,6 +201,19 @@ test('a request from a page in another window is left for that window\'s side pa
   const own = await panel({ windowId: 7 });
   assert.equal(await own.process(rawRequest('new', { windowId: 7 })), true);
   assert.equal(own.asks.length, 1);
+});
+
+test('two requests arriving while the panel looks up its window run one at a time, each in its own chat', async () => {
+  const { h, asks, drafts, process } = await panel();
+  h.scope.browserApi.windows = { getCurrent: () => new Promise((resolve) => setTimeout(() => resolve({ id: 7 }), 10)) };
+  const results = await Promise.all([
+    process(rawRequest('new', { requestId: 'req-new-a1', windowId: 7 })),
+    process(rawRequest('new', { requestId: 'req-new-b2', windowId: 7 })),
+  ]);
+  assert.deepEqual(results, [true, false], 'the second waits for the first');
+  assert.equal(drafts.length, 1, 'one new chat');
+  assert.equal(asks.length, 1);
+  assert.equal(asks[0].sessionId, 'chat-new');
 });
 
 test('when the gateway refuses the Assist model before taking the turn, the turn runs on the chat\'s model at Assist\'s effort, and says so', async () => {

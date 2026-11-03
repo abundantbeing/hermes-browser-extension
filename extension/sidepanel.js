@@ -471,6 +471,7 @@ import {
   sessionContextFailureRecovery,
   sessionStatusKnownIdle,
   turnDeliveryFromHistory,
+  turnRefusedBeforeStart,
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
@@ -27319,6 +27320,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   // a Bot Chat reply still queued. The post-turn history refresh would rebuild the view from stored
   // rows and wipe it, along with the user's own bubble.
   let holdPostTurnRefresh = false;
+  let turnRunStarted = false;
   let sawReplyActivity = false;
   let slowNoticeShown = false;
   const noteReplyActivity = () => {
@@ -27599,6 +27601,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
             streamView.updateReasoning(update);
           },
           onRun: (runId) => {
+            turnRunStarted = true;
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             // Dashboard prompt streams report the live session id here, not a
             // server run id. Keep activeRunId reserved for REST run controls;
@@ -27798,7 +27801,7 @@ ${streamError.message}`);
     // Every branch below reports the failure in the transcript or the composer. An accepted turn
     // may still store a late reply, so that one alone keeps the refresh.
     if (error?.requestAccepted !== true) holdPostTurnRefresh = true;
-    if (error?.requestAccepted !== true && !isAbortError(error)) turnOptions.onNotAccepted?.(error);
+    if (turnRefusedBeforeStart(error, { started: turnRunStarted })) turnOptions.onNotAccepted?.(error);
     if (error?.attachmentFailure) {
       if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
         els.input.value = userText;
@@ -28218,6 +28221,7 @@ async function processInlineDraftRequest(rawRequest) {
   if (isAttachedPanelResidency() && Number(sidePanelParams.tabId) !== tabId) return false;
   const requestWindowId = Number(rawRequest?.windowId) || 0;
   const panelWindowId = await sidePanelWindowId();
+  if (inlineDraftProcessing) return false;
   if (requestWindowId && panelWindowId && requestWindowId !== panelWindowId) return false;
   if (request.requestId === lastInlineDraftRequestId) return false;
   if (sending) {
