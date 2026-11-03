@@ -280,6 +280,8 @@ const turnProbe = `(() => {
     running: document.body.classList.contains('turn-running'),
     revealedInSlot: slot ? slot.querySelectorAll('.generated-image-reveal-source').length : 0,
     placeholdersInSlot: slot ? slot.querySelectorAll('.image-gen-placeholder').length : 0,
+    // Raw picture markup on screen: a MEDIA line or a Markdown image still being typed out.
+    rawMarkup: ((text) => text.includes('MEDIA:') || text.includes('!['))(last.querySelector('.message-content')?.innerText || ''),
     // Pictures or file chips the reply itself shows on screen right now.
     inlineVisible: [...last.querySelectorAll('.message-content img, .message-content .session-media, .message-content .artifact-card')]
       .filter((item) => item.getClientRects().length > 0).length,
@@ -315,7 +317,8 @@ const replyPictures = `(() => {
 async function runTurn(panel, prompt, expectText, { cards = 0, waiting = '', revealed = '' } = {}) {
   await submitPrompt(panel, prompt);
   // shownTwice: the most pictures the reply showed inline while its cards were still on screen.
-  const peaks = { revealedInSlot: 0, placeholdersInSlot: 0, shownTwice: 0 };
+  // rawWhileRevealing: raw picture markup was on screen while a card revealed its picture.
+  const peaks = { revealedInSlot: 0, placeholdersInSlot: 0, shownTwice: 0, rawWhileRevealing: false };
   const deadline = Date.now() + 150_000;
   const pending = { waiting: Boolean(waiting), revealed: Boolean(revealed) };
   const shoot = async (kind, file, pause) => {
@@ -331,6 +334,7 @@ async function runTurn(panel, prompt, expectText, { cards = 0, waiting = '', rev
       peaks.revealedInSlot = Math.max(peaks.revealedInSlot, probe.revealedInSlot);
       peaks.placeholdersInSlot = Math.max(peaks.placeholdersInSlot, probe.placeholdersInSlot);
       if (probe.placeholdersInSlot) peaks.shownTwice = Math.max(peaks.shownTwice, probe.inlineVisible);
+      if (probe.revealedInSlot && probe.rawMarkup) peaks.rawWhileRevealing = true;
       if (probe.placeholdersInSlot && !firstCardAt) firstCardAt = Date.now();
       // All the turn's cards are up, or the one card a build shows has been up a while.
       if (pending.waiting && probe.running && probe.placeholdersInSlot && !probe.revealedInSlot
@@ -555,6 +559,9 @@ async function main() {
     const four = results.turnFour;
     assert.equal(peaksFour.revealedInSlot, 3, 'each Markdown picture revealed in its own generation');
     assert.equal(peaksFour.shownTwice, 0, 'turn four never showed a picture inline while its cards were up');
+    for (const [turn, peaks] of [['one', peaksOne], ['two', peaksTwo], ['three', peaksThree], ['four', peaksFour]]) {
+      assert.equal(peaks.rawWhileRevealing, false, `turn ${turn} showed its finished text, not half-typed picture markup, while its cards revealed`);
+    }
     assert.equal(four.chips, 0, 'turn four shows no filename chip');
     assert.equal(four.inline.length, 3, 'turn four shows its three pictures inline');
     assert.ok(four.inline.every((item) => item.width > 0), 'every turn four picture decoded');

@@ -22718,7 +22718,10 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
       cancelAnimationFrame(frame);
       frame = 0;
     }
-    // Every picture the turn names goes into its generation, then the reply takes over.
+    // The whole reply shows while its cards reveal (its pictures wait), not the text the
+    // pacer had reached. Every picture the turn names goes into its generation, then the
+    // reply takes over.
+    if (node.classList.contains('image-cards-pending')) setMessageContent(node, pending);
     await settleTurnImages(node, { content: pending, imageSources });
     // Drops the generations that never produced a picture; revealed pictures stay.
     setToolActivity(node, null);

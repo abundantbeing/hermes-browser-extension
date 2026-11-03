@@ -105,6 +105,8 @@ test('a picture is never shown twice: the reply keeps its copy hidden while its 
   for (const selector of ['.generated-image', '.generated-image-inspectable', 'img[data-slot="aui_generated-image"]', '.session-media[data-session-media="image"]', '.artifact-card']) {
     assert.ok(rule[0].includes(selector), `${selector} waits for the cards`);
   }
+  // While the cards reveal, the finished reply text shows, not what the pacer had typed.
+  assert.match(sidepanelSource, /if \(node\.classList\.contains\('image-cards-pending'\)\) setMessageContent\(node, pending\);\s*await settleTurnImages\(/);
   // The mark comes off at every end of a turn, so a settled reply always shows its pictures.
   assert.match(sidepanelSource, /node\.classList\.remove\('image-cards-pending'\);\s*node\.hermesStreaming = false;\s*setMessageContent\(node, pending\);/);
   assert.match(sidepanelSource, /setToolActivity\(node, null, \{ settle: true \}\);\s*node\.classList\.remove\('image-cards-pending'\);/);
