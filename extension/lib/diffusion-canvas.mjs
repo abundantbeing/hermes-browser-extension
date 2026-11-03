@@ -155,7 +155,7 @@ function profileSignal(variant, x, y, time) {
 export function createDiffusionCanvas(canvas, { aspectRatio = 'landscape', seed = Date.now(), maxFps = 60 } = {}) {
   const variant = diffusionVariantForSeed(seed);
   const context = canvas?.getContext?.('2d');
-  if (!canvas || !context) return { variant, start() {}, stop() {}, render() {}, reveal() { return Promise.resolve({ variant, cancelled: true }); } };
+  if (!canvas || !context) return { variant, start() {}, stop() {}, settle() {}, render() {}, reveal() { return Promise.resolve({ variant, cancelled: true }); } };
 
   const ratioName = normalizeImageAspectRatio(aspectRatio);
   const ratio = IMAGE_ASPECT_RATIOS[ratioName];
@@ -456,7 +456,24 @@ export function createDiffusionCanvas(canvas, { aspectRatio = 'landscape', seed 
     }
   };
 
+  let attached = false;
+  const stop = () => {
+    disposed = true;
+    if (animationFrame) globalThis.cancelAnimationFrame?.(animationFrame);
+    animationFrame = 0;
+    revealComplete?.({ variant, cancelled: true });
+    revealComplete = null;
+    revealImage = null;
+    observer?.disconnect();
+  };
+
   const tick = (now) => {
+    // A canvas that left the page is never shown again: its frames would run forever.
+    if (canvas.isConnected) attached = true;
+    else if (attached && canvas.isConnected === false) {
+      stop();
+      return;
+    }
     const frameElapsed = now - lastFrameAt;
     if (!lastFrameAt || frameElapsed >= minimumFrameMs) {
       render(now);
@@ -491,14 +508,16 @@ export function createDiffusionCanvas(canvas, { aspectRatio = 'landscape', seed 
       render(startedAt);
       if (!reduceMotion) animationFrame = globalThis.requestAnimationFrame?.(tick) || 0;
     },
-    stop() {
-      disposed = true;
-      if (animationFrame) globalThis.cancelAnimationFrame?.(animationFrame);
-      animationFrame = 0;
-      revealComplete?.({ variant, cancelled: true });
-      revealComplete = null;
-      revealImage = null;
-      observer?.disconnect();
+    stop,
+    // Ends the animation but keeps the picture: a reveal still under way is drawn finished,
+    // once, and nothing is scheduled after it.
+    settle() {
+      if (disposed) return;
+      if (revealImage) {
+        revealStartedAt = -Infinity;
+        render(globalThis.performance?.now?.() || Date.now());
+      }
+      stop();
     },
   };
 }

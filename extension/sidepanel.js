@@ -21609,10 +21609,14 @@ function isClaimedImagePlaceholder(placeholder) {
 }
 
 // Drops the generations that have not revealed a picture and stops their animation.
-// A picture that already revealed stays in the bubble.
-function dropUnrevealedImagePlaceholders(node) {
+// A picture that already revealed stays in the bubble; with `settle` its animation stops
+// too, the picture drawn finished, as when the turn is torn down.
+function dropUnrevealedImagePlaceholders(node, { settle = false } = {}) {
   for (const placeholder of imageGenerationPlaceholders(node)) {
-    if (isRevealedImagePlaceholder(placeholder)) continue;
+    if (isRevealedImagePlaceholder(placeholder)) {
+      if (settle) placeholder._settle?.();
+      continue;
+    }
     placeholder._dispose?.();
     placeholder.remove();
   }
@@ -21869,6 +21873,7 @@ function renderImageGenPlaceholder(activity = {}) {
   root._start = () => diffusion.start();
   root._reveal = (image) => diffusion.reveal(image);
   root._dispose = () => diffusion.stop();
+  root._settle = () => diffusion.settle();
   return root;
 }
 
@@ -21914,10 +21919,10 @@ function renderToolActivity(activity = {}) {
   return root;
 }
 
-function setToolActivity(node, activity = null) {
+function setToolActivity(node, activity = null, { settle = false } = {}) {
   if (!node) return;
   if (!activity) {
-    dropUnrevealedImagePlaceholders(node);
+    dropUnrevealedImagePlaceholders(node, { settle });
     return;
   }
   // Ordinary tool calls never belong in the bubble; only image generations do.
@@ -22864,7 +22869,8 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
       frame = 0;
       if (pending) paintStream();
     }
-    setToolActivity(node, null);
+    // A picture that already revealed stays, drawn finished, with its animation stopped.
+    setToolActivity(node, null, { settle: true });
   }
   return {
     get node() { return node; },

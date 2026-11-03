@@ -177,6 +177,18 @@ test('a picture still loading at the turn end lands in its own card, once', asyn
   assert.equal(panel.slot(), null);
 });
 
+test('teardown stops the animation of a revealed picture and keeps the picture', async () => {
+  const panel = harness();
+  panel.tool({ activityId: 'call-a', status: 'started' });
+  panel.tool({ activityId: 'call-b', status: 'started' });
+  panel.tool({ activityId: 'call-a', status: 'completed', result: { success: true, image: pic('a') } });
+  await flushMicrotasks();
+  panel.api.setToolActivity(panel.node, null, { settle: true });
+  assert.deepEqual(panel.cards(), [pic('a')], 'the revealed picture stays');
+  assert.deepEqual(panel.log.filter(([kind]) => kind === 'settle'), [['settle', pic('a')]], 'its animation stopped');
+  assert.deepEqual(panel.log.filter(([kind]) => kind === 'dispose'), [['dispose', 'call-b']], 'the waiting one was dropped');
+});
+
 test('ordinary tool calls never reach the bubble', () => {
   const panel = harness();
   panel.api.setToolActivity(panel.node, { rawName: 'terminal', status: 'started' });

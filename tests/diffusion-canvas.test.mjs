@@ -160,3 +160,83 @@ test('sidepanel uses one persistent seeded diffusion placeholder per image call'
   assert.match(source, /root\._dispose/);
   assert.match(source, /placeholder\._dispose\?\.\(\);/);
 });
+
+function fakeCanvas() {
+  const gradient = { addColorStop() {} };
+  const drawn = [];
+  const context = new Proxy({}, {
+    get(target, property) {
+      if (property === 'createRadialGradient') return () => gradient;
+      if (property === 'drawImage') return (image) => drawn.push(image);
+      if (['setTransform', 'clearRect', 'fillRect', 'strokeRect', 'setLineDash'].includes(property)) return () => {};
+      return target[property];
+    },
+    set(target, property, value) {
+      target[property] = value;
+      return true;
+    },
+  });
+  return {
+    drawn,
+    canvas: {
+      dataset: {},
+      isConnected: true,
+      width: 0,
+      height: 0,
+      clientWidth: 320,
+      clientHeight: 180,
+      getBoundingClientRect: () => ({ width: 320, height: 180 }),
+      getContext: () => context,
+    },
+  };
+}
+
+// Frames run only when the test steps them, so a loop that never stops shows as a
+// frame still scheduled.
+function withManualFrames(run) {
+  const saved = { raf: globalThis.requestAnimationFrame, caf: globalThis.cancelAnimationFrame };
+  const queue = new Map();
+  let next = 1;
+  globalThis.requestAnimationFrame = (callback) => { queue.set(next, callback); return next++; };
+  globalThis.cancelAnimationFrame = (id) => { queue.delete(id); };
+  const step = (now) => {
+    const callbacks = [...queue.values()];
+    queue.clear();
+    for (const callback of callbacks) callback(now);
+  };
+  try {
+    return run({ step, scheduled: () => queue.size });
+  } finally {
+    globalThis.requestAnimationFrame = saved.raf;
+    globalThis.cancelAnimationFrame = saved.caf;
+  }
+}
+
+test('a diffusion canvas that leaves the page stops scheduling frames', () => withManualFrames(({ step, scheduled }) => {
+  const { canvas } = fakeCanvas();
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'detached' });
+  diffusion.start();
+  step(1016);
+  step(1032);
+  assert.equal(scheduled(), 1, 'the loop runs while the canvas is on the page');
+  canvas.isConnected = false;
+  step(1048);
+  assert.equal(scheduled(), 0, 'a detached canvas schedules no further frame');
+}));
+
+test('settle draws a reveal still under way finished, once, and stops', async () => withManualFrames(async ({ step, scheduled }) => {
+  const { canvas, drawn } = fakeCanvas();
+  const image = { naturalWidth: 64, naturalHeight: 36, width: 64, height: 36 };
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'settle' });
+  diffusion.start();
+  const revealed = diffusion.reveal(image);
+  step(1016);
+  assert.notEqual(canvas.dataset.revealState, 'complete', 'the reveal is still under way');
+  diffusion.settle();
+  assert.equal(canvas.dataset.revealState, 'complete');
+  assert.equal(canvas.dataset.revealProgress, '1.0000');
+  assert.ok(drawn.includes(image), 'the picture is drawn');
+  assert.equal(scheduled(), 0, 'nothing runs after settle');
+  const result = await revealed;
+  assert.notEqual(result.cancelled, true, 'the reveal finished rather than being cancelled');
+}));
