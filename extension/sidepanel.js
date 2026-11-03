@@ -28008,6 +28008,8 @@ ${streamError.message}`);
 }
 
 let inlineDraftProcessing = false;
+// Requests that came in while another was running; the shared storage key holds only the latest.
+const deferredInlineDraftRequests = [];
 // Off until startup has connected and restored the chat; the startup check then takes what is queued.
 let inlineDraftHandoffsReady = false;
 // A panel opened for a request hears of it twice (the storage change and the startup check): one turn.
@@ -28209,8 +28211,16 @@ async function savedInlineAssistSettings() {
 
 // Continue current chat and Start new Assist session: a visible turn in this panel, shown as what was asked
 // and where; the reply also goes back to the field.
+function deferInlineDraftRequest(rawRequest) {
+  const requestId = String(rawRequest?.requestId || '');
+  if (!requestId || requestId === lastInlineDraftRequestId) return false;
+  if (!deferredInlineDraftRequests.some((queued) => queued.requestId === requestId)) deferredInlineDraftRequests.push(rawRequest);
+  return false;
+}
+
 async function processInlineDraftRequest(rawRequest) {
-  if (!rawRequest || inlineDraftProcessing || !inlineDraftHandoffsReady) return false;
+  if (!rawRequest || !inlineDraftHandoffsReady) return false;
+  if (inlineDraftProcessing) return deferInlineDraftRequest(rawRequest);
   const request = normalizeInlineDraftRequest(rawRequest);
   const tabId = Number(rawRequest?.tabId);
   const expiresAt = Number(rawRequest?.expiresAt);
@@ -28221,7 +28231,7 @@ async function processInlineDraftRequest(rawRequest) {
   if (isAttachedPanelResidency() && Number(sidePanelParams.tabId) !== tabId) return false;
   const requestWindowId = Number(rawRequest?.windowId) || 0;
   const panelWindowId = await sidePanelWindowId();
-  if (inlineDraftProcessing) return false;
+  if (inlineDraftProcessing) return deferInlineDraftRequest(rawRequest);
   if (requestWindowId && panelWindowId && requestWindowId !== panelWindowId) return false;
   if (request.requestId === lastInlineDraftRequestId) return false;
   if (sending) {
@@ -28315,6 +28325,18 @@ async function processInlineDraftRequest(rawRequest) {
     return false;
   } finally {
     inlineDraftProcessing = false;
+    if (deferredInlineDraftRequests.length) globalThis.setTimeout(runDeferredInlineDraftRequests, 0);
+  }
+}
+
+// Takes kept requests in order until one runs; that run takes the rest when it finishes.
+async function runDeferredInlineDraftRequests() {
+  while (deferredInlineDraftRequests.length && !inlineDraftProcessing) {
+    const before = lastInlineDraftRequestId;
+    await processInlineDraftRequest(deferredInlineDraftRequests.shift()).catch((error) => {
+      console.warn('[Hermes Browser] Inline draft handoff failed:', error);
+    });
+    if (lastInlineDraftRequestId !== before) return;
   }
 }
 

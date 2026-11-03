@@ -38,6 +38,7 @@ async function panel({ reply = 'A drafted reply.', running = false, refuseModel 
   Object.assign(h.scope, {
     INLINE_DRAFT_STORAGE_KEY: 'hermesBrowserInlineDraftRequest',
     inlineDraftProcessing: false,
+    deferredInlineDraftRequests: [],
     inlineDraftHandoffsReady: true,
     lastInlineDraftRequestId: '',
     sending: false,
@@ -204,7 +205,7 @@ test('a request from a page in another window is left for that window\'s side pa
 });
 
 test('two requests arriving while the panel looks up its window run one at a time, each in its own chat', async () => {
-  const { h, asks, drafts, process } = await panel();
+  const { h, asks, drafts, sent, process } = await panel();
   h.scope.browserApi.windows = { getCurrent: () => new Promise((resolve) => setTimeout(() => resolve({ id: 7 }), 10)) };
   const results = await Promise.all([
     process(rawRequest('new', { requestId: 'req-new-a1', windowId: 7 })),
@@ -213,7 +214,36 @@ test('two requests arriving while the panel looks up its window run one at a tim
   assert.deepEqual(results, [true, false], 'the second waits for the first');
   assert.equal(drafts.length, 1, 'one new chat');
   assert.equal(asks.length, 1);
-  assert.equal(asks[0].sessionId, 'chat-new');
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  assert.equal(drafts.length, 2, 'then the second starts its own chat');
+  assert.equal(asks.length, 2);
+  const results2 = sent.filter((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').map((item) => item.message.requestId);
+  assert.deepEqual(results2, ['req-new-a1', 'req-new-b2'], 'and both pages get their draft');
+});
+
+test('a request arriving while another runs is kept and runs when that one finishes', async () => {
+  const { asks, sent, process } = await panel();
+  const first = process(rawRequest('current', { requestId: 'req-cur-a1' }));
+  await new Promise((resolve) => setTimeout(resolve, 1));
+  assert.equal(await process(rawRequest('current', { requestId: 'req-cur-b2' })), false, 'busy now');
+  assert.equal(await first, true);
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  assert.equal(asks.length, 2);
+  const done = sent.filter((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').map((item) => item.message.requestId);
+  assert.deepEqual(done, ['req-cur-a1', 'req-cur-b2']);
+});
+
+test('a kept request from another window does not hold up the next one kept for this window', async () => {
+  const { asks, sent, process } = await panel({ windowId: 7 });
+  const first = process(rawRequest('current', { requestId: 'req-cur-a1', windowId: 7 }));
+  await new Promise((resolve) => setTimeout(resolve, 1));
+  await process(rawRequest('current', { requestId: 'req-cur-b2', windowId: 8 }));
+  await process(rawRequest('current', { requestId: 'req-cur-c3', windowId: 7 }));
+  await first;
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  assert.equal(asks.length, 2);
+  const done = sent.filter((item) => item.message.type === 'HERMES_INLINE_DRAFT_RESULT').map((item) => item.message.requestId);
+  assert.deepEqual(done, ['req-cur-a1', 'req-cur-c3']);
 });
 
 test('when the gateway refuses the Assist model before taking the turn, the turn runs on the chat\'s model at Assist\'s effort, and says so', async () => {
