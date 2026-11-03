@@ -28,6 +28,8 @@ const SITES = [
   ['linkedin.html', 'https://www.linkedin.com/feed/'],
   ['github.html', 'https://github.com/o/r/issues/1'],
   ['github-wide-toolbar.html', 'https://github.com/o/r/pull/147'],
+  ['generic-mail.html', 'https://mail.example/thread/1'],
+  ['generic-post.html', 'https://social.example/home'],
 ];
 const fieldIn = (document) => document.querySelector('[contenteditable="true"], textarea');
 
@@ -54,12 +56,14 @@ for (const [name, url] of SITES) {
   });
 }
 
-test('any other site has no slot and uses the corner rule', () => {
-  const { document } = parseHTML(`<!doctype html><html><body>${fixture('generic.html')}</body></html>`);
-  const profile = inspectInlineSite(document, fieldIn(document), { url: 'https://forum.example/new' });
-  assert.equal(profile.placement.slot, null);
-  assert.deepEqual(profile.placement.preferred, ['corner-outside', 'corner-inside', 'below-end']);
-});
+for (const name of ['generic.html', 'generic-button.html', 'generic-actions.html', 'generic-far-buttons.html']) {
+  test(`${name}: any other site with no row of tools under its field has no slot and uses the corner rule`, () => {
+    const document = withBoxes(parseHTML(`<!doctype html><html><body>${fixture(name)}</body></html>`).document);
+    const profile = inspectInlineSite(document, fieldIn(document), { url: 'https://forum.example/new' });
+    assert.equal(profile.placement.slot, null);
+    assert.deepEqual(profile.placement.preferred, ['corner-outside', 'corner-inside', 'below-end']);
+  });
+}
 
 // End to end: the real content scripts in jsdom, with each element's box taken from data-rect.
 const EXTENSION = new URL('../extension/', import.meta.url);
@@ -249,6 +253,28 @@ test('any other site: 8px outside the field’s bottom-right corner', async () =
   assert.equal(launcher.style.left, '1224px');
 });
 
+test('any other site, a mail reply box: just after Attach, the last tool under the field, on its line', async () => {
+  const launcher = await focusedLauncher(boot('generic-mail.html', 'https://mail.example/thread/1'));
+  assert.equal(launcher.dataset.placement, 'after');
+  // Attach ends at 255: 12px gap; centred on its 34px box at 666.
+  assert.equal(launcher.style.left, '267px');
+  assert.equal(launcher.style.top, '671px');
+});
+
+test('any other site, a post composer: just after the last media tool, far from the counter and Post', async () => {
+  const launcher = await focusedLauncher(boot('generic-post.html', 'https://social.example/home'));
+  assert.equal(launcher.dataset.placement, 'after');
+  assert.equal(launcher.style.left, '432px');
+  assert.equal(launcher.style.top, '256px');
+});
+
+for (const name of ['generic-actions.html', 'generic-far-buttons.html']) {
+  test(`${name}: buttons that are not a row of tools right under the field keep the corner rule`, async () => {
+    const launcher = await focusedLauncher(boot(name, 'https://forum.example/new'));
+    assert.match(launcher.dataset.placement, /^corner-/);
+  });
+}
+
 test('a hostname names its adapter and the label Settings shows for it', async () => {
   const { inlineSiteForHost, inlineSiteLabel } = await import('../extension/lib/site-adapters.mjs');
   assert.deepEqual(inlineSiteForHost('www.x.com'), { adapterId: 'x', label: 'X' });
@@ -287,6 +313,8 @@ for (const [name, url] of [
   ['x-reply-modal.html', 'https://x.com/compose/post'],
   ['generic.html', 'https://forum.example/new'],
   ['generic-button.html', 'https://forum.example/new'],
+  ['generic-actions.html', 'https://forum.example/new'],
+  ['generic-far-buttons.html', 'https://forum.example/new'],
 ]) {
   test(`${name}: the circle covers none of the site's controls`, async () => {
     const env = boot(name, url);

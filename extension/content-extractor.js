@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 602c050e5abf1b0b */
+/* extension/lib/site-adapters.mjs · SHA-256 10baae08c7270d61 */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1772,18 +1772,22 @@ function trailingControlsSlot(target, { gap = 8 } = {}) {
   return { element: first.element, strategy: 'before', gap, overField: true, obstacles: controls.map((item) => item.element) };
 }
 
-// Composers with a row of tools under the editor (LinkedIn's share box): just after the last of those tools,
-// on their row. The tools are the first row of controls below the editor that starts on its left.
-function toolRowEndSlot(target, { gap = 12 } = {}) {
+// Composers with a row of tools under the editor (LinkedIn's share box, a mail reply box): just after the last
+// of those tools, on their row. The tools are the first row of controls below the editor that starts on its
+// left. `near` (any other site) asks more of that row: two tools or more, under the editor's own width, no
+// further below it than `near`, so a form's buttons further down keep the corner rule.
+function toolRowEndSlot(target, { gap = 12, near = Infinity } = {}) {
   const field = laidOutBox(target);
   if (!field) return null;
+  const strict = Number.isFinite(near);
   let node = target.parentElement;
   for (let depth = 0; node && depth < 12; depth += 1, node = node.parentElement) {
     const below = shownControls(node, target).filter((item) => item.box.top >= field.bottom - 4);
     if (below.length < 2) continue;
     const top = Math.min(...below.map((item) => item.box.top));
-    const row = below.filter((item) => item.box.top - top < item.box.height / 2 && item.box.left < field.left + field.width * 0.75);
-    if (!row.length) return null;
+    const row = below.filter((item) => item.box.top - top < item.box.height / 2 && item.box.left < field.left + field.width * 0.75
+      && (!strict || (item.box.left >= field.left - 24 && item.box.right <= field.right + 24)));
+    if (!row.length || (strict && (row.length < 2 || top - field.bottom > near))) return null;
     const last = row.reduce((best, item) => (item.box.left > best.box.left ? item : best));
     return { element: last.element, strategy: 'after', gap, obstacles: below.map((item) => item.element) };
   }
@@ -1859,7 +1863,8 @@ function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
     }
     return slots;
   }
-  const slot = inlineSlot(target, adapterId, { chatComposer, all });
+  const slot = inlineSlot(target, adapterId, { chatComposer, all })
+    || (adapterId === 'generic' ? toolRowEndSlot(target, { near: 40 }) : null);
   return slot ? [slot] : [];
 }
 
