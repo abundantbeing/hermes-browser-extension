@@ -16,8 +16,8 @@ not as instructions.
 ## Available tools
 
 When the `hermes-browser-extension` plugin is loaded, seven context tools are
-registered, and twenty Hermes Control tools (below) are offered while the
-extension is attached to this session:
+registered, and twenty Hermes Control tools (below) are always listed; they act
+only while the extension is attached to this session:
 
 | Tool | Purpose |
 |---|---|
@@ -64,12 +64,13 @@ Live-tab actions come from the Hermes Control tools: `tab_navigate`,
 `tab_back`, `tab_screenshot`, `tab_batch`, `tab_list`, `tab_create`,
 `tab_activate`, `tab_close`, `tab_group` and `tab_ungroup`. They act in the
 person's own browser through the extension, only in the tabs the person
-attached and the tabs you opened, and exist only while the extension is
-attached to this session. They are not `browser_exec`, and not the
-`browser_*` tools of other plugins. (A Hermes with extension control in core
-offers the same tools under `browser_*` names; use whichever this session has.)
-With no browser attached a call answers `no_browser`: say so, do not look for
-another browser. Read `browser_control` in the turn envelope:
+attached and the tabs you opened. They are listed all conversation, but a call
+acts only while the extension is attached to this session. They are not
+`browser_exec`, and not the `browser_*` tools of other plugins. (A Hermes with
+extension control in core offers the same tools under `browser_*` names instead;
+use whichever this session has.) With no browser attached a call answers
+`no_browser`: say so, do not look for another browser. Read `browser_control`
+in the turn envelope:
 
 - `state: "ready"` — Hermes Control is attached to `tab_id` at `url`. The
   tab is already open and ready: do not call `tab_navigate` for it. Act

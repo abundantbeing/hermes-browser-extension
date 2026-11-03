@@ -161,7 +161,7 @@ print(json.dumps({"actions": list(broker_module.CONTROL_ACTIONS), "schemas": sor
   }
 });
 
-test('register() offers the tools only while a controller is attached, and a name another toolset owns is left alone', () => {
+test('register() lists the tools with no attach-dependent check, and a name another toolset owns is left alone', () => {
   const out = runPython(`${PRELUDE}
 class Ctx:
     profile_name = "luxord"
@@ -179,35 +179,63 @@ ctx = Ctx(owned=["tab_click"])
 module.register(ctx)
 control = {name: entry for name, entry in ctx.registered.items() if name in tools.TOOL_NAMES}
 broker = broker_module.get_control_broker()
-before = tools.control_available()
-scope = broker_module.ControllerScope(principal_id="p", profile_id="luxord", session_id="sess-A", controller_id="c",
-                                      browser_profile_id="b", transport_family="local-api", capabilities=frozenset(CAPS))
-broker.attach(scope, lambda frame: None, owner=object())
-during = tools.control_available()
-checks = {name: entry["check_fn"]() for name, entry in control.items()}
-broker.reset()
 print(json.dumps({"count": len(control), "skipped_owned": "tab_click" not in control, "toolsets": sorted({e["toolset"] for e in control.values()}),
-                  "before": before, "during": during, "checks": sorted(set(checks.values())), "after": tools.control_available(),
+                  "checks": sorted({repr(e["check_fn"]) for e in control.values()}),
                   "schemas_ok": all(e["schema"]["name"] == name for name, e in control.items())}))
 `);
   const data = JSON.parse(out);
   assert.equal(data.count, 19);
   assert.equal(data.skipped_owned, true);
   assert.deepEqual(data.toolsets, ['hermes-browser-extension']);
-  assert.equal(data.before, false);
-  assert.equal(data.during, true);
-  assert.deepEqual(data.checks, [true]);
-  assert.equal(data.after, false);
+  // The list stays the same all conversation (prompt caching); without a browser a call answers no_browser.
+  assert.deepEqual(data.checks, ['None']);
   assert.equal(data.schemas_ok, true);
 });
 
-test("Hermes' memoized tool list is dropped when control comes or goes, so the tools show up after an attach", () => {
-  // Hermes memoizes get_tool_definitions() per toolset and config, not per check_fn result, so a
-  // list built before any controller attached would keep the tools hidden after one does.
+test('a Hermes with its own extension control switched on gets no tab_* tools, and the readiness route lists none', () => {
+  const out = runPython(`${PRELUDE}
+import types
+class Ctx:
+    profile_name = "default"
+    def __init__(self):
+        self.registered = []
+    def get_config(self, key, default=None): return default
+    def register_tool(self, name, *args, **kwargs): self.registered.append(name)
+    def register_hook(self, name, callback): pass
+    def register_skill(self, name, path): pass
+listed = {}
+module.status_route.register_status_route = lambda ctx, tools, **kwargs: listed.update({"tools": list(tools)})
+def control_count(flag):
+    core = types.ModuleType("gateway.browser_control_broker")
+    core.browser_control_enabled = flag
+    sys.modules["gateway"] = types.ModuleType("gateway")
+    sys.modules["gateway.browser_control_broker"] = core
+    ctx = Ctx()
+    module.register(ctx)
+    return [sum(name in tools.TOOL_NAMES for name in names) for names in (ctx.registered, listed["tools"])]
+def broken():
+    raise RuntimeError("config unreadable")
+seen = {"on": control_count(lambda: True), "off": control_count(lambda: False), "broken": control_count(broken)}
+del sys.modules["gateway"], sys.modules["gateway.browser_control_broker"]
+ctx = Ctx()
+module.register(ctx)
+seen["none"] = [sum(name in tools.TOOL_NAMES for name in names) for names in (ctx.registered, listed["tools"])]
+print(json.dumps(seen))
+`);
+  const data = JSON.parse(out);
+  // Switched on (0.22.5 and earlier): the extension attaches to core's broker, so these would only answer no_browser.
+  assert.deepEqual(data.on, [0, 0]);
+  // Off, unreadable, or a Hermes without it: the extension falls back to the plugin's route.
+  assert.deepEqual(data.off, [20, 20]);
+  assert.deepEqual(data.broken, [20, 20]);
+  assert.deepEqual(data.none, [20, 20]);
+});
+
+test("attaching or detaching a browser never touches Hermes' tool list mid-conversation", () => {
   const out = runPython(`${PRELUDE}
 import types
 clears = []
-sys.modules["model_tools"] = types.SimpleNamespace(_clear_tool_defs_cache=lambda: clears.append(tools.control_available()))
+sys.modules["model_tools"] = types.SimpleNamespace(_clear_tool_defs_cache=lambda: clears.append(True))
 class Ctx:
     profile_name = "default"
     def get_config(self, key, default=None): return default
@@ -216,25 +244,25 @@ class Ctx:
     def register_skill(self, name, path): pass
     def register_platform_handler(self, *args, **kwargs): pass
 module.register(Ctx())
-module.register(Ctx())  # a second registration adds no second listener
 broker = broker_module.get_control_broker()
 scope = broker_module.ControllerScope(principal_id="p", profile_id="default", session_id="sess-A", controller_id="c",
                                       browser_profile_id="b", transport_family="local-api", capabilities=frozenset(CAPS))
 owner = object()
 broker.attach(scope, lambda frame: None, owner=owner)
-attached = list(clears)
-broker.attach(scope, lambda frame: None, owner=owner)  # a same-identity refresh changes nothing
-refreshed = list(clears)
 broker.disconnect(scope, owner=owner)
-gone = list(clears)
 broker.reset()
 del sys.modules["model_tools"]
-print(json.dumps({"attached": attached, "refreshed": refreshed, "gone": gone}))
+print(json.dumps({"clears": len(clears)}))
 `);
-  const data = JSON.parse(out);
-  assert.deepEqual(data.attached, [true], 'dropped once, after the controller is live');
-  assert.deepEqual(data.refreshed, [true], 'a refresh that keeps control live drops nothing');
-  assert.deepEqual(data.gone, [true, false], 'and once more when the last controller goes');
+  assert.equal(JSON.parse(out).clears, 0);
+  // Hermes' private tool-list cache and attach-dependent checks stay out of the plugin.
+  const source = readFileSync(new URL('../companion-plugin/control_tools.py', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /model_tools|_clear_tool_defs_cache|add_presence_listener|check_fn\s*=|runtime_check_fn|no_cache_check_fn/);
+  // The bundled skill and the docs describe the same always-listed tools the agent sees.
+  for (const doc of ['skills/hermes-browser-extension/SKILL.md', 'README.md', 'install.md']) {
+    const text = readFileSync(new URL(`../companion-plugin/${doc}`, import.meta.url), 'utf8').replace(/\s+/g, ' ');
+    assert.doesNotMatch(text, /exist only while|(?:offered|listed|registered) (?:only )?while|stay hidden/i, doc);
+  }
 });
 
 test('both routes refuse without the API server auth, a registration is validated, and capabilities are filtered', () => {
@@ -567,7 +595,7 @@ async def main():
             await asyncio.sleep(0.02)
         seen["disconnected"] = not broker.any_connected()
         seen["offline"] = code(tools.run_control_action("browser_snapshot", {}, {"session_id": "sess-A"}))
-        seen["available_after"] = tools.control_available()
+        seen["available_after"] = broker.any_connected()
     return seen
 
 print(json.dumps(asyncio.run(main())))

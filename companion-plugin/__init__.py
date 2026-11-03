@@ -12,8 +12,8 @@ and read-only profile roster and avatar routes on the API server.
 
 It also carries Hermes Control for a Hermes whose core has no extension control:
 one tool per browser action (control_tools.py), served by a broker
-(control_broker.py) the extension registers with. The tools act only in the
-browser of the session that attached it, and only while it is attached.
+(control_broker.py) the extension registers with. The tools are always listed
+and act only in the browser of the session that attached it, while it is attached.
 """
 
 from __future__ import annotations
@@ -142,13 +142,14 @@ def register(ctx) -> None:
     )
 
     # ── Hermes Control tools ───────────────────────────────────────────
-    # Offered only while a controller is attached; a name another toolset owns
-    # (a Hermes that still has control in core) is skipped by Hermes.
+    # Always listed (no attach-dependent check, so the tool list never changes mid-conversation),
+    # except on a Hermes whose own extension control is on: the extension attaches to that instead.
     try:
         profile = getattr(ctx, "profile_name", "default")
     except Exception:
         profile = "default"
-    control_tools.register_control_tools(ctx, broker=get_control_broker(), profile=profile, data_dir=data_dir)
+    control_listed = control_tools.register_control_tools(ctx, broker=get_control_broker(), profile=profile, data_dir=data_dir)
+    listed_tools = TOOL_NAMES if control_listed else tuple(name for name in TOOL_NAMES if name not in control_tools.TOOL_NAMES)
 
     # ── Hooks ──────────────────────────────────────────────────────────
     ctx.register_hook("pre_llm_call", hooks.pre_llm_call)
@@ -164,7 +165,7 @@ def register(ctx) -> None:
     version = status_route.plugin_version()
     status_route.register_status_route(
         ctx,
-        tools=TOOL_NAMES,
+        tools=listed_tools,
         hooks=HOOK_NAMES,
         version=version,
         wire_extra=_chain(

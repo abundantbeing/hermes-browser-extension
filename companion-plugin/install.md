@@ -289,10 +289,11 @@ GET  /api/plugins/hermes-browser-extension/control/ws   (WebSocket; the ticket r
   click or the person opened it): the result counts it under
   `opened_tabs_not_attached`, and the person attaches it if needed. Refs
   belong to the tab they came from.
-- **Offered only while attached.** The tools appear only while some controller is
-  attached, and a call reaches only the controller registered for its own Hermes
-  session and profile; another session's, none, or more than one answer a plain
-  error. The agent is told to say so, never to look for another browser.
+- **Listed always, acting only while attached.** The tools stay in the tool list for
+  the whole conversation, so attaching or detaching a browser never changes the list
+  (prompt caching). A call reaches only the controller registered for its own Hermes
+  session and profile; another session's, none (`no_browser`), or more than one
+  answer a plain error. The agent is told to say so, never to look for another browser.
 - **One credential per session.** A session is bound to the credential that first
   attached its controller, through a dropped connection and for a short grace
   after (until an explicit detach). Another credential is refused (409) at
@@ -310,6 +311,8 @@ GET  /api/plugins/hermes-browser-extension/control/ws   (WebSocket; the ticket r
   and the other `browser_*` names, and Hermes refuses a second plugin's tool under
   a name already taken, so these tools have their own names. A Hermes that still
   carries extension control itself (0.22.5 and earlier) offers its own `browser_*`
-  control tools; the extension then attaches to that, and these stay hidden.
+  control tools. Where that control is switched on (`browser.extension_control.enabled`),
+  the extension attaches to it, and the plugin does not register these tools at all;
+  that is decided once when the gateway loads the plugin.
 - The routes exist only after the gateway restarts with the plugin enabled, and not
   under `plugins.isolation: host`. The Cloud and dashboard transport is not covered.

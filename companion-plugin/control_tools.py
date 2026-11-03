@@ -11,8 +11,9 @@ Fail-soft and fail-closed at once. With no controller attached, a controller for
 another session, several controllers for this one, an offline browser, a timeout
 or a refusal, the handler returns a plain error result the model can act on; it
 never raises into the agent and never reaches a browser that is not this
-session's. The tools are offered only while some controller is attached
-(``check_fn``); the extension, not this module, decides what the person approves.
+session's. The tools are always listed, so the tool list never changes during a
+conversation (prompt caching); with no browser attached a call answers
+``no_browser``. The extension, not this module, decides what the person approves.
 """
 
 from __future__ import annotations
@@ -127,28 +128,6 @@ def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default
 
 def _broker() -> ControlBroker:
     return _config["broker"] or get_control_broker()
-
-
-def control_available() -> bool:
-    """The tools' ``check_fn``: true only while some controller has a live transport."""
-    try:
-        return _broker().any_connected()
-    except Exception:
-        return False
-
-
-def _refresh_tool_listing(_connected: bool) -> None:
-    """Hermes memoizes its tool list per toolset and config, not per ``check_fn`` result
-    (``model_tools.get_tool_definitions``), so a list built before a controller attached would keep
-    the control tools hidden after one does. Drop that memo when control comes or goes; a Hermes
-    without the memo has nothing to drop."""
-    try:
-        import model_tools
-    except ImportError:
-        return
-    clear = getattr(model_tools, "_clear_tool_defs_cache", None)
-    if callable(clear):
-        clear()
 
 
 def _failure(code: str, message: str) -> str:
@@ -398,23 +377,25 @@ def make_handler(action: str) -> Callable[..., str]:
     return handler
 
 
-def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, profile: str = "default", data_dir: Any = None) -> None:
-    """Register every Hermes Control tool under its tab_* name. Those names belong to no Hermes core tool
-    and no other catalog plugin; a Hermes that still has extension control in core keeps its own
-    browser_* tools, and the extension then attaches to core's broker, so these stay hidden there."""
-    configure(broker=broker, profile=profile, screenshot_dir=Path(data_dir) / "control-screenshots" if data_dir else None)
-    _broker().add_presence_listener(_refresh_tool_listing)
-    check_fn: Callable[[], bool] = control_available
+def core_extension_control_on() -> bool:
+    """True on a Hermes that still carries extension control itself (0.22.5 and earlier) with it switched on.
+    The extension registers on core's route first, so there it attaches to core's broker."""
     try:
-        import tools.registry as hermes_registry
+        from gateway.browser_control_broker import browser_control_enabled
 
-        # The attach state changes with the person's switch, not on a human timescale. A Hermes
-        # with runtime_check_fn keys its tool-list memo on the answer; an older one only stops
-        # caching the check, and the presence listener above drops its memo instead.
-        mark = getattr(hermes_registry, "runtime_check_fn", None) or hermes_registry.no_cache_check_fn
-        check_fn = mark(control_available)
+        return browser_control_enabled() is True
     except Exception:
-        pass
+        return False
+
+
+def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, profile: str = "default", data_dir: Any = None) -> bool:
+    """Register every Hermes Control tool under its tab_* name; those names belong to no Hermes core tool
+    and no other catalog plugin. Where core's own extension control is on, register none (they could
+    only answer no_browser) and return False. Decided once at load, so the tool list never changes."""
+    configure(broker=broker, profile=profile, screenshot_dir=Path(data_dir) / "control-screenshots" if data_dir else None)
+    if core_extension_control_on():
+        logger.info("Hermes Control: this Hermes carries extension control itself; the tab_* tools are not registered")
+        return False
     for action in CONTROL_ACTIONS:
         tool = TOOL_FOR_ACTION[action]
         ctx.register_tool(
@@ -422,7 +403,7 @@ def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, 
             toolset=TOOLSET,
             schema=CONTROL_SCHEMAS[tool],
             handler=make_handler(action),
-            check_fn=check_fn,
             description=f"Hermes Control: {tool} in the person's own browser, through the Hermes Browser Extension.",
             emoji="🖱️",
         )
+    return True

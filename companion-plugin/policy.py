@@ -2,8 +2,8 @@
 
 # The context channel (hooks, context routes, context tools) never drives the
 # browser. Hermes Control (control_*.py) does, and only while the person has the
-# extension attached to a session: its tools are offered only then, act only in that
-# session's browser, and what each action may do is approved in the extension.
+# extension attached to a session: its tools are always listed but act only then, only in
+# that session's browser, and what each action may do is approved in the extension.
 BROWSER_CONTROL_ENABLED = True
 CONTROL_ENABLED = True
 CONTROL_NEEDS_ATTACHED_CONTROLLER = True

@@ -26,8 +26,9 @@ The plugin gives Hermes two things:
 | **A Chromium-based browser** (Chrome, Edge, Brave, Comet, Arc, ...) | Hermes Control. Firefox gets chat and page context only: it has no debugger API |
 | **The extension's address in `API_SERVER_CORS_ORIGINS`** (`chrome-extension://<id>`) | A Hermes that does not pair with the extension by itself. The extension's **Test connection** button shows the exact line to add |
 
-Hermes 0.22.5 and earlier still carry Hermes Control in Hermes itself; there the
-extension uses that, and this plugin adds the browser-context tools.
+Hermes 0.22.5 and earlier still carry Hermes Control in Hermes itself; where it is
+switched on, the extension uses that, this plugin registers no `tab_*` tools, and it
+adds the browser-context tools.
 
 Things to know:
 
@@ -65,8 +66,8 @@ the full tool reference.
 
 ## What it adds to Hermes
 
-- **Twenty Hermes Control tools**, offered only while your browser is attached
-  to the chat: `tab_list`, `tab_create`, `tab_activate`, `tab_close`,
+- **Twenty Hermes Control tools**, always listed and acting only while your
+  browser is attached to the chat: `tab_list`, `tab_create`, `tab_activate`, `tab_close`,
   `tab_group`, `tab_ungroup` to manage tabs, and `tab_navigate`, `tab_back`,
   `tab_snapshot`, `tab_screenshot`, `tab_click`, `tab_type`, `tab_fill`,
   `tab_select`, `tab_press`, `tab_hover`, `tab_drag`, `tab_scroll`,
