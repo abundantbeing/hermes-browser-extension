@@ -421,10 +421,15 @@ export function inlineSlotPlacement(slot = {}, viewport = {}, options = {}) {
   candidate.bottom = candidate.top + size;
   const offsetLeft = Number(viewport.offsetLeft || 0);
   const offsetTop = Number(viewport.offsetTop || 0);
-  const insideViewport = candidate.left >= offsetLeft + safe
-    && candidate.top >= offsetTop + safe
-    && candidate.right <= offsetLeft + Number(viewport.width || 0) - safe
-    && candidate.bottom <= offsetTop + Number(viewport.height || 0) - safe;
+  const viewRight = offsetLeft + Number(viewport.width || 0);
+  const viewBottom = offsetTop + Number(viewport.height || 0);
+  // The circle may come as close to an edge as the row it sits in (a split pane's composer on the window's
+  // bottom edge), never closer than that, and never past the edge.
+  const margin = (distance) => Math.min(safe, Math.max(0, distance));
+  const insideViewport = candidate.left >= offsetLeft + margin(row.left - offsetLeft)
+    && candidate.top >= offsetTop + margin(row.top - offsetTop)
+    && candidate.right <= viewRight - margin(viewRight - (row.left + row.width))
+    && candidate.bottom <= viewBottom - margin(viewBottom - (row.top + row.height));
   if (!insideViewport) return null;
   if (options.targetRect && rectsOverlap(candidate, options.targetRect)) return null;
   const obstacles = Array.isArray(options.obstacleRects) ? options.obstacleRects : [];

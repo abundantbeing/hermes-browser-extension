@@ -177,6 +177,18 @@ for (const title of ['Hermes', 'Fix the flaky test · Hermes', '● Fix the flak
   });
 }
 
+// A split pane's composer sits on the window's bottom edge: the circle still goes beside the model picker,
+// as close to the edge as the picker is, not to the corner rule clamped up into the safe margin.
+test('Hermes Webapp split pane, composer on the window\'s bottom edge: still just before the model picker', async () => {
+  const env = boot('hermes-web.html', 'http://127.0.0.1:9120/#/');
+  env.w.document.title = 'Fix the flaky test · Hermes';
+  env.w.innerHeight = 666;
+  const launcher = await focusedLauncher(env);
+  assert.equal(launcher.dataset.placement, 'before');
+  assert.equal(launcher.style.left, '568px');
+  assert.equal(launcher.style.top, '636px');
+});
+
 test('a page that is not Hermes but has a tour marker is not taken for the Webapp', () => {
   const document = withBoxes(parseHTML(`<!doctype html><html><head><title>Docs · Acme</title></head><body>${fixture('hermes-web.html')}</body></html>`).document);
   assert.equal(inspectInlineSite(document, fieldIn(document), { url: 'https://acme.example/#/' }).placement.slot, null);
