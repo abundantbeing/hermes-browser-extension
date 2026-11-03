@@ -189,6 +189,14 @@ test('teardown stops the animation of a revealed picture and keeps the picture',
   assert.deepEqual(panel.log.filter(([kind]) => kind === 'dispose'), [['dispose', 'call-b']], 'the waiting one was dropped');
 });
 
+test('a reply with generation cards marks itself so its inline pictures wait', () => {
+  const panel = harness();
+  panel.api.setToolActivity(panel.node, { rawName: 'terminal', status: 'started' });
+  assert.equal(panel.node.classList.contains('image-cards-pending'), false, 'no card, nothing to hide');
+  panel.tool({ activityId: 'call-a', status: 'started' });
+  assert.equal(panel.node.classList.contains('image-cards-pending'), true);
+});
+
 test('ordinary tool calls never reach the bubble', () => {
   const panel = harness();
   panel.api.setToolActivity(panel.node, { rawName: 'terminal', status: 'started' });

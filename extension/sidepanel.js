@@ -21932,6 +21932,8 @@ function setToolActivity(node, activity = null, { settle = false } = {}) {
     placeholder.dataset.activityKey = key;
     slot.appendChild(placeholder);
     placeholder._start?.();
+    // Until the turn ends, the reply's own copy of these pictures stays out of sight.
+    node.classList.add('image-cards-pending');
   }
   placeholder.dataset.toolStatus = activity.status || 'progress';
   if (completedSources.length && !isClaimedImagePlaceholder(placeholder)) {
@@ -22712,6 +22714,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     await settleTurnImages(node, { content: pending, imageSources });
     // Drops the generations that never produced a picture; revealed pictures stay.
     setToolActivity(node, null);
+    node.classList.remove('image-cards-pending');
     node.hermesStreaming = false;
     setMessageContent(node, pending);
     const row = node.closest('.message-row');
@@ -22850,6 +22853,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     }
     // A picture that already revealed stays, drawn finished, with its animation stopped.
     setToolActivity(node, null, { settle: true });
+    node.classList.remove('image-cards-pending');
   }
   return {
     get node() { return node; },

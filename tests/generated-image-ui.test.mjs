@@ -41,7 +41,7 @@ test('ordinary tool events never touch the image placeholders, and the turn sett
     /if \(\/image_generate\/i\.test\(tool\?\.rawName \|\| ''\)\) \{\s*rememberImageActivity\(tool\);\s*setToolActivity\(node, tool\);\s*\}/,
   );
   assert.match(sidepanelSource, /await settleTurnImages\(node, \{ content: pending, imageSources \}\);/);
-  assert.match(sidepanelSource, /setToolActivity\(node, null\);\s*node\.hermesStreaming = false;/);
+  assert.match(sidepanelSource, /setToolActivity\(node, null\);\s*node\.classList\.remove\('image-cards-pending'\);\s*node\.hermesStreaming = false;/);
   assert.match(sidepanelSource, /function dropUnrevealedImagePlaceholders/);
 });
 
@@ -96,4 +96,16 @@ test('recovered image_generate results keep safe image sources and reject host f
   assert.deepEqual(resolvedGeneratedImageSourcesFromMessages([
     { role: 'assistant', tool_calls: [{ function: { name: 'image_generate', result } }] },
   ]), ['https://cdn.example/generated.png']);
+});
+
+test('a picture is never shown twice: the reply keeps its copy hidden while its cards reveal', () => {
+  // Every inline form a generated picture takes, including the chip before it loads.
+  const rule = /\.image-cards-pending \.message-content :is\(([^)]*\([^)]*\))*[^)]*\)\s*\{\s*display: none;/.exec(cssSource);
+  assert.ok(rule, 'sidepanel.css hides inline pictures while cards are pending');
+  for (const selector of ['.generated-image', '.generated-image-inspectable', 'img[data-slot="aui_generated-image"]', '.session-media[data-session-media="image"]', '.artifact-card']) {
+    assert.ok(rule[0].includes(selector), `${selector} waits for the cards`);
+  }
+  // The mark comes off at every end of a turn, so a settled reply always shows its pictures.
+  assert.match(sidepanelSource, /node\.classList\.remove\('image-cards-pending'\);\s*node\.hermesStreaming = false;\s*setMessageContent\(node, pending\);/);
+  assert.match(sidepanelSource, /setToolActivity\(node, null, \{ settle: true \}\);\s*node\.classList\.remove\('image-cards-pending'\);/);
 });

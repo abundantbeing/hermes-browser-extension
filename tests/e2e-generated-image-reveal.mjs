@@ -12,7 +12,8 @@
  * What the run checks:
  * - each generation reveals its own picture in its own card while the turn finishes;
  * - events without a call id keep updating one card;
- * - the reply then shows every picture inline, with no filename chip and no empty card;
+ * - the reply then shows every picture inline, with no filename chip and no empty card,
+ *   and never shows a picture inline while its card is still on screen;
  * - each picture is downloaded from the gateway once, though it is drawn in several turns.
  *
  * HERMES_E2E_MEDIA_ROUTE=off hides the media route from /v1/capabilities. That is the
@@ -279,6 +280,9 @@ const turnProbe = `(() => {
     running: document.body.classList.contains('turn-running'),
     revealedInSlot: slot ? slot.querySelectorAll('.generated-image-reveal-source').length : 0,
     placeholdersInSlot: slot ? slot.querySelectorAll('.image-gen-placeholder').length : 0,
+    // Pictures or file chips the reply itself shows on screen right now.
+    inlineVisible: [...last.querySelectorAll('.message-content img, .message-content .session-media, .message-content .artifact-card')]
+      .filter((item) => item.getClientRects().length > 0).length,
   };
 })()`;
 
@@ -310,7 +314,8 @@ const replyPictures = `(() => {
 // comes is not taken.
 async function runTurn(panel, prompt, expectText, { cards = 0, waiting = '', revealed = '' } = {}) {
   await submitPrompt(panel, prompt);
-  const peaks = { revealedInSlot: 0, placeholdersInSlot: 0 };
+  // shownTwice: the most pictures the reply showed inline while its cards were still on screen.
+  const peaks = { revealedInSlot: 0, placeholdersInSlot: 0, shownTwice: 0 };
   const deadline = Date.now() + 150_000;
   const pending = { waiting: Boolean(waiting), revealed: Boolean(revealed) };
   const shoot = async (kind, file, pause) => {
@@ -325,6 +330,7 @@ async function runTurn(panel, prompt, expectText, { cards = 0, waiting = '', rev
     if (probe) {
       peaks.revealedInSlot = Math.max(peaks.revealedInSlot, probe.revealedInSlot);
       peaks.placeholdersInSlot = Math.max(peaks.placeholdersInSlot, probe.placeholdersInSlot);
+      if (probe.placeholdersInSlot) peaks.shownTwice = Math.max(peaks.shownTwice, probe.inlineVisible);
       if (probe.placeholdersInSlot && !firstCardAt) firstCardAt = Date.now();
       // All the turn's cards are up, or the one card a build shows has been up a while.
       if (pending.waiting && probe.running && probe.placeholdersInSlot && !probe.revealedInSlot
@@ -530,21 +536,25 @@ async function main() {
     assert.equal(new Set(one.inline.map((item) => item.hash)).size, 3, 'the three pictures are distinct');
     assert.equal(one.slotExists, false, 'the reply took over the pictures; no activity slot is left');
     assert.equal(peaksOne.revealedInSlot, 3, 'each generation revealed its own picture before the reply showed them');
+    assert.equal(peaksOne.shownTwice, 0, 'turn one never showed a picture inline while its cards were up');
 
     const two = results.turnTwo;
     assert.equal(two.chips, 0, 'turn two shows no filename chip');
     assert.equal(two.inline.length, 1, 'turn two shows its picture exactly once');
     assert.ok(two.inline[0].width > 0, 'turn two picture decoded');
     assert.equal(peaksTwo.revealedInSlot, 1, 'turn two revealed its picture in its generation');
+    assert.equal(peaksTwo.shownTwice, 0, 'turn two never showed its picture twice');
 
     const three = results.turnThree;
     assert.equal(peaksThree.placeholdersInSlot, 1, 'events without a call id kept one card');
     assert.equal(peaksThree.revealedInSlot, 1, 'turn three revealed its picture in that card');
+    assert.equal(peaksThree.shownTwice, 0, 'turn three never showed its picture twice');
     assert.equal(three.inline.length, 1, 'turn three shows its picture once');
     assert.equal(three.slotExists, false, 'turn three left no card behind');
 
     const four = results.turnFour;
     assert.equal(peaksFour.revealedInSlot, 3, 'each Markdown picture revealed in its own generation');
+    assert.equal(peaksFour.shownTwice, 0, 'turn four never showed a picture inline while its cards were up');
     assert.equal(four.chips, 0, 'turn four shows no filename chip');
     assert.equal(four.inline.length, 3, 'turn four shows its three pictures inline');
     assert.ok(four.inline.every((item) => item.width > 0), 'every turn four picture decoded');
@@ -574,8 +584,9 @@ async function main() {
     try { panel?.close?.(); } catch { /* best effort */ }
     if (chrome) killChrome(chrome);
     await gateway.close();
-    await rm(PROFILE, { recursive: true, force: true }).catch(() => {});
-    await rm(RUN_ROOT, { recursive: true, force: true }).catch(() => {});
+    // Windows keeps the profile locked for a moment after Chrome is killed.
+    await rm(PROFILE, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }).catch(() => {});
+    await rm(RUN_ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }).catch(() => {});
   }
 }
 

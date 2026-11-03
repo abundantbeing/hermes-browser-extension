@@ -3155,6 +3155,11 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
   background: rgba(var(--hermes-ink-rgb),0.04);
   box-shadow: 0 8px 22px rgba(0,0,0,0.14);
 }
+/* While a reply's generations reveal in their cards, its inline copy of the pictures waits,
+   and so does a file chip: a MEDIA line still being typed out is not yet a picture path. */
+.image-cards-pending .message-content :is(.generated-image, .generated-image-inspectable, img[data-slot="aui_generated-image"], .session-media[data-session-media="image"], .artifact-card) {
+  display: none;
+}
 .session-media {
   display: flex;
   align-items: center;
