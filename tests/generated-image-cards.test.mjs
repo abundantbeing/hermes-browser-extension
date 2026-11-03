@@ -42,7 +42,7 @@ test('a finished generation dissolves into the real picture via the dashboard me
   // The reveal resolves first, so a local cache path can actually decode.
   assert.match(
     sidepanelSource,
-    /async function revealGeneratedImage\(placeholder, source = ''\) \{[\s\S]{0,200}?const displayable = await resolveGeneratedImageSource\(source\);\s*if \(!displayable\) return false;\s*const image = await loadGeneratedImageForReveal\(displayable\);/,
+    /function revealGeneratedImage\(placeholder, source = ''\) \{[\s\S]{0,500}?const displayable = await resolveGeneratedImageSource\(source\);\s*if \(!displayable\) throw new Error\([^)]*\);\s*const image = await loadGeneratedImageForReveal\(displayable\);/,
   );
 });
 
@@ -60,7 +60,7 @@ test('every picture from one tool call gets a card, not just the first', () => {
   assert.doesNotMatch(sidepanelSource, /resolvedGeneratedImageSourcesFromResult\(activity\.result\)\[0\]/);
   // A recovered multi-image turn pairs its pictures with the waiting generations and
   // appends the extras as cards.
-  assert.match(sidepanelSource, /const plan = planImageReveals\(\{ pendingCount: waiting\.length/);
+  assert.match(sidepanelSource, /const plan = planImageReveals\(\{\s*pendingCount: waiting\.length,/);
   assert.match(sidepanelSource, /if \(plan\.cards\.length\) appendGeneratedImageCards\(node, plan\.cards\);/);
 });
 

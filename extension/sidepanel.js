@@ -281,14 +281,14 @@ import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToo
 import { emptyTurnReasoning, formatTurnDuration, liveTurnStartedAt, reduceTurnReasoning, replyTextAfterCommentary, storedTurnSummaries, turnReasoningFromRestEvent } from './lib/turn-activity.mjs';
 import { bindDashboardReasoning, ensureSessionShowsReasoning } from './lib/turn-reasoning-socket.mjs';
 import { discoverLiveSessions, readIdleRowSubagents, readLiveAttachSnapshot, rosterAfterFailure, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
-import { appendUserImageAttachments, extractHistoryMediaAttachments, extractMediaTags, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
+import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { createRestFollowState, messageCountFromSessionPayload, restFollowDue, restFollowStep } from './lib/session-follow.mjs';
 import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAGE_LIMIT } from './lib/session-paging.mjs';
 import { CORS_ORIGINS_SETTING, materializeSessionRoute, restSessionCreateSource, sessionRouteError, sessionRouteOriginRefusal } from './lib/session-materialization.mjs';
 import { createUserFileAttachment, createPageContextAttachment, appendUserFileAttachments, stageUserFiles, attachmentFileContext, attachmentSourceKey, rememberUserFileAttachments, restoreUserFileAttachments, openUserFileAttachment, downloadUserFileAttachment } from './lib/user-file-attachments.mjs';
 import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactDownloadSource, resolveArtifactFileSource } from './lib/media-source.mjs';
 import { createBoundedMediaCache } from './lib/media-data-cache.mjs';
-import { planImageReveals } from './lib/image-reveal-plan.mjs';
+import { isFinishedImageStatus, pickImageGenerationCard, planImageReveals } from './lib/image-reveal-plan.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import { artifactActionPlan, artifactFailureNotice } from './lib/artifact-actions.mjs';
 import { revealArtifactOnComputer } from './lib/artifact-folder.mjs';
@@ -21585,12 +21585,14 @@ function openGeneratedImageLightbox(image) {
   close.focus();
 }
 
-function extractRenderableImageSource(content = '') {
-  const html = renderMarkdownSafe(content || '');
+// Every picture a reply shows inline, in reply order: its MEDIA tags and its Markdown
+// images, whether they render as a picture or as a stored file the panel loads.
+function extractRenderableImageSources(content = '') {
   const template = document.createElement('template');
-  template.innerHTML = html;
-  const image = template.content.querySelector('img[data-slot="aui_generated-image"]');
-  return String(image?.getAttribute('src') || '').trim();
+  template.innerHTML = renderMarkdownSafe(content || '');
+  return [...template.content.querySelectorAll('img[data-slot="aui_generated-image"], [data-session-media="image"][data-media-path]')]
+    .map((item) => String(item.getAttribute('src') || item.getAttribute('data-media-path') || '').trim())
+    .filter(Boolean);
 }
 
 function imageGenerationPlaceholders(node) {
@@ -21599,6 +21601,11 @@ function imageGenerationPlaceholders(node) {
 
 function isRevealedImagePlaceholder(placeholder) {
   return Boolean(placeholder?.querySelector('.generated-image-reveal-source'));
+}
+
+// A card that has a picture, or is loading one, names it in data-reveal-source.
+function isClaimedImagePlaceholder(placeholder) {
+  return Boolean(placeholder?.dataset?.revealSource);
 }
 
 // Drops the generations that have not revealed a picture and stops their animation.
@@ -21613,13 +21620,18 @@ function dropUnrevealedImagePlaceholders(node) {
   if (slot && !slot.childElementCount) slot.remove();
 }
 
-// Removes the whole activity slot, revealed pictures included. Used when the reply shows
-// those same pictures inline, so no picture appears twice.
-function removeToolActivitySlot(node) {
+// Removes the cards whose picture the reply now shows inline, so no picture appears twice.
+// A card showing anything else, such as an alternate the reply does not name, stays.
+function removeImageCardsShownInline(node, sources = []) {
   const slot = node?.querySelector?.('.message-tool-activity');
   if (!slot) return;
-  for (const placeholder of slot.querySelectorAll('.image-gen-placeholder')) placeholder._dispose?.();
-  slot.remove();
+  const inline = new Set(sources);
+  for (const card of [...slot.children]) {
+    if (!inline.has(card.dataset?.revealSource || '')) continue;
+    card._dispose?.();
+    card.remove();
+  }
+  if (!slot.childElementCount) slot.remove();
 }
 
 // A local media path is not a browser URL. Hermes-managed paths are served as
@@ -21675,6 +21687,7 @@ function appendGeneratedImageCards(node, sources = []) {
     const figure = document.createElement('figure');
     figure.className = 'generated-image generated-image-card';
     figure.dataset.slot = 'aui_generated-image';
+    figure.dataset.revealSource = source;
     figure.setAttribute('role', 'status');
     figure.setAttribute('aria-label', name);
     const label = document.createElement('span');
@@ -21713,49 +21726,61 @@ function loadGeneratedImageForReveal(source = '') {
   });
 }
 
-async function revealGeneratedImage(placeholder, source = '') {
-  if (!placeholder?._reveal || !source) return false;
-  try {
-    const displayable = await resolveGeneratedImageSource(source);
-    if (!displayable) return false;
-    const image = await loadGeneratedImageForReveal(displayable);
-    const naturalRatio = image.naturalWidth / image.naturalHeight;
-    if (Number.isFinite(naturalRatio) && naturalRatio > 0) {
-      placeholder.style.aspectRatio = String(naturalRatio);
-      placeholder.style.setProperty('--image-gen-natural-ratio', String(naturalRatio));
-      placeholder.style.width = `min(100%, calc(var(--image-gen-max-preview-height) * ${naturalRatio}))`;
+// A card claims its picture the moment it starts loading it, so the turn end neither gives
+// it a second picture nor drops it while the picture is on its way. A picture that does not
+// load gives the claim back.
+function revealGeneratedImage(placeholder, source = '') {
+  if (!placeholder?._reveal || !source) return Promise.resolve(false);
+  if (isClaimedImagePlaceholder(placeholder)) return placeholder._revealing || Promise.resolve(isRevealedImagePlaceholder(placeholder));
+  placeholder.dataset.revealSource = source;
+  const revealing = (async () => {
+    try {
+      const displayable = await resolveGeneratedImageSource(source);
+      if (!displayable) throw new Error('Generated image has no displayable source.');
+      const image = await loadGeneratedImageForReveal(displayable);
+      const naturalRatio = image.naturalWidth / image.naturalHeight;
+      if (Number.isFinite(naturalRatio) && naturalRatio > 0) {
+        placeholder.style.aspectRatio = String(naturalRatio);
+        placeholder.style.setProperty('--image-gen-natural-ratio', String(naturalRatio));
+        placeholder.style.width = `min(100%, calc(var(--image-gen-max-preview-height) * ${naturalRatio}))`;
+      }
+      placeholder.appendChild(image);
+      placeholder.classList.add('generated-image-revealing');
+      await placeholder._reveal(image);
+      return true;
+    } catch {
+      if (!isRevealedImagePlaceholder(placeholder)) delete placeholder.dataset.revealSource;
+      return false;
+    } finally {
+      placeholder._revealing = null;
     }
-    placeholder.appendChild(image);
-    placeholder.classList.add('generated-image-revealing');
-    await placeholder._reveal(image);
-    return true;
-  } catch {
-    return false;
-  }
+  })();
+  placeholder._revealing = revealing;
+  return revealing;
 }
 
-// Turn end. The pictures the reply names (MEDIA tags, or an image in its markdown) and any
-// the session recovery found go into the waiting generations in the order they started,
-// one after another, each dissolving in as it arrives. A reply that names its pictures
-// shows them inline, so once they have revealed the slot is removed rather than showing
-// each picture twice.
+// Turn end. The pictures the reply shows (MEDIA tags and Markdown images) and any the session
+// recovery found go into the waiting generations in the order they started, one after
+// another, each dissolving in as it arrives. A picture already in a card is not shown again.
+// The cards whose picture the reply shows inline then give way to the reply; every other
+// picture, such as one the recovery found that the reply does not name, keeps its card.
 async function settleTurnImages(node, { content = '', imageSources = [] } = {}) {
-  const replyText = String(content || '');
-  const named = [
-    ...extractMediaTags(replyText).media
-      .map((item) => item.source)
-      .filter((source) => classifyMediaKind(source) === 'image'),
-    extractRenderableImageSource(replyText),
-  ].filter(Boolean);
-  const handoff = named.length > 0;
-  const recovered = (Array.isArray(imageSources) ? imageSources : []).filter((source) => !named.includes(source));
-  const waiting = imageGenerationPlaceholders(node).filter((item) => !isRevealedImagePlaceholder(item));
-  const plan = planImageReveals({ pendingCount: waiting.length, sources: handoff ? named : recovered, handoff });
+  // Pictures already on their way to a card land first, so each card ends with one picture.
+  await Promise.all(imageGenerationPlaceholders(node).map((item) => item._revealing).filter(Boolean));
+  const slot = node?.querySelector?.('.message-tool-activity');
+  const shown = [...(slot?.children || [])].map((card) => card.dataset?.revealSource || '');
+  const waiting = imageGenerationPlaceholders(node).filter((item) => !isClaimedImagePlaceholder(item));
+  const plan = planImageReveals({
+    pendingCount: waiting.length,
+    inline: extractRenderableImageSources(content),
+    recovered: imageSources,
+    shown,
+  });
   for (const { placeholderIndex, source } of plan.reveals) {
     await revealGeneratedImage(waiting[placeholderIndex], source);
   }
   if (plan.cards.length) appendGeneratedImageCards(node, plan.cards);
-  if (handoff) removeToolActivitySlot(node);
+  removeImageCardsShownInline(node, plan.replaced);
 }
 
 function imageVisualSeed(activity = {}) {
@@ -21897,35 +21922,35 @@ function setToolActivity(node, activity = null) {
   }
   // Ordinary tool calls never belong in the bubble; only image generations do.
   if (activity.history || !/image_generate/i.test(activity.rawName || '')) return;
-  let slot = node.querySelector('.message-tool-activity');
-  if (!slot) {
-    slot = document.createElement('div');
-    slot.className = 'message-tool-activity';
-    const content = node.querySelector('.message-content');
-    if (content?.nextSibling) node.insertBefore(slot, content.nextSibling);
-    else node.appendChild(slot);
-  }
   // Each generation keeps its own placeholder, found by its call id. A new start never
-  // disposes another generation's card, and a finish updates only its own card.
+  // disposes another generation's card, and a finish updates only its own card. An event
+  // without a call id updates the newest generation still waiting for its picture.
   const key = String(activity.activityId || '').trim();
-  const finished = /^(completed|finished|done|success|error|failed)$/i.test(String(activity.status || ''));
   const completedSources = rawGeneratedImageCandidatesFromResult(activity.result);
   const cards = imageGenerationPlaceholders(node);
-  let placeholder = key ? cards.find((item) => item.dataset.activityKey === key) || null : null;
-  if (!placeholder && !key && finished) {
-    // A finish without a call id belongs to the newest generation still waiting.
-    placeholder = [...cards].reverse().find((item) => !isRevealedImagePlaceholder(item)) || null;
-  }
+  let placeholder = cards[pickImageGenerationCard(cards.map((item) => ({
+    key: item.dataset.activityKey || '',
+    status: item.dataset.toolStatus || '',
+    claimed: isClaimedImagePlaceholder(item),
+  })), activity)] || null;
   if (!placeholder) {
     // A finish for a generation this panel never saw start has nothing to show.
-    if (finished && !completedSources.length) return;
+    if (isFinishedImageStatus(activity.status) && !completedSources.length) return;
+    let slot = node.querySelector('.message-tool-activity');
+    if (!slot) {
+      slot = document.createElement('div');
+      slot.className = 'message-tool-activity';
+      const content = node.querySelector('.message-content');
+      if (content?.nextSibling) node.insertBefore(slot, content.nextSibling);
+      else node.appendChild(slot);
+    }
     placeholder = renderImageGenPlaceholder({ ...activity, visualSeed: imageVisualSeed(activity) });
     placeholder.dataset.activityKey = key;
     slot.appendChild(placeholder);
     placeholder._start?.();
   }
   placeholder.dataset.toolStatus = activity.status || 'progress';
-  if (completedSources.length && !isRevealedImagePlaceholder(placeholder)) {
+  if (completedSources.length && !isClaimedImagePlaceholder(placeholder)) {
     void revealGeneratedImages(node, placeholder, completedSources);
   }
   scrollMessageStreamToBottom();
