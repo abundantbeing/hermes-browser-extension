@@ -2594,7 +2594,7 @@ const SITE_ADAPTER_API = Object.freeze({
   hermesGlobal.HermesSiteAdapters = SITE_ADAPTER_API;
 })(globalThis);
 
-/* extension/lib/inline-draft-policy.mjs · SHA-256 fa9c7426b34cbb4f */
+/* extension/lib/inline-draft-policy.mjs · SHA-256 94fcc4a48d0193e1 */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
 
@@ -2987,16 +2987,39 @@ function inlineLauncherPlacement(anchorRect = {}, viewport = {}, options = {}) {
 // The quick menu's result bar: under the field, lined up with it, and under the circle too when the circle
 // sits below the field (YouTube, X), so it never covers the circle. Near the bottom of the screen it goes above
 // both instead.
-function inlineResultBarPlacement(fieldRect = {}, circleRect = null, viewport = {}, { barHeight = 60, gap = 8, safe = 8 } = {}) {
+function inlineResultBarPlacement(fieldRect = {}, circleRect = null, viewport = {}, { barHeight = 60, gap = 8, safe = 8, obstacles = [] } = {}) {
   const viewportWidth = Number(viewport.width) || 0;
   const viewportHeight = Number(viewport.height) || 0;
   const width = Math.min(Math.max(Number(fieldRect.width) || 0, 260), 560, viewportWidth - safe * 2);
+  const left = Math.max(safe, Math.min(viewportWidth - width - safe, Number(fieldRect.left) || 0));
   const circleTop = circleRect ? Number(circleRect.top) : Infinity;
   const circleBottom = circleRect ? Number(circleRect.top) + (Number(circleRect.height) || 24) : -Infinity;
-  const below = Math.max(Number(fieldRect.bottom) || 0, circleBottom) + gap;
-  const above = Math.min(Number(fieldRect.top) || 0, circleTop) - gap - barHeight;
+  // The site's own controls in the bar's columns (a composer's toolbar under the field) push it past them,
+  // so the bar never covers one: below them when there is room, else above the field.
+  const inColumns = (Array.isArray(obstacles) ? obstacles : []).filter((rect) => rect && rect.right > left && rect.left < left + width);
+  const clearBelow = (start) => {
+    let top = start;
+    for (let moved = true; moved;) {
+      moved = false;
+      for (const rect of inColumns) {
+        if (rect.top < top + barHeight && rect.bottom > top) { top = rect.bottom + gap; moved = true; }
+      }
+    }
+    return top;
+  };
+  const clearAbove = (start) => {
+    let top = start;
+    for (let moved = true; moved;) {
+      moved = false;
+      for (const rect of inColumns) {
+        if (rect.top < top + barHeight && rect.bottom > top) { top = rect.top - gap - barHeight; moved = true; }
+      }
+    }
+    return top;
+  };
+  const below = clearBelow(Math.max(Number(fieldRect.bottom) || 0, circleBottom) + gap);
+  const above = clearAbove(Math.min(Number(fieldRect.top) || 0, circleTop) - gap - barHeight);
   const top = below + barHeight <= viewportHeight - safe ? below : Math.max(safe, above);
-  const left = Math.max(safe, Math.min(viewportWidth - width - safe, Number(fieldRect.left) || 0));
   return { top, left, width };
 }
 

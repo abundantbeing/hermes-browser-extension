@@ -970,8 +970,8 @@
     launcher.style.top = `${launcherPosition.top}px`;
     setLauncherTone(surfaceToneAt(launcherPosition.left + circle / 2, launcherPosition.top + circle / 2, anchor));
     if (!panel.hidden && panel.dataset.mode === 'bar') {
-      // The quick menu's result bar: under the field and clear of the circle (inlineResultBarPlacement).
-      const bar = policy.inlineResultBarPlacement(targetRect, { top: launcherPosition.top, left: launcherPosition.left, width: circle, height: circle }, { width: viewportWidth, height: viewportHeight }, { barHeight: panel.getBoundingClientRect().height || 60 });
+      // The quick menu's result bar: under the field, clear of the circle and of the site's own controls.
+      const bar = policy.inlineResultBarPlacement(targetRect, { top: launcherPosition.top, left: launcherPosition.left, width: circle, height: circle }, { width: viewportWidth, height: viewportHeight }, { barHeight: panel.getBoundingClientRect().height || 60, obstacles: obstacleRects });
       panel.style.width = `${bar.width}px`;
       panel.style.maxHeight = '';
       panel.style.left = `${bar.left}px`;

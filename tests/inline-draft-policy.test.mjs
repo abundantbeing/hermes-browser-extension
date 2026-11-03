@@ -474,3 +474,18 @@ test('the result bar sits under the field and under the circle when the circle i
   const low = inlineDraft.inlineResultBarPlacement({ left: 100, top: 760, right: 500, bottom: 800, width: 400, height: 40 }, { left: 100, top: 808, width: 24, height: 24 }, viewport, { barHeight: 90 });
   assert.equal(low.top, 760 - 8 - 90);
 });
+
+test('the result bar never covers a site control around the field: it drops below the toolbar, or opens above', () => {
+  const viewport = { width: 1280, height: 900 };
+  const field = { left: 100, top: 300, right: 700, bottom: 520, width: 600, height: 220 };
+  // A mail composer: Send and the format buttons sit in the toolbar row just under the field.
+  const toolbar = [{ left: 110, top: 528, right: 178, bottom: 562, width: 68, height: 34 }, { left: 186, top: 529, right: 218, bottom: 561, width: 32, height: 32 }];
+  const under = inlineDraft.inlineResultBarPlacement(field, { left: 652, top: 488, width: 24, height: 24 }, viewport, { barHeight: 110, obstacles: toolbar });
+  assert.equal(under.top, 562 + 8, 'under the toolbar, not over Send');
+  // Not enough room under the toolbar: above the field instead, still clear of every control.
+  const tight = inlineDraft.inlineResultBarPlacement(field, { left: 652, top: 488, width: 24, height: 24 }, { width: 1280, height: 640 }, { barHeight: 110, obstacles: toolbar });
+  assert.equal(tight.top, 300 - 8 - 110);
+  // A control off to the side of the bar's span does not move it.
+  const aside = inlineDraft.inlineResultBarPlacement(field, null, viewport, { barHeight: 110, obstacles: [{ left: 900, top: 528, right: 940, bottom: 560, width: 40, height: 32 }] });
+  assert.equal(aside.top, 528);
+});
