@@ -5,12 +5,15 @@
  * same tool events the gateway sends: tool.started, then tool.completed without the
  * image result (the gateway does not include it). Turn one starts three image
  * generations at once and names their pictures with MEDIA tags in the reply, which is
- * how Hermes reports generated images. Turn two names one picture.
+ * how Hermes reports generated images. Turn two names one picture. Turn three's events
+ * carry no call id, and its generation reports progress three times. Turn four starts
+ * three generations and shows their pictures as Markdown images.
  *
  * What the run checks:
  * - each generation reveals its own picture in its own card while the turn finishes;
+ * - events without a call id keep updating one card;
  * - the reply then shows every picture inline, with no filename chip and no empty card;
- * - each picture is downloaded from the gateway once, though it is drawn twice.
+ * - each picture is downloaded from the gateway once, though it is drawn in several turns.
  *
  * HERMES_E2E_MEDIA_ROUTE=off hides the media route from /v1/capabilities. That is the
  * state where the panel has not confirmed the route; the gateway still serves it.
@@ -73,6 +76,11 @@ function imageStart(key) {
   };
 }
 
+// The same generation reported without a call id, as some gateways and plugins do.
+function anonymous(event, afterMs, preview = '') {
+  return { afterMs, event, data: { tool: 'image_generate', preview } };
+}
+
 function imageDone(key, afterMs) {
   return {
     afterMs,
@@ -103,6 +111,30 @@ const TURNS = [
     key: 'tagged',
     answer: `Option D is ready.\nMEDIA:${mediaPath('d')}`,
     steps: [imageStart('d'), imageDone('d', 900)],
+  },
+  {
+    key: 'no-id',
+    answer: `One more, option A again.\nMEDIA:${mediaPath('a')}`,
+    steps: [
+      anonymous('tool.started', 250),
+      anonymous('tool.progress', 250, 'Rendering 25%'),
+      anonymous('tool.progress', 250, 'Rendering 50%'),
+      anonymous('tool.progress', 250, 'Rendering 75%'),
+      anonymous('tool.completed', 400, 'Image generated'),
+    ],
+  },
+  {
+    key: 'markdown',
+    answer: [
+      'Three more, as Markdown.',
+      '',
+      `![Option B](${mediaPath('b')})`,
+      '',
+      `![Option C](${mediaPath('c')})`,
+      '',
+      `![Option D](${mediaPath('d')})`,
+    ].join('\n'),
+    steps: [imageStart('b2'), imageStart('c2'), imageStart('d2'), imageDone('b2', 600), imageDone('c2', 300), imageDone('d2', 300)],
   },
 ];
 
@@ -273,16 +305,37 @@ const replyPictures = `(() => {
   };
 })()`;
 
-async function runTurn(panel, prompt, expectText) {
+// Mid-turn shots of the cards: `waiting` once the turn's cards are all generating, before
+// any picture; `revealed` once `cards` of them hold a picture. A shot whose moment never
+// comes is not taken.
+async function runTurn(panel, prompt, expectText, { cards = 0, waiting = '', revealed = '' } = {}) {
   await submitPrompt(panel, prompt);
   const peaks = { revealedInSlot: 0, placeholdersInSlot: 0 };
   const deadline = Date.now() + 150_000;
+  const pending = { waiting: Boolean(waiting), revealed: Boolean(revealed) };
+  const shoot = async (kind, file, pause) => {
+    pending[kind] = false;
+    await delay(pause);
+    await saveTurnScreenshot(panel, file, { part: 'slot' }).catch((error) => step(`${kind} shot skipped: ${error.message}`));
+  };
   let probe = null;
+  let firstCardAt = 0;
   while (Date.now() < deadline) {
     probe = await panel.evaluate(turnProbe);
     if (probe) {
       peaks.revealedInSlot = Math.max(peaks.revealedInSlot, probe.revealedInSlot);
       peaks.placeholdersInSlot = Math.max(peaks.placeholdersInSlot, probe.placeholdersInSlot);
+      if (probe.placeholdersInSlot && !firstCardAt) firstCardAt = Date.now();
+      // All the turn's cards are up, or the one card a build shows has been up a while.
+      if (pending.waiting && probe.running && probe.placeholdersInSlot && !probe.revealedInSlot
+        && (probe.placeholdersInSlot >= cards || Date.now() - firstCardAt > 1500)) {
+        await shoot('waiting', waiting, 300);
+        continue;
+      }
+      if (pending.revealed && probe.revealedInSlot >= cards) {
+        await shoot('revealed', revealed, 1200);
+        continue;
+      }
       if (probe.text.includes(expectText) && !probe.running) break;
     }
     await delay(150);
@@ -291,15 +344,25 @@ async function runTurn(panel, prompt, expectText) {
   return peaks;
 }
 
-async function saveTurnScreenshot(panel, file) {
+const PANEL_SIZE = { width: 420, height: 900, deviceScaleFactor: 1, mobile: false };
+
+// The newest reply, or its picture slot, scrolled to the top of the transcript. A tall
+// reply needs a tall panel, so the panel grows for the shot and then returns to its size.
+async function saveTurnScreenshot(panel, file, { part = 'reply' } = {}) {
+  await panel.call('Emulation.setDeviceMetricsOverride', { ...PANEL_SIZE, height: 2000 });
+  await delay(300);
   const box = await panel.evaluate(`(() => {
     const rows = [...document.querySelectorAll('.message.assistant')];
     const last = rows[rows.length - 1];
-    if (!last) return null;
-    const rect = last.getBoundingClientRect();
-    return { x: Math.max(0, rect.left), y: Math.max(0, rect.top), width: Math.min(rect.width, innerWidth), height: Math.min(rect.height, innerHeight) };
+    const target = ${JSON.stringify(part)} === 'slot' ? last?.querySelector('.message-tool-activity') : last;
+    if (!target) return null;
+    last.scrollIntoView({ block: 'start' });
+    const rect = (target === last ? last : target).getBoundingClientRect();
+    const frame = last.getBoundingClientRect();
+    const top = Math.max(0, Math.min(frame.top, rect.top) - 6);
+    return { x: Math.max(0, frame.left - 6), y: top, width: Math.min(frame.width + 12, innerWidth), height: Math.min(rect.bottom - top + 6, innerHeight - top) };
   })()`);
-  assert.ok(box && box.height > 0, 'assistant message box missing');
+  assert.ok(box && box.height > 0, `${part} box missing`);
   await mkdir(QA_DIR, { recursive: true });
   const shot = await panel.call('Page.captureScreenshot', {
     format: 'png',
@@ -307,6 +370,7 @@ async function saveTurnScreenshot(panel, file) {
     clip: { x: box.x, y: box.y, width: box.width, height: box.height, scale: 1 },
   });
   await writeFile(file, Buffer.from(shot.data, 'base64'));
+  await panel.call('Emulation.setDeviceMetricsOverride', PANEL_SIZE);
   return file;
 }
 
@@ -336,6 +400,7 @@ async function main() {
       '--disable-gpu',
       '--no-first-run',
       '--no-default-browser-check',
+      '--autoplay-policy=user-gesture-required',
       '--disable-background-networking',
       '--remote-debugging-port=0',
       `--user-data-dir=${PROFILE}`,
@@ -416,7 +481,11 @@ async function main() {
     })()`), 30_000);
     step('panel ready; sending turn one');
 
-    const peaksOne = await runTurn(panel, 'Make three options', 'Here are three options.');
+    const peaksOne = await runTurn(panel, 'Make three options', 'Here are three options.', {
+      cards: 3,
+      waiting: path.join(QA_DIR, `image-reveal-${LABEL}-turn-1-generating.png`),
+      revealed: path.join(QA_DIR, `image-reveal-${LABEL}-turn-1-revealing.png`),
+    });
     step('turn one settled');
     await delay(1500);
     results.turnOne = { peaks: peaksOne, ...(await panel.evaluate(replyPictures)) };
@@ -428,6 +497,24 @@ async function main() {
     await delay(1500);
     results.turnTwo = { peaks: peaksTwo, ...(await panel.evaluate(replyPictures)) };
     results.turnTwoScreenshot = await saveTurnScreenshot(panel, path.join(QA_DIR, `image-reveal-${LABEL}-turn-2.png`));
+
+    step('sending turn three (no call ids)');
+    const peaksThree = await runTurn(panel, 'Make option A again', 'One more, option A again.', {
+      cards: 1,
+      waiting: path.join(QA_DIR, `image-reveal-${LABEL}-turn-3-generating.png`),
+    });
+    await delay(1500);
+    results.turnThree = { peaks: peaksThree, ...(await panel.evaluate(replyPictures)) };
+    results.turnThreeScreenshot = await saveTurnScreenshot(panel, path.join(QA_DIR, `image-reveal-${LABEL}-turn-3.png`));
+
+    step('sending turn four (Markdown pictures)');
+    const peaksFour = await runTurn(panel, 'Make three more', 'Three more, as Markdown.', {
+      cards: 3,
+      revealed: path.join(QA_DIR, `image-reveal-${LABEL}-turn-4-revealing.png`),
+    });
+    await delay(1500);
+    results.turnFour = { peaks: peaksFour, ...(await panel.evaluate(replyPictures)) };
+    results.turnFourScreenshot = await saveTurnScreenshot(panel, path.join(QA_DIR, `image-reveal-${LABEL}-turn-4.png`));
 
     results.mediaRequests = gateway.mediaRequests.length;
     const perFile = {};
@@ -450,8 +537,21 @@ async function main() {
     assert.ok(two.inline[0].width > 0, 'turn two picture decoded');
     assert.equal(peaksTwo.revealedInSlot, 1, 'turn two revealed its picture in its generation');
 
+    const three = results.turnThree;
+    assert.equal(peaksThree.placeholdersInSlot, 1, 'events without a call id kept one card');
+    assert.equal(peaksThree.revealedInSlot, 1, 'turn three revealed its picture in that card');
+    assert.equal(three.inline.length, 1, 'turn three shows its picture once');
+    assert.equal(three.slotExists, false, 'turn three left no card behind');
+
+    const four = results.turnFour;
+    assert.equal(peaksFour.revealedInSlot, 3, 'each Markdown picture revealed in its own generation');
+    assert.equal(four.chips, 0, 'turn four shows no filename chip');
+    assert.equal(four.inline.length, 3, 'turn four shows its three pictures inline');
+    assert.ok(four.inline.every((item) => item.width > 0), 'every turn four picture decoded');
+    assert.equal(four.slotExists, false, 'turn four left no card behind');
+
     for (const name of Object.values(FIXTURE_FILES)) {
-      assert.equal(perFile[name] || 0, 1, `${name} is downloaded once, though drawn twice`);
+      assert.equal(perFile[name] || 0, 1, `${name} is downloaded once, though drawn in several turns`);
     }
 
     results.ok = true;
@@ -462,7 +562,7 @@ async function main() {
     results.requests = [...new Set(gateway.requestLog)].slice(0, 60);
     if (panel) {
       results.startupScreen = await Promise.race([
-        panel.evaluate("(() => { const s = document.querySelector('#startupScreen'); return { hidden: s?.hidden, text: (s?.innerText || '').replace(/\s+/g, ' ').slice(0, 300) }; })()"),
+        panel.evaluate("(() => { const s = document.querySelector('#startupScreen'); return { hidden: s?.hidden, text: (s?.innerText || '').replace(/\\s+/g, ' ').slice(0, 300) }; })()"),
         delay(4000).then(() => 'timed out reading startup screen'),
       ]);
     }
