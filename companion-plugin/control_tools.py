@@ -377,11 +377,25 @@ def make_handler(action: str) -> Callable[..., str]:
     return handler
 
 
-def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, profile: str = "default", data_dir: Any = None) -> None:
-    """Register every Hermes Control tool under its tab_* name. Those names belong to no Hermes core tool
-    and no other catalog plugin; a Hermes that still has extension control in core keeps its own
-    browser_* tools, and the extension then attaches to core's broker, so these stay hidden there."""
+def core_extension_control_on() -> bool:
+    """True on a Hermes that still carries extension control itself (0.22.5 and earlier) with it switched on.
+    The extension registers on core's route first, so there it attaches to core's broker."""
+    try:
+        from gateway.browser_control_broker import browser_control_enabled
+
+        return browser_control_enabled() is True
+    except Exception:
+        return False
+
+
+def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, profile: str = "default", data_dir: Any = None) -> bool:
+    """Register every Hermes Control tool under its tab_* name; those names belong to no Hermes core tool
+    and no other catalog plugin. Where core's own extension control is on, register none (they could
+    only answer no_browser) and return False. Decided once at load, so the tool list never changes."""
     configure(broker=broker, profile=profile, screenshot_dir=Path(data_dir) / "control-screenshots" if data_dir else None)
+    if core_extension_control_on():
+        logger.info("Hermes Control: this Hermes carries extension control itself; the tab_* tools are not registered")
+        return False
     for action in CONTROL_ACTIONS:
         tool = TOOL_FOR_ACTION[action]
         ctx.register_tool(
@@ -392,3 +406,4 @@ def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, 
             description=f"Hermes Control: {tool} in the person's own browser, through the Hermes Browser Extension.",
             emoji="🖱️",
         )
+    return True
