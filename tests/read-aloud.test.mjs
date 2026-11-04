@@ -11,8 +11,12 @@ import {
   dataUrlToBytes,
   describeVoiceRoute,
   readAloudRouteOrder,
+  gatewaySpeakUrl,
+  readAloudKey,
   readableTextFromElement,
+  requestGatewaySpeech,
   splitForSpeech,
+  voiceRouteSummary,
 } from '../extension/lib/read-aloud.mjs';
 
 function contentFor(html) {
@@ -143,6 +147,20 @@ test('the Voice row names the active route and the last fallback', () => {
   assert.deepEqual(fellBack.params, { reason: 'HTTP 400' });
 });
 
+test('the support report names the route in plain English', () => {
+  assert.match(voiceRouteSummary({ gatewayAvailable: true, browserAvailable: true }), /^gateway TTS \(Hermes dashboard \/api\/audio\/speak\)/);
+  assert.match(voiceRouteSummary({ gatewayAvailable: true, browserAvailable: true, lastFallback: 'HTTP 400' }), /fell back to browser speech \(HTTP 400\)/);
+  assert.match(voiceRouteSummary({ browserAvailable: true }), /^browser speech/);
+  assert.match(voiceRouteSummary({}), /^none/);
+});
+
+test('a reply keeps its key when the transcript is drawn again, and two replies differ', () => {
+  const a = { role: 'assistant', content: 'Hello there', ts: 5, rowId: 9 };
+  assert.equal(readAloudKey(a), readAloudKey({ ...a }));
+  assert.notEqual(readAloudKey(a), readAloudKey({ ...a, content: 'Hello there!' }));
+  assert.notEqual(readAloudKey(a), readAloudKey({ ...a, ts: 6 }));
+});
+
 // ---- Audio bytes ---------------------------------------------------------------
 
 test('a data URL becomes bytes and its type; anything else is refused', () => {
@@ -153,6 +171,53 @@ test('a data URL becomes bytes and its type; anything else is refused', () => {
   assert.equal(dataUrlToBytes('https://example.com/a.mp3'), null);
   assert.equal(dataUrlToBytes('data:audio/mpeg;base64,'), null);
   assert.equal(dataUrlToBytes(null), null);
+});
+
+test('a speech request goes to the dashboard with the session token in a header, never in the URL', async () => {
+  let seen;
+  const result = await requestGatewaySpeech({
+    baseUrl: 'http://127.0.0.1:9119/', token: 'tok-1', profile: 'work', text: 'Olá.',
+    fetchFn: async (url, init) => {
+      seen = { url, init };
+      return { ok: true, status: 200, json: async () => ({ ok: true, data_url: 'data:audio/mpeg;base64,AQID', mime_type: 'audio/mpeg', provider: 'edge' }) };
+    },
+  });
+  assert.equal(seen.url, 'http://127.0.0.1:9119/api/audio/speak?profile=work');
+  assert.equal(seen.init.method, 'POST');
+  assert.equal(seen.init.headers['X-Hermes-Session-Token'], 'tok-1');
+  assert.deepEqual(JSON.parse(seen.init.body), { text: 'Olá.' });
+  assert.ok(!seen.url.includes('tok-1'));
+  assert.deepEqual([...result.bytes], [1, 2, 3]);
+  assert.equal(result.mimeType, 'audio/mpeg');
+  assert.equal(result.provider, 'edge');
+  assert.equal(gatewaySpeakUrl('http://127.0.0.1:9119'), 'http://127.0.0.1:9119/api/audio/speak');
+});
+
+test('a refused speech request carries the server words and status; a reply with no audio is an error', async () => {
+  await assert.rejects(
+    () => requestGatewaySpeech({ baseUrl: 'http://x', token: 't', text: 'a', fetchFn: async () => ({ ok: false, status: 400, json: async () => ({ detail: 'Speech synthesis failed' }) }) }),
+    (error) => error.status === 400 && /Speech synthesis failed/.test(error.message),
+  );
+  await assert.rejects(
+    () => requestGatewaySpeech({ baseUrl: 'http://x', token: 't', text: 'a', fetchFn: async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) }) }),
+    /did not return audio/,
+  );
+  await assert.rejects(() => requestGatewaySpeech({ baseUrl: '', token: 't', text: 'a' }), /not reachable/);
+  await assert.rejects(() => requestGatewaySpeech({ baseUrl: 'http://x', token: '', text: 'a' }), /not reachable/);
+});
+
+test('stopping playback aborts the request in flight', async () => {
+  const controller = new AbortController();
+  let aborted = false;
+  const request = requestGatewaySpeech({
+    baseUrl: 'http://x', token: 't', text: 'a', signal: controller.signal,
+    fetchFn: (_url, init) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => { aborted = true; reject(new Error('aborted')); });
+    }),
+  });
+  controller.abort();
+  await assert.rejects(() => request, /aborted/);
+  assert.equal(aborted, true);
 });
 
 // ---- Gateway audio playback (Web Audio) --------------------------------------

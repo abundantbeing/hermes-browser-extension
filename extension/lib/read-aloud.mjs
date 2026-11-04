@@ -11,6 +11,7 @@
 export const READ_ALOUD_STATUS = Object.freeze({ idle: 'idle', loading: 'loading', speaking: 'speaking' });
 export const READ_ALOUD_ROUTES = Object.freeze({ gateway: 'gateway', browser: 'browser', none: 'none' });
 
+export const GATEWAY_SPEAK_PATH = '/api/audio/speak';
 export const BROWSER_CHUNK_CHARS = 180;
 export const GATEWAY_CHUNK_CHARS = 1200;
 
@@ -223,6 +224,23 @@ export function describeVoiceRoute({ gatewayAvailable = false, browserAvailable 
   };
 }
 
+/** English line for the support report: which route read-aloud uses and why. */
+export function voiceRouteSummary({ gatewayAvailable = false, browserAvailable = false, lastFallback = '' } = {}) {
+  const route = chooseReadAloudRoute({ gatewayAvailable, browserAvailable });
+  if (route === READ_ALOUD_ROUTES.gateway) {
+    const note = lastFallback ? `; the last read fell back to browser speech (${String(lastFallback).replace(/\s+/g, ' ').slice(0, 120)})` : '';
+    return `gateway TTS (Hermes dashboard ${GATEWAY_SPEAK_PATH}), then browser speech if it fails${note}`;
+  }
+  if (route === READ_ALOUD_ROUTES.browser) return 'browser speech (speechSynthesis); the Hermes dashboard speech route is not reachable';
+  return 'none (no Hermes dashboard speech route and no browser speech)';
+}
+
+/** Names a reply so its button state survives the transcript being drawn again. */
+export function readAloudKey(record) {
+  const content = String(record?.content ?? '');
+  return `${record?.rowId ?? ''}:${record?.ts ?? ''}:${content.length}:${content.slice(0, 48)}`;
+}
+
 // ---- Audio from the gateway ---------------------------------------------------------
 
 /** { bytes, mimeType } from an audio data URL, or null for anything else. */
@@ -240,6 +258,63 @@ export function dataUrlToBytes(dataUrl) {
     return { bytes, mimeType };
   } catch {
     return null;
+  }
+}
+
+const SPEAK_MIN_TIMEOUT_MS = 20_000;
+const SPEAK_MAX_TIMEOUT_MS = 180_000;
+const SPEAK_MS_PER_CHAR = 35;
+
+export function gatewaySpeakUrl(baseUrl = '', profile = '') {
+  const url = new URL(String(baseUrl || '').trim());
+  url.hash = '';
+  url.search = '';
+  url.pathname = GATEWAY_SPEAK_PATH;
+  const name = String(profile || '').trim();
+  if (name) url.searchParams.set('profile', name);
+  return url.toString();
+}
+
+/**
+ * Ask the Hermes dashboard to say `text` in the profile's configured voice.
+ * Resolves to { bytes, mimeType, provider }; rejects with the server's own words
+ * (and `status`) when it cannot. `signal` cancels the request when playback is stopped.
+ */
+export async function requestGatewaySpeech({
+  baseUrl = '', token = '', profile = '', text = '', signal = undefined, fetchFn = globalThis.fetch?.bind(globalThis),
+} = {}) {
+  if (!String(baseUrl || '').trim() || !String(token || '').trim() || typeof fetchFn !== 'function') {
+    throw new Error('The Hermes dashboard is not reachable from this panel.');
+  }
+  const body = String(text || '');
+  const timeoutMs = Math.min(SPEAK_MAX_TIMEOUT_MS, Math.max(SPEAK_MIN_TIMEOUT_MS, body.length * SPEAK_MS_PER_CHAR));
+  const timeout = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = timeout ? setTimeout(() => timeout.abort(), timeoutMs) : null;
+  const onStop = () => timeout?.abort();
+  signal?.addEventListener?.('abort', onStop, { once: true });
+  try {
+    const response = await fetchFn(gatewaySpeakUrl(baseUrl, profile), {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-Hermes-Session-Token': String(token).trim() },
+      body: JSON.stringify({ text: body }),
+      credentials: 'include',
+      cache: 'no-store',
+      redirect: 'error',
+      ...(timeout ? { signal: timeout.signal } : {}),
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      const detail = payload?.detail;
+      const error = new Error(String((typeof detail === 'string' && detail) || payload?.error?.message || payload?.error || `Hermes speech request failed (${response.status}).`));
+      error.status = response.status;
+      throw error;
+    }
+    const audio = dataUrlToBytes(payload?.data_url);
+    if (!audio) throw new Error('Hermes did not return audio.');
+    return { ...audio, provider: String(payload?.provider || '') };
+  } finally {
+    if (timer) clearTimeout(timer);
+    signal?.removeEventListener?.('abort', onStop);
   }
 }
 

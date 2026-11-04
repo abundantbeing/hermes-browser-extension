@@ -88,3 +88,14 @@ test('image upload refuses non-images and reports the dashboard error text', asy
   assert.equal(big.status, 413);
   assert.match(big.error, /too large/);
 });
+
+test('a reachable dashboard also stands in for the speech route read-aloud uses', () => {
+  assert.ok(DASHBOARD_ROUTE_CAPABILITIES.includes('audioSpeech'));
+  const identity = capabilityIdentity({ endpoint: 'http://127.0.0.1:8642', principal: 'p', profile: 'default' });
+  const ledger = createCapabilityLedger({ now: () => 100 });
+  ledger.rebind(identity);
+  assert.notEqual(ledger.get('audioSpeech')?.state, 'available');
+  for (const id of DASHBOARD_ROUTE_CAPABILITIES) ledger.observeProbe(id, dashboardRouteRecordFields({ reachable: true, checkedAt: 100 }));
+  assert.equal(ledger.get('audioSpeech').state, 'available');
+  assert.equal(ledger.get('audioSpeech').reasonCode, 'dashboard-route');
+});
