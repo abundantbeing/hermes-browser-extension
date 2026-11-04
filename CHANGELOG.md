@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Read a reply aloud.** Every finished Hermes reply has a speaker button beside Copy. It reads the answer only, never the tools Hermes used, its thinking notes or code blocks, and only when you press it, never when a reply arrives. Press it again to stop, or press another reply's button to switch. A new message, switching chats or closing the panel also stops it. The reply being read is outlined while it plays. With the Hermes dashboard reachable on this computer, the reply is spoken in the voice your Hermes profile is set up with (for example a Portuguese Edge or MiniMax voice), made by Hermes through `POST /api/audio/speak` and played here, so Stop works at once; if Hermes cannot make the audio, this browser's own speech voice reads it instead, and a Hermes without that route uses the browser voice from the start. Settings > About & Diagnostics has a new **Voice (read aloud)** row saying which of Gateway TTS, Browser speech or None is in use, and the copied diagnostics report says the same. A remote gateway that is not on this computer uses the browser voice for now (#153).
+
 - **Bot Mode loads your bots and their pictures from the extension's Hermes plugin.** When the gateway has no roster routes of its own (stock Hermes serves no `GET /v1/profiles`), the panel now asks the `hermes-browser-extension` plugin, installed as described in `companion-plugin/install.md`, for each bot's title, shape, colour and picture, with the same API key, instead of listing names only. The plugin answers only for the bots that gateway serves and never returns paths or other plugins' data. Hermes needs one restart after you install or update the plugin so its routes exist; until then Bot Mode lists the bots by name, as before.
 
 ### Changed
