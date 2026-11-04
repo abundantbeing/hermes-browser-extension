@@ -27755,7 +27755,7 @@ async function runRemoteInlineBackground(session, prompt) {
 async function runInlineDraftInBackground(request, resolvePrompt) {
   const session = await createInlineBackgroundSession(request);
   const prompt = typeof resolvePrompt === 'function'
-    ? await resolvePrompt()
+    ? await resolvePrompt(session)
     : String(resolvePrompt || '');
   if (session.client) {
     const answer = await runRemoteInlineBackground(session, prompt);
@@ -28065,10 +28065,11 @@ async function executeContextMenuRequest(request, requestedRoute) {
     const consentSettings = { ...settings };
     const { session } = await runInlineDraftInBackground(
       { adapterId: 'right-click', tabId: request.tabId, frameId: request.frameId },
-      async () => {
+      async (session) => {
         const browserControl = await resolveBrowserControlForTurn({
           context: turn.context,
           scope: turn.context.contextScope,
+          sessionId: session.id,
         });
         const sendTimeSettings = await refreshContextConsentLedger(consentSettings);
         const sendTimeTurn = contextMenuTurnForEffectiveContext(turn, sendTimeSettings);
