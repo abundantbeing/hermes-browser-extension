@@ -21613,12 +21613,19 @@ function dropUnrevealedImagePlaceholders(node, { settle = false } = {}) {
 
 // Removes the cards whose picture the reply now shows inline, so no picture appears twice.
 // A card showing anything else, such as an alternate the reply does not name, stays.
+// One spelling per picture: a web address as the reply renders it, a stored file by its path.
+// A tool result and the reply's Markdown can spell the same address differently.
+function imageSourceKey(source = '') {
+  const text = String(source || '').trim();
+  return resolveImageSource(text) || text;
+}
+
 function removeImageCardsShownInline(node, sources = []) {
   const slot = node?.querySelector?.('.message-tool-activity');
   if (!slot) return;
-  const inline = new Set(sources);
+  const inline = new Set(sources.map(imageSourceKey));
   for (const card of [...slot.children]) {
-    if (!inline.has(card.dataset?.revealSource || '')) continue;
+    if (!inline.has(imageSourceKey(card.dataset?.revealSource))) continue;
     card._dispose?.();
     card.remove();
   }
@@ -21764,12 +21771,12 @@ async function settleTurnImages(node, { content = '', imageSources = [] } = {}) 
   // Pictures already on their way to a card land first, so each card ends with one picture.
   await Promise.all(imageGenerationPlaceholders(node).map((item) => item._revealing).filter(Boolean));
   const slot = node?.querySelector?.('.message-tool-activity');
-  const shown = [...(slot?.children || [])].map((card) => card.dataset?.revealSource || '');
+  const shown = [...(slot?.children || [])].map((card) => imageSourceKey(card.dataset?.revealSource));
   const waiting = imageGenerationPlaceholders(node).filter((item) => !isClaimedImagePlaceholder(item));
   const plan = planImageReveals({
     pendingCount: waiting.length,
-    inline: extractRenderableImageSources(content),
-    recovered: imageSources,
+    inline: extractRenderableImageSources(content).map(imageSourceKey),
+    recovered: (Array.isArray(imageSources) ? imageSources : []).map(imageSourceKey),
     shown,
   });
   // A picture its card could not reveal (its canvas had stopped) still gets a plain card, unless

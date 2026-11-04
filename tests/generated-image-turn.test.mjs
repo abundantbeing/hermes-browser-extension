@@ -216,6 +216,15 @@ test('a reveal its canvas cancelled does not count as shown', async () => {
   assert.ok(panel.cards().includes(pic('b')), 'the recovered picture is still shown');
 });
 
+test('the same picture under two spellings of its URL is shown once', async () => {
+  const panel = harness();
+  panel.tool({ activityId: 'call-a', status: 'started' });
+  panel.tool({ activityId: 'call-a', status: 'completed', result: { success: true, image: 'https://CDN.example:443/result.png' } });
+  await flushMicrotasks();
+  await panel.api.settleTurnImages(panel.node, { content: 'Done.\n\n![Result](https://cdn.example/result.png)' });
+  assert.deepEqual(panel.cards(), [], 'the card gave way to the inline picture with the normalized URL');
+});
+
 test('ordinary tool calls never reach the bubble', () => {
   const panel = harness();
   panel.api.setToolActivity(panel.node, { rawName: 'terminal', status: 'started' });
