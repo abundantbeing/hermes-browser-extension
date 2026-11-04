@@ -8,6 +8,7 @@ import {
   savedConnectionStorageKey,
   selectSavedConnection,
 } from '../extension/lib/saved-connections.mjs';
+import { createRevisionGate } from '../extension/lib/context-scope-transition.mjs';
 import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
 
 const local = {
@@ -137,6 +138,7 @@ test('the real reload closes each socket once and preserves the departing draft 
     h.scope.activeDashboardWsConnection = { client: sharedClient };
     h.scope.profileWsConnection = { client: { close: () => events.push('close-profile') } };
     h.scope.savedConnectionReloading = false;
+    h.scope.scopeRevision = createRevisionGate();
     h.scope.persistCurrentComposerDraft = () => events.push(`draft-${h.scope.settings.activeSavedConnectionId}`);
     h.scope.stopConnectionProbeLoop = () => events.push('stop-probe');
     h.scope.window = { location: { reload: () => events.push('reload') } };
@@ -175,5 +177,41 @@ test('clearing the token also clears it from the active saved connection right a
     assert.equal(work.connection.apiKey, '');
     assert.equal(work.connection.tokenSource, '');
     assert.equal(JSON.stringify(stored).includes('work-test-token'), false);
+  } finally { h.close(); }
+});
+
+test('a switch from another panel stops a pending scope change here from writing its old settings back', async () => {
+  const h = await createSettingsSaveHarness({ settings: twoConnections() });
+  try {
+    const { scope } = h;
+    const followActive = { mode: 'follow-active', pinnedTabId: null };
+    const pinned = { mode: 'pinned-tab', pinnedTabId: 5 };
+    const rejections = [];
+    const openingSession = new Promise((resolve, reject) => rejections.push(reject));
+    Object.assign(scope, {
+      scopeRevision: createRevisionGate(),
+      contextScope: followActive, previousConversationScope: followActive, selectedTabs: null,
+      currentContext: { tabs: [] }, messages: [], availableSessions: [], activeSessionRuntime: null,
+      sessionRoutesAvailable: null, loadedSessionContextEstimate: 0, activeGroupProjection: null,
+      rememberNonPinnedConversationSession: () => {}, rememberConversationScope: () => {},
+      saveConversationScopeForInstance: () => {}, saveContextScopeForInstance: () => {},
+      syncSelectedTabsFromContextScope: () => {}, renderContextScopeControls: () => {},
+      renderMessagesFromStorage: () => {}, updateSessionLabel: () => {}, renderSessionMenu: () => {},
+      loadMessagesForActiveScope: async () => true,
+      ensureSessionForActiveScope: () => openingSession,
+      refreshContext: async () => {},
+      persistCurrentComposerDraft: () => {}, stopConnectionProbeLoop: () => {},
+      savedConnectionReloading: false, window: { location: { reload: () => {} } },
+    });
+    scope.remoteWsConnection = { client: { close: () => rejections.forEach((reject) => reject(new Error('socket closed'))) } };
+    const revisionId = scope.scopeRevision.begin();
+    const pending = h.fn('commitContextScope')(pinned, { ensureSession: true, scopeRevisionId: revisionId });
+    await Promise.resolve();
+    const selected = selectSavedConnection(scope.settings, 'default');
+    h.store.hermesBrowserSettings = selected;
+    h.fn('reloadForSavedConnection')(selected);
+    await pending.catch(() => {});
+    assert.equal(h.store.hermesBrowserSettings.activeSavedConnectionId, 'default');
+    assert.equal(h.store.hermesBrowserSettings.apiKey, local.apiKey);
   } finally { h.close(); }
 });

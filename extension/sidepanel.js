@@ -23392,6 +23392,7 @@ function reloadForSavedConnection(next) {
   savedConnectionReloading = true;
   persistCurrentComposerDraft({ immediate: true });
   connectionController.cancel('saved connection switched');
+  scopeRevision.invalidate();
   stopConnectionProbeLoop();
   const clients = new Set([remoteWsConnection?.client, profileWsConnection?.client, activeDashboardWsConnection?.client]);
   for (const client of clients) {
