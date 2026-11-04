@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "การเชื่อมต่อที่บันทึกไว้",
+  "connections.help": "การสลับจะบันทึกการตั้งค่าปัจจุบัน แต่ละการเชื่อมต่อเก็บที่อยู่และข้อมูลรับรองของตนเอง",
+  "connections.name_prompt": "ชื่อการเชื่อมต่อ",
+  "connections.default_name": "การเชื่อมต่อ {number}",
+  "connections.delete_confirm": "ลบ \"{name}\" หรือไม่?",
+  "connections.busy": "รอให้คำตอบปัจจุบันเสร็จก่อนสลับการเชื่อมต่อ",
+  "connections.error": "อัปเดตการเชื่อมต่อที่บันทึกไว้ไม่ได้",
   "ui.effort.title": "ระดับการใช้เหตุผล",
   "ui.effort.slider": "แถบเลื่อน",
   "ui.effort.buttons": "ปุ่ม",

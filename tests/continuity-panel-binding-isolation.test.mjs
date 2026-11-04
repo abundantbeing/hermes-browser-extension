@@ -30,6 +30,9 @@ function storageListener(initialSettings) {
   let listener = null;
   const context = vm.createContext({
     settings: initialSettings,
+    loadedSavedConnectionId: initialSettings.activeSavedConnectionId || '',
+    reloads: [],
+    reloadForSavedConnection(next) { this.reloads.push(next); },
     CUSTOM_THEME_STORAGE_KEY: 'customThemes',
     CONTEXT_CONSENT_STORAGE_KEY: 'consent',
     ONBOARDING_COMPLETED_STORAGE_KEY: 'onboardingDone',
@@ -37,6 +40,7 @@ function storageListener(initialSettings) {
     adoptStoredResponsePresentation() {},
     updateConnectionPrompt() {},
     renderBrowserControl() {},
+    renderSavedConnections() {},
     resetLocalDashboardState() {},
     handleCustomThemeStoreChange() {},
     normalizeContextConsentLedger: (value) => value,
@@ -67,6 +71,17 @@ test('credential and connection changes written by the controller or the pairing
   assert.equal(vm.runInContext('settings.apiKey', context), 'fresh');
   assert.equal(vm.runInContext('settings.gatewayMode', context), 'remote-dashboard');
   assert.equal(vm.runInContext('settings.trustedDashboardTabId', context), 7);
+});
+
+test('a saved-connection switch in another panel reloads before adopting its session', () => {
+  const { listener, context } = storageListener({ ...mine, activeSavedConnectionId: 'default' });
+  const next = { ...mine, activeSavedConnectionId: 'work', sessionId: '' };
+  // The callback is called as a plain function by the browser.
+  context.reloadForSavedConnection = (value) => context.reloads.push(value);
+  listener({ hermesBrowserSettings: { newValue: next } }, 'local');
+  assert.equal(context.reloads.length, 1);
+  assert.equal(context.reloads[0].activeSavedConnectionId, 'work');
+  assert.equal(vm.runInContext('settings.sessionId', context), 'A');
 });
 
 test('the toggle that persists Gmail capture adopts only its own key, not the whole shared record', async () => {

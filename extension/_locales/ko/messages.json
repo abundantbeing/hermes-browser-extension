@@ -1963,6 +1963,34 @@
     "message": "구성되지 않음",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "현재 응답이 완료된 후 연결을 전환하세요.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "연결 {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "\"{name}\"을(를) 삭제할까요?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "저장된 연결을 업데이트하지 못했습니다.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "전환 시 현재 설정이 저장됩니다. 각 연결은 주소와 인증 정보를 따로 보관합니다.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "연결 이름",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "저장된 연결",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "이 정확한 연결을 승인하기 전에는 채팅만 사용할 수 있습니다. 동의는 엔드포인트, 계정, 프로필 및 브라우저 컨트롤러별로 분리됩니다.",
     "description": "Runtime interface message context_consent.share_detail"

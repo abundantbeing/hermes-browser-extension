@@ -1963,6 +1963,34 @@
     "message": "não configurada",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "Aguarde a resposta atual terminar antes de trocar de conexão.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "Conexão {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "Excluir \"{name}\"?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "Não foi possível atualizar as conexões salvas.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "A troca salva as configurações atuais. Cada conexão mantém seu endereço e suas credenciais.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "Nome da conexão",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "Conexão salva",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "Somente chat até você aprovar esta conexão exata. O consentimento é isolado por endpoint, conta, perfil e controlador do navegador.",
     "description": "Runtime interface message context_consent.share_detail"

@@ -144,6 +144,8 @@ Settings exposes the same three product-level choices as Hermes Desktop:
 
 Existing installations migrate automatically: prior `local-api` settings become Local gateway, while prior `remote-api` and `remote-dashboard` settings remain Remote gateway. A legacy remote dashboard is never silently relabeled as Hermes Cloud.
 
+Settings > Connections lets you add, rename, delete, and switch saved connections. Each entry keeps its own gateway address, API key/browser token, and dashboard settings in browser-local storage. Your existing setup becomes the first entry. Switching saves the current settings, closes the old connection, and reloads the panel with a fresh chat on the selected gateway. Earlier conversations remain in that gateway's session list. Only one saved connection is active at a time; enable Hermes Control again when you need it on the selected connection.
+
 ### Local API server
 
 Local-only is the safest default. Put this in your Hermes `.env` on the machine running Hermes: `%LOCALAPPDATA%\hermes\.env` on native Windows, `~/.hermes/.env` on Linux/macOS/WSL, or `$HERMES_HOME/.env` if you relocated the data dir or use a named profile:

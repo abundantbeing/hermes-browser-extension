@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "सहेजा गया कनेक्शन",
+  "connections.help": "बदलने पर मौजूदा सेटिंग सहेजी जाती हैं। हर कनेक्शन अपना पता और क्रेडेंशियल रखता है।",
+  "connections.name_prompt": "कनेक्शन का नाम",
+  "connections.default_name": "कनेक्शन {number}",
+  "connections.delete_confirm": "\"{name}\" मिटाएं?",
+  "connections.busy": "कनेक्शन बदलने से पहले मौजूदा जवाब पूरा होने दें।",
+  "connections.error": "सहेजे गए कनेक्शन अपडेट नहीं हो सके।",
   "ui.effort.title": "प्रयास",
   "ui.effort.slider": "स्लाइडर",
   "ui.effort.buttons": "बटन",

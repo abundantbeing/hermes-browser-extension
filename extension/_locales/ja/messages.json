@@ -1963,6 +1963,34 @@
     "message": "未設定",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "現在の返信が完了してから接続を切り替えてください。",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "接続 {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "「{name}」を削除しますか？",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "保存済みの接続を更新できませんでした。",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "切り替え時に現在の設定を保存します。接続ごとにアドレスと認証情報を保持します。",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "接続名",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "保存済みの接続",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "この接続を明示的に承認するまではチャットのみです。同意はエンドポイント、アカウント、プロファイル、ブラウザーコントローラーごとに分離されます。",
     "description": "Runtime interface message context_consent.share_detail"

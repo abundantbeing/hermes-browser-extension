@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Koneksi tersimpan",
+  "connections.help": "Beralih akan menyimpan pengaturan saat ini. Setiap koneksi menyimpan alamat dan kredensialnya sendiri.",
+  "connections.name_prompt": "Nama koneksi",
+  "connections.default_name": "Koneksi {number}",
+  "connections.delete_confirm": "Hapus \"{name}\"?",
+  "connections.busy": "Tunggu balasan saat ini selesai sebelum beralih koneksi.",
+  "connections.error": "Tidak dapat memperbarui koneksi tersimpan.",
   "ui.effort.title": "Upaya",
   "ui.effort.slider": "Penggeser",
   "ui.effort.buttons": "Tombol",

@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Kayıtlı bağlantı",
+  "connections.help": "Geçiş sırasında mevcut ayarlar kaydedilir. Her bağlantı kendi adresini ve kimlik bilgilerini saklar.",
+  "connections.name_prompt": "Bağlantı adı",
+  "connections.default_name": "Bağlantı {number}",
+  "connections.delete_confirm": "\"{name}\" silinsin mi?",
+  "connections.busy": "Bağlantıyı değiştirmeden önce mevcut yanıtın bitmesini bekleyin.",
+  "connections.error": "Kayıtlı bağlantılar güncellenemedi.",
   "ui.effort.title": "Çaba",
   "ui.effort.slider": "Kaydırıcı",
   "ui.effort.buttons": "Düğmeler",

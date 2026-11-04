@@ -4,6 +4,8 @@ Hermes Browser Extension connects browser context to the Hermes Agent runtime yo
 
 ## Connection modes
 
+Saved connections keep named gateway configurations, including API keys/browser tokens, in `chrome.storage.local` alongside the active settings. Switching activates one configuration, closes the previous panel sockets, and reloads open panels. Single-use WebSocket tickets are never saved in these entries. Drafts and local transcript caches are separated by saved connection; switching starts a fresh gateway session and leaves existing server-side history intact.
+
 ### Local Hermes API
 
 Default Gateway URL:

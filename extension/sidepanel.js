@@ -594,7 +594,7 @@ import {
   messageStorageKeyForScope,
   normalizeContextScope,
   resolveContextTargetTab,
-  sessionBindingKeyForScope,
+  sessionBindingKeyForScope as unscopedSessionBindingKeyForScope,
   shouldRefreshForTabEvent,
 } from './lib/context-scope.mjs';
 import {
@@ -702,6 +702,14 @@ import {
   transportUsesDashboardTicket,
 } from './lib/connection-modes.mjs';
 import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForConnect } from './lib/connection-dispatch.mjs';
+import {
+  addSavedConnection,
+  deleteSavedConnection,
+  rememberSavedConnection,
+  renameSavedConnection,
+  savedConnectionStorageKey,
+  selectSavedConnection,
+} from './lib/saved-connections.mjs';
 import { assertCloudAgentTabStillMatches, resolveActiveCloudAgentTab } from './lib/cloud-agent-tab.mjs';
 import {
   CONNECTION_STATES,
@@ -1199,6 +1207,10 @@ const els = {
   gatewayModeInput: $('#gatewayModeInput'),
   remoteTransportRow: $('#remoteTransportRow'),
   gatewayUrlInput: $('#gatewayUrlInput'),
+  savedConnectionSelect: $('#savedConnectionSelect'),
+  savedConnectionAdd: $('#savedConnectionAdd'),
+  savedConnectionRename: $('#savedConnectionRename'),
+  savedConnectionDelete: $('#savedConnectionDelete'),
   hermesWebAddressInput: $('#hermesWebAddressInput'),
   webappKeepSignedInInput: $('#webappKeepSignedInInput'),
   hermesAccountRow: $('#hermesAccountRow'),
@@ -1295,6 +1307,9 @@ const els = {
 };
 
 let settings = { ...DEFAULT_SETTINGS };
+let loadedSavedConnectionId = '';
+let savedConnectionBusy = false;
+let savedConnectionReloading = false;
 let appearanceMutationId = 0;
 let appearanceSaveStatus = '';
 // Guards the async signature-font probe so a stale result cannot toggle the
@@ -4127,12 +4142,18 @@ function composerDraftStorage() {
   return globalThis.sessionStorage || null;
 }
 
+// Keep drafts and tab-scoped caches with the connection that produced them,
+// including while a switch is unloading this document.
+function connectionLocalStorageKey(key) {
+  return savedConnectionStorageKey({ activeSavedConnectionId: loadedSavedConnectionId || settings.activeSavedConnectionId }, key);
+}
+
 function persistCurrentComposerDraft({ immediate = false } = {}) {
   if (restoringComposerDraft) return;
   const run = () => {
     composerDraftSaveTimer = 0;
     persistComposerDraft(composerDraftStorage(), {
-      instanceId: ensureSidepanelInstanceId(),
+      instanceId: connectionLocalStorageKey(ensureSidepanelInstanceId()),
       text: els.input?.value || '',
       attachments,
     });
@@ -4154,11 +4175,11 @@ function forgetComposerDraft() {
     clearTimeout(composerDraftSaveTimer);
     composerDraftSaveTimer = 0;
   }
-  clearComposerDraft(composerDraftStorage(), { instanceId: ensureSidepanelInstanceId() });
+  clearComposerDraft(composerDraftStorage(), { instanceId: connectionLocalStorageKey(ensureSidepanelInstanceId()) });
 }
 
 function restoreComposerDraft() {
-  const draft = loadComposerDraft(composerDraftStorage(), { instanceId: ensureSidepanelInstanceId() });
+  const draft = loadComposerDraft(composerDraftStorage(), { instanceId: connectionLocalStorageKey(ensureSidepanelInstanceId()) });
   if (!draft) return false;
   restoringComposerDraft = true;
   try {
@@ -4748,11 +4769,11 @@ async function openHermesWeb() {
 }
 
 function contextScopeSessionKey() {
-  return `hermesBrowserContextScope:${ensureSidepanelInstanceId()}`;
+  return connectionLocalStorageKey(`hermesBrowserContextScope:${ensureSidepanelInstanceId()}`);
 }
 
 function conversationScopeSessionKey() {
-  return `hermesBrowserConversationScope:${ensureSidepanelInstanceId()}`;
+  return connectionLocalStorageKey(`hermesBrowserConversationScope:${ensureSidepanelInstanceId()}`);
 }
 
 function conversationScopeForContextScope(scope = contextScope, fallback = previousConversationScope) {
@@ -4789,7 +4810,7 @@ function rememberConversationScope(scope = contextScope) {
 }
 
 function nonPinnedConversationSessionKey() {
-  return `hermesBrowserConversationSession:${ensureSidepanelInstanceId()}`;
+  return connectionLocalStorageKey(`hermesBrowserConversationSession:${ensureSidepanelInstanceId()}`);
 }
 
 function rememberNonPinnedConversationSession(scope = previousConversationScope) {
@@ -4894,9 +4915,14 @@ function saveContextScopeForInstance() {
 }
 
 function activeMessagesStorageKey(conversationScope = previousConversationScope) {
-  return conversationScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB
+  const key = conversationScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB
     ? messageStorageKeyForScope(contextScope, conversationScope)
     : 'hermesBrowserMessages';
+  return connectionLocalStorageKey(key);
+}
+
+function sessionBindingKeyForScope(scope, conversationScope = scope) {
+  return connectionLocalStorageKey(unscopedSessionBindingKeyForScope(scope, conversationScope));
 }
 
 async function loadMessagesForActiveScope({ scopeRevisionId = scopeRevision.current() } = {}) {
@@ -5392,8 +5418,12 @@ async function ensureSessionForActiveScope({ focus = false, scopeRevisionId = sc
 
 async function initializeSessionForPanelOpen({ focus = false } = {}) {
   if (!minimumConnectionReady()) return;
-  if (shouldCreateFreshSessionOnOpen(settings)) {
+  if (settings.savedConnectionNeedsNewSession === true || shouldCreateFreshSessionOnOpen(settings)) {
     await beginHermesBrowserDraft({ title: makeBrowserSessionTitle(), focus });
+    if (settings.savedConnectionNeedsNewSession === true) {
+      settings = { ...settings, savedConnectionNeedsNewSession: false };
+      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    }
     setStatus('ok', 'New Hermes Browser Extension draft', 'Saved when you send the first message.');
     return;
   }
@@ -23033,10 +23063,8 @@ async function noteLongSharedSessionIfDue() {
 }
 
 async function loadSettings({ restoreMessages = false } = {}) {
-  loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
-  const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -23059,6 +23087,11 @@ async function loadSettings({ restoreMessages = false } = {}) {
   );
   const storedPanelAppearance = appearancePreferencesForSurface(storedSettings, 'panel');
   settings = { ...DEFAULT_SETTINGS, ...storedSettings, ...storedPanelAppearance };
+  settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
+  loadedSavedConnectionId = settings.activeSavedConnectionId;
+  loadContextScopeForInstance();
+  const messageKey = activeMessagesStorageKey(previousConversationScope);
+  if (restoreMessages) Object.assign(stored, await browserApi.storage.local.get(messageKey));
   settings = {
     ...settings,
     thinkingEnabled: settings.thinkingEnabled !== false,
@@ -23337,7 +23370,77 @@ function renderTranscriptProviderField() {
   if (els.transcriptProviderField) els.transcriptProviderField.hidden = !custom;
 }
 
+function renderSavedConnections() {
+  if (!els.savedConnectionSelect) return;
+  const current = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
+  els.savedConnectionSelect.replaceChildren(...current.savedConnections.map((entry) => {
+    const option = document.createElement('option');
+    option.value = entry.id;
+    option.textContent = entry.name;
+    return option;
+  }));
+  els.savedConnectionSelect.value = current.activeSavedConnectionId;
+  els.savedConnectionSelect.disabled = savedConnectionBusy;
+  els.savedConnectionAdd.disabled = savedConnectionBusy;
+  els.savedConnectionRename.disabled = savedConnectionBusy;
+  els.savedConnectionDelete.disabled = savedConnectionBusy || current.savedConnections.length < 2;
+}
+
+function reloadForSavedConnection(next) {
+  if (savedConnectionReloading) return;
+  savedConnectionReloading = true;
+  persistCurrentComposerDraft({ immediate: true });
+  connectionController.cancel('saved connection switched');
+  stopConnectionProbeLoop();
+  const clients = new Set([remoteWsConnection?.client, profileWsConnection?.client, activeDashboardWsConnection?.client]);
+  for (const client of clients) {
+    try { client?.close(); } catch { /* already closed */ }
+  }
+  settings = next;
+  try { globalThis.sessionStorage?.setItem('hermesBrowserOpenConnections', '1'); } catch { /* optional */ }
+  // A fresh panel discards all transport-derived state and pending callbacks.
+  // Other open panels follow the same storage change before reconnecting.
+  window.location.reload();
+}
+
+async function updateSavedConnection(action, id = settings.activeSavedConnectionId) {
+  if (savedConnectionBusy) return;
+  if (sending) {
+    showOperationToast({ kind: 'warn', title: t('connections.busy') });
+    renderSavedConnections();
+    return;
+  }
+  const current = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
+  const active = current.savedConnections.find((entry) => entry.id === current.activeSavedConnectionId);
+  let name;
+  if (action === 'add' || action === 'rename') {
+    name = window.prompt(t('connections.name_prompt'), action === 'add'
+      ? t('connections.default_name', { number: current.savedConnections.length + 1 }) : active.name);
+    if (!name?.trim()) { renderSavedConnections(); return; }
+  }
+  if (action === 'delete' && !window.confirm(t('connections.delete_confirm', { name: active.name }))) return;
+  savedConnectionBusy = true;
+  renderSavedConnections();
+  try {
+    await saveSettingsFromForm();
+    let next;
+    if (action === 'add') next = addSavedConnection(settings, name, crypto.randomUUID());
+    else if (action === 'rename') next = renameSavedConnection(settings, settings.activeSavedConnectionId, name);
+    else if (action === 'delete') next = deleteSavedConnection(settings, settings.activeSavedConnectionId);
+    else next = selectSavedConnection(settings, id);
+    await browserApi.storage.local.set({ hermesBrowserSettings: next });
+    if (next.activeSavedConnectionId !== settings.activeSavedConnectionId) reloadForSavedConnection(next);
+    else settings = next;
+  } catch {
+    showOperationToast({ kind: 'warn', title: t('connections.error') });
+  } finally {
+    savedConnectionBusy = false;
+    renderSavedConnections();
+  }
+}
+
 function syncSettingsForm() {
+  renderSavedConnections();
   renderAppearanceControls();
   renderProfiles();
   if (els.botModeEnabledInput) els.botModeEnabledInput.checked = settings.botModeEnabled === true;
@@ -23550,6 +23653,11 @@ async function saveSettingsFromForm() {
   }
   const stored = await browserApi.storage.local.get('hermesBrowserSettings');
   const freshSettings = stored.hermesBrowserSettings || {};
+  if (freshSettings.activeSavedConnectionId && loadedSavedConnectionId
+    && freshSettings.activeSavedConnectionId !== loadedSavedConnectionId) {
+    reloadForSavedConnection(freshSettings);
+    throw new Error(t('connections.error'));
+  }
   const panelSettings = { ...settings };
   for (const webAppearanceKey of ['webTextZoomPercent', 'webFontProfile', 'webCustomFontFamily', 'webTextSize']) {
     delete panelSettings[webAppearanceKey];
@@ -23560,6 +23668,7 @@ async function saveSettingsFromForm() {
     panelAppearancePreferences(),
   );
   applyAppearanceSettings();
+  settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   await applyWebappCredentialPreference();
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
@@ -28471,6 +28580,12 @@ function eventPathContains(event, node) {
 function bindEvents() {
   bindPromptCard();
   bindFirefoxScreenshotControl();
+  els.savedConnectionSelect?.addEventListener('change', () => {
+    void updateSavedConnection('switch', els.savedConnectionSelect.value);
+  });
+  els.savedConnectionAdd?.addEventListener('click', () => void updateSavedConnection('add'));
+  els.savedConnectionRename?.addEventListener('click', () => void updateSavedConnection('rename'));
+  els.savedConnectionDelete?.addEventListener('click', () => void updateSavedConnection('delete'));
   portalDockFloatingPanels();
   observeDockFloatingAnchor();
   bindJumpToLatest();
@@ -29753,6 +29868,11 @@ function bindEvents() {
     if (Object.hasOwn(changes, 'hermesBrowserSettings')) {
       const next = changes.hermesBrowserSettings?.newValue;
       if (next && typeof next === 'object') {
+        if (next.activeSavedConnectionId && loadedSavedConnectionId
+          && next.activeSavedConnectionId !== loadedSavedConnectionId) {
+          reloadForSavedConnection(next);
+          return;
+        }
         // The controller worker and the pairing flow rewrite this record (a
         // rejected pairing token is dropped, the transport can flip). Without
         // adopting those writes the panel keeps a stale apiKey and keeps hiding
@@ -29763,6 +29883,7 @@ function bindEvents() {
           'browserControlEnabled', 'browserControlPaused',
           'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
           'trustedDashboardOrigin', 'trustedDashboardTabId',
+          'activeSavedConnectionId', 'savedConnections',
           // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
           // panel, they share this record, and adopting another panel's binding would make this one resume
           // (and then write into) the other panel's session on its next reconnect.
@@ -29777,6 +29898,7 @@ function bindEvents() {
           resetLocalDashboardState();
           updateConnectionPrompt();
           renderBrowserControl();
+          renderSavedConnections();
         }
         adoptStoredResponsePresentation(next);
       }
@@ -30285,6 +30407,10 @@ bindEvents();
 void loadBotProfileOverrides();
 void refreshPetAvatarCache();
 await runStartupReadiness();
+if (globalThis.sessionStorage?.getItem('hermesBrowserOpenConnections') === '1') {
+  globalThis.sessionStorage.removeItem('hermesBrowserOpenConnections');
+  openSettingsDialog({ pane: 'connections' });
+}
 renderBrowserControl();
 await refreshBrowserControlStatus();
 scheduleBrowserControlPoll();

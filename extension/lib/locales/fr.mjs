@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Connexion enregistrée",
+  "connections.help": "Changer de connexion enregistre les paramètres actuels. Chaque connexion conserve son adresse et ses identifiants.",
+  "connections.name_prompt": "Nom de la connexion",
+  "connections.default_name": "Connexion {number}",
+  "connections.delete_confirm": "Supprimer « {name} » ?",
+  "connections.busy": "Attendez la fin de la réponse en cours avant de changer de connexion.",
+  "connections.error": "Impossible de mettre à jour les connexions enregistrées.",
   "ui.effort.title": "Effort",
   "ui.effort.slider": "Curseur",
   "ui.effort.buttons": "Boutons",

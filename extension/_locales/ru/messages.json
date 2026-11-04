@@ -1963,6 +1963,34 @@
     "message": "не настроено",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "Дождитесь завершения текущего ответа перед переключением подключения.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "Подключение {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "Удалить «{name}»?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "Не удалось обновить сохранённые подключения.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "При переключении текущие настройки сохраняются. У каждого подключения свой адрес и учётные данные.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "Название подключения",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "Сохранённое подключение",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "Только чат, пока вы явно не одобрите именно это подключение. Согласие изолировано по адресу, аккаунту, профилю и контроллеру браузера.",
     "description": "Runtime interface message context_consent.share_detail"

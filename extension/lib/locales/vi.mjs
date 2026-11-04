@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Kết nối đã lưu",
+  "connections.help": "Chuyển kết nối sẽ lưu cài đặt hiện tại. Mỗi kết nối giữ riêng địa chỉ và thông tin xác thực.",
+  "connections.name_prompt": "Tên kết nối",
+  "connections.default_name": "Kết nối {number}",
+  "connections.delete_confirm": "Xóa \"{name}\"?",
+  "connections.busy": "Chờ câu trả lời hiện tại hoàn tất trước khi chuyển kết nối.",
+  "connections.error": "Không thể cập nhật các kết nối đã lưu.",
   "ui.effort.title": "Mức suy luận",
   "ui.effort.slider": "Thanh trượt",
   "ui.effort.buttons": "Nút",

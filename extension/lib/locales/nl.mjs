@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Opgeslagen verbinding",
+  "connections.help": "Wisselen slaat de huidige instellingen op. Elke verbinding bewaart het eigen adres en de inloggegevens.",
+  "connections.name_prompt": "Verbindingsnaam",
+  "connections.default_name": "Verbinding {number}",
+  "connections.delete_confirm": "\"{name}\" verwijderen?",
+  "connections.busy": "Wacht tot het huidige antwoord klaar is voordat je van verbinding wisselt.",
+  "connections.error": "Opgeslagen verbindingen konden niet worden bijgewerkt.",
   "ui.effort.title": "Inspanning",
   "ui.effort.slider": "Schuifregelaar",
   "ui.effort.buttons": "Knoppen",

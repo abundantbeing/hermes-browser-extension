@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "保存済みの接続",
+  "connections.help": "切り替え時に現在の設定を保存します。接続ごとにアドレスと認証情報を保持します。",
+  "connections.name_prompt": "接続名",
+  "connections.default_name": "接続 {number}",
+  "connections.delete_confirm": "「{name}」を削除しますか？",
+  "connections.busy": "現在の返信が完了してから接続を切り替えてください。",
+  "connections.error": "保存済みの接続を更新できませんでした。",
   "ui.effort.title": "推論の強度",
   "ui.effort.slider": "スライダー",
   "ui.effort.buttons": "ボタン",

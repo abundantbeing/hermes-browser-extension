@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "已儲存的連線",
+  "connections.help": "切換時會儲存目前設定。每個連線分別保留位址和憑證。",
+  "connections.name_prompt": "連線名稱",
+  "connections.default_name": "連線 {number}",
+  "connections.delete_confirm": "刪除「{name}」？",
+  "connections.busy": "請等待目前回覆完成後再切換連線。",
+  "connections.error": "無法更新已儲存的連線。",
   "ui.effort.title": "推理強度",
   "ui.effort.slider": "滑桿",
   "ui.effort.buttons": "按鈕",

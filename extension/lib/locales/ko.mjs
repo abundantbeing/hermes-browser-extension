@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "저장된 연결",
+  "connections.help": "전환 시 현재 설정이 저장됩니다. 각 연결은 주소와 인증 정보를 따로 보관합니다.",
+  "connections.name_prompt": "연결 이름",
+  "connections.default_name": "연결 {number}",
+  "connections.delete_confirm": "\"{name}\"을(를) 삭제할까요?",
+  "connections.busy": "현재 응답이 완료된 후 연결을 전환하세요.",
+  "connections.error": "저장된 연결을 업데이트하지 못했습니다.",
   "ui.effort.title": "추론 강도",
   "ui.effort.slider": "슬라이더",
   "ui.effort.buttons": "버튼",

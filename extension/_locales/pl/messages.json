@@ -1963,6 +1963,34 @@
     "message": "nieskonfigurowany",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "Poczekaj na zakończenie bieżącej odpowiedzi przed zmianą połączenia.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "Połączenie {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "Usunąć „{name}”?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "Nie udało się zaktualizować zapisanych połączeń.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "Przełączenie zapisuje bieżące ustawienia. Każde połączenie zachowuje własny adres i dane uwierzytelniające.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "Nazwa połączenia",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "Zapisane połączenie",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "Tylko czat, dopóki nie zatwierdzisz dokładnie tego połączenia. Zgoda jest oddzielona według punktu końcowego, konta, profilu i kontrolera przeglądarki.",
     "description": "Runtime interface message context_consent.share_detail"

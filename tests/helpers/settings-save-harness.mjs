@@ -75,6 +75,7 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
     browserApi,
     availableModels: [],
     settings: { ...imported.get('DEFAULT_SETTINGS'), ...initial },
+    loadedSavedConnectionId: initial.activeSavedConnectionId || '',
     connectionController: { cancel: record('connectionController.cancel') },
     remoteWsConnection: null,
     profileWsConnection: null,
