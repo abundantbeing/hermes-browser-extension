@@ -168,3 +168,28 @@ test('a run started from the bar that fails stays a slim bar, with a plain Back 
   assert.equal(root.querySelector('.route-title'), null, 'not the full panel failure screen');
   assert.match(root.querySelector('.bar-preview').textContent, /Hermes Assist failed \(502\)/);
 });
+
+test('a result bar capped to a gap keeps its size: measuring the capped bar never uncaps it again', async () => {
+  const { env, root, panel } = await openQuick();
+  env.w.document.getElementById('field').value = 'a rough first draft';
+  await finishDraft(env, root);
+  assert.equal(panel.dataset.mode, 'bar');
+  env.w.innerHeight = 550;
+  const NATURAL = 132;
+  const box = (left, top, width, height) => ({ x: left, y: top, left, top, width, height, right: left + width, bottom: top + height, toJSON() {} });
+  env.w.Element.prototype.getBoundingClientRect = function rect() {
+    if (this === panel) {
+      const cap = Number.parseFloat(this.style.maxHeight);
+      return box(100, 0, 560, Number.isFinite(cap) ? Math.min(NATURAL, cap) : NATURAL);
+    }
+    if (this.id === 'field') return box(100, 100, 600, 340);
+    return box(0, 0, 0, 0);
+  };
+  const heights = [];
+  for (let cycle = 0; cycle < 4; cycle += 1) {
+    env.resized(panel);
+    await env.sleep(60);
+    heights.push(panel.style.maxHeight);
+  }
+  assert.deepEqual(heights, Array(4).fill('94px'), 'neither side holds the whole bar, so it stays capped to the 94px gap on every placement');
+});

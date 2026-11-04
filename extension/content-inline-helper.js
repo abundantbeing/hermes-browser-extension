@@ -995,10 +995,19 @@
     setLauncherTone(surfaceToneAt(launcherPosition.left + circle / 2, launcherPosition.top + circle / 2, anchor));
     if (!panel.hidden && panel.dataset.mode === 'bar') {
       // The quick menu's result bar: under the field, clear of the circle and of the site's own controls.
-      const bar = policy.inlineResultBarPlacement(targetRect, { top: launcherPosition.top, left: launcherPosition.left, width: circle, height: circle }, { width: viewportWidth, height: viewportHeight }, { barHeight: panel.getBoundingClientRect().height || 60, obstacles: obstacleRects });
+      // The bar is placed by its full content height at its final width, never by a height an earlier
+      // placement capped it to, or it would grow back and be capped again on every resize.
+      const circleRect = { top: launcherPosition.top, left: launcherPosition.left, width: circle, height: circle };
+      const windowSize = { width: viewportWidth, height: viewportHeight };
+      const scrolled = panel.scrollTop;
+      panel.style.width = `${policy.inlineResultBarPlacement(targetRect, circleRect, windowSize, { obstacles: obstacleRects }).width}px`;
+      panel.style.maxHeight = '';
+      panel.style.overflowY = '';
+      const bar = policy.inlineResultBarPlacement(targetRect, circleRect, windowSize, { barHeight: panel.getBoundingClientRect().height || 60, obstacles: obstacleRects });
       panel.style.width = `${bar.width}px`;
       panel.style.maxHeight = bar.maxHeight ? `${bar.maxHeight}px` : '';
       panel.style.overflowY = bar.maxHeight ? 'auto' : '';
+      panel.scrollTop = scrolled;
       panel.style.left = `${bar.left}px`;
       panel.style.top = `${bar.top}px`;
     } else if (!panel.hidden) {
