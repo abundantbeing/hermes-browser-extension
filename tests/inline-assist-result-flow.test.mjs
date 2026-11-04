@@ -60,10 +60,9 @@ test('the bar decides first, Undo beside a filled Keep, then changes the draft f
   assert.equal(root.querySelector('.bar-main button.main').textContent.trim(), 'Keep');
   assert.deepEqual(labels(root, '.bar-actions > .bar-tools button'), ['Again', 'Shorter', 'Longer', 'Copy', 'Open session']);
   assert.ok(root.querySelector('.bar-head .bar-name .bar-mark'), 'the Assist mark beside the title');
-  // One pair and one strip of equal cells: no row of loose buttons, so no row leaves a hole.
+  // One pair, then a grid of equal cells: no row of loose buttons, so no row leaves a hole.
   const css = /style\.textContent = `([\s\S]*?)`;/.exec(loadExtensionFile('content-inline-helper.js'))[1];
   assert.match(css, /\.bar-main \{ display:grid; grid-template-columns:1fr 1fr;/);
-  assert.match(css, /\.bar-tools \{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax\(0,1fr\);/);
   assert.doesNotMatch(css, /\.bar-actions \{ display:flex/);
 });
 
@@ -250,6 +249,21 @@ test('a language change redraws the screen that is open, the quick menu and the 
   await env.sleep();
   assert.equal(panel.dataset.mode, 'bar');
   assert.ok(root.querySelector('.bar-actions'), 'still the bar');
+});
+
+test('the bar\'s change buttons wrap so every name shows in full, in pairs with an odd last one across the row', () => {
+  const css = /style\.textContent = `([\s\S]*?)`;/.exec(loadExtensionFile('content-inline-helper.js'))[1];
+  const rule = (selector) => {
+    const found = css.split('\n').map((line) => line.trim()).find((line) => line.startsWith(`${selector} {`));
+    assert.ok(found, `${selector} rule`);
+    return found;
+  };
+  assert.match(rule('.bar-tools'), /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  const tool = rule('.bar-tools button');
+  assert.doesNotMatch(tool, /white-space:nowrap|text-overflow:ellipsis|overflow:hidden/, 'a long name (Lebih panjang at 200% text) is never cut');
+  assert.doesNotMatch(tool, /[^-]height:\d+px/, 'the height follows the wrapped name');
+  assert.match(tool, /min-height:/);
+  assert.match(rule('.bar-tools > button:last-child:nth-child(odd)'), /grid-column:1 \/ -1/);
 });
 
 test('a bar that only fits a gap between site controls is a smaller panel that scrolls', () => {
