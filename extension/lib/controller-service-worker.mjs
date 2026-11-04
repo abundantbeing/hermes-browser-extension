@@ -1660,6 +1660,18 @@ export function createControllerServiceWorker({
     lease_not_owned: 'This tab is not attached to Hermes Control. Ask the user to press Attach this tab in the Hermes panel.',
   });
 
+  function runningWork() {
+    return Boolean(activeActions.size || lifecycle.pendingCount() || approvals.count());
+  }
+
+  // Queued like every other change of connection, and looked at again once it is its turn: work that began
+  // while a heartbeat held the queue must end on its own, not be cancelled by the move.
+  function moveToTurnChat(turnSessionId) {
+    return runTransition(() => (runningWork()
+      ? { busy: true }
+      : syncSettingsTransition({ ...settings, sessionId: turnSessionId })));
+  }
+
   // Resolves the turn's exact target and, when control is attached and ready,
   // the page view the model can act on straight away. Also records the tab as
   // the default target for commands that name none.
@@ -1671,13 +1683,13 @@ export function createControllerServiceWorker({
       // The gateway lets only the chat the controller registered for drive the tab. A turn from
       // another chat (a second window, the full tab) moves the controller to it first, so the tab
       // is never reported ready to a chat whose tools would find no browser.
-      if (activeActions.size || lifecycle.pendingCount() || approvals.count()) {
-        return unavailableControlTarget('controller_busy', 'Hermes Control is busy with another chat. Ask the user to let it finish, then try again.');
-      }
-      await Promise.race([
-        syncSettings({ ...settings, sessionId: turnSessionId }).catch(() => undefined),
+      const busyWithOtherChat = () => unavailableControlTarget('controller_busy', 'Hermes Control is busy with another chat. Ask the user to let it finish, then try again.');
+      if (runningWork()) return busyWithOtherChat();
+      const moved = await Promise.race([
+        moveToTurnChat(turnSessionId).catch(() => undefined),
         new Promise((resolve) => setTimeout(resolve, PREPARE_TURN_CONNECT_MS)),
       ]);
+      if (moved?.busy) return busyWithOtherChat();
     }
     if (!connected && lastConnectFailure?.reason === CONTROLLER_SESSION_PENDING) {
       // The panel created this chat's Hermes session just before this turn: connect now, so the

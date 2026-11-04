@@ -527,6 +527,51 @@ test('a turn from another chat never takes Hermes Control away from a command st
   assert.equal(prepared.reason, 'controller_busy');
 });
 
+test('a chat move queued behind a heartbeat looks for running work again before it changes the connection', async () => {
+  const held = deferredGate();
+  const heartbeat = deferredGate();
+  const adapter = pageAdapter();
+  const execute = adapter.execute.bind(adapter);
+  adapter.execute = async (action, args, context) => {
+    if (action === 'browser_scroll') await held.promise;
+    return execute(action, args, context);
+  };
+  const { worker, transport } = await controlledWorker({ adapter });
+  const first = transport.connections[0];
+  first.heartbeat = () => heartbeat.promise;
+  const beating = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.wake }, extensionSender());
+  await settle();
+
+  // Nothing is running when the turn arrives, so the first look passes; the move waits behind the heartbeat.
+  const preparing = worker.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.prepareTurn,
+    tabId: 41,
+    frameId: 0,
+    expectedUrl: 'https://shop.example.test/cart',
+    sessionId: 'second-window-chat',
+  }, extensionSender());
+  await settle();
+  void first.emit({
+    method: 'browser.controller.command',
+    params: {
+      command_id: 'running-scroll', action: 'browser_scroll', tab_id: 41, frame_id: 0,
+      session_id: first.options.identity.hermesSessionId, arguments: { direction: 'down' },
+    },
+  });
+  await settle();
+  heartbeat.resolve({ ok: true });
+  const prepared = await preparing;
+  await beating;
+  held.resolve();
+  await settle();
+
+  assert.equal(transport.connections.length, 1, 'the running chat keeps its controller');
+  assert.equal(prepared.ok, false);
+  assert.equal(prepared.reason, 'controller_busy');
+  const finished = first.sent.map((frame) => frame.params).find((params) => params?.command_id === 'running-scroll');
+  assert.equal(finished?.ok, true, JSON.stringify(finished));
+});
+
 function deferredGate() {
   let resolve;
   const promise = new Promise((resolvePromise) => { resolve = resolvePromise; });
