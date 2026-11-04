@@ -846,28 +846,35 @@
     let composerRoot = placementSlots(profile)[0]?.element || null;
     while (composerRoot && !composerRoot.contains?.(target)) composerRoot = composerRoot.parentElement;
     const usable = (element) => element && element !== document.body && element !== document.documentElement;
-    // A site that draws its composer's buttons a moment after focus (X) has no slot yet: the area around
-    // the field is watched until it has one, so the circle moves there before any typing.
-    const awaitingSlot = !usable(composerRoot) && profile?.adapterId && profile.adapterId !== 'generic';
+    // A site that draws its composer's buttons a moment after focus (X, or any other site) has no slot yet:
+    // the area around the field is watched until it has one, so the circle moves there before any typing.
+    const awaitingSlot = !usable(composerRoot);
     const layoutRoot = usable(composerRoot)
       ? composerRoot
       : (awaitingSlot ? slotSearchRoot(target) : (anchor || observed[observed.length - 1]));
     if (layoutRoot && typeof MutationObserver === 'function') {
-      targetMutationObserver = new MutationObserver(() => {
-        refreshSiteProfile();
-        if (awaitingSlot && placementSlots(siteProfile).length) {
-          observeTargetLayout();
-          return;
-        }
-        schedulePosition();
-        stabilizePosition(240);
+      // On any other site the watched area can be most of the page: a late toolbar arrives as added
+      // or unhidden nodes, so only those are watched there, and the site is read again once per frame.
+      const genericWait = awaitingSlot && (!profile?.adapterId || profile.adapterId === 'generic');
+      let queued = 0;
+      const observer = new MutationObserver(() => {
+        if (queued) return;
+        queued = requestAnimationFrame(() => {
+          queued = 0;
+          if (targetMutationObserver !== observer) return;
+          refreshSiteProfile();
+          if (awaitingSlot && placementSlots(siteProfile).length) {
+            observeTargetLayout();
+            return;
+          }
+          schedulePosition();
+          stabilizePosition(240);
+        });
       });
-      targetMutationObserver.observe(layoutRoot, {
-        attributes: true,
-        childList: true,
-        subtree: true,
-        attributeFilter: ['class', 'style', 'hidden', 'aria-expanded', 'aria-label'],
-      });
+      targetMutationObserver = observer;
+      observer.observe(layoutRoot, genericWait
+        ? { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] }
+        : { attributes: true, childList: true, subtree: true, attributeFilter: ['class', 'style', 'hidden', 'aria-expanded', 'aria-label'] });
     }
     stabilizePosition(1_200);
   }

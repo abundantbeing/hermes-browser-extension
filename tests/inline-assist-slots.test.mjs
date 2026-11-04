@@ -305,6 +305,36 @@ test('X draws its toolbar a moment after focus: the circle goes to its spot then
   assert.equal(launcher.style.top, '243px');
 });
 
+test('on any other site the wait for a late toolbar watches only added or unhidden nodes, read once per frame', () => {
+  // The area around a generic field can be most of the page: watching every class and style change there
+  // would read the site again on every animation frame of a busy page.
+  const helper = load('content-inline-helper.js');
+  assert.match(helper, /genericWait\s*\?\s*\{ childList: true, subtree: true, attributes: true, attributeFilter: \['hidden'\] \}/);
+  assert.match(helper, /if \(queued\) return;\s*queued = requestAnimationFrame\(/);
+  assert.match(helper, /if \(targetMutationObserver !== observer\) return;/);
+});
+
+test('any other site draws its toolbar a moment after focus: the circle moves beside its tools without a refocus', async () => {
+  const env = boot('generic-mail.html', 'https://mail.example/thread/1');
+  const tools = env.w.document.querySelector('.tools');
+  const reply = tools.parentElement;
+  tools.remove();
+  const launcher = await focusedLauncher(env);
+  assert.match(launcher.dataset.placement, /^corner-/, 'no toolbar yet');
+  reply.append(tools);
+  await env.sleep(300);
+  assert.equal(launcher.dataset.placement, 'after');
+  assert.equal(launcher.style.left, '267px');
+  assert.equal(launcher.style.top, '671px');
+  const left = parseFloat(launcher.style.left);
+  const top = parseFloat(launcher.style.top);
+  const covered = [...env.w.document.querySelectorAll('button')].filter((control) => {
+    const box = control.getBoundingClientRect();
+    return left < box.right && left + 24 > box.left && top < box.bottom && top + 24 > box.top;
+  });
+  assert.deepEqual(covered.map((control) => control.textContent.trim()), [], 'the late toolbar is not covered');
+});
+
 // Hard rule: the circle never covers one of the site's own controls (a button, a link, X's character
 // counter). Every composer fixture is checked.
 const CONTROLS = 'button, [role="button"], a[aria-label], [role="progressbar"]';
