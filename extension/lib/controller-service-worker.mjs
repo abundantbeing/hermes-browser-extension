@@ -34,6 +34,7 @@ import {
   validateBrowserControlUrl,
 } from './browser-control-safety.mjs';
 import { isGatewayAuthRejection, transportUsesDashboardTicket } from './connection-modes.mjs';
+import { syncActiveSavedConnection } from './saved-connections.mjs';
 import { CONTROL_TOOL_FAMILIES, controlToolFamily, controlToolName, setControlToolFamily } from './control-tool-names.mjs';
 
 export const CONTROLLER_WORKER_VERSION = 1;
@@ -1076,7 +1077,7 @@ export function createControllerServiceWorker({
           current.tokenSource = '';
           current.lastConnectionTestedAt = 0;
           current.apiKey = '';
-          await storageArea.set({ hermesBrowserSettings: current });
+          await storageArea.set({ hermesBrowserSettings: syncActiveSavedConnection(current) });
         }
         await persist();
         return {

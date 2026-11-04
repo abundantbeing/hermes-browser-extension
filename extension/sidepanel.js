@@ -709,6 +709,7 @@ import {
   renameSavedConnection,
   savedConnectionStorageKey,
   selectSavedConnection,
+  syncActiveSavedConnection,
 } from './lib/saved-connections.mjs';
 import { assertCloudAgentTabStillMatches, resolveActiveCloudAgentTab } from './lib/cloud-agent-tab.mjs';
 import {
@@ -23700,7 +23701,7 @@ async function refreshAfterSettingsSave(saved) {
 async function clearStoredToken() {
   const previousTransport = migrateConnectionSettings(settings).connectionTransport;
   const cleared = connectionSettingsAfterTokenClear(settings);
-  settings = { ...settings, ...cleared };
+  settings = syncActiveSavedConnection({ ...settings, ...cleared });
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   if (els.apiKeyInput) els.apiKeyInput.value = '';
   sessionRoutesAvailable = null;

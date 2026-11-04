@@ -52,6 +52,14 @@ export function rememberSavedConnection(settings = {}, defaultName = 'Connection
   return { ...settings, activeSavedConnectionId, savedConnections };
 }
 
+// Settings changed outside this module (a cleared or rejected token) must reach
+// the saved copy too, or the old key comes back on the next switch.
+export function syncActiveSavedConnection(settings = {}) {
+  return Array.isArray(settings.savedConnections) && settings.savedConnections.length
+    ? rememberSavedConnection(settings)
+    : settings;
+}
+
 export function selectSavedConnection(settings, id) {
   const current = rememberSavedConnection(settings);
   const target = current.savedConnections.find((entry) => entry.id === id);

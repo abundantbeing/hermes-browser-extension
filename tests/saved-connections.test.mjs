@@ -158,3 +158,22 @@ test('connection labels are rendered as text and the last connection cannot be d
     assert.equal(h.els.savedConnectionDelete.disabled, true);
   } finally { h.close(); }
 });
+
+test('clearing the token also clears it from the active saved connection right away', async () => {
+  const h = await createSettingsSaveHarness({ settings: twoConnections() });
+  try {
+    Object.assign(h.scope, {
+      els: { ...h.els, apiKeyInput: { value: 'work-test-token' } },
+      setLocalDashboardUrl: () => {}, resetLocalDashboardState: () => {}, clearCachedRosterUrl: async () => {},
+      browserControlMessage: async () => null, markConnectionProbe: () => {}, setGatewayCapabilities: () => {},
+      normalizeGatewayCapabilities: () => ({}), setStatus: () => {},
+    });
+    await h.fn('clearStoredToken')();
+    const stored = h.store.hermesBrowserSettings;
+    assert.equal(stored.apiKey, '');
+    const work = stored.savedConnections.find((entry) => entry.id === 'work');
+    assert.equal(work.connection.apiKey, '');
+    assert.equal(work.connection.tokenSource, '');
+    assert.equal(JSON.stringify(stored).includes('work-test-token'), false);
+  } finally { h.close(); }
+});
