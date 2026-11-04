@@ -91,6 +91,9 @@ test('Phase 6 Firefox adapter advertises a safe subset and exact trusted-input g
     { action: 'browser_scroll_to', reason: 'trusted-input-unavailable' },
     { action: 'browser_select', reason: 'trusted-input-unavailable' },
     { action: 'browser_type', reason: 'trusted-input-unavailable' },
+    { action: 'browser_batch', reason: 'not-offered' },
+    { action: 'browser_tab_group', reason: 'not-offered' },
+    { action: 'browser_tab_ungroup', reason: 'not-offered' },
   ]);
 });
 

@@ -48,6 +48,9 @@ const FIREFOX_GAPS = Object.freeze([
   Object.freeze({ action: 'browser_scroll_to', reason: 'trusted-input-unavailable' }),
   Object.freeze({ action: 'browser_select', reason: 'trusted-input-unavailable' }),
   Object.freeze({ action: 'browser_type', reason: 'trusted-input-unavailable' }),
+  Object.freeze({ action: 'browser_batch', reason: 'not-offered' }),
+  Object.freeze({ action: 'browser_tab_group', reason: 'not-offered' }),
+  Object.freeze({ action: 'browser_tab_ungroup', reason: 'not-offered' }),
 ]);
 
 function frozenContract({
