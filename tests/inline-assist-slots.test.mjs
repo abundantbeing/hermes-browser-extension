@@ -309,9 +309,9 @@ test('an X direct message in the messages drawer, on any page: before the voice 
     const launcher = await focusedLauncher(boot(name, url));
     assert.equal(launcher.dataset.placement, 'before', name);
     // The voice button's box is 737-774 (middle 755.5) but its icon is 753-765 (middle 759): the circle's
-    // middle goes on the icon's.
+    // middle goes on the icon's. The field ends at 1158, 30px short of the button: the circle fits between.
     assert.equal(launcher.style.top, '747px', name);
-    assert.equal(launcher.style.left, '1156px', name);
+    assert.equal(launcher.style.left, '1158px', name);
   }
 });
 
@@ -389,6 +389,30 @@ for (const [name, url] of [
       return box.width > 0 && left < box.right && left + size > box.left && top < box.bottom && top + size > box.top;
     });
     assert.deepEqual(covered.map((control) => control.getAttribute('aria-label') || control.textContent.trim() || control.tagName), [], `${name}: covered`);
+  });
+}
+
+// Hard rule: where a chat box's buttons sit outside its field, the circle beside them covers none of the
+// field. With no room between the two it takes the corner rule instead, as on any other site.
+for (const [name, url, placement] of [
+  ['generic-chat.html', 'https://chat.example/room/1', 'before'],
+  ['generic-chat-tight.html', 'https://chat.example/room/1', 'corner-inside'],
+  ['x-dm.html', 'https://x.com/i/chat/123-456', 'before'],
+  ['x-dm-drawer.html', 'https://x.com/home', 'before'],
+  ['x-dm-drawer-editable.html', 'https://x.com/someone/status/1', 'before'],
+]) {
+  test(`${name}: the circle beside a chat box's buttons covers none of the message field`, async () => {
+    const env = boot(name, url);
+    const launcher = await focusedLauncher(env);
+    assert.equal(launcher.hidden, false, `${name}: the circle shows`);
+    assert.equal(launcher.dataset.placement, placement, name);
+    if (placement !== 'before') return;
+    const size = launcher.dataset.size === 'small' ? 20 : 24;
+    const left = parseFloat(launcher.style.left);
+    const top = parseFloat(launcher.style.top);
+    const box = fieldIn(env.w.document).getBoundingClientRect();
+    const overlaps = left < box.right && left + size > box.left && top < box.bottom && top + size > box.top;
+    assert.equal(overlaps, false, `${name}: the circle at ${left},${top} is over the field ${box.left}-${box.right}`);
   });
 }
 

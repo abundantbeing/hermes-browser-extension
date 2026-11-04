@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 0e1b75579d8889d6 */
+/* extension/lib/site-adapters.mjs · SHA-256 3fecf925f27e2d9a */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1796,8 +1796,9 @@ function toolRowEndSlot(target, { gap = 12, near = Infinity } = {}) {
 
 // A one-line chat box on any site (a message pill with its buttons at the right end, beside the text): just
 // before those buttons, as in a chat composer, so it needs no site's own names for its parts. A taller
-// field, or buttons only under it, keep the other rules.
-function chatRowSlot(target) {
+// field, or buttons only under it, keep the other rules. Buttons past the field's edge leave the draft
+// uncovered: the circle goes between, its gap narrowed to fit, or takes the corner rule where it cannot.
+function chatRowSlot(target, { size = 24 } = {}) {
   const field = laidOutBox(target);
   if (!field || field.height > 64) return null;
   const slot = trailingControlsSlot(target);
@@ -1806,7 +1807,9 @@ function chatRowSlot(target) {
   const middle = box.top + box.height / 2;
   const beside = middle > field.top - 16 && middle < field.bottom + 16
     && box.left >= field.left + field.width / 2 && box.left <= field.right + 96;
-  return beside ? slot : null;
+  if (!beside) return null;
+  if (box.left < field.right) return slot;
+  return { ...slot, overField: false, gap: Math.max(0, Math.min(slot.gap, box.left - field.right - size)) };
 }
 
 const CHAT_COMPOSER_SITES = new Set(['chatgpt', 'claude', 'perplexity', 'grok']);
