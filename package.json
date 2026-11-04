@@ -59,6 +59,7 @@
     "test:e2e:browser-control:child-frames": "npm run build && node tests/e2e-phase6-child-frames.mjs",
     "test:e2e:browser-control:youtube": "npm run build && node tests/e2e-phase6-youtube-like.mjs",
     "test:e2e:prompt-cards": "npm run build && node tests/e2e-agent-prompt-cards.mjs",
+    "test:e2e:image-reveal": "npm run build && node tests/e2e-generated-image-reveal.mjs",
     "test:e2e:page-annotation": "npm run build:content-runtime && node tests/e2e-page-annotation.mjs"
   },
   "engines": {

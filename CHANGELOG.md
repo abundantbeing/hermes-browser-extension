@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- Generated pictures show in the side panel. Each picture reveals in its own card while its reply finishes, including a reply that shows several pictures as Markdown images and a generation whose progress events carry no call id, and the reply then shows them inline. A picture the reply does not show, such as an alternate or one the session recovery found, keeps its card. Each picture is downloaded from the gateway once per account and profile instead of on every repaint, and a picture read as one account is never shown to another. The panel reads pictures through the gateway even before it has confirmed the gateway's picture route; the local dashboard is now only a fallback.
 - A clean checkout or contributor build no longer renders the signature profile with HermesDisplay instead of **Rules Gothic Compressed**. The Rules `woff2` files from the v0.4.0 release are in the repository, and Chromium and Firefox builds fail if any CSS-referenced font file is missing.
 - The sessions list stays complete after you open a chat that is running in another app (Hermes Desktop, the phone app, another window) and then start a new session. It showed 0 sessions, and Refresh failed or kept saying 0, until the panel was reopened (#139).
 - A group chat keeps its own messages when you change what page Hermes reads. Choosing Chat only, or pinning or returning to a tab, showed the last single-bot chat under the room's name until the room was reopened, and pinning a tab with a saved chat left the room (#138).
