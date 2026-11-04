@@ -53,7 +53,8 @@ test('switching round trips each address and key and clears session and control 
   assert.equal(home.agentToken, '');
   assert.equal(home.extensionPreferredModel, null);
   assert.deepEqual(home.sessionModelBindings, {});
-  assert.equal(home.savedConnectionNeedsNewSession, true);
+  assert.equal(home.savedConnectionSwitchRevision, work.savedConnectionSwitchRevision + 1);
+  assert.equal(selectSavedConnection(home, 'work').savedConnectionSwitchRevision, home.savedConnectionSwitchRevision + 1);
   const back = selectSavedConnection(home, 'work');
   assert.equal(back.gatewayUrl, 'https://work.example.test');
   assert.equal(back.apiKey, 'work-test-token');
@@ -214,4 +215,42 @@ test('a switch from another panel stops a pending scope change here from writing
     assert.equal(h.store.hermesBrowserSettings.activeSavedConnectionId, 'default');
     assert.equal(h.store.hermesBrowserSettings.apiKey, local.apiKey);
   } finally { h.close(); }
+});
+
+test('every open panel starts its own fresh chat after a switch, and later panels resume as set', async () => {
+  const resumeLast = { ...twoConnections(), sessionStartupMode: 'resume-last' };
+  const h = await createSettingsSaveHarness({ settings: resumeLast });
+  const realSessionStorage = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+  const sessionStores = new Map();
+  const openPanel = async (panelId) => {
+    if (!sessionStores.has(panelId)) sessionStores.set(panelId, new Map([['hermesBrowserInstanceId', panelId]]));
+    const map = sessionStores.get(panelId);
+    Object.defineProperty(globalThis, 'sessionStorage', {
+      configurable: true,
+      value: { getItem: (key) => (map.has(key) ? map.get(key) : null), setItem: (key, value) => map.set(key, String(value)) },
+    });
+    h.scope.settings = structuredClone(h.store.hermesBrowserSettings);
+    h.fn('noteSavedConnectionSwitchBaseline')?.();
+    h.calls.length = 0;
+    await h.fn('initializeSessionForPanelOpen')({ focus: false });
+    return h.callsTo('beginHermesBrowserDraft').length ? 'fresh' : 'resumed';
+  };
+  try {
+    Object.assign(h.scope, {
+      minimumConnectionReady: () => true, setStatus: () => {}, makeBrowserSessionTitle: () => 'draft',
+      beginHermesBrowserDraft: async () => { h.calls.push({ name: 'beginHermesBrowserDraft', args: [] }); },
+      ensureSessionForActiveScope: async () => { h.calls.push({ name: 'ensureSessionForActiveScope', args: [] }); },
+    });
+    h.store.hermesBrowserSettings = selectSavedConnection(resumeLast, 'default');
+    // Panels A and B were already open before the switch.
+    for (const id of ['A', 'B']) sessionStores.set(id, new Map([['hermesBrowserInstanceId', id], ['hermesBrowserSavedConnectionSwitch:' + id, '0']]));
+    assert.equal(await openPanel('A'), 'fresh');
+    assert.equal(await openPanel('B'), 'fresh');
+    assert.equal(await openPanel('A'), 'resumed', 'a panel that already started its chat resumes it');
+    assert.equal(await openPanel('C'), 'resumed', 'a panel opened after the switch resumes as set');
+  } finally {
+    if (realSessionStorage) Object.defineProperty(globalThis, 'sessionStorage', realSessionStorage);
+    else delete globalThis.sessionStorage;
+    h.close();
+  }
 });

@@ -69,8 +69,9 @@ export function selectSavedConnection(settings, id) {
     ...current,
     ...connectionConfig(target.connection),
     activeSavedConnectionId: id,
-    // Each switch starts a fresh chat. History remains on its own gateway.
-    savedConnectionNeedsNewSession: true,
+    // Each switch starts a fresh chat in every open panel. Each panel remembers
+    // the last revision it acted on, so no panel consumes another's switch.
+    savedConnectionSwitchRevision: (Number(current.savedConnectionSwitchRevision) || 0) + 1,
     sessionId: '',
     sessionTitle: DEFAULT_SETTINGS.sessionTitle,
     activeProfile: '',

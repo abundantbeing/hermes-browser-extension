@@ -5417,14 +5417,36 @@ async function ensureSessionForActiveScope({ focus = false, scopeRevisionId = sc
   });
 }
 
+function savedConnectionSwitchSeenKey() {
+  return `hermesBrowserSavedConnectionSwitch:${ensureSidepanelInstanceId()}`;
+}
+
+// A panel opened after a switch has nothing to start over: it takes the current revision as seen.
+function noteSavedConnectionSwitchBaseline() {
+  try {
+    const key = savedConnectionSwitchSeenKey();
+    if (globalThis.sessionStorage?.getItem(key) === null) {
+      globalThis.sessionStorage.setItem(key, String(Number(settings.savedConnectionSwitchRevision) || 0));
+    }
+  } catch { /* optional */ }
+}
+
+function consumeSavedConnectionSwitch() {
+  const revision = Number(settings.savedConnectionSwitchRevision) || 0;
+  try {
+    const key = savedConnectionSwitchSeenKey();
+    const seen = globalThis.sessionStorage?.getItem(key);
+    globalThis.sessionStorage?.setItem(key, String(revision));
+    return seen !== null && seen !== undefined && revision > Number(seen);
+  } catch {
+    return false;
+  }
+}
+
 async function initializeSessionForPanelOpen({ focus = false } = {}) {
   if (!minimumConnectionReady()) return;
-  if (settings.savedConnectionNeedsNewSession === true || shouldCreateFreshSessionOnOpen(settings)) {
+  if (consumeSavedConnectionSwitch() || shouldCreateFreshSessionOnOpen(settings)) {
     await beginHermesBrowserDraft({ title: makeBrowserSessionTitle(), focus });
-    if (settings.savedConnectionNeedsNewSession === true) {
-      settings = { ...settings, savedConnectionNeedsNewSession: false };
-      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
-    }
     setStatus('ok', 'New Hermes Browser Extension draft', 'Saved when you send the first message.');
     return;
   }
@@ -23090,6 +23112,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   settings = { ...DEFAULT_SETTINGS, ...storedSettings, ...storedPanelAppearance };
   settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
   loadedSavedConnectionId = settings.activeSavedConnectionId;
+  noteSavedConnectionSwitchBaseline();
   loadContextScopeForInstance();
   const messageKey = activeMessagesStorageKey(previousConversationScope);
   if (restoreMessages) Object.assign(stored, await browserApi.storage.local.get(messageKey));
