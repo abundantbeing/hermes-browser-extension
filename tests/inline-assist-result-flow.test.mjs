@@ -251,3 +251,9 @@ test('a language change redraws the screen that is open, the quick menu and the 
   assert.equal(panel.dataset.mode, 'bar');
   assert.ok(root.querySelector('.bar-actions'), 'still the bar');
 });
+
+test('a bar that only fits a gap between site controls is a smaller panel that scrolls', () => {
+  const source = loadExtensionFile('content-inline-helper.js');
+  assert.match(source, /panel\.style\.maxHeight = bar\.maxHeight \? `\$\{bar\.maxHeight\}px` : '';/);
+  assert.match(source, /panel\.style\.overflowY = bar\.maxHeight \? 'auto' : '';/);
+});

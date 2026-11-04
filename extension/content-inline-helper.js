@@ -982,7 +982,8 @@
       // The quick menu's result bar: under the field, clear of the circle and of the site's own controls.
       const bar = policy.inlineResultBarPlacement(targetRect, { top: launcherPosition.top, left: launcherPosition.left, width: circle, height: circle }, { width: viewportWidth, height: viewportHeight }, { barHeight: panel.getBoundingClientRect().height || 60, obstacles: obstacleRects });
       panel.style.width = `${bar.width}px`;
-      panel.style.maxHeight = '';
+      panel.style.maxHeight = bar.maxHeight ? `${bar.maxHeight}px` : '';
+      panel.style.overflowY = bar.maxHeight ? 'auto' : '';
       panel.style.left = `${bar.left}px`;
       panel.style.top = `${bar.top}px`;
     } else if (!panel.hidden) {

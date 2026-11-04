@@ -489,3 +489,17 @@ test('the result bar never covers a site control around the field: it drops belo
   const aside = inlineDraft.inlineResultBarPlacement(field, null, viewport, { barHeight: 110, obstacles: [{ left: 900, top: 528, right: 940, bottom: 560, width: 40, height: 32 }] });
   assert.equal(aside.top, 528);
 });
+
+test('the result bar never covers a control when the clamped position would: it opens in a gap, as a smaller panel', () => {
+  const viewport = { width: 1280, height: 550 };
+  const field = { left: 100, top: 180, right: 700, bottom: 400, width: 600, height: 220 };
+  const toolbar = { left: 110, top: 100, right: 400, bottom: 132, width: 290, height: 32 };
+  const send = { left: 110, top: 408, right: 178, bottom: 440, width: 68, height: 32 };
+  const bar = inlineDraft.inlineResultBarPlacement(field, null, viewport, { barHeight: 132, obstacles: [toolbar, send] });
+  const height = bar.maxHeight ?? 132;
+  const covers = (control) => bar.top < control.bottom && bar.top + height > control.top;
+  assert.equal(covers(toolbar), false, `the bar at ${bar.top}-${bar.top + height} covers the toolbar`);
+  assert.equal(covers(send), false, 'the bar covers Send');
+  assert.ok(bar.top >= 8 && bar.top + height <= 550 - 8, 'inside the window');
+  assert.ok(height < 132, 'neither side fits the full bar, so it is a smaller panel');
+});

@@ -384,6 +384,8 @@ export function inlineLauncherPlacement(anchorRect = {}, viewport = {}, options 
 //                minGapBelow (default 20) below the control so it never touches it
 // No placement when the control has no size, the circle would leave the viewport's safe area, or it
 // would cover the field's text or an obstacle (a send button); the caller then uses the generic rule.
+const MIN_SCROLLING_BAR = 48;
+
 // The quick menu's result bar: under the field, lined up with it, and under the circle too when the circle
 // sits below the field (YouTube, X), so it never covers the circle. Near the bottom of the screen it goes above
 // both instead.
@@ -419,8 +421,23 @@ export function inlineResultBarPlacement(fieldRect = {}, circleRect = null, view
   };
   const below = clearBelow(Math.max(Number(fieldRect.bottom) || 0, circleBottom) + gap);
   const above = clearAbove(Math.min(Number(fieldRect.top) || 0, circleTop) - gap - barHeight);
-  const top = below + barHeight <= viewportHeight - safe ? below : Math.max(safe, above);
-  return { top, left, width };
+  if (below + barHeight <= viewportHeight - safe) return { top: below, left, width };
+  if (above >= safe) return { top: above, left, width };
+  // Neither side has room for the whole bar without a control under it: the tallest clear gap in the window
+  // (the field and the circle count as taken) holds a smaller bar that scrolls.
+  const taken = [...inColumns, fieldRect, circleRect]
+    .map((rect) => rect && { top: Number(rect.top), bottom: Number(rect.bottom ?? (Number(rect.top) + Number(rect.height || 0))) })
+    .filter((rect) => rect && rect.bottom > rect.top)
+    .sort((a, b) => a.top - b.top);
+  let best = { top: safe, height: 0 };
+  let cursor = safe;
+  for (const rect of [...taken, { top: viewportHeight - safe + gap, bottom: Infinity }]) {
+    const end = rect.top - gap;
+    if (end - cursor > best.height) best = { top: cursor, height: end - cursor };
+    cursor = Math.max(cursor, rect.bottom + gap);
+  }
+  if (best.height < MIN_SCROLLING_BAR) return { top: Math.max(safe, above), left, width };
+  return { top: best.top, left, width, maxHeight: Math.min(barHeight, best.height) };
 }
 
 export function inlineSlotPlacement(slot = {}, viewport = {}, options = {}) {
