@@ -1678,8 +1678,11 @@ export function createControllerServiceWorker({
   async function prepareTurn(message = {}) {
     const turnSessionId = String(message.sessionId || '').trim();
     const transport = settings?.connectionTransport || settings?.gatewayMode;
-    if (turnSessionId && settings?.browserControlEnabled === true && !transportUsesDashboardTicket(transport)
-      && turnSessionId !== durableSessionId(settings)) {
+    const followsTurnChat = Boolean(turnSessionId) && settings?.browserControlEnabled === true
+      && !transportUsesDashboardTicket(transport);
+    const servesTurnChat = () => !followsTurnChat || durableSessionId(settings) === turnSessionId;
+    const chatNotMoved = () => unavailableControlTarget('controller_unavailable', PREPARE_TURN_MESSAGES.controller_unavailable);
+    if (followsTurnChat && !servesTurnChat()) {
       // The gateway lets only the chat the controller registered for drive the tab. A turn from
       // another chat (a second window, the full tab) moves the controller to it first, so the tab
       // is never reported ready to a chat whose tools would find no browser.
@@ -1690,6 +1693,7 @@ export function createControllerServiceWorker({
         new Promise((resolve) => setTimeout(resolve, PREPARE_TURN_CONNECT_MS)),
       ]);
       if (moved?.busy) return busyWithOtherChat();
+      if (!servesTurnChat()) return chatNotMoved();
     }
     if (!connected && lastConnectFailure?.reason === CONTROLLER_SESSION_PENDING) {
       // The panel created this chat's Hermes session just before this turn: connect now, so the
@@ -1716,6 +1720,7 @@ export function createControllerServiceWorker({
       await persist();
     }
     const view = await collectTurnSnapshot(resolved);
+    if (!servesTurnChat()) return chatNotMoved();
     return {
       ...resolved,
       state: 'ready',

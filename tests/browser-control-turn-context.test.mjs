@@ -572,6 +572,35 @@ test('a chat move queued behind a heartbeat looks for running work again before 
   assert.equal(finished?.ok, true, JSON.stringify(finished));
 });
 
+test('a turn is never ready for a chat Hermes Control has not moved to, even when the move is still waiting', async (t) => {
+  const heartbeat = deferredGate();
+  const { worker, transport } = await controlledWorker();
+  const first = transport.connections[0];
+  first.heartbeat = () => heartbeat.promise;
+  const beating = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.wake }, extensionSender());
+  await settle();
+
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const preparing = worker.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.prepareTurn,
+    tabId: 41,
+    frameId: 0,
+    expectedUrl: 'https://shop.example.test/cart',
+    sessionId: 'second-window-chat',
+  }, extensionSender());
+  for (let turn = 0; turn < 200; turn += 1) await Promise.resolve();
+  t.mock.timers.tick(3_000);
+  const prepared = await preparing;
+  t.mock.timers.reset();
+
+  assert.notEqual(prepared.state, 'ready', 'the old chat is still the one connected');
+  assert.equal(prepared.ok, false);
+  assert.equal(prepared.availability, 'unavailable');
+  heartbeat.resolve({ ok: true });
+  await beating;
+  await settle();
+});
+
 function deferredGate() {
   let resolve;
   const promise = new Promise((resolvePromise) => { resolve = resolvePromise; });
