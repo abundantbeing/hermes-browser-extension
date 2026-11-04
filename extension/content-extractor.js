@@ -1064,7 +1064,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 d8991a7c9f9545c3 */
+/* extension/lib/site-adapters.mjs · SHA-256 0e1b75579d8889d6 */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1794,6 +1794,21 @@ function toolRowEndSlot(target, { gap = 12, near = Infinity } = {}) {
   return null;
 }
 
+// A one-line chat box on any site (a message pill with its buttons at the right end, beside the text): just
+// before those buttons, as in a chat composer, so it needs no site's own names for its parts. A taller
+// field, or buttons only under it, keep the other rules.
+function chatRowSlot(target) {
+  const field = laidOutBox(target);
+  if (!field || field.height > 64) return null;
+  const slot = trailingControlsSlot(target);
+  const box = laidOutBox(slot?.element);
+  if (!box) return null;
+  const middle = box.top + box.height / 2;
+  const beside = middle > field.top - 16 && middle < field.bottom + 16
+    && box.left >= field.left + field.width / 2 && box.left <= field.right + 96;
+  return beside ? slot : null;
+}
+
 const CHAT_COMPOSER_SITES = new Set(['chatgpt', 'claude', 'perplexity', 'grok']);
 
 // Hermes Web, the web app a Hermes gateway serves: its composer is a chat composer as well.
@@ -1833,7 +1848,12 @@ function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
     // X nests its editor deep, so the composer is looked for well up the tree.
     const composer = composerAround(target, ['[data-testid="toolBar"]'], 30);
     const toolbar = composer?.querySelector('[data-testid="toolBar"]');
-    if (!toolbar) return [];
+    // No post toolbar: a direct message wherever it opens (the messages drawer sits over any page). X's
+    // post editor waits for its toolbar instead, which it draws a moment after focus.
+    if (!toolbar) {
+      const slot = target.closest?.('[data-testid^="tweetTextarea"]') ? null : chatRowSlot(target);
+      return slot ? [slot] : [];
+    }
     const send = all(composer, '[data-testid="tweetButtonInline"], [data-testid="tweetButton"]');
     // The media buttons only: the character counter and the add-post button by Reply are not tools, and
     // the circle covers none of the toolbar's controls.
@@ -1864,6 +1884,7 @@ function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
     return slots;
   }
   const slot = inlineSlot(target, adapterId, { chatComposer, all })
+    || chatRowSlot(target)
     || (adapterId === 'generic' ? toolRowEndSlot(target, { near: 40 }) : null);
   return slot ? [slot] : [];
 }

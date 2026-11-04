@@ -24,6 +24,8 @@ const SITES = [
   ['x-grok.html', 'https://x.com/i/grok'],
   ['x-dm.html', 'https://x.com/i/chat/123-456'],
   ['x-dm-drawer.html', 'https://x.com/home'],
+  ['x-dm-drawer-editable.html', 'https://x.com/someone/status/1'],
+  ['generic-chat.html', 'https://chat.example/room/1'],
   ['youtube.html', 'https://www.youtube.com/watch?v=abc'],
   ['gmail.html', 'https://mail.google.com/mail/u/0/#inbox?compose=new'],
   ['reddit.html', 'https://www.reddit.com/r/test/comments/1/x/'],
@@ -196,8 +198,9 @@ test('Hermes Webapp split pane, composer on the window\'s bottom edge: still jus
 });
 
 test('a page that is not Hermes but has a tour marker is not taken for the Webapp', () => {
-  const document = withBoxes(parseHTML(`<!doctype html><html><head><title>Docs · Acme</title></head><body>${fixture('hermes-web.html')}</body></html>`).document);
-  assert.equal(inspectInlineSite(document, fieldIn(document), { url: 'https://acme.example/#/' }).placement.slot, null);
+  // A draft of several lines: the Webapp's rule would still take it, the one-line chat box rule does not.
+  const document = withBoxes(parseHTML(`<!doctype html><html><head><title>Docs · Acme</title></head><body>${fixture('hermes-web.html').replace('data-rect="44 636 520 24"', 'data-rect="44 590 520 96"')}</body></html>`).document);
+  assert.equal(inspectInlineSite(document, fieldIn(document), { url: 'https://acme.example/#/' }).placement.slot === null, true);
 });
 
 test('Gmail: just after More options, covering none of the writing tools', async () => {
@@ -300,13 +303,23 @@ test('an X direct message: just before the voice button, as in any chat composer
   }
 });
 
-test('an X direct message in the messages drawer: before the voice button, level with its icon', async () => {
-  const launcher = await focusedLauncher(boot('x-dm-drawer.html', 'https://x.com/home'));
+test('an X direct message in the messages drawer, on any page: before the voice button, level with its icon', async () => {
+  // Nothing marks the drawer: the one-line field with no post toolbar is what makes it a chat box.
+  for (const [name, url] of [['x-dm-drawer.html', 'https://x.com/home'], ['x-dm-drawer-editable.html', 'https://x.com/someone/status/1']]) {
+    const launcher = await focusedLauncher(boot(name, url));
+    assert.equal(launcher.dataset.placement, 'before', name);
+    // The voice button's box is 737-774 (middle 755.5) but its icon is 753-765 (middle 759): the circle's
+    // middle goes on the icon's.
+    assert.equal(launcher.style.top, '747px', name);
+    assert.equal(launcher.style.left, '1156px', name);
+  }
+});
+
+test('any other site\'s one-line chat box: just before its buttons, level with them', async () => {
+  const launcher = await focusedLauncher(boot('generic-chat.html', 'https://chat.example/room/1'));
   assert.equal(launcher.dataset.placement, 'before');
-  // The voice button's box is 737-774 (middle 755.5) but its icon is 753-765 (middle 759): the circle's
-  // middle goes on the icon's.
-  assert.equal(launcher.style.top, '747px');
-  assert.equal(launcher.style.left, '1156px');
+  assert.equal(launcher.style.left, '768px');
+  assert.equal(launcher.style.top, '718px');
 });
 
 test('X draws its toolbar a moment after focus: the circle goes to its spot then, before any typing', async () => {
