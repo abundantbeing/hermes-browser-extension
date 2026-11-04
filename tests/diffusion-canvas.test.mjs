@@ -222,6 +222,34 @@ test('a diffusion canvas that leaves the page stops scheduling frames', () => wi
   canvas.isConnected = false;
   step(1048);
   assert.equal(scheduled(), 0, 'a detached canvas schedules no further frame');
+  diffusion.stop();
+}));
+
+test('a canvas whose card comes back picks up again, and one that stays away is stopped', (t) => withManualFrames(({ step, scheduled }) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  const { canvas } = fakeCanvas();
+  const image = { naturalWidth: 64, naturalHeight: 36, width: 64, height: 36 };
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'returns' });
+  diffusion.start();
+  step(1016);
+  let outcome = null;
+  diffusion.reveal(image).then((result) => { outcome = result; });
+  canvas.isConnected = false;
+  step(1032);
+  assert.equal(scheduled(), 0, 'paused while away');
+  // The user leaves the chat and comes back: the same row, and its canvas, is attached again.
+  t.mock.timers.tick(5_000);
+  canvas.isConnected = true;
+  t.mock.timers.tick(1_000);
+  assert.equal(scheduled(), 1, 'the loop resumes for the returned card');
+  assert.equal(outcome, null, 'its reveal was not cancelled');
+  // Gone for good: after ten minutes away it stops and its reveal reports cancelled.
+  canvas.isConnected = false;
+  step(1048);
+  t.mock.timers.tick(10 * 60_000 + 2_000);
+  canvas.isConnected = true;
+  t.mock.timers.tick(2_000);
+  assert.equal(scheduled(), 0, 'a canvas away for ten minutes stays stopped');
 }));
 
 test('settle draws a reveal still under way finished, once, and stops', async () => withManualFrames(async ({ step, scheduled }) => {

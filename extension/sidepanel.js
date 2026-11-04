@@ -21737,7 +21737,12 @@ function revealGeneratedImage(placeholder, source = '') {
       }
       placeholder.appendChild(image);
       placeholder.classList.add('generated-image-revealing');
-      await placeholder._reveal(image);
+      // A canvas stopped before it drew the picture showed nothing: the card has no picture.
+      if ((await placeholder._reveal(image))?.cancelled) {
+        image.remove();
+        placeholder.classList.remove('generated-image-revealing');
+        throw new Error('Generated image reveal was cancelled.');
+      }
       return true;
     } catch {
       if (!isRevealedImagePlaceholder(placeholder)) delete placeholder.dataset.revealSource;
@@ -21767,10 +21772,14 @@ async function settleTurnImages(node, { content = '', imageSources = [] } = {}) 
     recovered: imageSources,
     shown,
   });
+  // A picture its card could not reveal (its canvas had stopped) still gets a plain card, unless
+  // the reply shows it inline.
+  const inline = new Set(plan.replaced);
+  const unrevealed = [];
   for (const { placeholderIndex, source } of plan.reveals) {
-    await revealGeneratedImage(waiting[placeholderIndex], source);
+    if (!(await revealGeneratedImage(waiting[placeholderIndex], source)) && !inline.has(source)) unrevealed.push(source);
   }
-  if (plan.cards.length) appendGeneratedImageCards(node, plan.cards);
+  if (plan.cards.length || unrevealed.length) appendGeneratedImageCards(node, [...unrevealed, ...plan.cards]);
   removeImageCardsShownInline(node, plan.replaced);
 }
 

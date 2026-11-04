@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
 import { renderMarkdown } from '../extension/lib/common.mjs';
-import { rawGeneratedImageCandidatesFromResult } from '../extension/lib/image-render.mjs';
+import { rawGeneratedImageCandidatesFromResult, resolveImageSource } from '../extension/lib/image-render.mjs';
 import { mediaDisplayName } from '../extension/lib/media-source.mjs';
 import { isFinishedImageStatus, pickImageGenerationCard, planImageReveals } from '../extension/lib/image-reveal-plan.mjs';
 
@@ -33,7 +33,7 @@ const fromDataUrl = (value = '') => Buffer.from(String(value).split(',')[1] || '
 const shownIn = (card) => fromDataUrl(card.querySelector('img')?.getAttribute('src') || '');
 const pic = (name) => `${IMAGES}/${name}.png`;
 
-function harness({ revealHold = null } = {}) {
+function harness({ revealHold = null, cancelReveal = () => false } = {}) {
   const { document } = parseHTML('<html><body><article class="message assistant"><div class="message-content"></div></article></body></html>');
   const node = document.querySelector('article');
   const log = [];
@@ -41,6 +41,7 @@ function harness({ revealHold = null } = {}) {
     document,
     renderMarkdownSafe: renderMarkdown,
     rawGeneratedImageCandidatesFromResult,
+    resolveImageSource,
     mediaDisplayName,
     planImageReveals,
     pickImageGenerationCard,
@@ -64,7 +65,10 @@ function harness({ revealHold = null } = {}) {
       root.className = 'image-gen-placeholder';
       root.dataset.toolStatus = activity.status || 'progress';
       root._start = () => log.push(['start', activity.activityId || '']);
-      root._reveal = async (image) => log.push(['reveal', fromDataUrl(image.src)]);
+      root._reveal = async (image) => {
+        log.push(['reveal', fromDataUrl(image.src)]);
+        return cancelReveal(fromDataUrl(image.src)) ? { cancelled: true } : { cancelled: false };
+      };
       root._dispose = () => log.push(['dispose', root.dataset.activityKey || '']);
       root._settle = () => log.push(['settle', shownIn(root)]);
       return root;
@@ -195,6 +199,21 @@ test('a reply with generation cards marks itself so its inline pictures wait', (
   assert.equal(panel.node.classList.contains('image-cards-pending'), false, 'no card, nothing to hide');
   panel.tool({ activityId: 'call-a', status: 'started' });
   assert.equal(panel.node.classList.contains('image-cards-pending'), true);
+});
+
+test('a reveal its canvas cancelled does not count as shown', async () => {
+  // The canvas stopped (its card was away too long): the card must not keep a hidden picture
+  // and pass as revealed, so the turn end can still show that picture.
+  const panel = harness({ cancelReveal: (source) => source === pic('b') });
+  panel.tool({ activityId: 'call-b', status: 'started' });
+  panel.tool({ activityId: 'call-b', status: 'completed', result: { success: true, image: pic('b') } });
+  await flushMicrotasks();
+  const card = panel.placeholders()[0];
+  assert.equal(Boolean(card.querySelector('.generated-image-reveal-source')), false, 'no hidden picture left behind');
+  assert.equal(card.dataset.revealSource, undefined, 'the claim is given back');
+  await panel.api.settleTurnImages(panel.node, { content: 'Here it is.', imageSources: [pic('b')] });
+  await flushMicrotasks();
+  assert.ok(panel.cards().includes(pic('b')), 'the recovered picture is still shown');
 });
 
 test('ordinary tool calls never reach the bubble', () => {

@@ -151,6 +151,9 @@ function profileSignal(variant, x, y, time) {
   return clamp((bloom * 0.78) + (contour * bloom * 0.22));
 }
 
+const DETACHED_CHECK_MS = 1_000;
+const DETACHED_STOP_MS = 10 * 60_000;
+
 /** Animated seeded pixel diffusion used only while image_generate is running. */
 export function createDiffusionCanvas(canvas, { aspectRatio = 'landscape', seed = Date.now(), maxFps = 60 } = {}) {
   const variant = diffusionVariantForSeed(seed);
@@ -457,21 +460,47 @@ export function createDiffusionCanvas(canvas, { aspectRatio = 'landscape', seed 
   };
 
   let attached = false;
+  let wake = 0;
   const stop = () => {
     disposed = true;
     if (animationFrame) globalThis.cancelAnimationFrame?.(animationFrame);
     animationFrame = 0;
+    if (wake) globalThis.clearTimeout(wake);
+    wake = 0;
     revealComplete?.({ variant, cancelled: true });
     revealComplete = null;
     revealImage = null;
     observer?.disconnect();
   };
 
+  // A canvas that left the page pauses: a chat the user leaves and returns to attaches the same
+  // row again, and its card picks up where it was. One that stays away ten minutes is stopped.
+  const pauseWhileDetached = () => {
+    animationFrame = 0;
+    const since = Date.now();
+    const check = () => {
+      wake = 0;
+      if (disposed) return;
+      if (canvas.isConnected) {
+        lastFrameAt = 0;
+        animationFrame = globalThis.requestAnimationFrame?.(tick) || 0;
+        return;
+      }
+      if (Date.now() - since > DETACHED_STOP_MS) {
+        stop();
+        return;
+      }
+      wake = globalThis.setTimeout(check, DETACHED_CHECK_MS);
+      wake?.unref?.();
+    };
+    wake = globalThis.setTimeout(check, DETACHED_CHECK_MS);
+    wake?.unref?.();
+  };
+
   const tick = (now) => {
-    // A canvas that left the page is never shown again: its frames would run forever.
     if (canvas.isConnected) attached = true;
     else if (attached && canvas.isConnected === false) {
-      stop();
+      pauseWhileDetached();
       return;
     }
     const frameElapsed = now - lastFrameAt;

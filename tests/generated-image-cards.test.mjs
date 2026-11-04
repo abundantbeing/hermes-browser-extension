@@ -61,7 +61,7 @@ test('every picture from one tool call gets a card, not just the first', () => {
   // A recovered multi-image turn pairs its pictures with the waiting generations and
   // appends the extras as cards.
   assert.match(sidepanelSource, /const plan = planImageReveals\(\{\s*pendingCount: waiting\.length,/);
-  assert.match(sidepanelSource, /if \(plan\.cards\.length\) appendGeneratedImageCards\(node, plan\.cards\);/);
+  assert.match(sidepanelSource, /if \(plan\.cards\.length \|\| unrevealed\.length\) appendGeneratedImageCards\(node, \[\.\.\.unrevealed, \.\.\.plan\.cards\]\);/);
 });
 
 test('hydrated and generated pictures share the same inspect affordance', () => {
