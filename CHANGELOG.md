@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- Hermes Control follows the chat that is asking. A turn from another chat (a second window, the full tab) now moves Hermes Control to that chat before the tab is reported ready. Before, the tab said ready while the gateway still bound control to the first chat, so the agent found no browser behind its `tab_*` tools. A command still running keeps control until it finishes.
 - A clean checkout or contributor build no longer renders the signature profile with HermesDisplay instead of **Rules Gothic Compressed**. The Rules `woff2` files from the v0.4.0 release are in the repository, and Chromium and Firefox builds fail if any CSS-referenced font file is missing.
 - The sessions list stays complete after you open a chat that is running in another app (Hermes Desktop, the phone app, another window) and then start a new session. It showed 0 sessions, and Refresh failed or kept saying 0, until the panel was reopened (#139).
 - A group chat keeps its own messages when you change what page Hermes reads. Choosing Chat only, or pinning or returning to a tab, showed the last single-bot chat under the room's name until the room was reopened, and pinning a tab with a saved chat left the room (#138).
