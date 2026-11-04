@@ -52,3 +52,10 @@ test('every string the read aloud button and Voice row show is in the catalog', 
   assert.equal(english['ui.read.aloud'], 'Read aloud');
   assert.equal(english['ui.stop.reading.aloud'], 'Stop reading aloud');
 });
+
+test('the gateway voice is offered from what the dashboard probe last found, not from the capability ledger that forgets probes on a reconnect', () => {
+  assert.match(panel, /readAloudDashboardProbe = \{ reachable: probe\.reachable === true, gatewayUrl: settings\.gatewayUrl \}/);
+  const availability = panel.slice(panel.indexOf('function readAloudAvailability()'), panel.indexOf('function readAloudStateOf('));
+  assert.match(availability, /readAloudDashboardProbe/);
+  assert.doesNotMatch(availability, /capabilityRuntime/);
+});

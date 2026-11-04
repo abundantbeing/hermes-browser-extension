@@ -6,12 +6,9 @@
 // token (a legacy dashboard's page token, or the Webapp sign-in the panel holds):
 //
 //   POST /api/audio/transcribe    speech to text
-//   POST /api/audio/speak         text to speech: the profile's voice, returned as an audio data URL
 //   GET  /api/media               stored images
 //   POST /api/chat/image-upload   { data_url, filename } -> { ok, path, name, bytes, mime_type }
 //
-// Stock Hermes lists no speech route on its API server (audio_api is false), so a dashboard
-// that accepts the token is what lets read-aloud use the profile's own voice.
 // This module probes that the dashboard accepts the token (one bounded read-only GET) and
 // does the image upload. Pure: the caller supplies fetch and the token. Never throws.
 
@@ -19,7 +16,7 @@ export const DASHBOARD_PROBE_PATH = '/api/audio/voice-config';
 export const DASHBOARD_IMAGE_UPLOAD_PATH = '/api/chat/image-upload';
 export const DASHBOARD_SESSION_HEADER = 'X-Hermes-Session-Token';
 // The capability rows this dashboard stands in for.
-export const DASHBOARD_ROUTE_CAPABILITIES = Object.freeze(['audioTranscription', 'audioSpeech', 'imageUpload', 'mediaRead']);
+export const DASHBOARD_ROUTE_CAPABILITIES = Object.freeze(['audioTranscription', 'imageUpload', 'mediaRead']);
 
 const TIMEOUT_MS = 4000;
 

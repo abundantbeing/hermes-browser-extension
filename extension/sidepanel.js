@@ -1373,6 +1373,8 @@ let panelMessageThread = null;
 // the browser's speechSynthesis reads when the dashboard cannot. Click only.
 const readAloudAudio = createGatewayAudioPlayback();
 let readAloudDashboard = null;
+// What the last dashboard probe found, kept apart from the capability ledger, which forgets probes whenever a socket reconnects.
+let readAloudDashboardProbe = null;
 let readAloudTurnWasRunning = false;
 
 async function resolveReadAloudDashboard() {
@@ -1410,10 +1412,12 @@ const readAloudPlayer = createReadAloudPlayer({
 });
 
 function readAloudAvailability() {
-  syncCapabilityRuntime();
-  const state = capabilityRuntime.ledger.get('audioSpeech')?.state;
+  const probe = readAloudDashboardProbe;
+  const dashboardReachable = probe?.reachable === true
+    && probe.gatewayUrl === settings.gatewayUrl
+    && normalizeGatewayMode(settings.gatewayMode) === 'local-api';
   return {
-    gatewayAvailable: readAloudAudio.available && (state === 'available' || state === 'cached'),
+    gatewayAvailable: readAloudAudio.available && dashboardReachable,
     browserAvailable: createBrowserSpeech().available,
     lastFallback: readAloudPlayer.state().lastFallback,
   };
@@ -5855,6 +5859,8 @@ async function refreshDashboardRoutes({ force = false } = {}) {
   if (!baseUrl) return null;
   const token = await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }).catch(() => '');
   const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
+  readAloudDashboardProbe = { reachable: probe.reachable === true, gatewayUrl: settings.gatewayUrl };
+  renderCompatibilityPanel();
   const fields = dashboardRouteRecordFields(probe);
   if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
   for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);
