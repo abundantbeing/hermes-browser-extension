@@ -3283,7 +3283,7 @@ function browserControlSupportState() {
     : 'unknown';
 }
 
-async function resolveBrowserControlForTurn({ context = {}, scope = {} } = {}) {
+async function resolveBrowserControlForTurn({ context = {}, scope = {}, sessionId = '' } = {}) {
   // A Hermes without extension control is not "off" or "unreachable": say so, so
   // the turn does not send the agent to controller tools that do not exist.
   if (browserControlSupportState() === 'unsupported') {
@@ -3326,8 +3326,13 @@ async function resolveBrowserControlForTurn({ context = {}, scope = {} } = {}) {
   }
   try {
     // PREPARE_TURN resolves the same exact target and, when control is ready,
-    // also returns the page view (with refs minted) for this turn.
-    const resolved = await resolveBrowserControlCandidate(candidate, 'HERMES_CONTROLLER_PREPARE_TURN');
+    // also returns the page view (with refs minted) for this turn. The chat's
+    // session goes with it: control is ready only for the chat it serves.
+    const turnSessionId = String(sessionId || '').trim();
+    const resolved = await resolveBrowserControlCandidate(
+      turnSessionId ? { ...candidate, sessionId: turnSessionId } : candidate,
+      'HERMES_CONTROLLER_PREPARE_TURN',
+    );
     if (resolved?.route === 'extension-controller' && resolved?.isolatedFallback === 'forbidden') return resolved;
   } catch {
     // Fall through to a fail-closed unavailable target.
@@ -27033,7 +27038,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       }
     }
     if (!runIsViewed()) throw new Error('Session changed before submission. The original draft is held and was not sent.');
-    const browserControl = await resolveBrowserControlForTurn({ context, scope: turnContextScope });
+    const browserControl = await resolveBrowserControlForTurn({ context, scope: turnContextScope, sessionId: runSessionId });
     if (typeof turnOptions.resolveUserText === 'function') {
       userText = String(await turnOptions.resolveUserText() || '');
     }

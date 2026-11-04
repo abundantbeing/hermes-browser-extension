@@ -60,6 +60,13 @@ test('turn preparation asks the worker for the control snapshot and marks contro
   assert.ok(resolve.indexOf("reason: 'control_off'") < resolve.indexOf('browserControlCandidate({ context, scope })'));
 });
 
+test('a chat turn tells the worker which chat it is, so control is ready only for that chat', () => {
+  const ask = sidepanel.match(/async function askHermes\([\s\S]*?\n\}/)?.[0] || '';
+  const resolve = sidepanel.match(/async function resolveBrowserControlForTurn\([\s\S]*?\n\}/)?.[0] || '';
+  assert.match(ask, /resolveBrowserControlForTurn\(\{ context, scope: turnContextScope, sessionId: runSessionId \}\)/);
+  assert.match(resolve, /\{ \.\.\.candidate, sessionId: turnSessionId \}/);
+});
+
 test('a failed attach gives the just-acquired lease back', () => {
   const attach = sidepanel.match(/async function attachBrowserControlToCurrentTab\([\s\S]*?\n\}/)?.[0] || '';
   const acquireIndex = attach.indexOf('HERMES_CONTROLLER_LEASE_ACQUIRE');
