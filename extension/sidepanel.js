@@ -1,4 +1,16 @@
-import { reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
+import {
+  INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY,
+  INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY,
+  inlineAssistSiteEntries,
+  inlineAssistSitesModel,
+  normalizeInlineAssistHiddenSites,
+  normalizeInlineAssistIcon,
+  normalizeInlineAssistOpenMode,
+  withInlineAssistSiteState,
+  withoutInlineAssistSite,
+} from './lib/inline-assist-look.mjs';
+import { assistRequestSummary, reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
+import { assistSessionTitle } from './lib/inline-assist-handoff.mjs';
 import { CONTROL_TOOL_FAMILIES } from './lib/control-tool-names.mjs';
 import {
   AUDIO_TRANSCRIBE_ENDPOINT,
@@ -198,6 +210,7 @@ import { mountContextMenuEditor } from './lib/context-menu-editor-client.mjs';
 import { CONTEXT_MENU_REQUEST_CLAIM } from './lib/context-menu-controller.mjs';
 import {
   assertAssistModelSelectionAcknowledged,
+  assistChatTurnOverride,
   assistModelFallbackNotice,
   assistModelRoutingSupported,
   buildAssistModelRouteRequest,
@@ -233,6 +246,7 @@ import {
   withAppearancePreferenceUpdate,
 } from './lib/appearance-preferences.mjs';
 import { mountBrandedSelect } from './lib/branded-select.mjs';
+import { OVERLAY_SCROLLBAR_CSS, installOverlayScrollbars } from './lib/overlay-scrollbar.mjs';
 import { createEffortControl } from './lib/effort-control.mjs';
 import { probeSignatureFonts } from './lib/font-availability.mjs';
 import { refreshHermesContextRegistry } from './lib/hermes-context-sync.mjs';
@@ -458,6 +472,7 @@ import {
   sessionContextFailureRecovery,
   sessionStatusKnownIdle,
   turnDeliveryFromHistory,
+  turnRefusedBeforeStart,
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
@@ -765,7 +780,7 @@ import {
 import { rewindSessionToMessage, usesAuthorityRewind } from './lib/session-rewind.mjs';
 import { botChatDeliveryFrame, botChatRefusalState, isPendingBotChatDelivery, movedAsideBotChat, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
 import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-pick.mjs';
-import { explicitSiteCaptureAction, isGmailThreadUrl } from './lib/site-adapters.mjs';
+import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteFromInput, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
@@ -1226,6 +1241,17 @@ const els = {
   browserContextConsentIdentity: $('#browserContextConsentIdentity'),
   inlineAssistEnabled: $('#inlineAssistEnabled'),
   inlineAssistDefaultRoute: $('#inlineAssistDefaultRoute'),
+  inlineAssistIconInputs: Array.from(document.querySelectorAll('input[name="inlineAssistIcon"]')),
+  inlineAssistOpenModeInputs: Array.from(document.querySelectorAll('input[name="inlineAssistOpenMode"]')),
+  inlineAssistAutoReplace: $('#inlineAssistAutoReplace'),
+  inlineAssistSites: $('#inlineAssistSites'),
+  inlineAssistSitesValue: $('#inlineAssistSitesValue'),
+  inlineAssistSitesEmpty: $('#inlineAssistSitesEmpty'),
+  inlineAssistSitesHint: $('#inlineAssistSitesHint'),
+  inlineAssistAddSite: $('#inlineAssistAddSite'),
+  inlineAssistSiteInput: $('#inlineAssistSiteInput'),
+  inlineAssistAddTyped: $('#inlineAssistAddTyped'),
+  inlineAssistSiteInputHint: $('#inlineAssistSiteInputHint'),
   inlineAssistModel: $('#inlineAssistModel'),
   inlineAssistModelButton: $('#inlineAssistModelButton'),
   inlineAssistModelLabel: $('#inlineAssistModelLabel'),
@@ -1450,6 +1476,9 @@ const approvedForeignSessionIds = new Set();
 let pendingForeignTurn = null;
 let pendingContextMenuRequest = null;
 let sending = false;
+// The model fields of the turn being sent, when they are not the chat's own: a Hermes Assist turn runs on
+// Assist's model and effort (assistChatTurnOverride). Set for one askHermes send, cleared when it ends.
+let turnModelRoute = null;
 let queuedTurn = null;
 let activeAbortController = null;
 // Live follow of a session that is already running when the panel opens it.
@@ -2899,6 +2928,94 @@ function captureSettingsBaseline() {
   renderSettingsEditedMarkers();
 }
 
+// A control the panel refilled from storage while Settings is open: its new value is the saved one, so it
+// does not read as an unsaved edit. The key is the one settingsControlEntries() gives the control.
+function adoptSettingsBaselineValue(control) {
+  const pane = control?.closest?.('[data-settings-pane]')?.dataset.settingsPane;
+  const name = control?.id || control?.name;
+  if (!settingsBaseline || !pane || !name) return;
+  const checkable = control.type === 'checkbox' || control.type === 'radio';
+  settingsBaseline.set(`${pane}\u0000${name}:${control.type === 'radio' ? control.value : ''}`, checkable ? String(control.checked) : String(control.value));
+  renderSettingsEditedMarkers();
+}
+
+// Every tab has its own side panel, and they share one settings record. An icon saved in another panel is
+// taken in, and the radios show it unless they hold an unsaved pick, so an unrelated Save here does not put
+// the old icon back.
+function adoptInlineAssistIconChange(value) {
+  const saved = normalizeInlineAssistIcon(settings.inlineAssistIcon);
+  const next = normalizeInlineAssistIcon(value);
+  settings = { ...settings, inlineAssistIcon: next };
+  const inputs = els.inlineAssistIconInputs || [];
+  if (!inputs.length || inputs.find((input) => input.checked)?.value !== saved) return;
+  for (const input of inputs) {
+    input.checked = input.value === next;
+    adoptSettingsBaselineValue(input);
+  }
+}
+
+// The same for what clicking the circle opens (Quick menu or Full panel).
+function adoptInlineAssistOpenModeChange(value) {
+  const saved = normalizeInlineAssistOpenMode(settings.inlineAssistOpenMode);
+  const next = normalizeInlineAssistOpenMode(value);
+  settings = { ...settings, inlineAssistOpenMode: next };
+  const inputs = els.inlineAssistOpenModeInputs || [];
+  if (!inputs.length || inputs.find((input) => input.checked)?.value !== saved) return;
+  for (const input of inputs) {
+    input.checked = input.value === next;
+    adoptSettingsBaselineValue(input);
+  }
+}
+
+// The Assist model, which Assist's own picker on a page also saves (model, raw model and provider).
+function adoptInlineAssistModelChange(next = {}) {
+  const input = els.inlineAssistModel;
+  const saved = String(settings.inlineAssistModel || '');
+  settings = {
+    ...settings,
+    inlineAssistModel: String(next.inlineAssistModel || ''),
+    inlineAssistRawModel: String(next.inlineAssistRawModel || ''),
+    inlineAssistProvider: String(next.inlineAssistProvider || ''),
+  };
+  if (!input || input.value !== saved) return;
+  renderInlineAssistModelOptions();
+  adoptSettingsBaselineValue(input);
+}
+
+// And for Assist's effort, which the slider in the page's Assist options changes.
+function adoptInlineAssistEffortChange(next = {}) {
+  settings = {
+    ...settings,
+    inlineAssistReasoningEffort: normalizeReasoningEffort(next.inlineAssistReasoningEffort || 'low'),
+    inlineAssistThinkingEnabled: next.inlineAssistThinkingEnabled !== false,
+  };
+  renderInlineAssistRuntimeOptions();
+}
+
+// And for Keep Assist chats, which the quick menu's options also change on the page.
+function adoptInlineAssistSessionRetentionChange(value) {
+  const saved = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
+  const next = value === 'delete' ? 'delete' : 'keep';
+  settings = { ...settings, inlineAssistSessionRetention: next };
+  const select = els.inlineAssistSessionRetention;
+  if (!select || select.value !== saved) return;
+  select.value = next;
+  adoptSettingsBaselineValue(select);
+}
+
+// Assist's switch on a page writes "Replace text automatically" under its own key. The panel takes a new value
+// in, and its checkbox shows it unless the box holds an unsaved edit, so an unrelated Save does not write an
+// older copy back.
+function adoptInlineAssistAutoReplaceChange(value) {
+  const saved = settings.inlineAssistAutoReplace !== false;
+  const next = value !== false;
+  settings = { ...settings, inlineAssistAutoReplace: next };
+  const box = els.inlineAssistAutoReplace;
+  if (!box || box.checked !== saved) return;
+  box.checked = next;
+  adoptSettingsBaselineValue(box);
+}
+
 function renderSettingsEditedMarkers() {
   const dirty = settingsBaseline ? changedPanes(settingsBaseline, settingsControlEntries()) : new Set();
   for (const card of els.settingsForm.querySelectorAll('[data-settings-category]')) {
@@ -3076,6 +3193,7 @@ function showSettingsPane(pane, { field = '', focus = true } = {}) {
     paneEl.hidden = paneEl.dataset.settingsPane !== settingsActivePane;
   }
   els.settingsDialog.dataset.settingsView = settingsActivePane || 'home';
+  if (settingsActivePane === 'assist') void refreshInlineAssistOpenSite();
   els.settingsDialog.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   if (settingsActivePane === 'models') renderSettingsModelSummary();
   // The pane shows the open session's context; ask for a fresh reading (no-op when recent).
@@ -23143,7 +23261,9 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY, INLINE_SITE_CONTEXT_STORAGE_KEY, INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]);
+  inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(stored[INLINE_SITE_CONTEXT_STORAGE_KEY]);
+  inlineAssistHiddenSites = normalizeInlineAssistHiddenSites(stored[INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -23187,6 +23307,11 @@ async function loadSettings({ restoreMessages = false } = {}) {
     sessionStartupMode: normalizeSessionStartupMode(settings.sessionStartupMode),
     inlineAssistEnabled: settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute),
+    inlineAssistIcon: normalizeInlineAssistIcon(settings.inlineAssistIcon),
+    inlineAssistOpenMode: normalizeInlineAssistOpenMode(settings.inlineAssistOpenMode),
+    inlineAssistAutoReplace: typeof stored[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY] === 'boolean'
+      ? stored[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]
+      : settings.inlineAssistAutoReplace !== false,
     inlineAssistModel: String(settings.inlineAssistModel || ''),
     inlineAssistRawModel: String(settings.inlineAssistRawModel || ''),
     inlineAssistProvider: String(settings.inlineAssistProvider || ''),
@@ -23444,6 +23569,208 @@ function renderTranscriptProviderField() {
   if (els.transcriptProviderField) els.transcriptProviderField.hidden = !custom;
 }
 
+// Settings → Hermes Assist → Sites: where Assist reads the visible thread and where the circle is hidden,
+// each kept under its own storage key, which the page's Assist panel also writes. The
+// hidden #inlineAssistSitesValue holds both as JSON, so Save and the edited markers treat the list like
+// any other control; the rows only show it.
+let inlineSiteContextPreferences = {};
+let inlineAssistHiddenSites = [];
+const INLINE_ASSIST_SITE_STATES = [['visible', 'Reads thread'], ['draft', 'This field only'], ['hidden', 'Circle hidden']];
+
+function readInlineAssistSitesModel(input = els.inlineAssistSitesValue) {
+  let stored = null;
+  try {
+    stored = JSON.parse(input?.value || 'null');
+  } catch {
+    stored = null;
+  }
+  return inlineAssistSitesModel(stored?.contextPrefs, stored?.hidden);
+}
+
+function writeInlineAssistSitesModel(model, { edited = false, render = true } = {}) {
+  const input = els.inlineAssistSitesValue;
+  if (!input) return;
+  input.value = JSON.stringify(inlineAssistSitesModel(model?.contextPrefs, model?.hidden));
+  if (render) renderInlineAssistSites();
+  if (edited) void saveInlineAssistSitesNow();
+}
+
+// The list saves itself, like the page's own Assist options: a change applies straight away.
+async function saveInlineAssistSitesNow() {
+  const input = els.inlineAssistSitesValue;
+  const model = readInlineAssistSitesModel(input);
+  inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(model.contextPrefs);
+  inlineAssistHiddenSites = normalizeInlineAssistHiddenSites(model.hidden);
+  input.dataset.syncedValue = input.value;
+  adoptSettingsBaselineValue(input);
+  renderInlineAssistAddSite();
+  await trackInstantSave('assist', browserApi.storage.local.set({
+    [INLINE_SITE_CONTEXT_STORAGE_KEY]: inlineSiteContextPreferences,
+    [INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]: inlineAssistHiddenSites,
+  })).catch(() => {});
+}
+
+// The site of the open tab, as the Sites list keys it: its adapter, or its hostname. '' for other pages.
+function inlineAssistSiteForUrl(value) {
+  try {
+    const url = new URL(value || '');
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    const { adapterId } = inlineSiteForHost(host);
+    return adapterId === 'generic' ? host : adapterId;
+  } catch {
+    return '';
+  }
+}
+
+let inlineAssistOpenSite = '';
+
+async function refreshInlineAssistOpenSite() {
+  const tab = await activeTab().catch(() => null);
+  inlineAssistOpenSite = inlineAssistSiteForUrl(tab?.url);
+  renderInlineAssistAddSite();
+}
+
+// The open tab's site gets its own Add button until it is in the list; any site can be typed in.
+function renderInlineAssistAddSite() {
+  const button = els.inlineAssistAddSite;
+  if (!button) return;
+  const site = inlineAssistOpenSite;
+  const listed = Boolean(site) && inlineAssistSiteEntries(readInlineAssistSitesModel()).some((entry) => entry.site === site);
+  button.hidden = !site || listed;
+  if (site) button.textContent = t('assist.sites.add', { site: inlineSiteLabel(site) });
+}
+
+function syncInlineAssistSitesForm() {
+  writeInlineAssistSitesModel(inlineAssistSitesModel(inlineSiteContextPreferences, inlineAssistHiddenSites));
+  if (els.inlineAssistSitesValue) els.inlineAssistSitesValue.dataset.syncedValue = els.inlineAssistSitesValue.value;
+}
+
+// A site Assist knows (an adapter id) can read the thread; any other hostname can only hide the circle.
+function inlineAssistSiteReadsThreads(site) {
+  return Object.hasOwn(normalizeInlineSiteContextPreferences({ [site]: 'draft' }), site);
+}
+
+function renderInlineAssistSites() {
+  const list = els.inlineAssistSites;
+  if (!list) return;
+  const entries = inlineAssistSiteEntries(readInlineAssistSitesModel());
+  list.replaceChildren(...entries.map(({ site, state }) => {
+    const row = document.createElement('li');
+    row.className = 'inline-assist-site';
+    row.dataset.site = site;
+    const name = document.createElement('span');
+    name.className = 'inline-assist-site-name';
+    name.textContent = inlineSiteLabel(site);
+    row.append(name);
+    if (inlineAssistSiteReadsThreads(site)) {
+      const select = document.createElement('select');
+      select.className = 'inline-assist-site-state';
+      select.dataset.site = site;
+      select.setAttribute('aria-label', name.textContent);
+      for (const [value, label] of INLINE_ASSIST_SITE_STATES) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = translateUiText(label);
+        select.append(option);
+      }
+      select.value = state;
+      row.append(select);
+      // The same branded dropdown as every other Settings select, not the browser's list.
+      mountBrandedSelect(select);
+    } else {
+      const fixed = document.createElement('span');
+      fixed.className = 'inline-assist-site-state';
+      fixed.textContent = translateUiText('Circle hidden');
+      row.append(fixed);
+    }
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'inline-assist-site-remove';
+    remove.dataset.site = site;
+    remove.textContent = '×';
+    remove.title = translateUiText('Remove');
+    remove.setAttribute('aria-label', `${translateUiText('Remove')} ${name.textContent}`);
+    row.append(remove);
+    return row;
+  }));
+  list.hidden = !entries.length;
+  if (els.inlineAssistSitesEmpty) els.inlineAssistSitesEmpty.hidden = entries.length > 0;
+  renderInlineAssistAddSite();
+}
+
+function focusInlineAssistSite(site) {
+  const row = [...(els.inlineAssistSites?.children || [])].find((item) => item.dataset.site === site);
+  (row?.querySelector('.branded-select-button') || row?.querySelector('select') || row?.querySelector('button') || els.inlineAssistAddSite)?.focus();
+}
+
+function handleInlineAssistSiteChange(event) {
+  const select = event.target.closest?.('select.inline-assist-site-state');
+  if (!select) return;
+  // The row set does not change, so the rows stay put and the select keeps focus.
+  writeInlineAssistSitesModel(withInlineAssistSiteState(readInlineAssistSitesModel(), select.dataset.site, select.value), { edited: true, render: false });
+}
+
+function handleInlineAssistSiteRemove(event) {
+  const button = event.target.closest?.('button.inline-assist-site-remove');
+  if (!button) return;
+  const sites = inlineAssistSiteEntries(readInlineAssistSitesModel()).map((entry) => entry.site);
+  const index = sites.indexOf(button.dataset.site);
+  writeInlineAssistSitesModel(withoutInlineAssistSite(readInlineAssistSitesModel(), button.dataset.site), { edited: true });
+  const rest = sites.filter((site) => site !== button.dataset.site);
+  focusInlineAssistSite(rest[Math.min(index, rest.length - 1)]);
+}
+
+// The open tab's site joins the list with the setting that shares least: "This field only" for a site
+// Assist knows, "Circle hidden" for any other. The row shows it before Save, and the select changes it.
+async function addActiveSiteToInlineAssistSites() {
+  if (els.inlineAssistSitesHint) els.inlineAssistSitesHint.hidden = true;
+  const tab = await activeTab().catch(() => null);
+  const site = inlineAssistSiteForUrl(tab?.url);
+  inlineAssistOpenSite = site;
+  if (!site) {
+    if (els.inlineAssistSitesHint) els.inlineAssistSitesHint.hidden = false;
+    renderInlineAssistAddSite();
+    return;
+  }
+  addSiteToInlineAssistSites(site);
+}
+
+function addSiteToInlineAssistSites(site) {
+  const model = readInlineAssistSitesModel();
+  if (!inlineAssistSiteEntries(model).some((entry) => entry.site === site)) {
+    writeInlineAssistSitesModel(withInlineAssistSiteState(model, site, inlineAssistSiteReadsThreads(site) ? 'draft' : 'hidden'), { edited: true });
+  }
+  focusInlineAssistSite(site);
+}
+
+function addTypedSiteToInlineAssistSites() {
+  const input = els.inlineAssistSiteInput;
+  if (!input) return;
+  const site = inlineSiteFromInput(input.value);
+  if (els.inlineAssistSiteInputHint) els.inlineAssistSiteInputHint.hidden = Boolean(site);
+  if (!site) return;
+  input.value = '';
+  addSiteToInlineAssistSites(site);
+}
+
+function handleInlineAssistSiteInputKey(event) {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  addTypedSiteToInlineAssistSites();
+}
+
+// The page's Assist panel changes these too (Hide the circle on this site, Read the visible thread). They
+// are taken in, and an open list follows unless it holds unsaved edits.
+function adoptInlineAssistSitesChange({ hidden, contextPrefs } = {}) {
+  if (hidden !== undefined) inlineAssistHiddenSites = normalizeInlineAssistHiddenSites(hidden);
+  if (contextPrefs !== undefined) inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(contextPrefs);
+  const input = els.inlineAssistSitesValue;
+  if (!input || input.value !== input.dataset.syncedValue) return;
+  syncInlineAssistSitesForm();
+  adoptSettingsBaselineValue(input);
+}
+
 function syncSettingsForm() {
   renderAppearanceControls();
   renderProfiles();
@@ -23471,6 +23798,10 @@ function syncSettingsForm() {
   els.includeSelectedTextInput.checked = Boolean(settings.includeSelectedText);
   if (els.inlineAssistEnabled) els.inlineAssistEnabled.checked = settings.inlineAssistEnabled !== false;
   if (els.inlineAssistDefaultRoute) els.inlineAssistDefaultRoute.value = normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute);
+  for (const input of els.inlineAssistIconInputs || []) input.checked = input.value === normalizeInlineAssistIcon(settings.inlineAssistIcon);
+  for (const input of els.inlineAssistOpenModeInputs || []) input.checked = input.value === normalizeInlineAssistOpenMode(settings.inlineAssistOpenMode);
+  if (els.inlineAssistAutoReplace) els.inlineAssistAutoReplace.checked = settings.inlineAssistAutoReplace !== false;
+  syncInlineAssistSitesForm();
   renderInlineAssistModelOptions();
   if (els.inlineAssistSessionRetention) els.inlineAssistSessionRetention.value = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
   if (els.contextMenuDefaultRoute) els.contextMenuDefaultRoute.value = settings.contextMenuDefaultRoute || 'ask';
@@ -23583,6 +23914,9 @@ async function saveSettingsFromForm() {
     includeSelectedText: els.includeSelectedTextInput.checked,
     inlineAssistEnabled: els.inlineAssistEnabled ? els.inlineAssistEnabled.checked : settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(els.inlineAssistDefaultRoute?.value || settings.inlineAssistDefaultRoute),
+    inlineAssistIcon: normalizeInlineAssistIcon(els.inlineAssistIconInputs?.find((input) => input.checked)?.value || settings.inlineAssistIcon),
+    inlineAssistOpenMode: normalizeInlineAssistOpenMode(els.inlineAssistOpenModeInputs?.find((input) => input.checked)?.value || settings.inlineAssistOpenMode),
+    inlineAssistAutoReplace: els.inlineAssistAutoReplace ? els.inlineAssistAutoReplace.checked : settings.inlineAssistAutoReplace !== false,
     ...assistBinding,
     inlineAssistSessionRetention: els.inlineAssistSessionRetention?.value === 'delete' ? 'delete' : 'keep',
     inlineAssistThinkingEnabled: settings.inlineAssistThinkingEnabled !== false,
@@ -23668,6 +24002,12 @@ async function saveSettingsFromForm() {
   );
   applyAppearanceSettings();
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]: settings.inlineAssistAutoReplace !== false });
+  const sitesModel = readInlineAssistSitesModel(els.inlineAssistSitesValue);
+  inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(sitesModel.contextPrefs);
+  await browserApi.storage.local.set({ [INLINE_SITE_CONTEXT_STORAGE_KEY]: inlineSiteContextPreferences });
+  inlineAssistHiddenSites = normalizeInlineAssistHiddenSites(sitesModel.hidden);
+  await browserApi.storage.local.set({ [INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]: inlineAssistHiddenSites });
   await applyWebappCredentialPreference();
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
     || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
@@ -25682,6 +26022,36 @@ function currentModelOptionsPayload() {
   return buildHermesModelOptions(settings);
 }
 
+// The model, provider, options and lock a turn request carries: the chat's own, or the one-turn override
+// of the turn being sent (a Hermes Assist turn), which Hermes runs without saving it as the chat's lock.
+function turnModelFields() {
+  const chat = {
+    model: currentModelRequestId(),
+    provider: currentModelProviderSlug() || undefined,
+    model_options: currentModelOptionsPayload(),
+    require_model_lock: shouldRequireModelLock({
+      provider: currentModelProviderSlug(),
+      model: currentModelRequestId(),
+      defaultModel: DEFAULT_SETTINGS.model,
+      gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
+    }),
+  };
+  if (!turnModelRoute) return chat;
+  if (!turnModelRoute.model) return { ...chat, model_options: turnModelRoute.model_options || chat.model_options };
+  return {
+    model: turnModelRoute.model,
+    provider: turnModelRoute.provider || undefined,
+    model_options: turnModelRoute.model_options || chat.model_options,
+    require_model_lock: turnModelRoute.require_model_lock === true,
+  };
+}
+
+// The same fields for /v1/chat/completions, which takes no lock.
+function turnCompletionModelFields() {
+  const { require_model_lock: _lock, ...fields } = turnModelFields();
+  return fields;
+}
+
 // Which names the model has for the Hermes Control tools: the controller says once it is connected;
 // before that, the route it would take (Hermes core first, then the plugin).
 function currentControlToolFamily() {
@@ -25693,10 +26063,11 @@ function currentControlToolFamily() {
 }
 
 function currentHermesBrowserSystemPrompt() {
+  const turn = turnModelFields();
   const runtimeSelection = buildHermesRuntimeSelectionNote({
-    model: currentModelRequestId(),
-    provider: currentModelProviderSlug() || 'Hermes runtime',
-    modelOptions: currentModelOptionsPayload(),
+    model: turn.model,
+    provider: turn.provider || 'Hermes runtime',
+    modelOptions: turn.model_options,
   });
   const styleNote = responseStyleInstructions(settings.responseStyle);
   return `${hermesBrowserSystemPrompt(currentControlToolFamily())}\n\n${runtimeSelection}${styleNote ? `\n\n${styleNote}` : ''}`;
@@ -26347,15 +26718,7 @@ async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAtta
       signal,
       body: JSON.stringify({
             client_runtime_version: modelSelectionVersion,
-            model: currentModelRequestId(),
-            provider: currentModelProviderSlug() || undefined,
-            model_options: currentModelOptionsPayload(),
-            require_model_lock: shouldRequireModelLock({
-              provider: currentModelProviderSlug(),
-              model: currentModelRequestId(),
-              defaultModel: DEFAULT_SETTINGS.model,
-              gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
-            }),
+            ...turnModelFields(),
             message: outboundContent(prompt, turnAttachments),
             system_message: turnSystemMessage(voiceLive),
           }),
@@ -26396,9 +26759,7 @@ async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachme
       },
       body: JSON.stringify({
         client_runtime_version: modelSelectionVersion,
-        model: currentModelRequestId(),
-        provider: currentModelProviderSlug() || undefined,
-        model_options: currentModelOptionsPayload(),
+        ...turnCompletionModelFields(),
         stream: true,
         messages: [
           { role: 'system', content: turnSystemMessage(voiceLive) },
@@ -26873,15 +27234,7 @@ async function fallbackSessionChat(prompt, turnAttachments = attachments, { onRu
   const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/chat`, {
     method: 'POST',
     body: JSON.stringify({
-          model: currentModelRequestId(),
-          provider: currentModelProviderSlug() || undefined,
-          model_options: currentModelOptionsPayload(),
-          require_model_lock: shouldRequireModelLock({
-            provider: currentModelProviderSlug(),
-            model: currentModelRequestId(),
-            defaultModel: DEFAULT_SETTINGS.model,
-            gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
-          }),
+          ...turnModelFields(),
           message: outboundContent(prompt, turnAttachments),
           system_message: turnSystemMessage(voiceLive),
         }),
@@ -26906,9 +27259,7 @@ async function fallbackChatCompletions(prompt, turnAttachments = attachments, { 
       ...(safeActiveProfile() ? { 'X-Hermes-Profile': safeActiveProfile() } : {}),
     },
     body: JSON.stringify({
-      model: currentModelRequestId(),
-      provider: currentModelProviderSlug() || undefined,
-      model_options: currentModelOptionsPayload(),
+      ...turnCompletionModelFields(),
       stream: false,
       messages: [
         { role: 'system', content: turnSystemMessage(voiceLive) },
@@ -27076,6 +27427,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   // a Bot Chat reply still queued. The post-turn history refresh would rebuild the view from stored
   // rows and wipe it, along with the user's own bubble.
   let holdPostTurnRefresh = false;
+  let turnRunStarted = false;
   let sawReplyActivity = false;
   let slowNoticeShown = false;
   const noteReplyActivity = () => {
@@ -27084,6 +27436,9 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     clearTimeout(slowReplyTimer);
     if (slowNoticeShown) setStatus('ok', 'Model responding', 'Hermes is replying now.', { translateDetail: false });
   };
+  // A Hermes Assist turn names its own model and effort for this send (REST only: the dashboard socket runs
+  // a chat on the model it was created with).
+  turnModelRoute = dashboardTransport ? null : (turnOptions.modelRoute || null);
   try {
     let preparedAttachments = await saveImageAttachmentsForTurn(turnAttachments);
     if (!runIsViewed()) throw new Error('Session changed before submission. The original draft is held and was not sent.');
@@ -27353,6 +27708,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
             streamView.updateReasoning(update);
           },
           onRun: (runId) => {
+            turnRunStarted = true;
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             // Dashboard prompt streams report the live session id here, not a
             // server run id. Keep activeRunId reserved for REST run controls;
@@ -27552,6 +27908,7 @@ ${streamError.message}`);
     // Every branch below reports the failure in the transcript or the composer. An accepted turn
     // may still store a late reply, so that one alone keeps the refresh.
     if (error?.requestAccepted !== true) holdPostTurnRefresh = true;
+    if (turnRefusedBeforeStart(error, { started: turnRunStarted })) turnOptions.onNotAccepted?.(error);
     if (error?.attachmentFailure) {
       if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
         els.input.value = userText;
@@ -27708,6 +28065,7 @@ ${streamError.message}`);
       addMessage('system', `Hermes Browser Extension error: ${error?.message || String(error)}`);
     }
   } finally {
+    turnModelRoute = null;
     clearTimeout(slowReplyTimer);
     promptPoller?.stop();
     if (promptRunId) promptController.settleScope('rest', promptRunId);
@@ -27757,6 +28115,14 @@ ${streamError.message}`);
 }
 
 let inlineDraftProcessing = false;
+// Requests that came in while another was running; the shared storage key holds only the latest.
+const deferredInlineDraftRequests = [];
+let inlineDraftDraining = false;
+let deferredInlineDraftTimer = 0;
+// Off until startup has connected and restored the chat; the startup check then takes what is queued.
+let inlineDraftHandoffsReady = false;
+// A panel opened for a request hears of it twice (the storage change and the startup check): one turn.
+let lastInlineDraftRequestId = '';
 
 function inlineDraftPageKey(value = '') {
   try {
@@ -27884,49 +28250,6 @@ async function runInlineDraftInBackground(request, resolvePrompt) {
   return { answer: extractAssistantText(payload), session };
 }
 
-async function runInlineDraftInCurrentSession(request) {
-  await ensureHermesSession();
-  const prompt = await resolveInlineDraftPrompt(request);
-  const { policy, request: exactRouteRequest } = buildAssistModelRouteRequest(settings, gatewayCapabilities);
-  const requestedSelection = policy.selection || policy.requestedSelection || null;
-  let attemptSelection = policy.selection;
-  let routeRequest = exactRouteRequest;
-  let modelNotice = policy.mode === 'gateway-default-fallback'
-    ? assistModelFallbackNotice(requestedSelection, 'this gateway does not advertise exact model routing')
-    : '';
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/chat`, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...routeRequest,
-        message: prompt,
-        system_message: currentHermesBrowserSystemPrompt(),
-      }),
-    });
-    const payload = await readJsonResponse(response);
-    if (!response.ok) {
-      const reason = payload?.error?.message || payload?.error || `Hermes Assist failed (${response.status}).`;
-      if (attemptSelection && attempt === 0) {
-        modelNotice = assistModelFallbackNotice(attemptSelection, String(reason));
-        attemptSelection = null;
-        routeRequest = {};
-        continue;
-      }
-      throw new Error(reason);
-    }
-    const answer = extractAssistantText(payload);
-    try {
-      assertAssistModelSelectionAcknowledged(payload, attemptSelection);
-    } catch (modelError) {
-      if (!answer) throw modelError;
-      modelNotice = assistModelFallbackNotice(attemptSelection, 'the gateway returned the draft without acknowledging the selected model');
-    }
-    return { answer, modelNotice };
-  }
-  throw new Error('Hermes Assist could not complete the selected-model fallback.');
-}
-
 function inlineDraftRequestForEffectiveContext(request, source = settings) {
   const gate = effectiveContextGate(contextScope, source);
   if (gate.scope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) return request;
@@ -27944,8 +28267,78 @@ async function resolveInlineDraftPrompt(request, source = settings) {
   return buildInlineDraftPrompt(inlineDraftRequestForEffectiveContext(request, sendTimeSettings));
 }
 
-async function processInlineDraftRequest(rawRequest) {
-  if (!rawRequest || inlineDraftProcessing) return false;
+let inlineDraftPanelWindowId = null;
+
+async function sidePanelWindowId() {
+  if (inlineDraftPanelWindowId === null) {
+    inlineDraftPanelWindowId = Number((await browserApi.windows?.getCurrent?.().catch(() => null))?.id) || 0;
+  }
+  return inlineDraftPanelWindowId;
+}
+
+async function inlineDraftContextWithheld(request, source = settings) {
+  if (!request?.pageContext) return false;
+  const sendTimeSettings = await refreshContextConsentLedger({ ...source });
+  return !inlineDraftRequestForEffectiveContext(request, sendTimeSettings).pageContext;
+}
+
+// The draft Assist puts in the field: Hermes's final reply. A turn can also hold text the agent wrote
+// before a tool call, which the chat shows with it; that is not part of the draft. Read from the chat's
+// stored history, newest first, stopping at this turn's own message.
+async function finalInlineDraftReply(sessionId, answer) {
+  try {
+    const { messages: rows = [] } = await fetchSessionMessagesQuietly(sessionId);
+    for (let index = rows.length - 1; index >= 0; index -= 1) {
+      const row = rows[index] || {};
+      if (row.role === 'user') break;
+      const toolCalls = Array.isArray(row.tool_calls) && row.tool_calls.length > 0;
+      if (row.role === 'assistant' && String(row.content || '').trim() && !toolCalls) return String(row.content);
+    }
+  } catch {
+    // No history to read: the reply as it streamed.
+  }
+  return answer;
+}
+
+// The side panel's vertical scroll areas, each floating the branded thumb over its content.
+const OVERLAY_SCROLL_AREAS = '.app-scroll, .settings-dialog, .browser-control-dialog, .tool-call-list, .task-stack-list, .subagent-stack-stream, .bot-mode-cron-list, .marketplace-theme-results, .branded-select-list';
+
+function mountOverlayScrollbars() {
+  const style = document.createElement('style');
+  style.id = 'overlayScrollbarStyle';
+  style.textContent = OVERLAY_SCROLLBAR_CSS;
+  document.head.append(style);
+  installOverlayScrollbars(document.body, OVERLAY_SCROLL_AREAS);
+}
+
+// This panel's settings with Assist's own as saved (model, effort, thinking): the page writes them.
+async function savedInlineAssistSettings() {
+  const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
+  const saved = stored?.hermesBrowserSettings || {};
+  return { ...settings, ...Object.fromEntries(Object.entries(saved).filter(([key]) => key.startsWith('inlineAssist'))) };
+}
+
+// A new request waits behind kept ones; a kept one that meets a run goes back to the front.
+function inlineDraftRequestMustWait(queued) {
+  return inlineDraftProcessing || (!queued && (inlineDraftDraining || deferredInlineDraftRequests.length > 0));
+}
+
+function deferInlineDraftRequest(rawRequest, queued) {
+  const requestId = String(rawRequest?.requestId || '');
+  if (!requestId || requestId === lastInlineDraftRequestId) return false;
+  if (!deferredInlineDraftRequests.some((kept) => kept.requestId === requestId)) {
+    if (queued) deferredInlineDraftRequests.unshift(rawRequest);
+    else deferredInlineDraftRequests.push(rawRequest);
+  }
+  if (!inlineDraftProcessing && !inlineDraftDraining && !sending) scheduleDeferredInlineDraftRun(0);
+  return false;
+}
+
+// Continue current chat and Start new Assist session: a visible turn in this panel, shown as what was asked
+// and where; the reply also goes back to the field.
+async function processInlineDraftRequest(rawRequest, { queued = false } = {}) {
+  if (!rawRequest || !inlineDraftHandoffsReady) return false;
+  if (inlineDraftRequestMustWait(queued)) return deferInlineDraftRequest(rawRequest, queued);
   const request = normalizeInlineDraftRequest(rawRequest);
   const tabId = Number(rawRequest?.tabId);
   const expiresAt = Number(rawRequest?.expiresAt);
@@ -27954,76 +28347,96 @@ async function processInlineDraftRequest(rawRequest) {
     return false;
   }
   if (isAttachedPanelResidency() && Number(sidePanelParams.tabId) !== tabId) return false;
+  const requestWindowId = Number(rawRequest?.windowId) || 0;
+  const panelWindowId = await sidePanelWindowId();
+  if (inlineDraftRequestMustWait(queued)) return deferInlineDraftRequest(rawRequest, queued);
+  if (requestWindowId && panelWindowId && requestWindowId !== panelWindowId) return false;
+  if (request.requestId === lastInlineDraftRequestId) return false;
   if (sending) {
-    globalThis.setTimeout(() => consumePendingInlineDraftRequest(), 750);
+    deferInlineDraftRequest(rawRequest, true);
+    scheduleDeferredInlineDraftRun(750);
     return false;
   }
-  const tab = await browserApi.tabs.get(tabId).catch(() => null);
-  if (!tab || inlineDraftPageKey(tab.url || tab.pendingUrl) !== inlineDraftPageKey(request.pageUrl)) {
-    await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
-    await sendInlineDraftResult({ ...request, tabId }, { ok: false, reason: 'The originating page changed before Hermes could draft.' });
-    return false;
-  }
-
   inlineDraftProcessing = true;
-  await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
+  lastInlineDraftRequestId = request.requestId;
   let resultSent = false;
   try {
+    await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
+    const tab = await browserApi.tabs.get(tabId).catch(() => null);
+    if (!tab || inlineDraftPageKey(tab.url || tab.pendingUrl) !== inlineDraftPageKey(request.pageUrl)) {
+      await sendInlineDraftResult({ ...request, tabId }, { ok: false, reason: 'The originating page changed before Hermes could draft.' });
+      return false;
+    }
+    const contextWithheld = await inlineDraftContextWithheld(request);
     if (request.route === INLINE_DRAFT_ROUTES.BACKGROUND) {
       const { answer, session } = await runInlineDraftInBackground(request, () => resolveInlineDraftPrompt(request));
       const text = sanitizeInlineDraftResult(answer);
-      resultSent = await sendInlineDraftResult({ ...request, tabId }, { ok: true, text, sessionId: session.id, sessionTitle: session.title });
+      resultSent = await sendInlineDraftResult({ ...request, tabId }, { ok: true, text, contextWithheld, sessionId: session.id, sessionTitle: session.title });
       await loadSessions({ quiet: true });
       return resultSent;
     }
-    if (request.route === INLINE_DRAFT_ROUTES.CURRENT && !isRemoteWsMode()) {
-      const { answer, modelNotice } = await runInlineDraftInCurrentSession(request);
-      const text = sanitizeInlineDraftResult(answer);
-      resultSent = await sendInlineDraftResult({ ...request, tabId }, {
-        ok: true,
-        text,
-        sessionId: String(settings.sessionId || ''),
-        sessionTitle: String(settings.sessionTitle || 'Inline assist'),
-        modelNotice,
-      });
-      await loadSessions({ quiet: true });
-      return resultSent;
+    // Start new Assist session is the panel's New session button, then the send. Continue current chat into a
+    // chat with nothing in it yet (a tab's first panel) starts that chat the same way, so it is named for Assist.
+    if (request.route === INLINE_DRAFT_ROUTES.NEW || !messages.length) {
+      await beginHermesBrowserDraft({ title: assistSessionTitle(request, { suffix: String(request.requestId || '').slice(-4) }), focus: false });
     }
-    if (request.route === INLINE_DRAFT_ROUTES.NEW) {
-      await beginHermesBrowserDraft({ title: `Inline assist · ${request.adapterId || 'Browser'}`, focus: false });
-    }
-    const inlineAssistRoute = buildAssistModelRouteRequest(settings, gatewayCapabilities).policy;
-    const inlineAssistModelNotice = inlineAssistRoute.mode === 'gateway-default-fallback'
-      ? assistModelFallbackNotice(
+    // The turn runs on Assist's own model and effort. The page's Assist options save them while this panel
+    // is open, so they are read as saved, not from this panel's copy.
+    const assistSettings = await savedInlineAssistSettings();
+    const inlineAssistRoute = buildAssistModelRouteRequest(assistSettings, gatewayCapabilities).policy;
+    const dashboardTurn = usesDashboardWsChatTransport();
+    const modelRoute = dashboardTurn ? null : assistChatTurnOverride(assistSettings, gatewayCapabilities);
+    let inlineAssistModelNotice = '';
+    if (inlineAssistRoute.mode === 'gateway-default-fallback') {
+      inlineAssistModelNotice = assistModelFallbackNotice(
         inlineAssistRoute.requestedSelection,
         isRemoteWsMode()
           ? 'dashboard transport uses the gateway-selected runtime model'
           : 'this gateway does not advertise exact model routing',
-      )
-      : '';
+        "this chat's model",
+      );
+    } else if (dashboardTurn && inlineAssistRoute.selection) {
+      inlineAssistModelNotice = assistModelFallbackNotice(inlineAssistRoute.selection, 'the dashboard connection runs a chat on its own model', "this chat's model");
+    }
     const inlineSessionId = String(settings.sessionId || '');
-    const inlineSessionTitle = String(settings.sessionTitle || 'Inline assist');
+    const inlineSessionTitle = String(settings.sessionTitle || 'Hermes Assist');
     const prompt = await resolveInlineDraftPrompt(request);
-    const didSend = await askHermes(prompt, [], {
+    let refusedBeforeAccept = null;
+    const sendTurn = (route) => askHermes(prompt, [], {
       forceChatOnly: true,
       resolveUserText: () => resolveInlineDraftPrompt(request),
       preserveComposer: true,
       disableCommandParsing: true,
       disableAutoTitle: true,
-      displayUserText: `Inline draft · ${request.actionLabel}`,
+      modelRoute: route,
+      onNotAccepted: (error) => { refusedBeforeAccept = error; },
+      displayUserText: assistRequestSummary(prompt) || `Hermes Assist · ${request.actionLabel}`,
       onComplete: async (answer) => {
-        const text = sanitizeInlineDraftResult(answer);
+        const text = sanitizeInlineDraftResult(await finalInlineDraftReply(inlineSessionId, answer));
         resultSent = await sendInlineDraftResult({ ...request, tabId }, {
           ok: true,
           text,
+          contextWithheld,
           sessionId: inlineSessionId,
           sessionTitle: inlineSessionTitle,
           modelNotice: inlineAssistModelNotice,
         });
       },
     });
+    let didSend = await sendTurn(modelRoute);
+    if (!didSend && !resultSent && refusedBeforeAccept && modelRoute?.model) {
+      inlineAssistModelNotice = assistModelFallbackNotice(inlineAssistRoute.selection, refusedBeforeAccept.message || 'the gateway refused the selected model', "this chat's model");
+      const { model: _model, provider: _provider, require_model_lock: _lock, ...effortOnly } = modelRoute;
+      refusedBeforeAccept = null;
+      didSend = await sendTurn(effortOnly);
+    }
     if (!didSend && !resultSent) {
-      await sendInlineDraftResult({ ...request, tabId }, { ok: false, reason: 'Hermes is not connected or the selected session cannot accept this draft.' });
+      await sendInlineDraftResult({ ...request, tabId }, {
+        ok: false,
+        reason: viewedSessionIsRunning()
+          ? 'Hermes is still working in this chat. Try again when it finishes, or pick Start new Assist session.'
+          : 'Hermes is not connected or the selected session cannot accept this draft.',
+      });
     }
     return didSend;
   } catch (error) {
@@ -28031,7 +28444,29 @@ async function processInlineDraftRequest(rawRequest) {
     return false;
   } finally {
     inlineDraftProcessing = false;
+    if (deferredInlineDraftRequests.length && !inlineDraftDraining) scheduleDeferredInlineDraftRun(0);
   }
+}
+
+function scheduleDeferredInlineDraftRun(delay) {
+  globalThis.clearTimeout(deferredInlineDraftTimer);
+  deferredInlineDraftTimer = globalThis.setTimeout(runDeferredInlineDraftRequests, delay);
+}
+
+// Takes kept requests in order, one run at a time, while new arrivals wait behind them.
+async function runDeferredInlineDraftRequests() {
+  if (inlineDraftDraining) return;
+  inlineDraftDraining = true;
+  try {
+    while (deferredInlineDraftRequests.length && !inlineDraftProcessing && !sending) {
+      await processInlineDraftRequest(deferredInlineDraftRequests.shift(), { queued: true }).catch((error) => {
+        console.warn('[Hermes Browser] Inline draft handoff failed:', error);
+      });
+    }
+  } finally {
+    inlineDraftDraining = false;
+  }
+  if (deferredInlineDraftRequests.length && sending && !inlineDraftProcessing) scheduleDeferredInlineDraftRun(750);
 }
 
 async function consumePendingInlineDraftRequest() {
@@ -28595,6 +29030,11 @@ function bindEvents() {
   els.settingsForm.addEventListener('click', handleSettingsCategoryNavigation);
   els.settingsForm.addEventListener('input', handleSettingsFormEdit);
   els.settingsForm.addEventListener('change', handleSettingsFormEdit);
+  els.inlineAssistSites?.addEventListener('change', handleInlineAssistSiteChange);
+  els.inlineAssistSites?.addEventListener('click', handleInlineAssistSiteRemove);
+  els.inlineAssistAddSite?.addEventListener('click', () => void addActiveSiteToInlineAssistSites());
+  els.inlineAssistAddTyped?.addEventListener('click', addTypedSiteToInlineAssistSites);
+  els.inlineAssistSiteInput?.addEventListener('keydown', handleInlineAssistSiteInputKey);
   document.getElementById('settingsOpenModelPickerButton')?.addEventListener('click', openSettingsModelPicker);
   document.getElementById('settingsRefreshModelsButton')?.addEventListener('click', (event) => {
     const button = event.currentTarget;
@@ -29887,8 +30327,16 @@ function bindEvents() {
           renderBrowserControl();
         }
         adoptStoredResponsePresentation(next);
+        if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
+        if (Object.hasOwn(next, 'inlineAssistOpenMode')) adoptInlineAssistOpenModeChange(next.inlineAssistOpenMode);
+        if (Object.hasOwn(next, 'inlineAssistModel') && next.inlineAssistModel !== settings.inlineAssistModel) adoptInlineAssistModelChange(next);
+        if (Object.hasOwn(next, 'inlineAssistReasoningEffort') && next.inlineAssistReasoningEffort !== settings.inlineAssistReasoningEffort) adoptInlineAssistEffortChange(next);
+        if (Object.hasOwn(next, 'inlineAssistSessionRetention')) adoptInlineAssistSessionRetentionChange(next.inlineAssistSessionRetention);
       }
     }
+    if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);
+    if (Object.hasOwn(changes, INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY)) adoptInlineAssistSitesChange({ hidden: changes[INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]?.newValue });
+    if (Object.hasOwn(changes, INLINE_SITE_CONTEXT_STORAGE_KEY)) adoptInlineAssistSitesChange({ contextPrefs: changes[INLINE_SITE_CONTEXT_STORAGE_KEY]?.newValue });
     if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)) adoptOnboardingCompletedChange(changes);
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
     if (Object.hasOwn(changes, CONTEXT_CONSENT_STORAGE_KEY)) {
@@ -30387,6 +30835,7 @@ subscribeLocale(() => {
     translateDetail: lastVisibleStatus.translateDetail,
   });
 });
+mountOverlayScrollbars();
 await initI18n();
 hbeBootEmit('panel:i18n-ready');
 bindEvents();
@@ -30397,6 +30846,7 @@ renderBrowserControl();
 await refreshBrowserControlStatus();
 scheduleBrowserControlPoll();
 try {
+  inlineDraftHandoffsReady = true;
   await consumePendingInlineDraftRequest();
   await consumePendingContextMenuRequest();
   await consumePendingOpenSessionRequest();

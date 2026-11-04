@@ -355,6 +355,14 @@
     "message": "Valt terug naar de gatewaystandaard wanneer exacte routering niet beschikbaar is",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ {site} toevoegen",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} staat in de lijst",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Je kunt bestanden tot 25 MiB bijvoegen.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -3887,6 +3895,10 @@
     "message": "0 voltooid · 0 actief",
     "description": "Runtime interface message ui.0.complete.0.active"
   },
+  "runtime_ui_a_small_menu_at_the_circle_type_or_pick_an_action_the_draft_goes_straight_into_the_field": {
+    "message": "Een klein menu bij de cirkel. Typ of kies een actie; het concept komt direct in het veld.",
+    "description": "Runtime interface message ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field"
+  },
   "runtime_ui_accept": {
     "message": "Accepteer",
     "description": "Runtime interface message ui.accept"
@@ -3939,6 +3951,14 @@
     "message": "Toevoegen",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "Site toevoegen",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "Site toevoegen, zoals facebook.com",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -3946,6 +3966,10 @@
   "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
     "message": "Voeg instructies toe na de slash-opdracht voordat u verzendt.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_add_this_site": {
+    "message": "+ Deze site toevoegen",
+    "description": "Runtime interface message ui.add.this.site"
   },
   "runtime_ui_adjust": {
     "message": "Aanpassen",
@@ -3958,6 +3982,10 @@
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "Pas het zijpaneel aan voor leesbaarheid zonder de browserzoom te wijzigen.",
     "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_again": {
+    "message": "Opnieuw",
+    "description": "Runtime interface message ui.again"
   },
   "runtime_ui_agent": {
     "message": "AGENT",
@@ -4143,9 +4171,41 @@
     "message": "Vraag Hermes alles...",
     "description": "Runtime interface message ui.ask.hermes.anything"
   },
+  "runtime_ui_ask_hermes_ellipsis": {
+    "message": "Vraag het Hermes…",
+    "description": "Runtime interface message ui.ask.hermes.ellipsis"
+  },
+  "runtime_ui_asked_once_then_remembered": {
+    "message": "Eén keer gevraagd, daarna onthouden",
+    "description": "Runtime interface message ui.asked.once.then.remembered"
+  },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} werkt met wat al in het veld staat. Typ eerst iets, of kies een conceptactie om vanaf nul te beginnen.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "Je kunt dit altijd wijzigen in Instellingen → Hermes Assist.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes kon dit concept niet maken.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist kon niet worden uitgevoerd",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "Laden…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "Modelroutering",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "Nog geen modellen. Open het zijpaneel één keer zodat Hermes ze kan tonen.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Hulpopties",
@@ -4154,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Assistentiesessiegeschiedenis",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "Strikte standaard · geen zichtbare gesprekscontext van {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "Alleen het actieve concept gebruiken",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "Deze keuze de volgende keer gebruiken",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "Zichtbare context van {site} gebruiken",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Wat moet Hermes doen op {site}?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Wat moet Hermes doen op deze site?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "Assistent",
@@ -4211,6 +4295,10 @@
     "message": "Automatische naam overgeslagen",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "Automatisch vervangen",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "Automatisch koppelen is niet beschikbaar in deze Hermes-runtime. Open Instellingen en gebruik Handmatige configuratie met uw Gateway URL en API-token.",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4238,6 +4326,10 @@
   "runtime_ui_back_to_result": {
     "message": "Terug naar resultaat",
     "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_back_to_the_quick_menu": {
+    "message": "Terug naar het snelmenu",
+    "description": "Runtime interface message ui.back.to.the.quick.menu"
   },
   "runtime_ui_background": {
     "message": "Achtergrond",
@@ -4303,6 +4395,10 @@
     "message": "Bewerkte diagnostiek maken...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "Knoppictogram",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "Cache",
     "description": "Runtime interface message ui.cache"
@@ -4342,6 +4438,10 @@
   "runtime_ui_change": {
     "message": "Verandering",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "Wijzig het in Instellingen → Hermes Assist",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "Wijzig model- en runtime-opties",
@@ -4463,9 +4563,17 @@
     "message": "Sommige browsers blokkeren microfoonopname in de zijbalken van extensies. Dit zichtbare extensietabblad neemt op vanaf dezelfde oorsprong als Hermes Browser Extension wanneer Hermes STT beschikbaar is, of gebruikt browserspraakterugval wanneer de verbonden runtime geen audiotranscriptie beschikbaar maakt.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
+  "runtime_ui_circle_hidden": {
+    "message": "Cirkel verborgen",
+    "description": "Runtime interface message ui.circle.hidden"
+  },
   "runtime_ui_class": {
     "message": "Klasse",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "Scherp op elk formaat",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "Duidelijk",
@@ -5231,6 +5339,14 @@
     "message": "Diepgangs- en invoerwaarden bleven uitgesloten.",
     "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
   },
+  "runtime_ui_draft_in_place": {
+    "message": "Concept geplaatst",
+    "description": "Runtime interface message ui.draft.in.place"
+  },
+  "runtime_ui_draft_ready": {
+    "message": "Concept klaar",
+    "description": "Runtime interface message ui.draft.ready"
+  },
   "runtime_ui_draft_ready_for_review": {
     "message": "Concept klaar voor beoordeling",
     "description": "Runtime interface message ui.draft.ready.for.review"
@@ -5391,6 +5507,10 @@
     "message": "Evenementen",
     "description": "Runtime interface message ui.events"
   },
+  "runtime_ui_every_action_tool_and_option_at_once_with_a_preview_before_anything_changes": {
+    "message": "Alle acties, hulpmiddelen en opties tegelijk, met een voorbeeld voordat er iets verandert.",
+    "description": "Runtime interface message ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes"
+  },
   "runtime_ui_exception": {
     "message": "Uitzondering",
     "description": "Runtime interface message ui.exception"
@@ -5430,6 +5550,10 @@
   "runtime_ui_fast_mode": {
     "message": "Snelle modus",
     "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_fewer_actions": {
+    "message": "Minder acties",
+    "description": "Runtime interface message ui.fewer.actions"
   },
   "runtime_ui_field": {
     "message": "Veld",
@@ -5502,6 +5626,14 @@
   "runtime_ui_full_largest_payload": {
     "message": "Volledig - grootste laadvermogen",
     "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_full_panel": {
+    "message": "Volledig paneel",
+    "description": "Runtime interface message ui.full.panel"
+  },
+  "runtime_ui_full_panel_arrow": {
+    "message": "Volledig paneel →",
+    "description": "Runtime interface message ui.full.panel.arrow"
   },
   "runtime_ui_gateway": {
     "message": "Gateway",
@@ -5867,6 +5999,10 @@
     "message": "Hermes stopt voordat een vuile kassa wordt gewijzigd.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes schreef dit zonder de pagina: paginacontext staat uit voor deze verbinding. Zet het aan in het zijpaneel om het gesprek mee te nemen.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "Verbergen",
     "description": "Runtime interface message ui.hide"
@@ -5874,6 +6010,14 @@
   "runtime_ui_hide_sessions_rail": {
     "message": "Verberg sessierail",
     "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "Cirkel verbergen op deze site",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Verberg wat Hermes leest",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "Hoog",
@@ -5987,9 +6131,17 @@
     "message": "Artikel",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep": {
+    "message": "Bewaren",
+    "description": "Runtime interface message ui.keep"
+  },
   "runtime_ui_keep_restricted": {
     "message": "Keep restricted",
     "description": "Runtime interface message ui.keep_restricted"
+  },
+  "runtime_ui_keep_assist_chats": {
+    "message": "Assist-chats bewaren",
+    "description": "Runtime interface message ui.keep.assist.chats"
   },
   "runtime_ui_keep_assist_sessions": {
     "message": "Behoud Assist-sessies",
@@ -6006,6 +6158,10 @@
   "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
     "message": "Houd de huidige chat zichtbaar. Stuur het resultaat terug naar dit veld.",
     "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_kept_under_inline_assist_in_your_history": {
+    "message": "Bewaard onder Inline assist in je geschiedenis",
+    "description": "Runtime interface message ui.kept.under.inline.assist.in.your.history"
   },
   "runtime_ui_key": {
     "message": "Sleutel",
@@ -6102,6 +6258,10 @@
   "runtime_ui_local_sidecar_chrome_panel": {
     "message": "LOCAL SIDECAR / CHROME PANEL",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_longer": {
+    "message": "Langer",
+    "description": "Runtime interface message ui.longer"
   },
   "runtime_ui_low": {
     "message": "Laag",
@@ -6251,6 +6411,10 @@
     "message": "Meer",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "Meer acties",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "Naam",
     "description": "Runtime interface message ui.name"
@@ -6258,6 +6422,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "Systeemeigen contextbesturingselementen zijn niet beschikbaar.",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "Plaatst of verstuurt nooit. Alleen dit veld verandert.",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "Nieuw",
@@ -6363,6 +6531,10 @@
     "message": "Geen sessies gevonden",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "Nog geen sites. Wijzig er een via het Assist-paneel op een pagina, of voeg de site toe die je open hebt.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "Geen spraak vastgelegd",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6411,6 +6583,10 @@
     "message": "Let op",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "Nu",
     "description": "Runtime interface message ui.now"
@@ -6430,6 +6606,10 @@
   "runtime_ui_off": {
     "message": "Uit",
     "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_off_this_field_only": {
+    "message": "Uit: alleen dit veld",
+    "description": "Runtime interface message ui.off.this.field.only"
   },
   "runtime_ui_ok": {
     "message": "Oké",
@@ -6462,6 +6642,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "Open eerst een normaal paginatabblad.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "Open eerst een webpagina en voeg die dan hier toe.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "Volledige weergave openen",
@@ -6847,9 +7031,17 @@
     "message": "Snelle opdrachten",
     "description": "Runtime interface message ui.quick.commands"
   },
+  "runtime_ui_quick_menu": {
+    "message": "Snelmenu",
+    "description": "Runtime interface message ui.quick.menu"
+  },
   "runtime_ui_range": {
     "message": "Bereik",
     "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_read_the_visible_thread": {
+    "message": "Zichtbare thread lezen",
+    "description": "Runtime interface message ui.read.the.visible.thread"
   },
   "runtime_ui_readable_dom_text": {
     "message": "Leesbare DOM-tekst",
@@ -6858,6 +7050,22 @@
   "runtime_ui_reading_connection_settings_and_canonical_session_history": {
     "message": "Verbindingsinstellingen en canonieke sessiegeschiedenis lezen.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "Leest {chars} tekens rond het veld · opgeslagen voor {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "Leest {count} berichten · {chars} tekens · opgeslagen voor {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "Leest 1 bericht · {chars} tekens · opgeslagen voor {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
+  "runtime_ui_reads_thread": {
+    "message": "Leest de thread",
+    "description": "Runtime interface message ui.reads.thread"
   },
   "runtime_ui_ready": {
     "message": "Klaar",
@@ -6971,9 +7179,17 @@
     "message": "De weergegeven berichtteksten worden toegevoegd aan de volgende Hermes-beurt.",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "Tekst automatisch vervangen",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "Het originele veld veilig vervangen",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_replaces_the_text": {
+    "message": "Vervangt de tekst",
+    "description": "Runtime interface message ui.replaces.the.text"
   },
   "runtime_ui_reply": {
     "message": "Antwoord",
@@ -7034,6 +7250,10 @@
   "runtime_ui_retry": {
     "message": "Opnieuw proberen",
     "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_full_panel": {
+    "message": "Terug naar volledig paneel",
+    "description": "Runtime interface message ui.return.to.full.panel"
   },
   "runtime_ui_return_to_page": {
     "message": "Terug naar pagina",
@@ -7159,6 +7379,10 @@
     "message": "Veiligheid",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "Zelfde als chat",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "Kies een kleurenpalet voor je werkruimte.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7186,6 +7410,10 @@
   "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
     "message": "Zeg \"Hey Hermes\" voor een handsfree spraakverzoek in één draai. Always-on-detectie blijft op deze machine staan.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_say_what_to_change": {
+    "message": "Zeg wat er moet veranderen…",
+    "description": "Runtime interface message ui.say.what.to.change"
   },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Schaal de interfacetekst zonder de browserzoom te wijzigen.",
@@ -7226,6 +7454,10 @@
   "runtime_ui_security": {
     "message": "Beveiliging",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Bekijk wat Hermes leest",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "Selecteer",
@@ -7395,6 +7627,10 @@
     "message": "Kort",
     "description": "Runtime interface message ui.short"
   },
+  "runtime_ui_shorter": {
+    "message": "Korter",
+    "description": "Runtime interface message ui.shorter"
+  },
   "runtime_ui_show": {
     "message": "Toon",
     "description": "Runtime interface message ui.show"
@@ -7415,6 +7651,10 @@
     "message": "Status tonen of verbergen",
     "description": "Runtime interface message ui.show.or.hide.status"
   },
+  "runtime_ui_shows_a_preview": {
+    "message": "Toont een voorbeeld",
+    "description": "Runtime interface message ui.shows.a.preview"
+  },
   "runtime_ui_side_panel": {
     "message": "Zijpaneel",
     "description": "Runtime interface message ui.side.panel"
@@ -7434,6 +7674,14 @@
   "runtime_ui_site": {
     "message": "Locatie",
     "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_sites": {
+    "message": "Sites",
+    "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Leest de thread: Assist leest ook het gesprek op het scherm. Alleen dit veld: alleen wat in het veld staat. Cirkel verborgen: geen cirkel op die site. Wijzigingen worden meteen opgeslagen.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Grootte",
@@ -7490,6 +7738,10 @@
   "runtime_ui_speak_wake_replies": {
     "message": "Spreek wake-antwoorden uit",
     "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_staff": {
+    "message": "Staf",
+    "description": "Runtime interface message ui.staff"
   },
   "runtime_ui_standard": {
     "message": "Standaard",
@@ -7719,6 +7971,10 @@
     "message": "Tekstgrootte",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "De caduceus",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "De verbonden Hermes-runtime adverteert niet met native sessiecompactie.",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7982,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "De verbonden runtime ontvangt deze opties bij de volgende beurt, maar stelt geen bevestigingseindpunt bloot.",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "Het logo van de extensie",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "De live-modelcatalogus is niet beschikbaar; de laatst geverifieerde provider-/modellijst blijft behouden.",
@@ -7766,6 +8026,10 @@
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
     "message": "Deze browser stelt MediaRecorder/getUserMedia niet bloot aan extensiepagina's en de fallback van Web Speech is niet beschikbaar.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_field_only": {
+    "message": "Alleen dit veld",
+    "description": "Runtime interface message ui.this.field.only"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
     "message": "Deze gateway maakt /v1/capabilities nog niet zichtbaar. Extensiespecifieke routes blijven in de fallback-modus.",
@@ -7867,6 +8131,10 @@
     "message": "Probeer opnieuw op te nemen.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "Zet hem weer aan in Instellingen → Hermes Assist",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "Schakel uit",
     "description": "Runtime interface message ui.turn.off"
@@ -7883,6 +8151,10 @@
     "message": "Typ",
     "description": "Runtime interface message ui.type"
   },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "Typ een webadres, zoals facebook.com, of een naam, zoals Gmail.",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
+  },
   "runtime_ui_ui": {
     "message": "gebruikersinterface",
     "description": "Runtime interface message ui.ui"
@@ -7894,6 +8166,10 @@
   "runtime_ui_undo": {
     "message": "Ongedaan maken",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "Ongedaan maken is altijd één klik verwijderd",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "Bijwerken",
@@ -7954,6 +8230,10 @@
   "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
     "message": "Gebruik dit bij het indienen van GitHub-problemen of ondersteuningsrapporten.",
     "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_used_only_by_assist": {
+    "message": "Alleen gebruikt door Assist",
+    "description": "Runtime interface message ui.used.only.by.assist"
   },
   "runtime_ui_user": {
     "message": "Gebruiker",
@@ -8127,6 +8407,18 @@
     "message": "Waar moeten we aan werken?",
     "description": "Runtime interface message ui.what.should.we.work.on"
   },
+  "runtime_ui_when_you_click_it": {
+    "message": "Als je erop klikt",
+    "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Waar Assist de thread leest en waar de cirkel verborgen blijft.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "Waar het draait",
+    "description": "Runtime interface message ui.where.it.runs"
+  },
   "runtime_ui_where_should_hermes_work": {
     "message": "Waar moet Hermes werken?",
     "description": "Runtime interface message ui.where.should.hermes.work"
@@ -8147,6 +8439,10 @@
     "message": "Lijst met venstertabbladen",
     "description": "Runtime interface message ui.window.tab.list"
   },
+  "runtime_ui_wing": {
+    "message": "Vleugel",
+    "description": "Runtime interface message ui.wing"
+  },
   "runtime_ui_worker": {
     "message": "Werknemer",
     "description": "Runtime interface message ui.worker"
@@ -8166,6 +8462,10 @@
   "runtime_ui_workspaces": {
     "message": "Werkruimtes",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "Geschreven zonder de pagina: paginacontext staat uit voor deze verbinding.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

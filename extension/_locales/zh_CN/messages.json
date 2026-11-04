@@ -355,6 +355,14 @@
     "message": "精确路由不可用时回退到网关默认模型",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ 添加 {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} 已在列表中",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "可附加最大25 MiB的文件。",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -3887,6 +3895,10 @@
     "message": "0 完成 · 0 进行中",
     "description": "Runtime interface message ui.0.complete.0.active"
   },
+  "runtime_ui_a_small_menu_at_the_circle_type_or_pick_an_action_the_draft_goes_straight_into_the_field": {
+    "message": "圆圈旁的小菜单。输入或选择操作，草稿直接写入输入框。",
+    "description": "Runtime interface message ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field"
+  },
   "runtime_ui_accept": {
     "message": "接受",
     "description": "Runtime interface message ui.accept"
@@ -3939,6 +3951,14 @@
     "message": "添加",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "添加网站",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "添加网站，例如 facebook.com",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -3946,6 +3966,10 @@
   "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
     "message": "发送前在斜杠命令后添加指令。",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_add_this_site": {
+    "message": "+ 添加此网站",
+    "description": "Runtime interface message ui.add.this.site"
   },
   "runtime_ui_adjust": {
     "message": "调整",
@@ -3958,6 +3982,10 @@
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "调整侧面板以获得更好的可读性，无需更改浏览器缩放。",
     "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_again": {
+    "message": "再来",
+    "description": "Runtime interface message ui.again"
   },
   "runtime_ui_agent": {
     "message": "代理",
@@ -4143,9 +4171,41 @@
     "message": "向 Hermes 询问任何问题…",
     "description": "Runtime interface message ui.ask.hermes.anything"
   },
+  "runtime_ui_ask_hermes_ellipsis": {
+    "message": "问问 Hermes…",
+    "description": "Runtime interface message ui.ask.hermes.ellipsis"
+  },
+  "runtime_ui_asked_once_then_remembered": {
+    "message": "只询问一次，之后记住",
+    "description": "Runtime interface message ui.asked.once.then.remembered"
+  },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} 作用于输入框中已有的内容。请先输入一些内容，或选择一个起草操作从头开始。",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "你可以随时在 设置 → Hermes Assist 中更改。",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes 无法创建此草稿。",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist 无法运行",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "正在加载…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "模型路由",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "还没有模型。请打开一次侧边栏，让 Hermes 列出它们。",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Assist 选项",
@@ -4154,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Assist 会话历史",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "严格默认 · 不使用可见的 {site} 对话上下文",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "仅使用当前聚焦的草稿",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "下次使用这个选择",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "使用可见的 {site} 上下文",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Hermes 应该在 {site} 上做什么？",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Hermes 应该在此网站上做什么？",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "助手",
@@ -4211,6 +4295,10 @@
     "message": "已跳过自动命名",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "自动替换",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "此 Hermes 运行时不支持自动配对。请打开设置，使用网关 URL 和 API 令牌进行手动设置。",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4238,6 +4326,10 @@
   "runtime_ui_back_to_result": {
     "message": "返回结果",
     "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_back_to_the_quick_menu": {
+    "message": "返回快捷菜单",
+    "description": "Runtime interface message ui.back.to.the.quick.menu"
   },
   "runtime_ui_background": {
     "message": "后台",
@@ -4303,6 +4395,10 @@
     "message": "正在构建脱敏诊断...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "按钮图标",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "缓存",
     "description": "Runtime interface message ui.cache"
@@ -4342,6 +4438,10 @@
   "runtime_ui_change": {
     "message": "更改",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "在 设置 → Hermes Assist 中更改",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "更改模型和运行时选项",
@@ -4463,9 +4563,17 @@
     "message": "某些浏览器会阻止扩展侧边栏中的麦克风捕获。当 Hermes STT 可用时，此可见扩展选项卡记录来自同一 Hermes Browser Extension 源，或者当连接的运行时不公开音频转录时使用浏览器语音回退。",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
+  "runtime_ui_circle_hidden": {
+    "message": "圆圈已隐藏",
+    "description": "Runtime interface message ui.circle.hidden"
+  },
   "runtime_ui_class": {
     "message": "类",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "任何尺寸都清晰",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "清除",
@@ -5231,6 +5339,14 @@
     "message": "草稿和输入值仍未包含在内。",
     "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
   },
+  "runtime_ui_draft_in_place": {
+    "message": "草稿已放入",
+    "description": "Runtime interface message ui.draft.in.place"
+  },
+  "runtime_ui_draft_ready": {
+    "message": "草稿已就绪",
+    "description": "Runtime interface message ui.draft.ready"
+  },
   "runtime_ui_draft_ready_for_review": {
     "message": "草稿已准备好供审阅",
     "description": "Runtime interface message ui.draft.ready.for.review"
@@ -5391,6 +5507,10 @@
     "message": "事件",
     "description": "Runtime interface message ui.events"
   },
+  "runtime_ui_every_action_tool_and_option_at_once_with_a_preview_before_anything_changes": {
+    "message": "所有操作、工具和选项一次呈现，改动前先预览。",
+    "description": "Runtime interface message ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes"
+  },
   "runtime_ui_exception": {
     "message": "异常",
     "description": "Runtime interface message ui.exception"
@@ -5430,6 +5550,10 @@
   "runtime_ui_fast_mode": {
     "message": "快速模式",
     "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_fewer_actions": {
+    "message": "收起操作",
+    "description": "Runtime interface message ui.fewer.actions"
   },
   "runtime_ui_field": {
     "message": "字段",
@@ -5502,6 +5626,14 @@
   "runtime_ui_full_largest_payload": {
     "message": "完整 - 最大载荷",
     "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_full_panel": {
+    "message": "完整面板",
+    "description": "Runtime interface message ui.full.panel"
+  },
+  "runtime_ui_full_panel_arrow": {
+    "message": "完整面板 →",
+    "description": "Runtime interface message ui.full.panel.arrow"
   },
   "runtime_ui_gateway": {
     "message": "网关",
@@ -5867,6 +5999,10 @@
     "message": "Hermes 会在修改存在未提交更改的检出目录前停止操作。",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes 在没有页面的情况下写了这段内容：此连接已关闭页面上下文。在侧边栏中开启即可包含对话。",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "隐藏",
     "description": "Runtime interface message ui.hide"
@@ -5874,6 +6010,14 @@
   "runtime_ui_hide_sessions_rail": {
     "message": "隐藏会话栏",
     "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "在此网站隐藏圆圈",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "隐藏 Hermes 读取的内容",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "高",
@@ -5987,9 +6131,17 @@
     "message": "项目",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep": {
+    "message": "保留",
+    "description": "Runtime interface message ui.keep"
+  },
   "runtime_ui_keep_restricted": {
     "message": "Keep restricted",
     "description": "Runtime interface message ui.keep_restricted"
+  },
+  "runtime_ui_keep_assist_chats": {
+    "message": "保留 Assist 对话",
+    "description": "Runtime interface message ui.keep.assist.chats"
   },
   "runtime_ui_keep_assist_sessions": {
     "message": "保留 Assist 会话",
@@ -6006,6 +6158,10 @@
   "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
     "message": "保留当前聊天可见，并将结果返回到此字段。",
     "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_kept_under_inline_assist_in_your_history": {
+    "message": "保存在历史记录的 Inline assist 下",
+    "description": "Runtime interface message ui.kept.under.inline.assist.in.your.history"
   },
   "runtime_ui_key": {
     "message": "密钥",
@@ -6102,6 +6258,10 @@
   "runtime_ui_local_sidecar_chrome_panel": {
     "message": "本地边车 / CHROME 面板",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_longer": {
+    "message": "更长",
+    "description": "Runtime interface message ui.longer"
   },
   "runtime_ui_low": {
     "message": "低",
@@ -6251,6 +6411,10 @@
     "message": "更多",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "更多操作",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "名称",
     "description": "Runtime interface message ui.name"
@@ -6258,6 +6422,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "原生上下文控件不可用。",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "绝不发布或发送。只会改动此输入框。",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "新建",
@@ -6363,6 +6531,10 @@
     "message": "未找到会话",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "还没有网站。可在页面上的 Assist 面板中更改，或添加你当前打开的网站。",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "未捕获到语音",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6411,6 +6583,10 @@
     "message": "通知",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "现在",
     "description": "Runtime interface message ui.now"
@@ -6430,6 +6606,10 @@
   "runtime_ui_off": {
     "message": "关",
     "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_off_this_field_only": {
+    "message": "关闭：仅此输入框",
+    "description": "Runtime interface message ui.off.this.field.only"
   },
   "runtime_ui_ok": {
     "message": "确定",
@@ -6462,6 +6642,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "请先打开普通页面标签页。",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "请先打开一个网页，再在此添加。",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "打开完整视图",
@@ -6847,9 +7031,17 @@
     "message": "快速命令",
     "description": "Runtime interface message ui.quick.commands"
   },
+  "runtime_ui_quick_menu": {
+    "message": "快捷菜单",
+    "description": "Runtime interface message ui.quick.menu"
+  },
   "runtime_ui_range": {
     "message": "范围",
     "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_read_the_visible_thread": {
+    "message": "读取可见对话",
+    "description": "Runtime interface message ui.read.the.visible.thread"
   },
   "runtime_ui_readable_dom_text": {
     "message": "可读 DOM 文本",
@@ -6858,6 +7050,22 @@
   "runtime_ui_reading_connection_settings_and_canonical_session_history": {
     "message": "正在读取连接设置和规范会话历史。",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "读取输入框周围的 {chars} 个字符 · 已为 {site} 保存",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "读取 {count} 条消息 · {chars} 个字符 · 已为 {site} 保存",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "读取 1 条消息 · {chars} 个字符 · 已为 {site} 保存",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
+  "runtime_ui_reads_thread": {
+    "message": "读取对话",
+    "description": "Runtime interface message ui.reads.thread"
   },
   "runtime_ui_ready": {
     "message": "就绪",
@@ -6971,9 +7179,17 @@
     "message": "渲染的消息正文将附加到下一个 Hermes 回合。",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "自动替换文本",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "已安全替换原字段",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_replaces_the_text": {
+    "message": "替换文本",
+    "description": "Runtime interface message ui.replaces.the.text"
   },
   "runtime_ui_reply": {
     "message": "回复",
@@ -7034,6 +7250,10 @@
   "runtime_ui_retry": {
     "message": "重试",
     "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_full_panel": {
+    "message": "返回完整面板",
+    "description": "Runtime interface message ui.return.to.full.panel"
   },
   "runtime_ui_return_to_page": {
     "message": "返回页面",
@@ -7159,6 +7379,10 @@
     "message": "安全",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "与聊天相同",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "为你的工作区选择配色。",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7186,6 +7410,10 @@
   "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
     "message": "说“Hey Hermes”即可免手操作地发起一轮语音请求。持续监听仅在此设备上进行。",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_say_what_to_change": {
+    "message": "说明要改什么…",
+    "description": "Runtime interface message ui.say.what.to.change"
   },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "缩放界面文字而不更改浏览器缩放。",
@@ -7226,6 +7454,10 @@
   "runtime_ui_security": {
     "message": "安全",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "查看 Hermes 读取的内容",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "选择",
@@ -7395,6 +7627,10 @@
     "message": "短",
     "description": "Runtime interface message ui.short"
   },
+  "runtime_ui_shorter": {
+    "message": "更短",
+    "description": "Runtime interface message ui.shorter"
+  },
   "runtime_ui_show": {
     "message": "显示",
     "description": "Runtime interface message ui.show"
@@ -7415,6 +7651,10 @@
     "message": "显示或隐藏状态",
     "description": "Runtime interface message ui.show.or.hide.status"
   },
+  "runtime_ui_shows_a_preview": {
+    "message": "显示预览",
+    "description": "Runtime interface message ui.shows.a.preview"
+  },
   "runtime_ui_side_panel": {
     "message": "侧面板",
     "description": "Runtime interface message ui.side.panel"
@@ -7434,6 +7674,14 @@
   "runtime_ui_site": {
     "message": "站点",
     "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_sites": {
+    "message": "网站",
+    "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "读取对话：Assist 也会读取屏幕上的对话。仅此输入框：只用输入框里的内容。圆圈已隐藏：该网站不显示圆圈。更改会立即保存。",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "大小",
@@ -7490,6 +7738,10 @@
   "runtime_ui_speak_wake_replies": {
     "message": "朗读唤醒回复",
     "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_staff": {
+    "message": "权杖",
+    "description": "Runtime interface message ui.staff"
   },
   "runtime_ui_standard": {
     "message": "标准版",
@@ -7719,6 +7971,10 @@
     "message": "字号",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "双蛇杖",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "连接的 Hermes 运行时未声明原生会话压缩功能。",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7982,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "连接的运行时将在下一回合接收这些选项，但不提供确认端点。",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "扩展程序标志",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "实时模型目录不可用；保留上次已验证的提供商/模型列表。",
@@ -7766,6 +8026,10 @@
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
     "message": "此浏览器不会将 MediaRecorder/getUserMedia 暴露给扩展页面，并且 Web Speech 后备不可用。",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_field_only": {
+    "message": "仅此输入框",
+    "description": "Runtime interface message ui.this.field.only"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
     "message": "此网关尚未暴露 /v1/capabilities。扩展专用路由将保持回退模式。",
@@ -7867,6 +8131,10 @@
     "message": "请重试录音。",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "在 设置 → Hermes Assist 中重新开启",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "关闭",
     "description": "Runtime interface message ui.turn.off"
@@ -7883,6 +8151,10 @@
     "message": "类型",
     "description": "Runtime interface message ui.type"
   },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "输入网址（如 facebook.com）或网站名称（如 Gmail）。",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
+  },
   "runtime_ui_ui": {
     "message": "界面",
     "description": "Runtime interface message ui.ui"
@@ -7894,6 +8166,10 @@
   "runtime_ui_undo": {
     "message": "撤销",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "随时一键撤销",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "更新",
@@ -7954,6 +8230,10 @@
   "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
     "message": "在提交 GitHub issue 或支持报告时使用。",
     "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_used_only_by_assist": {
+    "message": "仅供 Assist 使用",
+    "description": "Runtime interface message ui.used.only.by.assist"
   },
   "runtime_ui_user": {
     "message": "用户",
@@ -8127,6 +8407,18 @@
     "message": "我们该做什么？",
     "description": "Runtime interface message ui.what.should.we.work.on"
   },
+  "runtime_ui_when_you_click_it": {
+    "message": "点击时",
+    "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Assist 在哪些网站读取对话，以及在哪些网站隐藏圆圈。",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "运行位置",
+    "description": "Runtime interface message ui.where.it.runs"
+  },
   "runtime_ui_where_should_hermes_work": {
     "message": "Hermes 应在何处处理？",
     "description": "Runtime interface message ui.where.should.hermes.work"
@@ -8147,6 +8439,10 @@
     "message": "窗口标签页列表",
     "description": "Runtime interface message ui.window.tab.list"
   },
+  "runtime_ui_wing": {
+    "message": "翅膀",
+    "description": "Runtime interface message ui.wing"
+  },
   "runtime_ui_worker": {
     "message": "工作进程",
     "description": "Runtime interface message ui.worker"
@@ -8166,6 +8462,10 @@
   "runtime_ui_workspaces": {
     "message": "工作区",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "未使用页面撰写：此连接已关闭页面上下文。",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "特大",

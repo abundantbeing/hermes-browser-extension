@@ -355,6 +355,14 @@
     "message": "ถอยกลับไปเป็นค่าเริ่มต้นของเกตเวย์เมื่อเส้นทางที่แน่นอนไม่พร้อมใช้งาน",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ เพิ่ม {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} อยู่ในรายการแล้ว",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "แนบไฟล์ขนาดไม่เกิน 25 MiB ได้",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -3887,6 +3895,10 @@
     "message": "0 เสร็จสมบูรณ์ · 0 ใช้งานอยู่",
     "description": "Runtime interface message ui.0.complete.0.active"
   },
+  "runtime_ui_a_small_menu_at_the_circle_type_or_pick_an_action_the_draft_goes_straight_into_the_field": {
+    "message": "เมนูเล็กๆ ที่วงกลม พิมพ์หรือเลือกการทำงาน แล้วร่างจะเข้าไปในช่องทันที",
+    "description": "Runtime interface message ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field"
+  },
   "runtime_ui_accept": {
     "message": "ยอมรับ",
     "description": "Runtime interface message ui.accept"
@@ -3939,6 +3951,14 @@
     "message": "เพิ่ม",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "เพิ่มเว็บไซต์",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "เพิ่มเว็บไซต์ เช่น facebook.com",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -3946,6 +3966,10 @@
   "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
     "message": "เพิ่มคำแนะนำหลังคำสั่งสแลชก่อนส่ง",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_add_this_site": {
+    "message": "+ เพิ่มไซต์นี้",
+    "description": "Runtime interface message ui.add.this.site"
   },
   "runtime_ui_adjust": {
     "message": "ปรับ",
@@ -3958,6 +3982,10 @@
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "ปรับแผงด้านข้างเพื่อให้อ่านง่ายโดยไม่ต้องเปลี่ยนการซูมเบราว์เซอร์",
     "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_again": {
+    "message": "อีกครั้ง",
+    "description": "Runtime interface message ui.again"
   },
   "runtime_ui_agent": {
     "message": "เอเจนต์",
@@ -4143,9 +4171,41 @@
     "message": "ถาม Hermes อะไรก็ได้...",
     "description": "Runtime interface message ui.ask.hermes.anything"
   },
+  "runtime_ui_ask_hermes_ellipsis": {
+    "message": "ถาม Hermes…",
+    "description": "Runtime interface message ui.ask.hermes.ellipsis"
+  },
+  "runtime_ui_asked_once_then_remembered": {
+    "message": "ถามครั้งเดียว แล้วจำไว้",
+    "description": "Runtime interface message ui.asked.once.then.remembered"
+  },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} ใช้กับข้อความที่มีอยู่ในช่องแล้ว พิมพ์อะไรสักอย่างก่อน หรือเลือกการร่างเพื่อเริ่มจากศูนย์",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "คุณเปลี่ยนได้ทุกเมื่อที่ การตั้งค่า → Hermes Assist",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes สร้างฉบับร่างนี้ไม่ได้",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "ไม่สามารถเรียกใช้ Assist ได้",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "กำลังโหลด…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "การกำหนดเส้นทางโมเดล",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "ยังไม่มีโมเดล เปิดแผงด้านข้างหนึ่งครั้งเพื่อให้ Hermes แสดงรายการได้",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "ตัวเลือก Assist",
@@ -4154,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "ประวัติเซสชัน Assist",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "ค่าเริ่มต้นแบบเข้มงวด · ไม่ใช้บริบทการสนทนาที่มองเห็นของ {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "ใช้เฉพาะฉบับร่างที่โฟกัสอยู่",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "ใช้ตัวเลือกนี้ในครั้งถัดไป",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "ใช้บริบทที่มองเห็นของ {site}",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Hermes ควรทำอะไรบน {site}?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Hermes ควรทำอะไรบนเว็บไซต์นี้?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "ผู้ช่วย",
@@ -4211,6 +4295,10 @@
     "message": "ข้ามการตั้งชื่ออัตโนมัติแล้ว",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "แทนที่อัตโนมัติ",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "การจับคู่อัตโนมัติไม่พร้อมใช้งานใน Hermes runtime นี้ เปิดการตั้งค่าและใช้การตั้งค่าด้วยตนเองด้วย Gateway URL และ API token ของคุณ",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4238,6 +4326,10 @@
   "runtime_ui_back_to_result": {
     "message": "กลับสู่ผลลัพธ์",
     "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_back_to_the_quick_menu": {
+    "message": "กลับไปที่เมนูด่วน",
+    "description": "Runtime interface message ui.back.to.the.quick.menu"
   },
   "runtime_ui_background": {
     "message": "พื้นหลัง",
@@ -4303,6 +4395,10 @@
     "message": "กำลังสร้างการวินิจฉัยที่แก้ไข...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "ไอคอนปุ่ม",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "แคช",
     "description": "Runtime interface message ui.cache"
@@ -4342,6 +4438,10 @@
   "runtime_ui_change": {
     "message": "เปลี่ยน",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "เปลี่ยนได้ที่ การตั้งค่า → Hermes Assist",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "เปลี่ยนโมเดลและตัวเลือกรันไทม์",
@@ -4463,9 +4563,17 @@
     "message": "เบราว์เซอร์บางตัวบล็อกการจับไมโครโฟนภายในแถบด้านข้างส่วนขยาย แท็บส่วนขยายที่มองเห็นได้นี้จะบันทึกจากต้นกำเนิดเดียวกันของ Hermes Browser Extension เมื่อ Hermes STT พร้อมใช้งาน หรือใช้ทางเลือกคำพูดของเบราว์เซอร์เมื่อรันไทม์ที่เชื่อมต่อไม่เปิดเผยการถอดเสียง",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
+  "runtime_ui_circle_hidden": {
+    "message": "ซ่อนวงกลมแล้ว",
+    "description": "Runtime interface message ui.circle.hidden"
+  },
   "runtime_ui_class": {
     "message": "ชั้นเรียน",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "คมชัดทุกขนาด",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "ชัดเจน",
@@ -5231,6 +5339,14 @@
     "message": "ค่าแบบร่างและค่าอินพุตยังคงถูกแยกออก",
     "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
   },
+  "runtime_ui_draft_in_place": {
+    "message": "ใส่ร่างแล้ว",
+    "description": "Runtime interface message ui.draft.in.place"
+  },
+  "runtime_ui_draft_ready": {
+    "message": "ร่างพร้อมแล้ว",
+    "description": "Runtime interface message ui.draft.ready"
+  },
   "runtime_ui_draft_ready_for_review": {
     "message": "ร่างพร้อมสำหรับการตรวจสอบ",
     "description": "Runtime interface message ui.draft.ready.for.review"
@@ -5391,6 +5507,10 @@
     "message": "กิจกรรม",
     "description": "Runtime interface message ui.events"
   },
+  "runtime_ui_every_action_tool_and_option_at_once_with_a_preview_before_anything_changes": {
+    "message": "ทุกการทำงาน เครื่องมือ และตัวเลือกในที่เดียว พร้อมตัวอย่างก่อนมีการเปลี่ยนแปลง",
+    "description": "Runtime interface message ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes"
+  },
   "runtime_ui_exception": {
     "message": "ข้อยกเว้น",
     "description": "Runtime interface message ui.exception"
@@ -5430,6 +5550,10 @@
   "runtime_ui_fast_mode": {
     "message": "โหมดรวดเร็ว",
     "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_fewer_actions": {
+    "message": "การทำงานน้อยลง",
+    "description": "Runtime interface message ui.fewer.actions"
   },
   "runtime_ui_field": {
     "message": "สนาม",
@@ -5502,6 +5626,14 @@
   "runtime_ui_full_largest_payload": {
     "message": "เต็ม – เพย์โหลดขนาดใหญ่ที่สุด",
     "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_full_panel": {
+    "message": "แผงเต็ม",
+    "description": "Runtime interface message ui.full.panel"
+  },
+  "runtime_ui_full_panel_arrow": {
+    "message": "แผงเต็ม →",
+    "description": "Runtime interface message ui.full.panel.arrow"
   },
   "runtime_ui_gateway": {
     "message": "Gateway",
@@ -5867,6 +5999,10 @@
     "message": "Hermes จะหยุดก่อนแก้ไข checkout ที่มีการเปลี่ยนแปลงที่ยังไม่ได้ commit",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes เขียนสิ่งนี้โดยไม่มีหน้าเว็บ: บริบทของหน้าปิดอยู่สำหรับการเชื่อมต่อนี้ เปิดในแผงด้านข้างเพื่อรวมบทสนทนา",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "ซ่อน",
     "description": "Runtime interface message ui.hide"
@@ -5874,6 +6010,14 @@
   "runtime_ui_hide_sessions_rail": {
     "message": "ซ่อนรางเซสชัน",
     "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "ซ่อนวงกลมบนไซต์นี้",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "ซ่อนสิ่งที่ Hermes อ่าน",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "สูง",
@@ -5987,9 +6131,17 @@
     "message": "รายการ",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep": {
+    "message": "เก็บ",
+    "description": "Runtime interface message ui.keep"
+  },
   "runtime_ui_keep_restricted": {
     "message": "Keep restricted",
     "description": "Runtime interface message ui.keep_restricted"
+  },
+  "runtime_ui_keep_assist_chats": {
+    "message": "เก็บแชต Assist",
+    "description": "Runtime interface message ui.keep.assist.chats"
   },
   "runtime_ui_keep_assist_sessions": {
     "message": "เก็บเซสชัน Assist ไว้",
@@ -6006,6 +6158,10 @@
   "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
     "message": "ทำให้การแชทปัจจุบันมองเห็นได้ ส่งกลับผลลัพธ์ไปที่ฟิลด์นี้",
     "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_kept_under_inline_assist_in_your_history": {
+    "message": "เก็บไว้ใน Inline assist ในประวัติของคุณ",
+    "description": "Runtime interface message ui.kept.under.inline.assist.in.your.history"
   },
   "runtime_ui_key": {
     "message": "คีย์",
@@ -6102,6 +6258,10 @@
   "runtime_ui_local_sidecar_chrome_panel": {
     "message": "ไซด์คาร์ท้องถิ่น / แผงโครเมียม",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_longer": {
+    "message": "ยาวขึ้น",
+    "description": "Runtime interface message ui.longer"
   },
   "runtime_ui_low": {
     "message": "ต่ำ",
@@ -6251,6 +6411,10 @@
     "message": "เพิ่มเติม",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "การทำงานเพิ่มเติม",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "ชื่อ",
     "description": "Runtime interface message ui.name"
@@ -6258,6 +6422,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "การควบคุมบริบทดั้งเดิมไม่พร้อมใช้งาน",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "ไม่โพสต์หรือส่งเอง เปลี่ยนแค่ช่องนี้เท่านั้น",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "ใหม่",
@@ -6363,6 +6531,10 @@
     "message": "ไม่พบเซสชัน",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "ยังไม่มีไซต์ เปลี่ยนไซต์ได้จากแผง Assist บนหน้าเว็บ หรือเพิ่มไซต์ที่เปิดอยู่",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "ไม่มีการบันทึกคำพูด",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6411,6 +6583,10 @@
     "message": "ประกาศ",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "ตอนนี้",
     "description": "Runtime interface message ui.now"
@@ -6430,6 +6606,10 @@
   "runtime_ui_off": {
     "message": "ปิด",
     "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_off_this_field_only": {
+    "message": "ปิด: เฉพาะช่องนี้",
+    "description": "Runtime interface message ui.off.this.field.only"
   },
   "runtime_ui_ok": {
     "message": "ตกลง",
@@ -6462,6 +6642,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "เปิดแท็บหน้าปกติก่อน",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "เปิดหน้าเว็บก่อน แล้วเพิ่มที่นี่",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "เปิดมุมมองแบบเต็ม",
@@ -6847,9 +7031,17 @@
     "message": "คำสั่งด่วน",
     "description": "Runtime interface message ui.quick.commands"
   },
+  "runtime_ui_quick_menu": {
+    "message": "เมนูด่วน",
+    "description": "Runtime interface message ui.quick.menu"
+  },
   "runtime_ui_range": {
     "message": "พิสัย",
     "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_read_the_visible_thread": {
+    "message": "อ่านเธรดที่มองเห็น",
+    "description": "Runtime interface message ui.read.the.visible.thread"
   },
   "runtime_ui_readable_dom_text": {
     "message": "ข้อความ DOM ที่อ่านได้",
@@ -6858,6 +7050,22 @@
   "runtime_ui_reading_connection_settings_and_canonical_session_history": {
     "message": "การอ่านการตั้งค่าการเชื่อมต่อและประวัติเซสชันตามรูปแบบบัญญัติ",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "อ่าน {chars} อักขระรอบช่อง · บันทึกสำหรับ {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "อ่าน {count} ข้อความ · {chars} อักขระ · บันทึกสำหรับ {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "อ่าน 1 ข้อความ · {chars} อักขระ · บันทึกสำหรับ {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
+  "runtime_ui_reads_thread": {
+    "message": "อ่านเธรด",
+    "description": "Runtime interface message ui.reads.thread"
   },
   "runtime_ui_ready": {
     "message": "พร้อม",
@@ -6971,9 +7179,17 @@
     "message": "เนื้อหาข้อความที่แสดงผลจะถูกแนบไปกับเทิร์น Hermes ครั้งถัดไป",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "แทนที่ข้อความโดยอัตโนมัติ",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "แทนที่ฟิลด์เดิมอย่างปลอดภัยแล้ว",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_replaces_the_text": {
+    "message": "แทนที่ข้อความ",
+    "description": "Runtime interface message ui.replaces.the.text"
   },
   "runtime_ui_reply": {
     "message": "ตอบกลับ",
@@ -7034,6 +7250,10 @@
   "runtime_ui_retry": {
     "message": "ลองอีกครั้ง",
     "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_full_panel": {
+    "message": "กลับไปที่แผงเต็ม",
+    "description": "Runtime interface message ui.return.to.full.panel"
   },
   "runtime_ui_return_to_page": {
     "message": "กลับไปที่หน้า",
@@ -7159,6 +7379,10 @@
     "message": "ความปลอดภัย",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "เหมือนแชต",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "เลือกชุดสีสำหรับพื้นที่ทำงานของคุณ",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7186,6 +7410,10 @@
   "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
     "message": "พูดว่า “Hey Hermes” เพื่อส่งคำขอเสียงแบบไม่ต้องใช้มือเพียงรอบเดียว การตรวจจับแบบเปิดตลอดเวลาจะอยู่บนเครื่องนี้",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_say_what_to_change": {
+    "message": "บอกว่าจะเปลี่ยนอะไร…",
+    "description": "Runtime interface message ui.say.what.to.change"
   },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "ปรับขนาดการคัดลอกอินเทอร์เฟซโดยไม่ต้องเปลี่ยนการซูมของเบราว์เซอร์",
@@ -7226,6 +7454,10 @@
   "runtime_ui_security": {
     "message": "ความปลอดภัย",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "ดูสิ่งที่ Hermes อ่าน",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "เลือก",
@@ -7395,6 +7627,10 @@
     "message": "สั้น",
     "description": "Runtime interface message ui.short"
   },
+  "runtime_ui_shorter": {
+    "message": "สั้นลง",
+    "description": "Runtime interface message ui.shorter"
+  },
   "runtime_ui_show": {
     "message": "แสดง",
     "description": "Runtime interface message ui.show"
@@ -7415,6 +7651,10 @@
     "message": "แสดงหรือซ่อนสถานะ",
     "description": "Runtime interface message ui.show.or.hide.status"
   },
+  "runtime_ui_shows_a_preview": {
+    "message": "แสดงตัวอย่าง",
+    "description": "Runtime interface message ui.shows.a.preview"
+  },
   "runtime_ui_side_panel": {
     "message": "แผงด้านข้าง",
     "description": "Runtime interface message ui.side.panel"
@@ -7434,6 +7674,14 @@
   "runtime_ui_site": {
     "message": "เว็บไซต์",
     "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_sites": {
+    "message": "ไซต์",
+    "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "อ่านเธรด: Assist อ่านบทสนทนาบนหน้าจอด้วย เฉพาะช่องนี้: เฉพาะสิ่งที่อยู่ในช่อง ซ่อนวงกลมแล้ว: ไม่มีวงกลมบนเว็บไซต์นั้น การเปลี่ยนแปลงบันทึกทันที",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "ขนาด",
@@ -7490,6 +7738,10 @@
   "runtime_ui_speak_wake_replies": {
     "message": "อ่านคำตอบเมื่อเรียกใช้งาน",
     "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_staff": {
+    "message": "คทา",
+    "description": "Runtime interface message ui.staff"
   },
   "runtime_ui_standard": {
     "message": "มาตรฐาน",
@@ -7719,6 +7971,10 @@
     "message": "ขนาดข้อความ",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "คทาคาดูเซียส",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "Hermes runtime ที่เชื่อมต่ออยู่ไม่ได้โฆษณาการบีบอัดเซสชันดั้งเดิม",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7982,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "รันไทม์ที่เชื่อมต่อจะได้รับตัวเลือกเหล่านี้ในเทิร์นถัดไป แต่จะไม่เปิดเผยจุดสิ้นสุดการรับทราบ",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "โลโก้ของส่วนขยาย",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "แคตตาล็อกโมเดลสดไม่พร้อมใช้งาน เก็บรายชื่อผู้ให้บริการ/รุ่นที่ได้รับการตรวจสอบล่าสุด",
@@ -7766,6 +8026,10 @@
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
     "message": "เบราว์เซอร์นี้ไม่เปิดเผย MediaRecorder/getUserMedia ในหน้าส่วนขยาย และ Web Speech ทางเลือกไม่พร้อมใช้งาน",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_field_only": {
+    "message": "เฉพาะช่องนี้",
+    "description": "Runtime interface message ui.this.field.only"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
     "message": "เกตเวย์นี้ยังไม่เปิดเผย /v1/capabilities เส้นทางเฉพาะส่วนขยายจะยังคงอยู่ในโหมดทางเลือก",
@@ -7867,6 +8131,10 @@
     "message": "ลองบันทึกอีกครั้ง",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "เปิดกลับได้ที่ การตั้งค่า → Hermes Assist",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "ปิดเครื่อง",
     "description": "Runtime interface message ui.turn.off"
@@ -7883,6 +8151,10 @@
     "message": "ประเภท",
     "description": "Runtime interface message ui.type"
   },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "พิมพ์ที่อยู่เว็บ เช่น facebook.com หรือชื่อเว็บไซต์ เช่น Gmail",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
+  },
   "runtime_ui_ui": {
     "message": "UI",
     "description": "Runtime interface message ui.ui"
@@ -7894,6 +8166,10 @@
   "runtime_ui_undo": {
     "message": "เลิกทำ",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "เลิกทำได้ในคลิกเดียวเสมอ",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "อัปเดต",
@@ -7954,6 +8230,10 @@
   "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
     "message": "Use this when filing GitHub issues or support reports.",
     "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_used_only_by_assist": {
+    "message": "ใช้โดย Assist เท่านั้น",
+    "description": "Runtime interface message ui.used.only.by.assist"
   },
   "runtime_ui_user": {
     "message": "ผู้ใช้",
@@ -8127,6 +8407,18 @@
     "message": "เราควรทำงานอะไร?",
     "description": "Runtime interface message ui.what.should.we.work.on"
   },
+  "runtime_ui_when_you_click_it": {
+    "message": "เมื่อคลิก",
+    "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "ที่ที่ Assist อ่านเธรด และที่ที่วงกลมจะถูกซ่อนไว้",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "ทำงานที่ไหน",
+    "description": "Runtime interface message ui.where.it.runs"
+  },
   "runtime_ui_where_should_hermes_work": {
     "message": "Hermes ควรทำงานที่ไหน",
     "description": "Runtime interface message ui.where.should.hermes.work"
@@ -8147,6 +8439,10 @@
     "message": "รายการแท็บหน้าต่าง",
     "description": "Runtime interface message ui.window.tab.list"
   },
+  "runtime_ui_wing": {
+    "message": "ปีก",
+    "description": "Runtime interface message ui.wing"
+  },
   "runtime_ui_worker": {
     "message": "คนงาน",
     "description": "Runtime interface message ui.worker"
@@ -8166,6 +8462,10 @@
   "runtime_ui_workspaces": {
     "message": "พื้นที่ทำงาน",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "เขียนโดยไม่มีหน้าเว็บ: บริบทของหน้าปิดอยู่สำหรับการเชื่อมต่อนี้",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "เอ็กแอล",

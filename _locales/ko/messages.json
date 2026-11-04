@@ -355,6 +355,14 @@
     "message": "정확한 라우팅을 사용할 수 없는 경우 게이트웨이 기본값으로 대체",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ {site} 추가",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site}이(가) 목록에 있습니다",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "최대 25 MiB의 파일을 첨부할 수 있습니다.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -3887,6 +3895,10 @@
     "message": "0 완료 · 0 진행 중",
     "description": "Runtime interface message ui.0.complete.0.active"
   },
+  "runtime_ui_a_small_menu_at_the_circle_type_or_pick_an_action_the_draft_goes_straight_into_the_field": {
+    "message": "원 옆의 작은 메뉴. 입력하거나 작업을 고르면 초안이 바로 입력란에 들어갑니다.",
+    "description": "Runtime interface message ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field"
+  },
   "runtime_ui_accept": {
     "message": "수락",
     "description": "Runtime interface message ui.accept"
@@ -3939,6 +3951,14 @@
     "message": "추가",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "사이트 추가",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "사이트 추가 (예: facebook.com)",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -3946,6 +3966,10 @@
   "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
     "message": "보내기 전에 슬래시 명령어 뒤에 지시사항을 추가하세요.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_add_this_site": {
+    "message": "+ 이 사이트 추가",
+    "description": "Runtime interface message ui.add.this.site"
   },
   "runtime_ui_adjust": {
     "message": "조정",
@@ -3958,6 +3982,10 @@
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "브라우저 확대/축소를 변경하지 않고 사이드 패널의 가독성을 조정합니다.",
     "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_again": {
+    "message": "다시",
+    "description": "Runtime interface message ui.again"
   },
   "runtime_ui_agent": {
     "message": "에이전트",
@@ -4143,9 +4171,41 @@
     "message": "무엇이든 Hermes에게 질문…",
     "description": "Runtime interface message ui.ask.hermes.anything"
   },
+  "runtime_ui_ask_hermes_ellipsis": {
+    "message": "Hermes에게 묻기…",
+    "description": "Runtime interface message ui.ask.hermes.ellipsis"
+  },
+  "runtime_ui_asked_once_then_remembered": {
+    "message": "한 번 묻고 그다음부터 기억합니다",
+    "description": "Runtime interface message ui.asked.once.then.remembered"
+  },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action}은(는) 입력란에 이미 있는 내용에 적용됩니다. 먼저 내용을 입력하거나, 처음부터 쓰려면 초안 작업을 선택하세요.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "설정 → Hermes Assist에서 언제든지 바꿀 수 있습니다.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes가 이 초안을 만들지 못했습니다.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "지원을 실행할 수 없습니다.",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "불러오는 중…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "모델 라우팅",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "아직 모델이 없습니다. Hermes가 목록을 가져올 수 있도록 사이드 패널을 한 번 여세요.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Assist 옵션",
@@ -4154,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Assist 세션 기록",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "엄격한 기본값 · 보이는 {site} 대화 컨텍스트 없음",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "포커스된 초안만 사용",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "다음에도 이 선택 사용",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "보이는 {site} 컨텍스트 사용",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "{site}에서 Hermes가 무엇을 할까요?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "이 사이트에서 Hermes가 무엇을 할까요?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "어시스턴트",
@@ -4211,6 +4295,10 @@
     "message": "자동 이름 지정을 건너뜀",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "자동 바꾸기",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "이 Hermes 런타임에서는 자동 페어링을 사용할 수 없습니다. 설정을 열고 게이트웨이 URL과 API 토큰으로 수동 설정을 사용하세요.",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4238,6 +4326,10 @@
   "runtime_ui_back_to_result": {
     "message": "결과로 돌아가기",
     "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_back_to_the_quick_menu": {
+    "message": "빠른 메뉴로 돌아가기",
+    "description": "Runtime interface message ui.back.to.the.quick.menu"
   },
   "runtime_ui_background": {
     "message": "배경",
@@ -4303,6 +4395,10 @@
     "message": "마스킹된 진단 정보를 생성하는 중...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "버튼 아이콘",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "캐시",
     "description": "Runtime interface message ui.cache"
@@ -4342,6 +4438,10 @@
   "runtime_ui_change": {
     "message": "변경",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "설정 → Hermes Assist에서 변경",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "모델 및 런타임 옵션 변경",
@@ -4463,9 +4563,17 @@
     "message": "일부 브라우저는 확장 사이드바 내부의 마이크 캡처를 차단합니다. 이 표시되는 확장 탭은 Hermes STT를 사용할 수 있을 때 동일한 Hermes Browser Extension 원본에서 기록하거나, 연결된 런타임이 오디오 전사를 노출하지 않을 때 브라우저 음성 대체를 사용합니다.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
+  "runtime_ui_circle_hidden": {
+    "message": "원 숨김",
+    "description": "Runtime interface message ui.circle.hidden"
+  },
   "runtime_ui_class": {
     "message": "클래스",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "어떤 크기에서도 선명함",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "지우기",
@@ -5231,6 +5339,14 @@
     "message": "초안 및 입력 값은 제외된 상태로 유지됩니다.",
     "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
   },
+  "runtime_ui_draft_in_place": {
+    "message": "초안 넣음",
+    "description": "Runtime interface message ui.draft.in.place"
+  },
+  "runtime_ui_draft_ready": {
+    "message": "초안 준비됨",
+    "description": "Runtime interface message ui.draft.ready"
+  },
   "runtime_ui_draft_ready_for_review": {
     "message": "초안 검토 준비 완료",
     "description": "Runtime interface message ui.draft.ready.for.review"
@@ -5391,6 +5507,10 @@
     "message": "이벤트",
     "description": "Runtime interface message ui.events"
   },
+  "runtime_ui_every_action_tool_and_option_at_once_with_a_preview_before_anything_changes": {
+    "message": "모든 작업, 도구, 옵션을 한 번에. 바뀌기 전에 미리 볼 수 있습니다.",
+    "description": "Runtime interface message ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes"
+  },
   "runtime_ui_exception": {
     "message": "예외",
     "description": "Runtime interface message ui.exception"
@@ -5430,6 +5550,10 @@
   "runtime_ui_fast_mode": {
     "message": "빠른 모드",
     "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_fewer_actions": {
+    "message": "작업 줄이기",
+    "description": "Runtime interface message ui.fewer.actions"
   },
   "runtime_ui_field": {
     "message": "필드",
@@ -5502,6 +5626,14 @@
   "runtime_ui_full_largest_payload": {
     "message": "전체 - 최대 페이로드",
     "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_full_panel": {
+    "message": "전체 패널",
+    "description": "Runtime interface message ui.full.panel"
+  },
+  "runtime_ui_full_panel_arrow": {
+    "message": "전체 패널 →",
+    "description": "Runtime interface message ui.full.panel.arrow"
   },
   "runtime_ui_gateway": {
     "message": "게이트웨이",
@@ -5867,6 +5999,10 @@
     "message": "Hermes는 더티 체크아웃을 변경하기 전에 중지됩니다.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes가 페이지 없이 작성했습니다. 이 연결에서 페이지 컨텍스트가 꺼져 있습니다. 대화를 포함하려면 사이드 패널에서 켜세요.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "숨기기",
     "description": "Runtime interface message ui.hide"
@@ -5874,6 +6010,14 @@
   "runtime_ui_hide_sessions_rail": {
     "message": "세션 레일 숨기기",
     "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "이 사이트에서 원 숨기기",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Hermes가 읽는 내용 숨기기",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "높음",
@@ -5987,9 +6131,17 @@
     "message": "항목",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep": {
+    "message": "유지",
+    "description": "Runtime interface message ui.keep"
+  },
   "runtime_ui_keep_restricted": {
     "message": "Keep restricted",
     "description": "Runtime interface message ui.keep_restricted"
+  },
+  "runtime_ui_keep_assist_chats": {
+    "message": "Assist 채팅 보관",
+    "description": "Runtime interface message ui.keep.assist.chats"
   },
   "runtime_ui_keep_assist_sessions": {
     "message": "Assist 세션 유지",
@@ -6006,6 +6158,10 @@
   "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
     "message": "현재 채팅을 계속 표시하세요. 결과를 이 필드에 반환합니다.",
     "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_kept_under_inline_assist_in_your_history": {
+    "message": "기록의 Inline assist 아래에 보관",
+    "description": "Runtime interface message ui.kept.under.inline.assist.in.your.history"
   },
   "runtime_ui_key": {
     "message": "키",
@@ -6102,6 +6258,10 @@
   "runtime_ui_local_sidecar_chrome_panel": {
     "message": "로컬 사이드카 / Chrome 패널",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_longer": {
+    "message": "더 길게",
+    "description": "Runtime interface message ui.longer"
   },
   "runtime_ui_low": {
     "message": "낮음",
@@ -6251,6 +6411,10 @@
     "message": "더",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "작업 더 보기",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "이름",
     "description": "Runtime interface message ui.name"
@@ -6258,6 +6422,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "기본 컨텍스트 컨트롤을 사용할 수 없습니다.",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "게시하거나 보내지 않습니다. 이 입력란만 바뀝니다.",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "새로운",
@@ -6363,6 +6531,10 @@
     "message": "세션을 찾을 수 없습니다.",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "아직 사이트가 없습니다. 페이지의 Assist 패널에서 하나를 변경하거나, 열려 있는 사이트를 추가하세요.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "음성이 캡처되지 않았습니다.",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6411,6 +6583,10 @@
     "message": "알아채다",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "지금",
     "description": "Runtime interface message ui.now"
@@ -6430,6 +6606,10 @@
   "runtime_ui_off": {
     "message": "끄다",
     "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_off_this_field_only": {
+    "message": "끔: 이 입력란만",
+    "description": "Runtime interface message ui.off.this.field.only"
   },
   "runtime_ui_ok": {
     "message": "좋아요",
@@ -6462,6 +6642,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "먼저 일반 페이지 탭을 엽니다.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "먼저 웹 페이지를 연 다음 여기에 추가하세요.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "전체 보기 열기",
@@ -6847,9 +7031,17 @@
     "message": "빠른 명령",
     "description": "Runtime interface message ui.quick.commands"
   },
+  "runtime_ui_quick_menu": {
+    "message": "빠른 메뉴",
+    "description": "Runtime interface message ui.quick.menu"
+  },
   "runtime_ui_range": {
     "message": "범위",
     "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_read_the_visible_thread": {
+    "message": "보이는 스레드 읽기",
+    "description": "Runtime interface message ui.read.the.visible.thread"
   },
   "runtime_ui_readable_dom_text": {
     "message": "읽을 수 있는 DOM 텍스트",
@@ -6858,6 +7050,22 @@
   "runtime_ui_reading_connection_settings_and_canonical_session_history": {
     "message": "연결 설정 및 표준 세션 기록을 읽는 중입니다.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "입력란 주변 {chars}자 읽음 · {site}에 저장됨",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "메시지 {count}개 읽음 · {chars}자 · {site}에 저장됨",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "메시지 1개 읽음 · {chars}자 · {site}에 저장됨",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
+  "runtime_ui_reads_thread": {
+    "message": "스레드 읽음",
+    "description": "Runtime interface message ui.reads.thread"
   },
   "runtime_ui_ready": {
     "message": "준비가 된",
@@ -6971,9 +7179,17 @@
     "message": "렌더링된 메시지 본문은 다음 Hermes 턴에 첨부됩니다.",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "텍스트 자동으로 바꾸기",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "원래 필드를 안전하게 교체했습니다.",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_replaces_the_text": {
+    "message": "텍스트 교체",
+    "description": "Runtime interface message ui.replaces.the.text"
   },
   "runtime_ui_reply": {
     "message": "회신하다",
@@ -7034,6 +7250,10 @@
   "runtime_ui_retry": {
     "message": "다시 해 보다",
     "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_full_panel": {
+    "message": "전체 패널로 돌아가기",
+    "description": "Runtime interface message ui.return.to.full.panel"
   },
   "runtime_ui_return_to_page": {
     "message": "페이지로 돌아가기",
@@ -7159,6 +7379,10 @@
     "message": "안전",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "채팅과 동일",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "작업 공간의 색상 팔레트를 선택하세요.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7186,6 +7410,10 @@
   "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
     "message": "“Hey Hermes”라고 말하면 핸즈프리 단일 턴 음성 요청을 할 수 있습니다. 상시 감지는 이 컴퓨터에서만 유지됩니다.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_say_what_to_change": {
+    "message": "바꿀 내용을 적어 주세요…",
+    "description": "Runtime interface message ui.say.what.to.change"
   },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "브라우저 확대/축소를 변경하지 않고 인터페이스 사본을 확장합니다.",
@@ -7226,6 +7454,10 @@
   "runtime_ui_security": {
     "message": "보안",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Hermes가 읽는 내용 보기",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "선택하다",
@@ -7395,6 +7627,10 @@
     "message": "짧은",
     "description": "Runtime interface message ui.short"
   },
+  "runtime_ui_shorter": {
+    "message": "더 짧게",
+    "description": "Runtime interface message ui.shorter"
+  },
   "runtime_ui_show": {
     "message": "보여주다",
     "description": "Runtime interface message ui.show"
@@ -7415,6 +7651,10 @@
     "message": "상태 표시/숨기기",
     "description": "Runtime interface message ui.show.or.hide.status"
   },
+  "runtime_ui_shows_a_preview": {
+    "message": "미리보기 표시",
+    "description": "Runtime interface message ui.shows.a.preview"
+  },
   "runtime_ui_side_panel": {
     "message": "측면 패널",
     "description": "Runtime interface message ui.side.panel"
@@ -7434,6 +7674,14 @@
   "runtime_ui_site": {
     "message": "대지",
     "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_sites": {
+    "message": "사이트",
+    "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "스레드 읽음: Assist가 화면의 대화도 읽습니다. 이 입력란만: 입력란의 내용만 사용합니다. 원 숨김: 그 사이트에는 원이 없습니다. 변경 사항은 바로 저장됩니다.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "크기",
@@ -7490,6 +7738,10 @@
   "runtime_ui_speak_wake_replies": {
     "message": "깨우기 답장 말하기",
     "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_staff": {
+    "message": "지팡이",
+    "description": "Runtime interface message ui.staff"
   },
   "runtime_ui_standard": {
     "message": "기준",
@@ -7719,6 +7971,10 @@
     "message": "텍스트 크기",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "카두세우스",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "연결된 Hermes 런타임은 네이티브 세션 압축을 지원하지 않습니다.",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7982,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "연결된 런타임은 다음 턴에 이 옵션을 받지만 확인 엔드포인트를 제공하지 않습니다.",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "확장 프로그램 로고",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "라이브 모델 카탈로그를 사용할 수 없습니다. 마지막으로 검증된 공급자/모델 목록을 유지합니다.",
@@ -7766,6 +8026,10 @@
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
     "message": "이 브라우저는 MediaRecorder/getUserMedia를 확장 페이지에 노출하지 않으며 Web Speech 대체를 사용할 수 없습니다.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_field_only": {
+    "message": "이 입력란만",
+    "description": "Runtime interface message ui.this.field.only"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
     "message": "이 게이트웨이는 아직 /v1/capabilities를 제공하지 않습니다. 확장 프로그램 전용 경로는 폴백 모드로 유지됩니다.",
@@ -7867,6 +8131,10 @@
     "message": "다시 녹음해 보세요.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "설정 → Hermes Assist에서 다시 켜기",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "끄다",
     "description": "Runtime interface message ui.turn.off"
@@ -7883,6 +8151,10 @@
     "message": "유형",
     "description": "Runtime interface message ui.type"
   },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "facebook.com 같은 웹 주소나 Gmail 같은 사이트 이름을 입력하세요.",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
+  },
   "runtime_ui_ui": {
     "message": "UI",
     "description": "Runtime interface message ui.ui"
@@ -7894,6 +8166,10 @@
   "runtime_ui_undo": {
     "message": "끄르다",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "실행 취소는 언제나 한 번의 클릭",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "업데이트",
@@ -7954,6 +8230,10 @@
   "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
     "message": "GitHub 문제 또는 지원 보고서를 제출할 때 이것을 사용하십시오.",
     "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_used_only_by_assist": {
+    "message": "Assist에서만 사용합니다",
+    "description": "Runtime interface message ui.used.only.by.assist"
   },
   "runtime_ui_user": {
     "message": "사용자",
@@ -8127,6 +8407,18 @@
     "message": "우리는 무엇을 해야 할까요?",
     "description": "Runtime interface message ui.what.should.we.work.on"
   },
+  "runtime_ui_when_you_click_it": {
+    "message": "클릭하면",
+    "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Assist가 스레드를 읽는 곳, 그리고 원이 숨겨지는 곳.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "실행 위치",
+    "description": "Runtime interface message ui.where.it.runs"
+  },
   "runtime_ui_where_should_hermes_work": {
     "message": "Hermes는 어디에서 작동하나요?",
     "description": "Runtime interface message ui.where.should.hermes.work"
@@ -8147,6 +8439,10 @@
     "message": "창 탭 목록",
     "description": "Runtime interface message ui.window.tab.list"
   },
+  "runtime_ui_wing": {
+    "message": "날개",
+    "description": "Runtime interface message ui.wing"
+  },
   "runtime_ui_worker": {
     "message": "노동자",
     "description": "Runtime interface message ui.worker"
@@ -8166,6 +8462,10 @@
   "runtime_ui_workspaces": {
     "message": "작업공간",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "페이지 없이 작성됨: 이 연결에서 페이지 컨텍스트가 꺼져 있습니다.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "특대",

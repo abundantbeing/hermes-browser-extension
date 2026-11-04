@@ -1,0 +1,12 @@
+<!-- GitHub comment box as github.com renders it now: Write/Preview tabs on the left, and the Markdown toolbar box
+     filling the rest of the header with its buttons lined up at the far right. -->
+<form class="js-new-comment-form" data-rect="76 54 816 196">
+  <div class="tabnav" data-rect="77 55 140 38"><button type="button" data-rect="80 58 64 34">Write</button><button type="button" data-rect="146 58 70 34">Preview</button></div>
+  <markdown-toolbar for="new_comment_field" aria-label="Formatting tools" data-rect="225 58 664 34">
+    <md-header><button type="button" aria-label="Add heading text" data-expect-slot data-rect="412 62 24 24">H</button></md-header>
+    <md-bold><button type="button" aria-label="Add bold text" data-rect="442 62 24 24">B</button></md-bold>
+    <md-italic><button type="button" aria-label="Add italic text" data-rect="472 62 24 24">I</button></md-italic>
+  </markdown-toolbar>
+  <textarea id="new_comment_field" name="comment[body]" aria-label="Comment body" data-rect="86 101 798 104"></textarea>
+  <button type="submit" class="btn-primary" data-rect="796 259 96 32">Comment</button>
+</form>

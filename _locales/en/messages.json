@@ -355,6 +355,14 @@
     "message": "Falls back to the gateway default when exact routing is unavailable",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Add {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} is in the list",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Files up to 25 MiB can be attached.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -3887,6 +3895,10 @@
     "message": "0 complete · 0 active",
     "description": "Runtime interface message ui.0.complete.0.active"
   },
+  "runtime_ui_a_small_menu_at_the_circle_type_or_pick_an_action_the_draft_goes_straight_into_the_field": {
+    "message": "A small menu at the circle. Type or pick an action; the draft goes straight into the field.",
+    "description": "Runtime interface message ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field"
+  },
   "runtime_ui_accept": {
     "message": "Accept",
     "description": "Runtime interface message ui.accept"
@@ -3939,6 +3951,14 @@
     "message": "Add",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "Add a site",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "Add a site, like facebook.com",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -3946,6 +3966,10 @@
   "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
     "message": "Add instructions after the slash command before sending.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_add_this_site": {
+    "message": "+ Add this site",
+    "description": "Runtime interface message ui.add.this.site"
   },
   "runtime_ui_adjust": {
     "message": "Adjust",
@@ -3958,6 +3982,10 @@
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "Adjust the side panel for readability without changing browser zoom.",
     "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_again": {
+    "message": "Again",
+    "description": "Runtime interface message ui.again"
   },
   "runtime_ui_agent": {
     "message": "AGENT",
@@ -4143,9 +4171,41 @@
     "message": "Ask Hermes anything…",
     "description": "Runtime interface message ui.ask.hermes.anything"
   },
+  "runtime_ui_ask_hermes_ellipsis": {
+    "message": "Ask Hermes…",
+    "description": "Runtime interface message ui.ask.hermes.ellipsis"
+  },
+  "runtime_ui_asked_once_then_remembered": {
+    "message": "Asked once, then remembered",
+    "description": "Runtime interface message ui.asked.once.then.remembered"
+  },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} works on what is already in the field. Type something first, or pick a Draft action to start from nothing.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "You can change it anytime in Settings → Hermes Assist.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes could not create this draft.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist could not run",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "Loading…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "Model routing",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "No models yet. Open the side panel once so Hermes can list them.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Assist options",
@@ -4154,6 +4214,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Assist session history",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "Strict default · no visible {site} conversation context",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "Use focused draft only",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "Use this choice next time",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "Use visible {site} context",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "What should Hermes do on {site}?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "What should Hermes do on this site?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "Assistant",
@@ -4211,6 +4295,10 @@
     "message": "Auto-name skipped",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "Auto-replace",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4238,6 +4326,10 @@
   "runtime_ui_back_to_result": {
     "message": "Back to result",
     "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_back_to_the_quick_menu": {
+    "message": "Back to the quick menu",
+    "description": "Runtime interface message ui.back.to.the.quick.menu"
   },
   "runtime_ui_background": {
     "message": "Background",
@@ -4303,6 +4395,10 @@
     "message": "Building redacted diagnostics...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "Button icon",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "Cache",
     "description": "Runtime interface message ui.cache"
@@ -4342,6 +4438,10 @@
   "runtime_ui_change": {
     "message": "Change",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "Change it in Settings → Hermes Assist",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "Change model and runtime options",
@@ -4463,9 +4563,17 @@
     "message": "Some browsers block microphone capture inside extension sidebars. This visible extension tab records from the same Hermes extension origin when Hermes STT is available, or uses browser speech fallback when the connected runtime does not expose audio transcription.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
+  "runtime_ui_circle_hidden": {
+    "message": "Circle hidden",
+    "description": "Runtime interface message ui.circle.hidden"
+  },
   "runtime_ui_class": {
     "message": "Class",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "Clean at any size",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "Clear",
@@ -5231,6 +5339,14 @@
     "message": "Draft and input values stayed excluded.",
     "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
   },
+  "runtime_ui_draft_in_place": {
+    "message": "Draft in place",
+    "description": "Runtime interface message ui.draft.in.place"
+  },
+  "runtime_ui_draft_ready": {
+    "message": "Draft ready",
+    "description": "Runtime interface message ui.draft.ready"
+  },
   "runtime_ui_draft_ready_for_review": {
     "message": "Draft ready for review",
     "description": "Runtime interface message ui.draft.ready.for.review"
@@ -5391,6 +5507,10 @@
     "message": "Events",
     "description": "Runtime interface message ui.events"
   },
+  "runtime_ui_every_action_tool_and_option_at_once_with_a_preview_before_anything_changes": {
+    "message": "Every action, tool and option at once, with a preview before anything changes.",
+    "description": "Runtime interface message ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes"
+  },
   "runtime_ui_exception": {
     "message": "Exception",
     "description": "Runtime interface message ui.exception"
@@ -5430,6 +5550,10 @@
   "runtime_ui_fast_mode": {
     "message": "Fast mode",
     "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_fewer_actions": {
+    "message": "Fewer actions",
+    "description": "Runtime interface message ui.fewer.actions"
   },
   "runtime_ui_field": {
     "message": "Field",
@@ -5502,6 +5626,14 @@
   "runtime_ui_full_largest_payload": {
     "message": "Full - largest payload",
     "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_full_panel": {
+    "message": "Full panel",
+    "description": "Runtime interface message ui.full.panel"
+  },
+  "runtime_ui_full_panel_arrow": {
+    "message": "Full panel →",
+    "description": "Runtime interface message ui.full.panel.arrow"
   },
   "runtime_ui_gateway": {
     "message": "Gateway",
@@ -5867,6 +5999,10 @@
     "message": "Hermes will stop before changing a dirty checkout.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes wrote this without the page: page context is off for this connection. Turn it on in the side panel to include the thread.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "Hide",
     "description": "Runtime interface message ui.hide"
@@ -5874,6 +6010,14 @@
   "runtime_ui_hide_sessions_rail": {
     "message": "Hide sessions rail",
     "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "Hide the circle on this site",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Hide what Hermes reads",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "High",
@@ -5987,9 +6131,17 @@
     "message": "Item",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep": {
+    "message": "Keep",
+    "description": "Runtime interface message ui.keep"
+  },
   "runtime_ui_keep_restricted": {
     "message": "Keep restricted",
     "description": "Runtime interface message ui.keep_restricted"
+  },
+  "runtime_ui_keep_assist_chats": {
+    "message": "Keep Assist chats",
+    "description": "Runtime interface message ui.keep.assist.chats"
   },
   "runtime_ui_keep_assist_sessions": {
     "message": "Keep Assist sessions",
@@ -6006,6 +6158,10 @@
   "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
     "message": "Keep the current chat visible. Return the result to this field.",
     "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_kept_under_inline_assist_in_your_history": {
+    "message": "Kept under Inline assist in your history",
+    "description": "Runtime interface message ui.kept.under.inline.assist.in.your.history"
   },
   "runtime_ui_key": {
     "message": "Key",
@@ -6102,6 +6258,10 @@
   "runtime_ui_local_sidecar_chrome_panel": {
     "message": "LOCAL SIDECAR / CHROME PANEL",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_longer": {
+    "message": "Longer",
+    "description": "Runtime interface message ui.longer"
   },
   "runtime_ui_low": {
     "message": "Low",
@@ -6251,6 +6411,10 @@
     "message": "More",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "More actions",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "Name",
     "description": "Runtime interface message ui.name"
@@ -6258,6 +6422,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "Native context controls unavailable.",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "Never posts or sends. Only this field changes.",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "New",
@@ -6363,6 +6531,10 @@
     "message": "No sessions found",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "No sites yet. Change one from the Assist panel on a page, or add the site you have open.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "No speech captured",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6411,6 +6583,10 @@
     "message": "Notice",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "Now",
     "description": "Runtime interface message ui.now"
@@ -6430,6 +6606,10 @@
   "runtime_ui_off": {
     "message": "Off",
     "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_off_this_field_only": {
+    "message": "Off: this field only",
+    "description": "Runtime interface message ui.off.this.field.only"
   },
   "runtime_ui_ok": {
     "message": "OK",
@@ -6462,6 +6642,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "Open a normal page tab first.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "Open a web page first, then add it here.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "Open full view",
@@ -6847,9 +7031,17 @@
     "message": "Quick commands",
     "description": "Runtime interface message ui.quick.commands"
   },
+  "runtime_ui_quick_menu": {
+    "message": "Quick menu",
+    "description": "Runtime interface message ui.quick.menu"
+  },
   "runtime_ui_range": {
     "message": "Range",
     "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_read_the_visible_thread": {
+    "message": "Read the visible thread",
+    "description": "Runtime interface message ui.read.the.visible.thread"
   },
   "runtime_ui_readable_dom_text": {
     "message": "Readable DOM text",
@@ -6858,6 +7050,22 @@
   "runtime_ui_reading_connection_settings_and_canonical_session_history": {
     "message": "Reading connection settings and canonical session history.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "Reads {chars} characters around the field · saved for {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "Reads {count} messages · {chars} characters · saved for {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "Reads 1 message · {chars} characters · saved for {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
+  "runtime_ui_reads_thread": {
+    "message": "Reads thread",
+    "description": "Runtime interface message ui.reads.thread"
   },
   "runtime_ui_ready": {
     "message": "Ready",
@@ -6971,9 +7179,17 @@
     "message": "Rendered message bodies will be attached to the next Hermes turn.",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "Replace text automatically",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "Replaced the original field safely",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_replaces_the_text": {
+    "message": "Replaces the text",
+    "description": "Runtime interface message ui.replaces.the.text"
   },
   "runtime_ui_reply": {
     "message": "Reply",
@@ -7034,6 +7250,10 @@
   "runtime_ui_retry": {
     "message": "Retry",
     "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_full_panel": {
+    "message": "Return to full panel",
+    "description": "Runtime interface message ui.return.to.full.panel"
   },
   "runtime_ui_return_to_page": {
     "message": "Return to page",
@@ -7159,6 +7379,10 @@
     "message": "Safety",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "Same as chat",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "Choose a color palette for your workspace.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7186,6 +7410,10 @@
   "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
     "message": "Say “Hey Hermes” for a hands-free, one-turn voice request. Always-on detection stays on this machine.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_say_what_to_change": {
+    "message": "Say what to change…",
+    "description": "Runtime interface message ui.say.what.to.change"
   },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Scale interface copy without changing browser zoom.",
@@ -7226,6 +7454,10 @@
   "runtime_ui_security": {
     "message": "Security",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "See what Hermes reads",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "Select",
@@ -7395,6 +7627,10 @@
     "message": "Short",
     "description": "Runtime interface message ui.short"
   },
+  "runtime_ui_shorter": {
+    "message": "Shorter",
+    "description": "Runtime interface message ui.shorter"
+  },
   "runtime_ui_show": {
     "message": "Show",
     "description": "Runtime interface message ui.show"
@@ -7415,6 +7651,10 @@
     "message": "Show or hide status",
     "description": "Runtime interface message ui.show.or.hide.status"
   },
+  "runtime_ui_shows_a_preview": {
+    "message": "Shows a preview",
+    "description": "Runtime interface message ui.shows.a.preview"
+  },
   "runtime_ui_side_panel": {
     "message": "Side panel",
     "description": "Runtime interface message ui.side.panel"
@@ -7434,6 +7674,14 @@
   "runtime_ui_site": {
     "message": "Site",
     "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_sites": {
+    "message": "Sites",
+    "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Reads thread: Assist also reads the conversation on screen. This field only: only what is in the field. Circle hidden: no circle on that site. Changes save right away.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Size",
@@ -7490,6 +7738,10 @@
   "runtime_ui_speak_wake_replies": {
     "message": "Speak wake replies",
     "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_staff": {
+    "message": "Staff",
+    "description": "Runtime interface message ui.staff"
   },
   "runtime_ui_standard": {
     "message": "Standard",
@@ -7719,6 +7971,10 @@
     "message": "Text size",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "The caduceus",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "The connected Hermes runtime does not advertise native session compaction.",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7726,6 +7982,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "The connected runtime will receive these options on the next turn, but does not expose an acknowledgement endpoint.",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "The extension logo",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "The live model catalog is unavailable; keeping the last verified provider/model list.",
@@ -7766,6 +8026,10 @@
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
     "message": "This browser does not expose MediaRecorder/getUserMedia to extension pages, and Web Speech fallback is unavailable.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_field_only": {
+    "message": "This field only",
+    "description": "Runtime interface message ui.this.field.only"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
     "message": "This gateway does not expose /v1/capabilities yet. Extension-specific routes will stay in fallback mode.",
@@ -7867,6 +8131,10 @@
     "message": "Try recording again.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "Turn it back on in Settings → Hermes Assist",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "Turn off",
     "description": "Runtime interface message ui.turn.off"
@@ -7883,6 +8151,10 @@
     "message": "Type",
     "description": "Runtime interface message ui.type"
   },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "Type a web address, like facebook.com, or a site name, like Gmail.",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
+  },
   "runtime_ui_ui": {
     "message": "UI",
     "description": "Runtime interface message ui.ui"
@@ -7894,6 +8166,10 @@
   "runtime_ui_undo": {
     "message": "Undo",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "Undo is always one click away",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "Update",
@@ -7954,6 +8230,10 @@
   "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
     "message": "Use this when filing GitHub issues or support reports.",
     "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_used_only_by_assist": {
+    "message": "Used only by Assist",
+    "description": "Runtime interface message ui.used.only.by.assist"
   },
   "runtime_ui_user": {
     "message": "User",
@@ -8127,6 +8407,18 @@
     "message": "What should we work on?",
     "description": "Runtime interface message ui.what.should.we.work.on"
   },
+  "runtime_ui_when_you_click_it": {
+    "message": "When you click it",
+    "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Where Assist reads the thread, and where the circle stays hidden.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "Where it runs",
+    "description": "Runtime interface message ui.where.it.runs"
+  },
   "runtime_ui_where_should_hermes_work": {
     "message": "Where should Hermes work?",
     "description": "Runtime interface message ui.where.should.hermes.work"
@@ -8147,6 +8439,10 @@
     "message": "Window tab list",
     "description": "Runtime interface message ui.window.tab.list"
   },
+  "runtime_ui_wing": {
+    "message": "Wing",
+    "description": "Runtime interface message ui.wing"
+  },
   "runtime_ui_worker": {
     "message": "Worker",
     "description": "Runtime interface message ui.worker"
@@ -8166,6 +8462,10 @@
   "runtime_ui_workspaces": {
     "message": "Workspaces",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "Written without the page: page context is off for this connection.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

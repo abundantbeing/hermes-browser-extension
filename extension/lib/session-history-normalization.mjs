@@ -489,15 +489,39 @@ export function stripProtocolNoise(text = '') {
  * through untouched. Accepts a message object ({ role, content | text }) or a
  * raw string.
  */
+// A Hermes Assist request as stored in the chat: one of Assist's three instruction lines, then its JSON
+// payload. Shown as what was asked and where ("Hermes Assist · Draft a reply" and the page link).
+const ASSIST_PROMPT_LEADS = [
+  'Draft a concise, neutral starting point for the focused field',
+  'Draft the text that belongs in the focused field',
+  'Edit the user-selected draft text using the active Hermes agent',
+];
+export function assistRequestSummary(raw = '') {
+  const text = String(raw || '').trim();
+  if (!ASSIST_PROMPT_LEADS.some((lead) => text.startsWith(lead))) return null;
+  const json = text.slice(text.indexOf('\n{') + 1);
+  if (!json.startsWith('{')) return null;
+  const payload = parseJsonObject(json);
+  if (!payload || typeof payload.task !== 'string' || !('adapter' in payload) || !('draft_text' in payload)) return null;
+  const task = payload.task.trim().slice(0, 200) || 'Assist';
+  const url = typeof payload.page_url === 'string' && /^https?:\/\//.test(payload.page_url) ? payload.page_url : '';
+  return url ? `Hermes Assist · ${task}\n${url}` : `Hermes Assist · ${task}`;
+}
+
 export function normalizeHistoryUserMessage(message = '') {
   const { role, text: rawText } = readHistoryMessage(message);
   const passThrough = { text: rawText, attachments: [], hadEnvelope: false, strippedProtocol: false };
   if (!rawText) return passThrough;
   if (role && role !== 'user' && role !== 'human') return passThrough;
+  const assist = assistRequestSummary(rawText);
+  if (assist) return { text: assist, attachments: [], hadEnvelope: false, strippedProtocol: true };
 
   const envelope = readTurnEnvelope(rawText);
   if (envelope) {
     const humanText = envelope.humanText ?? '';
+    // An Assist request the side panel sent as a turn: the same short form as one sent directly.
+    const assistTurn = assistRequestSummary(humanText);
+    if (assistTurn) return { text: assistTurn, attachments: [], hadEnvelope: true, strippedProtocol: true };
     const text = cleanEnvelopeHumanText(humanText);
     const attachments = dedupeAttachments([
       ...envelope.items,

@@ -88,8 +88,8 @@ test('inline and right-click background paths apply the final consent gate at tr
   assert.match(inlineGate, /pageContext: ''/);
   assert.match(inlineGate, /pageUrl: ''/);
   assert.match(inlineGate, /fieldLabel: ''/);
-  const currentRoute = sidepanel.match(/async function runInlineDraftInCurrentSession\([\s\S]*?\n\}/)?.[0] || '';
-  assert.ok(currentRoute.indexOf('await ensureHermesSession()') < currentRoute.indexOf('await resolveInlineDraftPrompt(request)'));
+  // Continue current chat sends through askHermes, which gates the prompt again at send time (below).
+  assert.doesNotMatch(sidepanel, /runInlineDraftInCurrentSession/);
   assert.match(sidepanel, /runInlineDraftInBackground\(request, \(\) => resolveInlineDraftPrompt\(request\)\)/);
   assert.match(sidepanel, /resolveUserText:\s*\(\) => resolveInlineDraftPrompt\(request\)/);
   const sender = sidepanel.match(/async function askHermes\([\s\S]*?\n\}/)?.[0] || '';

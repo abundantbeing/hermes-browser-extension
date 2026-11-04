@@ -292,3 +292,37 @@ test('normalizeHistoryUserMessage handles empty and part-shaped inputs', () => {
   const fromText = normalizeHistoryUserMessage({ role: 'user', text: 'Legacy text field' });
   assert.equal(fromText.text, 'Legacy text field');
 });
+
+test('a stored Hermes Assist request shows as what was asked and where, never as its JSON', async () => {
+  const { buildInlineDraftPrompt, INLINE_DRAFT_SCHEMA, INLINE_DRAFT_VERSION, INLINE_DRAFT_MODE } = await import('../extension/lib/inline-draft-policy.mjs');
+  const base = {
+    schema: INLINE_DRAFT_SCHEMA, version: INLINE_DRAFT_VERSION, mode: INLINE_DRAFT_MODE,
+    requestId: 'req-assist-display-0001', documentId: 'doc-assist-display-0001',
+    actionId: 'draft-reply', actionLabel: 'Draft a reply', startsFromPage: true,
+    route: 'background', draftText: '', fieldLabel: 'Add a comment…', adapterId: 'youtube',
+    pageContext: '', pageUrl: 'https://www.youtube.com/watch?v=abc123',
+  };
+  const prompt = buildInlineDraftPrompt(base);
+  assert.match(prompt, /"page_url":"https:\/\/www\.youtube\.com\/watch\?v=abc123"/, 'Hermes is told the page');
+  const shown = normalizeHistoryUserMessage({ role: 'user', content: prompt });
+  assert.equal(shown.text, 'Hermes Assist · Draft a reply\nhttps://www.youtube.com/watch?v=abc123');
+  assert.equal(shown.strippedProtocol, true);
+  const edit = normalizeHistoryUserMessage({ role: 'user', content: buildInlineDraftPrompt({ ...base, actionId: 'improve', actionLabel: 'Improve writing', startsFromPage: false, draftText: 'a rough first draft', pageUrl: '' }) });
+  assert.equal(edit.text, 'Hermes Assist · Improve writing');
+  const pasted = 'Edit the user-selected draft text please, here is my JSON {"a":1}';
+  assert.equal(normalizeHistoryUserMessage({ role: 'user', content: pasted }).text, pasted, 'ordinary text that only looks similar is left alone');
+});
+
+test('an Assist request sent through the side panel (inside its turn envelope) shows the same short form', async () => {
+  const { buildInlineDraftPrompt, INLINE_DRAFT_SCHEMA, INLINE_DRAFT_VERSION, INLINE_DRAFT_MODE } = await import('../extension/lib/inline-draft-policy.mjs');
+  const { serializeBrowserTurnEnvelope } = await import('../extension/lib/browser-context-protocol.mjs');
+  const prompt = buildInlineDraftPrompt({
+    schema: INLINE_DRAFT_SCHEMA, version: INLINE_DRAFT_VERSION, mode: INLINE_DRAFT_MODE,
+    requestId: 'req-assist-display-0002', documentId: 'doc-assist-display-0002',
+    actionId: 'draft-reply', actionLabel: 'Draft a reply', startsFromPage: true, route: 'current',
+    draftText: '', fieldLabel: 'Add a comment…', adapterId: 'youtube', pageContext: 'Video transcript…',
+    pageUrl: 'https://www.youtube.com/watch?v=abc123',
+  });
+  const stored = serializeBrowserTurnEnvelope({ humanInput: prompt, contextScope: { mode: 'chat-only' } });
+  assert.equal(normalizeHistoryUserMessage({ role: 'user', content: stored }).text, 'Hermes Assist · Draft a reply\nhttps://www.youtube.com/watch?v=abc123');
+});
