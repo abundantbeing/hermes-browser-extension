@@ -23,7 +23,7 @@ The plugin gives Hermes two things:
 | **Hermes Agent 0.22 or newer**, with its API server on (`API_SERVER_ENABLED=true`) | Everything |
 | **The Hermes Browser Extension**, connected to that Hermes | Everything |
 | **This plugin**, installed and enabled for every Hermes profile the extension talks to, then that profile's gateway restarted | Hermes Control on Hermes builds without built-in extension control (canary builds from Oct 24, 2026, and every release after 0.22.5); the browser-context tools on any Hermes |
-| **A Chromium-based browser** (Chrome, Edge, Brave, Comet, Arc, ...) | Hermes Control. Firefox gets chat and page context only: it has no debugger API |
+| **A Chromium-based browser** (Chrome, Edge, Brave, Comet, Arc, ...) | Hermes Control. Firefox gets a restricted Hermes Control (read, navigate, scroll, screenshots, tabs; no clicks or typing, since it has no debugger API), see [guides/firefox.md](../guides/firefox.md) |
 | **The extension's address in `API_SERVER_CORS_ORIGINS`** (`chrome-extension://<id>`) | A Hermes that does not pair with the extension by itself. The extension's **Test connection** button shows the exact line to add |
 
 Hermes 0.22.5 and earlier still carry Hermes Control in Hermes itself; where it is
