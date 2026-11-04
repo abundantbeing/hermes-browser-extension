@@ -22,6 +22,7 @@ const SITES = [
   ['github-issue.html', 'https://github.com/o/r/issues/2'],
   ['linkedin-share.html', 'https://www.linkedin.com/feed/'],
   ['x-grok.html', 'https://x.com/i/grok'],
+  ['x-dm.html', 'https://x.com/i/chat/123-456'],
   ['youtube.html', 'https://www.youtube.com/watch?v=abc'],
   ['gmail.html', 'https://mail.google.com/mail/u/0/#inbox?compose=new'],
   ['reddit.html', 'https://www.reddit.com/r/test/comments/1/x/'],
@@ -289,6 +290,13 @@ test('Grok on x.com: just before the Auto picker, as in any chat composer', asyn
   assert.equal(launcher.dataset.placement, 'before');
   assert.equal(launcher.style.left, '698px');
   assert.equal(launcher.style.top, '114px');
+});
+
+test('an X direct message: just before the voice button, as in any chat composer', async () => {
+  for (const url of ['https://x.com/i/chat/123-456', 'https://x.com/messages/123-456']) {
+    const launcher = await focusedLauncher(boot('x-dm.html', url));
+    assert.equal(launcher.dataset.placement, 'before', url);
+  }
 });
 
 test('X draws its toolbar a moment after focus: the circle goes to its spot then, before any typing', async () => {

@@ -486,7 +486,7 @@ function classifyInlineSurface(adapterId, url, target) {
     return 'repository-editor';
   }
   if (adapterId === 'x') {
-    if (/\/messages/.test(path) && /message|send/.test(`${label} ${nearby}`)) return 'direct-message';
+    if (/\/(messages|i\/chat)(\/|$)/.test(path) && /message|send/.test(`${label} ${nearby}`)) return 'direct-message';
     const composer = target?.closest?.('form, [role="dialog"]') || target?.parentElement;
     if ((composer?.querySelectorAll?.('[data-testid^="tweetTextarea_"]')?.length || 0) > 1) return 'thread';
     if (/status\//.test(path) || /replying to|post your reply|\breply\b/.test(`${label} ${nearby}`) || nearbyComposerIntent(target) === 'reply') return 'reply';
@@ -915,9 +915,12 @@ export function inspectInlineSite(document, target, options = {}) {
   const privateSurface = PRIVATE_INLINE_SITES.has(adapterId) || surface === 'direct-message';
   const defaultMode = privateSurface ? 'draft' : adapterId === 'generic' ? 'draft' : 'visible';
   const contextMode = preferences[adapterId] || defaultMode;
+  // Grok and direct messages on x.com are one-line chat composers with their buttons at the end, not the
+  // post composer's media toolbar.
   const chatComposer = CHAT_COMPOSER_SITES.has(adapterId)
     || (adapterId === 'generic' && isHermesWeb(document, url))
-    || (adapterId === 'x' && /^\/i\/grok(\/|$)/.test(url?.pathname || ''));
+    || (adapterId === 'x' && (/^\/(i\/grok|i\/chat|messages)(\/|$)/.test(url?.pathname || '')
+      || Boolean(target?.closest?.('[data-testid="DMDrawer"]'))));
   const slots = inlineSlots(target, adapterId, { chatComposer });
   const anchorElement = inlineAnchor(target, adapterId);
   const obstacleElements = adapterId === 'chatgpt'
