@@ -1211,8 +1211,14 @@ export function createControllerServiceWorker({
     }
 
     const previousRouteKey = controllerRouteKey(settings);
+    // Only the chat changing leaves the tabs and the gateway as they were: a stop the person pressed on a tab stays.
+    const chatOnly = !controllerRouteChanged(settings, {
+      ...normalized,
+      sessionId: settings.sessionId,
+      remoteDashboardSession: settings.remoteDashboardSession,
+    });
     settings = normalized;
-    pausedLeases = {};
+    if (!chatOnly) pausedLeases = {};
     lastTurnTabId = 0;
     lastActionTabId = 0;
     unsupportedRouteKey = '';

@@ -601,6 +601,33 @@ test('a turn is never ready for a chat Hermes Control has not moved to, even whe
   await settle();
 });
 
+test('a turn from another chat does not undo the stop the person pressed on a tab', async () => {
+  const { worker, adapter } = await controlledWorker();
+  await worker.handleDebuggerDetach({ tabId: 41, reason: 'canceled_by_user' });
+  const snapshotsBefore = adapter.calls.filter((call) => call.action === 'browser_snapshot').length;
+
+  const prepared = await worker.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.prepareTurn,
+    tabId: 41,
+    frameId: 0,
+    expectedUrl: 'https://shop.example.test/cart',
+    sessionId: 'second-window-chat',
+  }, extensionSender());
+
+  assert.equal(prepared.ok, false, JSON.stringify(prepared));
+  assert.equal(prepared.reason, 'debugger_detached');
+  assert.deepEqual(Object.keys(worker.status().pausedLeases), ['41']);
+  assert.equal(adapter.calls.filter((call) => call.action === 'browser_snapshot').length, snapshotsBefore,
+    'the page is not read, so the debugger is not attached again');
+});
+
+test('a change of gateway still clears the stops on tabs, since the tabs belong to a new route', async () => {
+  const { worker } = await controlledWorker();
+  await worker.handleDebuggerDetach({ tabId: 41, reason: 'canceled_by_user' });
+  await worker.syncSettings(settings({ gatewayUrl: 'http://127.0.0.1:9999' }));
+  assert.deepEqual(worker.status().pausedLeases, {});
+});
+
 function deferredGate() {
   let resolve;
   const promise = new Promise((resolvePromise) => { resolve = resolvePromise; });
