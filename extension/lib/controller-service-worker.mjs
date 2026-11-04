@@ -1664,6 +1664,21 @@ export function createControllerServiceWorker({
   // the page view the model can act on straight away. Also records the tab as
   // the default target for commands that name none.
   async function prepareTurn(message = {}) {
+    const turnSessionId = String(message.sessionId || '').trim();
+    const transport = settings?.connectionTransport || settings?.gatewayMode;
+    if (turnSessionId && settings?.browserControlEnabled === true && !transportUsesDashboardTicket(transport)
+      && turnSessionId !== durableSessionId(settings)) {
+      // The gateway lets only the chat the controller registered for drive the tab. A turn from
+      // another chat (a second window, the full tab) moves the controller to it first, so the tab
+      // is never reported ready to a chat whose tools would find no browser.
+      if (activeActions.size || lifecycle.pendingCount() || approvals.count()) {
+        return unavailableControlTarget('controller_busy', 'Hermes Control is busy with another chat. Ask the user to let it finish, then try again.');
+      }
+      await Promise.race([
+        syncSettings({ ...settings, sessionId: turnSessionId }).catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, PREPARE_TURN_CONNECT_MS)),
+      ]);
+    }
     if (!connected && lastConnectFailure?.reason === CONTROLLER_SESSION_PENDING) {
       // The panel created this chat's Hermes session just before this turn: connect now, so the
       // chat's first turn can already use control.

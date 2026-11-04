@@ -457,6 +457,82 @@ test('the turn envelope carries state ready and the bounded control snapshot', (
   assert.equal(envelope.browser_control.control_snapshot_omitted, undefined);
 });
 
+test('a turn from another chat moves Hermes Control to that chat before the tab is reported ready', async () => {
+  const { worker, transport } = await controlledWorker();
+  assert.equal(transport.connections[0].options.identity.hermesSessionId, 'turn-context-session');
+
+  const prepared = await worker.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.prepareTurn,
+    tabId: 41,
+    frameId: 0,
+    expectedUrl: 'https://shop.example.test/cart',
+    sessionId: 'second-window-chat',
+  }, extensionSender());
+
+  // The gateway serves the tab tools to the session the controller registered for, so a turn
+  // from another chat is only ready once the controller registered for that chat.
+  assert.equal(transport.connections.length, 2);
+  assert.equal(transport.connections[1].options.identity.hermesSessionId, 'second-window-chat');
+  assert.equal(prepared.ok, true, JSON.stringify(prepared));
+  assert.equal(prepared.state, 'ready');
+  assert.equal(prepared.leaseOwned, true, 'the attached tab stays attached across the move');
+});
+
+test('a turn from the chat Hermes Control already serves, or with no chat named, does not reconnect', async () => {
+  const { worker, transport } = await controlledWorker();
+  for (const sessionId of ['turn-context-session', '', undefined]) {
+    const prepared = await worker.handleMessage({
+      type: CONTROLLER_WORKER_MESSAGES.prepareTurn,
+      tabId: 41,
+      frameId: 0,
+      expectedUrl: 'https://shop.example.test/cart',
+      ...(sessionId === undefined ? {} : { sessionId }),
+    }, extensionSender());
+    assert.equal(prepared.state, 'ready', String(sessionId));
+  }
+  assert.equal(transport.connections.length, 1);
+});
+
+test('a turn from another chat never takes Hermes Control away from a command still running', async () => {
+  const held = deferredGate();
+  const adapter = pageAdapter();
+  const execute = adapter.execute.bind(adapter);
+  adapter.execute = async (action, args, context) => {
+    if (action === 'browser_scroll') await held.promise;
+    return execute(action, args, context);
+  };
+  const { worker, transport } = await controlledWorker({ adapter });
+  const scope = transport.connections[0].options.identity;
+  void transport.connections[0].emit({
+    method: 'browser.controller.command',
+    params: {
+      command_id: 'running-scroll', action: 'browser_scroll', tab_id: 41, frame_id: 0,
+      session_id: scope.hermesSessionId, arguments: { direction: 'down' },
+    },
+  });
+  await settle();
+
+  const prepared = await worker.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.prepareTurn,
+    tabId: 41,
+    frameId: 0,
+    expectedUrl: 'https://shop.example.test/cart',
+    sessionId: 'second-window-chat',
+  }, extensionSender());
+  held.resolve();
+
+  assert.equal(transport.connections.length, 1, 'the running chat keeps its controller');
+  assert.equal(prepared.ok, false);
+  assert.equal(prepared.availability, 'unavailable');
+  assert.equal(prepared.reason, 'controller_busy');
+});
+
+function deferredGate() {
+  let resolve;
+  const promise = new Promise((resolvePromise) => { resolve = resolvePromise; });
+  return { promise, resolve };
+}
+
 test('the control snapshot is redacted and bounded like every other envelope field', () => {
   const secret = ['sk', 'proj', 'abcdefghijklmnopqrstuvwxyz0123456789ABCD'].join('-');
   const envelope = buildBrowserTurnEnvelope({
