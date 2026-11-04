@@ -7,6 +7,8 @@ import {
   renameSavedConnection,
   savedConnectionStorageKey,
   selectSavedConnection,
+  savedConnectionsBase,
+  withSavedConnectionsLock,
 } from '../extension/lib/saved-connections.mjs';
 import { createRevisionGate } from '../extension/lib/context-scope-transition.mjs';
 import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
@@ -299,4 +301,59 @@ test('deleting a connection removes its stored records and does not save its dep
     else delete globalThis.sessionStorage;
     h.close();
   }
+});
+
+async function openPanel(settings, shareWith, prompt = () => 'Panel name') {
+  const h = await createSettingsSaveHarness({ settings });
+  if (shareWith) h.scope.browserApi = shareWith.scope.browserApi;
+  else h.store.hermesBrowserSettings = structuredClone(settings);
+  Object.assign(h.scope, {
+    savedConnectionBusy: false, sending: false, savedConnectionReloading: false,
+    scopeRevision: createRevisionGate(), restoringComposerDraft: false, composerDraftSaveTimer: 0, attachments: [],
+    renderSavedConnections: () => {}, showOperationToast: () => {}, stopConnectionProbeLoop: () => {},
+    persistCurrentComposerDraft: () => {},
+    window: { prompt, confirm: () => true, location: { reload: () => {} } },
+  });
+  return h;
+}
+
+test('overlapping panel Add and Rename cannot lose a saved connection', async () => {
+  const first = await openPanel(rememberSavedConnection(local), null, () => 'Added');
+  const second = await openPanel(rememberSavedConnection(local), first, () => 'Renamed');
+  try {
+    await Promise.all([first.fn('updateSavedConnection')('add'), second.fn('updateSavedConnection')('rename')]);
+    const stored = first.store.hermesBrowserSettings;
+    assert.equal(stored.savedConnections.length, 2, 'the added connection is still saved');
+    assert.ok(stored.savedConnections.some((entry) => entry.name === 'Added'));
+    assert.ok(stored.savedConnections.some((entry) => entry.id === stored.activeSavedConnectionId), 'the active ID names a saved connection');
+  } finally { first.close(); second.close(); }
+});
+
+test('Save from a panel holding an old connection list keeps the connections other panels added', async () => {
+  const first = await openPanel(rememberSavedConnection(local), null);
+  try {
+    const base = rememberSavedConnection(local);
+    first.store.hermesBrowserSettings = { ...base, savedConnections: [...base.savedConnections, { id: 'added', name: 'Added', connection: {} }] };
+    await first.save();
+    assert.deepEqual(first.store.hermesBrowserSettings.savedConnections.map((entry) => entry.id), ['default', 'added']);
+  } finally { first.close(); }
+});
+
+test('saved connection changes queue behind each other, with or without cross-document locks', async () => {
+  const events = [];
+  const task = (name) => async () => { events.push(`${name}-start`); await Promise.resolve(); events.push(`${name}-end`); };
+  await Promise.all([withSavedConnectionsLock(task('a'), null), withSavedConnectionsLock(task('b'), null)]);
+  assert.deepEqual(events, ['a-start', 'a-end', 'b-start', 'b-end']);
+  const requested = [];
+  const locks = { request: (name, run) => { requested.push(name); return run(); } };
+  assert.equal(await withSavedConnectionsLock(async () => 'ran', locks), 'ran');
+  assert.deepEqual(requested, ['hermes-saved-connections']);
+});
+
+test('a stored record replaces the panel copy of the list and a changed active ID is refused', () => {
+  const stale = rememberSavedConnection(local);
+  const stored = addSavedConnection(stale, 'Work', 'work');
+  assert.equal(savedConnectionsBase(stale, { ...stored, activeSavedConnectionId: 'work' }, 'work').savedConnections.length, 2);
+  assert.throws(() => savedConnectionsBase(stale, stored, 'default'), /changed/);
+  assert.equal(savedConnectionsBase(stale, {}, 'default'), stale);
 });

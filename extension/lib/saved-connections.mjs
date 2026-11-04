@@ -136,3 +136,29 @@ export function savedConnectionRecordKeys(keys, id) {
   const suffix = `:connection:${id}`;
   return [...keys].filter((key) => typeof key === 'string' && key.endsWith(suffix));
 }
+
+// Every panel reads, changes and writes the one settings record, so each change to the
+// saved list runs one at a time across panels. Without cross-document locks the
+// queue still orders this document's own changes.
+const SAVED_CONNECTIONS_LOCK = 'hermes-saved-connections';
+let ownQueue = Promise.resolve();
+
+export function withSavedConnectionsLock(task, locks = globalThis.navigator?.locks) {
+  if (typeof locks?.request === 'function') return locks.request(SAVED_CONNECTIONS_LOCK, task);
+  const run = ownQueue.then(task);
+  ownQueue = run.catch(() => {});
+  return run;
+}
+
+// The stored list is the truth; a panel's copy can be older than another panel's write.
+export function withStoredSavedConnections(settings, stored) {
+  return Array.isArray(stored?.savedConnections)
+    ? { ...settings, savedConnections: stored.savedConnections }
+    : settings;
+}
+
+export function savedConnectionsBase(settings, stored, expectedId) {
+  const activeId = stored?.activeSavedConnectionId;
+  if (activeId && activeId !== expectedId) throw new Error('The active saved connection changed.');
+  return withStoredSavedConnections(settings, stored);
+}

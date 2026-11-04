@@ -416,7 +416,7 @@ test('Hey Hermes hands one exactly-once wake turn to the side panel through its 
 
 test('saving unrelated settings preserves an explicit browser-local wake preference', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const saveSettings = source.match(/async function saveSettingsFromForm\(\)[\s\S]*?\n\}/)?.[0] || '';
+  const saveSettings = source.match(/async function saveSettingsFromForm\([^)]*\)[\s\S]*?\n\}/)?.[0] || '';
   assert.match(saveSettings, /wakeWordPreferNative:\s*settings\.wakeWordPreferNative !== false/);
   assert.doesNotMatch(saveSettings, /wakeWordPreferNative:\s*true/);
 });

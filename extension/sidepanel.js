@@ -709,8 +709,11 @@ import {
   renameSavedConnection,
   savedConnectionRecordKeys,
   savedConnectionStorageKey,
+  savedConnectionsBase,
   selectSavedConnection,
   syncActiveSavedConnection,
+  withSavedConnectionsLock,
+  withStoredSavedConnections,
 } from './lib/saved-connections.mjs';
 import { assertCloudAgentTabStillMatches, resolveActiveCloudAgentTab } from './lib/cloud-agent-tab.mjs';
 import {
@@ -23462,17 +23465,22 @@ async function updateSavedConnection(action, id = settings.activeSavedConnection
   if (action === 'delete' && !window.confirm(t('connections.delete_confirm', { name: active.name }))) return;
   savedConnectionBusy = true;
   renderSavedConnections();
+  const expectedId = current.activeSavedConnectionId;
   try {
-    await saveSettingsFromForm();
-    let next;
-    if (action === 'add') next = addSavedConnection(settings, name, crypto.randomUUID());
-    else if (action === 'rename') next = renameSavedConnection(settings, settings.activeSavedConnectionId, name);
-    else if (action === 'delete') next = deleteSavedConnection(settings, settings.activeSavedConnectionId);
-    else next = selectSavedConnection(settings, id);
-    await browserApi.storage.local.set({ hermesBrowserSettings: next });
-    if (action === 'delete') await forgetSavedConnectionRecords(settings.activeSavedConnectionId);
-    if (next.activeSavedConnectionId !== settings.activeSavedConnectionId) reloadForSavedConnection(next);
-    else settings = next;
+    await withSavedConnectionsLock(async () => {
+      await saveSettingsFromForm({ lockHeld: true });
+      const stored = await browserApi.storage.local.get('hermesBrowserSettings');
+      const base = savedConnectionsBase(settings, stored.hermesBrowserSettings, expectedId);
+      let next;
+      if (action === 'add') next = addSavedConnection(base, name, crypto.randomUUID());
+      else if (action === 'rename') next = renameSavedConnection(base, expectedId, name);
+      else if (action === 'delete') next = deleteSavedConnection(base, expectedId);
+      else next = selectSavedConnection(base, id);
+      await browserApi.storage.local.set({ hermesBrowserSettings: next });
+      if (action === 'delete') await forgetSavedConnectionRecords(expectedId);
+      if (next.activeSavedConnectionId !== expectedId) reloadForSavedConnection(next);
+      else settings = next;
+    });
   } catch {
     showOperationToast({ kind: 'warn', title: t('connections.error') });
   } finally {
@@ -23551,7 +23559,7 @@ function assertSettingsFormValid() {
   if (rejected.length) throw new Error(t('settings.save.sources_invalid', { sources: rejected.join(', ') }));
 }
 
-async function saveSettingsFromForm() {
+async function saveSettingsFromForm({ lockHeld = false } = {}) {
   assertSettingsFormValid();
   const previousSettings = { ...settings };
   const selected = availableModels.find((model) => model.id === settings.model);
@@ -23693,25 +23701,29 @@ async function saveSettingsFromForm() {
   if (!settings.trustedDashboardOrigin) {
     trustedDashboardTabId = null;
   }
-  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-  const freshSettings = stored.hermesBrowserSettings || {};
-  if (freshSettings.activeSavedConnectionId && loadedSavedConnectionId
-    && freshSettings.activeSavedConnectionId !== loadedSavedConnectionId) {
-    reloadForSavedConnection(freshSettings);
-    throw new Error(t('connections.error'));
-  }
-  const panelSettings = { ...settings };
-  for (const webAppearanceKey of ['webTextZoomPercent', 'webFontProfile', 'webCustomFontFamily', 'webTextSize']) {
-    delete panelSettings[webAppearanceKey];
-  }
-  settings = withAppearancePreferenceUpdate(
-    { ...freshSettings, ...panelSettings },
-    'panel',
-    panelAppearancePreferences(),
-  );
-  applyAppearanceSettings();
-  settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  const writeSettingsRecord = async () => {
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
+    const freshSettings = stored.hermesBrowserSettings || {};
+    if (freshSettings.activeSavedConnectionId && loadedSavedConnectionId
+      && freshSettings.activeSavedConnectionId !== loadedSavedConnectionId) {
+      reloadForSavedConnection(freshSettings);
+      throw new Error(t('connections.error'));
+    }
+    const panelSettings = withStoredSavedConnections({ ...settings }, freshSettings);
+    for (const webAppearanceKey of ['webTextZoomPercent', 'webFontProfile', 'webCustomFontFamily', 'webTextSize']) {
+      delete panelSettings[webAppearanceKey];
+    }
+    settings = withAppearancePreferenceUpdate(
+      { ...freshSettings, ...panelSettings },
+      'panel',
+      panelAppearancePreferences(),
+    );
+    applyAppearanceSettings();
+    settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  };
+  if (lockHeld) await writeSettingsRecord();
+  else await withSavedConnectionsLock(writeSettingsRecord);
   await applyWebappCredentialPreference();
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
     || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
