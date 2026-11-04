@@ -2623,7 +2623,7 @@ const SITE_ADAPTER_API = Object.freeze({
   hermesGlobal.HermesSiteAdapters = SITE_ADAPTER_API;
 })(globalThis);
 
-/* extension/lib/inline-draft-policy.mjs · SHA-256 4c86774405ff5071 */
+/* extension/lib/inline-draft-policy.mjs · SHA-256 46184a3ce861c257 */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
 
@@ -3061,7 +3061,7 @@ function inlineResultBarPlacement(fieldRect = {}, circleRect = null, viewport = 
   let best = { top: safe, height: 0 };
   let cursor = safe;
   for (const rect of [...taken, { top: viewportHeight - safe + gap, bottom: Infinity }]) {
-    const end = rect.top - gap;
+    const end = Math.min(rect.top - gap, viewportHeight - safe);
     if (end - cursor > best.height) best = { top: cursor, height: end - cursor };
     cursor = Math.max(cursor, rect.bottom + gap);
   }

@@ -503,3 +503,14 @@ test('the result bar never covers a control when the clamped position would: it 
   assert.ok(bar.top >= 8 && bar.top + height <= 550 - 8, 'inside the window');
   assert.ok(height < 132, 'neither side fits the full bar, so it is a smaller panel');
 });
+
+test('the result bar never opens in a gap that lies below the window, however far down the form goes', () => {
+  const viewport = { width: 1280, height: 550 };
+  const field = { left: 100, top: 100, right: 700, bottom: 400, width: 600, height: 300 };
+  const nearControl = { left: 110, top: 600, right: 178, bottom: 632, width: 68, height: 32 };
+  const farControl = { left: 110, top: 1500, right: 178, bottom: 1532, width: 68, height: 32 };
+  const bar = inlineDraft.inlineResultBarPlacement(field, null, viewport, { barHeight: 220, obstacles: [nearControl, farControl] });
+  const height = bar.maxHeight ?? 220;
+  assert.ok(bar.top >= 8 && bar.top + height <= 550 - 8, `the bar at ${bar.top}-${bar.top + height} leaves the window`);
+  assert.ok(height < 220, 'it is a smaller panel that scrolls');
+});

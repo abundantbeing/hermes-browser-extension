@@ -432,7 +432,7 @@ export function inlineResultBarPlacement(fieldRect = {}, circleRect = null, view
   let best = { top: safe, height: 0 };
   let cursor = safe;
   for (const rect of [...taken, { top: viewportHeight - safe + gap, bottom: Infinity }]) {
-    const end = rect.top - gap;
+    const end = Math.min(rect.top - gap, viewportHeight - safe);
     if (end - cursor > best.height) best = { top: cursor, height: end - cursor };
     cursor = Math.max(cursor, rect.bottom + gap);
   }
