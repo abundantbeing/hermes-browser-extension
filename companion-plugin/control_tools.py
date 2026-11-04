@@ -346,6 +346,15 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
         )
     scope = scopes[0]
     if broker.select(scope, action) is None:
+        offered = broker.offered_capabilities(scope)
+        if offered is not None:
+            names = sorted(TOOL_FOR_ACTION[name] for name in offered if name in TOOL_FOR_ACTION)
+            return _failure(
+                "browser_unavailable",
+                f"This browser's Hermes Control does not offer {tool}: the browser cannot do it (Firefox, for one, has no trusted "
+                f"clicks, typing or key presses). It does offer: {', '.join(names) or 'nothing'}. Use one of those, or ask the person "
+                f"to do this step themselves. Do not retry {tool}.",
+            )
         return _failure(
             "browser_unavailable",
             f"The browser for this session is offline or cannot run {tool}. Ask the person to check Hermes Control in the extension.",

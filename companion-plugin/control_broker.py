@@ -394,6 +394,11 @@ class ControlBroker:
         controller = self._live_controller(scope)
         return controller if controller is not None and capability in controller.scope.capabilities else None
 
+    def offered_capabilities(self, scope: ControllerScope) -> Optional[frozenset]:
+        """What the live controller for ``scope`` offers, or ``None`` when it is offline or absent."""
+        controller = self._live_controller(scope)
+        return None if controller is None else controller.scope.capabilities
+
     def is_owner(self, scope: ControllerScope, owner: Any) -> bool:
         """Whether ``owner`` is the exact live transport for ``scope`` (capability-independent)."""
         controller = self._live_controller(scope)
