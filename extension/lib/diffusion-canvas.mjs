@@ -474,9 +474,14 @@ export function createDiffusionCanvas(canvas, { aspectRatio = 'landscape', seed 
   };
 
   // A canvas that left the page pauses: a chat the user leaves and returns to attaches the same
-  // row again, and its card picks up where it was. One that stays away ten minutes is stopped.
+  // row again, and its card picks up where it was. A reveal under way finishes at once, so a turn
+  // never waits on a card nobody sees. One that stays away ten minutes is stopped.
   const pauseWhileDetached = () => {
     animationFrame = 0;
+    if (revealImage) {
+      revealStartedAt = -Infinity;
+      render(globalThis.performance?.now?.() || Date.now());
+    }
     const since = Date.now();
     const check = () => {
       wake = 0;
@@ -517,7 +522,7 @@ export function createDiffusionCanvas(canvas, { aspectRatio = 'landscape', seed 
     reveal(image) {
       if (disposed || !image) return Promise.resolve({ variant, cancelled: true });
       revealImage = image;
-      revealStartedAt = globalThis.performance?.now?.() || Date.now();
+      revealStartedAt = attached && !canvas.isConnected ? -Infinity : (globalThis.performance?.now?.() || Date.now());
       revealProgress = 0;
       revealOrder = null;
       canvas.dataset.revealState = 'revealing';
@@ -526,7 +531,7 @@ export function createDiffusionCanvas(canvas, { aspectRatio = 'landscape', seed 
           canvas.dataset.revealState = 'complete';
           resolve(result);
         };
-        render(revealStartedAt);
+        render(globalThis.performance?.now?.() || Date.now());
       });
     },
     start() {

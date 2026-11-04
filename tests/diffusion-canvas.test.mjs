@@ -242,7 +242,7 @@ test('a canvas whose card comes back picks up again, and one that stays away is 
   canvas.isConnected = true;
   t.mock.timers.tick(1_000);
   assert.equal(scheduled(), 1, 'the loop resumes for the returned card');
-  assert.equal(outcome, null, 'its reveal was not cancelled');
+  assert.equal(outcome?.cancelled, undefined, 'its reveal finished instead of being cancelled');
   // Gone for good: after ten minutes away it stops and its reveal reports cancelled.
   canvas.isConnected = false;
   step(1048);
@@ -267,4 +267,41 @@ test('settle draws a reveal still under way finished, once, and stops', async ()
   assert.equal(scheduled(), 0, 'nothing runs after settle');
   const result = await revealed;
   assert.notEqual(result.cancelled, true, 'the reveal finished rather than being cancelled');
+}));
+
+test('a reveal whose card has left the page finishes at once, so a finished turn never waits for it', async () => withManualFrames(async ({ step, scheduled }) => {
+  const { canvas, drawn } = fakeCanvas();
+  const image = { naturalWidth: 64, naturalHeight: 36, width: 64, height: 36 };
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'away-mid-reveal' });
+  diffusion.start();
+  step(1016);
+  const revealed = diffusion.reveal(image);
+  step(1032);
+  assert.notEqual(canvas.dataset.revealState, 'complete', 'the reveal is still under way on the page');
+  canvas.isConnected = false;
+  step(1048);
+  const result = await Promise.race([revealed, new Promise((resolve) => setTimeout(() => resolve('still waiting'), 50))]);
+  assert.notEqual(result, 'still waiting', 'the reveal settles while the card is away');
+  assert.notEqual(result.cancelled, true, 'finished, not cancelled: the card keeps its picture');
+  assert.equal(canvas.dataset.revealState, 'complete');
+  assert.ok(drawn.includes(image), 'the finished picture is on the canvas');
+  assert.equal(scheduled(), 0, 'no frame runs while the card is away');
+  canvas.isConnected = true;
+  diffusion.stop();
+}));
+
+test('a picture that arrives after its card left the page is drawn finished at once', async () => withManualFrames(async ({ step }) => {
+  const { canvas, drawn } = fakeCanvas();
+  const image = { naturalWidth: 64, naturalHeight: 36, width: 64, height: 36 };
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'arrives-away' });
+  diffusion.start();
+  step(1016);
+  canvas.isConnected = false;
+  step(1032);
+  const result = await Promise.race([diffusion.reveal(image), new Promise((resolve) => setTimeout(() => resolve('still waiting'), 50))]);
+  assert.notEqual(result, 'still waiting', 'the reveal settles while the card is away');
+  assert.notEqual(result.cancelled, true);
+  assert.ok(drawn.includes(image), 'the finished picture is on the canvas');
+  canvas.isConnected = true;
+  diffusion.stop();
 }));
