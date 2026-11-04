@@ -1,0 +1,138 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { parseHTML } from 'linkedom';
+import { buildMessageRail, setReadAloudState } from '../extension/lib/message-actions.mjs';
+import { createMessageThreadUi } from '../extension/lib/message-thread-ui.mjs';
+
+const documentFor = () => parseHTML('<!doctype html><html><body></body></html>').document;
+const TS = new Date(2026, 8, 30, 14, 42, 8).getTime();
+
+test('a finished assistant reply gets a speaker button after Copy', () => {
+  const rail = buildMessageRail({
+    document: documentFor(), role: 'assistant', ts: TS, locale: 'en-US',
+    canReadAloud: true, onCopy: () => true, onReadAloud: () => {},
+  });
+  assert.deepEqual(Array.from(rail.children).map((el) => el.className.split(' ').slice(0, 2).join(' ')), [
+    'message-time',
+    'message-action message-action-copy',
+    'message-action message-action-speak',
+  ]);
+  const speak = rail.querySelector('.message-action-speak');
+  assert.equal(speak.getAttribute('aria-label'), 'Read aloud');
+  assert.equal(speak.getAttribute('title'), 'Read aloud');
+  assert.equal(speak.getAttribute('aria-pressed'), 'false');
+  assert.equal(speak.getAttribute('type'), 'button');
+  assert.ok(speak.querySelector('svg.message-action-icon'));
+});
+
+test('no speaker button on a person\'s message, on a streaming reply, or without a handler', () => {
+  const document = documentFor();
+  const user = buildMessageRail({ document, role: 'user', ts: TS, canReadAloud: true, onReadAloud: () => {} });
+  assert.equal(user.querySelector('.message-action-speak'), null);
+  const streaming = buildMessageRail({ document, role: 'assistant', ts: TS, canReadAloud: false, onReadAloud: () => {} });
+  assert.equal(streaming.querySelector('.message-action-speak'), null);
+  const noHandler = buildMessageRail({ document, role: 'assistant', ts: TS, canReadAloud: true });
+  assert.equal(noHandler.querySelector('.message-action-speak'), null);
+});
+
+test('pressing the speaker calls back once', () => {
+  let calls = 0;
+  const rail = buildMessageRail({ document: documentFor(), role: 'assistant', ts: TS, canReadAloud: true, onReadAloud: () => { calls += 1; } });
+  rail.querySelector('.message-action-speak').click();
+  assert.equal(calls, 1);
+});
+
+test('while a reply is read its speaker is a pressed Stop control and its row is marked', () => {
+  const document = documentFor();
+  const row = document.createElement('div');
+  const rail = buildMessageRail({ document, role: 'assistant', ts: TS, canReadAloud: true, onReadAloud: () => {} });
+  row.append(rail);
+  const speak = rail.querySelector('.message-action-speak');
+  const idleIcon = speak.innerHTML;
+
+  setReadAloudState(rail, 'speaking', { translate: (text) => `[${text}]` });
+  assert.equal(speak.getAttribute('aria-pressed'), 'true');
+  assert.equal(speak.getAttribute('aria-label'), '[Stop reading aloud]');
+  assert.equal(speak.getAttribute('aria-busy'), null);
+  assert.ok(speak.classList.contains('is-reading'));
+  assert.ok(row.classList.contains('is-being-read'));
+  assert.notEqual(speak.innerHTML, idleIcon, 'the glyph becomes a stop square');
+
+  setReadAloudState(rail, 'loading');
+  assert.equal(speak.getAttribute('aria-pressed'), 'true');
+  assert.equal(speak.getAttribute('aria-busy'), 'true');
+  assert.ok(speak.classList.contains('is-loading'));
+
+  setReadAloudState(rail, 'idle');
+  assert.equal(speak.getAttribute('aria-pressed'), 'false');
+  assert.equal(speak.getAttribute('aria-busy'), null);
+  assert.equal(speak.getAttribute('aria-label'), 'Read aloud');
+  assert.equal(speak.classList.contains('is-reading'), false);
+  assert.equal(row.classList.contains('is-being-read'), false);
+  assert.equal(speak.innerHTML, idleIcon);
+});
+
+function threadFixture(options = {}) {
+  const { document, window } = parseHTML('<html><body><section id="messages"></section></body></html>');
+  const root = document.querySelector('#messages');
+  const controller = createMessageThreadUi({
+    root, document, window, ResizeObserver: null, requestFrame: (callback) => callback(),
+    locale: () => 'en-US', now: () => TS,
+    ...options,
+  });
+  const add = (record, extra = {}) => {
+    const row = document.createElement('div');
+    row.className = 'message-row';
+    const node = document.createElement('article');
+    node.className = `message ${record.role}`;
+    row.append(node);
+    controller.attach({ row, node, record, ...extra });
+    root.append(row);
+    return { row, node };
+  };
+  return { add, controller };
+}
+
+test('the thread asks the panel whether to offer the button, keeps it off while streaming and adds it when the reply ends', () => {
+  const asked = [];
+  const f = threadFixture({
+    canReadAloud: (record) => { asked.push(record); return true; },
+    onReadAloud: () => {},
+  });
+  const reply = { role: 'assistant', ts: TS };
+  const a = f.add(reply, { streaming: true });
+  assert.equal(a.row.querySelector('.message-action-speak'), null);
+  f.controller.setStreaming(a.row, false);
+  assert.ok(a.row.querySelector('.message-rail > .message-action-speak'));
+  assert.ok(asked.includes(reply));
+  const user = f.add({ role: 'user', ts: TS });
+  assert.equal(user.row.querySelector('.message-action-speak'), null);
+});
+
+test('a reply that is being read keeps its marked state when its rail is rebuilt, and refreshReadAloud updates states alone', () => {
+  const reading = new Set();
+  const f = threadFixture({
+    canReadAloud: () => true,
+    onReadAloud: () => {},
+    readAloudStateFor: (record) => (reading.has(record) ? 'speaking' : 'idle'),
+  });
+  const first = { role: 'assistant', ts: TS };
+  const second = { role: 'assistant', ts: TS };
+  const a = f.add(first);
+  const b = f.add(second);
+  reading.add(first);
+  const railBefore = a.row.querySelector('.message-rail');
+  f.controller.refreshReadAloud();
+  assert.equal(a.row.querySelector('.message-rail'), railBefore, 'the rail is not rebuilt');
+  assert.equal(a.row.querySelector('.message-action-speak').getAttribute('aria-pressed'), 'true');
+  assert.ok(a.row.classList.contains('is-being-read'));
+  assert.equal(b.row.classList.contains('is-being-read'), false);
+
+  f.controller.refreshActions();
+  assert.ok(a.row.classList.contains('is-being-read'), 'a rebuilt rail still marks the reply');
+  assert.equal(a.row.querySelector('.message-action-speak').getAttribute('aria-pressed'), 'true');
+
+  reading.clear();
+  f.controller.refreshReadAloud();
+  assert.equal(a.row.classList.contains('is-being-read'), false);
+});

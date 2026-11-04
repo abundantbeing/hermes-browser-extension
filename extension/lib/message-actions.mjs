@@ -11,6 +11,8 @@ const ICONS = {
   restore: ['M4 12a8 8 0 1 0 2.4-5.7', 'M4 4v5h5'],
   reply: ['M10 6L4 12l6 6', 'M4 12h10a6 6 0 0 1 6 6'],
   check: ['M5 12.5l4.5 4.5L19 7.5'],
+  speak: ['M4 9h3l4-3v12l-4-3H4z', 'M15 9v6', 'M18 7v10'],
+  stop: ['M7 7h10v10H7z'],
 };
 
 function icon(document, name) {
@@ -47,7 +49,8 @@ function actionButton(document, { kind, label, translate, onClick }) {
 export function buildMessageRail({
   document, role, ts = null, now = Date.now(), locale, translate = (s) => s,
   showTime = true, canEdit = false, canRestore = false,
-  replyLabel = '', durationLabel = '', onCopy, onEdit, onRestore, onReply,
+  replyLabel = '', durationLabel = '', canReadAloud = false, readAloudState = 'idle',
+  onCopy, onEdit, onRestore, onReply, onReadAloud,
 } = {}) {
   const rail = document.createElement('div');
   rail.className = 'message-rail';
@@ -122,7 +125,34 @@ export function buildMessageRail({
     }, RESET_MS);
   });
   rail.append(copy);
+
+  // Assistant replies only, and only once the reply is whole: the caller says so.
+  if (!isUser && canReadAloud && typeof onReadAloud === 'function') {
+    const speak = actionButton(document, { kind: 'speak', label: 'Read aloud', translate, onClick: onReadAloud });
+    rail.append(speak);
+    setReadAloudState(rail, readAloudState, { translate });
+  }
   return rail;
+}
+
+// The speaker button while its reply is read: a stop control that says so
+// (aria-pressed), with the row marked so the reply being read can be found.
+export function setReadAloudState(rail, state = 'idle', { translate = (s) => s } = {}) {
+  const button = rail?.querySelector?.('.message-action-speak');
+  if (!button) return;
+  const active = state === 'loading' || state === 'speaking';
+  const text = translate(active ? 'Stop reading aloud' : 'Read aloud');
+  button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  if (state === 'loading') button.setAttribute('aria-busy', 'true'); else button.removeAttribute('aria-busy');
+  button.setAttribute('aria-label', text);
+  button.setAttribute('title', text);
+  button.title = text;
+  button.classList.toggle('is-reading', active);
+  button.classList.toggle('is-loading', state === 'loading');
+  const glyph = button.querySelector('svg');
+  const document = button.ownerDocument;
+  if (glyph && document) glyph.replaceWith(icon(document, active ? 'stop' : 'speak'));
+  rail.parentElement?.classList?.toggle('is-being-read', active);
 }
 
 export function setRailCopyEnabled(rail, enabled) {
