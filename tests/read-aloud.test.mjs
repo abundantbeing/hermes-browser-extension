@@ -109,6 +109,12 @@ test('a line break always ends a chunk and CJK full stops split sentences', () =
   assert.deepEqual(splitForSpeech('今日は晴れです。明日は雨です。', { maxChars: 8 }), ['今日は晴れです。', '明日は雨です。']);
 });
 
+test('lines can share a piece when the speech service takes several paragraphs at once', () => {
+  assert.deepEqual(splitForSpeech('One.\nTwo.\nThree.', { maxChars: 20, packLines: true }), ['One.\nTwo.\nThree.']);
+  assert.deepEqual(splitForSpeech('One.\nTwo.\nThree.', { maxChars: 9, packLines: true }), ['One.\nTwo.', 'Three.']);
+  assert.deepEqual(splitForSpeech('One.\nTwo.', { maxChars: 20 }), ['One.', 'Two.']);
+});
+
 test('commas are used as the cut for a sentence that is too long', () => {
   const chunks = splitForSpeech('alpha beta gamma, delta epsilon zeta, eta theta iota', { maxChars: 25 });
   assert.deepEqual(chunks, ['alpha beta gamma,', 'delta epsilon zeta,', 'eta theta iota']);

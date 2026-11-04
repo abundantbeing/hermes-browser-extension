@@ -167,8 +167,12 @@ function sentencesOf(line) {
   return out.map((sentence) => sentence.trim()).filter(Boolean);
 }
 
-/** Cut text into pieces of at most maxChars, on line breaks and sentence ends where it can. */
-export function splitForSpeech(text, { maxChars = BROWSER_CHUNK_CHARS } = {}) {
+/**
+ * Cut text into pieces of at most maxChars, on line breaks and sentence ends where it can.
+ * A line break always ends a piece, unless packLines lets whole lines share one (a speech
+ * service takes a few paragraphs in one request; the browser's engine wants short pieces).
+ */
+export function splitForSpeech(text, { maxChars = BROWSER_CHUNK_CHARS, packLines = false } = {}) {
   const limit = Math.max(1, Number(maxChars) || BROWSER_CHUNK_CHARS);
   const chunks = [];
   for (const line of String(text || '').split(/\n+/)) {
@@ -191,7 +195,14 @@ export function splitForSpeech(text, { maxChars = BROWSER_CHUNK_CHARS } = {}) {
     }
     if (current) chunks.push(current);
   }
-  return chunks;
+  if (!packLines) return chunks;
+  const packed = [];
+  for (const chunk of chunks) {
+    const last = packed[packed.length - 1];
+    if (last !== undefined && codePoints(last).length + 1 + codePoints(chunk).length <= limit) packed[packed.length - 1] = `${last}\n${chunk}`;
+    else packed.push(chunk);
+  }
+  return packed;
 }
 
 // ---- Which voice ------------------------------------------------------------------
@@ -458,7 +469,7 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
 
   async function playThroughGateway(text, { token, signal, chunkChars, cancelled }) {
     const live = () => token === generation;
-    const chunks = splitForSpeech(text, { maxChars: chunkChars });
+    const chunks = splitForSpeech(text, { maxChars: chunkChars, packLines: true });
     const request = (index) => Promise.resolve()
       .then(() => gateway.synthesize(chunks[index], { signal }))
       .then((audio) => ({ audio }), (error) => ({ error }));
@@ -511,7 +522,7 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
             return { ok: true };
           }
           lastError = outcome.error;
-          const chunks = splitForSpeech(remaining, { maxChars: gatewayChunkChars });
+          const chunks = splitForSpeech(remaining, { maxChars: gatewayChunkChars, packLines: true });
           remaining = chunks.slice(outcome.failedAt).join('\n');
         } else if (route === READ_ALOUD_ROUTES.browser && browser) {
           const outcome = await playThroughBrowser(remaining, { token, chunkChars: browserChunkChars });
