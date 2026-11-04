@@ -81,7 +81,6 @@ import {
   safeTab,
   sanitizeGatewayDiagnosticText,
   shouldRequireModelLock,
-  shouldReuseImageGenerationActivity,
   shouldFallbackToWebSpeechForTranscription,
   shouldOpenVoiceDictationPageForSpeechError,
   shouldUseLocalDashboardAudioTranscription,
@@ -288,6 +287,8 @@ import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAG
 import { CORS_ORIGINS_SETTING, materializeSessionRoute, restSessionCreateSource, sessionRouteError, sessionRouteOriginRefusal } from './lib/session-materialization.mjs';
 import { createUserFileAttachment, createPageContextAttachment, appendUserFileAttachments, stageUserFiles, attachmentFileContext, attachmentSourceKey, rememberUserFileAttachments, restoreUserFileAttachments, openUserFileAttachment, downloadUserFileAttachment } from './lib/user-file-attachments.mjs';
 import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactDownloadSource, resolveArtifactFileSource } from './lib/media-source.mjs';
+import { createGatewayMediaReader } from './lib/media-data-cache.mjs';
+import { isFinishedImageStatus, pickImageGenerationCard, planImageReveals } from './lib/image-reveal-plan.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import { artifactActionPlan, artifactFailureNotice } from './lib/artifact-actions.mjs';
 import { revealArtifactOnComputer } from './lib/artifact-folder.mjs';
@@ -20544,20 +20545,24 @@ async function resolveDashboardMediaBaseUrl() {
   });
 }
 
-// Stored images live on the Hermes machine. A gateway that advertises media_api
-// serves them over the API credential this panel already holds; older gateways
-// fall through to the Desktop dashboard route below. A miss never throws.
-async function fetchGatewayMediaDataUrl(filePath = '') {
-  if (!gatewayCapabilities.mediaRead || !settings.apiKey || !filePath) return '';
-  try {
-    const response = await apiFetch(`/api/media?path=${encodeURIComponent(filePath)}`, { method: 'GET' });
-    if (!response.ok) return '';
-    const payload = await readJsonResponse(response);
-    const dataUrl = String(payload?.data_url || '').trim();
-    return dataUrl.startsWith('data:image/') ? dataUrl : '';
-  } catch {
-    return '';
-  }
+// Stored images live on the Hermes machine. The gateway that runs the turn serves them
+// over the API credential this panel holds, so it is tried whenever that credential is
+// set, whether or not the panel has confirmed the route yet. The Desktop dashboard is
+// only a fallback. Each picture is downloaded once per connection and path, and the
+// connection is everything apiFetch sends as: the gateway, the profile and the
+// credential. Another account or profile on the same gateway asks the gateway itself.
+const gatewayMediaReader = createGatewayMediaReader({
+  request: (filePath) => apiFetch(`/api/media?path=${encodeURIComponent(filePath)}`, { method: 'GET' }),
+  readJson: readJsonResponse,
+});
+
+function gatewayMediaIdentity() {
+  return JSON.stringify([settings.gatewayUrl || '', settings.activeProfile || '', settings.apiKey || '']);
+}
+
+function fetchGatewayMediaDataUrl(filePath = '') {
+  if (!settings.apiKey || !filePath) return Promise.resolve('');
+  return gatewayMediaReader.read(filePath, gatewayMediaIdentity());
 }
 
 async function hydrateSessionMedia(messageList = []) {
@@ -20577,7 +20582,7 @@ async function hydrateSessionMedia(messageList = []) {
     }
   }
   if (!pending.length) return;
-  if (gatewayCapabilities.mediaRead) {
+  if (settings.apiKey) {
     await Promise.all(pending.map(async (attachment) => {
       const dataUrl = await fetchGatewayMediaDataUrl(attachment.pathRef);
       if (dataUrl) attachment.dataUrl = dataUrl;
@@ -20603,11 +20608,19 @@ async function hydrateSessionMedia(messageList = []) {
   }));
 }
 
+// A loaded picture or player takes over the source the placeholder was painted from, so the
+// next paint of the same reply sees that block unchanged and keeps it. Without it, the patch
+// pours the placeholder's markup back into the picture's own element.
+function replaceHydratedMediaNode(node, replacement) {
+  if (node.hermesSourceHtml !== undefined) replacement.hermesSourceHtml = node.hermesSourceHtml;
+  node.replaceWith(replacement);
+}
+
 async function hydrateSessionMediaInElement(element) {
   if (!element?.querySelectorAll) return;
   const nodes = [...element.querySelectorAll('[data-session-media][data-media-path]')];
   if (!nodes.length) return;
-  if (gatewayCapabilities.mediaRead) {
+  if (settings.apiKey) {
     const doc = element.ownerDocument || document;
     await Promise.all(nodes.map(async (node) => {
       const filePath = node.getAttribute('data-media-path') || '';
@@ -20624,7 +20637,7 @@ async function hydrateSessionMediaInElement(element) {
       image.loading = 'lazy';
       image.dataset.slot = 'aui_generated-image';
       figure.append(image);
-      node.replaceWith(figure);
+      replaceHydratedMediaNode(node, figure);
       wrapGeneratedImagesForInspection(figure.parentElement || figure);
     }));
     if (!element.querySelectorAll('[data-session-media][data-media-path]').length) return;
@@ -20663,7 +20676,7 @@ async function hydrateSessionMediaInElement(element) {
       image.loading = 'lazy';
       image.dataset.slot = 'aui_generated-image';
       figure.append(image);
-      node.replaceWith(figure);
+      replaceHydratedMediaNode(node, figure);
       wrapGeneratedImagesForInspection(figure.parentElement || figure);
       return;
     }
@@ -20690,7 +20703,7 @@ async function hydrateSessionMediaInElement(element) {
         node.classList.add('unavailable');
         if (video.isConnected) video.replaceWith(node);
       }, { once: true });
-      node.replaceWith(video);
+      replaceHydratedMediaNode(node, video);
     }
   }));
 }
@@ -21564,23 +21577,71 @@ function openGeneratedImageLightbox(image) {
   close.focus();
 }
 
-function extractRenderableImageSource(content = '') {
-  const html = renderMarkdownSafe(content || '');
+// Every picture a reply shows inline, in reply order: its MEDIA tags and its Markdown
+// images, whether they render as a picture or as a stored file the panel loads.
+function extractRenderableImageSources(content = '') {
   const template = document.createElement('template');
-  template.innerHTML = html;
-  const image = template.content.querySelector('img[data-slot="aui_generated-image"]');
-  return String(image?.getAttribute('src') || '').trim();
+  template.innerHTML = renderMarkdownSafe(content || '');
+  return [...template.content.querySelectorAll('img[data-slot="aui_generated-image"], [data-session-media="image"][data-media-path]')]
+    .map((item) => String(item.getAttribute('src') || item.getAttribute('data-media-path') || '').trim())
+    .filter(Boolean);
 }
 
-function activeImageGenerationPlaceholder(node) {
-  return node?.querySelector('.message-tool-activity .image-gen-placeholder') || null;
+function imageGenerationPlaceholders(node) {
+  return [...(node?.querySelectorAll?.('.message-tool-activity .image-gen-placeholder') || [])];
 }
 
-// A local media path is not a browser URL. Hermes-managed paths are served by
-// the dashboard's /api/media route (as a data URL), which is how a finished
-// generation can dissolve into the real picture in the panel. Anything else
-// stays an honest filename chip: the route refuses to read outside the media
-// roots, and inventing a source would be a lie.
+function isRevealedImagePlaceholder(placeholder) {
+  return Boolean(placeholder?.querySelector('.generated-image-reveal-source'));
+}
+
+// A card that has a picture, or is loading one, names it in data-reveal-source.
+function isClaimedImagePlaceholder(placeholder) {
+  return Boolean(placeholder?.dataset?.revealSource);
+}
+
+// Drops the generations that have not revealed a picture and stops their animation.
+// A picture that already revealed stays in the bubble; with `settle` its animation stops
+// too, the picture drawn finished, as when the turn is torn down.
+function dropUnrevealedImagePlaceholders(node, { settle = false } = {}) {
+  for (const placeholder of imageGenerationPlaceholders(node)) {
+    if (isRevealedImagePlaceholder(placeholder)) {
+      if (settle) placeholder._settle?.();
+      continue;
+    }
+    placeholder._dispose?.();
+    placeholder.remove();
+  }
+  const slot = node?.querySelector?.('.message-tool-activity');
+  if (slot && !slot.childElementCount) slot.remove();
+}
+
+// Removes the cards whose picture the reply now shows inline, so no picture appears twice.
+// A card showing anything else, such as an alternate the reply does not name, stays.
+// One spelling per picture: a web address as the reply renders it, a stored file by its path.
+// A tool result and the reply's Markdown can spell the same address differently.
+function imageSourceKey(source = '') {
+  const text = String(source || '').trim();
+  return resolveImageSource(text) || text;
+}
+
+function removeImageCardsShownInline(node, sources = []) {
+  const slot = node?.querySelector?.('.message-tool-activity');
+  if (!slot) return;
+  const inline = new Set(sources.map(imageSourceKey));
+  for (const card of [...slot.children]) {
+    if (!inline.has(imageSourceKey(card.dataset?.revealSource))) continue;
+    card._dispose?.();
+    card.remove();
+  }
+  if (!slot.childElementCount) slot.remove();
+}
+
+// A local media path is not a browser URL. Hermes-managed paths are served as
+// data URLs by the gateway's /api/media route, or by the dashboard's copy of it,
+// which is how a finished generation dissolves into the real picture in the
+// panel. Anything else stays an honest filename chip: the routes refuse to read
+// outside the media roots, and inventing a source would be a lie.
 async function resolveGeneratedImageSource(source = '') {
   const text = String(source || '').trim();
   if (!text) return '';
@@ -21588,6 +21649,11 @@ async function resolveGeneratedImageSource(source = '') {
   if (direct) return direct;
   const plan = mediaSourcePlan(text);
   if (plan.transport !== 'dashboard-media') return '';
+  // The gateway that ran the turn serves the same file, so it is tried first.
+  // The Desktop dashboard is only the fallback: a generation must still reveal
+  // when the dashboard is not running.
+  const fromGateway = await fetchGatewayMediaDataUrl(text);
+  if (fromGateway) return fromGateway;
   try {
     const baseUrl = await resolveDashboardMediaBaseUrl();
     if (!baseUrl) return '';
@@ -21624,6 +21690,7 @@ function appendGeneratedImageCards(node, sources = []) {
     const figure = document.createElement('figure');
     figure.className = 'generated-image generated-image-card';
     figure.dataset.slot = 'aui_generated-image';
+    figure.dataset.revealSource = source;
     figure.setAttribute('role', 'status');
     figure.setAttribute('aria-label', name);
     const label = document.createElement('span');
@@ -21662,32 +21729,70 @@ function loadGeneratedImageForReveal(source = '') {
   });
 }
 
-async function revealGeneratedImage(placeholder, source = '') {
-  if (!placeholder?._reveal || !source) return false;
-  try {
-    const displayable = await resolveGeneratedImageSource(source);
-    if (!displayable) return false;
-    const image = await loadGeneratedImageForReveal(displayable);
-    const naturalRatio = image.naturalWidth / image.naturalHeight;
-    if (Number.isFinite(naturalRatio) && naturalRatio > 0) {
-      placeholder.style.aspectRatio = String(naturalRatio);
-      placeholder.style.setProperty('--image-gen-natural-ratio', String(naturalRatio));
-      placeholder.style.width = `min(100%, calc(var(--image-gen-max-preview-height) * ${naturalRatio}))`;
+// A card claims its picture the moment it starts loading it, so the turn end neither gives
+// it a second picture nor drops it while the picture is on its way. A picture that does not
+// load gives the claim back.
+function revealGeneratedImage(placeholder, source = '') {
+  if (!placeholder?._reveal || !source) return Promise.resolve(false);
+  if (isClaimedImagePlaceholder(placeholder)) return placeholder._revealing || Promise.resolve(isRevealedImagePlaceholder(placeholder));
+  placeholder.dataset.revealSource = source;
+  const revealing = (async () => {
+    try {
+      const displayable = await resolveGeneratedImageSource(source);
+      if (!displayable) throw new Error('Generated image has no displayable source.');
+      const image = await loadGeneratedImageForReveal(displayable);
+      const naturalRatio = image.naturalWidth / image.naturalHeight;
+      if (Number.isFinite(naturalRatio) && naturalRatio > 0) {
+        placeholder.style.aspectRatio = String(naturalRatio);
+        placeholder.style.setProperty('--image-gen-natural-ratio', String(naturalRatio));
+        placeholder.style.width = `min(100%, calc(var(--image-gen-max-preview-height) * ${naturalRatio}))`;
+      }
+      placeholder.appendChild(image);
+      placeholder.classList.add('generated-image-revealing');
+      // A canvas stopped before it drew the picture showed nothing: the card has no picture.
+      if ((await placeholder._reveal(image))?.cancelled) {
+        image.remove();
+        placeholder.classList.remove('generated-image-revealing');
+        throw new Error('Generated image reveal was cancelled.');
+      }
+      return true;
+    } catch {
+      if (!isRevealedImagePlaceholder(placeholder)) delete placeholder.dataset.revealSource;
+      return false;
+    } finally {
+      placeholder._revealing = null;
     }
-    placeholder.appendChild(image);
-    placeholder.classList.add('generated-image-revealing');
-    await placeholder._reveal(image);
-    return true;
-  } catch {
-    return false;
-  }
+  })();
+  placeholder._revealing = revealing;
+  return revealing;
 }
 
-async function revealGeneratedImageFromContent(node, content = '') {
-  const placeholder = activeImageGenerationPlaceholder(node);
-  const source = extractRenderableImageSource(content);
-  if (!placeholder || !source) return false;
-  return revealGeneratedImage(placeholder, source);
+// Turn end. The pictures the reply shows (MEDIA tags and Markdown images) and any the session
+// recovery found go into the waiting generations in the order they started, one after
+// another, each dissolving in as it arrives. A picture already in a card is not shown again.
+// The cards whose picture the reply shows inline then give way to the reply; every other
+// picture, such as one the recovery found that the reply does not name, keeps its card.
+async function settleTurnImages(node, { content = '', imageSources = [] } = {}) {
+  // Pictures already on their way to a card land first, so each card ends with one picture.
+  await Promise.all(imageGenerationPlaceholders(node).map((item) => item._revealing).filter(Boolean));
+  const slot = node?.querySelector?.('.message-tool-activity');
+  const shown = [...(slot?.children || [])].map((card) => imageSourceKey(card.dataset?.revealSource));
+  const waiting = imageGenerationPlaceholders(node).filter((item) => !isClaimedImagePlaceholder(item));
+  const plan = planImageReveals({
+    pendingCount: waiting.length,
+    inline: extractRenderableImageSources(content).map(imageSourceKey),
+    recovered: (Array.isArray(imageSources) ? imageSources : []).map(imageSourceKey),
+    shown,
+  });
+  // A picture its card could not reveal (its canvas had stopped) still gets a plain card, unless
+  // the reply shows it inline.
+  const inline = new Set(plan.replaced);
+  const unrevealed = [];
+  for (const { placeholderIndex, source } of plan.reveals) {
+    if (!(await revealGeneratedImage(waiting[placeholderIndex], source)) && !inline.has(source)) unrevealed.push(source);
+  }
+  if (plan.cards.length || unrevealed.length) appendGeneratedImageCards(node, [...unrevealed, ...plan.cards]);
+  removeImageCardsShownInline(node, plan.replaced);
 }
 
 function imageVisualSeed(activity = {}) {
@@ -21776,6 +21881,7 @@ function renderImageGenPlaceholder(activity = {}) {
   root._start = () => diffusion.start();
   root._reveal = (image) => diffusion.reveal(image);
   root._dispose = () => diffusion.stop();
+  root._settle = () => diffusion.settle();
   return root;
 }
 
@@ -21821,59 +21927,47 @@ function renderToolActivity(activity = {}) {
   return root;
 }
 
-function setToolActivity(node, activity = null) {
+function setToolActivity(node, activity = null, { settle = false } = {}) {
   if (!node) return;
-  let slot = node.querySelector('.message-tool-activity');
   if (!activity) {
-    slot?.querySelector('.image-gen-placeholder')?._dispose?.();
-    slot?.remove();
+    dropUnrevealedImagePlaceholders(node, { settle });
     return;
   }
-  if (!slot) {
-    slot = document.createElement('div');
-    slot.className = 'message-tool-activity';
-    const content = node.querySelector('.message-content');
-    if (content?.nextSibling) node.insertBefore(slot, content.nextSibling);
-    else node.appendChild(slot);
+  // Ordinary tool calls never belong in the bubble; only image generations do.
+  if (activity.history || !/image_generate/i.test(activity.rawName || '')) return;
+  // Each generation keeps its own placeholder, found by its call id. A new start never
+  // disposes another generation's card, and a finish updates only its own card. An event
+  // without a call id updates the newest generation still waiting for its picture.
+  const key = String(activity.activityId || '').trim();
+  const completedSources = rawGeneratedImageCandidatesFromResult(activity.result);
+  const cards = imageGenerationPlaceholders(node);
+  let placeholder = cards[pickImageGenerationCard(cards.map((item) => ({
+    key: item.dataset.activityKey || '',
+    status: item.dataset.toolStatus || '',
+    claimed: isClaimedImagePlaceholder(item),
+  })), activity)] || null;
+  if (!placeholder) {
+    // A finish for a generation this panel never saw start has nothing to show.
+    if (isFinishedImageStatus(activity.status) && !completedSources.length) return;
+    let slot = node.querySelector('.message-tool-activity');
+    if (!slot) {
+      slot = document.createElement('div');
+      slot.className = 'message-tool-activity';
+      const content = node.querySelector('.message-content');
+      if (content?.nextSibling) node.insertBefore(slot, content.nextSibling);
+      else node.appendChild(slot);
+    }
+    placeholder = renderImageGenPlaceholder({ ...activity, visualSeed: imageVisualSeed(activity) });
+    placeholder.dataset.activityKey = key;
+    slot.appendChild(placeholder);
+    placeholder._start?.();
+    // Until the turn ends, the reply's own copy of these pictures stays out of sight.
+    node.classList.add('image-cards-pending');
   }
-
-  const existingImage = slot.querySelector('.image-gen-placeholder');
-  const isImageGeneration = !activity.history && /image_generate/i.test(activity.rawName || '');
-  const previousImageActivity = {
-    rawName: slot.dataset.imageActivityName || '',
-    activityId: slot.dataset.imageActivityId || '',
-    status: slot.dataset.imageActivityStatus || '',
-  };
-  if (isImageGeneration && existingImage && shouldReuseImageGenerationActivity(previousImageActivity, activity)) {
-    slot.dataset.imageActivityId = activity.activityId || previousImageActivity.activityId;
-    slot.dataset.imageActivityStatus = activity.status || 'progress';
-    existingImage.dataset.toolStatus = activity.status || 'progress';
-    const completedSources = rawGeneratedImageCandidatesFromResult(activity.result);
-    if (completedSources.length) void revealGeneratedImages(node, existingImage, completedSources);
-    return;
+  placeholder.dataset.toolStatus = activity.status || 'progress';
+  if (completedSources.length && !isClaimedImagePlaceholder(placeholder)) {
+    void revealGeneratedImages(node, placeholder, completedSources);
   }
-  if (existingImage && !isImageGeneration) {
-    return;
-  }
-
-  let nextActivity = activity;
-  if (isImageGeneration) {
-    nextActivity = { ...activity, visualSeed: imageVisualSeed(activity) };
-    slot.dataset.imageActivityName = activity.rawName || 'image_generate';
-    slot.dataset.imageActivityId = activity.activityId || '';
-    slot.dataset.imageActivityStatus = activity.status || 'progress';
-  } else {
-    delete slot.dataset.imageActivityName;
-    delete slot.dataset.imageActivityId;
-    delete slot.dataset.imageActivityStatus;
-  }
-
-  existingImage?._dispose?.();
-  const toolActivity = renderToolActivity(nextActivity);
-  slot.replaceChildren(toolActivity);
-  toolActivity._start?.();
-  const completedSources = isImageGeneration ? rawGeneratedImageCandidatesFromResult(activity.result) : [];
-  if (completedSources.length) void revealGeneratedImages(node, toolActivity, completedSources);
   scrollMessageStreamToBottom();
 }
 
@@ -22612,12 +22706,13 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
   }
   let pending = '';
   let activity = null;
+  // Generations this turn started or finished, by call id, so a rebind puts all of them back.
+  const imageActivities = new Map();
   let calls = [];
   let toolHost = null;
   let toolScrollTop = 0;
   let running = true;
   let frame = 0;
-  let revealPromise = null;
   let reasoning = emptyTurnReasoning();
   let reasoningFrame = 0;
   // Ticks the turn's elapsed time beside the tool count while tools are shown.
@@ -22644,18 +22739,14 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
       cancelAnimationFrame(frame);
       frame = 0;
     }
-    const existingImage = activeImageGenerationPlaceholder(node);
-    const imageSource = extractRenderableImageSource(pending);
-    const recoveryImageSource = imageSource || imageSources[0] || '';
-    if (imageSources.length > 1) appendGeneratedImageCards(node, imageSources.slice(1));
-    if (existingImage && recoveryImageSource) {
-      revealPromise ||= imageSource
-        ? revealGeneratedImageFromContent(node, pending)
-        : revealGeneratedImage(existingImage, recoveryImageSource);
-      await revealPromise;
-    }
-    const renderedRecoveredImage = Boolean(existingImage?.querySelector('.generated-image-reveal-source'));
-    if (!renderedRecoveredImage || imageSource) setToolActivity(node, null);
+    // The whole reply shows while its cards reveal (its pictures wait), not the text the
+    // pacer had reached. Every picture the turn names goes into its generation, then the
+    // reply takes over.
+    if (node.classList.contains('image-cards-pending')) setMessageContent(node, pending);
+    await settleTurnImages(node, { content: pending, imageSources });
+    // Drops the generations that never produced a picture; revealed pictures stay.
+    setToolActivity(node, null);
+    node.classList.remove('image-cards-pending');
     node.hermesStreaming = false;
     setMessageContent(node, pending);
     const row = node.closest('.message-row');
@@ -22743,15 +22834,23 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     reasoning = next;
     if (!reasoningFrame) reasoningFrame = requestAnimationFrame(paintReasoning);
   }
+  function rememberImageActivity(tool) {
+    const key = String(tool?.activityId || '').trim();
+    if (!key) return;
+    imageActivities.set(key, { ...(imageActivities.get(key) || {}), ...tool });
+  }
   function updateTool(tool = null) {
     activity = tool;
     // A new tool starts a new paragraph of reasoning.
     if (tool && !/^(completed|failed|done|error)$/i.test(String(tool.status || ''))) reasoning = reduceTurnReasoning(reasoning, { kind: 'boundary' });
     if (tool) calls = mergeToolCallActivity(calls, tool);
     renderCalls();
-    // Keep the generated-image preview, but ordinary tool calls belong in
-    // the disclosure outside the assistant bubble.
-    setToolActivity(node, /image_generate/i.test(tool?.rawName || '') ? tool : null);
+    // Only a generated picture keeps a place in the bubble. Ordinary tool calls belong in the
+    // disclosure outside it and must not disturb the pictures already waiting there.
+    if (/image_generate/i.test(tool?.rawName || '')) {
+      rememberImageActivity(tool);
+      setToolActivity(node, tool);
+    }
   }
   function rebind(nextNode) {
     if (node !== nextNode) {
@@ -22765,7 +22864,8 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     paintStream();
     renderCalls();
     paintReasoning();
-    setToolActivity(node, /image_generate/i.test(activity?.rawName || '') ? activity : null);
+    // Put every generation of this turn back on the new bubble, not only the latest.
+    for (const tool of imageActivities.values()) setToolActivity(node, tool);
   }
   function dispose() {
     // Terminal error paths never flush; stop the diffusion canvas and drop the
@@ -22783,7 +22883,9 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
       frame = 0;
       if (pending) paintStream();
     }
-    setToolActivity(node, null);
+    // A picture that already revealed stays, drawn finished, with its animation stopped.
+    setToolActivity(node, null, { settle: true });
+    node.classList.remove('image-cards-pending');
   }
   return {
     get node() { return node; },
