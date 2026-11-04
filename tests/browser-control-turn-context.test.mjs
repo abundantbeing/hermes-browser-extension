@@ -628,6 +628,45 @@ test('a change of gateway still clears the stops on tabs, since the tabs belong 
   assert.deepEqual(worker.status().pausedLeases, {});
 });
 
+async function movedToSecondChat(options = {}) {
+  const made = await controlledWorker(options);
+  const prepared = await made.worker.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.prepareTurn,
+    tabId: 41,
+    frameId: 0,
+    expectedUrl: 'https://shop.example.test/cart',
+    sessionId: 'second-window-chat',
+  }, extensionSender());
+  assert.equal(prepared.state, 'ready', JSON.stringify(prepared));
+  assert.equal(made.transport.connections.length, 2);
+  return made;
+}
+
+test('a settings write that does not name another chat leaves Hermes Control on the chat that moved it', async () => {
+  const { worker, transport } = await movedToSecondChat();
+  // Another open panel saves an unrelated setting and writes the chat it still shows.
+  await worker.syncSettings(settings({ responseStyle: 'brief' }));
+  assert.equal(transport.connections.length, 2, 'no reconnect back to the panel chat');
+
+  // A chat the person opens in a panel is still followed.
+  await worker.syncSettings(settings({ sessionId: 'opened-in-panel' }));
+  assert.equal(transport.connections.length, 3);
+  assert.equal(transport.connections[2].options.identity.hermesSessionId, 'opened-in-panel');
+});
+
+test('Hermes Control never saves the chat that moved it over the chat the panel shows', async () => {
+  const { worker, storage } = await movedToSecondChat();
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
+  assert.equal(storage.state.hermesBrowserSettings.browserControlPaused, true);
+  assert.equal(storage.state.hermesBrowserSettings.sessionId, 'turn-context-session');
+});
+
+test('a restarted worker connects for the chat that moved Hermes Control, not the one the panel saved', async () => {
+  const { storage } = await movedToSecondChat();
+  const restarted = await controlledWorker({ storage, acquire: false });
+  assert.equal(restarted.transport.connections[0].options.identity.hermesSessionId, 'second-window-chat');
+});
+
 function deferredGate() {
   let resolve;
   const promise = new Promise((resolvePromise) => { resolve = resolvePromise; });
