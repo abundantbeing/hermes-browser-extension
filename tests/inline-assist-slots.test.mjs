@@ -23,6 +23,7 @@ const SITES = [
   ['linkedin-share.html', 'https://www.linkedin.com/feed/'],
   ['x-grok.html', 'https://x.com/i/grok'],
   ['x-dm.html', 'https://x.com/i/chat/123-456'],
+  ['x-dm-drawer.html', 'https://x.com/home'],
   ['youtube.html', 'https://www.youtube.com/watch?v=abc'],
   ['gmail.html', 'https://mail.google.com/mail/u/0/#inbox?compose=new'],
   ['reddit.html', 'https://www.reddit.com/r/test/comments/1/x/'],
@@ -299,6 +300,15 @@ test('an X direct message: just before the voice button, as in any chat composer
   }
 });
 
+test('an X direct message in the messages drawer: before the voice button, level with its icon', async () => {
+  const launcher = await focusedLauncher(boot('x-dm-drawer.html', 'https://x.com/home'));
+  assert.equal(launcher.dataset.placement, 'before');
+  // The voice button's box is 737-774 (middle 755.5) but its icon is 753-765 (middle 759): the circle's
+  // middle goes on the icon's.
+  assert.equal(launcher.style.top, '747px');
+  assert.equal(launcher.style.left, '1156px');
+});
+
 test('X draws its toolbar a moment after focus: the circle goes to its spot then, before any typing', async () => {
   const env = boot('x-reply-deep.html', 'https://x.com/someone/status/1');
   const toolbar = env.w.document.querySelector('[data-testid="toolBar"]');
@@ -366,5 +376,19 @@ for (const [name, url] of [
       return box.width > 0 && left < box.right && left + size > box.left && top < box.bottom && top + size > box.top;
     });
     assert.deepEqual(covered.map((control) => control.getAttribute('aria-label') || control.textContent.trim() || control.tagName), [], `${name}: covered`);
+  });
+}
+
+// Hard rule: beside a control, the circle is level with it. Its middle is on the middle of the control's
+// icon, which is what the eye lines up with, or of the control's box when it has no icon.
+for (const [name, url] of [...SITES, ['x-reply-modal.html', 'https://x.com/compose/post']]) {
+  test(`${name}: beside a control, the circle is level with it`, async () => {
+    const launcher = await focusedLauncher(boot(name, url));
+    if (!['before', 'after'].includes(launcher.dataset.placement)) return;
+    const control = launcher.ownerDocument.querySelector('[data-expect-slot]');
+    const box = (control.querySelector('svg, img') || control).getBoundingClientRect();
+    const size = launcher.dataset.size === 'small' ? 20 : 24;
+    const offset = parseFloat(launcher.style.top) + size / 2 - (box.top + box.height / 2);
+    assert.ok(Math.abs(offset) <= 0.5, `${name}: the circle's middle is ${offset}px off the control's`);
   });
 }

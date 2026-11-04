@@ -447,7 +447,11 @@ export function inlineSlotPlacement(slot = {}, viewport = {}, options = {}) {
   if (!control || !(Number(control.width) > 0) || !(Number(control.height) > 0)) return null;
   const gap = Math.max(0, Number(slot.gap ?? 12));
   const row = slot.rowRect && Number(slot.rowRect.height) > 0 ? slot.rowRect : control;
-  const centredTop = row.top + ((row.height - size) / 2);
+  // Beside a control the circle is level with what the eye lines up with: the control's icon, whose middle
+  // can sit off its box's (X's voice button in the messages drawer).
+  const beside = slot.strategy === 'before' || slot.strategy === 'after';
+  const level = beside && slot.levelRect && Number(slot.levelRect.height) > 0 ? slot.levelRect : row;
+  const centredTop = level.top + ((level.height - size) / 2);
   let left;
   let top = centredTop;
   if (slot.strategy === 'after') left = control.right + gap;

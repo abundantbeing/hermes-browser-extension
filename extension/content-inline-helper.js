@@ -905,6 +905,13 @@
       const box = element?.isConnected ? element.getBoundingClientRect() : null;
       return box && box.width > 0 && box.height > 0 ? box : null;
     };
+    const iconRect = (element) => {
+      for (const icon of element?.querySelectorAll?.('svg, img') || []) {
+        const box = visibleRect(icon);
+        if (box) return box;
+      }
+      return null;
+    };
     for (const slot of slots || []) {
       if (!slot?.element?.isConnected) continue;
       const size = Number(slot.size) || 24;
@@ -913,6 +920,7 @@
         strategy: slot.strategy,
         rect: visibleRect(slot.element),
         rowRect: visibleRect(slot.rowElement),
+        levelRect: iconRect(slot.element),
         gap: slot.gap,
         minGapBelow: slot.minGapBelow,
       }, viewport, { size, targetRect: slot.overField ? null : targetRect, obstacleRects: [...obstacleRects, ...slotObstacles] });

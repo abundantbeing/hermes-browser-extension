@@ -110,6 +110,12 @@ test('ChatGPT: 12px before the dictate button', () => {
   assert.deepEqual(inlineSlotPlacement({ strategy: 'before', rect: mic, gap: 12 }, VIEWPORT, { size: 24, obstacleRects: [] }), { left: 864, top: 706, strategy: 'before' });
 });
 
+test('beside a control whose box reaches past its icon: level with the icon, not the box', () => {
+  const voice = rect(1188, 737, 30, 37);
+  const icon = rect(1197, 753, 12, 12);
+  assert.deepEqual(inlineSlotPlacement({ strategy: 'before', rect: voice, levelRect: icon, gap: 8 }, VIEWPORT, { size: 24, obstacleRects: [] }), { left: 1156, top: 747, strategy: 'before' });
+});
+
 test('GitHub: at the front of the toolbar', () => {
   const toolbar = rect(600, 120, 220, 32);
   assert.deepEqual(inlineSlotPlacement({ strategy: 'before', rect: toolbar, gap: 8 }, VIEWPORT, { size: 24, obstacleRects: [] }), { left: 568, top: 124, strategy: 'before' });
