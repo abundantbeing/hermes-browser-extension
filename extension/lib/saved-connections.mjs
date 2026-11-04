@@ -129,3 +129,10 @@ export function savedConnectionStorageKey(settings, key) {
   const id = settings.activeSavedConnectionId;
   return id && id !== 'default' ? `${key}:connection:${id}` : key;
 }
+
+// Every record kept per connection carries its key suffix. The first connection
+// keeps its original, unsuffixed keys.
+export function savedConnectionRecordKeys(keys, id) {
+  const suffix = `:connection:${id}`;
+  return [...keys].filter((key) => typeof key === 'string' && key.endsWith(suffix));
+}

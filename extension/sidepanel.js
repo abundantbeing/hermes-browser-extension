@@ -707,6 +707,7 @@ import {
   deleteSavedConnection,
   rememberSavedConnection,
   renameSavedConnection,
+  savedConnectionRecordKeys,
   savedConnectionStorageKey,
   selectSavedConnection,
   syncActiveSavedConnection,
@@ -23410,10 +23411,25 @@ function renderSavedConnections() {
   els.savedConnectionDelete.disabled = savedConnectionBusy || current.savedConnections.length < 2;
 }
 
+function forgetSavedConnectionSessionRecords(id) {
+  const storage = globalThis.sessionStorage;
+  try {
+    const keys = Array.from({ length: storage?.length || 0 }, (_, index) => storage.key(index));
+    for (const key of savedConnectionRecordKeys(keys, id)) storage.removeItem(key);
+  } catch { /* optional */ }
+}
+
+async function forgetSavedConnectionRecords(id) {
+  const stored = await browserApi.storage.local.get(null);
+  await browserApi.storage.local.remove(savedConnectionRecordKeys(Object.keys(stored), id));
+  forgetSavedConnectionSessionRecords(id);
+}
+
 function reloadForSavedConnection(next) {
   if (savedConnectionReloading) return;
   savedConnectionReloading = true;
-  persistCurrentComposerDraft({ immediate: true });
+  if (next.savedConnections?.some((entry) => entry.id === loadedSavedConnectionId)) persistCurrentComposerDraft({ immediate: true });
+  else forgetSavedConnectionSessionRecords(loadedSavedConnectionId);
   connectionController.cancel('saved connection switched');
   scopeRevision.invalidate();
   stopConnectionProbeLoop();
@@ -23454,6 +23470,7 @@ async function updateSavedConnection(action, id = settings.activeSavedConnection
     else if (action === 'delete') next = deleteSavedConnection(settings, settings.activeSavedConnectionId);
     else next = selectSavedConnection(settings, id);
     await browserApi.storage.local.set({ hermesBrowserSettings: next });
+    if (action === 'delete') await forgetSavedConnectionRecords(settings.activeSavedConnectionId);
     if (next.activeSavedConnectionId !== settings.activeSavedConnectionId) reloadForSavedConnection(next);
     else settings = next;
   } catch {

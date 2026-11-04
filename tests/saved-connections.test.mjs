@@ -254,3 +254,49 @@ test('every open panel starts its own fresh chat after a switch, and later panel
     h.close();
   }
 });
+
+test('deleting a connection removes its stored records and does not save its departing draft', async () => {
+  const h = await createSettingsSaveHarness({
+    settings: twoConnections(),
+    storage: {
+      'hermesBrowserMessages:connection:work': [{ role: 'user', content: 'work chat' }],
+      'hermesBrowserSessionBinding:tab:5:connection:work': { sessionId: 'work-session' },
+      'hermesBrowserMessages:connection:other': [{ role: 'user', content: 'other chat' }],
+      hermesBrowserMessages: [{ role: 'user', content: 'home chat' }],
+    },
+  });
+  const realSessionStorage = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+  const session = new Map([['hermesBrowserInstanceId', 'panel-1'], ['hermesBrowserContextScope:panel-1:connection:work', '{}'], ['hermesBrowserContextScope:panel-1', '{}']]);
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: {
+      getItem: (key) => (session.has(key) ? session.get(key) : null),
+      setItem: (key, value) => session.set(key, String(value)),
+      removeItem: (key) => session.delete(key),
+      get length() { return session.size; },
+      key: (index) => [...session.keys()][index] ?? null,
+    },
+  });
+  try {
+    const reloads = [];
+    Object.assign(h.scope, {
+      savedConnectionBusy: false, sending: false, savedConnectionReloading: false,
+      scopeRevision: createRevisionGate(), restoringComposerDraft: false, composerDraftSaveTimer: 0, attachments: [],
+      renderSavedConnections: () => {}, showOperationToast: () => {}, stopConnectionProbeLoop: () => {},
+      window: { confirm: () => true, location: { reload: () => reloads.push('reload') } },
+    });
+    h.els.input.value = 'half-written message';
+    await h.fn('updateSavedConnection')('delete');
+    assert.equal(reloads.length, 1);
+    assert.equal(h.store.hermesBrowserSettings.activeSavedConnectionId, 'default');
+    assert.deepEqual(Object.keys(h.store).filter((key) => key.endsWith(':connection:work')), []);
+    assert.deepEqual([...session.keys()].filter((key) => key.endsWith(':connection:work')), []);
+    assert.ok(h.store['hermesBrowserMessages:connection:other'], 'other connections keep their records');
+    assert.ok(h.store.hermesBrowserMessages, 'the unsuffixed records are untouched');
+    assert.ok(session.has('hermesBrowserContextScope:panel-1'));
+  } finally {
+    if (realSessionStorage) Object.defineProperty(globalThis, 'sessionStorage', realSessionStorage);
+    else delete globalThis.sessionStorage;
+    h.close();
+  }
+});

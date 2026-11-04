@@ -54,6 +54,7 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
       local: {
         get: async (key) => (typeof key === 'string' ? { [key]: structuredClone(store[key]) } : structuredClone(store)),
         set: async (patch) => { Object.assign(store, structuredClone(patch)); },
+        remove: async (keys) => { for (const key of [keys].flat()) delete store[key]; },
       },
     },
   };
