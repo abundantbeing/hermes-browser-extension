@@ -34,7 +34,7 @@ The tables below are generated from `extension/lib/browser-capability-matrix.mjs
 | Hermes in the browser side | Supported | Supported | Firefox's own sidebar (declared as sidebar_action); the Chromium side panel API does not exist there. | Browser API | - |
 | Side panel tied to one tab | Supported | Unavailable | Firefox keeps an add-on sidebar open on every tab of the window, and giving it a panel per tab reloads it and ends chats in progress. | Browser API | The sidebar stays open across tabs; the toolbar button closes it. |
 | Chat, attachments and page context | Supported | Supported † | Same code as Chromium: your Hermes gateway and the extension content script. | Gateway | - |
-| Wake word in the side panel | Supported | Limited | Firefox has no offscreen documents, so the local listener cannot run; only Hermes's own wake engine on the gateway can. | Browser API | Use Hermes's own wake engine, or start the chat from the panel. |
+| Wake word in the side panel | Supported | Limited | Firefox has no offscreen documents, so the local listener cannot run. Hermes's own wake engine runs only on a local gateway on this computer, not on remote or cloud connections. | Browser API | Connect to a local gateway to use Hermes wake, or start the chat from the panel. |
 | Voice dictation in the composer | Supported | Limited | Firefox has no browser speech recognition, so dictation works only through Hermes's own transcription (a gateway with audio transcription, or the dashboard on this computer). | Browser API | Type instead, or turn on audio transcription on your Hermes gateway. |
 
 ### Hermes Assist (drafting in page fields)
@@ -60,7 +60,7 @@ The tables below are generated from `extension/lib/browser-capability-matrix.mjs
 | --- | --- | --- | --- | --- | --- |
 | Hermes Control: attach tabs, scope and approvals | Supported | Supported | Same attach, scope, approval and restricted-page rules as Chromium, on a smaller set of actions. | Gateway | - |
 | Hermes Control: reading the page | Supported | Limited | Firefox has no accessibility tree for extensions: Hermes reads the top page text and its list of controls with a content script, and nothing inside frames. | Browser API | Ask Hermes to work from the page text; copy anything inside a frame into the chat. |
-| Hermes Control: navigate, back and scroll | Supported | Supported | Tabs and scripting APIs. | Browser API | - |
+| Hermes Control: navigate, back and scroll | Supported | Limited | Firefox scroll calls move a fixed distance in the page and ignore the amount argument Chromium honors. | Browser API | Repeat scroll for larger moves, or ask the person to scroll manually. |
 | Hermes Control: list, open, switch and close tabs | Supported | Supported | Tabs API; only tabs you attached and tabs Hermes opened. Switching and closing ask you first. | Browser API | - |
 | Hermes Control: screenshots | Supported | Limited | Firefox allows a capture only with all-sites access, which is optional and asked for from a click. Only the whole visible tab can be captured, and it must be the tab the window shows. | Permission | Click Allow screenshots on Firefox in Settings, or have Hermes read the page text. |
 | Hermes Control: clicks, typing and key presses | Supported | Unavailable | Firefox has no debugger API, so an extension cannot send trusted clicks, typing or key presses, and Hermes does not imitate them with page events. | Browser API | Hermes can read the page and open addresses; do the click or typing yourself, or use a Chromium browser for the task. |

@@ -136,8 +136,8 @@ export const BROWSER_CAPABILITY_ROWS = Object.freeze([
     cell(
       S.LIMITED,
       C.BROWSER_API,
-      "Firefox has no offscreen documents, so the local listener cannot run; only Hermes's own wake engine on the gateway can.",
-      "Use Hermes's own wake engine, or start the chat from the panel.",
+      "Firefox has no offscreen documents, so the local listener cannot run. Hermes's own wake engine runs only on a local gateway on this computer, not on remote or cloud connections.",
+      "Connect to a local gateway to use Hermes wake, or start the chat from the panel.",
     ),
   ),
   row(
@@ -233,7 +233,14 @@ export const BROWSER_CAPABILITY_ROWS = Object.freeze([
     label: 'Hermes Control: navigate, back and scroll',
     actions: NAVIGATE_ACTIONS,
     chromium: { supported: cell(S.SUPPORTED, C.BROWSER_API, 'Tabs and debugger APIs.') },
-    firefox: { supported: cell(S.SUPPORTED, C.BROWSER_API, 'Tabs and scripting APIs.') },
+    firefox: {
+      supported: cell(S.SUPPORTED, C.BROWSER_API, 'Tabs and scripting APIs.'),
+      caveat: {
+        cause: C.BROWSER_API,
+        reason: 'Firefox scroll calls move a fixed distance in the page and ignore the amount argument Chromium honors.',
+        instead: 'Repeat scroll for larger moves, or ask the person to scroll manually.',
+      },
+    },
   }),
   controlRow({
     id: 'control.tabs',

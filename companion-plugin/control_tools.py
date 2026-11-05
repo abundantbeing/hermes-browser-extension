@@ -348,6 +348,12 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
     if broker.select(scope, action) is None:
         offered = broker.offered_capabilities(scope)
         if offered is not None:
+            if action == "browser_screenshot" and "browser_screenshot" not in offered and "browser_navigate" in offered:
+                return _failure(
+                    "permission_required",
+                    f"{tool} needs screenshot permission in this Firefox browser. Ask the person to click "
+                    f"Allow screenshots on Firefox in the Hermes Browser Extension Settings, then retry {tool}.",
+                )
             names = sorted(TOOL_FOR_ACTION[name] for name in offered if name in TOOL_FOR_ACTION)
             return _failure(
                 "browser_unavailable",

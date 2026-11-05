@@ -3,6 +3,7 @@
 //   node scripts/sync-capability-docs.mjs --check  exit 1 when the guide is out of date
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import {
   CAPABILITY_DOCS_END,
@@ -20,7 +21,7 @@ export function withCapabilityBlock(source) {
   return `${source.slice(0, start)}${capabilityDocsBlock()}${source.slice(end + CAPABILITY_DOCS_END.length)}`;
 }
 
-if (import.meta.url === new URL(`file:///${process.argv[1].replace(/\\/g, '/')}`).href) {
+if (import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const current = fs.readFileSync(guidePath, 'utf8');
   const next = withCapabilityBlock(current);
   if (process.argv.includes('--check')) {

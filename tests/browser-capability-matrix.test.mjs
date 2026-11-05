@@ -197,6 +197,7 @@ test('capabilityLimitsFor lists only where a browser does less than Chromium, wo
     'side-panel.wake-word',
     'side-panel.dictation',
     'control.read-page',
+    'control.navigate',
     'control.screenshot',
   ]);
   assert.ok(limits.every((entry) => entry.status !== CAPABILITY_STATUSES.SUPPORTED));
