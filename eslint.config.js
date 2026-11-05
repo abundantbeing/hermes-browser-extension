@@ -115,6 +115,33 @@ export default [
     },
   },
 
+  // Lessons kept as rules: each one shipped as a bug once. Add one with every fix that a rule can catch.
+  {
+    files: ['extension/**/*.js', 'extension/**/*.mjs', 'scripts/**/*.mjs', 'tests/**/*.mjs'],
+    rules: {
+      'linebreak-style': ['error', 'unix'],
+    },
+  },
+  {
+    files: ['extension/**/*.js', 'extension/**/*.mjs'],
+    rules: {
+      'no-restricted-syntax': ['error',
+        {
+          selector: 'Literal[value=/scrollbar-gutter/], TemplateElement[value.raw=/scrollbar-gutter/]',
+          message: 'No area keeps a strip for a scrollbar: float the thumb with attachOverlayScrollbar (lib/overlay-scrollbar.mjs).',
+        },
+        {
+          selector: 'CallExpression[callee.name="setTarget"] > MemberExpression.arguments[property.name="target"]',
+          message: 'Inside a shadow root event.target is only the host: pass eventOrigin(event).',
+        },
+        {
+          selector: 'CallExpression[callee.name="setTarget"] > MemberExpression.arguments[object.name="document"][property.name="activeElement"]',
+          message: 'document.activeElement stops at a shadow root host: follow shadowRoot.activeElement down to the field.',
+        },
+      ],
+    },
+  },
+
   {
     ignores: [
       'dist/',

@@ -3022,7 +3022,7 @@ test('sidepanel CSS constrains narrow panel overflow and keeps Hermes scrollbars
   assert.match(css, /\.shell \{[\s\S]*?max-width:\s*100vw[\s\S]*?overflow:\s*hidden/, 'shell should contain over-wide children');
   assert.match(css, /\.status-copy strong,[\s\S]*?\.status-copy span \{[\s\S]*?text-overflow:\s*ellipsis/, 'active tab title/url should ellipsize');
   assert.match(css, /\.context-scope-button span \{[\s\S]*?text-overflow:\s*ellipsis/, 'pinned/follow label should ellipsize inside the header button');
-  assert.match(css, /scrollbar-gutter:\s*stable/, 'scrollbar gutter should reserve stable layout space');
+  assert.doesNotMatch(css, /scrollbar-gutter/, 'no area keeps a strip for a scrollbar: the thumb floats over the content');
   assert.match(css, /\.app-scroll::.*-webkit-scrollbar,[\s\S]*?\.messages::.*-webkit-scrollbar,[\s\S]*?\.model-provider-list::.*-webkit-scrollbar,[\s\S]*?\.model-menu-list::.*-webkit-scrollbar,[\s\S]*?\.session-menu-list::.*-webkit-scrollbar[\s\S]*?width:\s*8px;/, 'scrollbar width should match the original 8px treatment');
   assert.match(css, /-webkit-scrollbar-thumb[\s\S]*?background:\s*rgba\(var\(--hermes-fg-rgb\),0\.45\);[\s\S]*?border:\s*1px solid var\(--hermes-line-strong\)/, 'restored thumb should match the old semi-transparent rectangular style');
   const scrollbarBlock = css.match(/\.app-scroll::.*-webkit-scrollbar,[\s\S]*?\.eyebrow,/)?.[0] || '';

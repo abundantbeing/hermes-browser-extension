@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   assertAssistModelSelectionAcknowledged,
+  assistChatTurnOverride,
   assistModelFallbackNotice,
   assistModelRequestPolicy,
   assistModelRoutingSupported,
@@ -106,7 +107,7 @@ test('capable gateways still reject partial exact selections', () => {
   );
 });
 
-test('route request builder omits unsupported fields on released gateways', () => {
+test('route request builder sends only Assist\'s effort to gateways that cannot lock a model', () => {
   assert.deepEqual(buildAssistModelRouteRequest({
     inlineAssistProvider: 'opencode-go',
     inlineAssistRawModel: 'deepseek-v4-pro',
@@ -127,8 +128,66 @@ test('route request builder omits unsupported fields on released gateways', () =
       modelOptions: null,
       label: 'opencode-go / deepseek-v4-pro',
     },
-    request: {},
+    request: {
+      reasoning_effort: 'high',
+      fast: true,
+      model_options: {
+        reasoning: { enabled: true, effort: 'high' },
+        reasoning_effort: 'high',
+        fast: true,
+        service_tier: 'priority',
+      },
+    },
   });
+});
+
+test('Assist\'s effort reaches Hermes even when Assist has no model of its own', () => {
+  const built = buildAssistModelRouteRequest({ inlineAssistReasoningEffort: 'xhigh' }, { sessionChat: true, sessionModelLock: true });
+  assert.equal(built.policy.mode, 'gateway-default');
+  assert.deepEqual(built.request, {
+    reasoning_effort: 'xhigh',
+    fast: false,
+    model_options: {
+      reasoning: { enabled: true, effort: 'xhigh' },
+      reasoning_effort: 'xhigh',
+      fast: false,
+      service_tier: null,
+    },
+  });
+  assert.equal(buildAssistModelRouteRequest({}, { sessionChat: true, sessionModelLock: true }).request.reasoning_effort, 'low', 'unset is Low, Assist\'s default');
+});
+
+test('an Assist turn in a chat runs on Assist\'s model and effort for that turn only', () => {
+  const capable = { sessionChat: true, sessionModelLock: true };
+  // A one-off override: Hermes runs the turn on it and keeps the chat's own model lock.
+  assert.deepEqual(assistChatTurnOverride({
+    inlineAssistProvider: 'openai-codex',
+    inlineAssistRawModel: 'gpt-6.1-terra',
+    inlineAssistReasoningEffort: 'high',
+  }, capable), {
+    model: 'gpt-6.1-terra',
+    provider: 'openai-codex',
+    require_model_lock: false,
+    reasoning_effort: 'high',
+    fast: false,
+    model_options: {
+      reasoning: { enabled: true, effort: 'high' },
+      reasoning_effort: 'high',
+      fast: false,
+      service_tier: null,
+    },
+  });
+  // Without an Assist model the chat's model runs, with Assist's effort.
+  const sameAsChat = assistChatTurnOverride({ inlineAssistReasoningEffort: 'minimal' }, capable);
+  assert.equal(sameAsChat.model, undefined);
+  assert.equal(sameAsChat.require_model_lock, undefined);
+  assert.equal(sameAsChat.model_options.reasoning.effort, 'minimal');
+});
+
+test('the model notice says what ran instead', () => {
+  const selection = { provider: 'openai-codex', model: 'gpt-6.1-terra' };
+  assert.match(assistModelFallbackNotice(selection, 'no lock'), /Used the gateway default model instead\.$/);
+  assert.match(assistModelFallbackNotice(selection, 'dashboard connection', 'this chat\'s model'), /could not enforce openai-codex \/ gpt-6\.1-terra \(dashboard connection\)\. Used this chat's model instead\.$/);
 });
 
 test('route request builder emits an exact lock only for capable gateways', () => {
@@ -185,7 +244,8 @@ test('route request builder preserves provider/model identifiers across user set
       sessionChat: true,
       sessionModelLock: false,
     });
-    assert.deepEqual(released.request, {});
+    assert.equal(released.request.model, undefined);
+    assert.equal(released.request.require_model_lock, undefined);
   }
 });
 
@@ -245,4 +305,16 @@ test('opaque provider model identifiers stay case-sensitive', () => {
     () => assertAssistModelSelectionAcknowledged({ model: 'model-a', provider: 'provider' }, selection),
     /did not acknowledge/i,
   );
+});
+
+test('a session that confirms the selected model without naming its provider is accepted', () => {
+  // Hermes' session create returns the locked model (model + has_model_config) but no provider field.
+  const selection = { model: 'claude-haiku-5-5', provider: 'anthropic' };
+  assert.deepEqual(
+    assertAssistModelSelectionAcknowledged({ object: 'hermes.session', session: { model: 'claude-haiku-5-5', has_model_config: true } }, selection),
+    selection,
+  );
+  assert.throws(() => assertAssistModelSelectionAcknowledged({ session: { model: 'claude-haiku-5-5', provider: 'openrouter' } }, selection), /did not acknowledge/i, 'a different named provider');
+  assert.throws(() => assertAssistModelSelectionAcknowledged({ session: { model: 'gpt-6.1-terra' } }, selection), /did not acknowledge/i, 'a different model');
+  assert.throws(() => assertAssistModelSelectionAcknowledged({ session: {} }, selection), /did not acknowledge/i, 'no model at all');
 });

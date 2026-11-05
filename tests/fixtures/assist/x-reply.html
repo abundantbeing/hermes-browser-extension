@@ -1,0 +1,14 @@
+<!-- X reply composer, as x.com renders it (2026): avatar column, DraftJS editable, media toolbar, Reply button. -->
+<main role="main"><div data-testid="cellInnerDiv">
+  <article data-testid="tweet" data-rect="0 0 600 120"><div lang="en">Post being replied to</div></article>
+  <div data-testid="inline_reply_offscreen" data-rect="0 130 600 190">
+    <div data-testid="UserAvatar-Container-hermes" data-expect-slot data-rect="16 162 40 40"></div>
+    <div data-testid="tweetTextarea_0RichTextInputContainer" data-rect="68 162 516 60">
+      <div data-testid="tweetTextarea_0" contenteditable="true" role="textbox" aria-label="Post text" id="field" data-rect="68 162 516 40"></div>
+    </div>
+    <div data-testid="toolBar" data-expect-row data-rect="68 237 516 36">
+      <div data-testid="ScrollSnap-List"><button aria-label="Add photos or video" data-rect="68 245 20 20"></button><button aria-label="Add a GIF" data-rect="104 245 20 20"></button></div>
+      <button data-testid="tweetButtonInline" data-rect="504 237 80 36">Reply</button>
+    </div>
+  </div>
+</div></main>

@@ -1,0 +1,11 @@
+<!-- GitHub issue comment box (React, 2026-11): no form around the textarea; Write/Preview tabs and the formatting toolbar in a header above it. -->
+<div class="prc-CommentBox" data-rect="56 68 912 178">
+  <div class="header" data-rect="57 69 910 38">
+    <div role="tablist" data-rect="57 69 140 38"><button role="tab" data-rect="57 69 66 38">Write</button><button role="tab" data-rect="123 69 74 38">Preview</button></div>
+    <div role="toolbar" aria-label="Formatting tools" data-rect="510 74 450 28">
+      <button aria-label="Heading" data-expect-slot data-rect="518 76 24 24">H</button><button aria-label="Bold" data-rect="550 76 24 24">B</button><button aria-label="Italic" data-rect="582 76 24 24">I</button>
+    </div>
+  </div>
+  <div class="body" data-rect="57 107 910 138"><textarea aria-label="Markdown value" placeholder="Use Markdown to format your comment" data-rect="65 115 894 122"></textarea></div>
+</div>
+<div class="footer" data-rect="56 254 912 34"><button data-rect="722 254 140 34">Close issue</button><button type="submit" data-rect="872 254 96 34">Comment</button></div>

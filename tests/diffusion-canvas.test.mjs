@@ -141,7 +141,8 @@ test('sidepanel uses one persistent seeded diffusion placeholder per image call'
 
   assert.match(source, /createDiffusionCanvas/);
   assert.match(source, /diffusionVariantForSeed/);
-  assert.match(source, /shouldReuseImageGenerationActivity/);
+  assert.match(source, /imageGenerationPlaceholders/);
+  assert.match(source, /placeholder\.dataset\.activityKey = key;/);
   assert.match(source, /imageVisualSeed/);
   assert.match(source, /crypto\?\.getRandomValues|crypto\.getRandomValues/);
   assert.doesNotMatch(source, /if \(activity\.activityId\) return String\(activity\.activityId\)/);
@@ -157,5 +158,150 @@ test('sidepanel uses one persistent seeded diffusion placeholder per image call'
   assert.match(source, /RESOLVING/);
   assert.match(source, /FINALIZING/);
   assert.match(source, /root\._dispose/);
-  assert.match(source, /slot\?\.querySelector\('\.image-gen-placeholder'\)\?\._dispose\?\./);
+  assert.match(source, /placeholder\._dispose\?\.\(\);/);
 });
+
+function fakeCanvas() {
+  const gradient = { addColorStop() {} };
+  const drawn = [];
+  const context = new Proxy({}, {
+    get(target, property) {
+      if (property === 'createRadialGradient') return () => gradient;
+      if (property === 'drawImage') return (image) => drawn.push(image);
+      if (['setTransform', 'clearRect', 'fillRect', 'strokeRect', 'setLineDash'].includes(property)) return () => {};
+      return target[property];
+    },
+    set(target, property, value) {
+      target[property] = value;
+      return true;
+    },
+  });
+  return {
+    drawn,
+    canvas: {
+      dataset: {},
+      isConnected: true,
+      width: 0,
+      height: 0,
+      clientWidth: 320,
+      clientHeight: 180,
+      getBoundingClientRect: () => ({ width: 320, height: 180 }),
+      getContext: () => context,
+    },
+  };
+}
+
+// Frames run only when the test steps them, so a loop that never stops shows as a
+// frame still scheduled.
+function withManualFrames(run) {
+  const saved = { raf: globalThis.requestAnimationFrame, caf: globalThis.cancelAnimationFrame };
+  const queue = new Map();
+  let next = 1;
+  globalThis.requestAnimationFrame = (callback) => { queue.set(next, callback); return next++; };
+  globalThis.cancelAnimationFrame = (id) => { queue.delete(id); };
+  const step = (now) => {
+    const callbacks = [...queue.values()];
+    queue.clear();
+    for (const callback of callbacks) callback(now);
+  };
+  try {
+    return run({ step, scheduled: () => queue.size });
+  } finally {
+    globalThis.requestAnimationFrame = saved.raf;
+    globalThis.cancelAnimationFrame = saved.caf;
+  }
+}
+
+test('a diffusion canvas that leaves the page stops scheduling frames', () => withManualFrames(({ step, scheduled }) => {
+  const { canvas } = fakeCanvas();
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'detached' });
+  diffusion.start();
+  step(1016);
+  step(1032);
+  assert.equal(scheduled(), 1, 'the loop runs while the canvas is on the page');
+  canvas.isConnected = false;
+  step(1048);
+  assert.equal(scheduled(), 0, 'a detached canvas schedules no further frame');
+  diffusion.stop();
+}));
+
+test('a canvas whose card comes back picks up again, and one that stays away is stopped', (t) => withManualFrames(({ step, scheduled }) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  const { canvas } = fakeCanvas();
+  const image = { naturalWidth: 64, naturalHeight: 36, width: 64, height: 36 };
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'returns' });
+  diffusion.start();
+  step(1016);
+  let outcome = null;
+  diffusion.reveal(image).then((result) => { outcome = result; });
+  canvas.isConnected = false;
+  step(1032);
+  assert.equal(scheduled(), 0, 'paused while away');
+  // The user leaves the chat and comes back: the same row, and its canvas, is attached again.
+  t.mock.timers.tick(5_000);
+  canvas.isConnected = true;
+  t.mock.timers.tick(1_000);
+  assert.equal(scheduled(), 1, 'the loop resumes for the returned card');
+  assert.equal(outcome?.cancelled, undefined, 'its reveal finished instead of being cancelled');
+  // Gone for good: after ten minutes away it stops and its reveal reports cancelled.
+  canvas.isConnected = false;
+  step(1048);
+  t.mock.timers.tick(10 * 60_000 + 2_000);
+  canvas.isConnected = true;
+  t.mock.timers.tick(2_000);
+  assert.equal(scheduled(), 0, 'a canvas away for ten minutes stays stopped');
+}));
+
+test('settle draws a reveal still under way finished, once, and stops', async () => withManualFrames(async ({ step, scheduled }) => {
+  const { canvas, drawn } = fakeCanvas();
+  const image = { naturalWidth: 64, naturalHeight: 36, width: 64, height: 36 };
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'settle' });
+  diffusion.start();
+  const revealed = diffusion.reveal(image);
+  step(1016);
+  assert.notEqual(canvas.dataset.revealState, 'complete', 'the reveal is still under way');
+  diffusion.settle();
+  assert.equal(canvas.dataset.revealState, 'complete');
+  assert.equal(canvas.dataset.revealProgress, '1.0000');
+  assert.ok(drawn.includes(image), 'the picture is drawn');
+  assert.equal(scheduled(), 0, 'nothing runs after settle');
+  const result = await revealed;
+  assert.notEqual(result.cancelled, true, 'the reveal finished rather than being cancelled');
+}));
+
+test('a reveal whose card has left the page finishes at once, so a finished turn never waits for it', async () => withManualFrames(async ({ step, scheduled }) => {
+  const { canvas, drawn } = fakeCanvas();
+  const image = { naturalWidth: 64, naturalHeight: 36, width: 64, height: 36 };
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'away-mid-reveal' });
+  diffusion.start();
+  step(1016);
+  const revealed = diffusion.reveal(image);
+  step(1032);
+  assert.notEqual(canvas.dataset.revealState, 'complete', 'the reveal is still under way on the page');
+  canvas.isConnected = false;
+  step(1048);
+  const result = await Promise.race([revealed, new Promise((resolve) => setTimeout(() => resolve('still waiting'), 50))]);
+  assert.notEqual(result, 'still waiting', 'the reveal settles while the card is away');
+  assert.notEqual(result.cancelled, true, 'finished, not cancelled: the card keeps its picture');
+  assert.equal(canvas.dataset.revealState, 'complete');
+  assert.ok(drawn.includes(image), 'the finished picture is on the canvas');
+  assert.equal(scheduled(), 0, 'no frame runs while the card is away');
+  canvas.isConnected = true;
+  diffusion.stop();
+}));
+
+test('a picture that arrives after its card left the page is drawn finished at once', async () => withManualFrames(async ({ step }) => {
+  const { canvas, drawn } = fakeCanvas();
+  const image = { naturalWidth: 64, naturalHeight: 36, width: 64, height: 36 };
+  const diffusion = createDiffusionCanvas(canvas, { seed: 'arrives-away' });
+  diffusion.start();
+  step(1016);
+  canvas.isConnected = false;
+  step(1032);
+  const result = await Promise.race([diffusion.reveal(image), new Promise((resolve) => setTimeout(() => resolve('still waiting'), 50))]);
+  assert.notEqual(result, 'still waiting', 'the reveal settles while the card is away');
+  assert.notEqual(result.cancelled, true);
+  assert.ok(drawn.includes(image), 'the finished picture is on the canvas');
+  canvas.isConnected = true;
+  diffusion.stop();
+}));

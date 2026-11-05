@@ -96,3 +96,20 @@ test('Hermes Assist canonicalizes locale aliases and cannot miss an initializati
     assert.equal(sandbox.HermesI18nContent.getLocale(), expected);
   }
 });
+
+test('every Hermes Assist string sent to translateUiText is in the catalog, as a whole string', async () => {
+  const helper = read('extension/content-inline-helper.js');
+  const { default: en } = await import('../extension/lib/locales/en.mjs');
+  const catalog = new Set(Object.values(en));
+  assert.doesNotMatch(helper, /translateUiText\(`[^`]*\$\{/, 'translate a {placeholder} template, then fill it');
+  const literals = [...helper.matchAll(/translateUiText\((['"])((?:\\.|(?!\1).)+)\1\)/g)].map((match) => match[2].replace(/\\(['"\\])/g, '$1'));
+  assert.doesNotMatch(helper, /renderFailure(?:Bar)?\(`/, 'a failure message is a catalog string');
+  assert.doesNotMatch(helper, /\bmake\('[^']*',\s*'[^']*',\s*`[^`]*\$\{/, 'make() translates whole strings only');
+  const madeLiterals = [...helper.matchAll(/\bmake\('[^']*',\s*'[^']*',\s*'((?:[^'\\]|\\.)+)'\)/g)].map((match) => match[1]).filter((text) => /[a-z]/i.test(text));
+  assert.ok(literals.length > 10 && madeLiterals.length > 10);
+  assert.deepEqual([...literals, ...madeLiterals].filter((text) => !catalog.has(text)), []);
+  const bridge = read('extension/lib/i18n-content.js');
+  for (const text of ['Use visible {site} context', '{action} works on what is already in the field. Type something first, or pick a Draft action to start from nothing.']) {
+    assert.ok(bridge.includes(JSON.stringify(text).slice(1, -1)), text);
+  }
+});
