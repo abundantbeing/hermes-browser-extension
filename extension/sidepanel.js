@@ -5868,7 +5868,7 @@ async function refreshDashboardRoutes({ force = false } = {}) {
   const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
   readAloudDashboardProbe = { reachable: probe.reachable === true, gatewayUrl: settings.gatewayUrl };
   renderCompatibilityPanel();
-  panelMessageThread?.refreshReadAloud();
+  panelMessageThread?.refreshAfterReadAloudProbe?.();
   const fields = dashboardRouteRecordFields(probe);
   if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
   for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);

@@ -90,7 +90,7 @@ function threadFixture(options = {}) {
     root.append(row);
     return { row, node };
   };
-  return { add, controller };
+  return { add, controller, document, window };
 }
 
 test('the thread asks the panel whether to offer the button, keeps it off while streaming and adds it when the reply ends', () => {
@@ -135,4 +135,63 @@ test('a reply that is being read keeps its marked state when its rail is rebuilt
   reading.clear();
   f.controller.refreshReadAloud();
   assert.equal(a.row.classList.contains('is-being-read'), false);
+});
+
+test('when voice becomes available after the probe, stale assistant rails gain a speaker button', () => {
+  let offerVoice = false;
+  const f = threadFixture({ canReadAloud: () => offerVoice, onReadAloud: () => {} });
+  const reply = { role: 'assistant', ts: TS };
+  const a = f.add(reply);
+  assert.equal(a.row.querySelector('.message-action-speak'), null);
+  offerVoice = true;
+  f.controller.refreshAfterReadAloudProbe();
+  assert.ok(a.row.querySelector('.message-rail > .message-action-speak'));
+  assert.equal(f.controller.readAloudRailsNeedRebuild(), false);
+});
+
+test('when voice availability is unchanged, probe refresh updates speak state without rebuilding the rail', () => {
+  const reading = new Set();
+  const f = threadFixture({
+    canReadAloud: () => true,
+    onReadAloud: () => {},
+    readAloudStateFor: (record) => (reading.has(record) ? 'speaking' : 'idle'),
+  });
+  const record = { role: 'assistant', ts: TS };
+  const a = f.add(record);
+  reading.add(record);
+  const railBefore = a.row.querySelector('.message-rail');
+  f.controller.refreshAfterReadAloudProbe();
+  assert.equal(a.row.querySelector('.message-rail'), railBefore);
+  assert.equal(a.row.querySelector('.message-action-speak').getAttribute('aria-pressed'), 'true');
+});
+
+test('rebuilding rails keeps keyboard focus on the Stop control', () => {
+  const reading = new Set();
+  const f = threadFixture({
+    canReadAloud: () => true,
+    onReadAloud: () => {},
+    readAloudStateFor: (record) => (reading.has(record) ? 'speaking' : 'idle'),
+  });
+  let active = null;
+  Object.defineProperty(f.document, 'activeElement', {
+    configurable: true,
+    get: () => active,
+  });
+  const stubFocus = function stubFocus() { active = this; };
+  const buttonProto = f.document.defaultView?.HTMLButtonElement?.prototype;
+  const previousFocus = buttonProto?.focus;
+  if (buttonProto) buttonProto.focus = stubFocus;
+  try {
+    const record = { role: 'assistant', ts: TS };
+    const a = f.add(record);
+    reading.add(record);
+    const stop = a.row.querySelector('.message-action-speak');
+    active = stop;
+    f.controller.refreshActions();
+    const stopAfter = a.row.querySelector('.message-action-speak');
+    assert.equal(active, stopAfter);
+    assert.equal(stopAfter.getAttribute('aria-pressed'), 'true');
+  } finally {
+    if (buttonProto && previousFocus) buttonProto.focus = previousFocus;
+  }
 });

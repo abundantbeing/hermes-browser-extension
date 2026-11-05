@@ -126,6 +126,13 @@ export function createMessageThreadUi({
     rows.clear();
   }
   function refreshActions() {
+    const focused = document.activeElement;
+    const focusedRow = focused?.closest?.('.message-row');
+    const restoreSpeakFocus = Boolean(
+      focused?.classList?.contains?.('message-action-speak')
+        && focusedRow
+        && root.contains(focusedRow),
+    );
     for (const [row, entry] of rows) {
       if (!root.contains(row)) {
         observer?.unobserve?.(row);
@@ -135,6 +142,23 @@ export function createMessageThreadUi({
         renderRail(entry);
       }
     }
+    if (restoreSpeakFocus) {
+      focusedRow.querySelector(':scope > .message-rail .message-action-speak')?.focus?.();
+    }
+  }
+  function readAloudRailsNeedRebuild() {
+    for (const [row, entry] of rows) {
+      if (!root.contains(row) || entry.streaming || entry.record.role !== 'assistant') continue;
+      if (!canReadAloud(entry.record, entry.node)) continue;
+      if (!row.querySelector(':scope > .message-rail .message-action-speak')) return true;
+    }
+    return false;
+  }
+  // After the dashboard voice probe: rebuild when stale rails lack a speaker button;
+  // otherwise update pressed/Stop state in place so keyboard focus is kept.
+  function refreshAfterReadAloudProbe() {
+    if (readAloudRailsNeedRebuild()) refreshActions();
+    else refreshReadAloud();
   }
   function setStreaming(row, streaming) {
     const entry = rows.get(row);
@@ -162,5 +186,8 @@ export function createMessageThreadUi({
     document.removeEventListener('click', clickOutside);
     document.removeEventListener('keydown', escape);
   }
-  return { attach, applyPlacement, reset, refreshActions, refreshReadAloud, setStreaming, pin, dispose };
+  return {
+    attach, applyPlacement, reset, refreshActions, refreshReadAloud, refreshAfterReadAloudProbe,
+    readAloudRailsNeedRebuild, setStreaming, pin, dispose,
+  };
 }
