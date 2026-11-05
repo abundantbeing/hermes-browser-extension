@@ -78,6 +78,10 @@ export function mergeSavedConnectionSecrets(settings = {}, secrets = {}) {
       connection: { ...conn, apiKey: '', tokenSource: '' },
     };
   });
+  const liveIds = new Set(savedConnections.map((entry) => entry?.id).filter((id) => typeof id === 'string'));
+  for (const id of Object.keys(nextSecrets)) {
+    if (!liveIds.has(id)) delete nextSecrets[id];
+  }
   return { settings: { ...settings, savedConnections }, secrets: nextSecrets };
 }
 

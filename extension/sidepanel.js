@@ -23729,8 +23729,12 @@ async function updateSavedConnection(action, id = settings.activeSavedConnection
   try {
     await withSavedConnectionsLock(async () => {
       await saveSettingsFromForm({ lockHeld: true });
-      const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-      const base = savedConnectionsBase(settings, stored.hermesBrowserSettings, expectedId);
+      const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+      const storedSettings = hydrateSavedConnectionSecrets(
+        stored.hermesBrowserSettings || {},
+        stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+      );
+      const base = savedConnectionsBase(settings, storedSettings, expectedId);
       let next;
       if (action === 'add') next = addSavedConnection(base, name, crypto.randomUUID());
       else if (action === 'rename') next = renameSavedConnection(base, expectedId, name);

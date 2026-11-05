@@ -34,7 +34,13 @@ import {
   validateBrowserControlUrl,
 } from './browser-control-safety.mjs';
 import { isGatewayAuthRejection, transportUsesDashboardTicket } from './connection-modes.mjs';
-import { syncActiveSavedConnection, packSavedConnectionStorage, hydrateSavedConnectionSecrets, SAVED_CONNECTION_SECRETS_STORAGE_KEY } from './saved-connections.mjs';
+import {
+  syncActiveSavedConnection,
+  packSavedConnectionStorage,
+  hydrateSavedConnectionSecrets,
+  SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+  withSavedConnectionsLock,
+} from './saved-connections.mjs';
 import { CONTROL_TOOL_FAMILIES, controlToolFamily, controlToolName, setControlToolFamily } from './control-tool-names.mjs';
 
 export const CONTROLLER_WORKER_VERSION = 1;
@@ -1473,8 +1479,17 @@ export function createControllerServiceWorker({
       stopTurnReads();
       lifecycle.cancelAll();
     }
-    settings = { ...settings, browserControlPaused: paused === true };
-    await storageArea.set({ hermesBrowserSettings: savedSettings() });
+    await withSavedConnectionsLock(async () => {
+      const stored = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+      const fromStorage = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+        ? hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+        : settings;
+      settings = keepChatMove({ ...fromStorage, browserControlPaused: paused === true });
+      await storageArea.set(packSavedConnectionStorage(
+        syncActiveSavedConnection(savedSettings(settings)),
+        stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+      ));
+    });
     await persist();
     if (paused === true) {
       for (const tabId of leases.leasedTabIds()) releaseDebuggerSession(tabId);

@@ -15,6 +15,10 @@ import {
 } from '../extension/lib/saved-connections.mjs';
 import { createRevisionGate } from '../extension/lib/context-scope-transition.mjs';
 import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
+import {
+  CONTROLLER_WORKER_MESSAGES,
+  createControllerServiceWorker,
+} from '../extension/lib/controller-service-worker.mjs';
 
 const local = {
   gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642',
@@ -224,6 +228,33 @@ test('a switch from another panel stops a pending scope change here from writing
   } finally { h.close(); }
 });
 
+test('switching after packed storage restores keys from the sidecar', () => {
+  const work = twoConnections();
+  const packed = packSavedConnectionStorage(work);
+  assert.equal(packed.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
+  const storedSettings = hydrateSavedConnectionSecrets(
+    packed.hermesBrowserSettings,
+    packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+  );
+  const base = savedConnectionsBase(work, storedSettings, 'work');
+  const next = selectSavedConnection(base, 'default');
+  assert.equal(next.apiKey, local.apiKey);
+  assert.equal(next.activeSavedConnectionId, 'default');
+  assert.equal(selectSavedConnection(next, 'work').apiKey, 'work-test-token');
+});
+
+test('deleting a connection drops its sidecar credentials when packed', () => {
+  const packed = packSavedConnectionStorage(twoConnections());
+  const hydrated = hydrateSavedConnectionSecrets(
+    packed.hermesBrowserSettings,
+    packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+  );
+  const deleted = deleteSavedConnection(rememberSavedConnection(hydrated), 'work');
+  const repacked = packSavedConnectionStorage(deleted, packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+  assert.equal(repacked[SAVED_CONNECTION_SECRETS_STORAGE_KEY].work, undefined);
+  assert.equal(JSON.stringify(repacked[SAVED_CONNECTION_SECRETS_STORAGE_KEY]).includes('work-test-token'), false);
+});
+
 test('saved gateway keys live in a sidecar, not inside inactive savedConnections entries', () => {
   const packed = packSavedConnectionStorage(twoConnections());
   assert.equal(packed.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
@@ -418,4 +449,42 @@ test('a stored record replaces the panel copy of the list and a changed active I
   assert.equal(savedConnectionsBase(stale, { ...stored, activeSavedConnectionId: 'work' }, 'work').savedConnections.length, 2);
   assert.throws(() => savedConnectionsBase(stale, stored, 'default'), /changed/);
   assert.equal(savedConnectionsBase(stale, {}, 'default'), stale);
+});
+
+test('pause in another panel keeps a saved-connection switch already in storage', async () => {
+  const panelSettings = rememberSavedConnection(local);
+  const state = {
+    hermesBrowserSettings: structuredClone(panelSettings),
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: {},
+  };
+  const worker = createControllerServiceWorker({
+    storageArea: {
+      async get(keys) {
+        const names = Array.isArray(keys) ? keys : [keys];
+        return Object.fromEntries(names.filter((key) => Object.hasOwn(state, key))
+          .map((key) => [key, structuredClone(Reflect.get(state, key))]));
+      },
+      async set(values) { Object.assign(state, structuredClone(values)); },
+    },
+    connector: {
+      async connect() {
+        return { async send() {}, async heartbeat() { return { ok: true }; }, close() {} };
+      },
+    },
+    product: { id: 'chromium', engine: 'chromium', label: 'Chromium browser' },
+    randomUUID: () => 'controller-pause-fixture',
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => 1_000,
+  });
+  await worker.boot();
+  Object.assign(state, packSavedConnectionStorage(selectSavedConnection(twoConnections(), 'default'), {
+    work: { apiKey: 'work-test-token', tokenSource: 'manual' },
+  }));
+  await worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.pause },
+    { url: 'chrome-extension://fixture/sidepanel.html' },
+  );
+  assert.equal(state.hermesBrowserSettings.activeSavedConnectionId, 'default');
+  assert.equal(state.hermesBrowserSettings.savedConnections.length, 2);
+  assert.equal(state.hermesBrowserSettings.browserControlPaused, true);
 });
