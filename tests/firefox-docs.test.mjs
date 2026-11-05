@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import {
   CAPABILITY_DOCS_END,
@@ -29,7 +30,7 @@ test('the Firefox guide carries exactly the generated matrix, so it cannot drift
 });
 
 test('sync:capabilities and check:capabilities run from this file path on Unix', () => {
-  const script = new URL('../scripts/sync-capability-docs.mjs', import.meta.url).pathname;
+  const script = fileURLToPath(new URL('../scripts/sync-capability-docs.mjs', import.meta.url));
   const check = spawnSync(process.execPath, [script, '--check'], { encoding: 'utf8' });
   assert.equal(check.status, 0, check.stderr || check.stdout);
   assert.match(check.stdout, /matches the capability matrix/);
