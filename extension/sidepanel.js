@@ -1373,6 +1373,7 @@ let panelMessageThread = null;
 // the browser's speechSynthesis reads when the dashboard cannot. Click only.
 const readAloudAudio = createGatewayAudioPlayback();
 let readAloudDashboard = null;
+let readAloudDashboardIdentity = '';
 // What the last dashboard probe found, kept apart from the capability ledger, which forgets probes whenever a socket reconnects.
 let readAloudDashboardProbe = null;
 let readAloudTurnWasRunning = false;
@@ -1393,8 +1394,14 @@ const readAloudPlayer = createReadAloudPlayer({
     prepare() {
       readAloudAudio.prepare();
       readAloudDashboard = null;
+      readAloudDashboardIdentity = '';
     },
     async synthesize(text, { signal } = {}) {
+      const identity = `${settings.gatewayUrl}|${settings.gatewayMode}|${settings.connectionTransport}`;
+      if (readAloudDashboardIdentity !== identity) {
+        readAloudDashboard = null;
+        readAloudDashboardIdentity = identity;
+      }
       readAloudDashboard ||= resolveReadAloudDashboard();
       const { baseUrl, token } = await readAloudDashboard;
       const speech = await requestGatewaySpeech({
@@ -5861,6 +5868,7 @@ async function refreshDashboardRoutes({ force = false } = {}) {
   const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
   readAloudDashboardProbe = { reachable: probe.reachable === true, gatewayUrl: settings.gatewayUrl };
   renderCompatibilityPanel();
+  panelMessageThread?.refreshActions();
   const fields = dashboardRouteRecordFields(probe);
   if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
   for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);
@@ -14310,6 +14318,7 @@ function claimGroupComposer() {
   const lease = { id: ++groupComposerSerial };
   activeComposerLease = lease;
   sending = true;
+  readAloudPlayer.turnStarted();
   updateComposerBusyState();
   return lease;
 }
@@ -29896,6 +29905,10 @@ function bindEvents() {
         }
         if (Object.keys(patch).length) {
           settings = { ...settings, ...patch };
+          readAloudDashboard = null;
+          readAloudDashboardIdentity = '';
+          readAloudDashboardProbe = null;
+          readAloudPlayer.stop();
           // Another panel may have moved the connection to a remote mode.
           resetLocalDashboardState();
           updateConnectionPrompt();

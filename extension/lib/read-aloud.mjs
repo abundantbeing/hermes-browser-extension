@@ -300,8 +300,15 @@ export async function requestGatewaySpeech({
   const body = String(text || '');
   const timeoutMs = Math.min(SPEAK_MAX_TIMEOUT_MS, Math.max(SPEAK_MIN_TIMEOUT_MS, body.length * SPEAK_MS_PER_CHAR));
   const timeout = typeof AbortController === 'function' ? new AbortController() : null;
-  const timer = timeout ? setTimeout(() => timeout.abort(), timeoutMs) : null;
-  const onStop = () => timeout?.abort();
+  const linked = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = timeout ? setTimeout(() => {
+    timeout.abort();
+    linked?.abort();
+  }, timeoutMs) : null;
+  const onStop = () => {
+    timeout?.abort();
+    linked?.abort();
+  };
   signal?.addEventListener?.('abort', onStop, { once: true });
   try {
     const response = await fetchFn(gatewaySpeakUrl(baseUrl, profile), {
@@ -311,7 +318,7 @@ export async function requestGatewaySpeech({
       credentials: 'include',
       cache: 'no-store',
       redirect: 'error',
-      ...(timeout ? { signal: timeout.signal } : {}),
+      ...(linked ? { signal: linked.signal } : {}),
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok) {
@@ -352,11 +359,12 @@ export function createGatewayAudioPlayback({
         if (ctx.state !== 'running') void Promise.resolve(ctx.resume()).catch(() => undefined);
       } catch { /* playing reports the failure */ }
     },
-    async play(bytes) {
+    async play(bytes, { isActive = () => true } = {}) {
       const ctx = ensureContext();
       if (ctx.state !== 'running') await ctx.resume();
       const copy = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
       const buffer = await ctx.decodeAudioData(copy);
+      if (!isActive()) return null;
       const source = ctx.createBufferSource();
       source.buffer = buffer;
       source.connect(ctx.destination);
@@ -481,7 +489,7 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
       if (index + 1 < chunks.length) upcoming = request(index + 1);
       let clip;
       try {
-        clip = await Promise.race([gateway.play(made.audio), cancelled]);
+        clip = await gateway.play(made.audio, { isActive: live });
         if (!clip) return { stale: true };
       } catch (error) {
         return { failedAt: index, error };
@@ -527,7 +535,12 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
         } else if (route === READ_ALOUD_ROUTES.browser && browser) {
           const outcome = await playThroughBrowser(remaining, { token, chunkChars: browserChunkChars });
           if (outcome.stale) return { ok: true, stopped: true };
-          set({ status: READ_ALOUD_STATUS.idle, target: null, route: null });
+          set({
+            status: READ_ALOUD_STATUS.idle,
+            target: null,
+            route: null,
+            lastFallback: state.fallbackReason || '',
+          });
           return { ok: true, fellBackFrom: state.fallbackReason || '' };
         } else {
           continue;
@@ -538,8 +551,7 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
       }
       if (token !== generation) return { ok: true, stopped: true };
       if (route === READ_ALOUD_ROUTES.gateway) {
-        const reason = messageOf(lastError);
-        set({ fallbackReason: reason, lastFallback: reason });
+        set({ fallbackReason: messageOf(lastError) });
       }
     }
     if (token !== generation) return { ok: true, stopped: true };

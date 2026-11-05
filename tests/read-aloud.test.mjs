@@ -356,7 +356,10 @@ function fakeRoutes() {
       log.push(`synth:${text}`);
       return call.promise;
     },
-    async play(audio) {
+    async play(audio, { isActive = () => true } = {}) {
+      await Promise.resolve();
+      await Promise.resolve();
+      if (!isActive()) return null;
       const end = deferred();
       const clip = { audio, end, stopped: false, stop() { clip.stopped = true; end.resolve(); } };
       clips.push(clip);
@@ -450,6 +453,18 @@ test('audio that arrives after Stop is thrown away and never played', async () =
   assert.equal(player.state().status, READ_ALOUD_STATUS.idle);
 });
 
+test('audio decoded after Stop never starts playback', async () => {
+  const { player, routes } = makePlayer();
+  const run = player.toggle('reply-1', 'Hello.', { order: ['gateway'] });
+  await tick();
+  routes.synths[0].resolve('audio-a');
+  player.stop();
+  await tick();
+  await run;
+  assert.equal(routes.clips.length, 0);
+  assert.equal(player.state().status, READ_ALOUD_STATUS.idle);
+});
+
 test('late audio of a stopped reply cannot interrupt the reply that replaced it', async () => {
   const { player, routes } = makePlayer();
   const first = player.toggle('reply-1', 'One.', { order: ['gateway'] });
@@ -503,8 +518,10 @@ test('when the gateway voice fails the browser speaks instead and the reason is 
   assert.equal(player.state().route, 'browser');
   assert.equal(player.state().status, READ_ALOUD_STATUS.speaking);
   assert.match(player.state().fallbackReason, /Speech synthesis failed/);
+  assert.equal(player.state().lastFallback, '');
   routes.browser.spoken[0].end.resolve();
   await run;
+  assert.equal(player.state().lastFallback, 'Speech synthesis failed');
   assert.ok(changes.some((state) => state.fallbackReason));
 });
 
