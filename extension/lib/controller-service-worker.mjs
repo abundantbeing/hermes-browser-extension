@@ -34,7 +34,7 @@ import {
   validateBrowserControlUrl,
 } from './browser-control-safety.mjs';
 import { isGatewayAuthRejection, transportUsesDashboardTicket } from './connection-modes.mjs';
-import { syncActiveSavedConnection } from './saved-connections.mjs';
+import { syncActiveSavedConnection, packSavedConnectionStorage, hydrateSavedConnectionSecrets, SAVED_CONNECTION_SECRETS_STORAGE_KEY } from './saved-connections.mjs';
 import { CONTROL_TOOL_FAMILIES, controlToolFamily, controlToolName, setControlToolFamily } from './control-tool-names.mjs';
 
 export const CONTROLLER_WORKER_VERSION = 1;
@@ -981,6 +981,12 @@ export function createControllerServiceWorker({
     }
 
     const epoch = generation;
+    const attemptedAuth = {
+      gatewayUrl: String(settings.gatewayUrl || ''),
+      apiKey: String(settings.apiKey || ''),
+      tokenSource: String(settings.tokenSource || ''),
+      activeSavedConnectionId: String(settings.activeSavedConnectionId || ''),
+    };
     connecting = (async () => {
       let candidate = null;
       try {
@@ -1070,14 +1076,23 @@ export function createControllerServiceWorker({
           // or on a 403 that was decided after the token authenticated.
           settings = { ...settings, tokenSource: '', lastConnectionTestedAt: 0 };
           settings.apiKey = '';
-          const stored = await storageArea.get('hermesBrowserSettings');
+          const stored = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
           const current = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
-            ? stored.hermesBrowserSettings
+            ? hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
             : {};
-          current.tokenSource = '';
-          current.lastConnectionTestedAt = 0;
-          current.apiKey = '';
-          await storageArea.set({ hermesBrowserSettings: syncActiveSavedConnection(current) });
+          const authStillMatches = String(current.gatewayUrl || '') === attemptedAuth.gatewayUrl
+            && String(current.apiKey || '') === attemptedAuth.apiKey
+            && String(current.tokenSource || '') === attemptedAuth.tokenSource
+            && String(current.activeSavedConnectionId || '') === attemptedAuth.activeSavedConnectionId;
+          if (authStillMatches) {
+            current.tokenSource = '';
+            current.lastConnectionTestedAt = 0;
+            current.apiKey = '';
+            await storageArea.set(packSavedConnectionStorage(
+              syncActiveSavedConnection(current),
+              stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+            ));
+          }
         }
         await persist();
         return {

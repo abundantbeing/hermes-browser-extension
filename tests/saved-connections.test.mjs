@@ -3,8 +3,11 @@ import assert from 'node:assert/strict';
 import {
   addSavedConnection,
   deleteSavedConnection,
+  hydrateSavedConnectionSecrets,
+  packSavedConnectionStorage,
   rememberSavedConnection,
   renameSavedConnection,
+  SAVED_CONNECTION_SECRETS_STORAGE_KEY,
   savedConnectionStorageKey,
   selectSavedConnection,
   savedConnectionsBase,
@@ -123,7 +126,8 @@ test('the panel switch saves form edits, persists the selected key and reloads o
     await h.fn('updateSavedConnection')('switch', 'default');
     assert.equal(h.store.hermesBrowserSettings.apiKey, local.apiKey);
     assert.equal(h.store.hermesBrowserSettings.activeSavedConnectionId, 'default');
-    assert.equal(h.store.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, 'updated-work-token');
+    assert.equal(h.store.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
+    assert.equal(h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY].work.apiKey, 'updated-work-token');
     assert.equal(h.callsTo('reload').length, 1);
     assert.equal(h.callsTo('toast').length, 0);
     h.scope.sending = true;
@@ -179,6 +183,7 @@ test('clearing the token also clears it from the active saved connection right a
     const work = stored.savedConnections.find((entry) => entry.id === 'work');
     assert.equal(work.connection.apiKey, '');
     assert.equal(work.connection.tokenSource, '');
+    assert.equal(h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.work?.apiKey || '', '');
     assert.equal(JSON.stringify(stored).includes('work-test-token'), false);
   } finally { h.close(); }
 });
@@ -219,6 +224,17 @@ test('a switch from another panel stops a pending scope change here from writing
   } finally { h.close(); }
 });
 
+test('saved gateway keys live in a sidecar, not inside inactive savedConnections entries', () => {
+  const packed = packSavedConnectionStorage(twoConnections());
+  assert.equal(packed.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
+  assert.equal(packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY].work.apiKey, 'work-test-token');
+  const restored = rememberSavedConnection(hydrateSavedConnectionSecrets(
+    packed.hermesBrowserSettings,
+    packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+  ));
+  assert.equal(restored.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, 'work-test-token');
+});
+
 test('every open panel starts its own fresh chat after a switch, and later panels resume as set', async () => {
   const resumeLast = { ...twoConnections(), sessionStartupMode: 'resume-last' };
   const h = await createSettingsSaveHarness({ settings: resumeLast });
@@ -250,6 +266,52 @@ test('every open panel starts its own fresh chat after a switch, and later panel
     assert.equal(await openPanel('B'), 'fresh');
     assert.equal(await openPanel('A'), 'resumed', 'a panel that already started its chat resumes it');
     assert.equal(await openPanel('C'), 'resumed', 'a panel opened after the switch resumes as set');
+  } finally {
+    if (realSessionStorage) Object.defineProperty(globalThis, 'sessionStorage', realSessionStorage);
+    else delete globalThis.sessionStorage;
+    h.close();
+  }
+});
+
+test('a failed fresh chat after a switch still retries as a fresh chat', async () => {
+  const resumeLast = { ...twoConnections(), sessionStartupMode: 'resume-last' };
+  const h = await createSettingsSaveHarness({ settings: resumeLast });
+  const realSessionStorage = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+  const session = new Map([
+    ['hermesBrowserInstanceId', 'panel-1'],
+    ['hermesBrowserSavedConnectionSwitch:panel-1', '0'],
+  ]);
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: {
+      getItem: (key) => (session.has(key) ? session.get(key) : null),
+      setItem: (key, value) => session.set(key, String(value)),
+    },
+  });
+  try {
+    let failDraft = true;
+    Object.assign(h.scope, {
+      minimumConnectionReady: () => true,
+      setStatus: () => {},
+      makeBrowserSessionTitle: () => 'draft',
+      beginHermesBrowserDraft: async () => {
+        if (failDraft) {
+          failDraft = false;
+          throw new Error('dashboard offline');
+        }
+        h.calls.push({ name: 'beginHermesBrowserDraft', args: [] });
+      },
+      ensureSessionForActiveScope: async () => { h.calls.push({ name: 'ensureSessionForActiveScope', args: [] }); },
+    });
+    h.store.hermesBrowserSettings = selectSavedConnection(resumeLast, 'default');
+    h.scope.settings = structuredClone(h.store.hermesBrowserSettings);
+    h.fn('noteSavedConnectionSwitchBaseline')();
+    h.calls.length = 0;
+    await assert.rejects(() => h.fn('initializeSessionForPanelOpen')({ focus: false }));
+    assert.equal(h.callsTo('ensureSessionForActiveScope').length, 0, 'switch pending blocks resume path');
+    h.calls.length = 0;
+    await h.fn('initializeSessionForPanelOpen')({ focus: false });
+    assert.equal(h.callsTo('beginHermesBrowserDraft').length, 1, 'retry still starts a fresh chat');
   } finally {
     if (realSessionStorage) Object.defineProperty(globalThis, 'sessionStorage', realSessionStorage);
     else delete globalThis.sessionStorage;

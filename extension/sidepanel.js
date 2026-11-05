@@ -705,8 +705,11 @@ import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForCo
 import {
   addSavedConnection,
   deleteSavedConnection,
+  hydrateSavedConnectionSecrets,
+  packSavedConnectionStorage,
   rememberSavedConnection,
   renameSavedConnection,
+  SAVED_CONNECTION_SECRETS_STORAGE_KEY,
   savedConnectionRecordKeys,
   savedConnectionStorageKey,
   savedConnectionsBase,
@@ -5435,22 +5438,32 @@ function noteSavedConnectionSwitchBaseline() {
   } catch { /* optional */ }
 }
 
-function consumeSavedConnectionSwitch() {
+function pendingSavedConnectionSwitch() {
   const revision = Number(settings.savedConnectionSwitchRevision) || 0;
   try {
     const key = savedConnectionSwitchSeenKey();
     const seen = globalThis.sessionStorage?.getItem(key);
-    globalThis.sessionStorage?.setItem(key, String(revision));
     return seen !== null && seen !== undefined && revision > Number(seen);
   } catch {
     return false;
   }
 }
 
+function markSavedConnectionSwitchSeen() {
+  try {
+    globalThis.sessionStorage?.setItem(
+      savedConnectionSwitchSeenKey(),
+      String(Number(settings.savedConnectionSwitchRevision) || 0),
+    );
+  } catch { /* optional */ }
+}
+
 async function initializeSessionForPanelOpen({ focus = false } = {}) {
   if (!minimumConnectionReady()) return;
-  if (consumeSavedConnectionSwitch() || shouldCreateFreshSessionOnOpen(settings)) {
+  const switchPending = pendingSavedConnectionSwitch();
+  if (switchPending || shouldCreateFreshSessionOnOpen(settings)) {
     await beginHermesBrowserDraft({ title: makeBrowserSessionTitle(), focus });
+    if (switchPending) markSavedConnectionSwitchSeen();
     setStatus('ok', 'New Hermes Browser Extension draft', 'Saved when you send the first message.');
     return;
   }
@@ -23091,7 +23104,16 @@ async function noteLongSharedSessionIfDue() {
 
 async function loadSettings({ restoreMessages = false } = {}) {
   await refreshCustomThemeStore({ render: false });
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get([
+    'hermesBrowserSettings',
+    SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+    LOCALE_STORAGE_KEY,
+    CONTEXT_CONSENT_STORAGE_KEY,
+    HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY,
+    ONBOARDING_COMPLETED_STORAGE_KEY,
+    TASK_STACKS_STORAGE_KEY,
+    ROOM_EVENTS_STORAGE_KEY,
+  ]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -23104,7 +23126,10 @@ async function loadSettings({ restoreMessages = false } = {}) {
   onboardingStateLoaded = true;
   renderBrowserIntroVisibility();
   const migrateConnectionSchema = stored.hermesBrowserSettings?.connectionSchemaVersion !== DEFAULT_SETTINGS.connectionSchemaVersion;
-  const storedSettings = migrateConnectionSettings(stored.hermesBrowserSettings || {});
+  const storedSettings = hydrateSavedConnectionSecrets(
+    migrateConnectionSettings(stored.hermesBrowserSettings || {}),
+    stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+  );
   const storedWakeSettings = normalizeWakeWordSettings({ ...DEFAULT_SETTINGS, ...storedSettings });
   const migrateDesktopOptionDefaults = !storedSettings.modelOptionsVersion && storedSettings.reasoningEffort === 'medium';
   const migrateModelOptionScope = !storedSettings.extensionPreferredModelOptions || !storedSettings.sessionModelOptionBindings;
@@ -23476,7 +23501,7 @@ async function updateSavedConnection(action, id = settings.activeSavedConnection
       else if (action === 'rename') next = renameSavedConnection(base, expectedId, name);
       else if (action === 'delete') next = deleteSavedConnection(base, expectedId);
       else next = selectSavedConnection(base, id);
-      await browserApi.storage.local.set({ hermesBrowserSettings: next });
+      await persistHermesBrowserSettings(next);
       if (action === 'delete') await forgetSavedConnectionRecords(expectedId);
       if (next.activeSavedConnectionId !== expectedId) reloadForSavedConnection(next);
       else settings = next;
@@ -23751,11 +23776,19 @@ async function refreshAfterSettingsSave(saved) {
   if (saved?.connectionIdentityChanged === true) await initializeSessionForPanelOpen({ focus: false });
 }
 
+async function persistHermesBrowserSettings(nextSettings) {
+  const stored = await browserApi.storage.local.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY);
+  await browserApi.storage.local.set(packSavedConnectionStorage(
+    nextSettings,
+    stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+  ));
+}
+
 async function clearStoredToken() {
   const previousTransport = migrateConnectionSettings(settings).connectionTransport;
   const cleared = connectionSettingsAfterTokenClear(settings);
   settings = syncActiveSavedConnection({ ...settings, ...cleared });
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await persistHermesBrowserSettings(settings);
   if (els.apiKeyInput) els.apiKeyInput.value = '';
   sessionRoutesAvailable = null;
   setLocalDashboardUrl('');

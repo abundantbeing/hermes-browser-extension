@@ -54,6 +54,62 @@ export function rememberSavedConnection(settings = {}, defaultName = 'Connection
 
 // Settings changed outside this module (a cleared or rejected token) must reach
 // the saved copy too, or the old key comes back on the next switch.
+export const SAVED_CONNECTION_SECRETS_STORAGE_KEY = 'hermesBrowserSavedConnectionSecrets';
+
+function cloneSecrets(secrets = {}) {
+  return structuredClone(secrets && typeof secrets === 'object' ? secrets : {});
+}
+
+/** Merge inline saved keys into the sidecar and strip them from the settings blob. */
+export function mergeSavedConnectionSecrets(settings = {}, secrets = {}) {
+  if (!Array.isArray(settings.savedConnections)) return { settings, secrets: cloneSecrets(secrets) };
+  const nextSecrets = cloneSecrets(secrets);
+  const savedConnections = settings.savedConnections.map((entry) => {
+    if (!entry || typeof entry.id !== 'string') return entry;
+    const conn = entry.connection && typeof entry.connection === 'object' ? entry.connection : {};
+    if (conn.apiKey || conn.tokenSource) {
+      nextSecrets[entry.id] = {
+        apiKey: String(conn.apiKey || ''),
+        tokenSource: String(conn.tokenSource || ''),
+      };
+    }
+    return {
+      ...entry,
+      connection: { ...conn, apiKey: '', tokenSource: '' },
+    };
+  });
+  return { settings: { ...settings, savedConnections }, secrets: nextSecrets };
+}
+
+/** Restore saved keys from the sidecar (and migrate any legacy inline copies). */
+export function hydrateSavedConnectionSecrets(settings = {}, secrets = {}) {
+  const merged = mergeSavedConnectionSecrets(settings, secrets);
+  if (!Array.isArray(merged.settings.savedConnections)) return merged.settings;
+  const savedConnections = merged.settings.savedConnections.map((entry) => {
+    if (!entry || typeof entry.id !== 'string') return entry;
+    const bag = merged.secrets[entry.id];
+    if (!bag) return entry;
+    const conn = entry.connection && typeof entry.connection === 'object' ? entry.connection : {};
+    return {
+      ...entry,
+      connection: {
+        ...conn,
+        apiKey: bag.apiKey ?? '',
+        tokenSource: bag.tokenSource ?? '',
+      },
+    };
+  });
+  return { ...merged.settings, savedConnections };
+}
+
+export function packSavedConnectionStorage(settings = {}, existingSecrets = {}) {
+  const merged = mergeSavedConnectionSecrets(rememberSavedConnection(settings), existingSecrets);
+  return {
+    hermesBrowserSettings: merged.settings,
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: merged.secrets,
+  };
+}
+
 export function syncActiveSavedConnection(settings = {}) {
   return Array.isArray(settings.savedConnections) && settings.savedConnections.length
     ? rememberSavedConnection(settings)
