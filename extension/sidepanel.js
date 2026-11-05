@@ -5868,7 +5868,7 @@ async function refreshDashboardRoutes({ force = false } = {}) {
   const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
   readAloudDashboardProbe = { reachable: probe.reachable === true, gatewayUrl: settings.gatewayUrl };
   renderCompatibilityPanel();
-  panelMessageThread?.refreshActions();
+  panelMessageThread?.refreshReadAloud();
   const fields = dashboardRouteRecordFields(probe);
   if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
   for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);
@@ -29899,18 +29899,28 @@ function bindEvents() {
           // panel, they share this record, and adopting another panel's binding would make this one resume
           // (and then write into) the other panel's session on its next reconnect.
         ];
+        const connectionKeys = new Set([
+          'apiKey', 'tokenSource', 'lastConnectionTestedAt',
+          'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
+          'trustedDashboardOrigin', 'trustedDashboardTabId',
+        ]);
         const patch = {};
+        let connectionChanged = false;
         for (const key of tracked) {
-          if (Object.hasOwn(next, key)) patch[key] = next[key];
+          if (!Object.hasOwn(next, key) || next[key] === settings[key]) continue;
+          patch[key] = next[key];
+          if (connectionKeys.has(key)) connectionChanged = true;
         }
         if (Object.keys(patch).length) {
           settings = { ...settings, ...patch };
-          readAloudDashboard = null;
-          readAloudDashboardIdentity = '';
-          readAloudDashboardProbe = null;
-          readAloudPlayer.stop();
-          // Another panel may have moved the connection to a remote mode.
-          resetLocalDashboardState();
+          if (connectionChanged) {
+            readAloudDashboard = null;
+            readAloudDashboardIdentity = '';
+            readAloudDashboardProbe = null;
+            readAloudPlayer.stop();
+            // Another panel may have moved the connection to a remote mode.
+            resetLocalDashboardState();
+          }
           updateConnectionPrompt();
           renderBrowserControl();
         }

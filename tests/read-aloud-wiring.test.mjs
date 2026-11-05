@@ -59,3 +59,9 @@ test('the gateway voice is offered from what the dashboard probe last found, not
   assert.match(availability, /readAloudDashboardProbe/);
   assert.doesNotMatch(availability, /capabilityRuntime/);
 });
+
+test('a shared settings write that only changes appearance does not stop read aloud', () => {
+  const block = panel.slice(panel.indexOf('browserApi.storage.onChanged.addListener((changes, areaName) => {'), panel.indexOf('if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)'));
+  assert.match(block, /let connectionChanged = false/);
+  assert.match(block, /if \(connectionChanged\) \{[\s\S]*readAloudPlayer\.stop\(\)/);
+});

@@ -454,14 +454,35 @@ test('audio that arrives after Stop is thrown away and never played', async () =
 });
 
 test('audio decoded after Stop never starts playback', async () => {
-  const { player, routes } = makePlayer();
+  const decode = deferred();
+  const { FakeContext, events } = fakeAudioContext();
+  const originalDecode = FakeContext.prototype.decodeAudioData;
+  FakeContext.prototype.decodeAudioData = function decodePending(buffer) {
+    return decode.promise.then(() => originalDecode.call(this, buffer));
+  };
+  const playback = createGatewayAudioPlayback({ AudioContextCtor: FakeContext });
+  const synths = [];
+  const player = createReadAloudPlayer({
+    gateway: {
+      prepare: () => playback.prepare(),
+      async synthesize(text) {
+        const call = deferred();
+        synths.push({ text, ...call });
+        return call.promise;
+      },
+      play: (audio, options) => playback.play(new TextEncoder().encode(String(audio)), options),
+    },
+    browser: null,
+  });
   const run = player.toggle('reply-1', 'Hello.', { order: ['gateway'] });
   await tick();
-  routes.synths[0].resolve('audio-a');
-  player.stop();
+  synths[0].resolve('audio-a');
   await tick();
+  player.stop();
+  decode.resolve();
   await run;
-  assert.equal(routes.clips.length, 0);
+  await tick();
+  assert.equal(events.includes('start'), false);
   assert.equal(player.state().status, READ_ALOUD_STATUS.idle);
 });
 
