@@ -177,9 +177,11 @@ function controllerRouteChanged(previous = {}, next = {}) {
     || durableSessionId(previous) !== durableSessionId(next);
 }
 
-// Route + session identity for Hermes Control: another panel may have updated storage with a new chat while
-// this worker still serves the old transport; on Pause, merge structural updates from storage but keep this
-// worker's route until the normal syncSettings transition runs.
+// Transport / gateway identity for Hermes Control on Pause: another panel may have updated storage with a new
+// chat while this worker still serves the old transport. Merge connection fields from storage but keep this
+// worker's transport credentials until Resume runs syncSettingsTransition. Chat fields (sessionId, sessionTitle,
+// remoteDashboardSession) always come from storage so Pause never copies the worker's in-memory chat into the
+// blob — that would make a later syncSettings see no route change and skip closing the socket (#3).
 const PAUSE_ROUTE_IDENTITY_FIELDS = [
   'connectionMode',
   'connectionTransport',
@@ -191,9 +193,6 @@ const PAUSE_ROUTE_IDENTITY_FIELDS = [
   'trustedDashboardOrigin',
   'trustedDashboardTabId',
   'browserControlEnabled',
-  'sessionId',
-  'sessionTitle',
-  'remoteDashboardSession',
 ];
 
 function routeIdentityFromSettings(source = {}) {
@@ -207,6 +206,9 @@ function mergePauseSettingsWithStorage(current = {}, fromStorage = {}) {
     ...fromStorage,
     ...routeIdentityFromSettings(current),
     browserControlPaused: true,
+    sessionId: fromStorage.sessionId,
+    sessionTitle: fromStorage.sessionTitle,
+    remoteDashboardSession: fromStorage.remoteDashboardSession,
   };
 }
 
@@ -338,6 +340,8 @@ export function createControllerServiceWorker({
   // True as soon as Pause is requested, before the saved-connections lock is acquired — blocks commands
   // that would otherwise slip past lifecycle.cancelAll() while another panel holds the lock.
   let pauseAdmittingCommands = false;
+  // Increments on each Pause; Resume drops stale transition work when a newer Pause completed first (#1).
+  let pauseSequence = 0;
   let controllerId = '';
   let browserProfileId = '';
   let generation = 1;
@@ -1512,9 +1516,11 @@ export function createControllerServiceWorker({
 
   async function setPaused(paused) {
     let transitionAfter = null;
+    const resumePauseSeq = paused === false ? pauseSequence : null;
     try {
       if (paused === true) {
         pauseAdmittingCommands = true;
+        pauseSequence += 1;
         // Pause is Stop plus a hold: the command that is running, or waiting for an approval, ends now. Releasing
         // the debugger alone left it to attach again and carry on.
         stopTurnReads();
@@ -1533,15 +1539,25 @@ export function createControllerServiceWorker({
             stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
           ));
         } else {
-          const resumed = syncActiveSavedConnection({ ...keepChatMove(fromStorage), browserControlPaused: false });
+          if (resumePauseSeq !== null && resumePauseSeq !== pauseSequence) {
+            transitionAfter = false;
+            return;
+          }
+          const refreshed = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+          const latest = refreshed?.hermesBrowserSettings && typeof refreshed.hermesBrowserSettings === 'object'
+            ? await hydrateSavedConnectionSecrets(refreshed.hermesBrowserSettings, refreshed[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+            : fromStorage;
+          const resumed = syncActiveSavedConnection({ ...keepChatMove(latest), browserControlPaused: false });
           await storageArea.set(await packSavedConnectionStorage(
             resumed,
-            stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+            refreshed[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
           ));
           transitionAfter = resumed;
         }
       });
-      if (transitionAfter) await runTransition(() => syncSettingsTransition(transitionAfter));
+      if (transitionAfter && typeof transitionAfter === 'object') {
+        await runTransition(() => syncSettingsTransition(transitionAfter));
+      }
     } finally {
       pauseAdmittingCommands = false;
     }
@@ -1986,8 +2002,11 @@ export function createControllerServiceWorker({
     if (type === CONTROLLER_WORKER_MESSAGES.settingsRefresh) {
       const revision = settingsRevision + 1;
       settingsRevision = revision;
-      const stored = await storageArea.get('hermesBrowserSettings');
-      return syncSettings(connectionSettings(stored), { revision });
+      const stored = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+      const hydrated = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+        ? await hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+        : {};
+      return syncSettings(hydrated, { revision });
     }
     if (type === CONTROLLER_WORKER_MESSAGES.scopeReplace) return runTransition(() => replaceScopeLeases(message));
     if (scopeChanging && [CONTROLLER_WORKER_MESSAGES.leaseAcquire, CONTROLLER_WORKER_MESSAGES.leaseRelease,

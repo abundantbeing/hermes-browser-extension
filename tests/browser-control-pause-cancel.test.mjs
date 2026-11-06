@@ -258,6 +258,103 @@ test('Resume after Pause runs syncSettings so a newer stored chat closes the old
   assert.equal(transport.connections.length, 2, 'a new connection opens for the advanced session');
 });
 
+test('Pause persists the newest chat from storage instead of copying the worker memory session', async () => {
+  const base = settings();
+  const storage = memoryStorage({ hermesBrowserSettings: base });
+  const transport = connector();
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async () => ({ ok: true, result: { status: 'noop' } }),
+  });
+  await worker.boot();
+  // Another panel advanced the shared session in storage; this worker has not run settingsRefresh yet.
+  storage.state.hermesBrowserSettings = { ...base, sessionId: 'session-b', sessionTitle: 'B' };
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
+  assert.equal(storage.state.hermesBrowserSettings.sessionId, 'session-b');
+  assert.equal(storage.state.hermesBrowserSettings.browserControlPaused, true);
+});
+
+test('a stale Resume after a newer Pause finishes does not apply browserControlPaused:false or admit commands', async () => {
+  const queue = [];
+  let running = false;
+  const locks = {
+    request(_name, task) {
+      return new Promise((resolve, reject) => {
+        queue.push({ task, resolve, reject });
+        const tryRun = () => {
+          if (running || !queue.length) return;
+          running = true;
+          const { task: next, resolve: res, reject: rej } = queue.shift();
+          Promise.resolve(next())
+            .then(res, rej)
+            .finally(() => {
+              running = false;
+              tryRun();
+            });
+        };
+        tryRun();
+      });
+    },
+  };
+  const prevNav = globalThis.navigator;
+  Object.defineProperty(globalThis, 'navigator', { value: { locks }, configurable: true });
+  let releaseHolder;
+  const holderDone = new Promise((r) => { releaseHolder = r; });
+  const otherPanelWork = withSavedConnectionsLock(async () => {
+    await holderDone;
+  });
+  const storage = memoryStorage({ hermesBrowserSettings: settings() });
+  const transport = connector();
+  const executed = [];
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async (frame) => {
+      executed.push(frame);
+      return { ok: true, result: { status: 'done' } };
+    },
+  });
+  try {
+    await worker.boot();
+    const ready = await ownedReady(worker, 91);
+    await settle();
+    const firstResume = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
+    await settle();
+    const secondPause = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
+    await settle();
+    releaseHolder();
+    await firstResume;
+    await secondPause;
+    await otherPanelWork;
+    assert.equal(storage.state.hermesBrowserSettings.browserControlPaused, true, 'storage stays paused after the second Pause');
+    await transport.connections[0].emit({
+      method: 'browser.controller.command',
+      params: {
+        command_id: 'after-stale-resume',
+        action: 'browser_scroll',
+        arguments: { direction: 'down' },
+        tab_id: 91,
+        document_generation: ready.documentGeneration,
+      },
+    });
+    await settle();
+    assert.equal(executed.length, 0, 'stale Resume must not admit gateway commands while still paused');
+    const rejected = terminalOf(transport.connections[0], 'after-stale-resume');
+    assert.equal(rejected?.ok, false);
+    assert.equal(rejected?.error?.code, 'controller_paused');
+  } finally {
+    if (prevNav === undefined) delete globalThis.navigator;
+    else Object.defineProperty(globalThis, 'navigator', { value: prevNav, configurable: true });
+  }
+});
+
 async function waitingApprovalWorker() {
   const storage = memoryStorage({ hermesBrowserSettings: settings() });
   const transport = connector();

@@ -132,7 +132,7 @@ test('the panel switch saves form edits, persists the selected key and reloads o
     h.els.connectionModeInput.value = 'remote';
     h.els.apiKeyInput.value = 'updated-work-token';
     await h.fn('updateSavedConnection')('switch', 'default');
-    assert.equal(h.store.hermesBrowserSettings.apiKey, local.apiKey);
+    assert.equal(h.store.hermesBrowserSettings.apiKey, '', 'packed storage does not keep a plaintext top-level key');
     assert.equal(h.store.hermesBrowserSettings.activeSavedConnectionId, 'default');
     assert.equal(h.store.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
     assert.equal(JSON.stringify(h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY]).includes('updated-work-token'), false);
@@ -140,6 +140,7 @@ test('the panel switch saves form edits, persists the selected key and reloads o
       h.store.hermesBrowserSettings,
       h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
     );
+    assert.equal(roundTrip.apiKey, local.apiKey, 'hydrate restores the active connection key from the sidecar');
     assert.equal(roundTrip.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, 'updated-work-token');
     assert.equal(h.callsTo('reload').length, 1);
     assert.equal(h.callsTo('toast').length, 0);

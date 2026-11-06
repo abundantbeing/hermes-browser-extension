@@ -852,8 +852,13 @@ test('out-of-order settings refresh reads cannot overwrite the newest controller
   const first = await worker.boot();
   const originalGet = storage.area.get;
   const settingsReads = [];
+  const readsHermesBrowserSettings = (keys) => {
+    if (keys === null) return false;
+    const list = Array.isArray(keys) ? keys : [keys];
+    return list.includes('hermesBrowserSettings');
+  };
   storage.area.get = async (keys = null) => {
-    if (keys !== 'hermesBrowserSettings') return originalGet(keys);
+    if (!readsHermesBrowserSettings(keys)) return originalGet(keys);
     const gate = deferred();
     settingsReads.push(gate);
     return gate.promise;
@@ -875,18 +880,22 @@ test('out-of-order settings refresh reads cannot overwrite the newest controller
     gatewayUrl: 'http://127.0.0.1:8644',
     sessionId: 'newest-session',
   });
-  settingsReads[1].resolve({ hermesBrowserSettings: newestSettings });
+  settingsReads[1].resolve(await originalGet(['hermesBrowserSettings', 'hermesBrowserSavedConnectionSecrets']).then((base) => ({
+    ...base,
+    hermesBrowserSettings: newestSettings,
+  })));
   const newest = await newestRefresh;
   assert.ok(newest.generation > first.generation);
   assert.equal(connector.connections.at(-1).options.settings.gatewayUrl, newestSettings.gatewayUrl);
   assert.equal(connector.connections.at(-1).options.identity.hermesSessionId, newestSettings.sessionId);
 
-  settingsReads[0].resolve({
+  settingsReads[0].resolve(await originalGet(['hermesBrowserSettings', 'hermesBrowserSavedConnectionSecrets']).then((base) => ({
+    ...base,
     hermesBrowserSettings: controllerSettings({
       gatewayUrl: 'http://127.0.0.1:8643',
       sessionId: 'stale-session',
     }),
-  });
+  })));
   const stale = await staleRefresh;
   assert.equal(stale.generation, newest.generation);
   assert.equal(connector.connections.length, 2);

@@ -24193,7 +24193,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     );
     applyAppearanceSettings();
     settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    await persistHermesBrowserSettings(settings);
   };
   if (lockHeld) await writeSettingsRecord();
   else await withSavedConnectionsLock(writeSettingsRecord);

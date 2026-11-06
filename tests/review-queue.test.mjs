@@ -119,6 +119,19 @@ test('simultaneous processes recovering a dead owner cannot overlap their critic
   // spawnSync does not expose a PID. Obtain one explicitly and await its exit.
   const departed = spawn(process.execPath, ['-e', '']);
   await new Promise((resolve) => departed.once('exit', resolve));
+  // Wait until the OS recycles are unlikely to have reassigned this PID to a live process
+  // (parallel full-suite runs have races where kill(pid,0) succeeds for a new owner).
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    let alive = false;
+    try {
+      process.kill(departed.pid, 0);
+      alive = true;
+    } catch (probe) {
+      if (probe.code !== 'ESRCH') throw probe;
+    }
+    if (!alive) break;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
   fs.writeFileSync(`${filename}.lock`, JSON.stringify({ pid: departed.pid, token: 'departed' }));
   const moduleURL = new URL('../scripts/hermes-review-queue.mjs', import.meta.url).href;
   const code = `

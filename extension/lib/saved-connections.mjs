@@ -129,11 +129,39 @@ export async function hydrateSavedConnectionSecrets(settings = {}, secrets = {})
       },
     };
   }));
-  return { ...merged.settings, savedConnections };
+  const activeId = merged.settings.activeSavedConnectionId;
+  const activeEntry = typeof activeId === 'string' && activeId
+    ? savedConnections.find((e) => e?.id === activeId) : null;
+  const activeConn = activeEntry?.connection && typeof activeEntry.connection === 'object' ? activeEntry.connection : null;
+  return {
+    ...merged.settings,
+    savedConnections,
+    ...(activeConn ? {
+      apiKey: activeConn.apiKey ?? merged.settings.apiKey ?? '',
+      tokenSource: activeConn.tokenSource ?? merged.settings.tokenSource ?? '',
+    } : {}),
+  };
 }
 
 export async function packSavedConnectionStorage(settings = {}, existingSecrets = {}) {
-  const merged = mergeSavedConnectionSecrets(rememberSavedConnection(settings), existingSecrets);
+  let merged = mergeSavedConnectionSecrets(rememberSavedConnection(settings), existingSecrets);
+  const activeId = merged.settings.activeSavedConnectionId;
+  const topApiKey = String(merged.settings.apiKey ?? '');
+  const topTokenSource = String(merged.settings.tokenSource ?? '');
+  if (typeof activeId === 'string' && activeId && (topApiKey || topTokenSource)) {
+    const existing = merged.secrets[activeId];
+    const existingPlain = existing ? await plaintextSecretBagFromStored(existing) : null;
+    merged = {
+      settings: { ...merged.settings, apiKey: '', tokenSource: '' },
+      secrets: {
+        ...merged.secrets,
+        [activeId]: {
+          apiKey: topApiKey || existingPlain?.apiKey || '',
+          tokenSource: topTokenSource || existingPlain?.tokenSource || '',
+        },
+      },
+    };
+  }
   const storedSecrets = {};
   for (const [id, bag] of Object.entries(merged.secrets)) {
     const plain = isPlainSecretBag(bag) ? bag : (await plaintextSecretBagFromStored(bag));
