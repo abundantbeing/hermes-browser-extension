@@ -53,7 +53,8 @@ test('inline result controls use correct artwork, dismiss accepted drafts, and r
   assert.match(source, /function renderOpenSessionChoices\(/);
   assert.match(source, /surface:\s*['"]sidepanel['"]/);
   assert.match(source, /surface:\s*['"]web['"]/);
-  assert.match(source, /\.result-actions\[data-action-count="3"\]/);
+  // An odd last result button takes the whole row, so two columns never leave a hole.
+  assert.match(source, /\.result-actions > button:last-child:nth-child\(odd\)/);
   const apply = source.match(/function applyResult\(\)[\s\S]*?\n\}/)?.[0] || '';
   assert.match(apply, /hidePanel\(\)/);
 });

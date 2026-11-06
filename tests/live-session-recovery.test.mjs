@@ -31,6 +31,7 @@ test('a live updater restores accumulated text and tool activity after its DOM n
     setMessageContent: (node, text) => painted.set(node, text),
     setToolActivity: (node, activity) => tools.set(node, activity),
     activeImageGenerationPlaceholder: () => null,
+    settleTurnImages: async () => {},
     extractRenderableImageSource: () => '',
     panelMessageThread: null,
     setRailCopyEnabled: () => {},
@@ -45,7 +46,7 @@ test('a live updater restores accumulated text and tool activity after its DOM n
   assert.equal(typeof view.rebind, 'function', 'navigation needs a rebindable updater, not a permanently detached bubble');
   view.rebind(newNode);
   assert.equal(painted.get(newNode), 'First chunk while away');
-  assert.equal(tools.get(newNode), null, 'ordinary tool calls must not become an assistant bubble');
+  assert.equal(tools.has(newNode), false, 'ordinary tool calls must not become an assistant bubble');
   assert.equal(document.querySelectorAll('.tool-call-group').length, 1);
   assert.match(document.querySelector('.tool-call-entry').textContent, /terminal/);
   assert.equal(view.node, newNode);
@@ -68,6 +69,7 @@ test('disposing a live updater paints text that was still waiting for its frame'
     setMessageContent: (_node, text) => painted.push(text),
     setToolActivity: () => {},
     activeImageGenerationPlaceholder: () => null,
+    settleTurnImages: async () => {},
     extractRenderableImageSource: () => '',
     panelMessageThread: null,
     setRailCopyEnabled: () => {},

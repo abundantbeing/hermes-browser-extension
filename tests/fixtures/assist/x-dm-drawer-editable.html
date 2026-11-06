@@ -1,0 +1,18 @@
+<!-- The messages drawer again, its field an editable box rather than a textarea. An X direct message in the messages drawer (the small window at the bottom right of x.com, 2026-11): nothing on the page that names it a drawer, so the composer itself has to say it is a chat box; the header's back, call, pop-out and collapse buttons, then + outside the pill and the pill with the Message field and the voice button. The voice button's own box reaches higher than its icon (measured on x.com: its middle sits 3.5px above the icon's), so a circle centred on the box sits high. -->
+<main role="main">
+  <div class="drawer" data-rect="840 260 425 540">
+    <div class="header" data-rect="840 270 425 48">
+      <button aria-label="Back" type="button" data-rect="852 278 32 32"></button>
+      <button aria-label="Start a call" type="button" data-rect="1112 278 34 34"></button>
+      <button aria-label="Pop out" type="button" data-rect="1155 278 34 34"></button>
+      <button aria-label="Collapse" type="button" data-rect="1198 278 34 34"></button>
+    </div>
+    <div class="dm-composer" data-rect="860 730 400 56">
+      <button aria-label="Add attachment" type="button" data-rect="866 738 40 40"><svg data-rect="876 748 20 20"></svg></button>
+      <div class="pill" data-rect="922 736 310 46">
+        <div contenteditable="true" role="textbox" aria-label="Message CHi" data-rect="938 746 220 24"></div>
+        <button aria-label="Record voice message" type="button" data-expect-slot data-rect="1188 737 30 37"><svg data-rect="1197 753 12 12"></svg></button>
+      </div>
+    </div>
+  </div>
+</main>

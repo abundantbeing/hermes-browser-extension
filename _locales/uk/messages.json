@@ -355,6 +355,14 @@
     "message": "Повертається до стандартного шлюзу, якщо точна маршрутизація недоступна",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_assist_sites_add": {
+    "message": "+ Додати {site}",
+    "description": "Runtime interface message assist.sites.add"
+  },
+  "runtime_assist_sites_listed": {
+    "message": "{site} уже в списку",
+    "description": "Runtime interface message assist.sites.listed"
+  },
   "runtime_attachments_attachment_too_large": {
     "message": "Можна прикріплювати файли розміром до 25 МіБ.",
     "description": "Runtime interface message attachments.attachment_too_large"
@@ -1348,15 +1356,15 @@
     "description": "Runtime interface message browser_limits.control_frames.reason"
   },
   "runtime_browser_limits_control_navigate_instead": {
-    "message": "Repeat scroll for larger moves, or ask the person to scroll manually.",
+    "message": "Повторіть прокрутку для більшого зміщення або попросіть користувача прокрутити вручну.",
     "description": "Runtime interface message browser_limits.control_navigate.instead"
   },
   "runtime_browser_limits_control_navigate_label": {
-    "message": "Hermes Control: navigate, back and scroll",
+    "message": "Hermes Control: перехід, назад і прокрутка",
     "description": "Runtime interface message browser_limits.control_navigate.label"
   },
   "runtime_browser_limits_control_navigate_reason": {
-    "message": "Firefox scroll calls move a fixed distance in the page and ignore the amount argument Chromium honors.",
+    "message": "Виклики прокрутки Firefox зсувають сторінку на фіксовану відстань і ігнорують аргумент amount, який враховує Chromium.",
     "description": "Runtime interface message browser_limits.control_navigate.reason"
   },
   "runtime_browser_limits_control_pointer_keyboard_instead": {
@@ -1436,7 +1444,7 @@
     "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
   },
   "runtime_browser_limits_side_panel_wake_word_instead": {
-    "message": "Connect to a local gateway to use Hermes wake, or start the chat from the panel.",
+    "message": "Підключіться до локального шлюзу, щоб використовувати Hermes Wake, або розпочніть чат із панелі.",
     "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
   },
   "runtime_browser_limits_side_panel_wake_word_label": {
@@ -1444,7 +1452,7 @@
     "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
   },
   "runtime_browser_limits_side_panel_wake_word_reason": {
-    "message": "Firefox has no offscreen documents, so the local listener cannot run. Hermes's own wake engine runs only on a local gateway on this computer, not on remote or cloud connections.",
+    "message": "У Firefox немає позаекранних документів, тому локальний слухач не може працювати. Вбудований рушій пробудження Hermes працює лише на локальному шлюзі на цьому комп’ютері, а не на віддалених чи хмарних з’єднаннях.",
     "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
   },
   "runtime_browser_limits_status_experimental": {
@@ -4043,6 +4051,10 @@
     "message": "0 виконано · 0 активних",
     "description": "Runtime interface message ui.0.complete.0.active"
   },
+  "runtime_ui_a_small_menu_at_the_circle_type_or_pick_an_action_the_draft_goes_straight_into_the_field": {
+    "message": "Невелике меню біля кола. Введіть або виберіть дію — чернетка одразу з'явиться в полі.",
+    "description": "Runtime interface message ui.a.small.menu.at.the.circle.type.or.pick.an.action.the.draft.goes.straight.into.the.field"
+  },
   "runtime_ui_accept": {
     "message": "Прийняти",
     "description": "Runtime interface message ui.accept"
@@ -4095,6 +4107,14 @@
     "message": "Додати",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_a_site": {
+    "message": "Додати сайт",
+    "description": "Runtime interface message ui.add.a.site"
+  },
+  "runtime_ui_add_a_site_like_facebook_com": {
+    "message": "Додати сайт, наприклад facebook.com",
+    "description": "Runtime interface message ui.add.a.site.like.facebook.com"
+  },
   "runtime_ui_add_comments_to_message": {
     "message": "Add comments to message",
     "description": "Runtime interface message ui.add.comments.to.message"
@@ -4102,6 +4122,10 @@
   "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
     "message": "Перед надсиланням додайте інструкції після скісної риски.",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_add_this_site": {
+    "message": "+ Додати цей сайт",
+    "description": "Runtime interface message ui.add.this.site"
   },
   "runtime_ui_adjust": {
     "message": "Налаштувати",
@@ -4114,6 +4138,10 @@
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "Відрегулюйте бічну панель для зручності читання без зміни масштабу браузера.",
     "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_again": {
+    "message": "Ще раз",
+    "description": "Runtime interface message ui.again"
   },
   "runtime_ui_agent": {
     "message": "АГЕНТ",
@@ -4299,9 +4327,41 @@
     "message": "Запитайте Hermes будь-що…",
     "description": "Runtime interface message ui.ask.hermes.anything"
   },
+  "runtime_ui_ask_hermes_ellipsis": {
+    "message": "Запитати Hermes…",
+    "description": "Runtime interface message ui.ask.hermes.ellipsis"
+  },
+  "runtime_ui_asked_once_then_remembered": {
+    "message": "Запитується один раз, потім запам’ятовується",
+    "description": "Runtime interface message ui.asked.once.then.remembered"
+  },
+  "runtime_ui_assist_action_needs_field_text": {
+    "message": "{action} працює з тим, що вже є в полі. Спершу щось напишіть або виберіть дію чернетки, щоб почати з нуля.",
+    "description": "Runtime interface message ui.assist.action.needs.field.text"
+  },
+  "runtime_ui_assist_change_it_anytime_in_settings": {
+    "message": "Це можна змінити будь-коли в Налаштування → Hermes Assist.",
+    "description": "Runtime interface message ui.assist.change.it.anytime.in.settings"
+  },
+  "runtime_ui_assist_could_not_create_this_draft": {
+    "message": "Hermes не зміг створити цю чернетку.",
+    "description": "Runtime interface message ui.assist.could.not.create.this.draft"
+  },
   "runtime_ui_assist_could_not_run": {
     "message": "Assist не міг запуститися",
     "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_loading": {
+    "message": "Завантаження…",
+    "description": "Runtime interface message ui.assist.loading"
+  },
+  "runtime_ui_assist_model_routing": {
+    "message": "Маршрутизація моделі",
+    "description": "Runtime interface message ui.assist.model.routing"
+  },
+  "runtime_ui_assist_no_models_yet": {
+    "message": "Моделей ще немає. Відкрийте бічну панель один раз, щоб Hermes міг їх показати.",
+    "description": "Runtime interface message ui.assist.no.models.yet"
   },
   "runtime_ui_assist_options": {
     "message": "Параметри допомоги",
@@ -4310,6 +4370,30 @@
   "runtime_ui_assist_session_history": {
     "message": "Історія сеансу допомоги",
     "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assist_strict_default_no_visible_site": {
+    "message": "Суворий типовий режим · без видимого контексту розмови {site}",
+    "description": "Runtime interface message ui.assist.strict.default.no.visible.site"
+  },
+  "runtime_ui_assist_use_focused_draft_only": {
+    "message": "Використовувати лише поточну чернетку",
+    "description": "Runtime interface message ui.assist.use.focused.draft.only"
+  },
+  "runtime_ui_assist_use_this_choice_next_time": {
+    "message": "Використати цей вибір наступного разу",
+    "description": "Runtime interface message ui.assist.use.this.choice.next.time"
+  },
+  "runtime_ui_assist_use_visible_site_context": {
+    "message": "Використовувати видимий контекст {site}",
+    "description": "Runtime interface message ui.assist.use.visible.site.context"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_site": {
+    "message": "Що Hermes має зробити на {site}?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.site"
+  },
+  "runtime_ui_assist_what_should_hermes_do_on_this_site": {
+    "message": "Що Hermes має зробити на цьому сайті?",
+    "description": "Runtime interface message ui.assist.what.should.hermes.do.on.this.site"
   },
   "runtime_ui_assistant": {
     "message": "помічник",
@@ -4367,6 +4451,10 @@
     "message": "Автоматичне ім'я пропущено",
     "description": "Runtime interface message ui.auto.name.skipped"
   },
+  "runtime_ui_auto_replace": {
+    "message": "Автозаміна",
+    "description": "Runtime interface message ui.auto.replace"
+  },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
     "message": "Автоматичне створення пари недоступне в цьому середовищі виконання Hermes. Відкрийте «Налаштування» та використовуйте налаштування вручну за допомогою маркерів шлюзу URL і API.",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
@@ -4394,6 +4482,10 @@
   "runtime_ui_back_to_result": {
     "message": "Повернутися до результату",
     "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_back_to_the_quick_menu": {
+    "message": "Назад до швидкого меню",
+    "description": "Runtime interface message ui.back.to.the.quick.menu"
   },
   "runtime_ui_background": {
     "message": "Фон",
@@ -4459,6 +4551,10 @@
     "message": "Створення редагованої діагностики...",
     "description": "Runtime interface message ui.building.redacted.diagnostics"
   },
+  "runtime_ui_button_icon": {
+    "message": "Значок кнопки",
+    "description": "Runtime interface message ui.button.icon"
+  },
   "runtime_ui_cache": {
     "message": "Кеш",
     "description": "Runtime interface message ui.cache"
@@ -4498,6 +4594,10 @@
   "runtime_ui_change": {
     "message": "Зміна",
     "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_it_in_settings_hermes_assist": {
+    "message": "Змініть у Налаштування → Hermes Assist",
+    "description": "Runtime interface message ui.change.it.in.settings.hermes.assist"
   },
   "runtime_ui_change_model_and_runtime_options": {
     "message": "Змінити параметри моделі та середовища виконання",
@@ -4619,9 +4719,17 @@
     "message": "Деякі браузери блокують захоплення мікрофона всередині бічних панелей розширень. Ця видима вкладка розширення записує з того самого джерела, що й Hermes Browser Extension, коли Hermes STT доступний, або використовує резервне мовлення браузера, коли підключене середовище виконання не надає аудіотранскрипцію.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
+  "runtime_ui_circle_hidden": {
+    "message": "Коло приховано",
+    "description": "Runtime interface message ui.circle.hidden"
+  },
   "runtime_ui_class": {
     "message": "Клас",
     "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clean_at_any_size": {
+    "message": "Чіткий у будь-якому розмірі",
+    "description": "Runtime interface message ui.clean.at.any.size"
   },
   "runtime_ui_clear": {
     "message": "Очистити",
@@ -5387,6 +5495,14 @@
     "message": "Чорнові та вхідні значення залишилися виключеними.",
     "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
   },
+  "runtime_ui_draft_in_place": {
+    "message": "Чернетку вставлено",
+    "description": "Runtime interface message ui.draft.in.place"
+  },
+  "runtime_ui_draft_ready": {
+    "message": "Чернетка готова",
+    "description": "Runtime interface message ui.draft.ready"
+  },
   "runtime_ui_draft_ready_for_review": {
     "message": "Чернетка готова до перегляду",
     "description": "Runtime interface message ui.draft.ready.for.review"
@@ -5547,6 +5663,10 @@
     "message": "Події",
     "description": "Runtime interface message ui.events"
   },
+  "runtime_ui_every_action_tool_and_option_at_once_with_a_preview_before_anything_changes": {
+    "message": "Усі дії, інструменти й налаштування одразу, з попереднім переглядом до будь-яких змін.",
+    "description": "Runtime interface message ui.every.action.tool.and.option.at.once.with.a.preview.before.anything.changes"
+  },
   "runtime_ui_exception": {
     "message": "Виняток",
     "description": "Runtime interface message ui.exception"
@@ -5586,6 +5706,10 @@
   "runtime_ui_fast_mode": {
     "message": "Швидкий режим",
     "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_fewer_actions": {
+    "message": "Менше дій",
+    "description": "Runtime interface message ui.fewer.actions"
   },
   "runtime_ui_field": {
     "message": "Поле",
@@ -5658,6 +5782,14 @@
   "runtime_ui_full_largest_payload": {
     "message": "Повний - найбільше корисне навантаження",
     "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_full_panel": {
+    "message": "Повна панель",
+    "description": "Runtime interface message ui.full.panel"
+  },
+  "runtime_ui_full_panel_arrow": {
+    "message": "Повна панель →",
+    "description": "Runtime interface message ui.full.panel.arrow"
   },
   "runtime_ui_gateway": {
     "message": "Шлюз",
@@ -6023,6 +6155,10 @@
     "message": "Hermes зупиниться перед зміною брудної каси.",
     "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
   },
+  "runtime_ui_hermes_wrote_this_without_the_page": {
+    "message": "Hermes написав це без сторінки: контекст сторінки вимкнено для цього підключення. Увімкніть його в бічній панелі, щоб урахувати листування.",
+    "description": "Runtime interface message ui.hermes.wrote.this.without.the.page"
+  },
   "runtime_ui_hide": {
     "message": "Сховати",
     "description": "Runtime interface message ui.hide"
@@ -6030,6 +6166,14 @@
   "runtime_ui_hide_sessions_rail": {
     "message": "Приховати панель сеансів",
     "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_hide_the_circle_on_this_site": {
+    "message": "Приховати коло на цьому сайті",
+    "description": "Runtime interface message ui.hide.the.circle.on.this.site"
+  },
+  "runtime_ui_hide_what_hermes_reads": {
+    "message": "Сховати, що читає Hermes",
+    "description": "Runtime interface message ui.hide.what.hermes.reads"
   },
   "runtime_ui_high": {
     "message": "Високий",
@@ -6143,9 +6287,17 @@
     "message": "Пункт",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep": {
+    "message": "Залишити",
+    "description": "Runtime interface message ui.keep"
+  },
   "runtime_ui_keep_restricted": {
     "message": "Keep restricted",
     "description": "Runtime interface message ui.keep_restricted"
+  },
+  "runtime_ui_keep_assist_chats": {
+    "message": "Зберігати чати Assist",
+    "description": "Runtime interface message ui.keep.assist.chats"
   },
   "runtime_ui_keep_assist_sessions": {
     "message": "Зберігати сеанси Assist",
@@ -6162,6 +6314,10 @@
   "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
     "message": "Тримайте поточний чат видимим. Поверніть результат у це поле.",
     "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_kept_under_inline_assist_in_your_history": {
+    "message": "Зберігаються в Inline assist в історії",
+    "description": "Runtime interface message ui.kept.under.inline.assist.in.your.history"
   },
   "runtime_ui_key": {
     "message": "ключ",
@@ -6258,6 +6414,10 @@
   "runtime_ui_local_sidecar_chrome_panel": {
     "message": "ЛОКАЛЬНИЙ SIDE-CAR / ПАНЕЛЬ CHROME",
     "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_longer": {
+    "message": "Довше",
+    "description": "Runtime interface message ui.longer"
   },
   "runtime_ui_low": {
     "message": "Низький",
@@ -6407,6 +6567,10 @@
     "message": "більше",
     "description": "Runtime interface message ui.more"
   },
+  "runtime_ui_more_actions": {
+    "message": "Більше дій",
+    "description": "Runtime interface message ui.more.actions"
+  },
   "runtime_ui_name": {
     "message": "Ім'я",
     "description": "Runtime interface message ui.name"
@@ -6414,6 +6578,10 @@
   "runtime_ui_native_context_controls_unavailable": {
     "message": "Власні елементи керування контекстом недоступні.",
     "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_never_posts_or_sends_only_this_field_changes": {
+    "message": "Ніколи не публікує й не надсилає. Змінюється лише це поле.",
+    "description": "Runtime interface message ui.never.posts.or.sends.only.this.field.changes"
   },
   "runtime_ui_new": {
     "message": "Новий",
@@ -6519,6 +6687,10 @@
     "message": "Сеансів не знайдено",
     "description": "Runtime interface message ui.no.sessions.found"
   },
+  "runtime_ui_no_sites_yet_change_one_from_the_assist_panel_on_a_page_or_add_the_site_you_have_open": {
+    "message": "Сайтів поки немає. Змініть один у панелі Assist на сторінці або додайте відкритий сайт.",
+    "description": "Runtime interface message ui.no.sites.yet.change.one.from.the.assist.panel.on.a.page.or.add.the.site.you.have.open"
+  },
   "runtime_ui_no_speech_captured": {
     "message": "Мова не зафіксована",
     "description": "Runtime interface message ui.no.speech.captured"
@@ -6567,6 +6739,10 @@
     "message": "Повідомлення",
     "description": "Runtime interface message ui.notice"
   },
+  "runtime_ui_nous_girl": {
+    "message": "Nous girl",
+    "description": "Runtime interface message ui.nous.girl"
+  },
   "runtime_ui_now": {
     "message": "Зараз",
     "description": "Runtime interface message ui.now"
@@ -6586,6 +6762,10 @@
   "runtime_ui_off": {
     "message": "Вимк.",
     "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_off_this_field_only": {
+    "message": "Вимк.: лише це поле",
+    "description": "Runtime interface message ui.off.this.field.only"
   },
   "runtime_ui_ok": {
     "message": "добре",
@@ -6618,6 +6798,10 @@
   "runtime_ui_open_a_normal_page_tab_first": {
     "message": "Спочатку відкрийте звичайну вкладку сторінки.",
     "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_a_web_page_first_then_add_it_here": {
+    "message": "Спершу відкрийте вебсторінку, потім додайте її сюди.",
+    "description": "Runtime interface message ui.open.a.web.page.first.then.add.it.here"
   },
   "runtime_ui_open_full_view": {
     "message": "Відкрити повний перегляд",
@@ -7003,9 +7187,17 @@
     "message": "Швидкі команди",
     "description": "Runtime interface message ui.quick.commands"
   },
+  "runtime_ui_quick_menu": {
+    "message": "Швидке меню",
+    "description": "Runtime interface message ui.quick.menu"
+  },
   "runtime_ui_range": {
     "message": "Діапазон",
     "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_read_the_visible_thread": {
+    "message": "Читати видиму гілку",
+    "description": "Runtime interface message ui.read.the.visible.thread"
   },
   "runtime_ui_readable_dom_text": {
     "message": "Читабельний текст DOM",
@@ -7014,6 +7206,22 @@
   "runtime_ui_reading_connection_settings_and_canonical_session_history": {
     "message": "Читання налаштувань підключення та історії канонічних сеансів.",
     "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_reads_characters_around_field": {
+    "message": "Читає символів біля поля: {chars} · збережено для {site}",
+    "description": "Runtime interface message ui.reads.characters.around.field"
+  },
+  "runtime_ui_reads_count_messages": {
+    "message": "Читає повідомлень: {count} · символів: {chars} · збережено для {site}",
+    "description": "Runtime interface message ui.reads.count.messages"
+  },
+  "runtime_ui_reads_one_message": {
+    "message": "Читає 1 повідомлення · символів: {chars} · збережено для {site}",
+    "description": "Runtime interface message ui.reads.one.message"
+  },
+  "runtime_ui_reads_thread": {
+    "message": "Читає гілку",
+    "description": "Runtime interface message ui.reads.thread"
   },
   "runtime_ui_ready": {
     "message": "Готовий",
@@ -7127,9 +7335,17 @@
     "message": "Тіла відтворених повідомлень будуть додані до наступного черги Hermes.",
     "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
   },
+  "runtime_ui_replace_text_automatically": {
+    "message": "Автоматично замінювати текст",
+    "description": "Runtime interface message ui.replace.text.automatically"
+  },
   "runtime_ui_replaced_the_original_field_safely": {
     "message": "Замінив оригінальне поле безпечно",
     "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_replaces_the_text": {
+    "message": "Замінює текст",
+    "description": "Runtime interface message ui.replaces.the.text"
   },
   "runtime_ui_reply": {
     "message": "Відповісти",
@@ -7190,6 +7406,10 @@
   "runtime_ui_retry": {
     "message": "Повторити",
     "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_full_panel": {
+    "message": "Повернутися до повної панелі",
+    "description": "Runtime interface message ui.return.to.full.panel"
   },
   "runtime_ui_return_to_page": {
     "message": "Повернутися до сторінки",
@@ -7315,6 +7535,10 @@
     "message": "Безпека",
     "description": "Runtime interface message ui.safety"
   },
+  "runtime_ui_same_as_chat": {
+    "message": "Як у чаті",
+    "description": "Runtime interface message ui.same.as.chat"
+  },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
     "message": "Виберіть палітру кольорів для робочого простору.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
@@ -7342,6 +7566,10 @@
   "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
     "message": "Скажіть «Привіт, Hermes», щоб отримати голосовий запит у режимі «вільні руки». Завжди ввімкнене виявлення залишається на цій машині.",
     "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_say_what_to_change": {
+    "message": "Скажіть, що змінити…",
+    "description": "Runtime interface message ui.say.what.to.change"
   },
   "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
     "message": "Масштабуйте копію інтерфейсу без зміни масштабу браузера.",
@@ -7382,6 +7610,10 @@
   "runtime_ui_security": {
     "message": "Безпека",
     "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_see_what_hermes_reads": {
+    "message": "Показати, що читає Hermes",
+    "description": "Runtime interface message ui.see.what.hermes.reads"
   },
   "runtime_ui_select": {
     "message": "Вибрати",
@@ -7551,6 +7783,10 @@
     "message": "Короткий",
     "description": "Runtime interface message ui.short"
   },
+  "runtime_ui_shorter": {
+    "message": "Коротше",
+    "description": "Runtime interface message ui.shorter"
+  },
   "runtime_ui_show": {
     "message": "Показати",
     "description": "Runtime interface message ui.show"
@@ -7571,6 +7807,10 @@
     "message": "Показати або приховати статус",
     "description": "Runtime interface message ui.show.or.hide.status"
   },
+  "runtime_ui_shows_a_preview": {
+    "message": "Показує перегляд",
+    "description": "Runtime interface message ui.shows.a.preview"
+  },
   "runtime_ui_side_panel": {
     "message": "Бічна панель",
     "description": "Runtime interface message ui.side.panel"
@@ -7590,6 +7830,14 @@
   "runtime_ui_site": {
     "message": "Сайт",
     "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_sites": {
+    "message": "Сайти",
+    "description": "Runtime interface message ui.sites"
+  },
+  "runtime_ui_sites_legend": {
+    "message": "Читає гілку: Assist також читає розмову на екрані. Лише це поле: лише те, що в полі. Коло приховано: на цьому сайті кола немає. Зміни зберігаються одразу.",
+    "description": "Runtime interface message ui.sites.legend"
   },
   "runtime_ui_size": {
     "message": "Розмір",
@@ -7646,6 +7894,10 @@
   "runtime_ui_speak_wake_replies": {
     "message": "Промовляти відповіді пробудження",
     "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_staff": {
+    "message": "Жезл",
+    "description": "Runtime interface message ui.staff"
   },
   "runtime_ui_standard": {
     "message": "Стандартний",
@@ -7875,6 +8127,10 @@
     "message": "Розмір тексту",
     "description": "Runtime interface message ui.text.size"
   },
+  "runtime_ui_the_caduceus": {
+    "message": "Кадуцей",
+    "description": "Runtime interface message ui.the.caduceus"
+  },
   "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
     "message": "Підключене середовище виконання Hermes не рекламує власне ущільнення сеансу.",
     "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
@@ -7882,6 +8138,10 @@
   "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
     "message": "Підключене середовище виконання отримає ці параметри на наступному ході, але не розкриє кінцеву точку підтвердження.",
     "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_extension_logo": {
+    "message": "Логотип розширення",
+    "description": "Runtime interface message ui.the.extension.logo"
   },
   "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
     "message": "Актуальний каталог моделей недоступний; збереження останнього перевіреного списку постачальників/моделей.",
@@ -7922,6 +8182,10 @@
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
     "message": "Цей веб-переглядач не відкриває MediaRecorder/getUserMedia для сторінок розширення, а резервний варіант Web Speech недоступний.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_field_only": {
+    "message": "Лише це поле",
+    "description": "Runtime interface message ui.this.field.only"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
     "message": "Цей шлюз ще не відкриває /v1/capabilities. Специфічні для розширення маршрути залишатимуться в резервному режимі.",
@@ -8023,6 +8287,10 @@
     "message": "Спробуйте записати ще раз.",
     "description": "Runtime interface message ui.try.recording.again"
   },
+  "runtime_ui_turn_it_back_on_in_settings_hermes_assist": {
+    "message": "Увімкніть знову в Налаштування → Hermes Assist",
+    "description": "Runtime interface message ui.turn.it.back.on.in.settings.hermes.assist"
+  },
   "runtime_ui_turn_off": {
     "message": "Вимкнути",
     "description": "Runtime interface message ui.turn.off"
@@ -8039,6 +8307,10 @@
     "message": "Тип",
     "description": "Runtime interface message ui.type"
   },
+  "runtime_ui_type_a_web_address_like_facebook_com_or_a_site_name_like_gmail": {
+    "message": "Введіть адресу сайту, наприклад facebook.com, або назву, наприклад Gmail.",
+    "description": "Runtime interface message ui.type.a.web.address.like.facebook.com.or.a.site.name.like.gmail"
+  },
   "runtime_ui_ui": {
     "message": "інтерфейс користувача",
     "description": "Runtime interface message ui.ui"
@@ -8050,6 +8322,10 @@
   "runtime_ui_undo": {
     "message": "Скасувати",
     "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_undo_is_always_one_click_away": {
+    "message": "Скасувати можна одним кліком",
+    "description": "Runtime interface message ui.undo.is.always.one.click.away"
   },
   "runtime_ui_update": {
     "message": "Оновити",
@@ -8110,6 +8386,10 @@
   "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
     "message": "Використовуйте це під час подання звітів про проблеми GitHub або служби підтримки.",
     "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_used_only_by_assist": {
+    "message": "Використовується лише Assist",
+    "description": "Runtime interface message ui.used.only.by.assist"
   },
   "runtime_ui_user": {
     "message": "Користувач",
@@ -8283,6 +8563,18 @@
     "message": "Над чим нам працювати?",
     "description": "Runtime interface message ui.what.should.we.work.on"
   },
+  "runtime_ui_when_you_click_it": {
+    "message": "Після натискання",
+    "description": "Runtime interface message ui.when.you.click.it"
+  },
+  "runtime_ui_where_assist_reads_the_thread_and_where_the_circle_stays_hidden": {
+    "message": "Де Assist читає гілку і де коло залишається прихованим.",
+    "description": "Runtime interface message ui.where.assist.reads.the.thread.and.where.the.circle.stays.hidden"
+  },
+  "runtime_ui_where_it_runs": {
+    "message": "Де працює",
+    "description": "Runtime interface message ui.where.it.runs"
+  },
   "runtime_ui_where_should_hermes_work": {
     "message": "Де має працювати Hermes?",
     "description": "Runtime interface message ui.where.should.hermes.work"
@@ -8303,6 +8595,10 @@
     "message": "Список вкладок вікна",
     "description": "Runtime interface message ui.window.tab.list"
   },
+  "runtime_ui_wing": {
+    "message": "Крило",
+    "description": "Runtime interface message ui.wing"
+  },
   "runtime_ui_worker": {
     "message": "робітник",
     "description": "Runtime interface message ui.worker"
@@ -8322,6 +8618,10 @@
   "runtime_ui_workspaces": {
     "message": "Робочі області",
     "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_written_without_the_page": {
+    "message": "Написано без сторінки: контекст сторінки вимкнено для цього підключення.",
+    "description": "Runtime interface message ui.written.without.the.page"
   },
   "runtime_ui_xl": {
     "message": "XL",

@@ -101,6 +101,14 @@ export function hermesGatewayTurnError({ payload = {}, operation = 'Hermes dashb
   return error;
 }
 
+// The gateway answered the turn's request with a refusal before any run started, so sending it again
+// cannot repeat work. An error event inside the stream comes after the run began.
+export function turnRefusedBeforeStart(error = {}, { started = false } = {}) {
+  if (started || error?.requestAccepted === true || error?.streamError) return false;
+  const status = Number(error?.httpStatus || 0);
+  return status >= 400 && status < 500;
+}
+
 export function turnRequestFailureState(error = {}) {
   // A refusal the gateway answered with (stale or gone session, busy session, a
   // named reason) never reached the model and says nothing about reachability.

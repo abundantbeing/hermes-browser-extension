@@ -25,8 +25,8 @@ test('side-panel user image attachments render inside the sent user message', ()
 });
 
 test('generated image result is handed to the existing animation before final inline rendering', () => {
-  assert.match(sidepanelSource, /revealGeneratedImageFromContent/);
-  assert.match(sidepanelSource, /activeImageGenerationPlaceholder/);
+  assert.match(sidepanelSource, /settleTurnImages/);
+  assert.match(sidepanelSource, /imageGenerationPlaceholders/);
   assert.match(sidepanelSource, /extractRenderableImageSource/);
   assert.match(sidepanelSource, /placeholder\._reveal/);
   assert.match(sidepanelSource, /generated-image-revealing/);
@@ -35,13 +35,14 @@ test('generated image result is handed to the existing animation before final in
   assert.match(cssSource, /\.image-gen-placeholder\.generated-image-revealing/);
 });
 
-test('follow-up non-image tool events preserve an active image placeholder until its final reveal', () => {
+test('ordinary tool events never touch the image placeholders, and the turn settles them once', () => {
   assert.match(
     sidepanelSource,
-    /if \(existingImage && !isImageGeneration\) \{\s*return;\s*\}/s,
+    /if \(\/image_generate\/i\.test\(tool\?\.rawName \|\| ''\)\) \{\s*rememberImageActivity\(tool\);\s*setToolActivity\(node, tool\);\s*\}/,
   );
-  assert.match(sidepanelSource, /existingImage\?\._dispose\?\.\(\);/);
-  assert.match(sidepanelSource, /await revealPromise;/);
+  assert.match(sidepanelSource, /await settleTurnImages\(node, \{ content: pending, imageSources \}\);/);
+  assert.match(sidepanelSource, /setToolActivity\(node, null\);\s*node\.classList\.remove\('image-cards-pending'\);\s*node\.hermesStreaming = false;/);
+  assert.match(sidepanelSource, /function dropUnrevealedImagePlaceholders/);
 });
 
 test('placeholder and final image support landscape square portrait and natural dimensions', () => {
@@ -95,4 +96,18 @@ test('recovered image_generate results keep safe image sources and reject host f
   assert.deepEqual(resolvedGeneratedImageSourcesFromMessages([
     { role: 'assistant', tool_calls: [{ function: { name: 'image_generate', result } }] },
   ]), ['https://cdn.example/generated.png']);
+});
+
+test('a picture is never shown twice: the reply keeps its copy hidden while its cards reveal', () => {
+  // Every inline form a generated picture takes, including the chip before it loads.
+  const rule = /\.image-cards-pending \.message-content :is\(([^)]*\([^)]*\))*[^)]*\)\s*\{\s*display: none;/.exec(cssSource);
+  assert.ok(rule, 'sidepanel.css hides inline pictures while cards are pending');
+  for (const selector of ['.generated-image', '.generated-image-inspectable', 'img[data-slot="aui_generated-image"]', '.session-media[data-session-media="image"]', '.artifact-card']) {
+    assert.ok(rule[0].includes(selector), `${selector} waits for the cards`);
+  }
+  // While the cards reveal, the finished reply text shows, not what the pacer had typed.
+  assert.match(sidepanelSource, /if \(node\.classList\.contains\('image-cards-pending'\)\) setMessageContent\(node, pending\);\s*await settleTurnImages\(/);
+  // The mark comes off at every end of a turn, so a settled reply always shows its pictures.
+  assert.match(sidepanelSource, /node\.classList\.remove\('image-cards-pending'\);\s*node\.hermesStreaming = false;\s*setMessageContent\(node, pending\);/);
+  assert.match(sidepanelSource, /setToolActivity\(node, null, \{ settle: true \}\);\s*node\.classList\.remove\('image-cards-pending'\);/);
 });

@@ -23,12 +23,33 @@ export function assistModelRoutingSupported(capabilities = {}) {
   return capabilities?.sessionChat === true && capabilities?.sessionModelLock === true;
 }
 
-export function assistModelFallbackNotice(selection = null, reason = '') {
+export function assistModelFallbackNotice(selection = null, reason = '', instead = 'the gateway default model') {
   const model = clean(selection?.model);
   const provider = clean(selection?.provider);
   if (!model || !provider) return '';
   const explanation = clean(reason);
-  return `Hermes Assist could not enforce ${provider} / ${model}${explanation ? ` (${explanation})` : ''}. Used the gateway default model instead.`;
+  return `Hermes Assist could not enforce ${provider} / ${model}${explanation ? ` (${explanation})` : ''}. Used ${clean(instead) || 'the gateway default model'} instead.`;
+}
+
+// Assist's own thinking, effort and fast settings as the fields a Hermes request takes. They apply with or
+// without an Assist model: with none, Hermes picks the model and still runs it at Assist's effort.
+export function assistEffortRequest(settings = {}) {
+  const thinkingSetting = String(settings.inlineAssistThinking || '').trim().toLowerCase();
+  const thinkingEnabled = settings.inlineAssistThinkingEnabled !== false && thinkingSetting !== 'off';
+  const reasoningEffort = thinkingEnabled
+    ? normalizeReasoningEffort(settings.inlineAssistReasoningEffort || settings.inlineAssistEffort || 'low')
+    : 'none';
+  const fast = normalizeFastMode(settings.inlineAssistFastMode ?? settings.inlineAssistFast);
+  return {
+    reasoning_effort: reasoningEffort,
+    fast,
+    model_options: {
+      reasoning: thinkingEnabled ? { enabled: true, effort: reasoningEffort } : { enabled: false },
+      reasoning_effort: reasoningEffort,
+      fast,
+      service_tier: fast ? 'priority' : null,
+    },
+  };
 }
 
 export function assistModelRequestPolicy(settings = {}, capabilities = {}) {
@@ -69,29 +90,25 @@ export function assistModelRequestPolicy(settings = {}, capabilities = {}) {
 
 export function buildAssistModelRouteRequest(settings = {}, capabilities = {}) {
   const policy = assistModelRequestPolicy(settings, capabilities);
-  if (!policy.selection) return { policy, request: {} };
-  const thinkingEnabled = policy.modelOptions?.thinking !== 'off';
-  const reasoningEffort = thinkingEnabled
-    ? normalizeReasoningEffort(policy.modelOptions?.reasoning_effort || 'low')
-    : 'none';
-  const fast = normalizeFastMode(policy.modelOptions?.fast);
-  const modelOptions = {
-    reasoning: thinkingEnabled ? { enabled: true, effort: reasoningEffort } : { enabled: false },
-    reasoning_effort: reasoningEffort,
-    fast,
-    service_tier: fast ? 'priority' : null,
-  };
+  const effort = assistEffortRequest(settings);
+  if (!policy.selection) return { policy, request: effort };
   return {
     policy,
     request: {
       model: policy.selection.model,
       provider: policy.selection.provider,
       require_model_lock: true,
-      reasoning_effort: reasoningEffort,
-      fast,
-      model_options: modelOptions,
+      ...effort,
     },
   };
+}
+
+// An Assist turn sent into a chat (Continue current chat, Start new Assist session): Assist's model and
+// effort for that one turn. Hermes runs a request's own model without saving it as the chat's lock, so the
+// chat keeps its model for the next message. With no Assist model the chat's model runs at Assist's effort.
+export function assistChatTurnOverride(settings = {}, capabilities = {}) {
+  const { request } = buildAssistModelRouteRequest(settings, capabilities);
+  return request.model ? { ...request, require_model_lock: false } : request;
 }
 
 export function resolveAssistModelBindingFromCatalog({ settings = {}, models = [] } = {}) {
@@ -151,12 +168,14 @@ export function assertAssistModelSelectionAcknowledged(payload = {}, selection =
   const runtime = acknowledgedRuntime(payload);
   const actualModel = clean(runtime.model);
   const actualProvider = clean(runtime.provider);
-  if (actualModel !== expectedModel || actualProvider !== expectedProvider) {
+  // Hermes' session create confirms the locked model but does not name its provider. A missing provider is
+  // accepted when the model matches; a different model, or a different named provider, is refused.
+  if (actualModel !== expectedModel || (actualProvider && actualProvider !== expectedProvider)) {
     throw new Error(
       `Hermes Assist refused to run because Hermes did not acknowledge the selected model (${expectedProvider} / ${expectedModel}). `
       + `Hermes acknowledged ${actualProvider || 'no provider'} / ${actualModel || 'no model'}. `
       + 'Update or restart Hermes Agent before trying again.',
     );
   }
-  return { model: actualModel, provider: actualProvider };
+  return { model: actualModel, provider: actualProvider || expectedProvider };
 }

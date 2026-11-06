@@ -23,12 +23,13 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.doesNotMatch(source, /logoUrl[\s\S]{0,180}hermes-browser-extension-icon-box-white\.png/);
   assert.doesNotMatch(source, /nous-girl-solo-logo\.png/);
   assert.match(source, /maskImage|webkitMaskImage/);
-  assert.match(source, /\.launcher \{[^}]*box-shadow:0 2px 10px rgba\(0,0,0,\.18\)/);
+  assert.match(source, /\.launcher \{[^}]*border-radius:50%/);
+  assert.match(source, /inlineAssistIconAsset/);
   assert.match(source, /\.panel \{[^}]*box-shadow:0 18px 50px rgba\(0,0,0,\.32\)/);
-  assert.match(source, /width:36px; height:36px/);
+  assert.match(source, /width:24px; height:24px/);
   assert.match(source, /\.launcher \{[^}]*padding:0;/s);
-  assert.match(source, /\.launcher-logo \{ width:30px; height:30px; \}/);
-  assert.match(source, /\.brand-logo \{ width:42px; height:42px; \}/);
+  assert.match(source, /\.launcher-logo \{ width:18px; height:18px;/);
+  assert.match(source, /\.brand-wing \{[^}]*width:46px; height:20px;/);
   assert.match(source, /--hb-logo', tokens\.logo/);
   assert.match(source, /browserApi\.storage\.local\.get/);
   assert.match(source, /browserApi\.storage\.onChanged/);
@@ -58,7 +59,7 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.doesNotMatch(source, /launcher\.addEventListener\('click', openPanel\)/);
   assert.match(source, /\.launcher \{[^}]*z-index:2;/s);
   assert.match(source, /\.panel \{[^}]*z-index:1;/s);
-  assert.match(source, /leftOfLauncher/);
+  assert.match(source, /circleBottom \+ 8/);
   assert.match(source, /panelScrollSuspended/);
   assert.match(source, /panel\.style\.visibility\s*=\s*'hidden'/);
   assert.match(source, /hasUnresolvedInteraction/);
@@ -75,7 +76,7 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.match(source, /Keep replacement/);
   assert.match(source, /inlineDraftPrimaryActionLabel/);
   assert.match(source, /Open session/);
-  assert.match(source, /Automatic replacement/);
+  assert.match(source, /Auto-replace/);
   const sidepanelHtml = await read('extension/sidepanel.html');
   // Assist controls live only in the side panel Settings.
   for (const html of [sidepanelHtml]) {
@@ -133,7 +134,7 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /HERMES_INLINE_SESSION_STATUS/);
   assert.match(source, /sender\?\.tab\?\.id/);
   assert.match(source, /runInlineDraftInServiceWorker/);
-  assert.match(source, /\[INLINE_DRAFT_ROUTES\.BACKGROUND, INLINE_DRAFT_ROUTES\.NEW\]\.includes\(request\.route\)/);
+  assert.match(source, /if \(request\.route === INLINE_DRAFT_ROUTES\.BACKGROUND\) return runInlineDraftInServiceWorker/);
   assert.match(source, /source: restSessionCreateSource\(\)/);
   assert.match(source, /buildAssistModelRouteRequest/);
   assert.match(source, /normalizeGatewayCapabilities/);
@@ -143,14 +144,17 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /deleteUnacknowledgedAssistSession/);
   assert.match(source, /Cleanup also failed/);
   assert.match(source, /\.\.\.attemptRouteRequest/);
+  // Falling back off the chosen model keeps Assist's effort.
+  assert.match(source, /attemptRouteRequest = assistEffortRequest\(settings\);/);
+  assert.doesNotMatch(source, /attemptRouteRequest = \{\};/);
   assert.match(source, /assistModelFallbackNotice/);
   assert.match(source, /modelNotice/);
   assert.match(source, /inlineAssistSessionRetention === 'delete'/);
-  assert.match(source, /new Date\(\)\.toISOString/);
+  assert.match(source, /assistSessionTitle\(request, \{ suffix: sessionId\.slice\(-4\) \}\)/);
   assert.match(source, /resolveBrowserApi/);
   assert.match(source, /browserApi\.storage\.session/);
   assert.doesNotMatch(source, /(?<![\w.])chrome\.storage/);
-  assert.match(source, /openHermesPanel\(sender\.tab\)/);
+  assert.match(source, /openAssistSidePanelFromGesture\(sender\.tab\)/);
   assert.match(source, /expiresAt/);
   assert.match(source, /createContextMenuController/);
   assert.match(source, /contextMenuController\.handleClick/);
@@ -173,7 +177,7 @@ test('sidepanel claims queued requests, honors current/new/background routing, a
   assert.match(source, /request\.route\s*===\s*INLINE_DRAFT_ROUTES\.BACKGROUND/);
   assert.match(source, /request\.route\s*===\s*INLINE_DRAFT_ROUTES\.NEW/);
   assert.match(source, /createInlineBackgroundSession/);
-  assert.match(source, /\{ ok: true, text, sessionId/);
+  assert.match(source, /\{ ok: true, text, contextWithheld, sessionId/);
   assert.match(source, /forceChatOnly:\s*true/);
   assert.match(source, /'assist\.options_heading'/);
   assert.match(source, /executeContextMenuRequest/);
@@ -196,7 +200,7 @@ test('inline runtime wires semantic site profiles, persisted context controls, a
   assert.match(source, /launcher\.dataset\.placement/);
   assert.match(source, /DRAFT ONLY/);
   assert.match(source, /BOUNDED/);
-  assert.match(source, /Preview \+ copy only/);
+  assert.match(source, /Copy to use/);
   assert.match(source, /applyMode:\s*supportsSafeApply\s*\?\s*['"]safe-apply['"]\s*:\s*['"]copy-only['"]/);
 });
 
@@ -207,15 +211,53 @@ test('inline helper consumes each matching result request at most once', async (
   assert.match(source, /handledResultRequestId = message\.requestId/);
 });
 
-test('Hermes Assist scroll surfaces use the canonical sharp themed scrollbar', async () => {
+test('Hermes Assist scroll surfaces float the branded thumb over their content, with no strip kept for it', async () => {
   const source = await read('extension/content-inline-helper.js');
-  assert.match(source, /\.panel, \.preview, \.custom \{ scrollbar-gutter:stable; \}/);
-  assert.match(source, /\.panel::-webkit-scrollbar, \.preview::-webkit-scrollbar, \.custom::-webkit-scrollbar \{ width:8px; \}/);
-  assert.match(source, /\.panel::-webkit-scrollbar-thumb, \.preview::-webkit-scrollbar-thumb, \.custom::-webkit-scrollbar-thumb \{ background:rgba\(var\(--hermes-fg-rgb\),0\.45\); border:1px solid var\(--hermes-line-strong\); \}/);
-  assert.match(source, /--hermes-fg-rgb/);
-  assert.match(source, /--hermes-line-strong/);
-  const scrollbarBlock = source.match(/\.panel, \.preview, \.custom \{ scrollbar-gutter:stable; \}[\s\S]*?\.head \{/)?.[0] || '';
-  assert.doesNotMatch(scrollbarBlock, /::-webkit-scrollbar-(?:track|button|corner)/);
-  assert.doesNotMatch(scrollbarBlock, /scrollbar-(?:width|color)/);
-  assert.doesNotMatch(scrollbarBlock, /border-radius/);
+  // No area keeps an empty strip beside its content for a scrollbar.
+  assert.doesNotMatch(source, /scrollbar-gutter/);
+  assert.match(source, /overlayScrollbar\?\.attachOverlayScrollbar\(panel\);/);
+  assert.match(source, /overlayScrollbar\?\.attachOverlayScrollbar\(list, \{ watchResize: false \}\);/);
+  assert.match(source, /overlayScrollbar\?\.attachOverlayScrollbar\(preview, \{ watchResize: false \}\);/);
+  // The textarea cannot hold the thumb: it keeps the canonical sharp bar, nothing more.
+  assert.match(source, /\.custom::-webkit-scrollbar \{ width:8px; \}/);
+  assert.match(source, /\.custom::-webkit-scrollbar-thumb \{ background:rgba\(var\(--hermes-fg-rgb\),0\.45\); border:1px solid var\(--hermes-line-strong\); \}/);
+  assert.doesNotMatch(source, /::-webkit-scrollbar-(?:track|button|corner)/);
+});
+
+test('a background Assist retry creates a new session id, since Hermes never reuses a deleted one', async () => {
+  const background = await read('extension/background.js');
+  const runner = background.match(/async function runInlineDraftInServiceWorker\([\s\S]*?\n\}/)?.[0] || '';
+  const loop = runner.slice(runner.indexOf('for (let attempt = 0;'));
+  assert.ok(loop.length > 0, 'the retry loop');
+  assert.match(loop.slice(0, loop.indexOf("client.fetch('/api/sessions'")), /const sessionId = assistSessionId\(\);/, 'a fresh id before each create');
+});
+
+test('only Run in background runs in the service worker; Continue and New hand off to the side panel', async () => {
+  const background = await read('extension/background.js');
+  const queue = background.match(/\nfunction queueInlineDraftRequest\([\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(queue, 'queueInlineDraftRequest is synchronous, so the side panel opens inside the click');
+  assert.match(queue, /if \(request\.route === INLINE_DRAFT_ROUTES\.BACKGROUND\) return runInlineDraftInServiceWorker\(request, sender, tabId\);/);
+  assert.doesNotMatch(queue, /INLINE_DRAFT_ROUTES\.NEW\]?\.includes|\[INLINE_DRAFT_ROUTES\.BACKGROUND, INLINE_DRAFT_ROUTES\.NEW\]/);
+  assert.match(queue, /handOffInlineDraftToSidePanel\(\{[\s\S]*openSidePanel: \(\) => openAssistSidePanelFromGesture\(sender\.tab\)/);
+  assert.doesNotMatch(queue, /\bawait\b/);
+  assert.doesNotMatch(queue, /openHermesPanel\(/);
+  assert.match(background, /async function sidePanelIsOpen\(\) \{[\s\S]*?getContexts\?\.\(\{ contextTypes: \['SIDE_PANEL'\] \}\)/);
+});
+
+test('Assist opens only a real side panel, never a full tab or a popup window', async () => {
+  const background = await read('extension/background.js');
+  const opener = background.match(/\nfunction openAssistSidePanelFromGesture\([\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(opener, 'the Assist opener');
+  // A resolved open is the answer: waiting for sidePanel.onOpened, which Comet does not send, is what put a
+  // full tab beside the panel.
+  assert.match(opener, /openSidePanelInClick\(browserApi\.sidePanel, /);
+  assert.doesNotMatch(opener, /openSidePanelWithConfirmation/);
+  assert.doesNotMatch(opener, /\bawait\b/);
+  assert.doesNotMatch(opener, /openHermesPanelFallback|openOrFocusPanelTab|windows\.create|tabs\.create/);
+});
+
+test('a finished background run no longer opens its chat afterwards, outside the click', async () => {
+  const background = await read('extension/background.js');
+  const runner = background.match(/async function runInlineDraftInServiceWorker\([\s\S]*?\n\}/)?.[0] || '';
+  assert.doesNotMatch(runner, /queueOpenSessionRequest/);
 });

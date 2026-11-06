@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { inlineLauncherPlacement } from '../extension/lib/inline-draft-policy.mjs';
+import { inlineLauncherPlacement, inlineSlotPlacement } from '../extension/lib/inline-draft-policy.mjs';
 
 // Placement preferences the site adapters hand to the policy. Every adapter now
 // leads with an outside placement and keeps inside-end only as the last resort.
@@ -78,4 +78,77 @@ test('an outside placement that lands on an obstacle falls through to the next s
   assert.ok(placement, 'a placement should be found');
   assert.equal(placement.strategy, 'outside-start');
   assert.ok(!overlaps({ ...placement, right: placement.left + 32, bottom: placement.top + 32 }, obstacle));
+});
+
+// Site slots: the circle sits beside one of the composer's own controls.
+const rect = (left, top, width, height) => ({ left, top, right: left + width, bottom: top + height, width, height });
+const VIEWPORT = { width: 1280, height: 800 };
+const box = (placement, size = 24) => ({ left: placement.left, top: placement.top, right: placement.left + size, bottom: placement.top + size });
+
+test('X: centred under the avatar on the media row, at least 20px clear of the avatar', () => {
+  const avatar = rect(16, 62, 40, 40);
+  const row = rect(68, 137, 532, 20);
+  const placement = inlineSlotPlacement({ strategy: 'below-center', rect: avatar, rowRect: row, gap: 12, minGapBelow: 20 }, VIEWPORT, { size: 24, targetRect: rect(68, 62, 532, 60), obstacleRects: [] });
+  assert.deepEqual(placement, { left: 24, top: 135, strategy: 'below-center' });
+  assert.ok(placement.top - avatar.bottom >= 20);
+  assert.ok(!overlaps(box(placement), avatar));
+});
+
+test('a short media row still keeps the circle 20px below the avatar', () => {
+  const avatar = rect(16, 62, 40, 40);
+  const placement = inlineSlotPlacement({ strategy: 'below-center', rect: avatar, rowRect: rect(68, 100, 532, 10), gap: 12, minGapBelow: 20 }, VIEWPORT, { size: 24, obstacleRects: [] });
+  assert.equal(placement.top, 122);
+});
+
+test('Gmail: 12px after the Send group, centred on it', () => {
+  const send = rect(30, 500, 96, 36);
+  assert.deepEqual(inlineSlotPlacement({ strategy: 'after', rect: send, gap: 12 }, VIEWPORT, { size: 24, obstacleRects: [] }), { left: 138, top: 506, strategy: 'after' });
+});
+
+test('ChatGPT: 12px before the dictate button', () => {
+  const mic = rect(900, 700, 36, 36);
+  assert.deepEqual(inlineSlotPlacement({ strategy: 'before', rect: mic, gap: 12 }, VIEWPORT, { size: 24, obstacleRects: [] }), { left: 864, top: 706, strategy: 'before' });
+});
+
+test('beside a control whose box reaches past its icon: level with the icon, not the box', () => {
+  const voice = rect(1188, 737, 30, 37);
+  const icon = rect(1197, 753, 12, 12);
+  assert.deepEqual(inlineSlotPlacement({ strategy: 'before', rect: voice, levelRect: icon, gap: 8 }, VIEWPORT, { size: 24, obstacleRects: [] }), { left: 1156, top: 747, strategy: 'before' });
+});
+
+test('GitHub: at the front of the toolbar', () => {
+  const toolbar = rect(600, 120, 220, 32);
+  assert.deepEqual(inlineSlotPlacement({ strategy: 'before', rect: toolbar, gap: 8 }, VIEWPORT, { size: 24, obstacleRects: [] }), { left: 568, top: 124, strategy: 'before' });
+});
+
+test('a slot that would cover a send button, the text or nothing at all gives no placement', () => {
+  const send = rect(30, 500, 96, 36);
+  assert.equal(inlineSlotPlacement({ strategy: 'after', rect: send, gap: 12 }, VIEWPORT, { size: 24, obstacleRects: [rect(130, 500, 40, 36)] }), null);
+  assert.equal(inlineSlotPlacement({ strategy: 'after', rect: send, gap: 12 }, VIEWPORT, { size: 24, targetRect: rect(120, 490, 300, 60), obstacleRects: [] }), null);
+  assert.equal(inlineSlotPlacement({ strategy: 'after', rect: rect(30, 500, 0, 0), gap: 12 }, VIEWPORT, { size: 24, obstacleRects: [] }), null);
+});
+
+test('slot scrolled out of view → no placement', () => {
+  assert.equal(inlineSlotPlacement({ strategy: 'after', rect: rect(30, -80, 96, 36), gap: 12 }, VIEWPORT, { size: 24, obstacleRects: [] }), null);
+  assert.equal(inlineSlotPlacement({ strategy: 'after', rect: rect(30, 900, 96, 36), gap: 12 }, VIEWPORT, { size: 24, obstacleRects: [] }), null);
+});
+
+const GENERIC = ['corner-outside', 'corner-inside', 'below-end'];
+
+test('any other site: 8px outside the field’s bottom-right corner when there is room', () => {
+  const field = rect(100, 100, 400, 120);
+  assert.deepEqual(inlineLauncherPlacement(field, VIEWPORT, { targetRect: field, preferred: GENERIC, size: 24, gap: 8 }), { left: 508, top: 196, strategy: 'corner-outside' });
+});
+
+test('a field flush with the right edge gets the circle 8px inside its corner', () => {
+  const field = rect(400, 100, 872, 120);
+  assert.deepEqual(inlineLauncherPlacement(field, VIEWPORT, { targetRect: field, preferred: GENERIC, size: 24, gap: 8 }), { left: 1240, top: 188, strategy: 'corner-inside' });
+});
+
+test('when neither corner fits, the circle goes under the field, never over the text', () => {
+  const field = rect(400, 100, 872, 120);
+  const handle = rect(1236, 184, 36, 36);
+  const placement = inlineLauncherPlacement(field, VIEWPORT, { targetRect: field, obstacleRects: [handle], preferred: GENERIC, size: 24, gap: 8 });
+  assert.deepEqual(placement, { left: 1248, top: 228, strategy: 'below-end' });
+  assert.ok(!overlaps(box(placement), field));
 });

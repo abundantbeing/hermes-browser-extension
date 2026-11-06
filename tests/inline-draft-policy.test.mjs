@@ -446,3 +446,71 @@ test('context-only drafting degrades to a generic safe prompt when consent strip
   assert.equal(payload.page_context, '');
   assert.match(prompt, /without assuming page-specific details/i);
 });
+
+test('an action that writes from the page runs on an empty field; one that edits the text needs text', () => {
+  const field = one('<textarea aria-label="Add a comment"></textarea>');
+  const base = { route: 'background', requestId: 'req-page-draft-0001', documentId: 'doc-page-draft-0001', pageContext: 'Video: launch walkthrough. Transcript 0:00 intro, 2:15 setup.' };
+  const timestamp = buildInlineDraftRequest(field, { ...base, action: { id: 'youtube-timestamp', label: 'Add useful timestamp', mode: 'draft-copy-only', startsFromPage: true } });
+  assert.equal(timestamp.ok, true, 'Add useful timestamp writes from the video');
+  assert.equal(timestamp.request.startsFromPage, true);
+  const hook = buildInlineDraftRequest(field, { ...base, action: { id: 'x-post-hook', label: 'Strengthen the hook', mode: 'draft-copy-only', startsFromPage: false } });
+  assert.deepEqual([hook.ok, hook.reason], [false, 'empty-draft'], 'Strengthen the hook edits text that is not there');
+  // The background checks the request again: a page draft with an empty field must pass there too.
+  assert.match(buildInlineDraftPrompt(timestamp.request), /Draft the text that belongs in the focused field/);
+  assert.ok(inlineDraft.normalizeInlineDraftRequest(timestamp.request), 'the background accepts it');
+});
+
+test('the result bar sits under the field and under the circle when the circle is below the field', () => {
+  const viewport = { width: 1280, height: 900 };
+  // YouTube: the field ends at 124 and the circle sits under it, at 167–191, beside the emoji button.
+  const youtube = inlineDraft.inlineResultBarPlacement({ left: 176, top: 95, right: 980, bottom: 124, width: 804, height: 29 }, { left: 228, top: 167, width: 24, height: 24 }, viewport, { barHeight: 90 });
+  assert.equal(youtube.top, 199, '8px under the circle, not over it');
+  assert.equal(youtube.left, 176);
+  assert.equal(youtube.width, 560);
+  // A circle beside the field changes nothing: 8px under the field.
+  const beside = inlineDraft.inlineResultBarPlacement({ left: 100, top: 100, right: 500, bottom: 200, width: 400, height: 100 }, { left: 508, top: 176, width: 24, height: 24 }, viewport, { barHeight: 90 });
+  assert.equal(beside.top, 208);
+  // Near the bottom of the screen it goes above both.
+  const low = inlineDraft.inlineResultBarPlacement({ left: 100, top: 760, right: 500, bottom: 800, width: 400, height: 40 }, { left: 100, top: 808, width: 24, height: 24 }, viewport, { barHeight: 90 });
+  assert.equal(low.top, 760 - 8 - 90);
+});
+
+test('the result bar never covers a site control around the field: it drops below the toolbar, or opens above', () => {
+  const viewport = { width: 1280, height: 900 };
+  const field = { left: 100, top: 300, right: 700, bottom: 520, width: 600, height: 220 };
+  // A mail composer: Send and the format buttons sit in the toolbar row just under the field.
+  const toolbar = [{ left: 110, top: 528, right: 178, bottom: 562, width: 68, height: 34 }, { left: 186, top: 529, right: 218, bottom: 561, width: 32, height: 32 }];
+  const under = inlineDraft.inlineResultBarPlacement(field, { left: 652, top: 488, width: 24, height: 24 }, viewport, { barHeight: 110, obstacles: toolbar });
+  assert.equal(under.top, 562 + 8, 'under the toolbar, not over Send');
+  // Not enough room under the toolbar: above the field instead, still clear of every control.
+  const tight = inlineDraft.inlineResultBarPlacement(field, { left: 652, top: 488, width: 24, height: 24 }, { width: 1280, height: 640 }, { barHeight: 110, obstacles: toolbar });
+  assert.equal(tight.top, 300 - 8 - 110);
+  // A control off to the side of the bar's span does not move it.
+  const aside = inlineDraft.inlineResultBarPlacement(field, null, viewport, { barHeight: 110, obstacles: [{ left: 900, top: 528, right: 940, bottom: 560, width: 40, height: 32 }] });
+  assert.equal(aside.top, 528);
+});
+
+test('the result bar never covers a control when the clamped position would: it opens in a gap, as a smaller panel', () => {
+  const viewport = { width: 1280, height: 550 };
+  const field = { left: 100, top: 180, right: 700, bottom: 400, width: 600, height: 220 };
+  const toolbar = { left: 110, top: 100, right: 400, bottom: 132, width: 290, height: 32 };
+  const send = { left: 110, top: 408, right: 178, bottom: 440, width: 68, height: 32 };
+  const bar = inlineDraft.inlineResultBarPlacement(field, null, viewport, { barHeight: 132, obstacles: [toolbar, send] });
+  const height = bar.maxHeight ?? 132;
+  const covers = (control) => bar.top < control.bottom && bar.top + height > control.top;
+  assert.equal(covers(toolbar), false, `the bar at ${bar.top}-${bar.top + height} covers the toolbar`);
+  assert.equal(covers(send), false, 'the bar covers Send');
+  assert.ok(bar.top >= 8 && bar.top + height <= 550 - 8, 'inside the window');
+  assert.ok(height < 132, 'neither side fits the full bar, so it is a smaller panel');
+});
+
+test('the result bar never opens in a gap that lies below the window, however far down the form goes', () => {
+  const viewport = { width: 1280, height: 550 };
+  const field = { left: 100, top: 100, right: 700, bottom: 400, width: 600, height: 300 };
+  const nearControl = { left: 110, top: 600, right: 178, bottom: 632, width: 68, height: 32 };
+  const farControl = { left: 110, top: 1500, right: 178, bottom: 1532, width: 68, height: 32 };
+  const bar = inlineDraft.inlineResultBarPlacement(field, null, viewport, { barHeight: 220, obstacles: [nearControl, farControl] });
+  const height = bar.maxHeight ?? 220;
+  assert.ok(bar.top >= 8 && bar.top + height <= 550 - 8, `the bar at ${bar.top}-${bar.top + height} leaves the window`);
+  assert.ok(height < 220, 'it is a smaller panel that scrolls');
+});

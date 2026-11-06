@@ -60,7 +60,10 @@ for (const locale of SUPPORTED_LOCALES) {
 }
 
 function contentBridgeSource() {
-  const helperSource = fs.readFileSync(path.join(root, 'extension/content-inline-helper.js'), 'utf8');
+  // Assist's page code and its look module (which holds the effort levels it shows).
+  const helperSource = ['extension/content-inline-helper.js', 'extension/lib/inline-assist-look.mjs']
+    .map((file) => fs.readFileSync(path.join(root, file), 'utf8'))
+    .join('\n');
   const english = runtimeCatalogs.en || {};
   const eligibleKeys = Object.entries(english)
     .filter(([, message]) => typeof message === 'string' && helperSource.includes(message))

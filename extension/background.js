@@ -32,10 +32,14 @@ import { resolveWebappTarget } from './lib/hermes-webapp.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
 import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
 import { HERMES_WEB_LAUNCH_LOOK_MESSAGE, HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
+import { INLINE_ASSIST_FONT_REQUEST, createInlineAssistFontServer } from './lib/inline-assist-font-server.mjs';
+import { createInlineAssistModelServer } from './lib/inline-assist-models.mjs';
+import { assistSessionTitle, handOffInlineDraftToSidePanel, openSidePanelInClick } from './lib/inline-assist-handoff.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
   assertAssistModelSelectionAcknowledged,
+  assistEffortRequest,
   assistModelFallbackNotice,
   buildAssistModelRouteRequest,
 } from './lib/assist-model-contract.mjs';
@@ -272,6 +276,10 @@ const contextMenuController = createContextMenuController({
   openHermesSurface: (tab) => openHermesPanelFromContextGesture(tab),
   translate: (_key, fallback) => translateUiText(fallback),
 });
+// Fonts for the Hermes Assist panel, which a web page may not load from the extension directly.
+const handleInlineAssistFontRequest = createInlineAssistFontServer({ runtime: browserApi.runtime });
+// The model picker in Assist on a page: the verified model list, and saving the one picked.
+const inlineAssistModels = createInlineAssistModelServer({ runtime: browserApi.runtime, storage: browserApi.storage.local });
 const themeMarketplaceController = createThemeMarketplaceController({
   client: createVscodeMarketplaceClient(),
   storageArea: browserApi.storage.local,
@@ -355,11 +363,6 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         activeProfile: settings.activeProfile || settings.profile || '',
       }),
     });
-    const sessionId = assistSessionId();
-    const adapterLabel = String(request.adapterId || 'Browser').replace(/(^|[-_\s])([a-z])/g, (_, lead, letter) => `${lead}${letter.toUpperCase()}`);
-    const titleStamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
-    const titleNonce = sessionId.slice(-4);
-    const sessionTitle = `Hermes Assist · ${adapterLabel} · ${titleStamp} · ${titleNonce}`;
     const gatewayCapabilities = await loadAssistGatewayCapabilities(client);
     const { policy: assistPolicy, request: routeRequest } = buildAssistModelRouteRequest(
       settings,
@@ -371,12 +374,18 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
     let modelNotice = assistPolicy.mode === 'gateway-default-fallback'
       ? assistModelFallbackNotice(requestedSelection, 'this gateway does not advertise exact model routing')
       : '';
-    let resolvedSessionId = sessionId;
-    let resolvedTitle = sessionTitle;
+    let resolvedSessionId = '';
+    let resolvedTitle = '';
     let text = '';
+    let contextWithheld = false;
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let createdThisAttempt = false;
+      // A fresh id for each attempt: Hermes never reuses the id of a session it deleted.
+      const sessionId = assistSessionId();
+      const sessionTitle = assistSessionTitle(request, { suffix: sessionId.slice(-4) });
+      resolvedSessionId = sessionId;
+      resolvedTitle = sessionTitle;
       try {
         const createResponse = await client.fetch('/api/sessions', {
           method: 'POST',
@@ -404,6 +413,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
           ledger: consentStored[CONTEXT_CONSENT_STORAGE_KEY] || null,
           controller: String(browserApi.runtime.id || 'hermes-browser'),
         });
+        contextWithheld = Boolean(request.pageContext) && !gatedRequest.allowed;
         const chatResponse = await client.fetch(`/api/sessions/${encodeURIComponent(resolvedSessionId)}/chat`, {
           method: 'POST',
           body: JSON.stringify({
@@ -436,7 +446,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         }
         modelNotice = assistModelFallbackNotice(attemptSelection, error?.message || 'the selected route was rejected');
         attemptSelection = null;
-        attemptRouteRequest = {};
+        attemptRouteRequest = assistEffortRequest(settings);
       }
     }
 
@@ -454,13 +464,11 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
     await sendDirectInlineResult(tabId, request, {
       ok: true,
       text,
+      contextWithheld,
       sessionId: retainedSessionId,
       sessionTitle: retainedSessionTitle,
       modelNotice,
     });
-    if (request.route === INLINE_DRAFT_ROUTES.NEW && retainedSessionId) {
-      await queueOpenSessionRequest({ sessionId: retainedSessionId }, sender);
-    }
     return { ok: true, requestId: request.requestId, background: request.route === INLINE_DRAFT_ROUTES.BACKGROUND, sessionId: retainedSessionId };
   } catch (error) {
     const reason = error?.message || String(error);
@@ -469,28 +477,51 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
   }
 }
 
-async function queueInlineDraftRequest(message, sender) {
+// Synchronous up to the side panel's open call: the click on the page counts only until the first await.
+function queueInlineDraftRequest(message, sender) {
   const tabId = Number(sender?.tab?.id);
   if (!Number.isFinite(tabId) || tabId <= 0 || Number(sender?.frameId || 0) !== 0) {
-    return { ok: false, reason: 'Inline draft requests must come from the top-level active page.' };
+    return Promise.resolve({ ok: false, reason: 'Inline draft requests must come from the top-level active page.' });
   }
   const request = normalizeInlineDraftRequest(message?.request);
-  if (!request) return { ok: false, reason: 'Inline draft request failed validation.' };
-  if (!browserApi.storage?.session) return { ok: false, reason: 'Session-only draft handoff is unavailable in this browser.' };
-  const queued = {
-    ...request,
-    tabId,
-    windowId: Number(sender?.tab?.windowId) || null,
-    expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
-  };
-  if ([INLINE_DRAFT_ROUTES.BACKGROUND, INLINE_DRAFT_ROUTES.NEW].includes(request.route)) {
-    return runInlineDraftInServiceWorker(request, sender, tabId);
+  if (!request) return Promise.resolve({ ok: false, reason: 'Inline draft request failed validation.' });
+  if (request.route === INLINE_DRAFT_ROUTES.BACKGROUND) return runInlineDraftInServiceWorker(request, sender, tabId);
+  if (!browserApi.storage?.session) return Promise.resolve({ ok: false, reason: 'Session-only draft handoff is unavailable in this browser.' });
+  // Continue current chat and Start new Assist session run in the side panel, where the user sees the turn.
+  return handOffInlineDraftToSidePanel({
+    queued: {
+      ...request,
+      tabId,
+      windowId: Number(sender?.tab?.windowId) || null,
+      expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
+    },
+    storageKey: INLINE_DRAFT_STORAGE_KEY,
+    sessionStorage: browserApi.storage.session,
+    openSidePanel: () => openAssistSidePanelFromGesture(sender.tab),
+    sidePanelIsOpen,
+  });
+}
+
+// The real side panel for Assist, opened inside the page click (the same scope as openHermesPanelFromGesture).
+// Resolves whether it opened; never falls back to a full tab or a popup window.
+function openAssistSidePanelFromGesture(tab) {
+  const browserId = detectBrowserId();
+  if (browserId === 'opera' || browserId === 'firefox') {
+    return Promise.resolve(openNativeSidebar({ windowId: tab?.windowId ?? null })).then(Boolean, () => false);
   }
-  await Promise.all([
-    browserApi.storage.session.set({ [INLINE_DRAFT_STORAGE_KEY]: queued }),
-    openHermesPanel(sender.tab),
-  ]);
-  return { ok: true, requestId: request.requestId };
+  const tabId = Number(tab?.id);
+  const useTabAttached = cachedPanelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED && Number.isFinite(tabId) && tabId > 0;
+  return openSidePanelInClick(browserApi.sidePanel, useTabAttached ? { tabId } : { windowId: Number(tab?.windowId) });
+}
+
+// Whether a Hermes side panel is open in any window (Chrome 116+; elsewhere it reads as closed).
+async function sidePanelIsOpen() {
+  try {
+    const contexts = await browserApi.runtime.getContexts?.({ contextTypes: ['SIDE_PANEL'] });
+    return Array.isArray(contexts) && contexts.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 async function inlineSessionStatus() {
@@ -540,6 +571,8 @@ async function queueOpenSessionRequest(message, sender) {
       expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
     },
   });
+  // An open side panel opens the session itself.
+  if (await sidePanelIsOpen()) return { ok: true, sessionId, surface };
   const opened = await openHermesPanel(tab, { allowFallback: false });
   if (opened === false) {
     await browserApi.storage.session.remove(OPEN_SESSION_STORAGE_KEY);
@@ -1127,6 +1160,10 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // From the content script on the gateway's hand-off page: it only learns how to cover the page.
     : message?.type === HERMES_WEB_LAUNCH_LOOK_MESSAGE
       ? hermesWebOpening.handleLaunchLook(sender)
+    : message?.type === INLINE_ASSIST_FONT_REQUEST
+      ? handleInlineAssistFontRequest(message, sender)
+    : inlineAssistModels.handles(message?.type)
+      ? inlineAssistModels.handle(message, sender)
     : message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
       ? queueInlineDraftRequest(message, sender)
       : message?.type === 'HERMES_INLINE_SESSION_STATUS'

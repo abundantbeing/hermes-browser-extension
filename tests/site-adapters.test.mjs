@@ -374,8 +374,7 @@ test('inline site adapters cover the requested sites with distinct surfaces and 
     assert.ok(profile.surface && profile.surface !== 'generic', `${adapterId} surface was generic`);
     assert.ok(profile.confidence >= 0.7, `${adapterId} confidence was ${profile.confidence}`);
     assert.match(profile.actions.map((action) => action.label).join(' '), actionPattern, `${adapterId} actions were not site-aware`);
-    assert.equal(profile.placement.preferred[0], 'outside-end', `${adapterId} launcher placement regressed`);
-    if (adapterId !== 'chatgpt') assert.equal(profile.placement.preferred.at(-1), 'inside-end', `${adapterId} lost its inside-end fallback`);
+    assert.deepEqual(profile.placement.preferred, ['corner-outside', 'corner-inside', 'below-end'], `${adapterId} launcher placement regressed`);
     if (adapterId !== 'chatgpt') assert.equal(profile.placement.anchorElement, target, `${adapterId} should anchor to the editable itself`);
   }
 });
@@ -427,7 +426,7 @@ test('ChatGPT inline profile anchors to the outer composer and treats native con
   const document = doc('<form id="composer"><div id="prompt-textarea" contenteditable="true" role="textbox" aria-label="Chat with ChatGPT"></div><button aria-label="Add files and more"></button><button aria-label="Start dictation"></button><button aria-label="Start Voice"></button></form>', 'https://chatgpt.com/');
   const profile = inspectInlineSite(document, document.querySelector('#prompt-textarea'), { url: document.URL });
   assert.equal(profile.placement.anchorElement.id, 'composer');
-  assert.equal(profile.placement.preferred[0], 'outside-end');
+  assert.equal(profile.placement.preferred[0], 'corner-outside');
   assert.equal(profile.placement.obstacleElements.length, 3);
   assert.equal(profile.applyMode, 'copy-only');
 
@@ -465,8 +464,7 @@ test('inline adapters cover common work, developer, publishing, social, and mess
     assert.ok(profile.surface && profile.surface !== 'generic', `${adapterId} surface was generic`);
     assert.match(`${profile.label} ${profile.actions.map((item) => item.label).join(' ')}`, actionPattern);
     assert.equal(profile.contextMode, contextMode, `${adapterId} context default was wrong`);
-    assert.equal(profile.placement.preferred[0], 'outside-end', `${adapterId} launcher should not sit inside the editable boundary`);
-    assert.equal(profile.placement.preferred.at(-1), 'inside-end', `${adapterId} launcher needs an inside-end fallback`);
+    assert.deepEqual(profile.placement.preferred, ['corner-outside', 'corner-inside', 'below-end'], `${adapterId} launcher should use the corner rule when it has no slot`);
     assert.equal(profile.placement.anchorElement, target, `${adapterId} should anchor to the editable itself`);
   }
 });
@@ -544,4 +542,20 @@ test('high-risk web messengers remain explicit conservative fallback profiles', 
     assert.equal(profile.contextMode, 'draft');
     assert.equal(profile.applyMode, 'copy-only');
   }
+});
+
+test('each site action says whether it writes from the page or edits the text in the field', () => {
+  const actionsOn = (url, html = '<textarea aria-label="Add a comment"></textarea>') => {
+    const document = doc(html, url);
+    return Object.fromEntries(inspectInlineSite(document, document.querySelector('textarea'), { url }).actions.map((item) => [item.id, item.startsFromPage]));
+  };
+  const youtube = actionsOn('https://www.youtube.com/watch?v=abc123');
+  assert.equal(youtube['youtube-timestamp'], true, 'Add useful timestamp writes from the video');
+  assert.ok(Object.values(youtube).every(Boolean), 'every YouTube action writes from the page');
+  const reddit = actionsOn('https://www.reddit.com/r/test/comments/1/x/');
+  assert.equal(reddit['draft-reply'], true);
+  assert.equal(reddit['reddit-tldr'], false, 'a TL;DR of the draft needs the draft');
+  const github = actionsOn('https://github.com/a/b/pull/1');
+  assert.equal(github['github-diagnostics'], true, 'asking for diagnostics writes from the page');
+  assert.equal(github['github-structure'], false, 'structuring needs the draft');
 });

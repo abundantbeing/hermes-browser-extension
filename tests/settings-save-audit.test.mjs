@@ -61,7 +61,7 @@ test('whole panes of instant controls, and nothing else, are excluded as live', 
   const single = controls.filter((control) => isLive(control) && !livePaneIds.has(control.closest('[data-settings-pane]')?.dataset.settingsPane)).map((control) => control.id);
   assert.deepEqual(single.sort(), [
     'agentHostInput', 'agentPortsInput', 'agentSchemeInput', 'browserContextConsentInput',
-    'browserControlScopeInput', 'gatewayModeInput', 'gmailCaptureEnabledInput', 'profileSelect',
+    'browserControlScopeInput', 'gatewayModeInput', 'gmailCaptureEnabledInput', 'inlineAssistSiteInput', 'inlineAssistSitesValue', 'profileSelect',
   ]);
 });
 

@@ -13,7 +13,7 @@ test('production side panel exposes one explicit Gmail thread-capture action', (
   const css = read('extension/sidepanel.css');
 
   assert.match(html, /id="explicitSiteCaptureButton"[\s\S]*?hidden[\s\S]*?Capture visible Gmail thread/);
-  assert.match(source, /import \{ explicitSiteCaptureAction, isGmailThreadUrl \} from '\.\/lib\/site-adapters\.mjs';/);
+  assert.match(source, /import \{[^}]*\bexplicitSiteCaptureAction\b[^}]*\bisGmailThreadUrl\b[^}]*\} from '\.\/lib\/site-adapters\.mjs';/);
   assert.match(source, /function getPageContext\(tab, options = \{\}\)/);
   assert.match(source, /explicitSiteCapture:\s*Boolean\(options\.explicitSiteCapture\)/);
   assert.match(source, /function refreshContext\(options = \{\}\)/);

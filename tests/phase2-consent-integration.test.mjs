@@ -88,8 +88,8 @@ test('inline and right-click background paths apply the final consent gate at tr
   assert.match(inlineGate, /pageContext: ''/);
   assert.match(inlineGate, /pageUrl: ''/);
   assert.match(inlineGate, /fieldLabel: ''/);
-  const currentRoute = sidepanel.match(/async function runInlineDraftInCurrentSession\([\s\S]*?\n\}/)?.[0] || '';
-  assert.ok(currentRoute.indexOf('await ensureHermesSession()') < currentRoute.indexOf('await resolveInlineDraftPrompt(request)'));
+  // Continue current chat sends through askHermes, which gates the prompt again at send time (below).
+  assert.doesNotMatch(sidepanel, /runInlineDraftInCurrentSession/);
   assert.match(sidepanel, /runInlineDraftInBackground\(request, \(\) => resolveInlineDraftPrompt\(request\)\)/);
   assert.match(sidepanel, /resolveUserText:\s*\(\) => resolveInlineDraftPrompt\(request\)/);
   const sender = sidepanel.match(/async function askHermes\([\s\S]*?\n\}/)?.[0] || '';
@@ -131,8 +131,8 @@ test('service-worker background and new-session inline drafts re-read the dedica
 test('right-click background route re-reads consent after session creation and re-gates against the same connection snapshot before prompt submission', () => {
   const runner = sidepanel.match(/async function runInlineDraftInBackground\([\s\S]*?\n\}/)?.[0] || '';
   assert.match(runner, /const session = await createInlineBackgroundSession\(request\)/);
-  assert.match(runner, /await resolvePrompt\(\)/);
-  assert.ok(runner.indexOf('const session = await createInlineBackgroundSession(request)') < runner.indexOf('await resolvePrompt()'));
+  assert.match(runner, /await resolvePrompt\(session\)/);
+  assert.ok(runner.indexOf('const session = await createInlineBackgroundSession(request)') < runner.indexOf('await resolvePrompt(session)'));
   const route = sidepanel.match(/async function executeContextMenuRequest\([\s\S]*?\n\}/)?.[0] || '';
   const refresh = sidepanel.match(/async function refreshContextConsentLedger\([\s\S]*?\n\}/)?.[0] || '';
   assert.match(route, /const consentSettings = \{ \.\.\.settings \};/);

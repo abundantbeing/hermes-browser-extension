@@ -583,7 +583,6 @@ html[data-hermes-mode="light"] .nous-strip {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  scrollbar-gutter: stable;
 }
 .app-scroll::-webkit-scrollbar,
 .messages::-webkit-scrollbar,
@@ -2148,7 +2147,6 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   box-sizing: border-box;
   overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-gutter: stable;
   padding: 16px;
   border: 1px solid var(--hermes-line-strong);
   border-radius: var(--radius);
@@ -2786,7 +2784,7 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
 .tool-call-group-title { flex: 0 0 auto; font-weight: 400; }
 .tool-call-group-state, .tool-call-status { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(var(--hermes-ink-rgb),0.65); font-size: 11px; }
 .tool-call-status { margin-left: auto; }
-.tool-call-list { list-style: none; padding: 4px 12px; margin: 0; max-height: min(42vh,360px); overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.tool-call-list { list-style: none; padding: 4px 12px; margin: 0; max-height: min(42vh,360px); overflow: auto; overscroll-behavior: contain; }
 .tool-call-entry > summary > span:first-of-type { min-width: 0; overflow-wrap: anywhere; font-family: var(--hermes-font-mono); }
 .tool-call-entry pre { margin: 0 0 8px 17px; padding: 8px; max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: rgba(var(--hermes-ink-rgb),0.04); font: 11px/1.5 var(--hermes-font-mono); }
 .tool-call-group summary:focus-visible { outline: 2px solid var(--hermes-accent); outline-offset: 2px; }
@@ -3154,6 +3152,11 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
   border: 1px solid rgba(var(--hermes-accent-rgb),0.42);
   background: rgba(var(--hermes-ink-rgb),0.04);
   box-shadow: 0 8px 22px rgba(0,0,0,0.14);
+}
+/* While a reply's generations reveal in their cards, its inline copy of the pictures waits,
+   and so does a file chip: a MEDIA line still being typed out is not yet a picture path. */
+.image-cards-pending .message-content :is(.generated-image, .generated-image-inspectable, img[data-slot="aui_generated-image"], .session-media[data-session-media="image"], .artifact-card) {
+  display: none;
 }
 .session-media {
   display: flex;
@@ -5813,7 +5816,6 @@ button.active-profile-indicator {
   overflow-y: hidden;
   padding: 7px 8px;
   box-sizing: border-box;
-  scrollbar-gutter: stable;
   border-bottom: 1px solid rgba(var(--hermes-fg-rgb),0.18);
   background: rgba(0,0,0,0.12);
 }
@@ -6479,7 +6481,7 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
   color: var(--hermes-ink);
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-gutter: stable;
+  --overlay-z: 95;
 }
 .settings-dialog header {
   position: sticky;
@@ -7762,7 +7764,8 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
 .marketplace-theme-search button { padding: 7px 10px; border: 1px solid #f4f2eb; background: #f4f2eb; color: #111; font: 700 calc(8.5px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono); }
 .marketplace-theme-search button:hover, .marketplace-theme-search button:focus-visible { border-color: var(--hermes-primary-fg, var(--hermes-paper)); background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .marketplace-theme-status { font: calc(9.5px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-mono); }
-.marketplace-theme-results { display: grid; gap: 7px; max-height: 330px; overflow: auto; scrollbar-gutter: stable; }
+.marketplace-theme-results { display: flex; flex-direction: column; gap: 7px; max-height: 330px; overflow: auto; }
+.marketplace-theme-results > * { flex: none; }
 .marketplace-theme-loading { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 4px; height: 7px; }
 .marketplace-theme-loading i { min-width: 0; background: var(--hermes-muted); opacity: .3; animation: marketplace-theme-pulse 900ms ease-in-out infinite alternate; }
 .marketplace-theme-loading i:nth-child(1) { background: #0505e8; opacity: 1; }
@@ -8079,7 +8082,8 @@ h2,
 .task-stack-chevron { color: var(--hermes-muted); text-align: center; transition: transform 140ms ease; }
 .task-stack[data-expanded="false"] .task-stack-chevron { transform: rotate(180deg); }
 .task-stack[data-expanded="false"] .task-stack-list { display: none; }
-.task-stack-list { display: grid; max-height: 164px; overflow: auto; margin: 0; padding: 0; border-top: 1px solid var(--hermes-line); list-style: none; scrollbar-gutter: stable; }
+.task-stack-list { display: flex; flex-direction: column; max-height: 164px; overflow: auto; margin: 0; padding: 0; border-top: 1px solid var(--hermes-line); list-style: none; }
+.task-stack-list > * { flex: none; }
 .task-stack-list::-webkit-scrollbar { width: 8px; height: 8px; }
 .task-stack-list::-webkit-scrollbar-thumb { background: rgba(var(--hermes-fg-rgb),0.45); border: 1px solid var(--hermes-line-strong); }
 .task-stack-item { display: grid; grid-template-columns: 16px minmax(0,1fr) auto; align-items: center; gap: 7px; min-height: 31px; padding: 6px 9px; border-bottom: 1px solid rgba(var(--hermes-ink-rgb),0.1); font-size: calc(10px * var(--hermes-text-zoom, 1)); line-height: 1.25; }
@@ -8136,12 +8140,8 @@ h2,
 .subagent-stack-stream {
   max-height: 148px;
 }
-.subagent-stack-list {
-  scrollbar-gutter: auto;
-}
 .subagent-stack-stream {
   max-height: 72px;
-  scrollbar-gutter: stable;
 }
 .subagent-stack-item {
   grid-template-columns: 8px minmax(0,1fr) max-content;
@@ -8195,8 +8195,10 @@ h2,
   background: var(--hermes-paper);
 }
 .subagent-stack-detail[hidden] { display: none; }
+.subagent-stack-stream > * { flex: none; }
 .subagent-stack-stream {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 3px;
   max-height: 72px;
   overflow: auto;
@@ -8356,7 +8358,8 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
 .bot-mode-cron-refresh.is-refreshing .session-refresh-icon {
   animation: sessionRefreshSpin 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.bot-mode-cron-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; max-height: 240px; overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; min-width: 0; max-width: 100%; }
+.bot-mode-cron-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-x: hidden; overflow-y: auto; min-width: 0; max-width: 100%; }
+.bot-mode-cron-list > * { flex: none; min-width: 0; }
 .bot-mode-cron-list:empty { margin: 0; }
 .bot-mode-cron-row { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; padding: 8px 10px; border: 1px solid var(--hermes-line); background: rgba(var(--hermes-ink-rgb), 0.03); border-radius: 4px; }
 .bot-mode-cron-row-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; flex-wrap: wrap; min-width: 0; }
@@ -12313,3 +12316,183 @@ html[dir="rtl"] .startup-actions [data-tip]::after {
   text-transform: none !important;
 }
 /* RTL-TRACKING-END */
+
+/* Hermes Assist button icon: each card shows the two circles the content script picks between, the light
+   one (for dark pages) and the dark one (for light pages), bare on the card. A hairline ring keeps each
+   circle visible on a card of its own colour. */
+.inline-assist-settings .settings-choice-group legend { margin-bottom: 10px; }
+.assist-icon-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.settings-dialog .settings-choice-card.assist-icon-card { justify-items: center; text-align: center; }
+.assist-icon-preview { display: flex; justify-content: center; gap: 8px; }
+.assist-icon-swatch { position: relative; width: 32px; height: 32px; display: grid; place-items: center; }
+.assist-icon-swatch::before { content: ""; width: 32px; height: 32px; border-radius: 50%; }
+.assist-icon-swatch-dark::before { background: #f4f4f1; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .16); }
+.assist-icon-swatch-light::before { background: #141414; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.assist-icon-swatch::after { content: ""; position: absolute; width: 22px; height: 22px; left: 5px; top: 5px; -webkit-mask: var(--assist-icon-mask) center / contain no-repeat; mask: var(--assist-icon-mask) center / contain no-repeat; }
+.assist-icon-swatch-dark::after { background: #111; }
+.assist-icon-swatch-light::after { background: #f4f4f1; }
+.assist-icon-preview[data-icon="wing"] .assist-icon-swatch { --assist-icon-mask: url("assets/img/assist-wing.png"); }
+.assist-icon-preview[data-icon="staff"] .assist-icon-swatch { --assist-icon-mask: url("assets/img/assist-staff.svg"); }
+.assist-icon-preview[data-icon="girl"] .assist-icon-swatch::after { width: 30px; height: 30px; left: 1px; top: 1px; border-radius: 50%; -webkit-mask-size: cover; mask-size: cover; }
+.assist-icon-preview[data-icon="girl"] .assist-icon-swatch-dark { --assist-icon-mask: url("assets/img/assist-girl-solid.png"); }
+.assist-icon-preview[data-icon="girl"] .assist-icon-swatch-light { --assist-icon-mask: url("assets/img/assist-girl-outline.png"); }
+
+/* Hermes Assist: what opens on click. Each card draws a small picture of it: a composer line with the
+   circle, and under it either the narrow quick menu or the wide full panel. */
+.assist-open-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.settings-dialog .settings-choice-card.assist-open-card { align-content: start; }
+.assist-open-thumb { position: relative; display: block; height: 96px; border-radius: 6px; background: #000; overflow: hidden; }
+.assist-open-thumb .thumb-circle { position: absolute; left: 8px; top: 10px; width: 11px; height: 11px; border-radius: 50%; background: #f4f4f1; box-shadow: 0 0 0 1.5px var(--accent, #ffbf00); }
+.assist-open-thumb::before { content: ""; position: absolute; left: 26px; top: 13px; width: 60px; height: 5px; border-radius: 2px; background: #333; }
+.assist-open-thumb .thumb-menu, .assist-open-thumb .thumb-panel { position: absolute; left: 6px; top: 28px; display: grid; gap: 5px; padding: 6px; border: 1px solid rgba(255, 248, 220, .5); background: #232335; }
+.assist-open-thumb .thumb-menu { width: 64px; }
+.assist-open-thumb .thumb-panel { width: 132px; grid-template-columns: 1fr 1fr; }
+.assist-open-thumb b { display: block; height: 7px; background: rgba(255, 248, 220, .7); }
+.assist-open-thumb .thumb-panel b { height: 14px; background: rgba(255, 248, 220, .18); }
+.assist-open-thumb .thumb-panel b:first-child { background: #fff8dc; }
+
+/* Hermes Assist settings rows: what the setting is on the left, its control on the right, in one group with
+   hairlines between the rows. The controls keep their own look (the selects, the model picker button and the
+   switch); only their place changes. */
+.assist-setting-rows {
+  display: grid;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.18);
+  background: var(--hermes-paper);
+}
+.settings-dialog .assist-setting-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 10px;
+  border-top: 1px solid rgba(var(--hermes-ink-rgb),0.12);
+}
+.settings-dialog .assist-setting-row:first-child { border-top: 0; }
+.settings-dialog .assist-setting-row:has(input[type="checkbox"]) { cursor: pointer; }
+.assist-setting-row .settings-toggle-copy small { display: block; margin-top: 3px; }
+.assist-setting-row > select,
+.assist-setting-row > #inlineAssistModelButton {
+  width: auto;
+  min-width: 0;
+  max-width: 11rem;
+  margin-top: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.assist-setting-row > #inlineAssistModelButton { min-height: 34px; padding-block: 7px; }
+.assist-setting-row:focus-within { outline: 2px solid rgba(var(--hermes-accent-rgb),0.5); outline-offset: -2px; }
+.assist-setting-row:has(input:checked) .settings-switch {
+  border-color: var(--hermes-accent);
+  background: var(--hermes-primary-bg);
+}
+.assist-setting-row:has(input:checked) .settings-switch::after {
+  transform: translateX(14px);
+  background: var(--hermes-primary-fg);
+}
+
+/* Sites: each one a square tag, "site · setting ×", with a dashed Add tag last. */
+.inline-assist-sites { display: grid; gap: 8px; }
+.inline-assist-sites .settings-toggle-copy small { display: block; margin-top: 3px; }
+.inline-assist-sites-chips { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.inline-assist-sites-list { display: contents; margin: 0; padding: 0; list-style: none; }
+.inline-assist-sites-list[hidden] { display: none; }
+.inline-assist-site {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 4px 4px 10px;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.24);
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+  line-height: 1.3;
+}
+.inline-assist-site-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.inline-assist-site .branded-select { flex: none; width: auto; min-width: 150px; }
+.inline-assist-site .branded-select-button { min-height: 34px; }
+.inline-assist-site .inline-assist-site-state {
+  margin: 0;
+  padding: 2px 2px 2px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--hermes-muted);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.inline-assist-site select.inline-assist-site-state { width: auto; cursor: pointer; }
+.inline-assist-site-remove {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.24);
+  background: transparent;
+  color: var(--hermes-muted);
+  font-size: calc(15px * var(--hermes-text-zoom, 1));
+  line-height: 1;
+  cursor: pointer;
+}
+.inline-assist-site-remove:hover,
+.inline-assist-site-remove:focus-visible { background: rgba(var(--hermes-ink-rgb),0.1); color: var(--hermes-ink); }
+.inline-assist-site-new {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.24);
+  background: var(--hermes-paper);
+}
+.settings-dialog .inline-assist-site-new input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 34px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--hermes-ink);
+  font: inherit;
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+  outline: none;
+}
+.settings-dialog .inline-assist-site-new:focus-within { border-color: var(--hermes-accent); }
+.settings-dialog .inline-assist-site-add-typed {
+  flex: none;
+  height: 34px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--hermes-ink);
+  background: var(--hermes-ink);
+  color: var(--hermes-paper);
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.settings-dialog .inline-assist-site-add {
+  align-self: flex-start;
+  margin: 0;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--hermes-muted);
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+  line-height: 1.3;
+  text-transform: none;
+  letter-spacing: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.settings-dialog .inline-assist-site-add[hidden] { display: none; }
+.settings-dialog .inline-assist-site-add:hover,
+.settings-dialog .inline-assist-site-add:focus-visible { color: var(--hermes-ink); outline: none; }
