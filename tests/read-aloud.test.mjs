@@ -226,6 +226,26 @@ test('stopping playback aborts the request in flight', async () => {
   assert.equal(aborted, true);
 });
 
+test('stopping before fetch runs never calls fetch when the caller signal is already aborted', async () => {
+  const controller = new AbortController();
+  controller.abort();
+  let fetchCalls = 0;
+  await assert.rejects(
+    () => requestGatewaySpeech({
+      baseUrl: 'http://x',
+      token: 't',
+      text: 'hello',
+      signal: controller.signal,
+      fetchFn: () => {
+        fetchCalls += 1;
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({ ok: true }) });
+      },
+    }),
+    (err) => err.name === 'AbortError',
+  );
+  assert.equal(fetchCalls, 0);
+});
+
 // ---- Gateway audio playback (Web Audio) --------------------------------------
 
 function fakeAudioContext() {

@@ -291,11 +291,23 @@ export function gatewaySpeakUrl(baseUrl = '', profile = '') {
  * Resolves to { bytes, mimeType, provider }; rejects with the server's own words
  * (and `status`) when it cannot. `signal` cancels the request when playback is stopped.
  */
+function abortErrorAlready() {
+  if (typeof DOMException === 'function') {
+    return new DOMException('The operation was aborted.', 'AbortError');
+  }
+  const err = new Error('The operation was aborted.');
+  err.name = 'AbortError';
+  return err;
+}
+
 export async function requestGatewaySpeech({
   baseUrl = '', token = '', profile = '', text = '', signal = undefined, fetchFn = globalThis.fetch?.bind(globalThis),
 } = {}) {
   if (!String(baseUrl || '').trim() || !String(token || '').trim() || typeof fetchFn !== 'function') {
     throw new Error('The Hermes dashboard is not reachable from this panel.');
+  }
+  if (signal?.aborted) {
+    throw abortErrorAlready();
   }
   const body = String(text || '');
   const timeoutMs = Math.min(SPEAK_MAX_TIMEOUT_MS, Math.max(SPEAK_MIN_TIMEOUT_MS, body.length * SPEAK_MS_PER_CHAR));
@@ -310,6 +322,10 @@ export async function requestGatewaySpeech({
     linked?.abort();
   };
   signal?.addEventListener?.('abort', onStop, { once: true });
+  if (signal?.aborted) {
+    onStop();
+    throw abortErrorAlready();
+  }
   try {
     const response = await fetchFn(gatewaySpeakUrl(baseUrl, profile), {
       method: 'POST',

@@ -149,6 +149,37 @@ test('when voice becomes available after the probe, stale assistant rails gain a
   assert.equal(f.controller.readAloudRailsNeedRebuild(), false);
 });
 
+test('when read-aloud turns off after the probe, stale speaker buttons are removed (idle rows only)', () => {
+  let offerVoice = true;
+  const f = threadFixture({ canReadAloud: () => offerVoice, onReadAloud: () => {} });
+  const reply = { role: 'assistant', ts: TS };
+  const a = f.add(reply);
+  assert.ok(a.row.querySelector('.message-rail > .message-action-speak'));
+  offerVoice = false;
+  f.controller.refreshAfterReadAloudProbe();
+  assert.equal(a.row.querySelector('.message-action-speak'), null);
+  assert.equal(f.controller.readAloudRailsNeedRebuild(), false);
+});
+
+test('when read-aloud turns off while a reply is speaking, the Stop control stays until playback ends', () => {
+  const reading = new Set();
+  let offerVoice = true;
+  const f = threadFixture({
+    canReadAloud: () => offerVoice,
+    onReadAloud: () => {},
+    readAloudStateFor: (record) => (reading.has(record) ? 'speaking' : 'idle'),
+  });
+  const record = { role: 'assistant', ts: TS };
+  const a = f.add(record);
+  reading.add(record);
+  assert.ok(a.row.querySelector('.message-action-speak'));
+  offerVoice = false;
+  assert.equal(f.controller.readAloudRailsNeedRebuild(), false);
+  f.controller.refreshAfterReadAloudProbe();
+  assert.ok(a.row.querySelector('.message-action-speak'));
+  assert.equal(a.row.querySelector('.message-action-speak').getAttribute('aria-pressed'), 'true');
+});
+
 test('when voice availability is unchanged, probe refresh updates speak state without rebuilding the rail', () => {
   const reading = new Set();
   const f = threadFixture({

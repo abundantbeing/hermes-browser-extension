@@ -43,6 +43,8 @@ export function createMessageThreadUi({
     row.classList.remove('is-being-read');
     if (!['user', 'assistant'].includes(record.role)) return;
     const rewind = !room && canRewind(record);
+    const readAloudState = readAloudStateFor(record);
+    const readAloudActive = readAloudState === 'speaking' || readAloudState === 'loading';
     const rail = buildMessageRail({
       document, role: record.role, ts: normalizeMessageTimestamp(record.ts, { now: now() }),
       now: now(), locale: locale(), translate,
@@ -52,8 +54,8 @@ export function createMessageThreadUi({
       canEdit: rewind, canRestore: rewind,
       replyLabel: room && record.role === 'assistant' ? replyLabelFor(record) : '',
       durationLabel: !streaming && record.role === 'assistant' ? durationLabelFor(record) : '',
-      canReadAloud: record.role === 'assistant' && !streaming && canReadAloud(record, node),
-      readAloudState: readAloudStateFor(record),
+      canReadAloud: record.role === 'assistant' && !streaming && (canReadAloud(record, node) || readAloudActive),
+      readAloudState,
       onReply: () => onReply?.(record, node),
       onReadAloud: () => onReadAloud?.(record, node),
       onCopy: () => onCopy?.(record, node),
@@ -62,7 +64,7 @@ export function createMessageThreadUi({
     });
     setRailCopyEnabled(rail, !streaming);
     row.append(rail);
-    setReadAloudState(rail, readAloudStateFor(record), { translate });
+    setReadAloudState(rail, readAloudState, { translate });
     requestFrame(() => applyPlacement(row));
   }
 
@@ -149,13 +151,17 @@ export function createMessageThreadUi({
   function readAloudRailsNeedRebuild() {
     for (const [row, entry] of rows) {
       if (!root.contains(row) || entry.streaming || entry.record.role !== 'assistant') continue;
-      if (!canReadAloud(entry.record, entry.node)) continue;
-      if (!row.querySelector(':scope > .message-rail .message-action-speak')) return true;
+      const offer = canReadAloud(entry.record, entry.node);
+      const speakBtn = row.querySelector(':scope > .message-rail .message-action-speak');
+      const state = readAloudStateFor(entry.record);
+      const activePlayback = state === 'speaking' || state === 'loading';
+      if (offer && !speakBtn) return true;
+      if (!offer && speakBtn && !activePlayback) return true;
     }
     return false;
   }
-  // After the dashboard voice probe: rebuild when stale rails lack a speaker button;
-  // otherwise update pressed/Stop state in place so keyboard focus is kept.
+  // After the dashboard voice probe: rebuild when rails are stale (missing speaker or
+  // speaker when read-aloud is off); otherwise update pressed/Stop state in place so keyboard focus is kept.
   function refreshAfterReadAloudProbe() {
     if (readAloudRailsNeedRebuild()) refreshActions();
     else refreshReadAloud();

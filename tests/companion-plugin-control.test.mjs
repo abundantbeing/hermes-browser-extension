@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 
 import { CONTROLLER_BROWSER_CAPABILITIES } from '../extension/lib/controller-protocol.mjs';
 import { PLUGIN_TOOL_NAMES } from '../extension/lib/control-tool-names.mjs';
+import { pythonExecutable } from './python-bin.mjs';
+
+const PY = pythonExecutable();
 
 // Hermes Control inside the companion plugin: the broker, the register and socket
 // routes, and the tools. These tests drive the real plugin code, the real aiohttp
@@ -12,7 +15,7 @@ import { PLUGIN_TOOL_NAMES } from '../extension/lib/control-tool-names.mjs';
 // start a gateway or open a socket to one (skipped when aiohttp is missing).
 
 function runPython(script) {
-  const result = spawnSync(process.env.PYTHON || 'python', ['-c', script], {
+  const result = spawnSync(PY, ['-c', script], {
     cwd: process.cwd(),
     encoding: 'utf8',
   });
