@@ -23356,7 +23356,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   onboardingStateLoaded = true;
   renderBrowserIntroVisibility();
   const migrateConnectionSchema = stored.hermesBrowserSettings?.connectionSchemaVersion !== DEFAULT_SETTINGS.connectionSchemaVersion;
-  const storedSettings = hydrateSavedConnectionSecrets(
+  const storedSettings = await hydrateSavedConnectionSecrets(
     migrateConnectionSettings(stored.hermesBrowserSettings || {}),
     stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
   );
@@ -23730,7 +23730,7 @@ async function updateSavedConnection(action, id = settings.activeSavedConnection
     await withSavedConnectionsLock(async () => {
       await saveSettingsFromForm({ lockHeld: true });
       const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-      const storedSettings = hydrateSavedConnectionSecrets(
+      const storedSettings = await hydrateSavedConnectionSecrets(
         stored.hermesBrowserSettings || {},
         stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
       );
@@ -24232,7 +24232,7 @@ async function refreshAfterSettingsSave(saved) {
 
 async function persistHermesBrowserSettings(nextSettings) {
   const stored = await browserApi.storage.local.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY);
-  await browserApi.storage.local.set(packSavedConnectionStorage(
+  await browserApi.storage.local.set(await packSavedConnectionStorage(
     nextSettings,
     stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
   ));

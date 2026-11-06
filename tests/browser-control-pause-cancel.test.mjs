@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { CONTROLLER_WORKER_MESSAGES, createControllerServiceWorker } from '../extension/lib/controller-service-worker.mjs';
+import { withSavedConnectionsLock } from '../extension/lib/saved-connections.mjs';
 import { TAB_LEASE_KINDS, TAB_LEASE_OWNERSHIPS } from '../extension/lib/tab-leases.mjs';
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
@@ -154,6 +155,107 @@ test('releasing a tab ends the command that is running on it', async () => {
   await waitFor(() => terminalOf(fixture.connection, 'running-1'));
   assert.equal(fixture.signals[0].aborted, true);
   assert.equal(terminalOf(fixture.connection, 'running-1').error.code, 'cancelled');
+});
+
+test('Pause blocks new gateway commands while the saved-connections lock is held', async () => {
+  const queue = [];
+  let running = false;
+  const locks = {
+    request(_name, task) {
+      return new Promise((resolve, reject) => {
+        queue.push({ task, resolve, reject });
+        const tryRun = () => {
+          if (running || !queue.length) return;
+          running = true;
+          const { task: next, resolve: res, reject: rej } = queue.shift();
+          Promise.resolve(next())
+            .then(res, rej)
+            .finally(() => {
+              running = false;
+              tryRun();
+            });
+        };
+        tryRun();
+      });
+    },
+  };
+  const prevNav = globalThis.navigator;
+  Object.defineProperty(globalThis, 'navigator', { value: { locks }, configurable: true });
+  let releaseHolder;
+  const holderDone = new Promise((r) => { releaseHolder = r; });
+  const otherPanelWork = withSavedConnectionsLock(async () => {
+    await holderDone;
+  });
+  const storage = memoryStorage({ hermesBrowserSettings: settings() });
+  const transport = connector();
+  const executed = [];
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async (frame) => {
+      executed.push(frame);
+      return { ok: true, result: { status: 'done' } };
+    },
+  });
+  try {
+    await worker.boot();
+    const ready = await ownedReady(worker, 91);
+    await settle();
+    const pausePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
+    await settle();
+    assert.equal(worker.status().paused, true, 'pause guard is on before lock callback runs');
+    await transport.connections[0].emit({
+      method: 'browser.controller.command',
+      params: {
+        command_id: 'during-lock',
+        action: 'browser_scroll',
+        arguments: { direction: 'down' },
+        tab_id: 91,
+        document_generation: ready.documentGeneration,
+      },
+    });
+    await settle();
+    assert.equal(executed.length, 0, 'executor must not run while pause guard is active during lock wait');
+    const rejected = terminalOf(transport.connections[0], 'during-lock');
+    assert.equal(rejected?.ok, false);
+    assert.equal(rejected?.error?.code, 'controller_paused');
+    releaseHolder();
+    await pausePromise;
+    await otherPanelWork;
+    assert.equal(worker.status().paused, true);
+  } finally {
+    if (prevNav === undefined) delete globalThis.navigator;
+    else Object.defineProperty(globalThis, 'navigator', { value: prevNav, configurable: true });
+  }
+});
+
+test('Resume after Pause runs syncSettings so a newer stored chat closes the old transport', async () => {
+  const base = settings();
+  const storage = memoryStorage({ hermesBrowserSettings: base });
+  const transport = connector();
+  const closes = [];
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async () => ({ ok: true, result: { status: 'noop' } }),
+  });
+  await worker.boot();
+  const firstConnection = transport.connections[0];
+  const originalClose = firstConnection.close.bind(firstConnection);
+  firstConnection.close = () => { closes.push('close'); originalClose(); };
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
+  storage.state.hermesBrowserSettings = { ...base, sessionId: 'session-b', sessionTitle: 'B' };
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.settingsRefresh }, extensionSender());
+  await settle();
+  assert.ok(closes.length >= 1, 'stale socket must close when storage advances the chat');
+  assert.equal(transport.connections.length, 2, 'a new connection opens for the advanced session');
 });
 
 async function waitingApprovalWorker() {

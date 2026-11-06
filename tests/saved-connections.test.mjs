@@ -13,6 +13,10 @@ import {
   savedConnectionsBase,
   withSavedConnectionsLock,
 } from '../extension/lib/saved-connections.mjs';
+import {
+  decryptSavedConnectionSecretBag,
+  isEncryptedSecretRecord,
+} from '../extension/lib/saved-connection-secrets-crypto.mjs';
 import { createRevisionGate } from '../extension/lib/context-scope-transition.mjs';
 import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
 import {
@@ -131,7 +135,12 @@ test('the panel switch saves form edits, persists the selected key and reloads o
     assert.equal(h.store.hermesBrowserSettings.apiKey, local.apiKey);
     assert.equal(h.store.hermesBrowserSettings.activeSavedConnectionId, 'default');
     assert.equal(h.store.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
-    assert.equal(h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY].work.apiKey, 'updated-work-token');
+    assert.equal(JSON.stringify(h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY]).includes('updated-work-token'), false);
+    const roundTrip = await hydrateSavedConnectionSecrets(
+      h.store.hermesBrowserSettings,
+      h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+    );
+    assert.equal(roundTrip.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, 'updated-work-token');
     assert.equal(h.callsTo('reload').length, 1);
     assert.equal(h.callsTo('toast').length, 0);
     h.scope.sending = true;
@@ -228,11 +237,11 @@ test('a switch from another panel stops a pending scope change here from writing
   } finally { h.close(); }
 });
 
-test('switching after packed storage restores keys from the sidecar', () => {
+test('switching after packed storage restores keys from the sidecar', async () => {
   const work = twoConnections();
-  const packed = packSavedConnectionStorage(work);
+  const packed = await packSavedConnectionStorage(work);
   assert.equal(packed.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
-  const storedSettings = hydrateSavedConnectionSecrets(
+  const storedSettings = await hydrateSavedConnectionSecrets(
     packed.hermesBrowserSettings,
     packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
   );
@@ -243,23 +252,25 @@ test('switching after packed storage restores keys from the sidecar', () => {
   assert.equal(selectSavedConnection(next, 'work').apiKey, 'work-test-token');
 });
 
-test('deleting a connection drops its sidecar credentials when packed', () => {
-  const packed = packSavedConnectionStorage(twoConnections());
-  const hydrated = hydrateSavedConnectionSecrets(
+test('deleting a connection drops its sidecar credentials when packed', async () => {
+  const packed = await packSavedConnectionStorage(twoConnections());
+  const hydrated = await hydrateSavedConnectionSecrets(
     packed.hermesBrowserSettings,
     packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
   );
   const deleted = deleteSavedConnection(rememberSavedConnection(hydrated), 'work');
-  const repacked = packSavedConnectionStorage(deleted, packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+  const repacked = await packSavedConnectionStorage(deleted, packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
   assert.equal(repacked[SAVED_CONNECTION_SECRETS_STORAGE_KEY].work, undefined);
   assert.equal(JSON.stringify(repacked[SAVED_CONNECTION_SECRETS_STORAGE_KEY]).includes('work-test-token'), false);
 });
 
-test('saved gateway keys live in a sidecar, not inside inactive savedConnections entries', () => {
-  const packed = packSavedConnectionStorage(twoConnections());
+test('saved gateway keys live in a sidecar, not inside inactive savedConnections entries', async () => {
+  const packed = await packSavedConnectionStorage(twoConnections());
   assert.equal(packed.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
-  assert.equal(packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY].work.apiKey, 'work-test-token');
-  const restored = rememberSavedConnection(hydrateSavedConnectionSecrets(
+  const sidecarJson = JSON.stringify(packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+  assert.match(sidecarJson, /"v":1/, 'sidecar stores encrypted v1 records');
+  assert.equal(sidecarJson.includes('work-test-token'), false, 'plaintext key must not appear in storage');
+  const restored = rememberSavedConnection(await hydrateSavedConnectionSecrets(
     packed.hermesBrowserSettings,
     packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
   ));
@@ -451,6 +462,36 @@ test('a stored record replaces the panel copy of the list and a changed active I
   assert.equal(savedConnectionsBase(stale, {}, 'default'), stale);
 });
 
+test('legacy plaintext sidecar entries migrate through hydrate and encrypt on pack', async () => {
+  const work = twoConnections();
+  const merged = rememberSavedConnection(work);
+  const legacySidecar = {
+    work: { apiKey: 'work-test-token', tokenSource: 'manual' },
+  };
+  const hydrated = await hydrateSavedConnectionSecrets(merged, legacySidecar);
+  assert.equal(hydrated.savedConnections.find((e) => e.id === 'work').connection.apiKey, 'work-test-token');
+  const packed = await packSavedConnectionStorage(hydrated, legacySidecar);
+  const rec = packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY].work;
+  assert.ok(isEncryptedSecretRecord(rec), 're-pack encrypts legacy plaintext');
+  assert.equal(JSON.stringify(packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY]).includes('work-test-token'), false);
+  const round = await hydrateSavedConnectionSecrets(packed.hermesBrowserSettings, packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+  assert.equal(round.savedConnections.find((e) => e.id === 'work').connection.apiKey, 'work-test-token');
+});
+
+test('when ciphertext cannot be decrypted, saved keys are treated as absent', async () => {
+  const packed = await packSavedConnectionStorage(twoConnections());
+  const encrypted = packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY].work;
+  assert.ok(isEncryptedSecretRecord(encrypted));
+  const tampered = { ...encrypted, ct: encrypted.ct.slice(0, -4) + 'BBBB' };
+  assert.equal(await decryptSavedConnectionSecretBag(tampered), null);
+  const hydrated = await hydrateSavedConnectionSecrets(
+    packed.hermesBrowserSettings,
+    { ...packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY], work: tampered },
+  );
+  assert.equal(hydrated.savedConnections.find((e) => e.id === 'work').connection.apiKey, '');
+  assert.equal(hydrated.savedConnections.find((e) => e.id === 'work').connection.tokenSource, '');
+});
+
 test('pause in another panel keeps a saved-connection switch already in storage', async () => {
   const panelSettings = rememberSavedConnection(local);
   const state = {
@@ -477,7 +518,7 @@ test('pause in another panel keeps a saved-connection switch already in storage'
     now: () => 1_000,
   });
   await worker.boot();
-  Object.assign(state, packSavedConnectionStorage(selectSavedConnection(twoConnections(), 'default'), {
+  Object.assign(state, await packSavedConnectionStorage(selectSavedConnection(twoConnections(), 'default'), {
     work: { apiKey: 'work-test-token', tokenSource: 'manual' },
   }));
   await worker.handleMessage(

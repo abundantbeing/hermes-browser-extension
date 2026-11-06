@@ -177,6 +177,39 @@ function controllerRouteChanged(previous = {}, next = {}) {
     || durableSessionId(previous) !== durableSessionId(next);
 }
 
+// Route + session identity for Hermes Control: another panel may have updated storage with a new chat while
+// this worker still serves the old transport; on Pause, merge structural updates from storage but keep this
+// worker's route until the normal syncSettings transition runs.
+const PAUSE_ROUTE_IDENTITY_FIELDS = [
+  'connectionMode',
+  'connectionTransport',
+  'gatewayMode',
+  'gatewayUrl',
+  'apiKey',
+  'tokenSource',
+  'activeProfile',
+  'trustedDashboardOrigin',
+  'trustedDashboardTabId',
+  'browserControlEnabled',
+  'sessionId',
+  'sessionTitle',
+  'remoteDashboardSession',
+];
+
+function routeIdentityFromSettings(source = {}) {
+  return Object.fromEntries(PAUSE_ROUTE_IDENTITY_FIELDS
+    .map((field) => [field, source[field]])
+    .filter(([, value]) => value !== undefined));
+}
+
+function mergePauseSettingsWithStorage(current = {}, fromStorage = {}) {
+  return {
+    ...fromStorage,
+    ...routeIdentityFromSettings(current),
+    browserControlPaused: true,
+  };
+}
+
 function controllerRouteKey(settings = {}) {
   const transport = String(settings?.connectionTransport || settings?.gatewayMode || '').trim();
   const gatewayUrl = String(settings?.gatewayUrl || '').trim();
@@ -302,6 +335,9 @@ export function createControllerServiceWorker({
 
   let bootPromise = null;
   let settings = {};
+  // True as soon as Pause is requested, before the saved-connections lock is acquired — blocks commands
+  // that would otherwise slip past lifecycle.cancelAll() while another panel holds the lock.
+  let pauseAdmittingCommands = false;
   let controllerId = '';
   let browserProfileId = '';
   let generation = 1;
@@ -354,6 +390,8 @@ export function createControllerServiceWorker({
     return code === 'restricted_frame' ? 'action_frame' : '';
   }
 
+  const controlPaused = () => pauseAdmittingCommands || settings?.browserControlPaused === true;
+
   function executorContext(base = {}, { lease, tabId, frameId, authoritative }) {
     const ownedLeases = ownedControllerLeases();
     return {
@@ -367,7 +405,7 @@ export function createControllerServiceWorker({
       // control off while it runs must end it, not let the rest of the steps
       // re-attach and carry on.
       controlHalted: () => settings?.browserControlEnabled !== true
-        || settings?.browserControlPaused === true
+        || controlPaused()
         || Boolean(pausedLeases[String(tabId)]),
       // The executor mints post-action refs under the generation the next
       // command will carry, which a navigation advances while it runs.
@@ -396,7 +434,7 @@ export function createControllerServiceWorker({
     if (settings?.browserControlEnabled !== true || !browserExecutor) {
       return terminalError('action_disabled', `Real browser control is disabled: ${String(frame?.action || '')}`);
     }
-    if (settings?.browserControlPaused === true) {
+    if (controlPaused()) {
       return terminalError('controller_paused', 'Browser control is paused.');
     }
 
@@ -623,7 +661,7 @@ export function createControllerServiceWorker({
       // Which names the model has for the control tools while connected (control-tool-names.mjs).
       controlToolFamily: connected ? controlToolFamily() : null,
       controlEnabled: settings?.browserControlEnabled === true && Boolean(browserExecutor),
-      paused: settings?.browserControlPaused === true,
+      paused: controlPaused(),
       controllerId,
       browserProfileId,
       generation,
@@ -907,7 +945,7 @@ export function createControllerServiceWorker({
     const tabId = hasTab ? tabIdValue : CONTROL_PLANE_TAB_ID;
 
     if (hasTab) {
-      if (settings?.browserControlPaused === true) {
+      if (controlPaused()) {
         return rejectFrame(connection, params, 'controller_paused', 'Browser control is paused.');
       }
       if (pausedLeases[String(tabId)]) {
@@ -1094,7 +1132,7 @@ export function createControllerServiceWorker({
           settings.apiKey = '';
           const stored = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
           const current = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
-            ? hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+            ? await hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
             : {};
           const authStillMatches = String(current.gatewayUrl || '') === attemptedAuth.gatewayUrl
             && String(current.apiKey || '') === attemptedAuth.apiKey
@@ -1104,7 +1142,7 @@ export function createControllerServiceWorker({
             current.tokenSource = '';
             current.lastConnectionTestedAt = 0;
             current.apiKey = '';
-            await storageArea.set(packSavedConnectionStorage(
+            await storageArea.set(await packSavedConnectionStorage(
               syncActiveSavedConnection(current),
               stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
             ));
@@ -1473,23 +1511,40 @@ export function createControllerServiceWorker({
   }
 
   async function setPaused(paused) {
-    if (paused === true) {
-      // Pause is Stop plus a hold: the command that is running, or waiting for an approval, ends now. Releasing
-      // the debugger alone left it to attach again and carry on.
-      stopTurnReads();
-      lifecycle.cancelAll();
+    let transitionAfter = null;
+    try {
+      if (paused === true) {
+        pauseAdmittingCommands = true;
+        // Pause is Stop plus a hold: the command that is running, or waiting for an approval, ends now. Releasing
+        // the debugger alone left it to attach again and carry on.
+        stopTurnReads();
+        lifecycle.cancelAll();
+      }
+      await withSavedConnectionsLock(async () => {
+        const stored = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+        const fromStorage = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+          ? await hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+          : settings;
+        if (paused === true) {
+          // Newest list/credentials from storage, but this worker's chat route until Resume runs syncSettingsTransition.
+          settings = mergePauseSettingsWithStorage(settings, fromStorage);
+          await storageArea.set(await packSavedConnectionStorage(
+            syncActiveSavedConnection(savedSettings(settings)),
+            stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+          ));
+        } else {
+          const resumed = syncActiveSavedConnection({ ...keepChatMove(fromStorage), browserControlPaused: false });
+          await storageArea.set(await packSavedConnectionStorage(
+            resumed,
+            stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+          ));
+          transitionAfter = resumed;
+        }
+      });
+      if (transitionAfter) await runTransition(() => syncSettingsTransition(transitionAfter));
+    } finally {
+      pauseAdmittingCommands = false;
     }
-    await withSavedConnectionsLock(async () => {
-      const stored = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-      const fromStorage = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
-        ? hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
-        : settings;
-      settings = keepChatMove({ ...fromStorage, browserControlPaused: paused === true });
-      await storageArea.set(packSavedConnectionStorage(
-        syncActiveSavedConnection(savedSettings(settings)),
-        stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
-      ));
-    });
     await persist();
     if (paused === true) {
       for (const tabId of leases.leasedTabIds()) releaseDebuggerSession(tabId);
@@ -1545,7 +1600,7 @@ export function createControllerServiceWorker({
     const tabId = Number(message.tabId);
     const documentGeneration = Number(message.documentGeneration);
     // Nothing is approved while control is paused: the command it was for has ended, and a new one asks again.
-    if (settings?.browserControlPaused === true || pausedLeases[String(tabId)]) {
+    if (controlPaused() || pausedLeases[String(tabId)]) {
       return { ok: false, error: 'controller_paused' };
     }
     const lease = leases.leaseForTab(tabId);
@@ -1777,7 +1832,7 @@ export function createControllerServiceWorker({
       const hint = PREPARE_TURN_MESSAGES[resolved.reason];
       return hint ? { ...resolved, message: hint } : resolved;
     }
-    if (settings?.browserControlPaused === true) {
+    if (controlPaused()) {
       return unavailableControlTarget('controller_paused', 'Browser control is paused. Ask the user to resume it in the Hermes panel.');
     }
     if (pausedLeases[String(resolved.tabId)]) {
@@ -1824,7 +1879,7 @@ export function createControllerServiceWorker({
     if (!Number.isInteger(tabId) || tabId <= 0 || !Number.isInteger(openerTabId) || openerTabId <= 0) {
       return { ok: true, adopted: false };
     }
-    if (settings?.browserControlEnabled !== true || settings?.browserControlPaused === true) {
+    if (settings?.browserControlEnabled !== true || controlPaused()) {
       return { ok: true, adopted: false };
     }
     // Only an action that can open a tab hears of one; a snapshot, screenshot or scroll never does.

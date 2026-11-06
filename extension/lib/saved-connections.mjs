@@ -1,6 +1,12 @@
 import { DEFAULT_SETTINGS } from './common.mjs';
 import { migrateConnectionSettings } from './connection-modes.mjs';
 import { DEFAULT_AGENT_PORTS } from './agent-discovery.mjs';
+import {
+  decryptSavedConnectionSecretBag,
+  encryptSavedConnectionSecretBag,
+  isEncryptedSecretRecord,
+  isPlainSecretBag,
+} from './saved-connection-secrets-crypto.mjs';
 
 // Only connection configuration is saved. Sessions, browser-control grants,
 // account tokens and single-use socket tickets never enter a saved connection.
@@ -60,6 +66,25 @@ function cloneSecrets(secrets = {}) {
   return structuredClone(secrets && typeof secrets === 'object' ? secrets : {});
 }
 
+/**
+ * @param {unknown} value
+ * @returns {{ apiKey: string, tokenSource: string }|null}
+ */
+async function plaintextSecretBagFromStored(value) {
+  if (!value || typeof value !== 'object') return null;
+  if (isEncryptedSecretRecord(value)) {
+    const decrypted = await decryptSavedConnectionSecretBag(value);
+    return decrypted || { apiKey: '', tokenSource: '' };
+  }
+  if (isPlainSecretBag(value)) {
+    return {
+      apiKey: String(value.apiKey ?? ''),
+      tokenSource: String(value.tokenSource ?? ''),
+    };
+  }
+  return null;
+}
+
 /** Merge inline saved keys into the sidecar and strip them from the settings blob. */
 export function mergeSavedConnectionSecrets(settings = {}, secrets = {}) {
   if (!Array.isArray(settings.savedConnections)) return { settings, secrets: cloneSecrets(secrets) };
@@ -78,7 +103,7 @@ export function mergeSavedConnectionSecrets(settings = {}, secrets = {}) {
       connection: { ...conn, apiKey: '', tokenSource: '' },
     };
   });
-  const liveIds = new Set(savedConnections.map((entry) => entry?.id).filter((id) => typeof id === 'string'));
+  const liveIds = new Set(savedConnections.map((e) => e?.id).filter((id) => typeof id === 'string'));
   for (const id of Object.keys(nextSecrets)) {
     if (!liveIds.has(id)) delete nextSecrets[id];
   }
@@ -86,12 +111,13 @@ export function mergeSavedConnectionSecrets(settings = {}, secrets = {}) {
 }
 
 /** Restore saved keys from the sidecar (and migrate any legacy inline copies). */
-export function hydrateSavedConnectionSecrets(settings = {}, secrets = {}) {
+export async function hydrateSavedConnectionSecrets(settings = {}, secrets = {}) {
   const merged = mergeSavedConnectionSecrets(settings, secrets);
   if (!Array.isArray(merged.settings.savedConnections)) return merged.settings;
-  const savedConnections = merged.settings.savedConnections.map((entry) => {
+  const savedConnections = await Promise.all(merged.settings.savedConnections.map(async (entry) => {
     if (!entry || typeof entry.id !== 'string') return entry;
-    const bag = merged.secrets[entry.id];
+    const raw = merged.secrets[entry.id];
+    const bag = raw ? await plaintextSecretBagFromStored(raw) : null;
     if (!bag) return entry;
     const conn = entry.connection && typeof entry.connection === 'object' ? entry.connection : {};
     return {
@@ -102,15 +128,22 @@ export function hydrateSavedConnectionSecrets(settings = {}, secrets = {}) {
         tokenSource: bag.tokenSource ?? '',
       },
     };
-  });
+  }));
   return { ...merged.settings, savedConnections };
 }
 
-export function packSavedConnectionStorage(settings = {}, existingSecrets = {}) {
+export async function packSavedConnectionStorage(settings = {}, existingSecrets = {}) {
   const merged = mergeSavedConnectionSecrets(rememberSavedConnection(settings), existingSecrets);
+  const storedSecrets = {};
+  for (const [id, bag] of Object.entries(merged.secrets)) {
+    const plain = isPlainSecretBag(bag) ? bag : (await plaintextSecretBagFromStored(bag));
+    if (!plain || (!plain.apiKey && !plain.tokenSource)) continue;
+    const encrypted = await encryptSavedConnectionSecretBag(plain);
+    storedSecrets[id] = encrypted || plain;
+  }
   return {
     hermesBrowserSettings: merged.settings,
-    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: merged.secrets,
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: storedSecrets,
   };
 }
 
