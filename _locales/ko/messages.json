@@ -1347,17 +1347,17 @@
     "message": "프레임 제어에는 Firefox에 없는 debugger API가 필요하며, Hermes가 읽는 페이지 텍스트에는 프레임이 빠집니다.",
     "description": "Runtime interface message browser_limits.control_frames.reason"
   },
-  "runtime_browser_limits_control_navigate_scroll_instead": {
-    "message": "Repeat scroll for larger moves, or scroll manually.",
-    "description": "Runtime interface message browser_limits.control_navigate_scroll.instead"
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Repeat scroll for larger moves, or ask the person to scroll manually.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
   },
-  "runtime_browser_limits_control_navigate_scroll_label": {
+  "runtime_browser_limits_control_navigate_label": {
     "message": "Hermes Control: navigate, back and scroll",
-    "description": "Runtime interface message browser_limits.control_navigate_scroll.label"
+    "description": "Runtime interface message browser_limits.control_navigate.label"
   },
-  "runtime_browser_limits_control_navigate_scroll_reason": {
-    "message": "Firefox scroll moves a fixed distance and ignores the amount Chromium uses.",
-    "description": "Runtime interface message browser_limits.control_navigate_scroll.reason"
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Firefox scroll calls move a fixed distance in the page and ignore the amount argument Chromium honors.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
   },
   "runtime_browser_limits_control_pointer_keyboard_instead": {
     "message": "Hermes는 페이지를 읽고 주소를 열 수 있으므로, 클릭이나 입력은 직접 하거나 이 작업에는 Chromium 브라우저를 사용하세요.",
@@ -1436,7 +1436,7 @@
     "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
   },
   "runtime_browser_limits_side_panel_wake_word_instead": {
-    "message": "Connect to the Hermes gateway on this computer to use Hermes wake, or start the chat from the panel.",
+    "message": "Connect to a local gateway to use Hermes wake, or start the chat from the panel.",
     "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
   },
   "runtime_browser_limits_side_panel_wake_word_label": {
@@ -1444,7 +1444,7 @@
     "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
   },
   "runtime_browser_limits_side_panel_wake_word_reason": {
-    "message": "Firefox has no offscreen documents, so the local listener cannot run. Hermes's own wake engine runs only when you use the Hermes gateway on this computer, not on remote or cloud connections.",
+    "message": "Firefox has no offscreen documents, so the local listener cannot run. Hermes's own wake engine runs only on a local gateway on this computer, not on remote or cloud connections.",
     "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
   },
   "runtime_browser_limits_status_experimental": {
