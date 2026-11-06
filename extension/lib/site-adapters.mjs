@@ -64,7 +64,8 @@ function isVisibleElement(node) {
   const view = node.ownerDocument?.defaultView;
   if (typeof view?.getComputedStyle === 'function'
     && typeof node.getClientRects === 'function'
-    && node.getClientRects().length === 0) return false;
+    && node.getClientRects().length === 0
+    && view.getComputedStyle(node)?.display !== 'contents') return false;
   return true;
 }
 
@@ -109,8 +110,12 @@ function uniqueTexts(nodes = [], maxItems = 40, maxChars = MAX_CONTEXT_CHARS) {
   return parts;
 }
 
+// Actions that write new text from the page run on an empty field: every "Draft …" action, and these, which
+// answer what the page shows. The rest edit the text already in the field (tone, shorten, structure).
+const PAGE_DRAFT_ACTIONS = new Set(['youtube-timestamp', 'github-diagnostics', 'gmail-asks', 'outlook-asks', 'slack-thread']);
 function action(id, label, instruction) {
-  return Object.freeze({ id, label, instruction, mode: 'draft-copy-only' });
+  const startsFromPage = /^Draft\b/.test(label) || PAGE_DRAFT_ACTIONS.has(id);
+  return Object.freeze({ id, label, instruction, mode: 'draft-copy-only', startsFromPage });
 }
 
 function baseResult(adapterId, label, policy, route, capabilities, actions, context = {}) {
@@ -357,6 +362,40 @@ const INLINE_SITE_LABELS = Object.freeze({
   telegram: 'Telegram',
 });
 
+// For Settings → Hermes Assist → Sites: an adapter id shows its site name, anything else its hostname.
+export function inlineSiteLabel(site = '') {
+  const key = String(site || '').toLowerCase();
+  return key !== 'generic' && Object.hasOwn(INLINE_SITE_LABELS, key) ? INLINE_SITE_LABELS[key] : key;
+}
+
+export function inlineSiteForHost(hostname = '') {
+  const host = String(hostname || '').toLowerCase().replace(/^www\./, '');
+  const adapterId = adapterIdForHost(host);
+  return { adapterId, label: adapterId === 'generic' ? host : inlineSiteLabel(adapterId) };
+}
+
+// A site typed into Settings → Hermes Assist → Sites: a site Assist knows by its name ("Gmail") or any
+// address of it, else any other website by its hostname. '' when it is neither.
+export function inlineSiteFromInput(value = '') {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  const named = Object.keys(INLINE_SITE_LABELS).find((id) => id !== 'generic' && (id === raw || INLINE_SITE_LABELS[id].toLowerCase() === raw));
+  if (named) return named;
+  let host = '';
+  try {
+    host = new URL(/^[a-z][a-z0-9+.-]*:\/\//.test(raw) ? raw : `https://${raw}`).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+  if (!host.includes('.')) {
+    const guessed = adapterIdForHost(`${host}.com`);
+    return guessed === 'generic' ? '' : guessed;
+  }
+  if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(host)) return '';
+  const adapterId = adapterIdForHost(host);
+  return adapterId === 'generic' ? host : adapterId;
+}
+
 function adapterIdForHost(host = '') {
   const normalized = String(host || '').toLowerCase();
   if (normalized === 'github.com' || normalized.endsWith('.github.com')) return 'github';
@@ -447,7 +486,7 @@ function classifyInlineSurface(adapterId, url, target) {
     return 'repository-editor';
   }
   if (adapterId === 'x') {
-    if (/\/messages/.test(path) && /message|send/.test(`${label} ${nearby}`)) return 'direct-message';
+    if (/\/(messages|i\/chat)(\/|$)/.test(path) && /message|send/.test(`${label} ${nearby}`)) return 'direct-message';
     const composer = target?.closest?.('form, [role="dialog"]') || target?.parentElement;
     if ((composer?.querySelectorAll?.('[data-testid^="tweetTextarea_"]')?.length || 0) > 1) return 'thread';
     if (/status\//.test(path) || /replying to|post your reply|\breply\b/.test(`${label} ${nearby}`) || nearbyComposerIntent(target) === 'reply') return 'reply';
@@ -606,6 +645,239 @@ function inlineAnchor(target, adapterId) {
   return target;
 }
 
+function firstMatch(root, selectors) {
+  for (const selector of selectors) {
+    const found = root?.querySelector?.(selector);
+    if (found) return found;
+  }
+  return null;
+}
+
+// The nearest ancestor of the field (within a few levels) that holds every selector: the composer.
+function composerAround(target, selectors, levels = 12) {
+  let node = target?.parentElement || null;
+  for (let depth = 0; node && depth < levels; depth += 1, node = node.parentElement) {
+    if (selectors.every((selector) => node.querySelector?.(selector))) return node;
+  }
+  return null;
+}
+
+function laidOutBox(element) {
+  const box = element?.getBoundingClientRect?.();
+  return box && box.width > 0 && box.height > 0 ? box : null;
+}
+
+// A composer's own controls that are showing, the field and anything inside it left out.
+function shownControls(root, target) {
+  return Array.from(root?.querySelectorAll?.('button, [role="button"], a[aria-label]') || [])
+    .filter((element) => element !== target && !target?.contains?.(element) && !element.contains?.(target))
+    .map((element) => ({ element, box: laidOutBox(element) }))
+    .filter((item) => item.box);
+}
+
+// Chat composers (ChatGPT, Claude, Perplexity, Grok, Hermes Web): just before the controls on the right of
+// the composer's own row (the model or effort picker, else the microphone), so the circle covers neither
+// the text nor a control. Which control that is depends on the layout (ChatGPT's effort pill widens to
+// "Thinking effort", a model picker comes and goes), so it is read from where the controls are: the
+// leftmost of the right-hand ones on the composer's lowest row of controls.
+function trailingControlsSlot(target, { gap = 8 } = {}) {
+  // The composer has a box of its own: chatgpt.com wraps the field and its controls in a display:contents
+  // box, which has none, so the walk goes on to the form.
+  let composer = target?.parentElement || null;
+  for (let depth = 0; composer && depth < 10; depth += 1, composer = composer.parentElement) {
+    if (composer === target.ownerDocument?.body) return null;
+    if (laidOutBox(composer) && shownControls(composer, target).length >= 2) break;
+  }
+  const box = laidOutBox(composer);
+  if (!box) return null;
+  const controls = shownControls(composer, target);
+  const middle = box.left + box.width / 2;
+  const centre = (item) => item.box.top + item.box.height / 2;
+  const right = controls.filter((item) => item.box.left + item.box.width / 2 > middle);
+  if (!right.length) return null;
+  const lowest = Math.max(...right.map(centre));
+  const row = right.filter((item) => Math.abs(centre(item) - lowest) <= item.box.height / 2);
+  const first = row.reduce((best, item) => (item.box.left < best.box.left ? item : best));
+  // The site's own buttons share the field's box (a one-line pill), so the circle may too.
+  return { element: first.element, strategy: 'before', gap, overField: true, obstacles: controls.map((item) => item.element) };
+}
+
+// Composers with a row of tools under the editor (LinkedIn's share box, a mail reply box): just after the last
+// of those tools, on their row. The tools are the first row of controls below the editor that starts on its
+// left. `near` (any other site) asks more of that row: two tools or more, under the editor's own width, no
+// further below it than `near`, so a form's buttons further down keep the corner rule.
+function toolRowEndSlot(target, { gap = 12, near = Infinity } = {}) {
+  const field = laidOutBox(target);
+  if (!field) return null;
+  const strict = Number.isFinite(near);
+  let node = target.parentElement;
+  for (let depth = 0; node && depth < 12; depth += 1, node = node.parentElement) {
+    const below = shownControls(node, target).filter((item) => item.box.top >= field.bottom - 4);
+    if (below.length < 2) continue;
+    const top = Math.min(...below.map((item) => item.box.top));
+    const row = below.filter((item) => item.box.top - top < item.box.height / 2 && item.box.left < field.left + field.width * 0.75
+      && (!strict || (item.box.left >= field.left - 24 && item.box.right <= field.right + 24)));
+    if (!row.length || (strict && (row.length < 2 || top - field.bottom > near))) return null;
+    const last = row.reduce((best, item) => (item.box.left > best.box.left ? item : best));
+    return { element: last.element, strategy: 'after', gap, obstacles: below.map((item) => item.element) };
+  }
+  return null;
+}
+
+// A one-line chat box on any site (a message pill with its buttons at the right end, beside the text): just
+// before those buttons, as in a chat composer, so it needs no site's own names for its parts. A taller
+// field, or buttons only under it, keep the other rules. Buttons past the field's edge leave the draft
+// uncovered: the circle goes between, its gap narrowed to fit, or takes the corner rule where it cannot.
+function chatRowSlot(target, { size = 24 } = {}) {
+  const field = laidOutBox(target);
+  if (!field || field.height > 64) return null;
+  const slot = trailingControlsSlot(target);
+  const box = laidOutBox(slot?.element);
+  if (!box) return null;
+  const middle = box.top + box.height / 2;
+  const beside = middle > field.top - 16 && middle < field.bottom + 16
+    && box.left >= field.left + field.width / 2 && box.left <= field.right + 96;
+  if (!beside) return null;
+  if (box.left < field.right) return slot;
+  return { ...slot, overField: false, gap: Math.max(0, Math.min(slot.gap, box.left - field.right - size)) };
+}
+
+const CHAT_COMPOSER_SITES = new Set(['chatgpt', 'claude', 'perplexity', 'grok']);
+
+// Hermes Web, the web app a Hermes gateway serves: its composer is a chat composer as well.
+// The site's own controls around the field, which no placement may cover (the generic corner rule
+// included): those in the nearest box above the field that has any.
+function controlsAroundField(target, anchor) {
+  let node = (anchor || target)?.parentElement || null;
+  for (let depth = 0; node && depth < 4; depth += 1, node = node.parentElement) {
+    if (node === target?.ownerDocument?.body) break;
+    const controls = Array.from(node.querySelectorAll?.('button, [role="button"], a[aria-label], select, [role="progressbar"]') || [])
+      .filter((element) => element !== target && !target?.contains?.(element) && !element.contains?.(target));
+    if (controls.length) return controls.slice(0, 40);
+  }
+  return [];
+}
+
+// The Webapp on its own origin names its tab after the open chat ("● Fix the flaky test · Hermes").
+function isHermesWeb(document, url) {
+  if (/^\/webapp(\/|$)/.test(url?.pathname || '')) return true;
+  return /(?:^|\s·\s)Hermes(?: HUD)?$/.test(String(document?.title || '').trim()) && Boolean(document?.querySelector?.('[data-tour]'));
+}
+
+// The site slot: one of the composer's own controls that the Assist circle sits beside, so it lands in a
+// row of buttons the site already has instead of on the text, the avatar or a send button. Selectors
+// prefer stable attributes (data-testid, aria-label, roles, element names); when a site changes its
+// markup and nothing matches, the slot is null and the content script uses the generic corner rule.
+// The slots are tried in order; the first that fits takes the circle.
+function inlineSlots(target, adapterId, { chatComposer = false } = {}) {
+  if (!target) return [];
+  const all = (root, selector) => Array.from(root?.querySelectorAll?.(selector) || []);
+  if (chatComposer) {
+    const slot = trailingControlsSlot(target);
+    return slot ? [slot] : [];
+  }
+  if (adapterId === 'x') {
+    // Reply, post and quote composers: the media toolbar under the editable, the account avatar beside it.
+    // X nests its editor deep, so the composer is looked for well up the tree.
+    const composer = composerAround(target, ['[data-testid="toolBar"]'], 30);
+    const toolbar = composer?.querySelector('[data-testid="toolBar"]');
+    // No post toolbar: a direct message wherever it opens (the messages drawer sits over any page). X's
+    // post editor waits for its toolbar instead, which it draws a moment after focus.
+    if (!toolbar) {
+      const slot = target.closest?.('[data-testid^="tweetTextarea"]') ? null : chatRowSlot(target);
+      return slot ? [slot] : [];
+    }
+    const send = all(composer, '[data-testid="tweetButtonInline"], [data-testid="tweetButton"]');
+    // The media buttons only: the character counter and the add-post button by Reply are not tools, and
+    // the circle covers none of the toolbar's controls.
+    const media = firstMatch(toolbar, ['[data-testid="ScrollSnap-List"]', 'nav[role="navigation"]', 'nav']) || toolbar;
+    const tools = all(media, 'button, [role="button"]').filter((element) => !send.includes(element));
+    const controls = [...all(toolbar, 'button, [role="button"], [role="progressbar"]'), ...send];
+    const slots = [];
+    // Centred under the avatar on the media row. The avatar is the composer's own: beside the editable,
+    // at its height, not the avatar of the post being replied to.
+    const field = laidOutBox(target);
+    const avatar = all(composerAround(target, [X_AVATAR], 30), X_AVATAR).find((element) => {
+      const box = laidOutBox(element);
+      return !box || !field || (box.right <= field.left + 4 && Math.abs(box.top - field.top) < 90);
+    });
+    if (avatar) slots.push({ element: avatar, rowElement: toolbar, strategy: 'below-center', gap: 12, minGapBelow: 20, obstacles: controls });
+    // Where the media buttons start right under the avatar (the pop-out reply), at the end of them instead:
+    // the size of X's icons, on the last icon's line, one more step in their spacing.
+    const shown = tools.filter((element) => laidOutBox(element) || !field);
+    const lastTool = shown.at(-1);
+    if (lastTool) {
+      const size = X_ICON_SIZE;
+      const last = laidOutBox(lastTool);
+      const before = laidOutBox(shown.at(-2));
+      const step = last && before ? (last.left + last.width / 2) - (before.left + before.width / 2) : 0;
+      const gap = step > 0 ? Math.max(6, Math.min(24, Math.round(step - last.width / 2 - size / 2))) : 12;
+      slots.push({ element: lastTool, strategy: 'after', gap, size, obstacles: controls.filter((element) => element !== lastTool) });
+    }
+    return slots;
+  }
+  const slot = inlineSlot(target, adapterId, { chatComposer, all })
+    || chatRowSlot(target)
+    || (adapterId === 'generic' ? toolRowEndSlot(target, { near: 40 }) : null);
+  return slot ? [slot] : [];
+}
+
+const X_AVATAR = '[data-testid^="UserAvatar-Container"], img[src*="profile_images"]';
+const X_ICON_SIZE = 20;
+
+function inlineSlot(target, adapterId, { chatComposer = false, all }) {
+  if (chatComposer) return trailingControlsSlot(target);
+  if (adapterId === 'youtube') {
+    // Comment box footer: just after the emoji button, far from Cancel and Comment.
+    const box = target.closest?.('ytd-commentbox');
+    const element = box?.querySelector?.('#emoji-button');
+    return element ? { element, strategy: 'after', gap: 12, obstacles: all(box, '#cancel-button, #submit-button') } : null;
+  }
+  if (adapterId === 'gmail') {
+    // Compose toolbar: just after More options (the ⋮ at the end of the writing tools), so the circle covers
+    // none of them. The toolbar is the row around Send that holds More options.
+    const compose = target.closest?.('[role="dialog"], .M9, form') || target.ownerDocument;
+    const send = firstMatch(compose, ['[role="button"][data-tooltip^="Send"]', '[role="button"][aria-label^="Send"]']);
+    const row = send ? composerAround(send, ['[role="button"][aria-label="More options"]'], 8) : null;
+    const more = row?.querySelector('[role="button"][aria-label="More options"]');
+    return more ? { element: more, strategy: 'after', gap: 8, obstacles: all(row, '[role="button"]').filter((element) => element !== more) } : null;
+  }
+  if (adapterId === 'reddit') {
+    // Comment composer: just after the formatting toggle at the end of the left icon group.
+    const composer = target.closest?.('shreddit-composer, comment-composer-host, faceplate-form, form');
+    const element = firstMatch(composer, ['button[aria-label="Show formatting options"]', 'button[aria-label*="formatting" i]']);
+    return element ? { element, strategy: 'after', gap: 12, obstacles: all(composer, 'button[type="submit"], button[slot="submit-button"], button[slot="cancel-button"]') } : null;
+  }
+  if (adapterId === 'linkedin') {
+    // Comment pill: just before the emoji button inside it, a size smaller so it fits the pill. The site's
+    // own buttons sit inside the editable's box there, so the circle may too.
+    const pill = composerAround(target, ['button[aria-label*="Emoji" i]'], 8);
+    const emoji = pill?.querySelector('button[aria-label*="Emoji" i]');
+    const field = laidOutBox(target);
+    const emojiBox = laidOutBox(emoji);
+    const inPill = emoji && (!field || !emojiBox || (emojiBox.top < field.bottom + 8 && emojiBox.bottom > field.top - 8));
+    if (inPill) return { element: emoji, strategy: 'before', gap: 10, size: 20, overField: true, obstacles: all(pill, 'button').filter((element) => element !== emoji) };
+    // Start a post (the share box): just after the last of the tools under the editor (the + that opens
+    // more of them, or the × once they are open).
+    return toolRowEndSlot(target);
+  }
+  if (adapterId === 'github') {
+    // Comment form: at the front of the Markdown toolbar. github.com stretches the toolbar box across the
+    // header and lines its buttons up at the far end, so the circle goes before the first button that is
+    // showing, not before the box.
+    // The toolbar is found from the field: on an issue the comment box is not a form around it.
+    const toolbars = ['markdown-toolbar', '[aria-label="Formatting tools"]', '[role="toolbar"]'];
+    const form = composerAround(target, [toolbars.join(', ')], 12) || target.closest?.('form, .CommentBox, [class*="MarkdownEditor"]');
+    const toolbar = firstMatch(form, toolbars);
+    // Visibility is checked only where there is layout (the toolbar itself has a size).
+    const laidOut = (toolbar?.getBoundingClientRect?.()?.width || 0) > 0;
+    const shown = (element) => !laidOut || (element.getBoundingClientRect?.()?.width || 0) > 0;
+    const element = Array.from(toolbar?.querySelectorAll?.('button, [role="button"]') || []).find(shown) || toolbar;
+    return element ? { element, strategy: 'before', gap: 8, obstacles: [] } : null;
+  }
+  return null;
+}
+
 function xReplyContextRoot(target) {
   const containingArticle = target?.closest?.('article') || null;
   let ancestor = target?.parentElement || null;
@@ -637,8 +909,12 @@ function contextRootFor(target, adapterId, surface = '') {
   if (PRIVATE_INLINE_SITES.has(adapterId)) {
     return target.closest?.('main, [role="main"]') || target.closest?.('[role="dialog"]') || target.parentElement;
   }
-  return target.closest?.('article, [data-message-id], ytd-comment-thread-renderer, main, [role="main"]') || target.parentElement;
+  return target.closest?.('article, [role="article"], [data-urn*="urn:li:activity"], [data-id*="urn:li:activity"], .feed-shared-update-v2, shreddit-comment, [data-message-id], ytd-comment-thread-renderer, main, [role="main"]') || target.parentElement;
 }
+
+// Where Assist reads the visible thread, per site adapter: written by the Assist panel on a page and by
+// Settings → Hermes Assist → Sites.
+export const INLINE_SITE_CONTEXT_STORAGE_KEY = 'hermesInlineSiteContextPreferences';
 
 export function normalizeInlineSiteContextPreferences(value = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -663,11 +939,18 @@ export function inspectInlineSite(document, target, options = {}) {
   const privateSurface = PRIVATE_INLINE_SITES.has(adapterId) || surface === 'direct-message';
   const defaultMode = privateSurface ? 'draft' : adapterId === 'generic' ? 'draft' : 'visible';
   const contextMode = preferences[adapterId] || defaultMode;
+  // Grok and direct messages on x.com are one-line chat composers with their buttons at the end, not the
+  // post composer's media toolbar.
+  const chatComposer = CHAT_COMPOSER_SITES.has(adapterId)
+    || (adapterId === 'generic' && isHermesWeb(document, url))
+    || (adapterId === 'x' && (/^\/(i\/grok|i\/chat|messages)(\/|$)/.test(url?.pathname || '')
+      || Boolean(target?.closest?.('[data-testid="DMDrawer"]'))));
+  const slots = inlineSlots(target, adapterId, { chatComposer });
   const anchorElement = inlineAnchor(target, adapterId);
   const obstacleElements = adapterId === 'chatgpt'
     ? Array.from(anchorElement?.querySelectorAll?.('button, [role="button"], select') || [])
       .filter((element) => element !== target && !target?.contains?.(element))
-    : [];
+    : controlsAroundField(target, anchorElement);
   const warning = adapterId === 'protonmail'
     ? 'Visible decrypted mail may be sent to your selected Hermes model.'
     : privateSurface
@@ -687,11 +970,11 @@ export function inspectInlineSite(document, target, options = {}) {
     placement: {
       anchorElement,
       obstacleElements,
-      // Prefer a placement outside the field for every adapter, and keep inside-end
-      // last: the launcher must never cover the draft in a full-width composer.
-      preferred: adapterId === 'chatgpt'
-        ? ['outside-end', 'outside-start', 'above-end', 'below-end']
-        : ['outside-end', 'outside-start', 'above-end', 'below-end', 'inside-end'],
+      // The site's own controls to sit beside, tried in order; when none fits the generic corner rule
+      // applies: outside the field's bottom-right corner, else inside that corner, else just under it.
+      slot: slots[0] || null,
+      slots,
+      preferred: ['corner-outside', 'corner-inside', 'below-end'],
     },
   };
 }
@@ -720,10 +1003,456 @@ function visibleContextText(root, target, max = 6_000) {
   return bounded(parts.join(' '), max);
 }
 
-export function captureInlineSiteContext(document, target, profile = null) {
+// --- What Assist reads: the thread the field belongs to ------------------------------------------
+//
+// Hermes gets what the page is, what is being written, and the thread's messages, each with who wrote it
+// and when. A long thread keeps the opening post, the message being answered and the newest messages, and
+// says how many were left out. Sites without a reader send the text nearest the field.
+export const ASSIST_CONTEXT_CHARS = 12_000;
+const ASSIST_ENTRY_CHARS = 2_500;
+const ASSIST_OPENING_CHARS = 3_500;
+const ASSIST_BLOCK_TAGS = new Set(['address', 'article', 'aside', 'blockquote', 'br', 'dd', 'details', 'div', 'dl', 'dt',
+  'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'ol', 'p',
+  'pre', 'section', 'summary', 'table', 'tbody', 'td', 'th', 'thead', 'tr', 'ul']);
+const ASSIST_SKIP_TAGS = new Set(['script', 'style', 'noscript', 'template', 'input', 'textarea', 'select', 'button', 'nav', 'svg', 'iframe']);
+const ASSIST_SKIP_ROLES = new Set(['navigation', 'toolbar', 'menu', 'menubar', 'tablist', 'banner', 'button', 'tooltip']);
+const COUNT_LINE = /^[\d.,]+\s*[KMB]?$/i;
+
+function readableText(node, max = ASSIST_ENTRY_CHARS, skip = null) {
+  if (!node) return '';
+  const parts = [];
+  const visit = (current, preformatted) => {
+    if (current.nodeType === 3) {
+      const value = String(current.nodeValue || '').replace(/\u00a0/g, ' ');
+      parts.push(preformatted ? value : value.replace(/\s+/g, ' '));
+      return;
+    }
+    if (current.nodeType !== 1) return;
+    const tag = String(current.tagName || '').toLowerCase();
+    if (ASSIST_SKIP_TAGS.has(tag) || skip?.(current)) return;
+    const block = ASSIST_BLOCK_TAGS.has(tag);
+    if (block) parts.push('\n');
+    for (const child of Array.from(current.childNodes || [])) visit(child, preformatted || tag === 'pre');
+    if (block) parts.push('\n');
+  };
+  visit(node, false);
+  const text = parts.join('').split('\n').map((line) => line.replace(/[\t\f\v ]+/g, ' ').trim()).join('\n')
+    .replace(/\n{3,}/g, '\n\n').trim();
+  return text.length <= max ? text : `${text.slice(0, max - 2).trimEnd()} …`;
+}
+
+function contextTime(value = '') {
+  const raw = bounded(value, 60);
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? raw : `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+}
+
+// Whether a node comes before the field in the page, from one pass over the page's elements.
+function aboveField(document, target) {
+  const position = new Map();
+  Array.from(document?.querySelectorAll?.('*') || []).forEach((element, index) => position.set(element, index));
+  const fieldAt = position.get(target);
+  return (node) => {
+    const at = position.get(node);
+    if (at === undefined || fieldAt === undefined) {
+      return typeof node?.compareDocumentPosition !== 'function' || Boolean(node.compareDocumentPosition(target) & 4);
+    }
+    return at < fieldAt && !node.contains?.(target);
+  };
+}
+
+// The first selector, in the order given, with a match that has text: a selector list would return the
+// first match in page order, which on real pages is often an empty twin (a miniplayer h1, an avatar link).
+function firstText(root, selectors, max = 300, read = (node) => textOf(node, max)) {
+  for (const selector of selectors) {
+    for (const node of Array.from(root?.querySelectorAll?.(selector) || [])) {
+      const text = read(node);
+      if (text) return text;
+    }
+  }
+  return '';
+}
+
+function fieldLabel(target) {
+  return bounded(target?.getAttribute?.('aria-label') || target?.getAttribute?.('placeholder') || '', 120);
+}
+
+function renderContextEntry(entry, replying) {
+  const who = [entry.author || 'Someone', entry.time].filter(Boolean).join(' · ');
+  const notes = [entry.note, replying ? 'you are replying to this' : ''].filter(Boolean).join('; ');
+  return `${who}${notes ? ` (${notes})` : ''}:\n${entry.text}`;
+}
+
+function composeAssistContext({ header = [], writing = '', notes = [], blocks = [], entries = [], replyingTo = -1 }, max = ASSIST_CONTEXT_CHARS) {
+  const head = [...header, writing && `You are writing ${writing}.`, ...notes, ...blocks].filter(Boolean).join('\n\n');
+  const rendered = entries.map((entry, index) => renderContextEntry(entry, index === replyingTo));
+  const budget = max - head.length - 2;
+  const kept = new Set();
+  let used = 0;
+  const keep = (index) => {
+    if (index < 0 || index >= rendered.length || kept.has(index)) return true;
+    const cost = rendered[index].length + 2;
+    if (used + cost > budget) return false;
+    kept.add(index);
+    used += cost;
+    return true;
+  };
+  keep(replyingTo);
+  keep(0);
+  for (let index = rendered.length - 1; index > 0; index -= 1) if (!keep(index)) break;
+  const body = [];
+  let skipped = 0;
+  rendered.forEach((text, index) => {
+    if (!kept.has(index)) { skipped += 1; return; }
+    if (skipped) body.push(`[${skipped} earlier message${skipped === 1 ? '' : 's'} left out to fit]`);
+    skipped = 0;
+    body.push(text);
+  });
+  if (skipped) body.push(`[${skipped} later message${skipped === 1 ? '' : 's'} left out to fit]`);
+  return [head, ...body].filter(Boolean).join('\n\n').slice(0, max);
+}
+
+const GITHUB_WRITING = {
+  'issue-comment': 'a comment on this issue',
+  'pull-request-comment': 'a comment on this pull request',
+  'discussion-comment': 'a reply in this discussion',
+  'pull-request-review': 'a review comment on the code above',
+  'pull-request-summary': 'the summary of a review of this pull request',
+};
+const GITHUB_BODY = '.js-comment-body, [data-testid="issue-body"] [data-testid="markdown-body"], [data-testid^="comment-viewer-outer-box-"] [data-testid="markdown-body"]';
+const GITHUB_COMMENT = '[data-testid^="comment-viewer-outer-box-"], [data-testid="issue-body"], .review-comment, .timeline-comment-group, .timeline-comment, .js-comment-container, .TimelineItem';
+
+function githubCommentEntry(body) {
+  const container = body.closest(GITHUB_COMMENT) || body.parentElement;
+  const author = firstText(container, ['[data-testid="issue-body-header-author"]', '.author', '[data-testid="comment-header"] [data-testid="avatar-link"]', '[data-testid="comment-header"] a[href^="/"]', 'a[data-hovercard-type="user"]'], 80)
+    .replace(/^(.+) \(\1\)$/, '$1');
+  const time = container?.querySelector?.('relative-time[datetime], time[datetime]')?.getAttribute?.('datetime') || '';
+  const opening = Boolean(container?.matches?.('[data-testid="issue-body"]'));
+  return { author, time: contextTime(time), text: readableText(body, opening ? ASSIST_OPENING_CHARS : ASSIST_ENTRY_CHARS), opening, body };
+}
+
+function githubDiffLines(target) {
+  const row = target.closest('tr');
+  const lines = [];
+  for (let current = row?.previousElementSibling; current && lines.length < 14; current = current.previousElementSibling) {
+    const cell = current.querySelector?.('.blob-code-inner');
+    if (!cell) continue;
+    const mark = cell.matches?.('.blob-code-addition') ? '+ ' : cell.matches?.('.blob-code-deletion') ? '- ' : '  ';
+    lines.unshift(`${mark}${String(cell.textContent || '').replace(/\s+$/, '')}`);
+  }
+  return lines;
+}
+
+function githubAssistContext(document, target, surface, url, above) {
+  const writing = GITHUB_WRITING[surface];
+  if (!writing) return null;
+  const route = url?.pathname?.match(/^\/([^/]+)\/([^/]+)\/(issues|pull|discussions)\/(\d+)/i);
+  const kind = { issues: 'issue', pull: 'pull request', discussions: 'discussion' }[route?.[3]?.toLowerCase()] || 'page';
+  const title = firstText(document, ['[data-testid="issue-title"]', 'bdi.js-issue-title', '.js-issue-title', 'h1'], 300).replace(/[\s·–-]*#\s*\d+\s*$/, '');
+  const state = firstText(document, ['[data-testid="header-state"]', '.gh-header-meta .State', '.State'], 40);
+  const header = [`GitHub ${kind}${route ? ` #${route[4]} in ${route[1]}/${route[2]}` : ''}${state ? ` (${state})` : ''}${title ? `: ${title}` : ''}`];
+  const thread = target.closest('.js-inline-comments-container, tr.inline-comments, .js-resolvable-timeline-thread-container');
+  const scope = surface === 'pull-request-review' ? (thread || null) : document;
+  const bodies = scope ? Array.from(scope.querySelectorAll(GITHUB_BODY)) : [];
+  const entries = bodies
+    .filter((body, index) => !body.closest('form') && !bodies.slice(0, index).some((other) => other.contains(body)) && above(body))
+    .map(githubCommentEntry)
+    .filter((entry) => entry.text);
+  if (entries[0] && (entries[0].opening || kind !== 'page') && surface !== 'pull-request-review') entries[0].note = 'opening post';
+  const notes = [];
+  const hidden = textOf(document.querySelector('[data-testid^="issue-timeline-load-more-count"], .js-timeline-progressive-focus-container .ajax-pagination-btn, .ajax-pagination-form button'), 200).match(/([\d,]+)\s+(?:remaining|hidden)/i);
+  if (hidden) notes.push(`GitHub is hiding ${hidden[1]} items in the middle of this thread; they are not included.`);
+  const blocks = [];
+  if (surface === 'pull-request-review') {
+    const file = target.closest('[data-tagsearch-path], [data-path]');
+    const filePath = file?.getAttribute?.('data-tagsearch-path') || file?.getAttribute?.('data-path') || '';
+    const lines = githubDiffLines(target);
+    if (lines.length) blocks.push(`${filePath ? `File ${filePath}, the` : 'The'} lines above the comment:\n${lines.join('\n')}`);
+  }
+  const replying = thread && entries.length ? entries.length - 1 : -1;
+  return { header, writing, notes, blocks, entries, replyingTo: replying };
+}
+
+function xAuthor(article) {
+  const name = article.querySelector('[data-testid="User-Name"]');
+  if (!name) return '';
+  const pieces = [];
+  const collect = (node) => {
+    if (node.nodeType === 3) {
+      const text = bounded(node.nodeValue || '', 80);
+      if (text) pieces.push(text);
+    } else if (node.nodeType === 1 && String(node.tagName).toLowerCase() !== 'time') {
+      for (const child of Array.from(node.childNodes || [])) collect(child);
+    }
+  };
+  collect(name);
+  const handle = pieces.find((piece) => /^@\w+/.test(piece)) || '';
+  const display = pieces.find((piece) => piece !== handle && piece !== '·') || '';
+  return [display, handle && `(${handle})`].filter(Boolean).join(' ');
+}
+
+function xPostEntry(article) {
+  const texts = Array.from(article.querySelectorAll('[data-testid="tweetText"]'));
+  const extras = [];
+  for (const image of Array.from(article.querySelectorAll('[data-testid="tweetPhoto"] img[alt]'))) {
+    const alt = bounded(image.getAttribute('alt'), 300);
+    if (alt && alt.toLowerCase() !== 'image') extras.push(`[Image: ${alt}]`);
+  }
+  const card = textOf(article.querySelector('[data-testid="card.wrapper"]'), 300);
+  if (card) extras.push(`[Link: ${card}]`);
+  let text = readableText(texts[0], ASSIST_ENTRY_CHARS);
+  if (texts[1]) extras.push(`[Quoting: ${readableText(texts[1], 1_000)}]`);
+  let author = xAuthor(article);
+  if (!texts.length) {
+    const lines = readableText(article, ASSIST_ENTRY_CHARS, (node) => node.getAttribute?.('role') === 'group')
+      .split('\n').filter((line) => line && !COUNT_LINE.test(line));
+    const handleAt = lines.findIndex((line) => /^@\w+$/.test(line));
+    if (handleAt >= 0) {
+      author ||= [lines[handleAt - 1], `(${lines[handleAt]})`].filter(Boolean).join(' ');
+      lines.splice(0, handleAt + 1);
+    }
+    text = lines.filter((line) => !/^\d{1,2}:\d{2}\s*[AP]M\s*·/i.test(line)).join('\n');
+  }
+  return {
+    author,
+    time: contextTime(article.querySelector('time[datetime]')?.getAttribute('datetime') || ''),
+    text: [text, ...extras].filter(Boolean).join('\n'),
+  };
+}
+
+function xAssistContext(document, target, surface, url, above) {
+  if (surface !== 'reply') return null;
+  const scope = target.closest('[role="dialog"]') || target.closest('main, [role="main"]') || document.body;
+  const articles = Array.from(scope?.querySelectorAll?.('article') || [])
+    .filter((article) => !article.contains(target) && !article.parentElement?.closest?.('article') && above(article));
+  const entries = articles.map(xPostEntry).filter((entry) => entry.text);
+  if (!entries.length) return null;
+  const answered = entries[entries.length - 1];
+  return { header: ['X conversation'], writing: `a reply to ${answered.author || 'the post above'}`, entries, replyingTo: entries.length - 1 };
+}
+
+function gmailAssistBody(body, stripQuotes) {
+  if (!stripQuotes || typeof body.cloneNode !== 'function') return gmailBodyText(body, ASSIST_ENTRY_CHARS);
+  const copy = body.cloneNode(true);
+  for (const quote of Array.from(copy.querySelectorAll('.gmail_quote, blockquote[type="cite"], .gmail_extra'))) quote.remove();
+  return gmailBodyText(copy, ASSIST_ENTRY_CHARS) || gmailBodyText(body, ASSIST_ENTRY_CHARS);
+}
+
+function gmailAssistContext(document, target, surface) {
+  if (!['reply', 'forward'].includes(surface)) return null;
+  let nodes = Array.from(document.querySelectorAll('[data-message-id]'));
+  if (!nodes.length) nodes = Array.from(document.querySelectorAll('[data-legacy-message-id], .adn'));
+  const seen = new Set();
+  const messages = nodes.map((message) => {
+    const body = message.querySelector(GMAIL_BODY_SELECTOR);
+    if (!body || seen.has(body) || body.contains(target) || body.isContentEditable === true || body.getAttribute?.('contenteditable') === 'true') return null;
+    seen.add(body);
+    return { message, body };
+  }).filter(Boolean).slice(-GMAIL_MESSAGE_LIMIT);
+  const entries = messages.map(({ message, body }) => ({
+    author: gmailMessageSender(message),
+    time: gmailMessageDate(message),
+    text: gmailAssistBody(body, messages.length > 1),
+  })).filter((entry) => entry.text);
+  if (!entries.length) return null;
+  const subject = gmailSubject(document);
+  return {
+    header: [subject ? `Email thread: ${subject}` : 'Email thread'],
+    writing: surface === 'forward' ? 'a forward of this email' : 'a reply to this email thread',
+    entries,
+    replyingTo: entries.length - 1,
+  };
+}
+
+function youtubeCommentEntry(comment, note = '') {
+  return {
+    author: textOf(comment.querySelector('#author-text'), 80),
+    time: textOf(comment.querySelector('#published-time-text'), 40),
+    text: readableText(comment.querySelector('#content-text'), ASSIST_ENTRY_CHARS),
+    note,
+  };
+}
+
+function youtubeAssistContext(document, target, surface, url, above) {
+  if (!['comment', 'comment-reply'].includes(surface)) return null;
+  const title = firstText(document, ['ytd-watch-metadata #title h1', '#title h1', 'h1'], 300);
+  const channel = firstText(document, ['ytd-watch-metadata ytd-channel-name #text', 'ytd-channel-name #text'], 120);
+  const description = firstText(document, ['#description-inline-expander yt-attributed-string', '#description-inline-expander', 'ytd-watch-metadata ytd-text-inline-expander', '#description'], 1_500, (node) => bounded(node.textContent || '', 1_500))
+    .replace(/\s*(?:…|\.\.\.)\s*more\b/i, '').replace(/\s*Show less\s*$/i, '');
+  const entries = description ? [{ author: channel || 'The channel', text: description, note: 'video description' }] : [];
+  const thread = target.closest('ytd-comment-thread-renderer');
+  let writing = 'a comment on this video';
+  let replyingTo = -1;
+  if (thread) {
+    const answered = target.closest('ytd-comment-view-model, ytd-comment-renderer');
+    const comments = Array.from(thread.querySelectorAll('ytd-comment-view-model, ytd-comment-renderer'))
+      .filter((comment) => comment === answered || above(comment));
+    entries.push(...comments.map((comment) => youtubeCommentEntry(comment)).filter((entry) => entry.text));
+    replyingTo = entries.length - 1;
+    const author = answered ? textOf(answered.querySelector('#author-text'), 80) : '';
+    writing = author ? `a reply to ${author}'s comment` : 'a reply in this comment thread';
+  } else {
+    const top = Array.from(document.querySelectorAll('ytd-comment-thread-renderer')).slice(0, 5)
+      .map((item) => item.querySelector('ytd-comment-view-model, ytd-comment-renderer'))
+      .filter(Boolean)
+      .map((comment) => youtubeCommentEntry(comment, 'top comment'));
+    entries.push(...top.filter((entry) => entry.text));
+  }
+  if (!entries.length && !title) return null;
+  return { header: [`YouTube video: ${title || 'this video'}${channel ? `, by ${channel}` : ''}`], writing, entries, replyingTo };
+}
+
+function redditCommentEntry(comment, note = '') {
+  const body = Array.from(comment.querySelectorAll('[slot="comment"]')).find((node) => node.closest('shreddit-comment') === comment);
+  const author = comment.getAttribute('author');
+  return { author: author ? `u/${author}` : '', time: contextTime(comment.getAttribute('created') || ''), text: readableText(body, ASSIST_ENTRY_CHARS), note };
+}
+
+function redditAssistContext(document, target) {
+  const post = document.querySelector('shreddit-post');
+  if (!post) return null;
+  const title = bounded(post.getAttribute('post-title') || textOf(post.querySelector('[slot="title"], h1'), 300), 300);
+  const community = bounded(post.getAttribute('subreddit-prefixed-name') || '', 80);
+  const author = post.getAttribute('author');
+  const link = String(post.getAttribute('content-href') || '');
+  const postText = readableText(post.querySelector('[slot="text-body"]'), ASSIST_OPENING_CHARS)
+    || (link ? `Link: ${bounded(link.startsWith('/') ? `https://www.reddit.com${link}` : link, 300)}` : '');
+  const entries = [{ author: author ? `u/${author}` : '', time: contextTime(post.getAttribute('created-timestamp') || ''), text: postText || title, note: 'the post' }];
+  const answered = target.closest('shreddit-comment');
+  let writing = 'a comment on this post';
+  if (answered) {
+    const chain = [];
+    for (let comment = answered; comment; comment = comment.parentElement?.closest?.('shreddit-comment')) chain.unshift(comment);
+    entries.push(...chain.map((comment) => redditCommentEntry(comment)).filter((entry) => entry.text));
+    writing = `a reply to u/${answered.getAttribute('author') || 'someone'}'s comment`;
+  } else {
+    entries.push(...Array.from(document.querySelectorAll('shreddit-comment[depth="0"]')).slice(0, 5)
+      .map((comment) => redditCommentEntry(comment, 'top comment')).filter((entry) => entry.text));
+  }
+  return {
+    header: [`Reddit post${community ? ` in ${community}` : ''}: ${title}`],
+    writing,
+    entries,
+    replyingTo: answered ? entries.length - 1 : 0,
+  };
+}
+
+const LINKEDIN_POST = '[data-urn*="urn:li:activity"], [data-id*="urn:li:activity"], .feed-shared-update-v2, .fie-impression-container';
+const LINKEDIN_COMMENT = '.comments-comment-entity, .comments-comment-item, article.comments-comment-item';
+
+function linkedinAssistContext(document, target, surface) {
+  if (surface !== 'comment') return null;
+  const post = target.closest(LINKEDIN_POST);
+  if (!post) return null;
+  const outsideComments = (read) => (node) => (node.closest(LINKEDIN_COMMENT) ? '' : read(node));
+  const author = firstText(post, ['.update-components-actor__title span[aria-hidden="true"]', '.update-components-actor__name', '.feed-shared-actor__name'], 120, outsideComments((node) => textOf(node, 120)));
+  const postText = firstText(post, ['.update-components-text', '.feed-shared-update-v2__description', '.feed-shared-inline-show-more-text', '.feed-shared-text'], ASSIST_OPENING_CHARS, outsideComments((node) => readableText(node, ASSIST_OPENING_CHARS)))
+    || readableText(post, ASSIST_OPENING_CHARS, (node) => node.matches?.(`${LINKEDIN_COMMENT}, .comments-comment-box`));
+  const entries = [{ author, text: postText, note: 'the post' }];
+  const answered = target.closest(LINKEDIN_COMMENT);
+  if (answered) {
+    entries.push({
+      author: firstText(answered, ['.comments-comment-meta__description-title', '.comments-post-meta__name-text', '.comments-comment-meta__actor'], 120),
+      text: firstText(answered, ['.comments-comment-item__main-content', '.update-components-text'], ASSIST_ENTRY_CHARS, (node) => readableText(node, ASSIST_ENTRY_CHARS)),
+    });
+  }
+  return {
+    header: ['LinkedIn post'],
+    writing: answered ? `a reply to ${entries[1].author || 'the comment above'}` : `a comment on ${author ? `${author}'s` : 'this'} post`,
+    entries: entries.filter((entry) => entry.text),
+    replyingTo: answered ? 1 : 0,
+  };
+}
+
+const ASSIST_CONTEXT_READERS = Object.freeze({
+  github: githubAssistContext,
+  x: xAssistContext,
+  gmail: gmailAssistContext,
+  youtube: youtubeAssistContext,
+  reddit: redditAssistContext,
+  linkedin: linkedinAssistContext,
+});
+
+function selfVisible(node) {
+  if (node.hidden || node.getAttribute?.('aria-hidden') === 'true') return false;
+  const inlineStyle = String(node.getAttribute?.('style') || '').toLowerCase().replace(/\s+/g, '');
+  if (inlineStyle.includes('display:none') || inlineStyle.includes('visibility:hidden')) return false;
+  const view = node.ownerDocument?.defaultView;
+  if (typeof view?.getComputedStyle !== 'function') return true;
+  const computed = view.getComputedStyle(node);
+  if (computed?.display === 'none' || computed?.visibility === 'hidden' || computed?.visibility === 'collapse') return false;
+  return computed?.display === 'contents' || typeof node.getClientRects !== 'function' || node.getClientRects().length > 0;
+}
+
+// The text around the field, nearest first when there is too much: what is just above a composer is what it
+// answers (a chat's newest messages, a form's question). The start of the area is kept too, for its title.
+function textAroundField(root, target, max) {
+  const before = [];
+  const after = [];
+  let passed = false;
+  let afterSize = 0;
+  const visit = (node, isRoot) => {
+    if (!node) return;
+    if (node === target) { passed = true; return; }
+    if (node.nodeType === 3) {
+      const text = String(node.nodeValue || '').replace(/\s+/g, ' ').trim();
+      if (!text) return;
+      if (!passed) before.push(text);
+      else if (afterSize < 1_000) { after.push(text); afterSize += text.length + 1; }
+      return;
+    }
+    if (node.nodeType !== 1 || (passed && afterSize >= 1_000)) return;
+    const tag = String(node.tagName || '').toLowerCase();
+    const holdsTarget = node.contains?.(target);
+    if (!holdsTarget && (ASSIST_SKIP_TAGS.has(tag) || ASSIST_SKIP_ROLES.has(node.getAttribute?.('role') || ''))) return;
+    if (!isRoot && !holdsTarget && (node.isContentEditable || node.getAttribute?.('contenteditable') === 'true' || !selfVisible(node))) return;
+    const block = ASSIST_BLOCK_TAGS.has(tag);
+    if (block) (passed ? after : before).push('\n');
+    for (const child of Array.from(node.childNodes || [])) visit(child, false);
+    if (block) (passed ? after : before).push('\n');
+  };
+  visit(root, true);
+  const tidy = (parts) => parts.join(' ').split('\n').map((line) => line.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+  let above = tidy(before);
+  const below = tidy(after).slice(0, 1_000);
+  const room = max - (below ? below.length + 40 : 0);
+  if (above.length > room) {
+    const head = above.slice(0, 1_200).trimEnd();
+    const tailLength = Math.max(0, room - head.length - 60);
+    above = `${head}\n[${above.length - head.length - tailLength} characters left out to fit]\n${above.slice(above.length - tailLength).trimStart()}`;
+  }
+  return [above, below && `After the field:\n${below}`].filter(Boolean).join('\n\n');
+}
+
+function genericAssistContext(document, target, profile) {
+  const root = profile.contextElement || target.parentElement;
+  const label = fieldLabel(target);
+  const writing = `You are writing ${label ? `in the field "${label}"` : 'in a text field on this page'}.`;
+  const title = bounded(document?.title || '', 200);
+  const head = [title && `Page: ${title}`, writing].filter(Boolean).join('\n');
+  const text = textAroundField(root, target, ASSIST_CONTEXT_CHARS - head.length - 2);
+  return text ? `${head}\n\n${text}` : '';
+}
+
+export function inlineSiteContext(document, target, profile = null) {
   const resolved = profile || inspectInlineSite(document, target);
-  if (resolved.contextMode !== 'visible') return '';
-  return visibleContextText(resolved.contextElement, target, 6_000);
+  if (!target || resolved.contextMode !== 'visible') return { text: '', messages: 0 };
+  const url = parsedUrl(document?.URL || document?.baseURI || '');
+  let thread = null;
+  try {
+    thread = ASSIST_CONTEXT_READERS[resolved.adapterId]?.(document, target, resolved.surface, url, aboveField(document, target)) || null;
+  } catch {
+    thread = null;
+  }
+  if (thread && (thread.entries?.length || thread.blocks?.length)) {
+    return { text: composeAssistContext(thread), messages: thread.entries.length };
+  }
+  return { text: genericAssistContext(document, target, resolved), messages: 0 };
+}
+
+export function captureInlineSiteContext(document, target, profile = null) {
+  return inlineSiteContext(document, target, profile).text;
 }
 
 export function inspectSite(document, options = {}) {
@@ -816,6 +1545,7 @@ export const SITE_ADAPTER_API = Object.freeze({
   inspectSite,
   inspectInlineSite,
   captureInlineSiteContext,
+  inlineSiteContext,
   normalizeInlineSiteContextPreferences,
   isGmailThreadUrl,
   applySiteAdapterPolicy,

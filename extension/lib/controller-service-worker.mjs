@@ -557,6 +557,9 @@ export function createControllerServiceWorker({
   // No transient reconnect before this time (retryAfterMs backoff).
   let nextConnectAt = 0;
   let settingsRevision = 0;
+  // The chat a turn moved Hermes Control to, and the chat the saved settings name while it is there. Panels
+  // keep writing the chat they show, so a write naming that same chat must not move control back.
+  let chatMove = null;
   let persistChain = Promise.resolve();
   let transitionChain = Promise.resolve();
 
@@ -580,14 +583,21 @@ export function createControllerServiceWorker({
       lastTurnTabId,
       lastActionTabId,
       unsupportedRouteKey,
+      chatMove: chatMove ? { ...chatMove } : null,
       terminalOutbox: normalizeTerminalOutbox(terminalOutbox, { at: Number(now()) }),
       updatedAt: Number(now()),
     };
   }
 
+  function savedSettings(source = settings) {
+    return chatMove && durableSessionId(source) === chatMove.sessionId
+      ? { ...source, sessionId: chatMove.storedSessionId }
+      : { ...source };
+  }
+
   function persist({ includeSettings = false } = {}) {
     const values = {
-      ...(includeSettings ? { hermesBrowserSettings: { ...settings } } : {}),
+      ...(includeSettings ? { hermesBrowserSettings: savedSettings() } : {}),
       [CONTROLLER_WORKER_STORAGE_KEY]: workerSnapshot(),
       [CONTROLLER_REGISTRY_STORAGE_KEY]: registry.snapshot(),
       [TAB_LEASE_STORAGE_KEY]: leases.snapshot(),
@@ -1106,6 +1116,15 @@ export function createControllerServiceWorker({
         ]);
         settings = connectionSettings(stored);
         const previousWorker = stored[CONTROLLER_WORKER_STORAGE_KEY];
+        chatMove = null;
+        const previousMove = previousWorker?.chatMove;
+        if (Number(previousWorker?.version) === CONTROLLER_WORKER_VERSION
+          && typeof previousMove?.sessionId === 'string' && previousMove.sessionId
+          && typeof previousMove.storedSessionId === 'string'
+          && durableSessionId(settings) === previousMove.storedSessionId) {
+          chatMove = { sessionId: previousMove.sessionId, storedSessionId: previousMove.storedSessionId };
+          settings = { ...settings, sessionId: chatMove.sessionId };
+        }
         const identity = Number(previousWorker?.version) === CONTROLLER_WORKER_VERSION
           ? cleanIdentity(previousWorker)
           : null;
@@ -1211,8 +1230,14 @@ export function createControllerServiceWorker({
     }
 
     const previousRouteKey = controllerRouteKey(settings);
+    // Only the chat changing leaves the tabs and the gateway as they were: a stop the person pressed on a tab stays.
+    const chatOnly = !controllerRouteChanged(settings, {
+      ...normalized,
+      sessionId: settings.sessionId,
+      remoteDashboardSession: settings.remoteDashboardSession,
+    });
     settings = normalized;
-    pausedLeases = {};
+    if (!chatOnly) pausedLeases = {};
     lastTurnTabId = 0;
     lastActionTabId = 0;
     unsupportedRouteKey = '';
@@ -1232,6 +1257,15 @@ export function createControllerServiceWorker({
     return connect();
   }
 
+  function keepChatMove(nextSettings = {}) {
+    if (!chatMove) return nextSettings;
+    if (durableSessionId(nextSettings) !== chatMove.storedSessionId) {
+      chatMove = null;
+      return nextSettings;
+    }
+    return { ...nextSettings, sessionId: chatMove.sessionId };
+  }
+
   function syncSettings(nextSettings = {}, { revision = null } = {}) {
     // Callers without a revision are "latest wins" writers: the background
     // storage.onChanged rebind is one of them. Number(null) is 0, so testing
@@ -1246,7 +1280,7 @@ export function createControllerServiceWorker({
       if (requestedRevision !== settingsRevision) {
         return { ...status(), staleSettingsRevision: true };
       }
-      return syncSettingsTransition(nextSettings);
+      return syncSettingsTransition(keepChatMove(nextSettings));
     });
   }
 
@@ -1424,7 +1458,7 @@ export function createControllerServiceWorker({
       lifecycle.cancelAll();
     }
     settings = { ...settings, browserControlPaused: paused === true };
-    await storageArea.set({ hermesBrowserSettings: { ...settings } });
+    await storageArea.set({ hermesBrowserSettings: savedSettings() });
     await persist();
     if (paused === true) {
       for (const tabId of leases.leasedTabIds()) releaseDebuggerSession(tabId);
@@ -1453,7 +1487,7 @@ export function createControllerServiceWorker({
     }
     approvals.clear?.();
     const nextSettings = { ...settings, browserControlEnabled: false, browserControlPaused: false };
-    await storageArea.set({ hermesBrowserSettings: { ...nextSettings } });
+    await storageArea.set({ hermesBrowserSettings: savedSettings(nextSettings) });
     await syncSettingsTransition(nextSettings);
     return { ok: true, cancelled: stopped.cancelled, releasedTabIds };
   }
@@ -1660,10 +1694,44 @@ export function createControllerServiceWorker({
     lease_not_owned: 'This tab is not attached to Hermes Control. Ask the user to press Attach this tab in the Hermes panel.',
   });
 
+  function runningWork() {
+    return Boolean(activeActions.size || lifecycle.pendingCount() || approvals.count());
+  }
+
+  // Queued like every other change of connection, and looked at again once it is its turn: work that began
+  // while a heartbeat held the queue must end on its own, not be cancelled by the move.
+  function moveToTurnChat(turnSessionId) {
+    return runTransition(() => {
+      if (runningWork()) return { busy: true };
+      const storedSessionId = chatMove?.storedSessionId ?? durableSessionId(settings);
+      chatMove = turnSessionId === storedSessionId ? null : { sessionId: turnSessionId, storedSessionId };
+      return syncSettingsTransition({ ...settings, sessionId: turnSessionId });
+    });
+  }
+
   // Resolves the turn's exact target and, when control is attached and ready,
   // the page view the model can act on straight away. Also records the tab as
   // the default target for commands that name none.
   async function prepareTurn(message = {}) {
+    const turnSessionId = String(message.sessionId || '').trim();
+    const transport = settings?.connectionTransport || settings?.gatewayMode;
+    const followsTurnChat = Boolean(turnSessionId) && settings?.browserControlEnabled === true
+      && !transportUsesDashboardTicket(transport);
+    const servesTurnChat = () => !followsTurnChat || durableSessionId(settings) === turnSessionId;
+    const chatNotMoved = () => unavailableControlTarget('controller_unavailable', PREPARE_TURN_MESSAGES.controller_unavailable);
+    if (followsTurnChat && !servesTurnChat()) {
+      // The gateway lets only the chat the controller registered for drive the tab. A turn from
+      // another chat (a second window, the full tab) moves the controller to it first, so the tab
+      // is never reported ready to a chat whose tools would find no browser.
+      const busyWithOtherChat = () => unavailableControlTarget('controller_busy', 'Hermes Control is busy with another chat. Ask the user to let it finish, then try again.');
+      if (runningWork()) return busyWithOtherChat();
+      const moved = await Promise.race([
+        moveToTurnChat(turnSessionId).catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, PREPARE_TURN_CONNECT_MS)),
+      ]);
+      if (moved?.busy) return busyWithOtherChat();
+      if (!servesTurnChat()) return chatNotMoved();
+    }
     if (!connected && lastConnectFailure?.reason === CONTROLLER_SESSION_PENDING) {
       // The panel created this chat's Hermes session just before this turn: connect now, so the
       // chat's first turn can already use control.
@@ -1689,6 +1757,7 @@ export function createControllerServiceWorker({
       await persist();
     }
     const view = await collectTurnSnapshot(resolved);
+    if (!servesTurnChat()) return chatNotMoved();
     return {
       ...resolved,
       state: 'ready',

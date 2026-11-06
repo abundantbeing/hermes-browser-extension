@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Bake the Hermes Assist circle icons</title>
+<!--
+  Regenerates extension/assets/img/assist-wing.png and assist-girl-{outline,solid}.png from the brand art.
+  Open in headless Chrome for Testing with --allow-file-access-from-files and --dump-dom; the page writes
+  each PNG as a data URL into #out as JSON, which scripts can decode into the files.
+-->
+<pre id="out"></pre>
+<script>
+(async () => {
+  const load = (src) => new Promise((resolve, reject) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = reject; image.src = src; });
+  const art = '../extension/assets/img/';
+  const SIZE = 256;
+
+  // The engraved wing turns into a grey smudge at 24px, so it is filled into one solid silhouette:
+  // blurred and thresholded so the strokes join, every pixel the outside cannot reach is filled,
+  // then tilted slightly up to the right.
+  async function wing() {
+    const image = await load(`${art}hermes-wing-mark.svg`);
+    const w = 800, h = 800;
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d');
+    x.filter = 'blur(2.5px)';
+    x.translate(w / 2, h / 2); x.rotate(-14 * Math.PI / 180);
+    const s = Math.min(w / image.width, h / image.height) * 0.92;
+    x.drawImage(image, -image.width * s / 2, -image.height * s / 2, image.width * s, image.height * s);
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    const d = x.getImageData(0, 0, w, h);
+    const on = new Uint8Array(w * h);
+    for (let p = 0; p < w * h; p += 1) on[p] = d.data[p * 4 + 3] / 255 > 0.12 ? 1 : 0;
+    const outside = new Uint8Array(w * h);
+    const stack = [];
+    for (let i = 0; i < w; i += 1) stack.push(i, (h - 1) * w + i);
+    for (let j = 0; j < h; j += 1) stack.push(j * w, j * w + w - 1);
+    while (stack.length) {
+      const p = stack.pop();
+      if (outside[p] || on[p]) continue;
+      outside[p] = 1;
+      const px = p % w;
+      if (px > 0) stack.push(p - 1);
+      if (px < w - 1) stack.push(p + 1);
+      if (p >= w) stack.push(p - w);
+      if (p < w * (h - 1)) stack.push(p + w);
+    }
+    for (let p = 0; p < w * h; p += 1) {
+      d.data[p * 4] = d.data[p * 4 + 1] = d.data[p * 4 + 2] = 0;
+      d.data[p * 4 + 3] = outside[p] ? 0 : 255;
+    }
+    x.putImageData(d, 0, 0);
+    const out = document.createElement('canvas'); out.width = SIZE; out.height = SIZE;
+    const o = out.getContext('2d');
+    o.filter = 'blur(0.4px)';
+    o.imageSmoothingQuality = 'high';
+    o.drawImage(c, 0, 0, SIZE, SIZE);
+    return out.toDataURL('image/png');
+  }
+
+  // The girl: the extension logo cropped to her head (x 40-560, y 0-478 of the 600-wide art) so she
+  // fills the circle, without the wordmark below the collar.
+  async function girl(file) {
+    const image = await load(`${art}${file}`);
+    const k = image.width / 600;
+    const c = document.createElement('canvas'); c.width = 520; c.height = 520;
+    c.getContext('2d').drawImage(image, 40 * k, 0, 520 * k, 478 * k, 0, 0, 520, 478);
+    const out = document.createElement('canvas'); out.width = SIZE; out.height = SIZE;
+    const o = out.getContext('2d');
+    o.imageSmoothingQuality = 'high';
+    o.drawImage(c, 0, 0, SIZE, SIZE);
+    return out.toDataURL('image/png');
+  }
+
+  const result = {
+    'assist-wing.png': await wing(),
+    'assist-girl-outline.png': await girl('hermes-extension-icon-outline.png'),
+    'assist-girl-solid.png': await girl('hermes-extension-icon-solid.png'),
+  };
+  document.getElementById('out').textContent = JSON.stringify(result);
+})().catch((error) => { document.getElementById('out').textContent = JSON.stringify({ error: String(error) }); });
+</script>

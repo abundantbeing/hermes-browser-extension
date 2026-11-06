@@ -52,14 +52,16 @@
   right: 0;
   max-height: 240px;
   overflow: auto;
-  scrollbar-gutter: stable;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   background: var(--hermes-paper, #fbfcff);
   color: var(--hermes-ink, inherit);
   border: 1px solid var(--hermes-line-strong);
 }
 
 .branded-select-list[hidden] { display: none; }
+
+.branded-select-list > * { flex: none; }
 
 .branded-select-list::-webkit-scrollbar { width: 8px; }
 

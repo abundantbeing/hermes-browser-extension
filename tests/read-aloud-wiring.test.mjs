@@ -65,3 +65,20 @@ test('a shared settings write that only changes appearance does not stop read al
   assert.match(block, /let connectionChanged = false/);
   assert.match(block, /if \(connectionChanged\) \{[\s\S]*readAloudPlayer\.stop\(\)/);
 });
+
+test('when the dashboard URL cannot be resolved, the probe records unreachable and refreshes read-aloud rails', () => {
+  const body = panel.slice(panel.indexOf('async function refreshDashboardRoutes('), panel.indexOf('async function loadGatewayCapabilities('));
+  assert.match(body, /if \(!baseUrl\) \{[\s\S]*readAloudDashboardProbe = \{ reachable: false, gatewayUrl: settings\.gatewayUrl \}/);
+  assert.match(body, /notifyReadAloudDashboardProbeChanged\(\)/);
+});
+
+test('when the connection is remote or has no gateway URL, clearing the probe refreshes read-aloud rails', () => {
+  const body = panel.slice(panel.indexOf('async function refreshDashboardRoutes('), panel.indexOf('async function loadGatewayCapabilities('));
+  assert.match(body, /if \(isRemoteWsMode\(\) \|\| !settings\.gatewayUrl\) \{[\s\S]*readAloudDashboardProbe = null/);
+  assert.match(body, /notifyReadAloudDashboardProbeChanged\(\)/);
+});
+
+test('after a cross-tab connection change clears the probe, read-aloud rails are refreshed', () => {
+  const block = panel.slice(panel.indexOf('browserApi.storage.onChanged.addListener((changes, areaName) => {'), panel.indexOf('if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)'));
+  assert.match(block, /readAloudDashboardProbe = null;[\s\S]*notifyReadAloudDashboardProbeChanged\(\)/);
+});

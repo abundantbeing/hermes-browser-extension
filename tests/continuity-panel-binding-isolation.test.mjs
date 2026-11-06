@@ -37,6 +37,15 @@ function storageListener(initialSettings) {
     CUSTOM_THEME_STORAGE_KEY: 'customThemes',
     CONTEXT_CONSENT_STORAGE_KEY: 'consent',
     ONBOARDING_COMPLETED_STORAGE_KEY: 'onboardingDone',
+    INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY: 'hermesInlineAssistAutoReplace',
+    adoptInlineAssistAutoReplaceChange() {},
+    adoptInlineAssistIconChange() {},
+    adoptInlineAssistOpenModeChange() {},
+    adoptInlineAssistModelChange() {},
+    adoptInlineAssistSessionRetentionChange() {},
+    INLINE_SITE_CONTEXT_STORAGE_KEY: 'hermesInlineSiteContextPreferences',
+    adoptInlineAssistSitesChange() {},
+    INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY: 'hermesInlineAssistHiddenSites',
     adoptOnboardingCompletedChange() {},
     adoptStoredResponsePresentation() {},
     updateConnectionPrompt() {},
@@ -46,6 +55,7 @@ function storageListener(initialSettings) {
     normalizeContextConsentLedger: (value) => value,
     renderBrowserContextConsentControl() {},
     refreshContext() {},
+    notifyReadAloudDashboardProbeChanged() {},
     browserApi: { storage: { onChanged: { addListener: (fn) => { listener = fn; } } } },
   });
   vm.runInContext(text, context);
