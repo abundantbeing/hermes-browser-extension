@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+import { pythonExecutable } from './python-bin.mjs';
+
+const PY = pythonExecutable();
+
 // The companion plugin's browser-context side channel: context status, context
 // upload and the declarative actions list, wired into the API server through
 // ctx.register_platform_handler("api_server", ...). These tests drive the real
@@ -10,7 +14,7 @@ import { readFileSync } from 'node:fs';
 // They never start a gateway or open a socket to one.
 
 function runPython(script, env = {}) {
-  const result = spawnSync(process.env.PYTHON || 'python', ['-c', script], {
+  const result = spawnSync(PY, ['-c', script], {
     cwd: process.cwd(),
     encoding: 'utf8',
     env: { ...process.env, ...env },
