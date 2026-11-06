@@ -129,7 +129,7 @@ test('side panel: composer and right-click turns carry the contract; inline draf
   // The system prompt (session create, inline drafts, background tasks) has no Vivid text.
   assert.match(panel, /const styleNote = responseStyleInstructions\(settings\.responseStyle\);/);
   // Another window's choice is adopted, so a stale full write can't revert it.
-  assert.match(panel, /adoptStoredResponsePresentation\(next\);/);
+  assert.match(panel, /adoptStoredResponsePresentation\(merged\);/);
 });
 
 // ---------------------------------------------------------------------------

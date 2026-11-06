@@ -283,3 +283,25 @@ export function savedConnectionsBase(settings, stored, expectedId) {
   if (activeId && activeId !== expectedId) throw new Error('The active saved connection changed.');
   return withStoredSavedConnections(settings, stored);
 }
+
+/** Read a full local storage snapshot and return live settings with secrets restored. */
+export async function hydrateHermesBrowserSettingsFromStorage(raw = {}, storageArea = null) {
+  const area = storageArea?.get ? storageArea : null;
+  const bundle = area
+    ? await area.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+    : (raw && typeof raw === 'object' ? raw : {});
+  const blob = bundle?.hermesBrowserSettings && typeof bundle.hermesBrowserSettings === 'object'
+    ? bundle.hermesBrowserSettings
+    : {};
+  const secrets = bundle?.[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
+  return hydrateSavedConnectionSecrets(blob, secrets);
+}
+
+/** Pack settings and secrets for storage.local.set (single call). */
+export async function packedHermesBrowserSettingsWrite(nextSettings = {}, storageArea = null) {
+  const area = storageArea?.get ? storageArea : null;
+  const existing = area
+    ? (await area.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY))[SAVED_CONNECTION_SECRETS_STORAGE_KEY]
+    : undefined;
+  return packSavedConnectionStorage(nextSettings, existing && typeof existing === 'object' ? existing : {});
+}

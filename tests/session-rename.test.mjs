@@ -122,7 +122,7 @@ test('sidepanel rename editor updates optimistically, reconciles on failure, and
   // The local projection never touches storage without a confirmed write path
   // (it only mirrors settings for the active session).
   const local = functionBody(source, 'applySessionTitleLocally');
-  assert.match(local, /hermesBrowserSettings: settings/);
+  assert.match(local, /void setPackedBrowserSettings\(settings\)|setPackedBrowserSettings\(settings\)/);
 });
 
 test('sidepanel auto-naming persists through the shared rename path and cannot clobber a user title', () => {

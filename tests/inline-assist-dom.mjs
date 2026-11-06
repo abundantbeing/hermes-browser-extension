@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
+import { SAVED_CONNECTION_SECRETS_STORAGE_KEY } from '../extension/lib/saved-connections.mjs';
 
 // Loads the real Assist content scripts into jsdom with stubbed extension APIs. `settings` is what
 // storage holds under hermesBrowserSettings, `storage` any other keys; `stored` records every storage write.
@@ -13,6 +14,8 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', u
   const stored = [];
   const listeners = [];
   const storageListeners = [];
+  let currentHermesSettings = { ...settings };
+  let currentSecrets = {};
   const dom = new JSDOM(
     `<!doctype html><html><body><div id="composer" style="${pageBackground ? `background-color:${pageBackground}` : ''}"><textarea id="field"></textarea></div></body></html>`,
     { url, runScripts: 'outside-only', pretendToBeVisual: true },
@@ -48,7 +51,30 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', u
       onMessage: { addListener: (fn) => messageListeners.push(fn), removeListener() {} },
     },
     storage: {
-      local: { get: () => Promise.resolve({ ...structuredClone(storage), hermesBrowserSettings: { ...settings } }), set: (items) => { stored.push(items); return Promise.resolve(); } },
+      local: {
+        get: (keys) => {
+          const bundle = {
+            ...structuredClone(storage),
+            hermesBrowserSettings: structuredClone(currentHermesSettings),
+            [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: structuredClone(currentSecrets),
+          };
+          if (keys === null || keys === undefined) return Promise.resolve(bundle);
+          const list = Array.isArray(keys) ? keys : [keys];
+          const out = {};
+          for (const key of list) {
+            if (Object.hasOwn(bundle, key)) out[key] = structuredClone(bundle[key]);
+          }
+          return Promise.resolve(out);
+        },
+        set: (items) => {
+          stored.push(items);
+          if (items?.hermesBrowserSettings) currentHermesSettings = structuredClone(items.hermesBrowserSettings);
+          if (Object.hasOwn(items || {}, SAVED_CONNECTION_SECRETS_STORAGE_KEY)) {
+            currentSecrets = structuredClone(items[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+          }
+          return Promise.resolve();
+        },
+      },
       onChanged: { addListener: (listener) => storageListeners.push(listener), removeListener() {} },
     },
   };
@@ -88,7 +114,15 @@ export function bootAssist({ settings = {}, storage = {}, pageBackground = '', u
   };
   const listenersFor = (element, type) => listeners.filter((item) => item.target === element && item.type === type).map((item) => item.listener);
   // Another surface (the side panel, another tab) wrote to storage.
-  const changeStorage = (changes) => { for (const listener of storageListeners) listener(changes, 'local'); };
+  const changeStorage = async (changes) => {
+    if (changes.hermesBrowserSettings?.newValue) {
+      currentHermesSettings = structuredClone(changes.hermesBrowserSettings.newValue);
+    }
+    if (changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue !== undefined) {
+      currentSecrets = structuredClone(changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY].newValue);
+    }
+    for (const listener of storageListeners) await listener(changes, 'local');
+  };
   // Hands the content script a message from the background, as the result of a draft arrives.
   const deliver = (message) => messageListeners.forEach((fn) => fn(message, {}, () => {}));
   return { w, sent, stored, fonts, fontSources, changeStorage, sleep, userClick, listenersFor, deliver, resized, root: () => shadow, host: () => w.document.getElementById('hermes-inline-draft-host') };

@@ -44,6 +44,7 @@ import {
   buildAssistModelRouteRequest,
 } from './lib/assist-model-contract.mjs';
 import { createWakeBackgroundController } from './lib/wake-background.mjs';
+import { hydrateHermesBrowserSettingsFromStorage, SAVED_CONNECTION_SECRETS_STORAGE_KEY } from './lib/saved-connections.mjs';
 import { WAKE_MESSAGES } from './lib/wake-word.mjs';
 import { initI18n, subscribeLocale, translateUiText } from './lib/i18n.mjs';
 import {
@@ -100,7 +101,8 @@ const browserControlRuntime = createBrowserControlRuntime({
 // through storage.session. The setting is read from storage each time, so the panel's Save applies here.
 async function readStoredSettings() {
   try {
-    return (await browserApi.storage.local.get('hermesBrowserSettings'))?.hermesBrowserSettings || {};
+    const bundle = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+    return hydrateHermesBrowserSettingsFromStorage(bundle, browserApi.storage.local);
   } catch {
     return {};
   }
@@ -354,8 +356,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
     if (!tab || pageKey(tab.url || tab.pendingUrl) !== pageKey(request.pageUrl)) {
       throw new Error('The originating page changed before Hermes could draft.');
     }
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-    const settings = stored?.hermesBrowserSettings || {};
+    const settings = await readStoredSettings();
     const client = createHermesClient({
       getConnection: () => ({
         gatewayUrl: settings.gatewayUrl || settings.agentApiUrl || '',
@@ -525,8 +526,8 @@ async function sidePanelIsOpen() {
 }
 
 async function inlineSessionStatus() {
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', INLINE_SESSION_STATE_KEY]);
-  const settings = stored?.hermesBrowserSettings || {};
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY, INLINE_SESSION_STATE_KEY]);
+  const settings = await hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local);
   const state = stored?.[INLINE_SESSION_STATE_KEY] || {};
   const sessionId = String(state.sessionId || settings.sessionId || '').trim();
   return {
@@ -545,9 +546,9 @@ async function queueOpenSessionRequest(message, sender) {
   if (surface === 'web') {
     // Hermes Web is the Webapp the user's own gateway serves. It cannot be opened on one
     // session, so this opens (or focuses) it and the session is found in its own list.
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
     const result = await openHermesWebapp({
-      settings: stored?.hermesBrowserSettings || {},
+      settings: await hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local),
       tabsApi: browserApi.tabs,
       windowsApi: browserApi.windows,
       permissionsApi: browserApi.permissions,
@@ -1099,8 +1100,10 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   if (areaName !== 'local') return;
   contextMenuController.handleStorageChanged(changes, areaName)
     .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
-  if (changes.hermesBrowserSettings?.newValue && controllerWorker) {
-    controllerWorker.syncSettings(changes.hermesBrowserSettings.newValue)
+  if ((changes.hermesBrowserSettings?.newValue || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue) && controllerWorker) {
+    void browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+      .then((bundle) => hydrateHermesBrowserSettingsFromStorage(bundle, browserApi.storage.local))
+      .then((hydrated) => controllerWorker.syncSettings(hydrated))
       .then((result) => syncControllerAlarms(result))
       .catch((error) => console.warn('[Hermes Browser] Controller settings rebind failed:', error));
   }
