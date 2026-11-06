@@ -154,9 +154,9 @@ test('an open panel shows the replacement switch Settings just saved', async () 
   await env.sleep(60);
   const toggle = () => env.root().querySelector('input.toggle[data-setting="auto-replace"]');
   assert.equal(toggle().checked, true);
-  env.changeStorage({ hermesInlineAssistAutoReplace: { newValue: false } });
+  await env.changeStorage({ hermesInlineAssistAutoReplace: { newValue: false } });
   assert.equal(toggle().checked, false);
-  env.changeStorage({ hermesInlineAssistAutoReplace: { newValue: true } });
+  await env.changeStorage({ hermesInlineAssistAutoReplace: { newValue: true } });
   assert.equal(toggle().checked, true);
 });
 

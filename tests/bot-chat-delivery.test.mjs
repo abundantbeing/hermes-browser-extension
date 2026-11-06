@@ -195,7 +195,7 @@ test('the turn follows a moved Bot Chat before the post-turn refresh reads it', 
   assert.match(askHermes, /if \(movedBotChatId && runIsViewed\(\)\) await adoptMovedBotChat\(runSessionId, movedBotChatId\)/);
   const adopt = functionSource('adoptMovedBotChat');
   assert.match(adopt, /sessionId: next/);
-  assert.match(adopt, /hermesBrowserSettings: settings/);
+  assert.match(adopt, /setPackedBrowserSettings\(settings\)/);
   assert.doesNotMatch(adopt, /sessionLineage\.adopt/, 'the moved-aside chat stays its own conversation');
 });
 

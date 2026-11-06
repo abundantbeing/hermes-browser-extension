@@ -4092,10 +4092,10 @@ test('appearance writes are awaited against a freshly re-read settings blob and 
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const persist = source.match(/async function persistAppearanceSettings\(([\s\S]*?)\) \{([\s\S]*?)\n\}/)?.[2] || '';
   assert.ok(persist, 'persistAppearanceSettings should be async');
-  const getIndex = persist.search(/browserApi\.storage\.local\.get\(\s*['"]hermesBrowserSettings['"]\s*\)/);
-  const setIndex = persist.search(/browserApi\.storage\.local\.set\(\s*\{\s*hermesBrowserSettings\s*:/);
-  assert.ok(getIndex >= 0, 'persist must re-read the fresh hermesBrowserSettings blob before writing');
-  assert.ok(setIndex >= 0, 'persist must write hermesBrowserSettings');
+  const getIndex = persist.search(/readBrowserSettingsFromStorage\(\)/);
+  const setIndex = persist.search(/setPackedBrowserSettings\(/);
+  assert.ok(getIndex >= 0, 'persist must re-read hydrated settings before writing');
+  assert.ok(setIndex >= 0, 'persist must write packed settings');
   assert.ok(getIndex < setIndex, 'the fresh read must happen before the write');
   assert.match(persist, /withAppearancePreferenceUpdate\(/, 'persist must merge through the shared helper');
   assert.match(persist, /'panel'/, 'persist must update the panel surface');

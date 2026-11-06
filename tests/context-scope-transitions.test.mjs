@@ -227,7 +227,7 @@ test('scope transitions derive pin/reset boundaries from the remembered conversa
   assert.match(region, /const conversationScope = conversationScopeForContextScope\(contextScope, previousConversationScope\)/);
   assert.match(region, /conversationScope\.mode !== CONTEXT_SCOPE_MODES\.PINNED_TAB/);
   assert.ok(tryIndex >= 0 && tryIndex < refreshIndex, 'refresh must be inside the rollback boundary');
-  assert.match(region, /browserApi\.storage\.local\.set\(\{ hermesBrowserSettings: snapshot\.settings \}\)/);
+  assert.match(region, /await setPackedBrowserSettings\(snapshot\.settings\)/);
 });
 
 test('pinning a stale menu row fails closed instead of reusing a closed tab snapshot', async () => {

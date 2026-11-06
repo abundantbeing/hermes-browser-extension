@@ -122,7 +122,8 @@
         "assets/img/assist-staff.svg",
         "assets/img/assist-girl-outline.png",
         "assets/img/assist-girl-solid.png",
-        "assets/img/hermes-wing-mark.svg"
+        "assets/img/hermes-wing-mark.svg",
+        "lib/saved-connections.mjs"
       ],
       "matches": [
         "http://*/*",

@@ -68,7 +68,7 @@ test('a model pick in room-member mode switches that room member only', () => {
 test('room bindings are persisted in settings and the runtime re-applies them per attempt', () => {
   assert.match(common, /groupRoomModelBindings:\s*\{\}/, 'the bindings store has a default');
   assert.match(source, /writeRoomModelBinding\(/);
-  assert.match(fn('persistRoomModelBindings'), /hermesBrowserSettings: settings/, 'the binding write is persisted');
+  assert.match(fn('persistRoomModelBindings'), /setPackedBrowserSettings\(settings\)/, 'the binding write is persisted');
   // B3.3 Outcome R: re-apply before every submission attempt via the hook.
   assert.match(source, /needsReapply\(/, 'the panel decides whether a binding must be re-applied');
   assert.match(source, /beforeMemberTurn:/, 'the room runtime receives the beforeMemberTurn hook');
