@@ -418,6 +418,28 @@ print(json.dumps(asyncio.run(main())))
   assert.ok(!JSON.stringify(data.ok.scope).includes('paired-token'));
 });
 
+test('multiplex register returns a materialized ws_path, not the {profile} template', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}
+async def main():
+    client, _, _ = await make()
+    async with client:
+        ok = await client.post(
+            "/p/work" + REGISTER,
+            headers={"Authorization": TOKEN},
+            json=body(session="sess-B", profile="bp-w", caps=CAPS),
+        )
+        return {"status": ok.status, "ws_path": (await ok.json()).get("ws_path")}
+print(json.dumps(asyncio.run(main())))
+`);
+  const data = JSON.parse(out);
+  if (skipped(data)) return;
+  assert.equal(data.status, 201);
+  assert.equal(
+    data.ws_path,
+    '/p/work/api/plugins/hermes-browser-extension/control/ws',
+  );
+});
+
 test('through the real factory, register and the socket both refuse an unauthenticated or ticketless caller', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 class Ctx:

@@ -275,6 +275,11 @@ def materialize_listener_profile(profile: str, *, request: Optional[Any] = None)
     if not _companion_loaded_in_scope():
         return None
 
+    with _lock:
+        discovered = _registry.get(row_key)
+        if discovered is not None and discovered.broker is not None:
+            return discovered
+
     from .control_broker import get_control_broker
     from .status_route import plugin_version
 

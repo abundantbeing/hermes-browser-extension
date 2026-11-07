@@ -93,8 +93,9 @@ def derive_principal(profile: str, request: Any) -> str:
 
 def _control_ws_path(request: Any) -> str:
     path = str(getattr(getattr(request, "rel_url", None), "path", "") or getattr(request, "path", "") or "")
-    if _PATH_PREFIX.match(path):
-        return multiplex_path(CONTROL_WS_PATH)
+    matched = _PATH_PREFIX.match(path)
+    if matched:
+        return f"/p/{matched.group(1)}{CONTROL_WS_PATH}"
     return CONTROL_WS_PATH
 
 

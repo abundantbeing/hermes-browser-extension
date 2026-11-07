@@ -87,3 +87,50 @@ test('multiplex status names the requested profile and refuses unknown profiles'
   assert.equal(data.ghost_status, 503);
   assert.equal(data.ghost_code, 'companion_profile_unavailable');
 });
+
+test('materialize_listener_profile keeps tools recorded by discovery instead of all TOOL_NAMES', () => {
+  const script = `
+import importlib.util, json, pathlib, sys, types
+
+root = pathlib.Path.cwd() / "companion-plugin"
+spec = importlib.util.spec_from_file_location(
+    "probe_plugin", root / "__init__.py", submodule_search_locations=[str(root)])
+module = importlib.util.module_from_spec(spec)
+module.__package__ = "probe_plugin"
+sys.modules["probe_plugin"] = module
+spec.loader.exec_module(module)
+registry = sys.modules["probe_plugin.profile_registry"]
+broker_mod = sys.modules["probe_plugin.control_broker"]
+tools = module.TOOL_NAMES
+
+discovered_tools = tuple(name for name in tools if not name.startswith("tab_"))
+
+registry.set_multiplex_test_profiles(["work"])
+broker = broker_mod.get_control_broker("work")
+store = registry.ensure_context_store("work")
+registry.register_listener_profile(
+    profile="work",
+    store=store,
+    broker=broker,
+    tools=discovered_tools,
+    hooks=module.HOOK_NAMES,
+    version="discovered",
+)
+
+class Req:
+    path = "/p/work/api/plugins/hermes-browser-extension/status"
+
+registry._companion_loaded_in_scope = lambda: True
+row = registry.materialize_listener_profile("work", request=Req())
+print(json.dumps({
+    "tool_count": len(row.tools),
+    "discovered_count": len(discovered_tools),
+    "full_count": len(tools),
+    "preserved": row.tools == discovered_tools,
+}))
+`;
+  const data = runPython(script);
+  assert.ok(data.discovered_count < data.full_count);
+  assert.equal(data.preserved, true);
+  assert.equal(data.tool_count, data.discovered_count);
+});
