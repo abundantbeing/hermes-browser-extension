@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Apri prima la barra laterale (Ctrl+Shift+H o il pulsante della barra degli strumenti), poi scrivi la bozza.",
+    "message": "Apri prima la barra laterale (Ctrl+Shift+H o il pulsante della barra degli strumenti), poi scrivi la bozza. Oppure scegli Esegui in background.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox consente a un'estensione di aprire la sua barra laterale solo da un'azione dell'utente. Un clic inoltrato dalla pagina al worker in background non è stato testato e, quando Firefox lo rifiuta, Hermes apre il pannello in una piccola finestra.",
+    "message": "Firefox consente a un'estensione di aprire la sua barra laterale solo da un'azione dell'utente. Un clic inoltrato dalla pagina al worker in background non è stato testato e, quando Firefox lo rifiuta e nessuna barra laterale è aperta, Hermes interrompe la bozza e chiede di aprire la barra laterale o eseguire in background.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Buka bilah samping terlebih dahulu (Ctrl+Shift+H atau tombol toolbar), lalu buat draf.",
+    "message": "Buka bilah samping terlebih dahulu (Ctrl+Shift+H atau tombol toolbar), lalu buat draf. Atau pilih Jalankan di latar belakang.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox hanya mengizinkan ekstensi membuka bilah sampingnya dari tindakan pengguna. Klik yang diteruskan dari halaman ke background worker belum diuji, dan saat Firefox menolak, Hermes membuka panel di jendela kecil.",
+    "message": "Firefox hanya mengizinkan ekstensi membuka bilah sampingnya dari tindakan pengguna. Klik yang diteruskan dari halaman ke background worker belum diuji, dan saat Firefox menolak dan tidak ada bilah samping terbuka, Hermes menghentikan draf dan meminta Anda membuka bilah samping atau menjalankan di latar belakang.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

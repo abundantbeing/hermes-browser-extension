@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Abre primero la barra lateral (Ctrl+Shift+H o el botón de la barra de herramientas) y luego redacta.",
+    "message": "Abre primero la barra lateral (Ctrl+Shift+H o el botón de la barra de herramientas) y luego redacta. O elige Ejecutar en segundo plano.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox solo permite que una extensión abra su barra lateral desde una acción del usuario. No se ha probado un clic que pase de la página al proceso en segundo plano, y cuando Firefox lo rechaza, Hermes abre el panel en una ventana pequeña.",
+    "message": "Firefox solo permite que una extensión abra su barra lateral desde una acción del usuario. No se ha probado un clic que pase de la página al proceso en segundo plano, y cuando Firefox lo rechaza y no hay barra lateral abierta, Hermes detiene el borrador y te pide abrir la barra lateral o ejecutar en segundo plano.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

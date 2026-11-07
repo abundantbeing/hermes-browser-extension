@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "เปิดแถบด้านข้างก่อน (Ctrl+Shift+H หรือปุ่มในแถบเครื่องมือ) แล้วจึงร่าง",
+    "message": "เปิดแถบด้านข้างก่อน (Ctrl+Shift+H หรือปุ่มในแถบเครื่องมือ) แล้วจึงร่าง หรือเลือกรันในพื้นหลัง",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox อนุญาตให้ส่วนขยายเปิดแถบด้านข้างได้เฉพาะจากการกระทำของผู้ใช้ การคลิกที่ส่งจากหน้าไปยังตัวทำงานเบื้องหลังยังไม่ได้ทดสอบ และเมื่อ Firefox ปฏิเสธ Hermes จะเปิดแผงในหน้าต่างขนาดเล็กแทน",
+    "message": "Firefox อนุญาตให้ส่วนขยายเปิดแถบด้านข้างได้เฉพาะจากการกระทำของผู้ใช้ การคลิกที่ส่งจากหน้าไปยังตัวทำงานเบื้องหลังยังไม่ได้ทดสอบ และเมื่อ Firefox ปฏิเสธและไม่มีแถบด้านข้างเปิดอยู่ Hermes จะหยุดร่างและขอให้คุณเปิดแถบด้านข้างหรือรันในพื้นหลัง",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

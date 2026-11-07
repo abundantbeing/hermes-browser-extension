@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Najpierw otwórz pasek boczny (Ctrl+Shift+H lub przycisk na pasku narzędzi), a potem twórz szkic.",
+    "message": "Najpierw otwórz pasek boczny (Ctrl+Shift+H lub przycisk na pasku narzędzi), a potem twórz szkic. Albo wybierz Uruchom w tle.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox pozwala rozszerzeniu otworzyć pasek boczny tylko w wyniku działania użytkownika. Kliknięcie przekazywane ze strony do skryptu tła nie zostało sprawdzone. Gdy Firefox odmawia, Hermes otwiera panel w małym oknie.",
+    "message": "Firefox pozwala rozszerzeniu otworzyć pasek boczny tylko w wyniku działania użytkownika. Kliknięcie przekazywane ze strony do skryptu tła nie zostało sprawdzone. Gdy Firefox odmawia i pasek boczny nie jest otwarty, Hermes przerywa szkic i prosi o otwarcie paska bocznego lub uruchomienie w tle.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

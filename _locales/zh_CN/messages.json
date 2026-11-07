@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "请先打开侧边栏（Ctrl+Shift+H 或工具栏按钮），然后再起草。",
+    "message": "请先打开侧边栏（Ctrl+Shift+H 或工具栏按钮），然后再起草。或选择后台运行。",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox 只允许扩展在用户操作时打开其侧边栏。从页面转发到后台脚本的点击尚未测试；当 Firefox 拒绝时，Hermes 会改为在小窗口中打开面板。",
+    "message": "Firefox 只允许扩展在用户操作时打开其侧边栏。从页面转发到后台脚本的点击尚未测试；当 Firefox 拒绝且没有侧边栏打开时，Hermes 会停止草稿并要求你打开侧边栏或在后台运行。",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

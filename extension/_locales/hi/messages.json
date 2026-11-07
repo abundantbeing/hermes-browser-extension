@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "पहले साइड बार खोलें (Ctrl+Shift+H या टूलबार बटन), फिर ड्राफ़्ट बनाएँ।",
+    "message": "पहले साइड बार खोलें (Ctrl+Shift+H या टूलबार बटन), फिर ड्राफ़्ट बनाएँ। या पृष्ठभूमि में चलाएँ चुनें।",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox एक्सटेंशन को अपना साइडबार केवल उपयोगकर्ता की क्रिया से खोलने देता है। पेज से बैकग्राउंड वर्कर तक भेजे गए क्लिक का परीक्षण नहीं हुआ है, और जब Firefox मना करता है, तो Hermes पैनल को एक छोटी विंडो में खोलता है।",
+    "message": "Firefox एक्सटेंशन को अपना साइडबार केवल उपयोगकर्ता की क्रिया से खोलने देता है। पेज से बैकग्राउंड वर्कर तक भेजे गए क्लिक का परीक्षण नहीं हुआ है, और जब Firefox मना करता है और कोई साइडबार खुला नहीं होता, तो Hermes ड्राफ़्ट रोक देता है और आपसे साइडबार खोलने या पृष्ठभूमि में चलाने को कहता है।",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Open the sidebar first (Ctrl+Shift+H or the toolbar button), then draft.",
+    "message": "Open the sidebar first (Ctrl+Shift+H or the toolbar button), then draft. Or choose Run in background.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox lets an extension open its sidebar only from a user action. A click relayed from the page to the background worker has not been tested, and when Firefox refuses, Hermes opens the panel in a small window instead.",
+    "message": "Firefox lets an extension open its sidebar only from a user action. A click relayed from the page to the background worker has not been tested, and when Firefox refuses and no sidebar is open, Hermes stops the draft and asks you to open the sidebar or run in the background.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

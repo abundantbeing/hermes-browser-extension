@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Mở thanh bên trước (Ctrl+Shift+H hoặc nút trên thanh công cụ), rồi soạn bản nháp.",
+    "message": "Mở thanh bên trước (Ctrl+Shift+H hoặc nút trên thanh công cụ), rồi soạn bản nháp. Hoặc chọn Chạy trong nền.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox chỉ cho phép tiện ích mở thanh bên của nó khi có thao tác từ người dùng. Thao tác nhấp được chuyển từ trang đến trình nền chưa được kiểm thử; khi Firefox từ chối, Hermes mở bảng điều khiển trong một cửa sổ nhỏ.",
+    "message": "Firefox chỉ cho phép tiện ích mở thanh bên của nó khi có thao tác từ người dùng. Thao tác nhấp được chuyển từ trang đến trình nền chưa được kiểm thử; khi Firefox từ chối và không có thanh bên nào đang mở, Hermes dừng bản nháp và yêu cầu bạn mở thanh bên hoặc chạy trong nền.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

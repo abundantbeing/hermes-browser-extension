@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "افتح الشريط الجانبي أولًا (Ctrl+Shift+H أو زر شريط الأدوات)، ثم اكتب المسودة.",
+    "message": "افتح الشريط الجانبي أولًا (Ctrl+Shift+H أو زر شريط الأدوات)، ثم اكتب المسودة. أو اختر التشغيل في الخلفية.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "يسمح Firefox للإضافة بفتح شريطها الجانبي فقط عبر إجراء من المستخدم. لم يُختبر نقر يُمرَّر من الصفحة إلى عامل الخلفية، وعندما يرفض Firefox ذلك يفتح Hermes اللوحة في نافذة صغيرة بدلًا من ذلك.",
+    "message": "يسمح Firefox للإضافة بفتح شريطها الجانبي فقط عبر إجراء من المستخدم. لم يُختبر نقر يُمرَّر من الصفحة إلى عامل الخلفية، وعندما يرفض Firefox ذلك ولا يكون الشريط الجانبي مفتوحًا، يوقف Hermes المسودة ويطلب منك فتح الشريط الجانبي أو التشغيل في الخلفية.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

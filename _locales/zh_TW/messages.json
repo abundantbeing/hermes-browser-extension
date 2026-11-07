@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "請先開啟側邊欄（Ctrl+Shift+H 或工具列按鈕），再撰寫草稿。",
+    "message": "請先開啟側邊欄（Ctrl+Shift+H 或工具列按鈕），再撰寫草稿。或選擇在背景執行。",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox 只允許擴充功能在使用者操作時開啟其側邊欄。從頁面轉送到背景工作程序的點按尚未測試；當 Firefox 拒絕時，Hermes 會改在小視窗中開啟面板。",
+    "message": "Firefox 只允許擴充功能在使用者操作時開啟其側邊欄。從頁面轉送到背景工作程序的點按尚未測試；當 Firefox 拒絕且沒有側邊欄開啟時，Hermes 會停止草稿並請你開啟側邊欄或在背景執行。",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

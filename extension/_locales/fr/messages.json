@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Ouvrez d’abord la barre latérale (Ctrl+Shift+H ou le bouton de la barre d’outils), puis rédigez.",
+    "message": "Ouvrez d’abord la barre latérale (Ctrl+Shift+H ou le bouton de la barre d’outils), puis rédigez. Ou choisissez Exécuter en arrière-plan.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox n’autorise une extension à ouvrir sa barre latérale que depuis une action de l’utilisateur. Un clic transmis de la page au processus d’arrière-plan n’a pas été testé ; quand Firefox refuse, Hermes ouvre le panneau dans une petite fenêtre.",
+    "message": "Firefox n’autorise une extension à ouvrir sa barre latérale que depuis une action de l’utilisateur. Un clic transmis de la page au processus d’arrière-plan n’a pas été testé ; quand Firefox refuse et qu’aucune barre latérale n’est ouverte, Hermes arrête le brouillon et vous demande d’ouvrir la barre latérale ou d’exécuter en arrière-plan.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

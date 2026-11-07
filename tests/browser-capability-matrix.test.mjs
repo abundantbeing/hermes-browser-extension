@@ -141,7 +141,7 @@ const ANCHORS = Object.freeze({
   'side-panel.per-tab': [['extension/sidepanel.js', /function panelUsesWindowSidebar/]],
   'side-panel.wake-word': [['extension/lib/wake-background.mjs', /tryNativeWake/]],
   'side-panel.dictation': [['extension/sidepanel.js', /function speechRecognitionConstructor/]],
-  'assist.panel-route': [['extension/background.js', /await openHermesPanel\(tab/], ['extension/background.js', /openHermesPanelFallback/]],
+  'assist.panel-route': [['extension/background.js', /handOffInlineDraftToSidePanel/], ['extension/background.js', /openAssistSidePanelFromGesture/]],
   'assist.field-drafts': [['extension/content-inline-helper.js', /HermesInlineDraft/]],
   'assist.write-back': [['extension/content-extractor.js', /function writeEditableText/]],
   'assist.background-drafts': [['extension/background.js', /runInlineDraftInServiceWorker/]],

@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Öffne zuerst die Seitenleiste (Ctrl+Shift+H oder die Schaltfläche in der Symbolleiste), und schreibe dann den Entwurf.",
+    "message": "Öffne zuerst die Seitenleiste (Ctrl+Shift+H oder die Schaltfläche in der Symbolleiste), und schreibe dann den Entwurf. Oder wähle Im Hintergrund ausführen.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox erlaubt einer Erweiterung, ihre Seitenleiste nur aus einer Nutzeraktion heraus zu öffnen. Ein Klick, der von der Seite an den Hintergrundprozess weitergeleitet wird, ist nicht getestet, und lehnt Firefox ihn ab, öffnet Hermes das Panel stattdessen in einem kleinen Fenster.",
+    "message": "Firefox erlaubt einer Erweiterung, ihre Seitenleiste nur aus einer Nutzeraktion heraus zu öffnen. Ein Klick, der von der Seite an den Hintergrundprozess weitergeleitet wird, ist nicht getestet, und lehnt Firefox ab und ist keine Seitenleiste geöffnet, beendet Hermes den Entwurf und bittet dich, die Seitenleiste zu öffnen oder im Hintergrund auszuführen.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

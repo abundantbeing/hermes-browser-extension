@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Сначала откройте боковую панель Firefox (Ctrl+Shift+H или кнопка на панели инструментов), затем создайте черновик.",
+    "message": "Сначала откройте боковую панель (Ctrl+Shift+H или кнопка на панели инструментов), затем создайте черновик. Или выберите Выполнить в фоне.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox позволяет расширению открыть боковую панель только по действию пользователя. Передача клика со страницы фоновому скрипту не проверена. Когда Firefox отказывает, Hermes открывает панель в небольшом окне.",
+    "message": "Firefox позволяет расширению открыть боковую панель только по действию пользователя. Передача клика со страницы фоновому скрипту не проверена. Когда Firefox отказывает и боковая панель не открыта, Hermes останавливает черновик и просит открыть боковую панель или выполнить в фоне.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

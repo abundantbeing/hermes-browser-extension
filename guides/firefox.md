@@ -43,7 +43,7 @@ The tables below are generated from `extension/lib/browser-capability-matrix.mjs
 | --- | --- | --- | --- | --- | --- |
 | Assist circle and drafts in page fields | Supported | Supported | The same content script, declared for Firefox too; its draft host appears next to a focused field. | Extension code | - |
 | Writing a reviewed draft into the field | Supported | Supported † | Same code as Chromium: you review the draft first; editors that manage their own text get a preview and Copy. | Extension code | - |
-| Assist drafts that open the side panel | Supported | Experimental † | Firefox lets an extension open its sidebar only from a user action. A click relayed from the page to the background worker has not been tested, and when Firefox refuses, Hermes opens the panel in a small window instead. | Browser API | Open the sidebar first (Ctrl+Shift+H or the toolbar button), then draft. |
+| Assist drafts that open the side panel | Supported | Experimental † | Firefox lets an extension open its sidebar only from a user action. A click relayed from the page to the background worker has not been tested, and when Firefox refuses and no sidebar is open, Hermes stops the draft and asks you to open the sidebar or run in the background. | Browser API | Open the sidebar first (Ctrl+Shift+H or the toolbar button), then draft. Or choose Run in background. |
 | Drafts that need no open panel | Supported | Supported † | Same code as Chromium: the background worker asks your gateway for the draft. | Gateway | - |
 
 ### Hermes Web (full tab)
@@ -51,7 +51,7 @@ The tables below are generated from `extension/lib/browser-capability-matrix.mjs
 | Feature | Chromium | Firefox | Why on Firefox | Decided by | Instead |
 | --- | --- | --- | --- | --- | --- |
 | Open Hermes Web from the panel | Supported | Supported † | Same code as Chromium: opens the Webapp your gateway serves, in a normal tab. | Gateway | - |
-| Signed-in Hermes Web launch | Supported | Supported † | Same code as Chromium: a one-use sign-in from a gateway with the pairing routes; otherwise run hermes webapp once. | Gateway | - |
+| Signed-in Hermes Web launch | Supported | Supported † | Same code as Chromium: one-use sign-in only on loopback with pairing routes (otherwise run hermes webapp once on this computer); a remote Web address uses account sign-in instead. | Gateway | - |
 | The extension chat in a full tab | Unavailable | Unavailable | The full-page chat view was retired; the sidebar is the supported surface. | Not offered by the extension | Use Hermes Web for a full page. |
 
 ### Hermes Control (acting in tabs you attach)

@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Open eerst de zijbalk (Ctrl+Shift+H of de werkbalkknop) en schrijf dan het concept.",
+    "message": "Open eerst de zijbalk (Ctrl+Shift+H of de werkbalkknop) en schrijf dan het concept. Of kies Uitvoeren op de achtergrond.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox laat een extensie de zijbalk alleen openen vanuit een actie van de gebruiker. Een klik die van de pagina naar de achtergrondwerker wordt doorgegeven, is niet getest. Als Firefox weigert, opent Hermes het paneel in plaats daarvan in een klein venster.",
+    "message": "Firefox laat een extensie de zijbalk alleen openen vanuit een actie van de gebruiker. Een klik die van de pagina naar de achtergrondwerker wordt doorgegeven, is niet getest. Als Firefox weigert en er is geen zijbalk open, stopt Hermes het concept en vraagt je de zijbalk te openen of op de achtergrond uit te voeren.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

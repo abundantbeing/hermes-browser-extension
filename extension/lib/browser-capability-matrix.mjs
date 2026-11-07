@@ -175,8 +175,8 @@ export const BROWSER_CAPABILITY_ROWS = Object.freeze([
     cell(
       S.EXPERIMENTAL,
       C.BROWSER_API,
-      'Firefox lets an extension open its sidebar only from a user action. A click relayed from the page to the background worker has not been tested, and when Firefox refuses, Hermes opens the panel in a small window instead.',
-      'Open the sidebar first (Ctrl+Shift+H or the toolbar button), then draft.',
+      'Firefox lets an extension open its sidebar only from a user action. A click relayed from the page to the background worker has not been tested, and when Firefox refuses and no sidebar is open, Hermes stops the draft and asks you to open the sidebar or run in the background.',
+      'Open the sidebar first (Ctrl+Shift+H or the toolbar button), then draft. Or choose Run in background.',
       K.UNCHECKED,
     ),
   ),
@@ -198,8 +198,18 @@ export const BROWSER_CAPABILITY_ROWS = Object.freeze([
     'web.sign-in',
     'web',
     'Signed-in Hermes Web launch',
-    cell(S.SUPPORTED, C.GATEWAY, 'A gateway with the extension pairing routes mints a one-use sign-in; on any other gateway run hermes webapp once.'),
-    cell(S.SUPPORTED, C.GATEWAY, 'Same code as Chromium: a one-use sign-in from a gateway with the pairing routes; otherwise run hermes webapp once.', '', K.UNCHECKED),
+    cell(
+      S.SUPPORTED,
+      C.GATEWAY,
+      'On this computer, a loopback Hermes Web address on a gateway with the extension pairing routes mints a one-use sign-in; otherwise run hermes webapp once. A remote Web address opens with account sign-in instead; neither automatic sign-in nor hermes webapp applies there.',
+    ),
+    cell(
+      S.SUPPORTED,
+      C.GATEWAY,
+      'Same code as Chromium: one-use sign-in only on loopback with pairing routes (otherwise run hermes webapp once on this computer); a remote Web address uses account sign-in instead.',
+      '',
+      K.UNCHECKED,
+    ),
   ),
   row(
     'web.full-tab',

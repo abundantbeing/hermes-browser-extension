@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "Önce kenar çubuğunu açın (Ctrl+Shift+H veya araç çubuğu düğmesi), sonra taslak hazırlayın.",
+    "message": "Önce kenar çubuğunu açın (Ctrl+Shift+H veya araç çubuğu düğmesi), sonra taslak hazırlayın. Ya da Arka planda çalıştır seçeneğini seçin.",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox, bir eklentinin kenar çubuğunu yalnızca kullanıcı eylemiyle açmasına izin verir. Sayfadan arka plan çalışanına iletilen bir tıklama henüz denenmedi; Firefox reddettiğinde Hermes paneli bunun yerine küçük bir pencerede açar.",
+    "message": "Firefox, bir eklentinin kenar çubuğunu yalnızca kullanıcı eylemiyle açmasına izin verir. Sayfadan arka plan çalışanına iletilen bir tıklama henüz denenmedi; Firefox reddettiğinde ve açık bir kenar çubuğu yoksa Hermes taslağı durdurur ve kenar çubuğunu açmanızı veya arka planda çalıştırmanızı ister.",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {

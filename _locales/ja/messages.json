@@ -1320,7 +1320,7 @@
     "description": "Runtime interface message browser_control.waiting_title"
   },
   "runtime_browser_limits_assist_panel_route_instead": {
-    "message": "先にサイドバーを開き（Ctrl+Shift+H またはツールバーのボタン）、それから下書きしてください。",
+    "message": "先にサイドバーを開き（Ctrl+Shift+H またはツールバーのボタン）、それから下書きしてください。またはバックグラウンドで実行を選んでください。",
     "description": "Runtime interface message browser_limits.assist_panel_route.instead"
   },
   "runtime_browser_limits_assist_panel_route_label": {
@@ -1328,7 +1328,7 @@
     "description": "Runtime interface message browser_limits.assist_panel_route.label"
   },
   "runtime_browser_limits_assist_panel_route_reason": {
-    "message": "Firefox では、拡張機能がサイドバーを開けるのはユーザー操作からのみです。ページからバックグラウンドワーカーへ中継されたクリックは未検証で、Firefox が拒否した場合は Hermes が代わりに小さなウィンドウでパネルを開きます。",
+    "message": "Firefox では、拡張機能がサイドバーを開けるのはユーザー操作からのみです。ページからバックグラウンドワーカーへ中継されたクリックは未検証で、Firefox が拒否しサイドバーが開いていない場合、Hermes は下書きを停止し、サイドバーを開くかバックグラウンドで実行するよう求めます。",
     "description": "Runtime interface message browser_limits.assist_panel_route.reason"
   },
   "runtime_browser_limits_control_batch_instead": {
