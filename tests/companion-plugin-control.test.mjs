@@ -236,6 +236,73 @@ print(json.dumps(seen))
   assert.deepEqual(data.none, [20, 20]);
 });
 
+test('a second plugin load reuses the same broker, classes and route versus tool wiring', () => {
+  const out = runPython(`
+import importlib.util, json, pathlib, sys, types
+
+root = pathlib.Path.cwd() / "companion-plugin"
+if "hermes_plugins" not in sys.modules:
+    ns = types.ModuleType("hermes_plugins")
+    ns.__path__ = []
+    sys.modules["hermes_plugins"] = ns
+
+def evict(prefix):
+    for name in list(sys.modules):
+        if name == prefix or name.startswith(prefix + "."):
+            sys.modules.pop(name, None)
+
+def load_broker(module_name):
+    spec = importlib.util.spec_from_file_location(
+        module_name, root / "control_broker.py", submodule_search_locations=[str(root)])
+    mod = importlib.util.module_from_spec(spec)
+    mod.__package__ = module_name.rpartition(".")[0]
+    sys.modules[module_name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+FIRST = "hermes_plugins.hermes_browser_extension.control_broker"
+SECOND = "hermes_plugins.hermes_browser_extension_reloaded.control_broker"
+broker_first = load_broker(FIRST)
+route_broker = broker_first.get_control_broker()
+scope = broker_first.ControllerScope(
+    principal_id="p", profile_id="default", session_id="sess-A", controller_id="c",
+    browser_profile_id="b", transport_family="local-api", capabilities=frozenset({"controller.noop"}))
+route_broker.attach(scope, lambda frame: None, owner=object())
+attached_before = len(route_broker.lane_scopes(profile_id="default", session_id="sess-A"))
+
+evict("hermes_plugins.hermes_browser_extension")
+broker_second = load_broker(SECOND)
+tool_broker = broker_second.get_control_broker()
+route_seen = len(route_broker.lane_scopes(profile_id="default", session_id="sess-A"))
+tool_seen = len(tool_broker.lane_scopes(profile_id="default", session_id="sess-A"))
+
+try:
+    raise broker_first.ControllerUnavailable("probe")
+except broker_second.ControllerUnavailable:
+    exception_caught = True
+except Exception:
+    exception_caught = False
+
+print(json.dumps({
+    "same_broker": route_broker is tool_broker,
+    "same_exception_class": broker_first.ControllerUnavailable is broker_second.ControllerUnavailable,
+    "exception_caught": exception_caught,
+    "attached_before": attached_before,
+    "route_seen": route_seen,
+    "tool_seen": tool_seen,
+    "register_wiring_matches": route_broker is tool_broker,
+}))
+`);
+  const data = JSON.parse(out);
+  assert.equal(data.same_broker, true);
+  assert.equal(data.same_exception_class, true);
+  assert.equal(data.exception_caught, true);
+  assert.equal(data.attached_before, 1);
+  assert.equal(data.route_seen, 1);
+  assert.equal(data.tool_seen, 1);
+  assert.equal(data.register_wiring_matches, true);
+});
+
 test("attaching or detaching a browser never touches Hermes' tool list mid-conversation", () => {
   const out = runPython(`${PRELUDE}
 import types

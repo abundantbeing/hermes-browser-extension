@@ -31,11 +31,14 @@ and any feature flag. The plugin being enabled for a profile is the switch.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import secrets
+import sys
 import threading
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
@@ -652,7 +655,7 @@ _BROKER_LOCK = threading.RLock()
 
 
 def get_control_broker(profile: str | None = None) -> ControlBroker:
-    """Broker for the named profile (``default`` when omitted)."""
+    """Broker for the named profile (``default`` when omitted), process-wide."""
     key = str(profile or "default").strip() or "default"
     with _BROKER_LOCK:
         broker = _BROKERS.get(key)
@@ -660,3 +663,23 @@ def get_control_broker(profile: str | None = None) -> ControlBroker:
             broker = ControlBroker()
             _BROKERS[key] = broker
         return broker
+
+
+def iter_control_brokers() -> tuple[ControlBroker, ...]:
+    """Every profile broker (ticket consumption across multiplex copies)."""
+    with _BROKER_LOCK:
+        return tuple(_BROKERS.values())
+
+
+# Hermes's directory-plugin loader evicts ``hermes_plugins.<slug>.*`` and
+# re-executes the package on each load. Adopt one canonical module object so
+# routes and tab_* tools share ``_BROKERS`` and exception class identities.
+_SHARED_MODULE_KEY = "_hermes_browser_extension_shared_control_broker"
+_SOURCE_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+_shared_mod = sys.modules.get(_SHARED_MODULE_KEY)
+if _shared_mod is not None and getattr(_shared_mod, "_SOURCE_DIGEST", None) == _SOURCE_DIGEST:
+    globals().update({name: value for name, value in vars(_shared_mod).items() if not name.startswith("__")})
+else:
+    sys.modules[_SHARED_MODULE_KEY] = sys.modules[__name__]
+del _shared_mod
