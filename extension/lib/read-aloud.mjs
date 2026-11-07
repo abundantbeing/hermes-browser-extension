@@ -249,7 +249,7 @@ export function voiceRouteSummary({ gatewayAvailable = false, browserAvailable =
 /** Names a reply so its button state survives the transcript being drawn again. */
 export function readAloudKey(record) {
   const content = String(record?.content ?? '');
-  return `${record?.rowId ?? ''}:${record?.ts ?? ''}:${content.length}:${content.slice(0, 48)}`;
+  return `${content.length}:${content.slice(0, 48)}`;
 }
 
 // ---- Audio from the gateway ---------------------------------------------------------
@@ -502,7 +502,6 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
       const made = await Promise.race([upcoming, cancelled]);
       if (!live()) return { stale: true };
       if (made.error) return { failedAt: index, error: made.error };
-      if (index + 1 < chunks.length) upcoming = request(index + 1);
       let clip;
       try {
         clip = await gateway.play(made.audio, { isActive: live });
@@ -510,6 +509,7 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
       } catch (error) {
         return { failedAt: index, error };
       }
+      if (index + 1 < chunks.length) upcoming = request(index + 1);
       if (!live()) { clip.stop(); return { stale: true }; }
       current = clip;
       if (state.status !== READ_ALOUD_STATUS.speaking) set({ status: READ_ALOUD_STATUS.speaking, route: READ_ALOUD_ROUTES.gateway });
