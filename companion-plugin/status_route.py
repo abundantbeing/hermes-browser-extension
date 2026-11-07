@@ -37,6 +37,8 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
+from .multiplex_routes import add_get_listener_routes, documented_listener_paths
+
 logger = logging.getLogger(__name__)
 
 PLUGIN_NAME = "hermes-browser-extension"
@@ -161,15 +163,14 @@ def register_status_route(
         profile=profile,
         tools=tools,
         hooks=hooks,
-        routes=routes,
+        routes=documented_listener_paths(routes),
     )
 
     def wire(native, adapter) -> None:
         router = getattr(native, "router", None)
-        add_get = getattr(router, "add_get", None)
-        if not callable(add_get):
+        if router is None:
             return
-        add_get(ROUTE_PATH, make_handler(adapter, payload))
+        add_get_listener_routes(router, ROUTE_PATH, make_handler(adapter, payload))
         # One factory wires every route: Hermes keys factories by plugin and
         # qualified name, so a second closure of this shape would be skipped.
         if callable(wire_extra):

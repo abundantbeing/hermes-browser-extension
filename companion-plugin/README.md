@@ -34,9 +34,11 @@ Things to know:
 
 - **Named profiles (bots).** Each profile needs the plugin enabled and its own
   `API_SERVER_KEY`. On a gateway that serves several profiles at one address,
-  Hermes Control reaches a named profile's copy of the plugin only on a Hermes
-  that routes plugin calls per profile (`/p/<profile>/api/plugins/...`); until
-  then it works for the default profile.
+  the plugin registers its status, browser-context and Hermes Control routes on
+  the listener under `/p/<profile>/api/plugins/...` as well as the plain paths
+  (Hermes mirrors its own API routes that way; the plugin does the same for its
+  routes). The listener-scoped bot roster stays on the plain path only. The
+  default profile keeps the plain addresses.
 - **Hermes Cloud and dashboard connections** are chat-only in the extension, so
   they do not use this plugin.
 - **One browser per chat.** Hermes Control drives the browser that attached the

@@ -146,16 +146,24 @@ print(json.dumps(asyncio.run(main())))
   for (const name of ['status', 'upload', 'actions']) assert.deepEqual(data[name], [401, 401], name);
   assert.deepEqual(data.raising, [401, 401, 401]);
   assert.deepEqual(data.nocheck, [401, 401, 401]);
-  assert.deepEqual(data.listed, [
+  const mirror = (path) => `/p/{profile}${path}`;
+  const multiplexed = [
     '/api/plugins/hermes-browser-extension/actions',
     '/api/plugins/hermes-browser-extension/context',
     '/api/plugins/hermes-browser-extension/context/status',
     '/api/plugins/hermes-browser-extension/control/register',
     '/api/plugins/hermes-browser-extension/control/ws',
+    '/api/plugins/hermes-browser-extension/status',
+    mirror('/api/plugins/hermes-browser-extension/actions'),
+    mirror('/api/plugins/hermes-browser-extension/context'),
+    mirror('/api/plugins/hermes-browser-extension/context/status'),
+    mirror('/api/plugins/hermes-browser-extension/control/register'),
+    mirror('/api/plugins/hermes-browser-extension/control/ws'),
+    mirror('/api/plugins/hermes-browser-extension/status'),
     '/api/plugins/hermes-browser-extension/profiles',
     '/api/plugins/hermes-browser-extension/profiles/{name}/avatar',
-    '/api/plugins/hermes-browser-extension/status',
-  ]);
+  ].sort();
+  assert.deepEqual([...data.listed].sort(), multiplexed);
 });
 
 test('an upload is validated by the hook parser, parked for its session, and answered with metadata only', () => {

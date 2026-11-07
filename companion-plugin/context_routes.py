@@ -34,6 +34,7 @@ from typing import Any, Callable, Iterable
 
 from . import actions as action_catalog
 from .protocol import BrowserContextEnvelope
+from .multiplex_routes import add_get_listener_routes, add_post_listener_routes
 from .status_route import (
     ACTIONS_PATH,
     CONTEXT_STATUS_PATH,
@@ -189,13 +190,9 @@ def make_wire_extra(store: Any, *, version: str) -> Callable[[Any, Any], None]:
     actions_payload = build_actions_payload(version=version)
 
     def wire_extra(router: Any, adapter: Any) -> None:
-        add_get = getattr(router, "add_get", None)
-        add_post = getattr(router, "add_post", None)
-        if callable(add_get):
-            add_get(CONTEXT_STATUS_PATH, make_status_handler(adapter, store))
-            add_get(ACTIONS_PATH, make_actions_handler(adapter, actions_payload))
-        if callable(add_post):
-            add_post(CONTEXT_UPLOAD_PATH, make_upload_handler(adapter, store))
+        add_get_listener_routes(router, CONTEXT_STATUS_PATH, make_status_handler(adapter, store))
+        add_get_listener_routes(router, ACTIONS_PATH, make_actions_handler(adapter, actions_payload))
+        add_post_listener_routes(router, CONTEXT_UPLOAD_PATH, make_upload_handler(adapter, store))
 
     return wire_extra
 

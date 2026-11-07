@@ -48,6 +48,7 @@ from .control_broker import (
     filter_capabilities,
     protocol_supported,
 )
+from .multiplex_routes import add_get_listener_routes, add_post_listener_routes
 from .status_route import BASE_PATH, authorize
 
 logger = logging.getLogger(__name__)
@@ -318,11 +319,9 @@ def make_wire_extra(broker: ControlBroker, *, profile: str) -> Callable[[Any, An
     """The ``wire_extra`` hook for status_route.register_status_route()."""
 
     def wire_extra(router: Any, adapter: Any) -> None:
-        add_get = getattr(router, "add_get", None)
-        add_post = getattr(router, "add_post", None)
-        if callable(add_post):
-            add_post(CONTROL_REGISTER_PATH, make_register_handler(adapter, broker, profile=profile))
-        if callable(add_get):
-            add_get(CONTROL_WS_PATH, make_ws_handler(broker))
+        add_post_listener_routes(
+            router, CONTROL_REGISTER_PATH, make_register_handler(adapter, broker, profile=profile)
+        )
+        add_get_listener_routes(router, CONTROL_WS_PATH, make_ws_handler(broker))
 
     return wire_extra
