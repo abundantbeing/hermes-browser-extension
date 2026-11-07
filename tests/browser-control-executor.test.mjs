@@ -527,3 +527,52 @@ test('a screenshot the adapter withheld keeps its code: not_active_tab and restr
     assert.equal(result.error.code, code);
   }
 });
+
+test('an action the browser cannot do says why and what it can do instead, so it is never a silent refusal', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const { controllerAdapterContractFor } = await import('../extension/lib/browser-controller-adapter.mjs');
+  const contract = controllerAdapterContractFor({
+    product: { id: 'firefox', engine: 'gecko' },
+    capabilities: { apis: { scripting: true, tabs: true } },
+    controlEnabled: true,
+  });
+  let calls = 0;
+  const executor = createBrowserControlExecutor({
+    adapter: { contract, execute: async () => { calls += 1; return {}; } },
+    approvals: createBrowserControlApprovalStore(),
+    refs: createBrowserControlRefStore(),
+  });
+  const click = await executor.execute(frame('browser_click', { ref: '@e1' }), { scope });
+  assert.equal(click.error.code, 'unsupported_action');
+  assert.match(click.error.message, /browser_click is not available in this browser/);
+  assert.match(click.error.message, /trusted input/i);
+  assert.match(click.error.message, /browser_snapshot/);
+  assert.match(click.error.message, /browser_navigate/);
+  assert.match(click.error.message, /ask the person to do this step/i);
+  const group = await executor.execute(frame('browser_tab_group', { tab_ids: [7] }), { scope });
+  assert.match(group.error.message, /browser_tab_group is not available in this browser/);
+  assert.match(group.error.message, /does not offer it/i);
+  const unknown = await executor.execute(frame('browser_evaluate', { expression: '1' }), { scope });
+  assert.equal(unknown.error.code, 'unsupported_action');
+  assert.doesNotMatch(unknown.error.message, /trusted input/i, 'an unknown action is not blamed on trusted input');
+  assert.equal(calls, 0);
+});
+
+test('a batch step the browser cannot do is named with its reason before anything runs', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const { controllerAdapterContractFor } = await import('../extension/lib/browser-controller-adapter.mjs');
+  const contract = controllerAdapterContractFor({
+    product: { id: 'firefox', engine: 'gecko' },
+    capabilities: { apis: { scripting: true, tabs: true } },
+    controlEnabled: true,
+  });
+  const executor = createBrowserControlExecutor({
+    adapter: { contract: { ...contract, actions: [...contract.actions, 'browser_batch'] }, execute: async () => ({}) },
+    approvals: createBrowserControlApprovalStore(),
+    refs: createBrowserControlRefStore(),
+  });
+  const batch = await executor.execute(frame('browser_batch', { actions: [{ action: 'browser_scroll', direction: 'down' }, { action: 'browser_click', ref: '@e1' }] }), { scope });
+  assert.equal(batch.error.code, 'unsupported_action');
+  assert.match(batch.error.message, /Step 2: browser_click is not available in this browser/);
+  assert.match(batch.error.message, /trusted input/i);
+});

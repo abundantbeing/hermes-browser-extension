@@ -397,6 +397,11 @@ class ControlBroker:
         controller = self._live_controller(scope)
         return controller if controller is not None and capability in controller.scope.capabilities else None
 
+    def offered_capabilities(self, scope: ControllerScope) -> Optional[frozenset]:
+        """What the live controller for ``scope`` offers, or ``None`` when it is offline or absent."""
+        controller = self._live_controller(scope)
+        return None if controller is None else controller.scope.capabilities
+
     def is_owner(self, scope: ControllerScope, owner: Any) -> bool:
         """Whether ``owner`` is the exact live transport for ``scope`` (capability-independent)."""
         controller = self._live_controller(scope)
@@ -672,9 +677,20 @@ def iter_control_brokers() -> tuple[ControlBroker, ...]:
 
 
 # Hermes's directory-plugin loader evicts ``hermes_plugins.<slug>.*`` and
-# re-executes the package on each load. Adopt one canonical module object so
+# re-executes the package on each load (``hermes_cli/plugins_loader.py``).
+# Adopt one canonical module object under a key the loader never evicts so
 # routes and tab_* tools share ``_BROKERS`` and exception class identities.
-_SHARED_MODULE_KEY = "_hermes_browser_extension_shared_control_broker"
+# The key is scoped to one Hermes home (the plugin slug, including ``__home_…``)
+# so two homes in one process never share per-profile brokers.
+def _plugin_home_scope() -> str:
+    """The Hermes-home slice of this load's plugin package name."""
+    package = __package__ or ""
+    if package.startswith("hermes_plugins."):
+        return package.split(".", 1)[1]
+    return package or __name__.rpartition(".")[0] or "default"
+
+
+_SHARED_MODULE_KEY = f"_hermes_browser_extension_shared_control_broker.{_plugin_home_scope()}"
 _SOURCE_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 _shared_mod = sys.modules.get(_SHARED_MODULE_KEY)

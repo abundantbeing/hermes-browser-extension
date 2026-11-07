@@ -1319,6 +1319,162 @@
     "message": "Wacht op deze chat",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "Open eerst de zijbalk (Ctrl+Shift+H of de werkbalkknop) en schrijf dan het concept. Of kies Uitvoeren op de achtergrond.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "Assist-concepten die het zijpaneel openen",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox laat een extensie de zijbalk alleen openen vanuit een actie van de gebruiker. Een klik die van de pagina naar de achtergrondwerker wordt doorgegeven, is niet getest. Als Firefox weigert en er is geen zijbalk open, stopt Hermes het concept en vraagt je de zijbalk te openen of op de achtergrond uit te voeren.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes voert de stappen één voor één uit.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: actiebatches",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "De Firefox-adapter biedt nog geen batches, en de meeste stappen in een batch (klikken, typen) zijn daar sowieso niet beschikbaar.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "Open de pagina met het frame in een eigen tabblad.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: besturing binnen frames",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "Frame-besturing vereist de debugger-API, die Firefox niet heeft. De paginatekst die Hermes leest, laat frames weg.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Herhaal scrollen voor grotere bewegingen, of vraag de gebruiker handmatig te scrollen.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: navigeren, terug en scrollen",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Firefox-scrolloproepen verplaatsen de pagina over een vaste afstand en negeren het hoeveelheid-argument dat Chromium eerbetoon geeft.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes kan de pagina lezen en adressen openen; doe de klik of het typen zelf, of gebruik voor deze taak een Chromium-browser.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: klikken, typen en toetsaanslagen",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox heeft geen debugger-API, dus een extensie kan geen vertrouwde klikken, typen of toetsaanslagen sturen. Hermes imiteert die ook niet met paginagebeurtenissen.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Vraag Hermes om met de paginatekst te werken; kopieer alles binnen een frame naar de chat.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: de pagina lezen",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox heeft geen toegankelijkheidsboom voor extensies. Hermes leest de tekst van de bovenste pagina en de lijst met bedieningselementen via een content script, en niets binnen frames.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "Klik in Instellingen op Schermafbeeldingen in Firefox toestaan, of laat Hermes de paginatekst lezen.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: schermafbeeldingen",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox staat een opname alleen toe met toegang tot alle sites. Die toegang is optioneel en wordt via een klik gevraagd. Alleen het hele zichtbare tabblad kan worden vastgelegd, en het moet het tabblad zijn dat het venster toont.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes opent en sluit zijn eigen tabbladen nog steeds; ze worden alleen niet gegroepeerd.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: tabbladgroepen",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox heeft de tabs.group-aanroep, maar de Firefox-adapter biedt groeperen nog niet aan.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "In plaats daarvan: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "Typ in plaats daarvan, of schakel audiotranscriptie in op je Hermes-gateway.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "Spraakdictatie in het invoerveld",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox heeft geen spraakherkenning in de browser, dus dicteren werkt alleen via de eigen transcriptie van Hermes (een gateway met audiotranscriptie, of het dashboard op deze computer).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "De zijbalk blijft open over tabbladen heen; de werkbalkknop sluit hem.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "Zijpaneel gekoppeld aan één tabblad",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox houdt een add-on-zijbalk open op elk tabblad van het venster. Als er per tabblad een paneel komt, wordt die opnieuw geladen en worden lopende chats beëindigd.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Maak verbinding met een lokale gateway om Hermes Wake te gebruiken, of start de chat vanuit het paneel.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "Wake-word in het zijpaneel",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox heeft geen offscreen-documenten, dus de lokale listener kan niet draaien. Hermes' eigen wake-engine draait alleen op een lokale gateway op deze computer, niet op remote- of cloudverbindingen.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "Experimenteel",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "Beperkt",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "Niet beschikbaar",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Beperkt of niet beschikbaar in Firefox: {count}. Open het om te zien waarom en wat je in plaats daarvan kunt doen.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Firefox-beperkingen",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "Goedkeuringsgebeurtenissen",
     "description": "Runtime interface message capability.feature.approvalEvents"

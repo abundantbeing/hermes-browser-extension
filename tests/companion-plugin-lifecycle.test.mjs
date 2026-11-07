@@ -8,6 +8,9 @@ import {
   browserContextPayloadHash,
   serializeBrowserTurnEnvelope,
 } from '../extension/lib/browser-context-protocol.mjs';
+import { pythonExecutable } from './python-bin.mjs';
+
+const PY = pythonExecutable();
 
 // Lifecycle and identity contract for the companion plugin, exercised the way
 // the installed Hermes plugin runtime drives it: hooks receive trusted runtime
@@ -16,7 +19,7 @@ import {
 // runtime-injected kwargs next to the model-controlled args mapping.
 
 function runPluginPython(script, env = {}) {
-  const result = spawnSync(process.env.PYTHON || 'python', ['-c', script], {
+  const result = spawnSync(PY, ['-c', script], {
     cwd: process.cwd(),
     encoding: 'utf8',
     env: { ...process.env, ...env },

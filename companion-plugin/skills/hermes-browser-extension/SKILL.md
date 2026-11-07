@@ -102,6 +102,10 @@ in the turn envelope:
   using refs in it.
 - Several tabs can be worked in parallel, one call per tab. `tab_group`
   gathers the tabs you opened so the person can see them together.
+- Not every browser offers every tool. Firefox has no trusted input, so it
+  offers no clicks, typing or key presses; a tool the attached browser does not
+  offer answers `browser_unavailable` and names the tools it does offer. Use
+  one of those or ask the person to do the step; never retry the same tool.
 - Hover, drag and screenshots need the tab in front. In a background tab they
   fail with `tab_hidden`: ask the person to bring it forward (Show tab in the
   Hermes panel). `tab_activate` and `tab_close` ask the person first.

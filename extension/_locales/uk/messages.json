@@ -1319,6 +1319,162 @@
     "message": "Очікування цього чату",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "Спершу відкрийте бічну панель (Ctrl+Shift+H або кнопка на панелі інструментів), потім складіть чернетку. Або виберіть Виконати у фоні.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "Чернетки Assist, що відкривають бічну панель",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox дозволяє розширенню відкрити свою бічну панель лише з дії користувача. Передачу кліку зі сторінки фоновому процесу не перевіряли; коли Firefox відмовляє і бічна панель не відкрита, Hermes зупиняє чернетку й просить відкрити бічну панель або виконати у фоні.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes виконує кроки по одному.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: пакетні дії",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Адаптер Firefox ще не пропонує пакетні дії, а більшість кроків у пакеті (кліки, введення) там однаково недоступні.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "Відкрийте сторінку з фреймом в окремій вкладці.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: керування всередині фреймів",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "Керування фреймами потребує API налагоджувача, якого у Firefox немає; текст сторінки, який читає Hermes, не містить фреймів.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Повторіть прокрутку для більшого зміщення або попросіть користувача прокрутити вручну.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: перехід, назад і прокрутка",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Виклики прокрутки Firefox зсувають сторінку на фіксовану відстань і ігнорують аргумент amount, який враховує Chromium.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes може читати сторінку та відкривати адреси; виконайте клік або введення самі чи скористайтеся для цього завдання браузером Chromium.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: кліки, введення тексту та натискання клавіш",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "У Firefox немає API налагоджувача, тому розширення не може надсилати довірені кліки, введення чи натискання клавіш, а Hermes не імітує їх подіями сторінки.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Попросіть Hermes працювати з текстом сторінки; скопіюйте все з фрейму в чат.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: читання сторінки",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "У Firefox немає дерева доступності для розширень: Hermes читає верхній текст сторінки та список її елементів керування через скрипт вмісту, а всередині фреймів не читає нічого.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "Натисніть «Дозволити знімки екрана у Firefox» у налаштуваннях або попросіть Hermes прочитати текст сторінки.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: знімки екрана",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox дозволяє знімок лише за доступу до всіх сайтів; цей доступ необов'язковий і запитується кліком. Можна зняти лише всю видиму вкладку, і це має бути вкладка, яку показує вікно.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes усе одно відкриває та закриває власні вкладки; вони просто не згруповані.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: групи вкладок",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "У Firefox є виклик tabs.group, але адаптер Firefox ще не пропонує групування.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "Натомість: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "Вводьте текст вручну або увімкніть аудіотранскрипцію на шлюзі Hermes.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "Голосовий диктант у полі введення",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "У Firefox немає розпізнавання мовлення браузером, тому диктант працює лише через власну транскрипцію Hermes (шлюз з аудіотранскрипцією або Dashboard на цьому комп'ютері).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "Бічна панель доповнення лишається відкритою на всіх вкладках; кнопка на панелі інструментів закриває її.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "Бічна панель прив'язана до однієї вкладки",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox тримає бічну панель доповнення відкритою на кожній вкладці вікна, а панель для кожної вкладки перезавантажує її та завершує чати, що тривають.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Підключіться до локального шлюзу, щоб використовувати Hermes Wake, або розпочніть чат із панелі.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "Слово пробудження на бічній панелі",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "У Firefox немає позаекранних документів, тому локальний слухач не може працювати. Вбудований рушій пробудження Hermes працює лише на локальному шлюзі на цьому комп’ютері, а не на віддалених чи хмарних з’єднаннях.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "Експериментально",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "Обмежено",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "Недоступно",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Обмежено або недоступно у Firefox: {count}. Відкрийте, щоб дізнатися причину та що зробити натомість.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Обмеження Firefox",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "Події підтвердження",
     "description": "Runtime interface message capability.feature.approvalEvents"

@@ -325,7 +325,15 @@ def consume_control_ticket(value: str) -> tuple["ControlBroker", "ControllerScop
 
 
 # Directory-plugin reloads must not split the listener registry across module copies.
-_SHARED_MODULE_KEY = "_hermes_browser_extension_shared_profile_registry"
+def _plugin_home_scope() -> str:
+    """The Hermes-home slice of this load's plugin package name."""
+    package = __package__ or ""
+    if package.startswith("hermes_plugins."):
+        return package.split(".", 1)[1]
+    return package or __name__.rpartition(".")[0] or "default"
+
+
+_SHARED_MODULE_KEY = f"_hermes_browser_extension_shared_profile_registry.{_plugin_home_scope()}"
 _SOURCE_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 _shared_mod = sys.modules.get(_SHARED_MODULE_KEY)

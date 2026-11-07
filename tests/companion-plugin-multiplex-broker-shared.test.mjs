@@ -28,23 +28,27 @@ def evict(prefix):
         if name == prefix or name.startswith(prefix + "."):
             sys.modules.pop(name, None)
 
-def load_package(home_key, package):
+def load_package(module_name, *, home_package):
     spec = importlib.util.spec_from_file_location(
-        package, root / "__init__.py", submodule_search_locations=[str(root)])
+        module_name, root / "__init__.py", submodule_search_locations=[str(root)])
     mod = importlib.util.module_from_spec(spec)
-    mod.__package__ = package
-    sys.modules[package] = mod
+    mod.__package__ = home_package
+    sys.modules[module_name] = mod
     spec.loader.exec_module(mod)
-    broker = sys.modules[package + ".control_broker"]
-    routes = sys.modules[package + ".control_tools"]
-    registry = sys.modules[package + ".profile_registry"]
+    prefix = home_package if home_package in sys.modules else module_name
+    broker = sys.modules[f"{prefix}.control_broker"]
+    routes = sys.modules[f"{prefix}.control_tools"]
+    registry = sys.modules[f"{prefix}.profile_registry"]
     return mod, broker, routes, registry
 
-DEFAULT = "hermes_plugins.hermes_browser_extension"
-WORK = "hermes_plugins.hermes_browser_extension__home_work"
+HOME = "hermes_plugins.hermes_browser_extension"
+MODULE_DEFAULT = HOME
+MODULE_PROFILE_COPY = HOME + "__profile_work_copy"
+OTHER_HOME = "hermes_plugins.hermes_browser_extension__home_0123456789ab"
 
-mod_def, broker_def, tools_def, reg_def = load_package("default", DEFAULT)
-mod_work, broker_work, tools_work, reg_work = load_package("work", WORK)
+mod_def, broker_def, tools_def, reg_def = load_package(MODULE_DEFAULT, home_package=HOME)
+mod_work, broker_work, tools_work, reg_work = load_package(MODULE_PROFILE_COPY, home_package=HOME)
+mod_other, broker_other, _, _ = load_package(OTHER_HOME, home_package=OTHER_HOME)
 
 registry_def = reg_def
 registry_work = reg_work
@@ -63,16 +67,19 @@ attached = len(route_broker.lane_scopes(profile_id="work", session_id="sess-A"))
 tool_broker = tools_work._broker({"session_id": "sess-A", "profile_name": "work"})
 tool_seen = len(tool_broker.lane_scopes(profile_id="work", session_id="sess-A"))
 
-evict(WORK)
-_, broker_reload, tools_reload, _ = load_package("work", WORK + "_reloaded")
+evict(MODULE_PROFILE_COPY)
+_, broker_reload, tools_reload, _ = load_package(MODULE_PROFILE_COPY + "_reloaded", home_package=HOME)
 reloaded_tool_broker = tools_reload._broker({"session_id": "sess-A", "profile_name": "work"})
 reloaded_seen = len(reloaded_tool_broker.lane_scopes(profile_id="work", session_id="sess-A"))
+
+other_home_broker = broker_other.get_control_broker("work")
 
 print(json.dumps({
     "same_default_work_module_broker": route_broker is broker_work.get_control_broker("work"),
     "tool_sees_route": tool_seen == attached == 1,
     "reload_shares_broker": route_broker is reloaded_tool_broker,
     "reload_still_sees_controller": reloaded_seen == 1,
+    "homes_isolated": route_broker is not other_home_broker,
 }))
 `;
 
@@ -82,4 +89,5 @@ test('two profile module copies and a reload share the work profile ControlBroke
   assert.equal(data.tool_sees_route, true);
   assert.equal(data.reload_shares_broker, true);
   assert.equal(data.reload_still_sees_controller, true);
+  assert.equal(data.homes_isolated, true);
 });
