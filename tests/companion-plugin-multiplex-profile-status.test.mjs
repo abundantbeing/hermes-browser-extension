@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 
-// Regression for #159 round 2: mirrored plugin status must name the /p/<profile>/
-// listener profile, not the first profile that wired the shared factory (00f38685).
+// Regression for #159: mirrored plugin status must name /p/<profile>/ using the
+// profile scoped by Hermes middleware, not only the profile that wired routes.
 
 function runPython(script) {
   const result = spawnSync(process.env.PYTHON || 'python3', ['-c', script], {
@@ -25,7 +25,6 @@ module.__package__ = "probe_plugin"
 sys.modules["probe_plugin"] = module
 spec.loader.exec_module(module)
 registry = sys.modules["probe_plugin.profile_registry"]
-broker_mod = sys.modules["probe_plugin.control_broker"]
 
 class Adapter:
     def _check_auth(self, request):
@@ -46,11 +45,14 @@ class Ctx:
     def register_platform_handler(self, platform, factory):
         self.factories.append((platform, factory))
 
+# Real multiplex: only the default profile wires the shared api_server factory.
 wired = None
-for name in ("default", "work"):
-    ctx = Ctx(name)
-    module.register(ctx)
-    wired = ctx
+ctx = Ctx("default")
+module.register(ctx)
+wired = ctx
+
+registry.set_multiplex_test_profiles(["default", "work"])
+registry._companion_loaded_in_scope = lambda: True
 
 async def main():
     try:

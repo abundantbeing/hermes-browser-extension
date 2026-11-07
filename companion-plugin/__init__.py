@@ -180,7 +180,6 @@ def register(ctx) -> None:
     # authenticated by the API server's own check and wired by one factory;
     # skipped (never fatal) where Hermes refuses the seam. See status_route.py,
     # context_routes.py and control_routes.py.
-    profile_registry.set_wiring_profile(profile)
     status_route.register_status_route(
         ctx,
         tools=listed_tools,

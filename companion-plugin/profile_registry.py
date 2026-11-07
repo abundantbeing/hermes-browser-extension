@@ -1,9 +1,14 @@
 """Per-profile HTTP listener state for a multiplexed Hermes gateway.
 
-Hermes loads one plugin instance per profile home but wires
-``register_platform_handler`` factories only once on the shared api_server app.
-Those routes must dispatch to the profile named in ``/p/<profile>/``, using that
-profile's broker, context store and tool list — not the first profile that wired.
+Hermes mirrors native api_server routes at ``/p/{profile}/…`` on one shared aiohttp
+app. Plugin ``register_platform_handler`` factories run from the default profile's
+plugin manager at connect time, but each served profile has its own
+``PluginManager``, broker, and context store under ``HERMES_HOME`` (set by the
+profile-prefix middleware before handlers run).
+
+HTTP handlers resolve the named profile and materialize that profile's listener
+row from the active scoped plugin manager — they do not require an earlier
+``register()`` in the wiring profile alone.
 """
 from __future__ import annotations
 
@@ -17,7 +22,13 @@ from .context_store import BrowserContextStore
 if TYPE_CHECKING:
     from .control_broker import ControlBroker, ControllerScope
 
+_COMPANION_PLUGIN_ID = "hermes-browser-extension"
 _SAFE_NAME = re.compile(r"[^A-Za-z0-9_.-]+")
+_PATH_PREFIX = re.compile(r"^/p/([^/]+)(?:/|$)")
+_registry: dict[str, "ListenerProfile"] = {}
+_lock = threading.RLock()
+# Tests without Hermes may pin the served multiplex roster.
+_TEST_SERVED_PROFILES: Optional[frozenset[str]] = None
 
 
 def _label(value: Any, default: str) -> str:
@@ -29,10 +40,10 @@ def normalize_profile(profile: str) -> str:
     return _label(profile, "default")
 
 
-_PATH_PREFIX = re.compile(r"^/p/([^/]+)(?:/|$)")
-_wiring_profile = "default"
-_registry: dict[str, "ListenerProfile"] = {}
-_lock = threading.RLock()
+def set_multiplex_test_profiles(names: Optional[Iterable[str]]) -> None:
+    """Pin served profile names for harnesses (not used in production)."""
+    global _TEST_SERVED_PROFILES
+    _TEST_SERVED_PROFILES = None if names is None else frozenset(_label(n, "") for n in names if str(n or "").strip())
 
 
 @dataclass(frozen=True)
@@ -43,12 +54,6 @@ class ListenerProfile:
     tools: tuple[str, ...]
     hooks: tuple[str, ...]
     version: str
-
-
-def set_wiring_profile(profile: str) -> None:
-    global _wiring_profile
-    with _lock:
-        _wiring_profile = _label(profile, "default")
 
 
 def register_listener_profile(
@@ -105,11 +110,7 @@ def ensure_context_store(profile: str) -> BrowserContextStore:
 
 
 def resolve_turn_profile(kwargs: Any) -> str:
-    """Profile for the current agent turn (tool hooks, control tools).
-
-    Prefer an explicit ``profile_name`` when Hermes passes it; otherwise use
-    ``hermes_cli.profiles.current_profile_name()`` (HERMES_HOME override / env pin).
-    """
+    """Profile for the current agent turn (tool hooks, control tools)."""
     if isinstance(kwargs, dict):
         explicit = kwargs.get("profile_name")
         if isinstance(explicit, str) and explicit.strip():
@@ -122,17 +123,22 @@ def resolve_turn_profile(kwargs: Any) -> str:
             return _label(found.strip(), "default")
     except Exception:
         pass
-    with _lock:
-        return _wiring_profile
+    try:
+        from hermes_cli.profiles import get_active_profile_name
+
+        return _label(get_active_profile_name(), "default")
+    except Exception:
+        return "default"
 
 
 def store_for_turn(**kwargs: Any) -> Optional[BrowserContextStore]:
-    """The context store for this turn's profile, or ``None`` if the companion did not register there."""
+    """The context store for this turn's profile."""
     name = resolve_turn_profile(kwargs)
-    with _lock:
-        entry = _registry.get(name)
-        if entry is not None:
-            return entry.store
+    entry = get_listener_entry(name)
+    if entry is None or entry.broker is None:
+        entry = materialize_listener_profile(name)
+    if entry is not None:
+        return entry.store
     return None
 
 
@@ -151,6 +157,8 @@ def _profile_from_api_context() -> Optional[str]:
 
 
 def _profile_from_request_path(request: Any) -> str:
+    if request is None:
+        return ""
     match_info = getattr(request, "match_info", None)
     if match_info is not None:
         try:
@@ -171,14 +179,108 @@ def resolve_request_profile(request: Any) -> str:
     for candidate in (_profile_from_api_context(), _profile_from_request_path(request)):
         if candidate:
             return candidate
+    try:
+        from hermes_cli.profiles import get_active_profile_name
+
+        return _label(get_active_profile_name(), "default")
+    except Exception:
+        return "default"
+
+
+def _profile_home_matches(name: str, request: Optional[Any]) -> bool:
+    """True when the URL prefix or active ``HERMES_HOME`` is this profile."""
+    if request is not None and _profile_from_request_path(request) == name:
+        return True
+    try:
+        from hermes_cli.profiles import get_active_profile_name
+
+        return _label(get_active_profile_name(), "default") == name
+    except Exception:
+        return name == "default"
+
+
+def _profile_is_served(name: str) -> bool:
+    if _TEST_SERVED_PROFILES is not None:
+        return name in _TEST_SERVED_PROFILES
+    try:
+        from agent.secret_scope import is_multiplex_active
+    except Exception:
+        is_multiplex_active = lambda: False  # type: ignore[misc, assignment]
+    try:
+        if not is_multiplex_active():
+            return name == "default"
+        from hermes_cli.profiles import profiles_to_serve
+
+        served = {n for n, _ in profiles_to_serve(multiplex=True)}
+        return name in served
+    except Exception:
+        return name == "default"
+
+
+def _companion_loaded_in_scope() -> bool:
+    try:
+        from hermes_cli.plugins import get_plugin_manager
+
+        loaded = get_plugin_manager()._plugins.get(_COMPANION_PLUGIN_ID)  # noqa: SLF001
+    except Exception:
+        return False
+    if loaded is None or getattr(loaded, "error", None):
+        return False
+    return getattr(loaded, "module", None) is not None
+
+
+def materialize_listener_profile(profile: str, *, request: Optional[Any] = None) -> Optional[ListenerProfile]:
+    """Build or refresh the listener row for ``profile`` under the active Hermes home."""
+    name = _label(profile, "default")
+    if not _profile_is_served(name):
+        return None
+    if not _profile_home_matches(name, request):
+        return None
+
     with _lock:
-        return _wiring_profile
+        existing = _registry.get(name)
+        if existing is not None and existing.broker is not None:
+            return existing
+
+    if not _companion_loaded_in_scope():
+        try:
+            from hermes_cli.plugins import discover_plugins
+
+            discover_plugins()
+        except Exception:
+            pass
+    if not _companion_loaded_in_scope():
+        return None
+
+    from .control_broker import get_control_broker
+    from .status_route import plugin_version
+
+    try:
+        from . import HOOK_NAMES, TOOL_NAMES
+    except Exception:
+        return None
+
+    broker = get_control_broker(name)
+    store = ensure_context_store(name)
+    register_listener_profile(
+        profile=name,
+        store=store,
+        broker=broker,
+        tools=TOOL_NAMES,
+        hooks=HOOK_NAMES,
+        version=plugin_version(),
+    )
+    with _lock:
+        return _registry.get(name)
 
 
 def lookup_listener_profile(request: Any) -> tuple[Optional[ListenerProfile], str]:
     name = resolve_request_profile(request)
     with _lock:
-        return _registry.get(name), name
+        entry = _registry.get(name)
+    if entry is None or entry.broker is None:
+        entry = materialize_listener_profile(name, request=request)
+    return entry, name
 
 
 def consume_control_ticket(value: str) -> tuple["ControlBroker", "ControllerScope"]:

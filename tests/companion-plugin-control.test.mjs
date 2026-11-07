@@ -85,7 +85,6 @@ async def make(adapter=None, **broker_kwargs):
     registry.register_listener_profile(
         profile="luxord", store=store, broker=broker, tools=(), hooks=(), version="test"
     )
-    registry.set_wiring_profile("luxord")
     app = web.Application()
     routes.make_wire_extra()(app.router, adapter or Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
