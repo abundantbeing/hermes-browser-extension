@@ -762,6 +762,7 @@ import {
   createReadAloudPlayer,
   describeVoiceRoute,
   readAloudKey,
+  readAloudKeysMatch,
   readAloudRouteOrder,
   readableTextFromElement,
   requestGatewaySpeech,
@@ -1463,12 +1464,13 @@ function readAloudAvailability() {
 
 function readAloudStateOf(record) {
   const state = readAloudPlayer.state();
-  return state.target !== null && state.target === readAloudKey(record) ? state.status : 'idle';
+  return state.target !== null && readAloudKeysMatch(state.target, record) ? state.status : 'idle';
 }
 
 async function toggleReadAloud(record, node) {
   const key = readAloudKey(record);
-  if (readAloudPlayer.state().target === key) {
+  const state = readAloudPlayer.state();
+  if (state.target !== null && readAloudKeysMatch(state.target, record) && state.status !== 'idle') {
     readAloudPlayer.stop();
     return;
   }

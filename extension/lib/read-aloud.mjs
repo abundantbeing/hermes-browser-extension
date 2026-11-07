@@ -246,10 +246,42 @@ export function voiceRouteSummary({ gatewayAvailable = false, browserAvailable =
   return 'none (no Hermes dashboard speech route and no browser speech)';
 }
 
-/** Names a reply so its button state survives the transcript being drawn again. */
-export function readAloudKey(record) {
+function readAloudRowId(record) {
+  const rowId = record?.rowId;
+  return Number.isInteger(rowId) && rowId > 0 ? rowId : null;
+}
+
+/** Content fingerprint for a reply (stable across history refresh). */
+export function readAloudContentKey(record) {
   const content = String(record?.content ?? '');
-  return `${record?.rowId ?? ''}:${content.length}:${content.slice(0, 48)}`;
+  return `${content.length}:${content.slice(0, 48)}`;
+}
+
+/** Names a reply for playback; includes rowId when the server has assigned one. */
+export function readAloudKey(record) {
+  const contentKey = readAloudContentKey(record);
+  const rowId = readAloudRowId(record);
+  return rowId !== null ? `${rowId}:${contentKey}` : contentKey;
+}
+
+function parseReadAloudTarget(target) {
+  const text = String(target ?? '');
+  const firstColon = text.indexOf(':');
+  if (firstColon < 0) return { rowId: null, contentKey: text };
+  const head = text.slice(0, firstColon);
+  const rest = text.slice(firstColon + 1);
+  if (/^\d+$/.test(head) && /^\d+:/.test(rest)) return { rowId: Number(head), contentKey: rest };
+  return { rowId: null, contentKey: text };
+}
+
+/** Same reply across refresh when rowId was missing live then set; distinct when rowIds differ. */
+export function readAloudKeysMatch(targetKey, record) {
+  const playing = parseReadAloudTarget(targetKey);
+  const contentKey = readAloudContentKey(record);
+  if (playing.contentKey !== contentKey) return false;
+  const rowId = readAloudRowId(record);
+  if (playing.rowId !== null && rowId !== null && playing.rowId !== rowId) return false;
+  return true;
 }
 
 // ---- Audio from the gateway ---------------------------------------------------------

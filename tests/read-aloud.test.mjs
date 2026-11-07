@@ -13,6 +13,7 @@ import {
   readAloudRouteOrder,
   gatewaySpeakUrl,
   readAloudKey,
+  readAloudKeysMatch,
   readableTextFromElement,
   requestGatewaySpeech,
   splitForSpeech,
@@ -173,6 +174,13 @@ test('a reply keeps its key when the transcript is drawn again, and two replies 
   assert.equal(first.content.length, second.content.length);
   assert.equal(first.content.slice(0, 48), second.content.slice(0, 48));
   assert.notEqual(readAloudKey(first), readAloudKey(second));
+  assert.equal(readAloudKeysMatch(readAloudKey(first), second), false);
+
+  const live = { role: 'assistant', content: 'Finished live reply', ts: 1 };
+  const refreshed = { ...live, ts: 99, rowId: 7 };
+  assert.notEqual(readAloudKey(live), readAloudKey(refreshed));
+  assert.equal(readAloudKeysMatch(readAloudKey(live), refreshed), true);
+  assert.equal(readAloudKeysMatch(readAloudKey(refreshed), live), true);
 });
 
 // ---- Audio bytes ---------------------------------------------------------------
