@@ -165,7 +165,14 @@ test('a reply keeps its key when the transcript is drawn again, and two replies 
   assert.equal(readAloudKey(a), readAloudKey({ ...a }));
   assert.notEqual(readAloudKey(a), readAloudKey({ ...a, content: 'Hello there!' }));
   assert.equal(readAloudKey(a), readAloudKey({ ...a, ts: 6 }));
-  assert.equal(readAloudKey(a), readAloudKey({ ...a, rowId: 42 }));
+  assert.notEqual(readAloudKey(a), readAloudKey({ ...a, rowId: 42 }));
+
+  const prefix = 'A'.repeat(48);
+  const first = { role: 'assistant', content: `${prefix} ending one`, ts: 1, rowId: 10 };
+  const second = { role: 'assistant', content: `${prefix} ending two`, ts: 2, rowId: 11 };
+  assert.equal(first.content.length, second.content.length);
+  assert.equal(first.content.slice(0, 48), second.content.slice(0, 48));
+  assert.notEqual(readAloudKey(first), readAloudKey(second));
 });
 
 // ---- Audio bytes ---------------------------------------------------------------

@@ -249,7 +249,7 @@ export function voiceRouteSummary({ gatewayAvailable = false, browserAvailable =
 /** Names a reply so its button state survives the transcript being drawn again. */
 export function readAloudKey(record) {
   const content = String(record?.content ?? '');
-  return `${content.length}:${content.slice(0, 48)}`;
+  return `${record?.rowId ?? ''}:${content.length}:${content.slice(0, 48)}`;
 }
 
 // ---- Audio from the gateway ---------------------------------------------------------
