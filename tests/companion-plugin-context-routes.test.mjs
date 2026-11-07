@@ -88,6 +88,9 @@ class Adapter:
 async def served(adapter=None):
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
+    registry = sys.modules["probe_plugin.profile_registry"]
+    registry.set_multiplex_test_profiles(["default", "luxord"])
+    registry.set_listener_test_profile("luxord")
     ctx = Ctx()
     module.register(ctx)
     app = web.Application()

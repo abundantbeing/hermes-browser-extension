@@ -34,13 +34,13 @@ def set_store(store: BrowserContextStore) -> None:
 
 
 def _ensure_store(**kwargs: Any) -> BrowserContextStore:
+    if _STORE is not None:
+        return _STORE
     store = profile_registry.store_for_turn(**kwargs)
     if store is not None:
         return store
-    if _STORE is None:
-        msg = "BrowserContextStore not initialized — plugin register() may have failed."
-        raise RuntimeError(msg)
-    return _STORE
+    msg = "BrowserContextStore not initialized — plugin register() may have failed."
+    raise RuntimeError(msg)
 
 
 def _text_from_content_parts(parts: list[Any]) -> str:

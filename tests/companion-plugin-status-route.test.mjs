@@ -109,6 +109,9 @@ class NoCheckAdapter:
     pass
 
 async def exercise(adapter):
+    registry = sys.modules["probe_plugin.profile_registry"]
+    registry.set_multiplex_test_profiles(["default", "luxord"])
+    registry.set_listener_test_profile("luxord")
     ctx = Ctx()
     module.register(ctx)
     app = web.Application()

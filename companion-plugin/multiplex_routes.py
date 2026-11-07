@@ -3,7 +3,7 @@
 Hermes mirrors native API paths on the default listener with
 ``/p/{profile}<path>``, then registers the profile catch-all
 ``/p/{profile}/{tail:.*}``, and only then calls ``register_platform_handler``
-factories (v0.22.5 and v0.23.0). aiohttp keeps multiplex routes that share an
+factories (v0.22.5 and v0.23.0). The shared listener router keeps multiplex routes that share an
 index bucket in registration order, so plugin mirrors appended after the
 catch-all lose to it. Register mirrors after wiring, then move them before the
 catch-all in the router index.
@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any, Callable, Iterable
 
 MULTIPLEX_PROFILE_PARAM = "/p/{profile}"
-# aiohttp normalizes ``{tail:.*}`` to ``{tail}`` in canonical paths.
+# The router normalizes ``{tail:.*}`` to ``{tail}`` in canonical paths.
 PROFILE_CATCHALL_CANONICALS = frozenset({"/p/{profile}/{tail:.*}", "/p/{profile}/{tail}"})
 PLUGIN_MULTIPLEX_PREFIX = "/p/{profile}/api/plugins/hermes-browser-extension"
 

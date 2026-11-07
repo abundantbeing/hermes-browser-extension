@@ -149,9 +149,6 @@ def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default
 
 def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
     profile = profile_registry.resolve_turn_profile(kwargs or {})
-    entry = profile_registry.get_listener_entry(profile)
-    if entry is not None and entry.broker is not None:
-        return entry.broker
     configured = _config.get("broker")
     if configured is not None:
         return configured

@@ -48,6 +48,7 @@ from .control_broker import (
     PrincipalConflict,
     TicketInvalid,
     filter_capabilities,
+    get_control_broker,
     protocol_supported,
 )
 from .multiplex_routes import add_get_listener_routes, add_post_listener_routes, multiplex_path
@@ -153,9 +154,9 @@ def make_register_handler(adapter: Any) -> Callable[..., Any]:
         if denied is not None:
             return denied
         lp, profile = lookup_listener_profile(request)
-        if lp is None or lp.broker is None:
+        if lp is None:
             return _unavailable_profile(profile)
-        broker = lp.broker
+        broker = get_control_broker(profile)
         body = await _read_bounded(request, MAX_REGISTER_BYTES)
         if body is None:
             return _error(413, "registration_too_large", "The registration is too large.")

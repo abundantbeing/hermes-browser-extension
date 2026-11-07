@@ -1,7 +1,7 @@
 """Per-profile HTTP listener state for a multiplexed Hermes gateway.
 
-Hermes mirrors native api_server routes at ``/p/{profile}/…`` on one shared aiohttp
-app. Plugin ``register_platform_handler`` factories run from the default profile's
+Hermes mirrors native api_server routes at ``/p/{profile}/…`` on one shared API
+listener app. Plugin ``register_platform_handler`` factories run from the default profile's
 plugin manager at connect time, but each served profile has its own
 ``PluginManager``, broker, and context store under ``HERMES_HOME`` (set by the
 profile-prefix middleware before handlers run).
@@ -12,9 +12,12 @@ row from the active scoped plugin manager — they do not require an earlier
 """
 from __future__ import annotations
 
+import hashlib
 import re
+import sys
 import threading
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterable, Optional, TYPE_CHECKING
 
 from .context_store import BrowserContextStore
@@ -27,8 +30,9 @@ _SAFE_NAME = re.compile(r"[^A-Za-z0-9_.-]+")
 _PATH_PREFIX = re.compile(r"^/p/([^/]+)(?:/|$)")
 _registry: dict[str, "ListenerProfile"] = {}
 _lock = threading.RLock()
-# Tests without Hermes may pin the served multiplex roster.
+# Tests without Hermes may pin the served multiplex roster and active profile.
 _TEST_SERVED_PROFILES: Optional[frozenset[str]] = None
+_TEST_ACTIVE_PROFILE: Optional[str] = None
 
 
 def _label(value: Any, default: str) -> str:
@@ -40,10 +44,27 @@ def normalize_profile(profile: str) -> str:
     return _label(profile, "default")
 
 
+def _listener_key(profile: str) -> str:
+    """Registry row for this profile in the active Hermes home (multiplex names are unique)."""
+    name = _label(profile, "default")
+    try:
+        from hermes_constants import get_hermes_home
+
+        return f"{name}\x00{get_hermes_home().resolve()}"
+    except Exception:
+        return name
+
+
 def set_multiplex_test_profiles(names: Optional[Iterable[str]]) -> None:
     """Pin served profile names for harnesses (not used in production)."""
     global _TEST_SERVED_PROFILES
     _TEST_SERVED_PROFILES = None if names is None else frozenset(_label(n, "") for n in names if str(n or "").strip())
+
+
+def set_listener_test_profile(name: Optional[str]) -> None:
+    """Pin the listener profile for harnesses without Hermes middleware (not production)."""
+    global _TEST_ACTIVE_PROFILE
+    _TEST_ACTIVE_PROFILE = None if name is None else _label(name, "default")
 
 
 @dataclass(frozen=True)
@@ -66,11 +87,9 @@ def register_listener_profile(
     version: str,
 ) -> None:
     name = _label(profile, "default")
+    key = _listener_key(name)
     with _lock:
-        existing = _registry.get(name)
-        if existing is not None:
-            store = existing.store
-        _registry[name] = ListenerProfile(
+        _registry[key] = ListenerProfile(
             profile=name,
             store=store,
             broker=broker,
@@ -87,19 +106,20 @@ def listener_profile_names() -> frozenset[str]:
 
 def get_listener_entry(name: str) -> Optional[ListenerProfile]:
     with _lock:
-        return _registry.get(_label(name, "default"))
+        return _registry.get(_listener_key(_label(name, "default")))
 
 
 def ensure_context_store(profile: str) -> BrowserContextStore:
     """Return the per-profile store, creating the registry row before ``register()`` finishes if needed."""
-    key = _label(profile, "default")
+    name = _label(profile, "default")
+    key = _listener_key(name)
     with _lock:
         existing = _registry.get(key)
         if existing is not None:
             return existing.store
         store = BrowserContextStore()
         _registry[key] = ListenerProfile(
-            profile=key,
+            profile=name,
             store=store,
             broker=None,
             tools=(),
@@ -132,10 +152,10 @@ def resolve_turn_profile(kwargs: Any) -> str:
 
 
 def store_for_turn(**kwargs: Any) -> Optional[BrowserContextStore]:
-    """The context store for this turn's profile."""
+    """The context store for this turn's profile under the active Hermes scope."""
     name = resolve_turn_profile(kwargs)
     entry = get_listener_entry(name)
-    if entry is None or entry.broker is None:
+    if entry is None:
         entry = materialize_listener_profile(name)
     if entry is not None:
         return entry.store
@@ -176,6 +196,8 @@ def _profile_from_request_path(request: Any) -> str:
 
 def resolve_request_profile(request: Any) -> str:
     """Profile the HTTP listener attributes to this request."""
+    if _TEST_ACTIVE_PROFILE:
+        return _TEST_ACTIVE_PROFILE
     for candidate in (_profile_from_api_context(), _profile_from_request_path(request)):
         if candidate:
             return candidate
@@ -237,8 +259,9 @@ def materialize_listener_profile(profile: str, *, request: Optional[Any] = None)
     if not _profile_home_matches(name, request):
         return None
 
+    row_key = _listener_key(name)
     with _lock:
-        existing = _registry.get(name)
+        existing = _registry.get(row_key)
         if existing is not None and existing.broker is not None:
             return existing
 
@@ -271,13 +294,13 @@ def materialize_listener_profile(profile: str, *, request: Optional[Any] = None)
         version=plugin_version(),
     )
     with _lock:
-        return _registry.get(name)
+        return _registry.get(row_key)
 
 
 def lookup_listener_profile(request: Any) -> tuple[Optional[ListenerProfile], str]:
     name = resolve_request_profile(request)
     with _lock:
-        entry = _registry.get(name)
+        entry = _registry.get(_listener_key(name))
     if entry is None or entry.broker is None:
         entry = materialize_listener_profile(name, request=request)
     return entry, name
@@ -285,17 +308,24 @@ def lookup_listener_profile(request: Any) -> tuple[Optional[ListenerProfile], st
 
 def consume_control_ticket(value: str) -> tuple["ControlBroker", "ControllerScope"]:
     """Find the profile broker that minted this ticket and consume it once there."""
-    from .control_broker import TicketInvalid
+    from .control_broker import TicketInvalid, iter_control_brokers
 
-    with _lock:
-        entries = list(_registry.values())
-    for entry in entries:
-        broker = entry.broker
-        if broker is None:
-            continue
+    for broker in iter_control_brokers():
         try:
             scope = broker.consume_ticket(value)
             return broker, scope
         except TicketInvalid:
             continue
     raise TicketInvalid("unknown ticket")
+
+
+# Directory-plugin reloads must not split the listener registry across module copies.
+_SHARED_MODULE_KEY = "_hermes_browser_extension_shared_profile_registry"
+_SOURCE_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+_shared_mod = sys.modules.get(_SHARED_MODULE_KEY)
+if _shared_mod is not None and getattr(_shared_mod, "_SOURCE_DIGEST", None) == _SOURCE_DIGEST:
+    globals().update({name: value for name, value in vars(_shared_mod).items() if not name.startswith("__")})
+else:
+    sys.modules[_SHARED_MODULE_KEY] = sys.modules[__name__]
+del _shared_mod
