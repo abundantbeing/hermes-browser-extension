@@ -122,15 +122,15 @@ def _profile_for_control(kwargs: dict[str, Any]) -> str:
     """Active profile for control tool dispatch (runtime context, then configure fallback)."""
     if kwargs.get("profile_name"):
         return profile_registry.normalize_profile(str(kwargs["profile_name"]))
-    try:
-        from hermes_cli.profiles import current_profile_name
-
-        runtime = current_profile_name()
-        if isinstance(runtime, str) and runtime.strip():
-            return profile_registry.normalize_profile(runtime)
-    except Exception:
-        pass
-    return profile_registry.normalize_profile(configured_profile_name())
+    resolved = profile_registry.resolve_turn_profile(kwargs)
+    configured = configured_profile_name()
+    # Multiplex turns name the profile in Hermes' runtime scope. Harnesses and older
+    # gateways may leave that unset while register() still pinned one in configure().
+    if resolved != "default":
+        return resolved
+    if configured != "default":
+        return configured
+    return resolved
 
 
 def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default", screenshot_dir: Any = None) -> None:
@@ -148,11 +148,10 @@ def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default
 
 
 def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
-    profile = profile_registry.resolve_turn_profile(kwargs or {})
     configured = _config.get("broker")
     if configured is not None:
         return configured
-    return get_control_broker(profile)
+    return get_control_broker(_profile_for_control(kwargs or {}))
 
 
 def _failure(code: str, message: str) -> str:
