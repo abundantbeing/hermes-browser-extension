@@ -37,7 +37,7 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
-from .multiplex_routes import add_get_listener_routes, documented_listener_paths
+from .multiplex_routes import add_get_listener_routes, documented_listener_paths, promote_multiplex_plugin_routes
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +175,7 @@ def register_status_route(
         # qualified name, so a second closure of this shape would be skipped.
         if callable(wire_extra):
             wire_extra(router, adapter)
+        promote_multiplex_plugin_routes(router)
 
     try:
         register(PLATFORM, wire)
