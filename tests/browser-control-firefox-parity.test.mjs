@@ -5,7 +5,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
 
-import { createFirefoxWebExtensionAdapter, frameProbe } from '../extension/lib/browser-control-browser-adapters.mjs';
+import {
+  createFirefoxWebExtensionAdapter,
+  FIREFOX_PAGE_PROBE_SCROLL_DELTA_PX,
+  frameProbe,
+  pageProbe,
+} from '../extension/lib/browser-control-browser-adapters.mjs';
 
 const scope = Object.freeze({ tabId: 7, frameId: 0 });
 const openSignal = () => new AbortController().signal;
@@ -132,4 +137,21 @@ test('the probe reports the frame address and counts only frames that show', () 
   const childWindow = { top };
   const child = runProbe({ ...env, window: childWindow, location: { href: 'https://ads.example/slot' } });
   assert.deepEqual({ url: child.url, top: child.top, frames: child.frames }, { url: 'https://ads.example/slot', top: false, frames: 0 });
+});
+
+test('Firefox scroll uses a fixed step and ignores the Chromium amount argument', async () => {
+  const scrollCalls = [];
+  const fake = firefox();
+  const originalExecute = fake.api.scripting.executeScript.bind(fake.api.scripting);
+  fake.api.scripting.executeScript = async (details) => {
+    if (details.func === pageProbe) {
+      const env = { window: { scrollBy(opts) { scrollCalls.push({ ...opts }); } }, document: {} };
+      const result = vm.runInNewContext(`(${details.func.toString()})(${JSON.stringify(details.args[0])}, ${JSON.stringify(details.args[1])})`, env);
+      return [{ result }];
+    }
+    return originalExecute(details);
+  };
+  const adapter = createFirefoxWebExtensionAdapter({ browserApi: fake.api });
+  await adapter.execute('browser_scroll', { direction: 'down', amount: 12_000 }, { scope, signal: openSignal() });
+  assert.deepEqual(scrollCalls, [{ left: 0, top: FIREFOX_PAGE_PROBE_SCROLL_DELTA_PX, behavior: 'auto' }]);
 });

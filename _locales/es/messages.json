@@ -1319,6 +1319,162 @@
     "message": "Esperando este chat",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "Abre primero la barra lateral (Ctrl+Shift+H o el botón de la barra de herramientas) y luego redacta. O elige Ejecutar en segundo plano.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "Borradores de Assist que abren el panel lateral",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox solo permite que una extensión abra su barra lateral desde una acción del usuario. No se ha probado un clic que pase de la página al proceso en segundo plano, y cuando Firefox lo rechaza y no hay barra lateral abierta, Hermes detiene el borrador y te pide abrir la barra lateral o ejecutar en segundo plano.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes ejecuta los pasos uno a uno.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: lotes de acciones",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "El adaptador de Firefox todavía no ofrece lotes, y de todos modos la mayoría de los pasos de un lote (clics, escritura) no están disponibles allí.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "Abre la página con el marco en su propia pestaña.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: controles dentro de marcos",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "El control de marcos necesita la API de depurador, que Firefox no tiene; el texto de página que lee Hermes deja fuera los marcos.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Repite el desplazamiento para movimientos mayores, o pide a la persona que desplace manualmente.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: navegar, retroceder y desplazar",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Las llamadas de desplazamiento de Firefox mueven la página una distancia fija e ignoran el argumento de cantidad que Chromium respeta.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes puede leer la página y abrir direcciones; haz tú el clic o la escritura, o usa un navegador Chromium para la tarea.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: clics, escritura y pulsaciones de teclas",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox no tiene API de depurador, así que una extensión no puede enviar clics, escritura ni pulsaciones de teclas de confianza, y Hermes no los imita con eventos de página.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Pide a Hermes que trabaje con el texto de la página; copia en el chat cualquier cosa que esté dentro de un marco.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: lectura de la página",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox no tiene árbol de accesibilidad para extensiones: Hermes lee el texto superior de la página y su lista de controles con un script de contenido, y nada dentro de los marcos.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "Haz clic en Permitir capturas en Firefox en Ajustes, o pide a Hermes que lea el texto de la página.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: capturas de pantalla",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox solo permite una captura con acceso a todos los sitios, que es opcional y se pide con un clic. Solo se puede capturar la pestaña visible completa, y debe ser la pestaña que muestra la ventana.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes sigue abriendo y cerrando sus propias pestañas; simplemente no se agrupan.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: grupos de pestañas",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox tiene la llamada tabs.group, pero el adaptador de Firefox todavía no ofrece agrupar.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "En su lugar: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "Escribe en su lugar, o activa la transcripción de audio en tu gateway de Hermes.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "Dictado de voz en el campo de mensaje",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox no tiene reconocimiento de voz del navegador, así que el dictado solo funciona con la transcripción propia de Hermes (un gateway con transcripción de audio, o el Dashboard de este equipo).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "La barra lateral permanece abierta entre pestañas; el botón de la barra de herramientas la cierra.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "Panel lateral vinculado a una pestaña",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox mantiene abierta una barra lateral de complemento en cada pestaña de la ventana, y darle un panel por pestaña la recargaría y terminaría los chats en curso.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Conéctate a una puerta de enlace local para usar Hermes Wake, o inicia el chat desde el panel.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "Palabra de activación en el panel lateral",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox no tiene documentos fuera de pantalla, así que el listener local no puede ejecutarse. El motor de activación propio de Hermes solo funciona en una puerta de enlace local en este equipo, no en conexiones remotas o en la nube.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "Experimental",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "Limitado",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "No disponible",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Limitado o no disponible en Firefox: {count}. Abre para ver por qué y qué hacer en su lugar.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Límites de Firefox",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "Eventos de aprobación",
     "description": "Runtime interface message capability.feature.approvalEvents"

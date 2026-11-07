@@ -1319,6 +1319,162 @@
     "message": "इस चैट की प्रतीक्षा",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "पहले साइड बार खोलें (Ctrl+Shift+H या टूलबार बटन), फिर ड्राफ़्ट बनाएँ। या पृष्ठभूमि में चलाएँ चुनें।",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "साइड पैनल खोलने वाले Assist ड्राफ़्ट",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox एक्सटेंशन को अपना साइडबार केवल उपयोगकर्ता की क्रिया से खोलने देता है। पेज से बैकग्राउंड वर्कर तक भेजे गए क्लिक का परीक्षण नहीं हुआ है, और जब Firefox मना करता है और कोई साइडबार खुला नहीं होता, तो Hermes ड्राफ़्ट रोक देता है और आपसे साइडबार खोलने या पृष्ठभूमि में चलाने को कहता है।",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes चरणों को एक-एक करके चलाता है।",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: क्रिया बैच",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Firefox एडैप्टर अभी बैच नहीं देता, और बैच के अधिकांश चरण (क्लिक, टाइपिंग) वैसे भी वहाँ उपलब्ध नहीं हैं।",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "फ़्रेम वाले पेज को उसके अपने टैब में खोलें।",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: फ़्रेम के भीतर के नियंत्रण",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "फ़्रेम नियंत्रण के लिए debugger API चाहिए, जो Firefox में नहीं है; Hermes जो पेज टेक्स्ट पढ़ता है उसमें फ़्रेम शामिल नहीं होते।",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "बड़े स्थानांतरण के लिए स्क्रॉल दोहराएँ, या व्यक्ति से मैन्युअली स्क्रॉल करने कहें।",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: नेविगेट, वापस और स्क्रॉल",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Firefox के स्क्रॉल कॉल पेज में एक निश्चित दूरी घिसाते हैं और Chromium जो राशि तर्क मानता है उसे अनदेखा करते हैं।",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes पेज पढ़ सकता है और पते खोल सकता है; क्लिक या टाइपिंग आप स्वयं करें, या इस काम के लिए Chromium ब्राउज़र का उपयोग करें।",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: क्लिक, टाइपिंग और कुंजी दबाना",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox में debugger API नहीं है, इसलिए कोई एक्सटेंशन भरोसेमंद क्लिक, टाइपिंग या कुंजी दबाने नहीं भेज सकता, और Hermes इन्हें पेज इवेंट से नकल नहीं करता।",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Hermes से पेज टेक्स्ट के आधार पर काम करने को कहें; फ़्रेम के अंदर की कोई भी सामग्री चैट में कॉपी करें।",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: पेज पढ़ना",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox में एक्सटेंशन के लिए एक्सेसिबिलिटी ट्री नहीं है: Hermes कंटेंट स्क्रिप्ट से शीर्ष पेज टेक्स्ट और नियंत्रणों की सूची पढ़ता है, फ़्रेम के भीतर कुछ नहीं।",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "सेटिंग में \"Firefox में स्क्रीनशॉट की अनुमति दें\" पर क्लिक करें, या Hermes से पेज टेक्स्ट पढ़वाएँ।",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: स्क्रीनशॉट",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox केवल सभी-साइट्स एक्सेस के साथ कैप्चर की अनुमति देता है, जो वैकल्पिक है और क्लिक से माँगी जाती है। केवल दिखाई देता पूरा टैब कैप्चर हो सकता है, और वह वही टैब होना चाहिए जो विंडो दिखा रही है।",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes अब भी अपने टैब खोलता और बंद करता है; वे बस समूह में नहीं होते।",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: टैब समूह",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox में tabs.group कॉल है, लेकिन Firefox एडैप्टर अभी समूहीकरण नहीं देता।",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "इसके बजाय: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "इसके बजाय टाइप करें, या अपने Hermes गेटवे पर ऑडियो ट्रांसक्रिप्शन चालू करें।",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "कंपोज़र में आवाज श्रुतलेख",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox में ब्राउज़र की स्पीच पहचान नहीं है, इसलिए श्रुतलेख केवल Hermes की अपनी ट्रांसक्रिप्शन (ऑडियो ट्रांसक्रिप्शन वाला गेटवे, या इस कंप्यूटर का डैशबोर्ड) से काम करता है।",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "साइड बार सभी टैब पर खुला रहता है; उसे टूलबार बटन से बंद किया जाता है।",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "एक टैब से जुड़ा साइड पैनल",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox विंडो के हर टैब पर एक ऐड-ऑन साइडबार खुला रखता है, और हर टैब को अलग पैनल देने से वह फिर से लोड होता है और चल रही चैट समाप्त हो जाती हैं।",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Hermes वेक उपयोग करने के लिए स्थानीय गेटवे से जुड़ें, या पैनल से चैट शुरू करें।",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "साइड पैनल में वेक वर्ड",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox में ऑफ़स्क्रीन दस्तावेज़ नहीं होते, इसलिए स्थानीय श्रोता नहीं चल सकता। Hermes का अपना वेक इंजन केवल इस कंप्यूटर पर स्थानीय गेटवे पर चलता है, दूरस्थ या क्लाउड कनेक्शन पर नहीं।",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "प्रायोगिक",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "सीमित",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "उपलब्ध नहीं",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Firefox पर सीमित या उपलब्ध नहीं: {count}। कारण और इसके बजाय क्या करें, यह देखने के लिए खोलें।",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Firefox की सीमाएँ",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "अनुमोदन घटनाएँ",
     "description": "Runtime interface message capability.feature.approvalEvents"
