@@ -30,6 +30,10 @@ function storageListener(initialSettings) {
   let listener = null;
   const context = vm.createContext({
     settings: initialSettings,
+    readAloudPlayer: { stop() {} },
+    readAloudDashboard: null,
+    readAloudDashboardIdentity: '',
+    readAloudDashboardProbe: null,
     CUSTOM_THEME_STORAGE_KEY: 'customThemes',
     CONTEXT_CONSENT_STORAGE_KEY: 'consent',
     ONBOARDING_COMPLETED_STORAGE_KEY: 'onboardingDone',
@@ -51,6 +55,7 @@ function storageListener(initialSettings) {
     normalizeContextConsentLedger: (value) => value,
     renderBrowserContextConsentControl() {},
     refreshContext() {},
+    notifyReadAloudDashboardProbeChanged() {},
     browserApi: { storage: { onChanged: { addListener: (fn) => { listener = fn; } } } },
   });
   vm.runInContext(text, context);

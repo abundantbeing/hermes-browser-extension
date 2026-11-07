@@ -9735,6 +9735,19 @@ body.hide-message-times .message-time { display: none; }
 .message-action-icon { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .message-action.is-copied { color: var(--hermes-success, #3ecf8e); }
 .message-action.is-copy-failed { color: var(--hermes-danger, #ff6b6b); }
+/* Read aloud: the reply being read is outlined like a focused bubble and keeps its rail up, so Stop stays in reach. */
+.message-row.is-being-read > .message-rail { opacity: 1; pointer-events: auto; transition-delay: 0ms; }
+.message-row.is-being-read > .message { outline: 1px solid color-mix(in srgb, var(--hermes-fg, #fff) 55%, transparent); outline-offset: 2px; }
+.message-action-speak.is-reading {
+  color: var(--hermes-fg, currentColor);
+  background: color-mix(in srgb, var(--hermes-fg, currentColor) 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hermes-fg, currentColor) 55%, transparent);
+}
+.message-action-speak.is-loading .message-action-icon { animation: messageActionBlink 900ms steps(2, end) infinite; }
+@keyframes messageActionBlink { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) {
+  .message-action-speak.is-loading .message-action-icon { animation: none; }
+}
 .message:focus-visible { outline: 1px solid color-mix(in srgb, var(--hermes-accent, #fff) 60%, transparent); outline-offset: 2px; }
 
 /* Day divider: hairline, muted, no pill, not sticky. */

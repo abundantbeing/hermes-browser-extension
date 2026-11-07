@@ -77,6 +77,7 @@ export function buildSupportDiagnostics({
   health = {},
   capabilities = {},
   capabilityRows = null,
+  voiceOutput = '',
   selectedModel = {},
   contextScope = {},
   lastError = null,
@@ -140,6 +141,7 @@ export function buildSupportDiagnostics({
         bullet('Companion plugin', availability(capabilities.browserCompanionPlugin, { missing: `${NOT_ADVERTISED} (the extension cannot tell whether it is loaded)` })),
         bullet('Plugin actions', availability(capabilities.pluginActions, { missing: NOT_ADVERTISED })),
       ]),
+    ...(voiceOutput ? [bullet('Voice output (read aloud)', voiceOutput)] : []),
     bullet('Browser control', capabilities.browserControl ? 'blocked by read-only policy' : 'disabled'),
     // Only when the companion plugin's own routes answered: counts and ages, never page data.
     ...(companionContext ? [bullet('Companion plugin context (this session)', companionContext)] : []),

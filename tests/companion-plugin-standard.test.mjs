@@ -6,6 +6,10 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { pythonExecutable } from './python-bin.mjs';
+
+const PY = pythonExecutable();
+
 // The companion plugin as Hermes' plugin platform sees it: the manifest the
 // catalog validator reads, and a register() that survives the validator's
 // recording context (which has no `state`, unlike the live PluginContext).
@@ -13,7 +17,7 @@ import path from 'node:path';
 const manifest = readFileSync('companion-plugin/plugin.yaml', 'utf8');
 
 function runPython(script) {
-  const result = spawnSync(process.env.PYTHON || 'python', ['-c', script], {
+  const result = spawnSync(PY, ['-c', script], {
     cwd: process.cwd(),
     encoding: 'utf8',
   });
@@ -99,7 +103,7 @@ test('a portable plugin.json is not shipped: plugin.yaml is the native manifest 
 // HERMES_AGENT_CHECKOUT (and HERMES_AGENT_PYTHON for its interpreter).
 const checkout = process.env.HERMES_AGENT_CHECKOUT || '';
 test('Hermes plugin doctor and validate pass without warnings', { skip: !checkout }, () => {
-  const python = process.env.HERMES_AGENT_PYTHON || 'python';
+  const python = process.env.HERMES_AGENT_PYTHON || PY;
   const home = mkdtempSync(path.join(tmpdir(), 'hbe-doctor-'));
   try {
     const script = `
