@@ -23,6 +23,8 @@ const MIN_VISIBLE_FRAME_PX = 4;
 const OFF_PAGE_PX = -50;
 const SCROLL_MIN_PX = 100;
 const SCROLL_MAX_PX = 5_000;
+// Firefox Hermes Control scroll: fixed step per direction (see browser-capability-matrix and tests).
+export const FIREFOX_PAGE_PROBE_SCROLL_DELTA_PX = 600;
 const SCROLL_VIEWPORT_FRACTION = 0.85;
 const COMPACT_TEXT_LIMIT = 6_000;
 const FULL_TEXT_LIMIT = 100_000;
@@ -778,11 +780,13 @@ function pageProbe(mode, direction = '') {
     return { hasUnsavedContent: dirtyText || dirtyChecks, focused };
   }
   if (mode === 'scroll') {
+    // Fixed step for Firefox scripting scroll (must match FIREFOX_PAGE_PROBE_SCROLL_DELTA_PX).
+    const step = 600;
     const deltas = {
-      up: [0, -600],
-      down: [0, 600],
-      left: [-600, 0],
-      right: [600, 0],
+      up: [0, -step],
+      down: [0, step],
+      left: [-step, 0],
+      right: [step, 0],
     };
     const [left, top] = deltas[String(direction || '').toLowerCase()] || [0, 0];
     window.scrollBy({ left, top, behavior: 'auto' });
@@ -2601,4 +2605,5 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
 export {
   createChromiumCdpAdapter,
   createFirefoxWebExtensionAdapter,
+  pageProbe,
 };

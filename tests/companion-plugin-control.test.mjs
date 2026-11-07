@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 
 import { CONTROLLER_BROWSER_CAPABILITIES } from '../extension/lib/controller-protocol.mjs';
 import { PLUGIN_TOOL_NAMES } from '../extension/lib/control-tool-names.mjs';
+import { pythonExecutable } from './python-bin.mjs';
+
+const PY = pythonExecutable();
 
 // Hermes Control inside the companion plugin: the broker, the register and socket
 // routes, and the tools. These tests drive the real plugin code, the real aiohttp
@@ -12,7 +15,7 @@ import { PLUGIN_TOOL_NAMES } from '../extension/lib/control-tool-names.mjs';
 // start a gateway or open a socket to one (skipped when aiohttp is missing).
 
 function runPython(script) {
-  const result = spawnSync(process.env.PYTHON || 'python', ['-c', script], {
+  const result = spawnSync(PY, ['-c', script], {
     cwd: process.cwd(),
     encoding: 'utf8',
   });
@@ -587,6 +590,7 @@ async def main():
         # a capability the controller did not negotiate is unavailable, not guessed
         ws2, _ = await attach(client, broker, session="sess-C", controller="ctl-2", caps=["controller.noop", "browser_snapshot"])
         seen["not_negotiated"] = code(tools.run_control_action("browser_click", {"ref": "@e1"}, {"session_id": "sess-C"}))
+        seen["not_negotiated_text"] = json.loads(tools.run_control_action("browser_click", {"ref": "@e1"}, {"session_id": "sess-C"}))["error"]
         await ws2.close()
         await ws.close()
         # Under a loaded test run the broker can take seconds to see both sockets close.
@@ -614,6 +618,11 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.other_profile, 'no_browser');
   assert.equal(data.nothing_sent, true, 'the controller of another session saw no command');
   assert.equal(data.not_negotiated, 'browser_unavailable');
+  // The browser is online but does not offer the tool (Firefox has no trusted input): say what it does offer, not "offline".
+  assert.match(data.not_negotiated_text, /does not offer tab_click/);
+  assert.match(data.not_negotiated_text, /tab_snapshot/);
+  assert.match(data.not_negotiated_text, /ask the person to do this step/i);
+  assert.doesNotMatch(data.not_negotiated_text, /offline/);
   assert.equal(data.disconnected, true, 'the broker saw both controllers close');
   assert.equal(data.offline, 'browser_unavailable');
   assert.equal(data.available_after, false);

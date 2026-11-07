@@ -785,6 +785,7 @@ import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
+import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
 import {
   browserControlLightState,
   browserControlStatusLine,
@@ -1275,6 +1276,9 @@ const els = {
   profileStatus: $('#profileStatus'),
   compatibilityList: $('#compatibilityList'),
   compatibilityStatus: $('#compatibilityStatus'),
+  browserLimitsPanel: $('#browserLimitsPanel'),
+  browserLimitsList: $('#browserLimitsList'),
+  browserLimitsStatus: $('#browserLimitsStatus'),
   copyDiagnosticsButton: $('#copyDiagnosticsButton'),
   diagnosticsCopyStatus: $('#diagnosticsCopyStatus'),
   connectionSecuritySummary: $('#connectionSecuritySummary'),
@@ -4096,6 +4100,33 @@ function renderCompatibilityPanel() {
     els.compatibilityList.appendChild(entry);
   }
   if (els.compatibilityStatus) els.compatibilityStatus.textContent = capabilitySummaryText(rows, { t });
+  renderBrowserLimitsPanel();
+}
+
+// Firefox only: what this browser cannot do, from the same capability matrix as guides/firefox.md.
+function renderBrowserLimitsPanel() {
+  if (!els.browserLimitsPanel || !els.browserLimitsList) return;
+  const view = describeBrowserLimits({ product: browserProduct, t });
+  els.browserLimitsPanel.hidden = view.hidden;
+  els.browserLimitsList.replaceChildren();
+  els.browserLimitsStatus.textContent = view.summary;
+  for (const row of view.rows) {
+    const entry = document.createElement('li');
+    entry.className = 'compatibility-row warn';
+    entry.dataset.capability = row.id;
+    entry.dataset.capabilityState = row.status === 'unavailable' ? 'unsupported' : 'degraded';
+    const label = document.createElement('span');
+    label.textContent = row.label;
+    const state = document.createElement('strong');
+    state.textContent = row.statusLabel;
+    const reason = document.createElement('small');
+    reason.textContent = row.reason;
+    const instead = document.createElement('small');
+    instead.className = 'compatibility-meta';
+    instead.textContent = row.instead;
+    entry.append(label, state, reason, instead);
+    els.browserLimitsList.appendChild(entry);
+  }
 }
 
 function renderConnectionSecurity() {

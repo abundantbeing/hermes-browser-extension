@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+import { pythonExecutable } from './python-bin.mjs';
+
+const PY = pythonExecutable();
+
 // The companion plugin's one HTTP surface: a read-only metadata route wired into
 // the API server through ctx.register_platform_handler("api_server", ...). These
 // tests drive the real plugin code, and the real aiohttp router when aiohttp is
@@ -12,7 +16,7 @@ const manifest = readFileSync('companion-plugin/plugin.yaml', 'utf8');
 const manifestTools = [...manifest.matchAll(/^ {2}- ((?:browser|tab)_\w+)$/gm)].map((match) => match[1]);
 
 function runPython(script) {
-  const result = spawnSync(process.env.PYTHON || 'python', ['-c', script], {
+  const result = spawnSync(PY, ['-c', script], {
     cwd: process.cwd(),
     encoding: 'utf8',
   });
