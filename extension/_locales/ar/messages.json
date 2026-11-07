@@ -1319,6 +1319,162 @@
     "message": "في انتظار هذه الدردشة",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "افتح الشريط الجانبي أولًا (Ctrl+Shift+H أو زر شريط الأدوات)، ثم اكتب المسودة. أو اختر التشغيل في الخلفية.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "مسودات Assist التي تفتح اللوحة الجانبية",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "يسمح Firefox للإضافة بفتح شريطها الجانبي فقط عبر إجراء من المستخدم. لم يُختبر نقر يُمرَّر من الصفحة إلى عامل الخلفية، وعندما يرفض Firefox ذلك ولا يكون الشريط الجانبي مفتوحًا، يوقف Hermes المسودة ويطلب منك فتح الشريط الجانبي أو التشغيل في الخلفية.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "ينفّذ Hermes الخطوات واحدة تلو الأخرى.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: مجموعات الإجراءات",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "لا يوفر محوّل Firefox المجموعات بعد، وأغلب الخطوات داخل المجموعة (النقرات والكتابة) غير متاحة هناك على أي حال.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "افتح الصفحة التي بها الإطار في علامة تبويب خاصة بها.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: عناصر داخل الإطارات",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "يحتاج التحكم في الإطارات إلى API المصحح، وهو غير متوفر في Firefox؛ ونص الصفحة الذي يقرأه Hermes يستثني الإطارات.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "كرّر التمرير للمسافات الأكبر، أو اطلب من المستخدم التمرير يدويًا.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: التنقل والرجوع والتمرير",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "تنفّذ أوامر التمرير في Firefox مسافة ثابتة في الصفحة وتتجاهل وسيط المقدار الذي يحترمه Chromium.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "يستطيع Hermes قراءة الصفحة وفتح العناوين؛ نفّذ النقر أو الكتابة بنفسك، أو استخدم متصفح Chromium لهذه المهمة.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: النقرات والكتابة وضغطات المفاتيح",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "لا يملك Firefox API للمصحح، لذلك لا تستطيع الإضافة إرسال نقرات أو كتابة أو ضغطات مفاتيح موثوقة، ولا يحاكيها Hermes بأحداث الصفحة.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "اطلب من Hermes العمل بالاعتماد على نص الصفحة، وانسخ أي محتوى داخل إطار إلى المحادثة.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: قراءة الصفحة",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "لا تتوفر شجرة إمكانية الوصول للإضافات في Firefox: يقرأ Hermes نص الصفحة العلوي وقائمة عناصر التحكم بواسطة نص المحتوى، ولا يقرأ شيئًا داخل الإطارات.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "انقر «السماح بلقطات الشاشة في Firefox» في الإعدادات، أو اطلب من Hermes قراءة نص الصفحة.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: لقطات الشاشة",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "لا يسمح Firefox بالالتقاط إلا مع الوصول إلى جميع المواقع، وهو اختياري ويُطلب بنقرة. ولا يمكن التقاط إلا علامة التبويب المرئية كاملةً، ويجب أن تكون العلامة التي تعرضها النافذة.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "يستمر Hermes في فتح علامات التبويب الخاصة به وإغلاقها، لكنها لا تُجمَّع فحسب.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: مجموعات علامات التبويب",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "يتوفر استدعاء tabs.group في Firefox، لكن محوّل Firefox لا يوفر التجميع بعد.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "البديل: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "اكتب بدلًا من ذلك، أو فعّل نسخ الصوت على بوابة Hermes.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "الإملاء الصوتي في حقل الرسالة",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "لا يتوفر التعرف على الكلام المدمج في Firefox، لذلك يعمل الإملاء فقط عبر خدمة النسخ الخاصة بـ Hermes (بوابة تدعم نسخ الصوت، أو لوحة القيادة على هذا الجهاز).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "يبقى الشريط الجانبي مفتوحًا عبر علامات التبويب، ويغلقه زر شريط الأدوات.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "اللوحة الجانبية مرتبطة بعلامة تبويب واحدة",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "يُبقي Firefox الشريط الجانبي للإضافة مفتوحًا في كل علامات التبويب داخل النافذة، وإعطاؤه لوحة لكل علامة تبويب سيعيد تحميله ويُنهي المحادثات الجارية.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "اتصل ببوابة محلية لاستخدام إيقاظ Hermes، أو ابدأ الدردشة من اللوحة.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "كلمة التنبيه في اللوحة الجانبية",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "لا يوفّر Firefox مستندات خارج الشاشة، لذلك لا يمكن تشغيل المستمع المحلي. يعمل محرك إيقاظ Hermes المدمج على بوابة محلية على هذا الحاسوب فقط، لا على الاتصالات البعيدة أو السحابية.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "تجريبي",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "محدود",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "غير متاح",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "محدود أو غير متاح في Firefox: {count}. افتح القائمة لمعرفة السبب وما يمكن فعله بدلًا من ذلك.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "قيود Firefox",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "أحداث الموافقة",
     "description": "Runtime interface message capability.feature.approvalEvents"

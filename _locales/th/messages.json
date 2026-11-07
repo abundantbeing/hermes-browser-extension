@@ -1319,6 +1319,162 @@
     "message": "กำลังรอแชทนี้",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "เปิดแถบด้านข้างก่อน (Ctrl+Shift+H หรือปุ่มในแถบเครื่องมือ) แล้วจึงร่าง หรือเลือกรันในพื้นหลัง",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "ร่าง Assist ที่เปิดแผงด้านข้าง",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox อนุญาตให้ส่วนขยายเปิดแถบด้านข้างได้เฉพาะจากการกระทำของผู้ใช้ การคลิกที่ส่งจากหน้าไปยังตัวทำงานเบื้องหลังยังไม่ได้ทดสอบ และเมื่อ Firefox ปฏิเสธและไม่มีแถบด้านข้างเปิดอยู่ Hermes จะหยุดร่างและขอให้คุณเปิดแถบด้านข้างหรือรันในพื้นหลัง",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes ทำทีละขั้นตอน",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: ชุดคำสั่งการทำงาน",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "ตัวเชื่อมของ Firefox ยังไม่รองรับชุดคำสั่ง และขั้นตอนส่วนใหญ่ในชุดคำสั่ง (คลิก พิมพ์) ก็ใช้ไม่ได้อยู่แล้ว",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "เปิดหน้าที่มีเฟรมในแท็บของตัวเอง",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: ตัวควบคุมภายในเฟรม",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "การควบคุมเฟรมต้องใช้ debugger API ซึ่ง Firefox ไม่มี และข้อความหน้าที่ Hermes อ่านไม่รวมเฟรม",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "เลื่อนซ้ำสำหรับการเคลื่อนไหวที่มากขึ้น หรือขอให้ผู้ใช้เลื่อนด้วยตนเอง",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: นำทาง ถอยกลับ และเลื่อน",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "การเรียกเลื่อนของ Firefox จะเลื่อนหน้าเป็นความกว้างคงที่และไม่สนใจอาร์กิวเมนต์จำนวนที่ Chromium ใช้",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes อ่านหน้าและเปิดที่อยู่ได้ ทำการคลิกหรือพิมพ์เองเถอะ หรือใช้เบราว์เซอร์ Chromium สำหรับงานนี้",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: คลิก พิมพ์ และกดปุ่ม",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox ไม่มี debugger API ส่วนขยายจึงส่งการคลิก การพิมพ์ หรือการกดปุ่มที่เชื่อถือได้ไม่ได้ และ Hermes ไม่เลียนแบบด้วยเหตุการณ์ของหน้า",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "ขอให้ Hermes ทำงานจากข้อความของหน้า และคัดลอกสิ่งที่อยู่ในเฟรมมาวางในแชต",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: การอ่านหน้า",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox ไม่มี accessibility tree สำหรับส่วนขยาย Hermes อ่านข้อความด้านบนของหน้าและรายการตัวควบคุมผ่าน content script และไม่อ่านอะไรภายในเฟรมเลย",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "คลิก อนุญาตภาพหน้าจอใน Firefox ในการตั้งค่า หรือให้ Hermes อ่านข้อความของหน้า",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: ภาพหน้าจอ",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox อนุญาตให้จับภาพได้เฉพาะเมื่อมีสิทธิ์เข้าถึงทุกเว็บไซต์ ซึ่งเป็นสิทธิ์ที่ไม่บังคับและขอผ่านการคลิก จับได้เฉพาะแท็บที่มองเห็นทั้งแท็บ และต้องเป็นแท็บที่หน้าต่างแสดงอยู่",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes ยังเปิดและปิดแท็บของตัวเองได้ เพียงแต่แท็บเหล่านั้นไม่ได้ถูกจัดกลุ่ม",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: กลุ่มแท็บ",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox มีการเรียก tabs.group แต่ตัวเชื่อมของ Firefox ยังไม่รองรับการจัดกลุ่ม",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "ทางเลือกแทน: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "พิมพ์แทน หรือเปิดการถอดเสียงในเกตเวย์ Hermes ของคุณ",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "การเขียนตามคำบอกในช่องพิมพ์",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox ไม่มีการจดจำเสียงพูดของเบราว์เซอร์ การเขียนตามคำบอกจึงใช้ได้เฉพาะผ่านระบบถอดเสียงของ Hermes เอง (เกตเวย์ที่มีการถอดเสียง หรือแดชบอร์ดของ Hermes บนคอมพิวเตอร์เครื่องนี้)",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "แถบด้านข้างจะเปิดค้างไว้ข้ามแท็บ ปุ่มในแถบเครื่องมือใช้ปิดได้",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "แผงด้านข้างผูกกับแท็บเดียว",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox เปิดแถบด้านข้างของ add-on ค้างไว้ทุกแท็บในหน้าต่าง และถ้าให้มีแผงแยกต่อแท็บ แผงจะโหลดใหม่และจบแชตที่กำลังทำอยู่",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "เชื่อมต่อกับเกตเวย์ภายในเพื่อใช้ Hermes wake หรือเริ่มแชทจากแผงด้านข้าง",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "คำปลุกในแผงด้านข้าง",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox ไม่มีเอกสารแบบ offscreen ดังนั้นตัวฟังในเครื่องจึงทำงานไม่ได้ เอนจิน wake ของ Hermes เองรันได้เฉพาะบนเกตเวย์ภายในบนเครื่องนี้เท่านั้น ไม่ใช่การเชื่อมต่อระยะไกลหรือคลาวด์",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "ทดลอง",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "จำกัด",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "ใช้ไม่ได้",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "จำกัดหรือใช้ไม่ได้บน Firefox: {count}. เปิดเพื่อดูว่าเพราะอะไรและควรทำอะไรแทน",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "ข้อจำกัดของ Firefox",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "เหตุการณ์การอนุมัติ",
     "description": "Runtime interface message capability.feature.approvalEvents"
