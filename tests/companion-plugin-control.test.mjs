@@ -251,6 +251,11 @@ PLUGIN = "hermes_plugins.hermes_browser_extension"
 OTHER_HOME = "hermes_plugins.hermes_browser_extension__home_0123456789ab"
 
 class Adapter:
+    async def _ensure_session_db_async(self):
+        class Db:
+            def get_session(self, session_id):
+                return {"id": session_id}
+        return Db()
     def _check_auth(self, request):
         from aiohttp import web
         if request.headers.get("Authorization") == TOKEN:
