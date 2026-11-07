@@ -435,8 +435,8 @@ test('the extension\'s own full and reference serializations interoperate: same 
 import os
 upload = os.environ["UPLOAD_ENVELOPE"]
 turn = os.environ["REFERENCE_TURN"]
-store = module.STORE
 module.register(Ctx())
+store = module.STORE
 parked = store.put_session_upload("sess-A", upload)
 other = hooks.pre_llm_call(user_message=turn, **ids(session="sess-B"))
 notice = hooks.pre_llm_call(user_message=turn, **ids())
