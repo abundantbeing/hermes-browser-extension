@@ -203,7 +203,7 @@ async def main():
         # header at the real handler too, without relying on client serialization.
         from aiohttp.test_utils import make_mocked_request
         ctl_request = make_mocked_request("POST", BASE + "/context", headers={**AUTH, "X-Hermes-Session-Id": "a\\x01b"})
-        bad["ctl_header"] = (await routes.make_upload_handler(Adapter(), module.STORE)(ctl_request)).status
+        bad["ctl_header"] = (await routes.make_upload_handler(Adapter())(ctl_request)).status
         bad["get_on_post"] = (await client.get(BASE + "/context", headers=h)).status
         seen["bad"] = bad
         # the refused uploads did not replace the good one

@@ -645,11 +645,18 @@ class ControlBroker:
             return len(self._pending)
 
 
-# One broker per process, shared by the routes (the gateway's event loop) and the
-# tools (agent worker threads): ordinary turns run in the gateway process.
-_BROKER = ControlBroker()
+# One broker per profile on a multiplexed gateway so control routes and tab_* tools
+# never cross profiles through the shared listener app.
+_BROKERS: dict[str, ControlBroker] = {}
+_BROKER_LOCK = threading.RLock()
 
 
-def get_control_broker() -> ControlBroker:
-    """The process-local broker."""
-    return _BROKER
+def get_control_broker(profile: str | None = None) -> ControlBroker:
+    """Broker for the named profile (``default`` when omitted)."""
+    key = str(profile or "default").strip() or "default"
+    with _BROKER_LOCK:
+        broker = _BROKERS.get(key)
+        if broker is None:
+            broker = ControlBroker()
+            _BROKERS[key] = broker
+        return broker

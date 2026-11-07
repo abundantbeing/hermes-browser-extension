@@ -88,7 +88,7 @@ async def exercise(*, demote):
     status_plain = "/api/plugins/hermes-browser-extension/status"
     async with TestClient(TestServer(app)) as client:
         headers = {"Authorization": "Bearer paired-token"}
-        pref = await client.get("/p/namine" + status_plain, headers=headers)
+        pref = await client.get("/p/luxord" + status_plain, headers=headers)
         out = {
             "prefixed_status": pref.status,
             "pref_body": await pref.text() if pref.status != 200 else (await pref.json()).get("profile"),

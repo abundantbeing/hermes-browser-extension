@@ -80,8 +80,14 @@ async def make(adapter=None, **broker_kwargs):
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
     broker = broker_module.ControlBroker(**broker_kwargs)
+    registry = sys.modules["probe_plugin.profile_registry"]
+    store = registry.ensure_context_store("luxord")
+    registry.register_listener_profile(
+        profile="luxord", store=store, broker=broker, tools=(), hooks=(), version="test"
+    )
+    registry.set_wiring_profile("luxord")
     app = web.Application()
-    routes.make_wire_extra(broker, profile="luxord")(app.router, adapter or Adapter())
+    routes.make_wire_extra()(app.router, adapter or Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
     tools.configure(broker=broker, profile="luxord", screenshot_dir=shots)
     client = TestClient(TestServer(app))
