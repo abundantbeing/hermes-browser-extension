@@ -171,6 +171,7 @@ const hermesWebOpening = createHermesWebOpening({
 const hermesWebOpener = { open: (request) => hermesWebOpening.start(request) };
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let panelResidencyHydrated = false;
+let controllerSettingsStorageRebind = 0;
 
 const controllerConnector = createControllerConnector({
   fetchImpl: globalThis.fetch?.bind(globalThis),
@@ -1106,6 +1107,7 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   contextMenuController.handleStorageChanged(changes, areaName)
     .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
   if (changes.hermesBrowserSettings?.newValue && controllerWorker) {
+    const rebindGeneration = ++controllerSettingsStorageRebind;
     void (async () => {
       try {
         let secrets = Object.hasOwn(changes, SAVED_CONNECTION_SECRETS_STORAGE_KEY)
@@ -1116,6 +1118,7 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
           secrets = stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
         }
         const hydrated = await hydrateSavedConnectionSecrets(changes.hermesBrowserSettings.newValue, secrets);
+        if (rebindGeneration !== controllerSettingsStorageRebind) return;
         const result = await controllerWorker.syncSettings(hydrated);
         syncControllerAlarms(result);
       } catch (error) {
