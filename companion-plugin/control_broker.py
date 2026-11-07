@@ -663,7 +663,17 @@ def get_control_broker() -> ControlBroker:
 # That would mint a fresh ``_BROKER`` and exception classes per load. Keep one
 # canonical module object under a key the loader never evicts and adopt it on
 # later loads so routes and tools always share state and class identities.
-_SHARED_MODULE_KEY = "_hermes_browser_extension_shared_control_broker"
+# The key is scoped to one Hermes home (the plugin slug, including ``__home_…``)
+# so two homes in one process never share controller attachments.
+def _plugin_home_scope() -> str:
+    """The Hermes-home slice of this load's plugin package name."""
+    package = __package__ or ""
+    if package.startswith("hermes_plugins."):
+        return package.split(".", 1)[1]
+    return package or __name__.rpartition(".")[0] or "default"
+
+
+_SHARED_MODULE_KEY = f"_hermes_browser_extension_shared_control_broker.{_plugin_home_scope()}"
 _SOURCE_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 _shared_mod = sys.modules.get(_SHARED_MODULE_KEY)
