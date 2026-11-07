@@ -27,6 +27,8 @@
     "generate:browser-locales": "node scripts/generate-browser-locales.mjs",
     "sync:contexts": "node scripts/sync-hermes-context-windows.mjs",
     "check:contexts": "node scripts/sync-hermes-context-windows.mjs --check",
+    "sync:capabilities": "node scripts/sync-capability-docs.mjs",
+    "check:capabilities": "node scripts/sync-capability-docs.mjs --check",
     "check:i18n": "node scripts/generate-browser-locales.mjs --check && node scripts/check-i18n.mjs",
     "check:manifest": "npm run check:i18n && node scripts/check-manifest.mjs",
     "verify": "npm run test && npm run check:js && npm run check:voice && npm run check:manifest",

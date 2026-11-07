@@ -1319,6 +1319,162 @@
     "message": "En attente de cette discussion",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "Ouvrez d’abord la barre latérale (Ctrl+Shift+H ou le bouton de la barre d’outils), puis rédigez. Ou choisissez Exécuter en arrière-plan.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "Brouillons Assist qui ouvrent le panneau latéral",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox n’autorise une extension à ouvrir sa barre latérale que depuis une action de l’utilisateur. Un clic transmis de la page au processus d’arrière-plan n’a pas été testé ; quand Firefox refuse et qu’aucune barre latérale n’est ouverte, Hermes arrête le brouillon et vous demande d’ouvrir la barre latérale ou d’exécuter en arrière-plan.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes exécute les étapes une par une.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control : lots d’actions",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "L’adaptateur Firefox ne propose pas encore de lots, et la plupart des étapes d’un lot (clics, saisie) ne sont de toute façon pas disponibles là-bas.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "Ouvrez la page avec le cadre dans son propre onglet.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control : contrôles dans les cadres",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "Le contrôle des cadres nécessite l’API de débogage, que Firefox n’a pas ; le texte de page lu par Hermes laisse de côté les cadres.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Répétez le défilement pour des mouvements plus grands, ou demandez à la personne de faire défiler manuellement.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control : navigation, retour et défilement",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Les appels de défilement de Firefox parcourent une distance fixe dans la page et ignorent l'argument d'amplitude que Chromium respecte.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes peut lire la page et ouvrir des adresses ; faites vous-même le clic ou la saisie, ou utilisez un navigateur Chromium pour cette tâche.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control : clics, saisie et touches",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox n’a pas d’API de débogage : une extension ne peut donc pas envoyer de clics, de saisies ou de touches fiables, et Hermes ne les imite pas avec des événements de page.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Demandez à Hermes de travailler à partir du texte de la page ; copiez dans le chat tout ce qui se trouve dans un cadre.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control : lecture de la page",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox n’a pas d’arbre d’accessibilité pour les extensions : Hermes lit le texte de la page principale et la liste de ses contrôles avec un script de contenu, sans rien à l’intérieur des cadres.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "Cliquez sur Autoriser les captures dans Firefox dans les paramètres, ou demandez à Hermes de lire le texte de la page.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control : captures d’écran",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox n’autorise une capture qu’avec l’accès à tous les sites, qui est facultatif et demandé depuis un clic. Seul l’onglet visible en entier peut être capturé, et il doit s’agir de l’onglet affiché par la fenêtre.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes ouvre et ferme toujours ses propres onglets ; ils ne sont simplement pas regroupés.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control : groupes d’onglets",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox dispose de l’appel tabs.group, mais l’adaptateur Firefox ne propose pas encore le regroupement.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "À la place : {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "Saisissez plutôt le texte, ou activez la transcription audio sur votre passerelle Hermes.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "Dictée vocale dans la zone de saisie",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox n’a pas de reconnaissance vocale intégrée au navigateur ; la dictée ne fonctionne donc que via la transcription propre à Hermes (une passerelle avec transcription audio, ou le tableau de bord sur cet ordinateur).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "La barre latérale reste ouverte d’un onglet à l’autre ; le bouton de la barre d’outils la ferme.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "Panneau latéral lié à un onglet",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox garde une barre latérale de complément ouverte sur chaque onglet de la fenêtre ; lui donner un panneau par onglet la rechargerait et interromprait les conversations en cours.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Connectez-vous à une passerelle locale pour utiliser l'éveil Hermes, ou démarrez la conversation depuis le panneau.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "Mot de réveil dans le panneau latéral",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox n'a pas de documents hors écran, l'écouteur local ne peut donc pas fonctionner. Le moteur d'éveil Hermes intégré ne tourne que sur une passerelle locale sur cet ordinateur, pas sur les connexions distantes ou cloud.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "Expérimental",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "Limité",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "Indisponible",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Limité ou indisponible sur Firefox : {count}. Ouvrez pour voir pourquoi et que faire à la place.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Limites de Firefox",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "Événements d'approbation",
     "description": "Runtime interface message capability.feature.approvalEvents"

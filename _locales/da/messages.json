@@ -1319,6 +1319,162 @@
     "message": "Venter på denne chat",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "Åbn sidebjælken først (Ctrl+Shift+H eller værktøjslinjeknappen), og skriv derefter udkastet. Eller vælg Kør i baggrunden.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "Assist-udkast, der åbner sidepanelet",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox lader en udvidelse åbne sin sidebjælke kun fra en brugerhandling. Et klik, der sendes videre fra siden til baggrundsprocessen, er ikke testet, og når Firefox afviser det og ingen sidebjælke er åben, stopper Hermes udkastet og beder dig åbne sidebjælken eller køre i baggrunden.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes kører trinene ét ad gangen.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: handlingsbatcher",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Firefox-adapteren tilbyder endnu ikke batcher, og de fleste trin i en batch (klik, skrivning) er under alle omstændigheder ikke tilgængelige der.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "Åbn siden med frame i sin egen fane.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: elementer i frames",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "Styring af frames kræver debugger-API'et, som Firefox ikke har; sidetekst, Hermes læser, udelader frames.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Gentag rul for længere bevægelser, eller bed personen om at rulle manuelt.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: navigér, tilbage og rul",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Firefoxs rullekald flytter siden en fast afstand og ignorerer parametret for beløb, som Chromium respekterer.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes kan læse siden og åbne adresser; lav klik og skrivning selv, eller brug en Chromium-browser til opgaven.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: klik, skrivning og tastetryk",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox har ingen debugger-API, så en udvidelse kan ikke sende betroede klik, skrivning eller tastetryk, og Hermes efterligner dem ikke med sidehændelser.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Bed Hermes om at arbejde ud fra sidens tekst; kopiér alt inde i en frame ind i chatten.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: læsning af siden",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox har intet tilgængelighedstræ til udvidelser: Hermes læser den øverste sidetekst og listen over elementer med et indholdsscript, og intet inde i frames.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "Klik på Tillad skærmbilleder i Firefox i Indstillinger, eller lad Hermes læse sidens tekst.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: skærmbilleder",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox tillader kun en optagelse med adgang til alle websteder, som er valgfri og bedes om med et klik. Kun hele den synlige fane kan optages, og det skal være den fane, vinduet viser.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes åbner og lukker stadig sine egne faner; de bliver bare ikke grupperet.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: fanegrupper",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox har tabs.group-kaldet, men Firefox-adapteren tilbyder endnu ikke gruppering.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "I stedet: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "Skriv i stedet, eller slå lydtranskription til på din Hermes-gateway.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "Stemmediktering i tekstfeltet",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox har ingen browserbaseret talegenkendelse, så diktering virker kun gennem Hermes' egen transskription (en gateway med lydtranskription eller dashboardet på denne computer).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "Sidebjælken forbliver åben på tværs af faner; værktøjslinjeknappen lukker den.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "Sidepanel knyttet til én fane",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox holder en sidebjælke fra en tilføjelse åben på alle faner i vinduet, og hvis hver fane fik sit eget panel, ville den blive genindlæst, og igangværende chats ville stoppe.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Opret forbindelse til en lokal gateway for at bruge Hermes Wake, eller start chatten fra panelet.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "Wake word i sidepanelet",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox har ikke dokumenter uden for skærmen, så den lokale lytter kan ikke køre. Hermes' indbyggede væk-motor kører kun på en lokal gateway på denne computer – ikke ved fjern- eller cloud-forbindelser.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "Eksperimentel",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "Begrænset",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "Ikke tilgængelig",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Begrænset eller ikke tilgængelig i Firefox: {count}. Åbn for at se hvorfor, og hvad du kan gøre i stedet.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Firefox-begrænsninger",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "Godkendelseshændelser",
     "description": "Runtime interface message capability.feature.approvalEvents"

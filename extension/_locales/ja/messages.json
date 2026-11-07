@@ -1319,6 +1319,162 @@
     "message": "このチャットを待っています",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "先にサイドバーを開き（Ctrl+Shift+H またはツールバーのボタン）、それから下書きしてください。またはバックグラウンドで実行を選んでください。",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "サイドパネルを開く Assist の下書き",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox では、拡張機能がサイドバーを開けるのはユーザー操作からのみです。ページからバックグラウンドワーカーへ中継されたクリックは未検証で、Firefox が拒否しサイドバーが開いていない場合、Hermes は下書きを停止し、サイドバーを開くかバックグラウンドで実行するよう求めます。",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes は手順を 1 つずつ実行します。",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: アクションのバッチ処理",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Firefox 用のアダプターはまだバッチを提供しておらず、バッチ内の手順の大半（クリックや入力など）はどのみち利用できません。",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "フレームを含むページは、単独のタブで開いてください。",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: フレーム内のコントロール",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "フレームの制御には Firefox にはない debugger API が必要で、Hermes が読み取るページテキストにもフレームは含まれません。",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "大きく動かすときはスクロールを繰り返すか、利用者に手動でスクロールしてもらってください。",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: 移動・戻る・スクロール",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Firefox のスクロール呼び出しはページ内を一定距離だけ動かし、Chromium が解釈する amount 引数を無視します。",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes はページを読み取ってアドレスを開けるので、クリックや入力は自分で行うか、この作業には Chromium ブラウザーを使ってください。",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: クリック、入力、キー操作",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox には debugger API がないため、拡張機能は信頼されたクリック、入力、キー操作を送れず、Hermes もページイベントでそれらを模倣しません。",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Hermes にページテキストをもとに作業させ、フレーム内の内容はチャットにコピーしてください。",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: ページの読み取り",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox には拡張機能向けのアクセシビリティツリーがないため、Hermes はコンテンツスクリプトで最上位ページのテキストとコントロールの一覧を読み取り、フレーム内は読み取りません。",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "設定で「Firefox でスクリーンショットを許可」をクリックするか、Hermes にページテキストを読み取らせてください。",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: スクリーンショット",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox では、すべてのサイトへのアクセス権がある場合にのみキャプチャでき、このアクセス権は任意で、クリック操作で求められます。キャプチャできるのは表示中のタブ全体だけで、ウィンドウが表示しているタブである必要があります。",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes は引き続き自分のタブを開いて閉じますが、それらはグループにまとめられません。",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: タブグループ",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox には tabs.group の呼び出しがありますが、Firefox 用のアダプターはまだグループ化を提供していません。",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "代わりの方法: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "代わりに入力するか、Hermes ゲートウェイで音声文字起こしをオンにしてください。",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "コンポーザーでの音声ディクテーション",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox にはブラウザーの音声認識がないため、ディクテーションは Hermes 独自の文字起こし（音声文字起こしを備えたゲートウェイ、またはこのコンピューターのダッシュボード）でのみ動作します。",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "サイドバーはタブをまたいで開いたままになり、ツールバーのボタンで閉じます。",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "1 つのタブに紐付いたサイドパネル",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox はアドオンのサイドバーをウィンドウのすべてのタブで開いたままにするため、タブごとにパネルを持たせるとサイドバーが再読み込みされ、進行中のチャットが終わります。",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Hermes ウェイクを使うにはローカルゲートウェイに接続するか、パネルからチャットを開始してください。",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "サイドパネルでのウェイクワード",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox にはオフスクリーンドキュメントがないため、ローカルリスナーは動作しません。Hermes 標準のウェイクエンジンはこのコンピュータ上のローカルゲートウェイでのみ動作し、リモートやクラウド接続では利用できません。",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "試験段階",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "制限あり",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "利用不可",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Firefox で制限されているか利用できない機能: {count} 件。開くと理由と代わりの方法を確認できます。",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Firefox の制限",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "承認イベント",
     "description": "Runtime interface message capability.feature.approvalEvents"

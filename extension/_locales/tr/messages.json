@@ -1319,6 +1319,162 @@
     "message": "Bu sohbet bekleniyor",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "Önce kenar çubuğunu açın (Ctrl+Shift+H veya araç çubuğu düğmesi), sonra taslak hazırlayın. Ya da Arka planda çalıştır seçeneğini seçin.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "Yan paneli açan Assist taslakları",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox, bir eklentinin kenar çubuğunu yalnızca kullanıcı eylemiyle açmasına izin verir. Sayfadan arka plan çalışanına iletilen bir tıklama henüz denenmedi; Firefox reddettiğinde ve açık bir kenar çubuğu yoksa Hermes taslağı durdurur ve kenar çubuğunu açmanızı veya arka planda çalıştırmanızı ister.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes adımları tek tek çalıştırır.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: toplu eylemler",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Firefox uyarlayıcısı henüz toplu eylemleri sunmuyor; ayrıca bir toplu eylemdeki adımların çoğu (tıklamalar, yazma) zaten orada kullanılamıyor.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "Çerçeveli sayfayı kendi sekmesinde açın.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: çerçevelerin içindeki denetimler",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "Çerçeve denetimi, Firefox'ta bulunmayan hata ayıklayıcı API'sini gerektirir; Hermes'in okuduğu sayfa metni çerçeveleri dışarıda bırakır.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Daha büyük hareketler için kaydırmayı tekrarlayın veya kullanıcıdan elle kaydırmasını isteyin.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: gezin, geri ve kaydır",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Firefox kaydırma çağrıları sayfada sabit bir mesafe hareket eder ve Chromium’un dikkate aldığı miktar bağımsız değişkenini yok sayar.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes sayfayı okuyabilir ve adresleri açabilir; tıklamayı veya yazmayı kendiniz yapın ya da bu iş için bir Chromium tarayıcısı kullanın.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: tıklamalar, yazma ve tuş basışları",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox'ta hata ayıklayıcı API'si olmadığı için bir eklenti güvenilir tıklama, yazma veya tuş basışı gönderemez; Hermes da bunları sayfa olaylarıyla taklit etmez.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Hermes'ten sayfa metni üzerinden çalışmasını isteyin; çerçeve içindeki her şeyi sohbete kopyalayın.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: sayfayı okuma",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox'ta eklentiler için erişilebilirlik ağacı yok: Hermes, sayfanın üst metnini ve denetim listesini bir içerik betiğiyle okur, çerçevelerin içini ise hiç okumaz.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "Ayarlar'da Firefox'ta ekran görüntülerine izin ver düğmesine tıklayın ya da Hermes'in sayfa metnini okumasını sağlayın.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: ekran görüntüleri",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox, yakalamaya yalnızca tüm sitelere erişim verildiğinde izin verir; bu erişim isteğe bağlıdır ve bir tıklamayla istenir. Yalnızca görünen sekmenin tamamı yakalanabilir ve pencerenin gösterdiği sekme olmalıdır.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes kendi açtığı sekmeleri yine açar ve kapatır; yalnızca gruplanmazlar.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: sekme grupları",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox'ta tabs.group çağrısı var, ancak Firefox uyarlayıcısı henüz gruplamayı sunmuyor.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "Bunun yerine: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "Bunun yerine yazın ya da Hermes ağ geçidinizde ses transkripsiyonunu açın.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "Yazma alanında sesli dikte",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox'ta tarayıcının konuşma tanıma özelliği olmadığı için dikte yalnızca Hermes'in kendi transkripsiyonuyla çalışır (ses transkripsiyonu açık bir ağ geçidi ya da bu bilgisayardaki Dashboard).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "Kenar çubuğu sekmeler arasında açık kalır; araç çubuğu düğmesi onu kapatır.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "Yan panel tek bir sekmeye bağlı",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox, eklenti kenar çubuğunu pencerenin her sekmesinde açık tutar; her sekme için ayrı bir panel vermek onu yeniden yükler ve süren sohbetleri sonlandırır.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Hermes Wake kullanmak için yerel bir ağ geçidine bağlanın veya sohbeti panelden başlatın.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "Yan paneldeki uyandırma sözcüğü",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox’ta ekran dışı belge yoktur; bu yüzden yerel dinleyici çalışmaz. Hermes’in yerleşik uyandırma motoru yalnızca bu bilgisayardaki yerel bir ağ geçidinde çalışır; uzak veya bulut bağlantılarında değil.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "Deneysel",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "Sınırlı",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "Kullanılamıyor",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Firefox'ta sınırlı veya kullanılamıyor: {count}. Nedenini ve bunun yerine ne yapacağınızı görmek için açın.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Firefox sınırları",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "Onay olayları",
     "description": "Runtime interface message capability.feature.approvalEvents"

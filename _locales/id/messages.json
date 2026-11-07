@@ -1319,6 +1319,162 @@
     "message": "Menunggu obrolan ini",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "Buka bilah samping terlebih dahulu (Ctrl+Shift+H atau tombol toolbar), lalu buat draf. Atau pilih Jalankan di latar belakang.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "Draf Assist yang membuka panel samping",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox hanya mengizinkan ekstensi membuka bilah sampingnya dari tindakan pengguna. Klik yang diteruskan dari halaman ke background worker belum diuji, dan saat Firefox menolak dan tidak ada bilah samping terbuka, Hermes menghentikan draf dan meminta Anda membuka bilah samping atau menjalankan di latar belakang.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes menjalankan langkah satu per satu.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: batch aksi",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Adaptor Firefox belum menyediakan batch, dan sebagian besar langkah dalam batch (klik, mengetik) memang tidak tersedia di sana.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "Buka halaman yang berisi frame di tab tersendiri.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: kontrol di dalam frame",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "Kontrol frame memerlukan API debugger, yang tidak dimiliki Firefox; teks halaman yang dibaca Hermes tidak menyertakan frame.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Ulangi gulir untuk perpindahan lebih jauh, atau minta pengguna menggulir secara manual.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: navigasi, kembali, dan gulir",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Panggilan gulir Firefox menggeser halaman sejauh tetap dan mengabaikan argumen jumlah yang dihormati Chromium.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes dapat membaca halaman dan membuka alamat; lakukan klik atau mengetik sendiri, atau gunakan browser Chromium untuk tugas tersebut.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: klik, mengetik, dan penekanan tombol",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox tidak memiliki API debugger, sehingga ekstensi tidak dapat mengirim klik, ketikan, atau penekanan tombol tepercaya, dan Hermes tidak meniru hal tersebut dengan event halaman.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Minta Hermes bekerja dari teks halaman; salin apa pun di dalam frame ke obrolan.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: membaca halaman",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox tidak memiliki accessibility tree untuk ekstensi: Hermes membaca teks halaman tingkat atas dan daftar kontrolnya dengan content script, dan tidak ada yang di dalam frame.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "Klik Izinkan tangkapan layar di Firefox di Pengaturan, atau minta Hermes membaca teks halaman.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: tangkapan layar",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox hanya mengizinkan tangkapan dengan akses ke semua situs, yang bersifat opsional dan diminta dari klik. Hanya seluruh tab yang terlihat yang bisa ditangkap, dan harus tab yang ditampilkan jendela.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes tetap membuka dan menutup tab miliknya sendiri; tab tersebut hanya tidak dikelompokkan.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: grup tab",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox memiliki panggilan tabs.group, tetapi adaptor Firefox belum menyediakan pengelompokan.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "Sebagai gantinya: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "Ketik saja, atau aktifkan transkripsi audio di gateway Hermes Anda.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "Dikte suara di komposer",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox tidak memiliki pengenalan ucapan browser, sehingga dikte hanya berfungsi melalui transkripsi milik Hermes (gateway dengan transkripsi audio, atau dasbor di komputer ini).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "Bilah samping tetap terbuka di seluruh tab; tombol toolbar menutupnya.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "Panel samping terikat pada satu tab",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox membiarkan bilah samping add-on terbuka di setiap tab jendela, dan memberinya panel per tab akan memuat ulang bilah samping dan mengakhiri obrolan yang sedang berjalan.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Hubungkan ke gateway lokal untuk menggunakan Hermes Wake, atau mulai obrolan dari panel.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "Kata bangun di panel samping",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox tidak memiliki dokumen offscreen, jadi pendengar lokal tidak dapat berjalan. Mesin bangun Hermes bawaan hanya berjalan di gateway lokal pada komputer ini, bukan pada koneksi jarak jauh atau cloud.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "Eksperimental",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "Terbatas",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "Tidak tersedia",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Terbatas atau tidak tersedia di Firefox: {count}. Buka untuk melihat alasannya dan apa yang bisa dilakukan sebagai gantinya.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Batasan Firefox",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "Peristiwa persetujuan",
     "description": "Runtime interface message capability.feature.approvalEvents"

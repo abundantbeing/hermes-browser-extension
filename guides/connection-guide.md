@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | Chrome / Edge / Chromium 114+ side panel | Yes | Primary public support target. |
 | Brave / Comet / Chromium forks | Best-effort | Must expose the Chromium Side Panel API. |
-| Firefox | Install from [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/) (Firefox 142+) | Chat and context only, in a sidebar declared with `sidebar_action`. Real-tab attach is Chromium-only; the Firefox package omits the `debugger`, `offscreen` and `sidePanel` permissions, so there is no trusted input and no control of controls inside frames. |
+| Firefox | Install from [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/) (Firefox 142+) | Chat and context in a sidebar declared with `sidebar_action`, plus a restricted Hermes Control (read, navigate, scroll, screenshots you allow, tabs). The Firefox package omits the `debugger`, `offscreen` and `sidePanel` permissions, so there is no trusted input (no clicks or typing) and no control of controls inside frames. Every row and its reason: [firefox.md](./firefox.md). |
 | Safari | Not shipped | No Safari package is included. |
 | Local Hermes API server | Yes | Default path: `http://127.0.0.1:8642`. |
 | Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Chat-only. |
@@ -16,7 +16,7 @@
 | Browser Context Protocol | Yes | Typed `hermes.browser.turn.v2` envelopes, with the v1 payload compatibility path. |
 | Hermes Assist | Yes, site-aware preview/review | 31 writing environments. Never submits. |
 | Page comments | Yes | Attach menu. Queues beside Ask Hermes. |
-| Hermes Control | Yes (Experimental) | Opt-in MV3 controller that acts only on tabs you attach, with explicit approval gates. Requires compatible Hermes Agent controller support. Reaches controls in same-site frames of an attached page; frames from other sites are not read or acted on. |
+| Hermes Control | Yes (Experimental) | Opt-in MV3 controller that acts only on tabs you attach, with explicit approval gates. Requires compatible Hermes Agent controller support. Reaches controls in same-site frames of an attached page; frames from other sites are not read or acted on. Restricted on Firefox: see [firefox.md](./firefox.md). |
 | Projects, move a session, Compact context | Needs session authority | Needs the dashboard WebSocket and a gateway whose `gateway.ready` reports session authority. A REST-only connection, an older gateway or one that answers "method not found" gets a plain reason instead, and Recents and the older compaction keep working. Checked against a test gateway, not yet a released Hermes. |
 | Capability states | Yes | Settings > About & Diagnostics lists what this connection can do, with state, reason, source and age. A feature the gateway does not advertise reads "Not advertised by this gateway". |
 | `nativeMessaging` | No | Not requested or required. |
