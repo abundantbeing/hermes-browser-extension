@@ -111,6 +111,13 @@ export function mergeSavedConnectionSecrets(settings = {}, secrets = {}) {
 }
 
 /** Restore saved keys from the sidecar (and migrate any legacy inline copies). */
+/** Settings blob plus optional sidecar record as returned from `storage.local.get`. */
+export async function hydrateHermesBrowserSettingsFromStorage(stored = {}) {
+  const settings = stored?.hermesBrowserSettings;
+  if (!settings || typeof settings !== 'object') return {};
+  return hydrateSavedConnectionSecrets(settings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+}
+
 export async function hydrateSavedConnectionSecrets(settings = {}, secrets = {}) {
   const merged = mergeSavedConnectionSecrets(settings, secrets);
   if (!Array.isArray(merged.settings.savedConnections)) return merged.settings;

@@ -1173,12 +1173,18 @@ export function createControllerServiceWorker({
       try {
         const stored = await storageArea.get([
           'hermesBrowserSettings',
+          SAVED_CONNECTION_SECRETS_STORAGE_KEY,
           CONTROLLER_WORKER_STORAGE_KEY,
           CONTROLLER_REGISTRY_STORAGE_KEY,
           TAB_LEASE_STORAGE_KEY,
           CONTROLLER_LIFECYCLE_STORAGE_KEY,
         ]);
-        settings = connectionSettings(stored);
+        settings = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+          ? await hydrateSavedConnectionSecrets(
+              stored.hermesBrowserSettings,
+              stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+            )
+          : connectionSettings(stored);
         const previousWorker = stored[CONTROLLER_WORKER_STORAGE_KEY];
         chatMove = null;
         const previousMove = previousWorker?.chatMove;

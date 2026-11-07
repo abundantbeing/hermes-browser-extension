@@ -23688,6 +23688,62 @@ async function forgetSavedConnectionRecords(id) {
   forgetSavedConnectionSessionRecords(id);
 }
 
+async function hermesBrowserSettingsFromStorageChanges(changes) {
+  const raw = changes?.hermesBrowserSettings?.newValue;
+  if (!raw || typeof raw !== 'object') return null;
+  let secrets = Object.hasOwn(changes, SAVED_CONNECTION_SECRETS_STORAGE_KEY)
+    ? changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue
+    : undefined;
+  if (secrets === undefined) {
+    const stored = await browserApi.storage.local.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY);
+    secrets = stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
+  }
+  return hydrateSavedConnectionSecrets(migrateConnectionSettings(raw), secrets);
+}
+
+async function adoptHermesBrowserSettingsStorageChange(changes) {
+  const next = await hermesBrowserSettingsFromStorageChanges(changes);
+  if (!next) return;
+  if (next.activeSavedConnectionId && loadedSavedConnectionId
+    && next.activeSavedConnectionId !== loadedSavedConnectionId) {
+    reloadForSavedConnection(next);
+    return;
+  }
+  // The controller worker and the pairing flow rewrite this record (a
+  // rejected pairing token is dropped, the transport can flip). Without
+  // adopting those writes the panel keeps a stale apiKey and keeps hiding
+  // the connect panel that owns the "Connect to Hermes" repair button,
+  // which leaves tab control stuck with no reachable way to reconnect.
+  const tracked = [
+    'apiKey', 'tokenSource', 'lastConnectionTestedAt',
+    'browserControlEnabled', 'browserControlPaused',
+    'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
+    'trustedDashboardOrigin', 'trustedDashboardTabId',
+    'activeSavedConnectionId', 'savedConnections',
+    // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
+    // panel, they share this record, and adopting another panel's binding would make this one resume
+    // (and then write into) the other panel's session on its next reconnect.
+  ];
+  const patch = {};
+  for (const key of tracked) {
+    if (Object.hasOwn(next, key)) patch[key] = next[key];
+  }
+  if (Object.keys(patch).length) {
+    settings = { ...settings, ...patch };
+    // Another panel may have moved the connection to a remote mode.
+    resetLocalDashboardState();
+    updateConnectionPrompt();
+    renderBrowserControl();
+    renderSavedConnections();
+  }
+  adoptStoredResponsePresentation(next);
+  if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
+  if (Object.hasOwn(next, 'inlineAssistOpenMode')) adoptInlineAssistOpenModeChange(next.inlineAssistOpenMode);
+  if (Object.hasOwn(next, 'inlineAssistModel') && next.inlineAssistModel !== settings.inlineAssistModel) adoptInlineAssistModelChange(next);
+  if (Object.hasOwn(next, 'inlineAssistReasoningEffort') && next.inlineAssistReasoningEffort !== settings.inlineAssistReasoningEffort) adoptInlineAssistEffortChange(next);
+  if (Object.hasOwn(next, 'inlineAssistSessionRetention')) adoptInlineAssistSessionRetentionChange(next.inlineAssistSessionRetention);
+}
+
 function reloadForSavedConnection(next) {
   if (savedConnectionReloading) return;
   savedConnectionReloading = true;
@@ -27398,7 +27454,8 @@ async function connectApiWithPairing() {
 
     settings.tokenSource = 'pairing';
     settings.lastConnectionTestedAt = Date.now();
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    settings = syncActiveSavedConnection(settings);
+    await persistHermesBrowserSettings(settings);
     syncSettingsForm();
     updateConnectionPrompt();
     // The controller keeps its own copy of the settings; without an explicit
@@ -30508,47 +30565,7 @@ function bindEvents() {
   browserApi.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
     if (Object.hasOwn(changes, 'hermesBrowserSettings')) {
-      const next = changes.hermesBrowserSettings?.newValue;
-      if (next && typeof next === 'object') {
-        if (next.activeSavedConnectionId && loadedSavedConnectionId
-          && next.activeSavedConnectionId !== loadedSavedConnectionId) {
-          reloadForSavedConnection(next);
-          return;
-        }
-        // The controller worker and the pairing flow rewrite this record (a
-        // rejected pairing token is dropped, the transport can flip). Without
-        // adopting those writes the panel keeps a stale apiKey and keeps hiding
-        // the connect panel that owns the "Connect to Hermes" repair button,
-        // which leaves tab control stuck with no reachable way to reconnect.
-        const tracked = [
-          'apiKey', 'tokenSource', 'lastConnectionTestedAt',
-          'browserControlEnabled', 'browserControlPaused',
-          'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
-          'trustedDashboardOrigin', 'trustedDashboardTabId',
-          'activeSavedConnectionId', 'savedConnections',
-          // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
-          // panel, they share this record, and adopting another panel's binding would make this one resume
-          // (and then write into) the other panel's session on its next reconnect.
-        ];
-        const patch = {};
-        for (const key of tracked) {
-          if (Object.hasOwn(next, key)) patch[key] = next[key];
-        }
-        if (Object.keys(patch).length) {
-          settings = { ...settings, ...patch };
-          // Another panel may have moved the connection to a remote mode.
-          resetLocalDashboardState();
-          updateConnectionPrompt();
-          renderBrowserControl();
-          renderSavedConnections();
-        }
-        adoptStoredResponsePresentation(next);
-        if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
-        if (Object.hasOwn(next, 'inlineAssistOpenMode')) adoptInlineAssistOpenModeChange(next.inlineAssistOpenMode);
-        if (Object.hasOwn(next, 'inlineAssistModel') && next.inlineAssistModel !== settings.inlineAssistModel) adoptInlineAssistModelChange(next);
-        if (Object.hasOwn(next, 'inlineAssistReasoningEffort') && next.inlineAssistReasoningEffort !== settings.inlineAssistReasoningEffort) adoptInlineAssistEffortChange(next);
-        if (Object.hasOwn(next, 'inlineAssistSessionRetention')) adoptInlineAssistSessionRetentionChange(next.inlineAssistSessionRetention);
-      }
+      void adoptHermesBrowserSettingsStorageChange(changes);
     }
     if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);
     if (Object.hasOwn(changes, INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY)) adoptInlineAssistSitesChange({ hidden: changes[INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]?.newValue });

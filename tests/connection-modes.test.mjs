@@ -178,9 +178,11 @@ test('automatic API pairing is loopback-only and enforced by the side-panel conn
 test('a completed pairing rebinds the controller instead of leaving it on stale settings', () => {
   const pairingBody = sidepanelSource.match(/async function connectApiWithPairing\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
   assert.match(pairingBody, /tokenSource = 'pairing'/, 'the pairing success path must persist the token');
+  assert.match(pairingBody, /syncActiveSavedConnection\(settings\)/, 'pairing must refresh the active saved connection before pack');
+  assert.match(pairingBody, /persistHermesBrowserSettings\(settings\)/, 'pairing must pack the new credential into the sidecar');
   assert.match(pairingBody, /HERMES_CONTROLLER_SETTINGS_REFRESH/, 'the pairing success path must rebind the controller');
   assert.ok(
-    pairingBody.indexOf("tokenSource = 'pairing'") < pairingBody.indexOf('HERMES_CONTROLLER_SETTINGS_REFRESH'),
+    pairingBody.indexOf('persistHermesBrowserSettings(settings)') < pairingBody.indexOf('HERMES_CONTROLLER_SETTINGS_REFRESH'),
     'the controller refresh must follow the stored token',
   );
 });
