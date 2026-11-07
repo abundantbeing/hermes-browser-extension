@@ -247,7 +247,7 @@ test('the protocol exports stay stable and gain the plugin route', () => {
   assert.equal(controllerProfilePath('/v1/x', 'luxord'), '/p/luxord/v1/x');
   assert.equal(controllerProfilePath('/p/other/v1/x', 'luxord'), '/p/other/v1/x');
   assert.equal(controllerProfilePath('/v1/x', ''), '/v1/x');
-  // Stock Hermes serves the plugin's routes only at the plain address, which is the default profile's.
+  // default and empty profile keep the plain plugin addresses; named profiles use /p/<profile>/.
   assert.equal(controllerProfilePath(PLUGIN_WS_PATH, 'default'), PLUGIN_WS_PATH);
   assert.equal(controllerWebSocketUrl(baseUrl, PLUGIN_WS_PATH, 'default'), PLUGIN_SOCKET);
   assert.equal(

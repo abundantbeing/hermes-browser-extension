@@ -30,6 +30,9 @@ module = importlib.util.module_from_spec(spec)
 module.__package__ = "probe_plugin"
 sys.modules["probe_plugin"] = module
 spec.loader.exec_module(module)
+registry = sys.modules["probe_plugin.profile_registry"]
+registry.set_multiplex_test_profiles(["default", "luxord"])
+registry.set_listener_test_profile("luxord")
 broker_module = sys.modules["probe_plugin.control_broker"]
 routes = sys.modules["probe_plugin.control_routes"]
 tools = sys.modules["probe_plugin.control_tools"]
@@ -79,9 +82,22 @@ def body(session="sess-A", controller="ctl-1", profile="bp-1", caps=CAPS, versio
 async def make(adapter=None, **broker_kwargs):
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
-    broker = broker_module.ControlBroker(**broker_kwargs)
+    registry = sys.modules["probe_plugin.profile_registry"]
+    registry.set_multiplex_test_profiles(["default", "luxord"])
+    registry.set_listener_test_profile("luxord")
+    if broker_kwargs:
+        broker = broker_module.ControlBroker(**broker_kwargs)
+        with broker_module._BROKER_LOCK:
+            broker_module._BROKERS["luxord"] = broker
+    else:
+        broker = broker_module.get_control_broker("luxord")
+    broker.reset()
+    store = registry.ensure_context_store("luxord")
+    registry.register_listener_profile(
+        profile="luxord", store=store, broker=broker, tools=(), hooks=(), version="test"
+    )
     app = web.Application()
-    routes.make_wire_extra(broker, profile="luxord")(app.router, adapter or Adapter())
+    routes.make_wire_extra()(app.router, adapter or Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
     tools.configure(broker=broker, profile="luxord", screenshot_dir=shots)
     client = TestClient(TestServer(app))
@@ -178,7 +194,7 @@ class Ctx:
 ctx = Ctx(owned=["tab_click"])
 module.register(ctx)
 control = {name: entry for name, entry in ctx.registered.items() if name in tools.TOOL_NAMES}
-broker = broker_module.get_control_broker()
+broker = broker_module.get_control_broker("default")
 print(json.dumps({"count": len(control), "skipped_owned": "tab_click" not in control, "toolsets": sorted({e["toolset"] for e in control.values()}),
                   "checks": sorted({repr(e["check_fn"]) for e in control.values()}),
                   "schemas_ok": all(e["schema"]["name"] == name for name, e in control.items())}))
@@ -258,7 +274,7 @@ def load_broker(module_name):
 FIRST = "hermes_plugins.hermes_browser_extension.control_broker"
 SECOND = "hermes_plugins.hermes_browser_extension_reloaded.control_broker"
 broker_first = load_broker(FIRST)
-route_broker = broker_first.get_control_broker()
+route_broker = broker_first.get_control_broker("default")
 scope = broker_first.ControllerScope(
     principal_id="p", profile_id="default", session_id="sess-A", controller_id="c",
     browser_profile_id="b", transport_family="local-api", capabilities=frozenset({"controller.noop"}))
@@ -267,7 +283,7 @@ attached_before = len(route_broker.lane_scopes(profile_id="default", session_id=
 
 evict("hermes_plugins.hermes_browser_extension")
 broker_second = load_broker(SECOND)
-tool_broker = broker_second.get_control_broker()
+tool_broker = broker_second.get_control_broker("default")
 route_seen = len(route_broker.lane_scopes(profile_id="default", session_id="sess-A"))
 tool_seen = len(tool_broker.lane_scopes(profile_id="default", session_id="sess-A"))
 
@@ -311,7 +327,7 @@ class Ctx:
     def register_skill(self, name, path): pass
     def register_platform_handler(self, *args, **kwargs): pass
 module.register(Ctx())
-broker = broker_module.get_control_broker()
+broker = broker_module.get_control_broker("default")
 scope = broker_module.ControllerScope(principal_id="p", profile_id="default", session_id="sess-A", controller_id="c",
                                       browser_profile_id="b", transport_family="local-api", capabilities=frozenset(CAPS))
 owner = object()

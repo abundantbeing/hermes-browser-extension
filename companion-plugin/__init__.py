@@ -20,11 +20,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import context_routes, control_routes, control_tools, hooks, profile_routes, status_route, tools
+from . import context_routes, control_routes, control_tools, hooks, profile_registry, profile_routes, status_route, tools
 from .context_store import BrowserContextStore
 from .control_broker import get_control_broker
 
-# Global store — shared between tools and hooks.
+# Module ``STORE`` is the default-profile instance (single-profile gateways and tests).
 STORE = BrowserContextStore()
 
 # What register() installs; the readiness route reports exactly these names and
@@ -54,13 +54,25 @@ def _chain(*wires):
 
 def register(ctx) -> None:
     """Register companion plugin tools, hooks, and bundled skill."""
+    global STORE
     durable_receipts = ctx.get_config("durable_receipts", default=True)
     receipt_limit = ctx.get_config("receipt_limit", default=8)
     # The live PluginContext always has `state`; the catalog validator's
     # recording context does not, so a missing one means memory-only receipts.
+    try:
+        profile = getattr(ctx, "profile_name", "default")
+    except Exception:
+        profile = "default"
+    name = profile_registry.normalize_profile(profile)
+    if name == "default":
+        store = STORE
+    else:
+        store = profile_registry.ensure_context_store(profile)
+    STORE = store
+
     state = getattr(ctx, "state", None)
     if state is not None:
-        STORE.configure_durable_state(
+        store.configure_durable_state(
             state,
             enabled=durable_receipts is True,
             receipt_limit=receipt_limit,
@@ -72,10 +84,10 @@ def register(ctx) -> None:
         data_dir = getattr(state, "data_dir", None)
     except Exception:
         data_dir = None
-    STORE.configure_journal(data_dir)
-    # Tell tools which store to use
-    tools.set_store(STORE)
-    hooks.set_store(STORE)
+    store.configure_journal(data_dir)
+    # Tell tools which store to use (compatibility; handlers use profile_registry)
+    tools.set_store(store)
+    hooks.set_store(store)
 
     # ── Tools ──────────────────────────────────────────────────────────
     ctx.register_tool(
@@ -144,12 +156,18 @@ def register(ctx) -> None:
     # ── Hermes Control tools ───────────────────────────────────────────
     # Always listed (no attach-dependent check, so the tool list never changes mid-conversation),
     # except on a Hermes whose own extension control is on: the extension attaches to that instead.
-    try:
-        profile = getattr(ctx, "profile_name", "default")
-    except Exception:
-        profile = "default"
-    control_listed = control_tools.register_control_tools(ctx, broker=get_control_broker(), profile=profile, data_dir=data_dir)
+    broker = get_control_broker(profile)
+    control_listed = control_tools.register_control_tools(ctx, broker=broker, profile=profile, data_dir=data_dir)
     listed_tools = TOOL_NAMES if control_listed else tuple(name for name in TOOL_NAMES if name not in control_tools.TOOL_NAMES)
+    version = status_route.plugin_version()
+    profile_registry.register_listener_profile(
+        profile=profile,
+        store=store,
+        broker=broker,
+        tools=listed_tools,
+        hooks=HOOK_NAMES,
+        version=version,
+    )
 
     # ── Hooks ──────────────────────────────────────────────────────────
     ctx.register_hook("pre_llm_call", hooks.pre_llm_call)
@@ -162,15 +180,14 @@ def register(ctx) -> None:
     # authenticated by the API server's own check and wired by one factory;
     # skipped (never fatal) where Hermes refuses the seam. See status_route.py,
     # context_routes.py and control_routes.py.
-    version = status_route.plugin_version()
     status_route.register_status_route(
         ctx,
         tools=listed_tools,
         hooks=HOOK_NAMES,
         version=version,
         wire_extra=_chain(
-            context_routes.make_wire_extra(STORE, version=version),
-            control_routes.make_wire_extra(get_control_broker(), profile=profile),
+            context_routes.make_wire_extra(),
+            control_routes.make_wire_extra(),
             profile_routes.make_wire_extra(),
         ),
         routes=(*status_route.ROUTE_PATHS, *control_routes.ROUTE_PATHS, *profile_routes.ROUTE_PATHS),

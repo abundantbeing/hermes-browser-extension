@@ -648,21 +648,32 @@ class ControlBroker:
             return len(self._pending)
 
 
-# One broker per process, shared by the routes (the gateway's event loop) and the
-# tools (agent worker threads): ordinary turns run in the gateway process.
-_BROKER = ControlBroker()
+# One broker per profile on a multiplexed gateway so control routes and tab_* tools
+# never cross profiles through the shared listener app.
+_BROKERS: dict[str, ControlBroker] = {}
+_BROKER_LOCK = threading.RLock()
 
 
-def get_control_broker() -> ControlBroker:
-    """The process-local broker."""
-    return _BROKER
+def get_control_broker(profile: str | None = None) -> ControlBroker:
+    """Broker for the named profile (``default`` when omitted), process-wide."""
+    key = str(profile or "default").strip() or "default"
+    with _BROKER_LOCK:
+        broker = _BROKERS.get(key)
+        if broker is None:
+            broker = ControlBroker()
+            _BROKERS[key] = broker
+        return broker
+
+
+def iter_control_brokers() -> tuple[ControlBroker, ...]:
+    """Every profile broker (ticket consumption across multiplex copies)."""
+    with _BROKER_LOCK:
+        return tuple(_BROKERS.values())
 
 
 # Hermes's directory-plugin loader evicts ``hermes_plugins.<slug>.*`` and
-# re-executes the package on each load (``hermes_cli/plugins_loader.py``).
-# That would mint a fresh ``_BROKER`` and exception classes per load. Keep one
-# canonical module object under a key the loader never evicts and adopt it on
-# later loads so routes and tools always share state and class identities.
+# re-executes the package on each load. Adopt one canonical module object so
+# routes and tab_* tools share ``_BROKERS`` and exception class identities.
 _SHARED_MODULE_KEY = "_hermes_browser_extension_shared_control_broker"
 _SOURCE_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
