@@ -31,11 +31,14 @@ and any feature flag. The plugin being enabled for a profile is the switch.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import secrets
+import sys
 import threading
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
@@ -653,3 +656,19 @@ _BROKER = ControlBroker()
 def get_control_broker() -> ControlBroker:
     """The process-local broker."""
     return _BROKER
+
+
+# Hermes's directory-plugin loader evicts ``hermes_plugins.<slug>.*`` and
+# re-executes the package on each load (``hermes_cli/plugins_loader.py``).
+# That would mint a fresh ``_BROKER`` and exception classes per load. Keep one
+# canonical module object under a key the loader never evicts and adopt it on
+# later loads so routes and tools always share state and class identities.
+_SHARED_MODULE_KEY = "_hermes_browser_extension_shared_control_broker"
+_SOURCE_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+_shared_mod = sys.modules.get(_SHARED_MODULE_KEY)
+if _shared_mod is not None and getattr(_shared_mod, "_SOURCE_DIGEST", None) == _SOURCE_DIGEST:
+    globals().update({name: value for name, value in vars(_shared_mod).items() if not name.startswith("__")})
+else:
+    sys.modules[_SHARED_MODULE_KEY] = sys.modules[__name__]
+del _shared_mod
