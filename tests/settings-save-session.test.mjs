@@ -58,7 +58,7 @@ test('a Save with no connection ready does nothing to the session', async () => 
 test('the Save handler passes what saveSettingsFromForm reports, and saveSettingsFromForm reports the identity change', () => {
   assert.match(source, /const saved = await saveSettingsFromForm\(\);\s*persisted = true;/);
   assert.match(source, /await refreshAfterSettingsSave\(saved\);/);
-  const save = source.match(/async function saveSettingsFromForm\(\)[\s\S]*?\n\}\n/)[0];
+  const save = source.match(/async function saveSettingsFromForm\([^)]*\)[\s\S]*?\n\}\n/)[0];
   assert.match(save, /return \{ connectionIdentityChanged: identityChanged \};/);
   assert.match(save, /connectionIdentityChanged\(previousSettings, settings, normalizeGatewayUrl\)/);
 });

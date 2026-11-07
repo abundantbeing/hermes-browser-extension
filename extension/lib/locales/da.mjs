@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Gemt forbindelse",
+  "connections.help": "Skift gemmer de aktuelle indstillinger. Hver forbindelse beholder sin adresse og sine legitimationsoplysninger.",
+  "connections.name_prompt": "Forbindelsesnavn",
+  "connections.default_name": "Forbindelse {number}",
+  "connections.delete_confirm": "Slet \"{name}\"?",
+  "connections.busy": "Vent, til det aktuelle svar er færdigt, før du skifter forbindelse.",
+  "connections.error": "De gemte forbindelser kunne ikke opdateres.",
   "ui.effort.title": "Indsats",
   "ui.effort.slider": "Skyder",
   "ui.effort.buttons": "Knapper",

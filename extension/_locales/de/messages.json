@@ -1971,6 +1971,34 @@
     "message": "nicht konfiguriert",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "Warte, bis die aktuelle Antwort abgeschlossen ist, bevor du die Verbindung wechselst.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "Verbindung {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "„{name}“ löschen?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "Gespeicherte Verbindungen konnten nicht aktualisiert werden.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "Beim Wechsel werden die aktuellen Einstellungen gespeichert. Jede Verbindung behält ihre Adresse und Zugangsdaten.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "Verbindungsname",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "Gespeicherte Verbindung",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "Nur Chat, bis du genau diese Verbindung genehmigst. Die Einwilligung ist nach Endpunkt, Konto, Profil und Browser-Controller getrennt.",
     "description": "Runtime interface message context_consent.share_detail"

@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Сохранённое подключение",
+  "connections.help": "При переключении текущие настройки сохраняются. У каждого подключения свой адрес и учётные данные.",
+  "connections.name_prompt": "Название подключения",
+  "connections.default_name": "Подключение {number}",
+  "connections.delete_confirm": "Удалить «{name}»?",
+  "connections.busy": "Дождитесь завершения текущего ответа перед переключением подключения.",
+  "connections.error": "Не удалось обновить сохранённые подключения.",
   "ui.effort.title": "Усилие",
   "ui.effort.slider": "Ползунок",
   "ui.effort.buttons": "Кнопки",

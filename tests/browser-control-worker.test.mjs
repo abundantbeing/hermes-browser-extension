@@ -1047,6 +1047,28 @@ test('worker drops a rejected pairing token so reconnect can mint a fresh ticket
   assert.equal(String(store.state.hermesBrowserSettings.apiKey || ''), '');
 });
 
+test('worker clears a rejected pairing token from the active saved connection too', async () => {
+  const paired = settings({ tokenSource: 'pairing' });
+  const entry = { id: 'default', name: 'Home', connection: { ...paired } };
+  const store = memoryStorage({
+    hermesBrowserSettings: { ...paired, activeSavedConnectionId: 'default', savedConnections: [entry] },
+  });
+  const worker = createControllerServiceWorker({
+    storageArea: store.area,
+    connector: { async connect() { throw new Error('Controller registration failed (HTTP 401).'); } },
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async () => ({ ok: true, result: {} }),
+    now: () => 0,
+  });
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.status }, extensionSender());
+  const stored = store.state.hermesBrowserSettings;
+  assert.equal(stored.apiKey, '');
+  assert.equal(stored.savedConnections[0].connection.apiKey, '');
+  assert.equal(stored.savedConnections[0].connection.tokenSource, '');
+});
+
 test('Phase 6 worker drops the tab debugger session when a lease is released, paused, or detached', async () => {
   const storage = memoryStorage({ hermesBrowserSettings: settings() });
   const released = [];

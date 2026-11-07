@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "已保存的连接",
+  "connections.help": "切换时会保存当前设置。每个连接分别保留地址和凭据。",
+  "connections.name_prompt": "连接名称",
+  "connections.default_name": "连接 {number}",
+  "connections.delete_confirm": "删除“{name}”？",
+  "connections.busy": "请等待当前回复完成后再切换连接。",
+  "connections.error": "无法更新已保存的连接。",
   "ui.effort.title": "推理强度",
   "ui.effort.slider": "滑块",
   "ui.effort.buttons": "按钮",

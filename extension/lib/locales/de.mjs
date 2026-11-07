@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Gespeicherte Verbindung",
+  "connections.help": "Beim Wechsel werden die aktuellen Einstellungen gespeichert. Jede Verbindung behält ihre Adresse und Zugangsdaten.",
+  "connections.name_prompt": "Verbindungsname",
+  "connections.default_name": "Verbindung {number}",
+  "connections.delete_confirm": "„{name}“ löschen?",
+  "connections.busy": "Warte, bis die aktuelle Antwort abgeschlossen ist, bevor du die Verbindung wechselst.",
+  "connections.error": "Gespeicherte Verbindungen konnten nicht aktualisiert werden.",
   "ui.effort.title": "Denkaufwand",
   "ui.effort.slider": "Schieberegler",
   "ui.effort.buttons": "Schaltflächen",

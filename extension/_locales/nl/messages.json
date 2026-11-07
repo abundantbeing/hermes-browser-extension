@@ -1971,6 +1971,34 @@
     "message": "niet geconfigureerd",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "Wacht tot het huidige antwoord klaar is voordat je van verbinding wisselt.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "Verbinding {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "\"{name}\" verwijderen?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "Opgeslagen verbindingen konden niet worden bijgewerkt.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "Wisselen slaat de huidige instellingen op. Elke verbinding bewaart het eigen adres en de inloggegevens.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "Verbindingsnaam",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "Opgeslagen verbinding",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "Alleen chat totdat je precies deze verbinding goedkeurt. Toestemming is gescheiden per eindpunt, account, profiel en browsercontroller.",
     "description": "Runtime interface message context_consent.share_detail"

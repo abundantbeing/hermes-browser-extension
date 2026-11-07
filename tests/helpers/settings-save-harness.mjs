@@ -54,6 +54,7 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
       local: {
         get: async (key) => (typeof key === 'string' ? { [key]: structuredClone(store[key]) } : structuredClone(store)),
         set: async (patch) => { Object.assign(store, structuredClone(patch)); },
+        remove: async (keys) => { for (const key of [keys].flat()) delete store[key]; },
       },
     },
   };
@@ -75,6 +76,7 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
     browserApi,
     availableModels: [],
     settings: { ...imported.get('DEFAULT_SETTINGS'), ...initial },
+    loadedSavedConnectionId: initial.activeSavedConnectionId || '',
     connectionController: { cancel: record('connectionController.cancel') },
     remoteWsConnection: null,
     profileWsConnection: null,

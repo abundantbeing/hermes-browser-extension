@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Conexão salva",
+  "connections.help": "A troca salva as configurações atuais. Cada conexão mantém seu endereço e suas credenciais.",
+  "connections.name_prompt": "Nome da conexão",
+  "connections.default_name": "Conexão {number}",
+  "connections.delete_confirm": "Excluir \"{name}\"?",
+  "connections.busy": "Aguarde a resposta atual terminar antes de trocar de conexão.",
+  "connections.error": "Não foi possível atualizar as conexões salvas.",
   "ui.effort.title": "Esforço",
   "ui.effort.slider": "Controle deslizante",
   "ui.effort.buttons": "Botões",

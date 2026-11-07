@@ -1971,6 +1971,34 @@
     "message": "ยังไม่ได้กำหนดค่า",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "รอให้คำตอบปัจจุบันเสร็จก่อนสลับการเชื่อมต่อ",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "การเชื่อมต่อ {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "ลบ \"{name}\" หรือไม่?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "อัปเดตการเชื่อมต่อที่บันทึกไว้ไม่ได้",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "การสลับจะบันทึกการตั้งค่าปัจจุบัน แต่ละการเชื่อมต่อเก็บที่อยู่และข้อมูลรับรองของตนเอง",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "ชื่อการเชื่อมต่อ",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "การเชื่อมต่อที่บันทึกไว้",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "ใช้ได้เฉพาะแชทจนกว่าคุณจะอนุมัติการเชื่อมต่อนี้โดยเฉพาะ การยินยอมจะแยกตามปลายทาง บัญชี โปรไฟล์ และตัวควบคุมเบราว์เซอร์",
     "description": "Runtime interface message context_consent.share_detail"

@@ -949,6 +949,17 @@
             </div>
           </div>
 
+        <div class="saved-connections">
+          <label for="savedConnectionSelect" data-i18n="connections.saved_label">Saved connection</label>
+          <select id="savedConnectionSelect" data-settings-live aria-describedby="savedConnectionHelp"></select>
+          <div class="saved-connection-actions">
+            <button id="savedConnectionAdd" type="button" data-i18n="ui.add">Add</button>
+            <button id="savedConnectionRename" type="button" data-i18n="ui.rename">Rename</button>
+            <button id="savedConnectionDelete" type="button" data-i18n="ui.delete" disabled>Delete</button>
+          </div>
+          <p id="savedConnectionHelp" class="hint" data-i18n="connections.help">Switching saves your current settings. Each connection keeps its address and credentials.</p>
+        </div>
+
         <div class="gateway-mode" role="radiogroup" aria-label="Connection mode" data-i18n-aria-label="ui.connection.mode">
           <button class="conn-mode-card" type="button" data-connection-mode="local" role="radio" aria-checked="true">
             <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.local.gateway">Local gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>

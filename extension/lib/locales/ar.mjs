@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "الاتصال المحفوظ",
+  "connections.help": "يؤدي التبديل إلى حفظ الإعدادات الحالية. يحتفظ كل اتصال بعنوانه وبيانات اعتماده.",
+  "connections.name_prompt": "اسم الاتصال",
+  "connections.default_name": "الاتصال {number}",
+  "connections.delete_confirm": "هل تريد حذف \"{name}\"؟",
+  "connections.busy": "انتظر حتى تكتمل الإجابة الحالية قبل تبديل الاتصال.",
+  "connections.error": "تعذر تحديث الاتصالات المحفوظة.",
   "ui.effort.title": "الجهد",
   "ui.effort.slider": "شريط تمرير",
   "ui.effort.buttons": "أزرار",

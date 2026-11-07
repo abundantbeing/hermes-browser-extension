@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Saved connection",
+  "connections.help": "Switching saves your current settings. Each connection keeps its address and credentials.",
+  "connections.name_prompt": "Connection name",
+  "connections.default_name": "Connection {number}",
+  "connections.delete_confirm": "Delete \"{name}\"?",
+  "connections.busy": "Wait for the current reply to finish before switching connections.",
+  "connections.error": "Could not update saved connections.",
   "ui.effort.title": "Effort",
   "ui.effort.slider": "Slider",
   "ui.effort.buttons": "Buttons",

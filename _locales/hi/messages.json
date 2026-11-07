@@ -1971,6 +1971,34 @@
     "message": "कॉन्फ़िगर नहीं किया गया",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "कनेक्शन बदलने से पहले मौजूदा जवाब पूरा होने दें।",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "कनेक्शन {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "\"{name}\" मिटाएं?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "सहेजे गए कनेक्शन अपडेट नहीं हो सके।",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "बदलने पर मौजूदा सेटिंग सहेजी जाती हैं। हर कनेक्शन अपना पता और क्रेडेंशियल रखता है।",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "कनेक्शन का नाम",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "सहेजा गया कनेक्शन",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "इस सटीक कनेक्शन को मंज़ूरी देने तक केवल चैट उपलब्ध है। सहमति एंडपॉइंट, खाते, प्रोफ़ाइल और ब्राउज़र कंट्रोलर के अनुसार अलग रखी जाती है।",
     "description": "Runtime interface message context_consent.share_detail"

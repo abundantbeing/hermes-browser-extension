@@ -1971,6 +1971,34 @@
     "message": "غير مكوَّن",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "انتظر حتى تكتمل الإجابة الحالية قبل تبديل الاتصال.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "الاتصال {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "هل تريد حذف \"{name}\"؟",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "تعذر تحديث الاتصالات المحفوظة.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "يؤدي التبديل إلى حفظ الإعدادات الحالية. يحتفظ كل اتصال بعنوانه وبيانات اعتماده.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "اسم الاتصال",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "الاتصال المحفوظ",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "الدردشة فقط حتى توافق على هذا الاتصال المحدد. تُعزل الموافقة حسب نقطة النهاية والحساب والملف الشخصي ووحدة تحكم المتصفح.",
     "description": "Runtime interface message context_consent.share_detail"

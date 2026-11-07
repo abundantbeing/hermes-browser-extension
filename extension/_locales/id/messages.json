@@ -1971,6 +1971,34 @@
     "message": "belum dikonfigurasi",
     "description": "Runtime interface message connection.not_configured_short"
   },
+  "runtime_connections_busy": {
+    "message": "Tunggu balasan saat ini selesai sebelum beralih koneksi.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "Koneksi {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "Hapus \"{name}\"?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_error": {
+    "message": "Tidak dapat memperbarui koneksi tersimpan.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "Beralih akan menyimpan pengaturan saat ini. Setiap koneksi menyimpan alamat dan kredensialnya sendiri.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "Nama koneksi",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_saved_label": {
+    "message": "Koneksi tersimpan",
+    "description": "Runtime interface message connections.saved_label"
+  },
   "runtime_context_consent_share_detail": {
     "message": "Hanya chat sampai Anda menyetujui koneksi yang tepat ini. Persetujuan dipisahkan berdasarkan endpoint, akun, profil, dan pengontrol Browser.",
     "description": "Runtime interface message context_consent.share_detail"

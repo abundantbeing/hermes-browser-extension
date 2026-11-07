@@ -71,6 +71,11 @@ import {
   createBrowserControlArtifactClient,
   createBrowserControlArtifactHttpTransport,
 } from './lib/browser-control-artifacts.mjs';
+import {
+  hydrateHermesBrowserSettingsFromStorage,
+  hydrateSavedConnectionSecrets,
+  SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+} from './lib/saved-connections.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -100,7 +105,8 @@ const browserControlRuntime = createBrowserControlRuntime({
 // through storage.session. The setting is read from storage each time, so the panel's Save applies here.
 async function readStoredSettings() {
   try {
-    return (await browserApi.storage.local.get('hermesBrowserSettings'))?.hermesBrowserSettings || {};
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+    return hydrateHermesBrowserSettingsFromStorage(stored);
   } catch {
     return {};
   }
@@ -1100,9 +1106,22 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   contextMenuController.handleStorageChanged(changes, areaName)
     .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
   if (changes.hermesBrowserSettings?.newValue && controllerWorker) {
-    controllerWorker.syncSettings(changes.hermesBrowserSettings.newValue)
-      .then((result) => syncControllerAlarms(result))
-      .catch((error) => console.warn('[Hermes Browser] Controller settings rebind failed:', error));
+    void (async () => {
+      try {
+        let secrets = Object.hasOwn(changes, SAVED_CONNECTION_SECRETS_STORAGE_KEY)
+          ? changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue
+          : undefined;
+        if (secrets === undefined) {
+          const stored = await browserApi.storage.local.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY);
+          secrets = stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
+        }
+        const hydrated = await hydrateSavedConnectionSecrets(changes.hermesBrowserSettings.newValue, secrets);
+        const result = await controllerWorker.syncSettings(hydrated);
+        syncControllerAlarms(result);
+      } catch (error) {
+        console.warn('[Hermes Browser] Controller settings rebind failed:', error);
+      }
+    })();
   }
   let changed = false;
   if (Object.hasOwn(changes, 'hermesBrowserSettings')) {

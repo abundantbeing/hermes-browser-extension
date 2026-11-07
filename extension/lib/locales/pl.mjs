@@ -1,4 +1,11 @@
 export default Object.freeze({
+  "connections.saved_label": "Zapisane połączenie",
+  "connections.help": "Przełączenie zapisuje bieżące ustawienia. Każde połączenie zachowuje własny adres i dane uwierzytelniające.",
+  "connections.name_prompt": "Nazwa połączenia",
+  "connections.default_name": "Połączenie {number}",
+  "connections.delete_confirm": "Usunąć „{name}”?",
+  "connections.busy": "Poczekaj na zakończenie bieżącej odpowiedzi przed zmianą połączenia.",
+  "connections.error": "Nie udało się zaktualizować zapisanych połączeń.",
   "ui.effort.title": "Wysiłek",
   "ui.effort.slider": "Suwak",
   "ui.effort.buttons": "Przyciski",
