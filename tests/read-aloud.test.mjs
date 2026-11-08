@@ -182,7 +182,6 @@ test('a reply keeps its key when the transcript is drawn again, and two replies 
   assert.equal(readAloudKeysMatch(readAloudKey(live), refreshed), true);
   assert.equal(readAloudKeysMatch(readAloudKey(refreshed), live), true);
 
-  const prefix = 'A'.repeat(48);
   const looseOne = { role: 'assistant', content: `${prefix} ending one`, ts: 1 };
   const looseTwo = { role: 'assistant', content: `${prefix} ending two`, ts: 2 };
   assert.notEqual(readAloudKey(looseOne), readAloudKey(looseTwo));

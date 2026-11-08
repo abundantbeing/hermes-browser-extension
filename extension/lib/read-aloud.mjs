@@ -279,17 +279,19 @@ function parseReadAloudTarget(target) {
   if (text.startsWith(READ_ALOUD_ROW_PREFIX)) {
     const after = text.slice(READ_ALOUD_ROW_PREFIX.length);
     const firstColon = after.indexOf(':');
-    if (firstColon < 0) return { rowId: null, contentKey: text };
+    if (firstColon < 0) return { rowId: null, contentKey: text, ts: null };
     const head = after.slice(0, firstColon);
-    if (!/^\d+$/.test(head)) return { rowId: null, contentKey: text };
-    return { rowId: Number(head), contentKey: after.slice(firstColon + 1) };
+    if (!/^\d+$/.test(head)) return { rowId: null, contentKey: text, ts: null };
+    return { rowId: Number(head), contentKey: after.slice(firstColon + 1), ts: null };
   }
   const mark = text.lastIndexOf(READ_ALOUD_TS_MARK);
   if (mark > 0) {
     const tail = text.slice(mark + 1);
-    if (/^\d+$/.test(tail)) return { rowId: null, contentKey: text.slice(0, mark) };
+    if (/^\d+$/.test(tail)) {
+      return { rowId: null, contentKey: text.slice(0, mark), ts: Number(tail) };
+    }
   }
-  return { rowId: null, contentKey: text };
+  return { rowId: null, contentKey: text, ts: null };
 }
 
 /** Same reply across refresh when rowId was missing live then set; distinct when rowIds differ. */
@@ -299,6 +301,10 @@ export function readAloudKeysMatch(targetKey, record) {
   if (playing.contentKey !== contentKey) return false;
   const rowId = readAloudRowId(record);
   if (playing.rowId !== null && rowId !== null && playing.rowId !== rowId) return false;
+  if (playing.rowId === null && rowId === null && playing.ts !== null) {
+    const recordTs = readAloudTs(record);
+    if (recordTs !== null && playing.ts !== recordTs) return false;
+  }
   return true;
 }
 
