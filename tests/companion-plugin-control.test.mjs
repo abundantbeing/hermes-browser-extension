@@ -234,6 +234,153 @@ print(json.dumps(seen))
   assert.deepEqual(data.none, [20, 20]);
 });
 
+test('a second plugin load reuses the same broker, classes and route versus tool wiring', () => {
+  const out = runPython(`
+import asyncio, importlib.util, json, pathlib, sys, tempfile, types
+${SKIP_GUARD}
+root = pathlib.Path.cwd() / "companion-plugin"
+if "hermes_plugins" not in sys.modules:
+    ns = types.ModuleType("hermes_plugins")
+    ns.__path__ = []
+    sys.modules["hermes_plugins"] = ns
+
+BASE = "/api/plugins/hermes-browser-extension"
+REGISTER = BASE + "/control/register"
+WS = BASE + "/control/ws"
+TOKEN = "Bearer paired-token"
+PROTOCOL = "hermes-browser-control-v1"
+CAPS = ["controller.noop", "browser_click", "browser_snapshot", "browser_navigate", "browser_screenshot", "browser_batch"]
+PLUGIN = "hermes_plugins.hermes_browser_extension"
+OTHER_HOME = "hermes_plugins.hermes_browser_extension__home_0123456789ab"
+
+class Adapter:
+    async def _ensure_session_db_async(self):
+        class Db:
+            def get_session(self, session_id):
+                return {"id": session_id}
+        return Db()
+    def _check_auth(self, request):
+        from aiohttp import web
+        if request.headers.get("Authorization") == TOKEN:
+            return None
+        return web.json_response({"error": {"code": "gateway_auth_failed"}}, status=401)
+
+class Ctx:
+    profile_name = "luxord"
+    def get_config(self, key, default=None): return default
+    def register_tool(self, *args, **kwargs): pass
+    def register_hook(self, name, callback): pass
+    def register_skill(self, name, path): pass
+    def register_platform_handler(self, *args, **kwargs): pass
+
+def evict(prefix):
+    for name in list(sys.modules):
+        if name == prefix or name.startswith(prefix + "."):
+            sys.modules.pop(name, None)
+
+def load_plugin(name):
+    parent = name.rpartition(".")[0]
+    if parent and parent not in sys.modules:
+        namespace = types.ModuleType(parent)
+        namespace.__path__ = []
+        sys.modules[parent] = namespace
+    spec = importlib.util.spec_from_file_location(name, root / "__init__.py", submodule_search_locations=[str(root)])
+    module = importlib.util.module_from_spec(spec)
+    module.__package__ = name
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+def body(session="sess-A", controller="ctl-1", profile="bp-1", caps=CAPS, version=1):
+    return {"protocol_version": version, "controller_id": controller, "browser_profile_id": profile,
+            "session_id": session, "capabilities": caps}
+
+async def attach(client, broker, **kwargs):
+    response = await client.post(REGISTER, headers={"Authorization": TOKEN}, json=body(**kwargs))
+    assert response.status == 201, await response.json()
+    ticket = (await response.json())["ticket"]
+    ws = await client.ws_connect(WS, protocols=(PROTOCOL, "hermes-browser-control-ticket." + ticket))
+    for _ in range(400):
+        scopes = broker.lane_scopes(profile_id="luxord", session_id=kwargs.get("session", "sess-A"))
+        if any(broker._controllers[s].connected for s in scopes):
+            break
+        await asyncio.sleep(0.02)
+    return ws
+
+async def main():
+    from aiohttp import web
+    from aiohttp.test_utils import TestClient, TestServer
+
+    module_first = load_plugin(PLUGIN)
+    module_first.register(Ctx())
+    routes = sys.modules[PLUGIN + ".control_routes"]
+    tools_first = sys.modules[PLUGIN + ".control_tools"]
+    broker_first = sys.modules[PLUGIN + ".control_broker"]
+    route_broker = broker_first.get_control_broker()
+
+    app = web.Application()
+    routes.make_wire_extra(route_broker, profile="luxord")(app.router, Adapter())
+    shots = tempfile.mkdtemp(prefix="hbc-shots-")
+    tools_first.configure(broker=route_broker, profile="luxord", screenshot_dir=shots)
+    client = TestClient(TestServer(app))
+    await client.start_server()
+
+    async with client:
+        ws = await attach(client, route_broker)
+        attached_before = len(route_broker.lane_scopes(profile_id="luxord", session_id="sess-A"))
+
+        evict(PLUGIN)
+        module_second = load_plugin(PLUGIN)
+        module_second.register(Ctx())
+        tools_second = sys.modules[PLUGIN + ".control_tools"]
+        broker_second = sys.modules[PLUGIN + ".control_broker"]
+        tool_broker = broker_second.get_control_broker()
+        route_seen = len(route_broker.lane_scopes(profile_id="luxord", session_id="sess-A"))
+        tool_seen = len(tool_broker.lane_scopes(profile_id="luxord", session_id="sess-A"))
+
+        try:
+            raise broker_first.ControllerUnavailable("probe")
+        except broker_second.ControllerUnavailable:
+            exception_caught = True
+        except Exception:
+            exception_caught = False
+
+        task = asyncio.create_task(asyncio.to_thread(
+            tools_second.run_control_action, "browser_snapshot", {}, {"session_id": "sess-A", "task_id": "task-1"}))
+        frame = await ws.receive_json(timeout=5)
+        await ws.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": "RELOAD_WIRED"}})
+        tool_result = await task
+        await ws.close()
+
+    other_home = load_plugin(OTHER_HOME)
+    other_broker = sys.modules[OTHER_HOME + ".control_broker"].get_control_broker()
+
+    return {
+        "same_broker": route_broker is tool_broker,
+        "same_exception_class": broker_first.ControllerUnavailable is broker_second.ControllerUnavailable,
+        "exception_caught": exception_caught,
+        "attached_before": attached_before,
+        "route_seen": route_seen,
+        "tool_seen": tool_seen,
+        "tool_result": tool_result,
+        "homes_isolated": route_broker is not other_broker,
+    }
+
+print(json.dumps(asyncio.run(main())))
+`);
+  const data = JSON.parse(out);
+  if (skipped(data)) return;
+  assert.equal(data.same_broker, true);
+  assert.equal(data.same_exception_class, true);
+  assert.equal(data.exception_caught, true);
+  assert.equal(data.attached_before, 1);
+  assert.equal(data.route_seen, 1);
+  assert.equal(data.tool_seen, 1);
+  assert.equal(data.tool_result, 'RELOAD_WIRED');
+  assert.equal(data.homes_isolated, true);
+});
+
 test("attaching or detaching a browser never touches Hermes' tool list mid-conversation", () => {
   const out = runPython(`${PRELUDE}
 import types
