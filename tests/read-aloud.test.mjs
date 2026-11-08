@@ -189,11 +189,23 @@ test('a reply keeps its key when the transcript is drawn again, and two replies 
 
   const departure = { role: 'assistant', content: '12:30 is the next departure.', ts: 1 };
   const departureLiveKey = readAloudKey(departure);
-  assert.equal(departureLiveKey, '28:12:30 is the next departure.@1');
+  assert.equal(departureLiveKey, 't:1:28:12:30 is the next departure.');
   assert.equal(readAloudKeysMatch(departureLiveKey, departure), true);
   const departureRefreshed = { ...departure, ts: 99, rowId: 28 };
   assert.equal(readAloudKeysMatch(departureLiveKey, departureRefreshed), true);
   assert.equal(readAloudKeysMatch(readAloudKey(departureRefreshed), departure), true);
+
+  const atMention = { role: 'assistant', content: 'Use @123 for help.' };
+  const atMentionKey = readAloudKey(atMention);
+  assert.equal(atMentionKey, '18:Use @123 for help.');
+  assert.equal(readAloudKeysMatch(atMentionKey, atMention), true);
+
+  const atMentionLive = { role: 'assistant', content: 'Use @123 for help.', ts: 456 };
+  const atMentionLiveKey = readAloudKey(atMentionLive);
+  assert.equal(atMentionLiveKey, 't:456:18:Use @123 for help.');
+  assert.equal(readAloudKeysMatch(atMentionLiveKey, atMentionLive), true);
+  const atMentionRefreshed = { ...atMentionLive, ts: 999, rowId: 88 };
+  assert.equal(readAloudKeysMatch(atMentionLiveKey, atMentionRefreshed), true);
 });
 
 // ---- Audio bytes ---------------------------------------------------------------

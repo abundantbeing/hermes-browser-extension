@@ -247,7 +247,7 @@ export function voiceRouteSummary({ gatewayAvailable = false, browserAvailable =
 }
 
 const READ_ALOUD_ROW_PREFIX = 'r:';
-const READ_ALOUD_TS_MARK = '@';
+const READ_ALOUD_TS_PREFIX = 't:';
 
 function readAloudRowId(record) {
   const rowId = record?.rowId;
@@ -271,7 +271,7 @@ export function readAloudKey(record) {
   const rowId = readAloudRowId(record);
   if (rowId !== null) return `${READ_ALOUD_ROW_PREFIX}${rowId}:${contentKey}`;
   const ts = readAloudTs(record);
-  return ts !== null ? `${contentKey}${READ_ALOUD_TS_MARK}${ts}` : contentKey;
+  return ts !== null ? `${READ_ALOUD_TS_PREFIX}${ts}:${contentKey}` : contentKey;
 }
 
 function parseReadAloudTarget(target) {
@@ -284,12 +284,13 @@ function parseReadAloudTarget(target) {
     if (!/^\d+$/.test(head)) return { rowId: null, contentKey: text, ts: null };
     return { rowId: Number(head), contentKey: after.slice(firstColon + 1), ts: null };
   }
-  const mark = text.lastIndexOf(READ_ALOUD_TS_MARK);
-  if (mark > 0) {
-    const tail = text.slice(mark + 1);
-    if (/^\d+$/.test(tail)) {
-      return { rowId: null, contentKey: text.slice(0, mark), ts: Number(tail) };
-    }
+  if (text.startsWith(READ_ALOUD_TS_PREFIX)) {
+    const after = text.slice(READ_ALOUD_TS_PREFIX.length);
+    const firstColon = after.indexOf(':');
+    if (firstColon < 0) return { rowId: null, contentKey: text, ts: null };
+    const head = after.slice(0, firstColon);
+    if (!/^\d+$/.test(head)) return { rowId: null, contentKey: text, ts: null };
+    return { rowId: null, contentKey: after.slice(firstColon + 1), ts: Number(head) };
   }
   return { rowId: null, contentKey: text, ts: null };
 }
