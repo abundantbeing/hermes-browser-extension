@@ -361,8 +361,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
     if (!tab || pageKey(tab.url || tab.pendingUrl) !== pageKey(request.pageUrl)) {
       throw new Error('The originating page changed before Hermes could draft.');
     }
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-    const settings = stored?.hermesBrowserSettings || {};
+    const settings = await readStoredSettings();
     const client = createHermesClient({
       getConnection: () => ({
         gatewayUrl: settings.gatewayUrl || settings.agentApiUrl || '',

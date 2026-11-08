@@ -534,6 +534,24 @@ test('controller worker boot hydrates apiKey when storage was packed', async () 
   assert.equal(packed.hermesBrowserSettings.apiKey, '');
 });
 
+test('after Save, hydrated storage reads restore the active gateway key for followers', async () => {
+  const h = await createSettingsSaveHarness({ settings: twoConnections() });
+  try {
+    h.els.apiKeyInput.value = 'rotated-work-token';
+    await h.save();
+    assert.equal(h.store.hermesBrowserSettings.apiKey, '', 'pack clears the top-level key in storage');
+    const hydrated = await hydrateHermesBrowserSettingsFromStorage(h.store);
+    assert.equal(hydrated.apiKey, 'rotated-work-token', 'readers must hydrate before using credentials');
+    assert.equal(
+      hydrated.savedConnections.find((entry) => entry.id === 'work').connection.apiKey,
+      'rotated-work-token',
+    );
+    assert.equal(JSON.stringify(h.store).includes('rotated-work-token'), false);
+  } finally {
+    h.close();
+  }
+});
+
 test('pause in another panel keeps a saved-connection switch already in storage', async () => {
   const panelSettings = rememberSavedConnection(local);
   const state = {
