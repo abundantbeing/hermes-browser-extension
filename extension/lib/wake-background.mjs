@@ -289,9 +289,8 @@ export function createWakeBackgroundController({
   // The native engine runs on this computer's Desktop dashboard. A remote API or
   // cloud connection has no such companion, so it must never probe loopback.
   async function localGatewayIsActive() {
-    const stored = await chromeApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]).catch(() => null);
-    const settings = await hydrateHermesBrowserSettingsFromStorage(stored || {}, chromeApi.storage.local);
-    return legacyGatewayModeForConnection(settings) === 'local-api';
+    const stored = await chromeApi.storage.local.get('hermesBrowserSettings').catch(() => null);
+    return legacyGatewayModeForConnection(stored?.hermesBrowserSettings || {}) === 'local-api';
   }
 
   async function tryNativeWake() {
@@ -473,9 +472,8 @@ export function createWakeBackgroundController({
   }
 
   async function restore() {
-    const stored = await chromeApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-    const merged = await hydrateHermesBrowserSettingsFromStorage(stored, chromeApi.storage.local);
-    return configureSerialized(merged);
+    const stored = await chromeApi.storage.local.get('hermesBrowserSettings');
+    return configureSerialized(stored?.hermesBrowserSettings || {});
   }
 
   return { configure: configureSerialized, handleMessage, restore, state: () => state };

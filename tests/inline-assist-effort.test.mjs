@@ -71,7 +71,7 @@ test('the full panel footer has the same slider beside the model', async () => {
 
 test('an effort saved elsewhere moves an open slider', async () => {
   const { env, root } = await open({ inlineAssistReasoningEffort: 'low' });
-  await env.changeStorage({ hermesBrowserSettings: { newValue: { ...ASSIST_MODEL, inlineAssistReasoningEffort: 'ultra' } } });
+  env.changeStorage({ hermesBrowserSettings: { newValue: { ...ASSIST_MODEL, inlineAssistReasoningEffort: 'ultra' } } });
   await env.sleep();
   assert.equal(root.querySelector('.foot input.effort-range').value, '6');
 });

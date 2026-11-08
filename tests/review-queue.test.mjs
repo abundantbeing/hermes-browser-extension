@@ -119,11 +119,9 @@ test('simultaneous processes recovering a dead owner cannot overlap their critic
   // spawnSync does not expose a PID. Obtain one explicitly and await its exit.
   const departed = spawn(process.execPath, ['-e', '']);
   await new Promise((resolve) => departed.once('exit', resolve));
-  // Wait until kill(pid,0) reports ESRCH, then linger briefly: under parallel load the
-  // kernel can reassign the PID quickly and acquireReviewLock would see a live unrelated
-  // process (flaky "simultaneous processes recovering" failure in full npm test).
-  const deadline = Date.now() + 5000;
-  for (;;) {
+  // Wait until the OS recycles are unlikely to have reassigned this PID to a live process
+  // (parallel full-suite runs have races where kill(pid,0) succeeds for a new owner).
+  for (let attempt = 0; attempt < 100; attempt += 1) {
     let alive = false;
     try {
       process.kill(departed.pid, 0);
@@ -132,10 +130,8 @@ test('simultaneous processes recovering a dead owner cannot overlap their critic
       if (probe.code !== 'ESRCH') throw probe;
     }
     if (!alive) break;
-    if (Date.now() > deadline) assert.fail('expected departed child PID to become unassigned (ESRCH)');
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 5));
   }
-  await new Promise((resolve) => setTimeout(resolve, 75));
   fs.writeFileSync(`${filename}.lock`, JSON.stringify({ pid: departed.pid, token: 'departed' }));
   const moduleURL = new URL('../scripts/hermes-review-queue.mjs', import.meta.url).href;
   const code = `

@@ -38,7 +38,6 @@ import {
   syncActiveSavedConnection,
   packSavedConnectionStorage,
   hydrateSavedConnectionSecrets,
-  hydrateHermesBrowserSettingsFromStorage,
   packedHermesBrowserSettingsWrite,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
   withSavedConnectionsLock,
@@ -150,8 +149,9 @@ function canonicalControlUrl(value = '') {
   }
 }
 
-async function connectionSettings(stored = {}, area) {
-  return hydrateHermesBrowserSettingsFromStorage(stored, area);
+function connectionSettings(stored = {}) {
+  const settings = stored?.hermesBrowserSettings;
+  return settings && typeof settings === 'object' ? settings : {};
 }
 
 function durableSessionId(settings = {}) {
@@ -180,9 +180,8 @@ function controllerRouteChanged(previous = {}, next = {}) {
 
 // Transport / gateway identity for Hermes Control on Pause: another panel may have updated storage with a new
 // chat while this worker still serves the old transport. Merge connection fields from storage but keep this
-// worker's transport credentials until Resume runs syncSettingsTransition. Chat fields (sessionId, sessionTitle,
-// remoteDashboardSession) always come from storage so Pause never copies the worker's in-memory chat into the
-// blob — that would make a later syncSettings see no route change and skip closing the socket (#3).
+// worker's transport credentials until Resume runs syncSettingsTransition. The in-memory chat route stays on
+// this worker; the paused storage write carries the newest chat from storage so panels stay aligned.
 const PAUSE_ROUTE_IDENTITY_FIELDS = [
   'connectionMode',
   'connectionTransport',
@@ -207,9 +206,9 @@ function mergePauseSettingsWithStorage(current = {}, fromStorage = {}) {
     ...fromStorage,
     ...routeIdentityFromSettings(current),
     browserControlPaused: true,
-    sessionId: fromStorage.sessionId,
-    sessionTitle: fromStorage.sessionTitle,
-    remoteDashboardSession: fromStorage.remoteDashboardSession,
+    sessionId: current.sessionId,
+    sessionTitle: current.sessionTitle,
+    remoteDashboardSession: current.remoteDashboardSession,
   };
 }
 
@@ -1184,7 +1183,12 @@ export function createControllerServiceWorker({
           TAB_LEASE_STORAGE_KEY,
           CONTROLLER_LIFECYCLE_STORAGE_KEY,
         ]);
-        settings = await connectionSettings(stored, storageArea);
+        settings = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+          ? await hydrateSavedConnectionSecrets(
+              stored.hermesBrowserSettings,
+              stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+            )
+          : connectionSettings(stored);
         const previousWorker = stored[CONTROLLER_WORKER_STORAGE_KEY];
         chatMove = null;
         const previousMove = previousWorker?.chatMove;
@@ -1540,8 +1544,14 @@ export function createControllerServiceWorker({
         if (paused === true) {
           // Newest list/credentials from storage, but this worker's chat route until Resume runs syncSettingsTransition.
           settings = mergePauseSettingsWithStorage(settings, fromStorage);
+          const pausedForStorage = {
+            ...settings,
+            sessionId: fromStorage.sessionId,
+            sessionTitle: fromStorage.sessionTitle,
+            remoteDashboardSession: fromStorage.remoteDashboardSession,
+          };
           await storageArea.set(await packSavedConnectionStorage(
-            syncActiveSavedConnection(savedSettings(settings)),
+            syncActiveSavedConnection(savedSettings(pausedForStorage)),
             stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
           ));
         } else {

@@ -278,6 +278,26 @@ test('Pause persists the newest chat from storage instead of copying the worker 
   assert.equal(storage.state.hermesBrowserSettings.browserControlPaused, true);
 });
 
+test('Pause leaves the worker serving the in-memory chat while storage records a newer one', async () => {
+  const base = settings();
+  const storage = memoryStorage({ hermesBrowserSettings: base });
+  const transport = connector();
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async () => ({ ok: true, result: { status: 'noop' } }),
+  });
+  await worker.boot();
+  assert.equal(transport.connections[0]?.options?.settings?.sessionId, 'pause-session');
+  storage.state.hermesBrowserSettings = { ...base, sessionId: 'session-b', sessionTitle: 'B' };
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
+  assert.equal(storage.state.hermesBrowserSettings.sessionId, 'session-b');
+  assert.equal(transport.connections[0]?.options?.settings?.sessionId, 'pause-session');
+});
+
 test('a Pause between Resume lock release and its transition is not overridden by that Resume', async () => {
   const storage = memoryStorage({ hermesBrowserSettings: { ...settings(), browserControlPaused: true } });
   const transport = connector();

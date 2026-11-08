@@ -130,7 +130,7 @@ test('Try again on the failure bar with Ask every time shows the chooser', async
   env.userClick(root.querySelector('.quick-item'));
   await env.sleep(60);
   const request = requests(env).at(-1);
-  await env.changeStorage({ hermesBrowserSettings: { newValue: { inlineAssistDefaultRoute: 'ask', inlineAssistOpenMode: 'quick', inlineAssistModel: 'gpt-6.1-terra' } } });
+  env.changeStorage({ hermesBrowserSettings: { newValue: { inlineAssistDefaultRoute: 'ask', inlineAssistOpenMode: 'quick', inlineAssistModel: 'gpt-6.1-terra' } } });
   await env.sleep(20);
   env.deliver({ type: 'HERMES_INLINE_DRAFT_RESULT', requestId: request.requestId, documentId: request.documentId, ok: false, reason: 'The gateway refused.' });
   await env.sleep(60);
@@ -238,14 +238,14 @@ test('Back on the chooser from the full panel returns to the actions', async () 
 
 test('a language change redraws the screen that is open, the quick menu and the bar included', async () => {
   const { env, root, panel } = await boot({ inlineAssistOpenMode: 'quick' });
-  await env.changeStorage({ hermesBrowserLocale: { newValue: 'es' } });
+  env.changeStorage({ hermesBrowserLocale: { newValue: 'es' } });
   await env.sleep();
   assert.equal(panel.dataset.view, 'quick');
   assert.equal(panel.dataset.mode, 'quick');
   env.userClick(root.querySelector('.quick-item'));
   await env.sleep(60);
   await deliverLast(env);
-  await env.changeStorage({ hermesBrowserLocale: { newValue: 'fr' } });
+  env.changeStorage({ hermesBrowserLocale: { newValue: 'fr' } });
   await env.sleep();
   assert.equal(panel.dataset.mode, 'bar');
   assert.ok(root.querySelector('.bar-actions'), 'still the bar');

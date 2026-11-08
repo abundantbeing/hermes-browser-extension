@@ -16,26 +16,6 @@
   if (!policy?.classifyEditable || !policy?.buildInlineDraftRequest || !policy?.applyResult || !appearance?.resolveInlineAssistTheme || !i18n?.ready) return;
   await i18n.ready;
   if (globalThis.__HERMES_INLINE_HELPER_GENERATION__ !== generation) return;
-  const extensionRootEarly = String(browserApi.runtime.getManifest()?.side_panel?.default_path || '').startsWith('extension/') ? 'extension/' : '';
-  let hydrateHermesBrowserSettingsFromStorage;
-  let packedHermesBrowserSettingsWrite;
-  let SAVED_CONNECTION_SECRETS_STORAGE_KEY;
-  try {
-    ({
-      hydrateHermesBrowserSettingsFromStorage,
-      packedHermesBrowserSettingsWrite,
-      SAVED_CONNECTION_SECRETS_STORAGE_KEY,
-    } = await import(browserApi.runtime.getURL(`${extensionRootEarly}lib/saved-connections.mjs`)));
-  } catch {
-    hydrateHermesBrowserSettingsFromStorage = async (raw = {}, area) => {
-      const bundle = area ? await area.get(['hermesBrowserSettings', 'hermesBrowserSavedConnectionSecrets']) : raw;
-      const blob = bundle?.hermesBrowserSettings && typeof bundle.hermesBrowserSettings === 'object' ? bundle.hermesBrowserSettings : {};
-      return blob;
-    };
-    packedHermesBrowserSettingsWrite = async (next) => ({ hermesBrowserSettings: next });
-    SAVED_CONNECTION_SECRETS_STORAGE_KEY = 'hermesBrowserSavedConnectionSecrets';
-  }
-  if (globalThis.__HERMES_INLINE_HELPER_GENERATION__ !== generation) return;
   const translateUiText = (value) => i18n.translateText(value);
 
   const PAGE_CONTEXT_CHARS = 12_000;
@@ -385,18 +365,12 @@
   overlayStyle.textContent = overlayScrollbar?.css || '';
   shadow.append(style, overlayStyle, fontStyle, launcher, panel);
   (document.documentElement || document.body).appendChild(host);
-  void (async () => {
-    try {
-      const bundle = await browserApi.storage?.local?.get?.(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-      const merged = await hydrateHermesBrowserSettingsFromStorage(bundle || {}, browserApi.storage?.local);
-      const percent = Number(merged?.textZoomPercent);
-      if (!Number.isFinite(percent)) return;
-      const bounded = Math.min(200, Math.max(75, Math.round(percent)));
-      host.style.setProperty('--hermes-text-zoom', String(bounded / 100));
-    } catch {
-      /* ignore */
-    }
-  })();
+  browserApi.storage?.local?.get?.('hermesBrowserSettings').then((stored) => {
+    const percent = Number(stored?.hermesBrowserSettings?.textZoomPercent);
+    if (!Number.isFinite(percent)) return;
+    const bounded = Math.min(200, Math.max(75, Math.round(percent)));
+    host.style.setProperty('--hermes-text-zoom', String(bounded / 100));
+  }).catch(() => {});
 
   let target = null;
   let siteProfile = null;
@@ -607,18 +581,8 @@
   }
 
   async function loadAssistSettings() {
-    const stored = await browserApi.storage.local.get([
-      'hermesBrowserSettings',
-      SAVED_CONNECTION_SECRETS_STORAGE_KEY,
-      SITE_CONTEXT_STORAGE_KEY,
-      AUTO_REPLACE_STORAGE_KEY,
-      HIDDEN_SITES_STORAGE_KEY,
-    ]).catch(() => ({}));
-    const merged = await hydrateHermesBrowserSettingsFromStorage(
-      { hermesBrowserSettings: stored?.hermesBrowserSettings, [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: stored?.[SAVED_CONNECTION_SECRETS_STORAGE_KEY] },
-      browserApi.storage.local,
-    );
-    assistSettings = { ...assistSettings, ...merged };
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY, AUTO_REPLACE_STORAGE_KEY, HIDDEN_SITES_STORAGE_KEY]).catch(() => ({}));
+    assistSettings = { ...assistSettings, ...(stored?.hermesBrowserSettings || {}) };
     savedAutoReplace = typeof stored?.[AUTO_REPLACE_STORAGE_KEY] === 'boolean' ? stored[AUTO_REPLACE_STORAGE_KEY] : null;
     hiddenSites = look?.normalizeInlineAssistHiddenSites?.(stored?.[HIDDEN_SITES_STORAGE_KEY]) || [];
     siteContextPreferences = adapters?.normalizeInlineSiteContextPreferences?.(stored?.[SITE_CONTEXT_STORAGE_KEY]) || {};
@@ -634,23 +598,21 @@
   }
 
   async function persistAssistSettings(patch) {
-    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]).catch(() => ({}));
-    const current = await hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local);
-    const next = { ...current, ...patch };
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
+    const next = { ...(stored?.hermesBrowserSettings || {}), ...patch };
     assistSettings = { ...assistSettings, ...next };
-    await browserApi.storage.local.set(await packedHermesBrowserSettingsWrite(next, browserApi.storage.local));
+    await browserApi.storage.local.set({ hermesBrowserSettings: next });
   }
 
   async function persistDefaultRoute(route) {
-    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]).catch(() => ({}));
-    const current = await hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local);
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
     const next = {
-      ...current,
+      ...(stored?.hermesBrowserSettings || {}),
       inlineAssistEnabled: assistSettings.inlineAssistEnabled !== false,
       inlineAssistDefaultRoute: policy.normalizeRoutePreference?.(route) || 'ask',
     };
     assistSettings = { ...assistSettings, ...next };
-    await browserApi.storage.local.set(await packedHermesBrowserSettingsWrite(next, browserApi.storage.local));
+    await browserApi.storage.local.set({ hermesBrowserSettings: next });
   }
 
   async function persistSiteContextMode(adapterId, mode) {
@@ -667,7 +629,10 @@
 
   function onStorageChanged(changes, areaName) {
     if (areaName !== 'local') return;
-    if (changes?.hermesBrowserSettings || changes?.[SAVED_CONNECTION_SECRETS_STORAGE_KEY]) void loadAssistSettings();
+    if (changes?.hermesBrowserSettings) {
+      assistSettings = { ...assistSettings, ...(changes.hermesBrowserSettings.newValue || {}) };
+      assistSettings.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
+    }
     if (changes?.[AUTO_REPLACE_STORAGE_KEY]) {
       const value = changes[AUTO_REPLACE_STORAGE_KEY].newValue;
       savedAutoReplace = typeof value === 'boolean' ? value : null;

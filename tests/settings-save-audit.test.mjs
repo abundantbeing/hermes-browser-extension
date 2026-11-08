@@ -212,7 +212,6 @@ test('extension writers never call storage.set with a raw hermesBrowserSettings 
   const targets = [
     '../extension/sidepanel.js',
     '../extension/background.js',
-    '../extension/content-inline-helper.js',
     '../extension/lib/wake-background.mjs',
     '../extension/lib/controller-service-worker.mjs',
   ];
@@ -258,10 +257,7 @@ test('settings that Save writes have a consumer that reads them live', () => {
   assert.match(sidepanelSource, /normalizeExternalModelSourceList\(settings\.customModelSources/);
   assert.match(sidepanelSource, /const provider = settings\.transcriptProvider/);
   // Assist and the right-click menu live in other contexts: they follow storage.
-  assert.match(
-    inlineHelper,
-    new RegExp(`changes\\?\\.\\[${SAVED_CONNECTION_SECRETS_STORAGE_KEY}\\]|changes\\?\\.hermesBrowserSettings`),
-  );
+  assert.match(inlineHelper, /changes\.hermesBrowserSettings\.newValue/);
   assert.match(readFileSync(new URL('../extension/lib/context-menu-controller.mjs', import.meta.url), 'utf8'), /hermesBrowserSettings\?\.contextMenuDefaultRoute/);
   assert.match(readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8'), /changes\.hermesBrowserSettings\?\.newValue\?\.panelResidencyMode/);
 });

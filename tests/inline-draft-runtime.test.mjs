@@ -232,6 +232,13 @@ test('a background Assist retry creates a new session id, since Hermes never reu
   assert.match(loop.slice(0, loop.indexOf("client.fetch('/api/sessions'")), /const sessionId = assistSessionId\(\);/, 'a fresh id before each create');
 });
 
+test('background Assist hydrates packed gateway credentials before calling the API', async () => {
+  const background = await read('extension/background.js');
+  const runner = background.match(/async function runInlineDraftInServiceWorker\([\s\S]*?\n\}/)?.[0] || '';
+  assert.match(runner, /const settings = await readStoredSettings\(\);/);
+  assert.doesNotMatch(runner, /hermesBrowserSettings \|\| \{\}/);
+});
+
 test('only Run in background runs in the service worker; Continue and New hand off to the side panel', async () => {
   const background = await read('extension/background.js');
   const queue = background.match(/\nfunction queueInlineDraftRequest\([\s\S]*?\n\}/)?.[0] || '';
