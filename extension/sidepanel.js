@@ -761,6 +761,8 @@ import {
   createGatewayAudioPlayback,
   createReadAloudPlayer,
   describeVoiceRoute,
+  ensureReadAloudReplyId,
+  preserveReadAloudReplyIds,
   readAloudKey,
   readAloudKeysMatch,
   readAloudRouteOrder,
@@ -6025,23 +6027,30 @@ async function refreshDashboardRoutes({ force = false } = {}) {
   }
   if (!force && Date.now() - dashboardRoutesProbeAt < 30_000) return null;
   dashboardRoutesProbeAt = Date.now();
-  syncCapabilityRuntime();
-  const identityKey = capabilityRuntime.ledger.identityKey;
-  const baseUrl = await resolveDashboardMediaBaseUrl().catch(() => '');
-  if (!baseUrl) {
+  let identityKey = '';
+  try {
+    syncCapabilityRuntime();
+    identityKey = capabilityRuntime.ledger.identityKey;
+    const baseUrl = await resolveDashboardMediaBaseUrl().catch(() => '');
+    if (!baseUrl) {
+      readAloudDashboardProbe = { reachable: false, gatewayUrl: settings.gatewayUrl };
+      notifyReadAloudDashboardProbeChanged();
+      return null;
+    }
+    const token = await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }).catch(() => '');
+    const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
+    readAloudDashboardProbe = { reachable: probe.reachable === true, gatewayUrl: settings.gatewayUrl };
+    notifyReadAloudDashboardProbeChanged();
+    const fields = dashboardRouteRecordFields(probe);
+    if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
+    for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);
+    refreshCapabilityViews();
+    return probe;
+  } catch {
     readAloudDashboardProbe = { reachable: false, gatewayUrl: settings.gatewayUrl };
     notifyReadAloudDashboardProbeChanged();
     return null;
   }
-  const token = await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }).catch(() => '');
-  const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
-  readAloudDashboardProbe = { reachable: probe.reachable === true, gatewayUrl: settings.gatewayUrl };
-  notifyReadAloudDashboardProbeChanged();
-  const fields = dashboardRouteRecordFields(probe);
-  if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
-  for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);
-  refreshCapabilityViews();
-  return probe;
 }
 
 async function loadGatewayCapabilities({ quiet = false, publicOnly = false, healthOk = false } = {}) {
@@ -21229,7 +21238,7 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
     ? messages
     : (sessionAssistantStylesBySession.get(String(sessionId || '').trim()) || []);
   messages = preserveAssistantResponseStyles(
-    preserveUserImageAttachments(incoming, messages).map((message) => {
+    preserveReadAloudReplyIds(preserveUserImageAttachments(incoming, messages), messages).map((message) => {
       const extracted = extractHistoryMediaAttachments(message);
       if (!extracted.length || normalizeUserImageAttachments(message.attachments).length) return message;
       return { ...message, attachments: extracted };
@@ -22930,6 +22939,7 @@ function addMessage(role, content, {
     });
   }
   if (roleLabel) record.roleLabel = roleLabel;
+  if (role === 'assistant') ensureReadAloudReplyId(record);
   if (Number.isInteger(rowId) && rowId > 0) record.rowId = rowId;
   if (speaker) record.speaker = speaker;
   if (thread) record.thread = thread;

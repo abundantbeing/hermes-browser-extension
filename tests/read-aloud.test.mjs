@@ -12,6 +12,9 @@ import {
   describeVoiceRoute,
   readAloudRouteOrder,
   gatewaySpeakUrl,
+  ensureReadAloudReplyId,
+  preserveReadAloudReplyIds,
+  readAloudContentKey,
   readAloudKey,
   readAloudKeysMatch,
   readableTextFromElement,
@@ -187,25 +190,40 @@ test('a reply keeps its key when the transcript is drawn again, and two replies 
   assert.notEqual(readAloudKey(looseOne), readAloudKey(looseTwo));
   assert.equal(readAloudKeysMatch(readAloudKey(looseOne), looseTwo), false);
 
-  const departure = { role: 'assistant', content: '12:30 is the next departure.', ts: 1 };
+  const departure = { role: 'assistant', content: '12:30 is the next departure.', ts: 1, readAloudReplyId: 'dep-1' };
   const departureLiveKey = readAloudKey(departure);
-  assert.equal(departureLiveKey, 't:1:28:12:30 is the next departure.');
+  assert.equal(departureLiveKey, `u:dep-1#${readAloudContentKey(departure)}`);
   assert.equal(readAloudKeysMatch(departureLiveKey, departure), true);
   const departureRefreshed = { ...departure, ts: 99, rowId: 28 };
   assert.equal(readAloudKeysMatch(departureLiveKey, departureRefreshed), true);
   assert.equal(readAloudKeysMatch(readAloudKey(departureRefreshed), departure), true);
 
-  const atMention = { role: 'assistant', content: 'Use @123 for help.' };
+  const atMention = { role: 'assistant', content: 'Use @123 for help.', readAloudReplyId: 'at-1' };
   const atMentionKey = readAloudKey(atMention);
-  assert.equal(atMentionKey, '18:Use @123 for help.');
+  assert.equal(atMentionKey, `u:at-1#${readAloudContentKey(atMention)}`);
   assert.equal(readAloudKeysMatch(atMentionKey, atMention), true);
 
-  const atMentionLive = { role: 'assistant', content: 'Use @123 for help.', ts: 456 };
+  const atMentionLive = { role: 'assistant', content: 'Use @123 for help.', ts: 456, readAloudReplyId: 'at-live' };
   const atMentionLiveKey = readAloudKey(atMentionLive);
-  assert.equal(atMentionLiveKey, 't:456:18:Use @123 for help.');
+  assert.equal(atMentionLiveKey, `u:at-live#${readAloudContentKey(atMentionLive)}`);
   assert.equal(readAloudKeysMatch(atMentionLiveKey, atMentionLive), true);
   const atMentionRefreshed = { ...atMentionLive, ts: 999, rowId: 88 };
   assert.equal(readAloudKeysMatch(atMentionLiveKey, atMentionRefreshed), true);
+
+  const bareOne = ensureReadAloudReplyId({ role: 'assistant', content: `${prefix} ending one` });
+  const bareTwo = ensureReadAloudReplyId({ role: 'assistant', content: `${prefix} ending two` });
+  assert.notEqual(readAloudKey(bareOne), readAloudKey(bareTwo));
+  assert.equal(readAloudKeysMatch(readAloudKey(bareOne), bareTwo), false);
+});
+
+test('history refresh carries read-aloud reply ids forward when row ids arrive later', () => {
+  const live = ensureReadAloudReplyId({ role: 'assistant', content: 'Finished live reply', ts: 1 });
+  const localId = live.readAloudReplyId;
+  const incoming = [{ role: 'assistant', content: 'Finished live reply', row_id: 7, ts: 99 }];
+  const merged = preserveReadAloudReplyIds(incoming, [live]);
+  assert.equal(merged[0].readAloudReplyId, localId);
+  assert.equal(merged[0].row_id, 7);
+  assert.equal(readAloudKeysMatch(readAloudKey(live), { ...merged[0], rowId: 7 }), true);
 });
 
 // ---- Audio bytes ---------------------------------------------------------------
@@ -452,6 +470,33 @@ function makePlayer(overrides = {}) {
   });
   return { player, routes, changes };
 }
+
+test('two replies with matching length and prefix but different endings switch playback instead of stopping each other', async () => {
+  const prefix = 'A'.repeat(48);
+  const first = ensureReadAloudReplyId({ role: 'assistant', content: `${prefix} ending one` });
+  const second = ensureReadAloudReplyId({ role: 'assistant', content: `${prefix} ending two` });
+  const keyOne = readAloudKey(first);
+  const keyTwo = readAloudKey(second);
+  assert.notEqual(keyOne, keyTwo);
+  const ends = [];
+  const { browser } = fakeRoutes();
+  browser.speak = () => {
+    const end = deferred();
+    ends.push(end);
+    return { stop: () => end.resolve(), finished: end.promise };
+  };
+  const player = createReadAloudPlayer({ browser, onChange: () => {} });
+  const firstRun = player.toggle(keyOne, 'alpha', { order: ['browser'] });
+  await tick();
+  assert.equal(readAloudKeysMatch(player.state().target, first), true);
+  assert.equal(readAloudKeysMatch(player.state().target, second), false);
+  const secondRun = player.toggle(keyTwo, 'beta', { order: ['browser'] });
+  await tick();
+  assert.equal(readAloudKeysMatch(player.state().target, second), true);
+  assert.equal(readAloudKeysMatch(player.state().target, first), false);
+  ends.forEach((end) => end.resolve());
+  await Promise.allSettled([firstRun, secondRun]);
+});
 
 test('a press starts loading, then speaking when the audio arrives, then idle when it ends', async () => {
   const { player, routes } = makePlayer();

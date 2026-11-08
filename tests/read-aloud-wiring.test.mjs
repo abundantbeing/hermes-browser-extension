@@ -70,6 +70,7 @@ test('when the dashboard URL cannot be resolved, the probe records unreachable a
   const body = panel.slice(panel.indexOf('async function refreshDashboardRoutes('), panel.indexOf('async function loadGatewayCapabilities('));
   assert.match(body, /if \(!baseUrl\) \{[\s\S]*readAloudDashboardProbe = \{ reachable: false, gatewayUrl: settings\.gatewayUrl \}/);
   assert.match(body, /notifyReadAloudDashboardProbeChanged\(\)/);
+  assert.match(body, /catch \{[\s\S]*readAloudDashboardProbe = \{ reachable: false, gatewayUrl: settings\.gatewayUrl \}[\s\S]*notifyReadAloudDashboardProbeChanged\(\)/);
 });
 
 test('when the connection is remote or has no gateway URL, clearing the probe refreshes read-aloud rails', () => {

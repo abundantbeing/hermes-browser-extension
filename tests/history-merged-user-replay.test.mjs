@@ -8,6 +8,7 @@ import { sessionToolDisplayMessages } from '../extension/lib/live-session-attach
 import { preserveAssistantResponseStyles, responsePresentationFromSettings } from '../extension/lib/response-presentation.mjs';
 import { preserveUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments } from '../extension/lib/image-render.mjs';
 import { bindRowIdsFromHistory } from '../extension/lib/message-rewind.mjs';
+import { preserveReadAloudReplyIds } from '../extension/lib/read-aloud.mjs';
 
 // Same storage shape as the reported session, with no private conversation data.
 const turn = (text, extra = {}) => JSON.stringify({
@@ -140,7 +141,7 @@ test('the real async history commit saves the repaired transcript and rejects a 
     reconcileBrowserUserHistory: history.reconcileBrowserUserHistory,
     preserveAssistantResponseStyles, responsePresentationFromSettings,
     preserveUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments,
-    bindRowIdsFromHistory, messageDisplayText,
+    bindRowIdsFromHistory, messageDisplayText, preserveReadAloudReplyIds,
     scopeRevision: { current: () => 1, isCurrent: id => id === 1 },
     settings: { sessionId: 'test-session', responseStyle: 'rich' },
     sessionLoadRequestId: 1,

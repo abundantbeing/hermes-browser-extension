@@ -151,12 +151,11 @@ export function createMessageThreadUi({
   function readAloudRailsNeedRebuild() {
     for (const [row, entry] of rows) {
       if (!root.contains(row) || entry.streaming || entry.record.role !== 'assistant') continue;
-      const offer = canReadAloud(entry.record, entry.node);
       const speakBtn = row.querySelector(':scope > .message-rail .message-action-speak');
       const state = readAloudStateFor(entry.record);
       const activePlayback = state === 'speaking' || state === 'loading';
-      if (offer && !speakBtn) return true;
-      if (!offer && speakBtn && !activePlayback) return true;
+      const shouldShowSpeak = canReadAloud(entry.record, entry.node) || activePlayback;
+      if (shouldShowSpeak !== Boolean(speakBtn)) return true;
     }
     return false;
   }

@@ -248,9 +248,20 @@ export function voiceRouteSummary({ gatewayAvailable = false, browserAvailable =
 
 const READ_ALOUD_ROW_PREFIX = 'r:';
 const READ_ALOUD_TS_PREFIX = 't:';
+const READ_ALOUD_REPLY_PREFIX = 'u:';
+
+export function hashReadAloudContent(text) {
+  const content = String(text ?? '');
+  let hash = 2166136261;
+  for (let index = 0; index < content.length; index += 1) {
+    hash ^= content.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
 
 function readAloudRowId(record) {
-  const rowId = record?.rowId;
+  const rowId = record?.rowId ?? record?.row_id;
   return Number.isInteger(rowId) && rowId > 0 ? rowId : null;
 }
 
@@ -262,7 +273,84 @@ function readAloudTs(record) {
 /** Content fingerprint for a reply (stable across history refresh). */
 export function readAloudContentKey(record) {
   const content = String(record?.content ?? '');
-  return `${content.length}:${content.slice(0, 48)}`;
+  return `${content.length}:${hashReadAloudContent(content)}`;
+}
+
+function readAloudGatewayMessageId(record) {
+  for (const candidate of [record?.message_id, record?.id, record?.messageId]) {
+    const id = String(candidate ?? '').trim();
+    if (id) return id;
+  }
+  return null;
+}
+
+/** Stable per-reply id: gateway message id, a panel-local id, or null. */
+export function readAloudStableReplyId(record) {
+  const stored = String(record?.readAloudReplyId ?? '').trim();
+  if (stored) return stored;
+  return readAloudGatewayMessageId(record);
+}
+
+let readAloudReplyIdCounter = 0;
+
+export function allocateReadAloudReplyId() {
+  readAloudReplyIdCounter += 1;
+  const random = typeof globalThis.crypto?.randomUUID === 'function'
+    ? globalThis.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${random}-${readAloudReplyIdCounter}`;
+}
+
+/** Assign a durable read-aloud id on assistant records that lack one. */
+export function ensureReadAloudReplyId(record) {
+  if (!record || record.role !== 'assistant') return record;
+  const id = readAloudStableReplyId(record);
+  if (id) {
+    if (!record.readAloudReplyId) record.readAloudReplyId = id;
+    return record;
+  }
+  record.readAloudReplyId = allocateReadAloudReplyId();
+  return record;
+}
+
+/** Carry local read-aloud ids forward when history refresh re-merges the transcript. */
+export function preserveReadAloudReplyIds(refreshedMessages = [], localMessages = []) {
+  if (!Array.isArray(refreshedMessages)) return [];
+  const localAssistants = (Array.isArray(localMessages) ? localMessages : [])
+    .filter((message) => message?.role === 'assistant');
+  const localByRowId = new Map();
+  for (const message of localAssistants) {
+    const rowId = readAloudRowId(message);
+    if (rowId !== null) localByRowId.set(rowId, message);
+  }
+  const claimed = new Set();
+  return refreshedMessages.map((message) => {
+    if (message?.role !== 'assistant') return message;
+    if (readAloudStableReplyId(message)) return ensureReadAloudReplyId({ ...message });
+    let donor = null;
+    if (Number.isInteger(message.rowId) && message.rowId > 0) donor = localByRowId.get(message.rowId);
+    if (!donor) {
+      const incomingRowId = readAloudRowId(message);
+      if (incomingRowId !== null) donor = localByRowId.get(incomingRowId);
+    }
+    if (!donor) {
+      const contentKey = readAloudContentKey(message);
+      const ts = readAloudTs(message);
+      donor = localAssistants.find((local, index) => {
+        if (claimed.has(index)) return false;
+        const localRowId = readAloudRowId(local);
+        const incomingRowId = readAloudRowId(message);
+        if (localRowId && incomingRowId && localRowId !== incomingRowId) return false;
+        if (readAloudContentKey(local) !== contentKey) return false;
+        const localTs = readAloudTs(local);
+        if (localTs !== null && ts !== null && localTs !== ts && !(incomingRowId && !localRowId)) return false;
+        return true;
+      });
+      if (donor) claimed.add(localAssistants.indexOf(donor));
+    }
+    const id = readAloudStableReplyId(donor) || readAloudGatewayMessageId(message) || allocateReadAloudReplyId();
+    return { ...message, readAloudReplyId: id };
+  });
 }
 
 /** Names a reply for playback; row ids are prefixed so content like `12:30` is not parsed as an id. */
@@ -270,29 +358,41 @@ export function readAloudKey(record) {
   const contentKey = readAloudContentKey(record);
   const rowId = readAloudRowId(record);
   if (rowId !== null) return `${READ_ALOUD_ROW_PREFIX}${rowId}:${contentKey}`;
+  const replyId = readAloudStableReplyId(record);
+  if (replyId !== null) return `${READ_ALOUD_REPLY_PREFIX}${replyId}#${contentKey}`;
   const ts = readAloudTs(record);
   return ts !== null ? `${READ_ALOUD_TS_PREFIX}${ts}:${contentKey}` : contentKey;
 }
 
+function parsePrefixedReadAloudTarget(text, prefix) {
+  if (!text.startsWith(prefix)) return null;
+  const after = text.slice(prefix.length);
+  const firstColon = after.indexOf(':');
+  if (firstColon < 0) return { head: null, contentKey: text };
+  return { head: after.slice(0, firstColon), contentKey: after.slice(firstColon + 1) };
+}
+
 function parseReadAloudTarget(target) {
   const text = String(target ?? '');
-  if (text.startsWith(READ_ALOUD_ROW_PREFIX)) {
-    const after = text.slice(READ_ALOUD_ROW_PREFIX.length);
-    const firstColon = after.indexOf(':');
-    if (firstColon < 0) return { rowId: null, contentKey: text, ts: null };
-    const head = after.slice(0, firstColon);
-    if (!/^\d+$/.test(head)) return { rowId: null, contentKey: text, ts: null };
-    return { rowId: Number(head), contentKey: after.slice(firstColon + 1), ts: null };
+  const row = parsePrefixedReadAloudTarget(text, READ_ALOUD_ROW_PREFIX);
+  if (row) {
+    if (!/^\d+$/.test(row.head || '')) return { rowId: null, replyId: null, contentKey: text, ts: null };
+    return { rowId: Number(row.head), replyId: null, contentKey: row.contentKey, ts: null };
   }
-  if (text.startsWith(READ_ALOUD_TS_PREFIX)) {
-    const after = text.slice(READ_ALOUD_TS_PREFIX.length);
-    const firstColon = after.indexOf(':');
-    if (firstColon < 0) return { rowId: null, contentKey: text, ts: null };
-    const head = after.slice(0, firstColon);
-    if (!/^\d+$/.test(head)) return { rowId: null, contentKey: text, ts: null };
-    return { rowId: null, contentKey: after.slice(firstColon + 1), ts: Number(head) };
+  if (text.startsWith(READ_ALOUD_REPLY_PREFIX)) {
+    const after = text.slice(READ_ALOUD_REPLY_PREFIX.length);
+    const split = after.indexOf('#');
+    if (split < 0) return { rowId: null, replyId: null, contentKey: text, ts: null };
+    const replyId = after.slice(0, split);
+    if (!replyId) return { rowId: null, replyId: null, contentKey: text, ts: null };
+    return { rowId: null, replyId, contentKey: after.slice(split + 1), ts: null };
   }
-  return { rowId: null, contentKey: text, ts: null };
+  const tsMarked = parsePrefixedReadAloudTarget(text, READ_ALOUD_TS_PREFIX);
+  if (tsMarked) {
+    if (!/^\d+$/.test(tsMarked.head || '')) return { rowId: null, replyId: null, contentKey: text, ts: null };
+    return { rowId: null, replyId: null, contentKey: tsMarked.contentKey, ts: Number(tsMarked.head) };
+  }
+  return { rowId: null, replyId: null, contentKey: text, ts: null };
 }
 
 /** Same reply across refresh when rowId was missing live then set; distinct when rowIds differ. */
@@ -302,7 +402,9 @@ export function readAloudKeysMatch(targetKey, record) {
   if (playing.contentKey !== contentKey) return false;
   const rowId = readAloudRowId(record);
   if (playing.rowId !== null && rowId !== null && playing.rowId !== rowId) return false;
-  if (playing.rowId === null && rowId === null && playing.ts !== null) {
+  const replyId = readAloudStableReplyId(record);
+  if (playing.replyId !== null && replyId !== null && playing.replyId !== replyId) return false;
+  if (playing.rowId === null && rowId === null && playing.replyId === null && playing.ts !== null) {
     const recordTs = readAloudTs(record);
     if (recordTs !== null && playing.ts !== recordTs) return false;
   }
