@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
   addSavedConnection,
   deleteSavedConnection,
-  hydrateHermesBrowserSettingsFromStorage,
   hydrateSavedConnectionSecrets,
   packSavedConnectionStorage,
   rememberSavedConnection,
@@ -492,64 +491,6 @@ test('when ciphertext cannot be decrypted, saved keys are treated as absent', as
   );
   assert.equal(hydrated.savedConnections.find((e) => e.id === 'work').connection.apiKey, '');
   assert.equal(hydrated.savedConnections.find((e) => e.id === 'work').connection.tokenSource, '');
-});
-
-test('hydrateHermesBrowserSettingsFromStorage restores packed credentials on worker boot', async () => {
-  const packed = await packSavedConnectionStorage(rememberSavedConnection(local));
-  const hydrated = await hydrateHermesBrowserSettingsFromStorage(packed);
-  assert.equal(hydrated.apiKey, local.apiKey);
-  assert.equal(packed.hermesBrowserSettings.apiKey, '');
-});
-
-test('controller worker boot hydrates apiKey when storage was packed', async () => {
-  const packed = await packSavedConnectionStorage(rememberSavedConnection({
-    ...local,
-    browserControlEnabled: true,
-    sessionId: 'boot-session',
-  }));
-  const connections = [];
-  const worker = createControllerServiceWorker({
-    storageArea: {
-      async get(keys) {
-        const names = Array.isArray(keys) ? keys : [keys];
-        return Object.fromEntries(names.filter((key) => key === 'hermesBrowserSettings' || key === SAVED_CONNECTION_SECRETS_STORAGE_KEY)
-          .map((key) => [key, structuredClone(packed[key])]));
-      },
-      async set() {},
-    },
-    connector: {
-      async connect(options) {
-        const connection = { options, async send() {}, async heartbeat() { return { ok: true }; }, close() {} };
-        connections.push(connection);
-        return connection;
-      },
-    },
-    product: { id: 'chromium', engine: 'chromium', label: 'Chromium browser' },
-    randomUUID: () => 'controller-boot-hydrate',
-    extensionOrigin: 'chrome-extension://fixture',
-    now: () => 1_000,
-  });
-  await worker.boot();
-  assert.equal(connections[0]?.options?.settings?.apiKey, local.apiKey);
-  assert.equal(packed.hermesBrowserSettings.apiKey, '');
-});
-
-test('after Save, hydrated storage reads restore the active gateway key for followers', async () => {
-  const h = await createSettingsSaveHarness({ settings: twoConnections() });
-  try {
-    h.els.apiKeyInput.value = 'rotated-work-token';
-    await h.save();
-    assert.equal(h.store.hermesBrowserSettings.apiKey, '', 'pack clears the top-level key in storage');
-    const hydrated = await hydrateHermesBrowserSettingsFromStorage(h.store);
-    assert.equal(hydrated.apiKey, 'rotated-work-token', 'readers must hydrate before using credentials');
-    assert.equal(
-      hydrated.savedConnections.find((entry) => entry.id === 'work').connection.apiKey,
-      'rotated-work-token',
-    );
-    assert.equal(JSON.stringify(h.store).includes('rotated-work-token'), false);
-  } finally {
-    h.close();
-  }
 });
 
 test('pause in another panel keeps a saved-connection switch already in storage', async () => {

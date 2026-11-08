@@ -38,6 +38,8 @@ import {
   syncActiveSavedConnection,
   packSavedConnectionStorage,
   hydrateSavedConnectionSecrets,
+  hydrateHermesBrowserSettingsFromStorage,
+  packedHermesBrowserSettingsWrite,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
   withSavedConnectionsLock,
 } from './saved-connections.mjs';
@@ -148,9 +150,8 @@ function canonicalControlUrl(value = '') {
   }
 }
 
-function connectionSettings(stored = {}) {
-  const settings = stored?.hermesBrowserSettings;
-  return settings && typeof settings === 'object' ? settings : {};
+async function connectionSettings(stored = {}, area) {
+  return hydrateHermesBrowserSettingsFromStorage(stored, area);
 }
 
 function durableSessionId(settings = {}) {
@@ -179,8 +180,9 @@ function controllerRouteChanged(previous = {}, next = {}) {
 
 // Transport / gateway identity for Hermes Control on Pause: another panel may have updated storage with a new
 // chat while this worker still serves the old transport. Merge connection fields from storage but keep this
-// worker's transport credentials until Resume runs syncSettingsTransition. The in-memory chat route stays on
-// this worker; the paused storage write carries the newest chat from storage so panels stay aligned.
+// worker's transport credentials until Resume runs syncSettingsTransition. Chat fields (sessionId, sessionTitle,
+// remoteDashboardSession) always come from storage so Pause never copies the worker's in-memory chat into the
+// blob — that would make a later syncSettings see no route change and skip closing the socket (#3).
 const PAUSE_ROUTE_IDENTITY_FIELDS = [
   'connectionMode',
   'connectionTransport',
@@ -205,9 +207,9 @@ function mergePauseSettingsWithStorage(current = {}, fromStorage = {}) {
     ...fromStorage,
     ...routeIdentityFromSettings(current),
     browserControlPaused: true,
-    sessionId: current.sessionId,
-    sessionTitle: current.sessionTitle,
-    remoteDashboardSession: current.remoteDashboardSession,
+    sessionId: fromStorage.sessionId,
+    sessionTitle: fromStorage.sessionTitle,
+    remoteDashboardSession: fromStorage.remoteDashboardSession,
   };
 }
 
@@ -644,16 +646,20 @@ export function createControllerServiceWorker({
   }
 
   function persist({ includeSettings = false } = {}) {
-    const values = {
-      ...(includeSettings ? { hermesBrowserSettings: savedSettings() } : {}),
-      [CONTROLLER_WORKER_STORAGE_KEY]: workerSnapshot(),
-      [CONTROLLER_REGISTRY_STORAGE_KEY]: registry.snapshot(),
-      [TAB_LEASE_STORAGE_KEY]: leases.snapshot(),
-      [CONTROLLER_LIFECYCLE_STORAGE_KEY]: lifecycle.snapshot(),
-    };
     persistChain = persistChain
       .catch(() => undefined)
-      .then(() => storageArea.set(values));
+      .then(async () => {
+        const packed = includeSettings
+          ? await packedHermesBrowserSettingsWrite(syncActiveSavedConnection(savedSettings()), storageArea)
+          : {};
+        await storageArea.set({
+          ...packed,
+          [CONTROLLER_WORKER_STORAGE_KEY]: workerSnapshot(),
+          [CONTROLLER_REGISTRY_STORAGE_KEY]: registry.snapshot(),
+          [TAB_LEASE_STORAGE_KEY]: leases.snapshot(),
+          [CONTROLLER_LIFECYCLE_STORAGE_KEY]: lifecycle.snapshot(),
+        });
+      });
     return persistChain;
   }
 
@@ -1178,12 +1184,7 @@ export function createControllerServiceWorker({
           TAB_LEASE_STORAGE_KEY,
           CONTROLLER_LIFECYCLE_STORAGE_KEY,
         ]);
-        settings = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
-          ? await hydrateSavedConnectionSecrets(
-              stored.hermesBrowserSettings,
-              stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
-            )
-          : connectionSettings(stored);
+        settings = await connectionSettings(stored, storageArea);
         const previousWorker = stored[CONTROLLER_WORKER_STORAGE_KEY];
         chatMove = null;
         const previousMove = previousWorker?.chatMove;
@@ -1539,14 +1540,8 @@ export function createControllerServiceWorker({
         if (paused === true) {
           // Newest list/credentials from storage, but this worker's chat route until Resume runs syncSettingsTransition.
           settings = mergePauseSettingsWithStorage(settings, fromStorage);
-          const pausedForStorage = {
-            ...settings,
-            sessionId: fromStorage.sessionId,
-            sessionTitle: fromStorage.sessionTitle,
-            remoteDashboardSession: fromStorage.remoteDashboardSession,
-          };
           await storageArea.set(await packSavedConnectionStorage(
-            syncActiveSavedConnection(savedSettings(pausedForStorage)),
+            syncActiveSavedConnection(savedSettings(settings)),
             stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
           ));
         } else {
@@ -1567,7 +1562,14 @@ export function createControllerServiceWorker({
         }
       });
       if (transitionAfter && typeof transitionAfter === 'object') {
-        await runTransition(() => syncSettingsTransition(transitionAfter));
+        const capturedResumeSeq = resumePauseSeq;
+        const pendingTransition = transitionAfter;
+        await runTransition(async () => {
+          if (capturedResumeSeq !== null && capturedResumeSeq !== pauseSequence) return;
+          const refreshed = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+          if (refreshed?.hermesBrowserSettings?.browserControlPaused === true) return;
+          return syncSettingsTransition(pendingTransition);
+        });
       }
     } finally {
       pauseAdmittingCommands = false;
@@ -1600,7 +1602,10 @@ export function createControllerServiceWorker({
     }
     approvals.clear?.();
     const nextSettings = { ...settings, browserControlEnabled: false, browserControlPaused: false };
-    await storageArea.set({ hermesBrowserSettings: savedSettings(nextSettings) });
+    await storageArea.set(await packedHermesBrowserSettingsWrite(
+      syncActiveSavedConnection(savedSettings(nextSettings)),
+      storageArea,
+    ));
     await syncSettingsTransition(nextSettings);
     return { ok: true, cancelled: stopped.cancelled, releasedTabIds };
   }

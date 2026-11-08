@@ -53,7 +53,7 @@ test('every pane confirms a control that saved itself in the same place', () => 
   assert.equal(chips.length, form.querySelectorAll('[data-settings-pane]').length, 'each pane carries a Saved chip');
   for (const chip of chips) assert.equal(chip.getAttribute('role'), 'status');
   const wired = [
-    ['agents', /trackInstantSave\('agents', browserApi\.storage\.local\.set/],
+    ['agents', /trackInstantSave\('agents', setPackedBrowserSettings/],
     ['connections', /trackInstantSave\('connections', persistAgentDiscoverySettings/],
     ['permissions', /trackInstantSave\('permissions', persistBrowserControlPreferences/],
     ['permissions', /trackInstantSave\('permissions', setBrowserContextConsent/],

@@ -208,6 +208,21 @@ test('a saved connection mode and wake word take effect through the follow-up ac
   }
 });
 
+test('extension writers never call storage.set with a raw hermesBrowserSettings object', () => {
+  const targets = [
+    '../extension/sidepanel.js',
+    '../extension/background.js',
+    '../extension/content-inline-helper.js',
+    '../extension/lib/wake-background.mjs',
+    '../extension/lib/controller-service-worker.mjs',
+  ];
+  const directWrite = /(?:storage(?:Area)?|browserApi\.storage\.local)\.set\(\s*\{[^}]*\bhermesBrowserSettings\s*:/;
+  for (const rel of targets) {
+    const source = readFileSync(new URL(rel, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, directWrite, `${rel} must route settings through packSavedConnectionStorage`);
+  }
+});
+
 test('Save packs storage so no savedConnections entry or sidecar holds a plaintext gateway key', async () => {
   const h = await createSettingsSaveHarness({
     settings: {
@@ -243,7 +258,10 @@ test('settings that Save writes have a consumer that reads them live', () => {
   assert.match(sidepanelSource, /normalizeExternalModelSourceList\(settings\.customModelSources/);
   assert.match(sidepanelSource, /const provider = settings\.transcriptProvider/);
   // Assist and the right-click menu live in other contexts: they follow storage.
-  assert.match(inlineHelper, /changes\.hermesBrowserSettings\.newValue/);
+  assert.match(
+    inlineHelper,
+    new RegExp(`changes\\?\\.\\[${SAVED_CONNECTION_SECRETS_STORAGE_KEY}\\]|changes\\?\\.hermesBrowserSettings`),
+  );
   assert.match(readFileSync(new URL('../extension/lib/context-menu-controller.mjs', import.meta.url), 'utf8'), /hermesBrowserSettings\?\.contextMenuDefaultRoute/);
   assert.match(readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8'), /changes\.hermesBrowserSettings\?\.newValue\?\.panelResidencyMode/);
 });

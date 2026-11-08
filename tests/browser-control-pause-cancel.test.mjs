@@ -278,24 +278,42 @@ test('Pause persists the newest chat from storage instead of copying the worker 
   assert.equal(storage.state.hermesBrowserSettings.browserControlPaused, true);
 });
 
-test('Pause leaves the worker serving the in-memory chat while storage records a newer one', async () => {
-  const base = settings();
-  const storage = memoryStorage({ hermesBrowserSettings: base });
+test('a Pause between Resume lock release and its transition is not overridden by that Resume', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: { ...settings(), browserControlPaused: true } });
   const transport = connector();
+  const executed = [];
   const worker = createControllerServiceWorker({
     storageArea: storage.area,
     connector: transport,
     product: PRODUCT,
     randomUUID: uuids(),
     extensionOrigin: 'chrome-extension://fixture',
-    executeBrowserCommand: async () => ({ ok: true, result: { status: 'noop' } }),
+    executeBrowserCommand: async (frame) => {
+      executed.push(frame);
+      return { ok: true, result: { status: 'done' } };
+    },
   });
   await worker.boot();
-  assert.equal(transport.connections[0]?.options?.settings?.sessionId, 'pause-session');
-  storage.state.hermesBrowserSettings = { ...base, sessionId: 'session-b', sessionTitle: 'B' };
-  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
-  assert.equal(storage.state.hermesBrowserSettings.sessionId, 'session-b');
-  assert.equal(transport.connections[0]?.options?.settings?.sessionId, 'pause-session');
+  const ready = await ownedReady(worker, 88);
+  const resumePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
+  const pausePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
+  await Promise.all([resumePromise, pausePromise]);
+  await settle();
+  assert.equal(storage.state.hermesBrowserSettings.browserControlPaused, true);
+  assert.equal(worker.status().paused, true);
+  await transport.connections[0].emit({
+    method: 'browser.controller.command',
+    params: {
+      command_id: 'race-after-resume-transition',
+      action: 'browser_scroll',
+      arguments: { direction: 'down' },
+      tab_id: 88,
+      document_generation: ready.documentGeneration,
+    },
+  });
+  await settle();
+  assert.equal(executed.length, 0);
+  assert.equal(terminalOf(transport.connections[0], 'race-after-resume-transition')?.error?.code, 'controller_paused');
 });
 
 test('a stale Resume after a newer Pause finishes does not apply browserControlPaused:false or admit commands', async () => {

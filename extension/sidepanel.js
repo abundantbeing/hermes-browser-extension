@@ -721,8 +721,10 @@ import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForCo
 import {
   addSavedConnection,
   deleteSavedConnection,
+  hydrateHermesBrowserSettingsFromStorage,
   hydrateSavedConnectionSecrets,
   packSavedConnectionStorage,
+  packedHermesBrowserSettingsWrite,
   rememberSavedConnection,
   renameSavedConnection,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
@@ -1599,7 +1601,7 @@ async function adoptSessionSuccessor(parentId = '', childId = '', connection = n
   };
   if (queuedTurn?.sessionId === parent) queuedTurn = { ...queuedTurn, sessionId: child };
   if (activeSessionRuntime?.sessionId === parent) activeSessionRuntime = { ...activeSessionRuntime, sessionId: child };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   await saveSessionBindingForActiveScope({ id: child, title: settings.sessionTitle || child }).catch(() => false);
   updateSessionLabel();
   return true;
@@ -1625,7 +1627,7 @@ async function adoptMovedBotChat(previousId = '', nextId = '') {
   if (queuedTurn?.sessionId === previous) queuedTurn = { ...queuedTurn, sessionId: next };
   if (activeSessionRuntime?.sessionId === previous) activeSessionRuntime = { ...activeSessionRuntime, sessionId: next };
   if (activeRunControl?.sessionId === previous) activeRunControl = { ...activeRunControl, sessionId: next };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   await saveSessionBindingForActiveScope({ id: next, title: BOT_CHAT_TITLE }).catch(() => false);
   updateSessionLabel();
   return true;
@@ -3495,7 +3497,7 @@ function browserControlTaskSetId() {
 
 async function persistBrowserControlPreferences(patch = {}) {
   settings = { ...settings, ...patch };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
 }
 
 function renderBrowserControl() {
@@ -5699,7 +5701,7 @@ async function commitContextScope(nextScope, { ensureSession = false, scopeRevis
     if (scopeRevision.isCurrent(scopeRevisionId) && snapshot) {
       restoreScopeTransitionSnapshot(snapshot);
       try {
-        await browserApi.storage.local.set({ hermesBrowserSettings: snapshot.settings });
+        await setPackedBrowserSettings(snapshot.settings);
       } catch {
         // Preserve the original transition error if durable rollback is unavailable.
       }
@@ -5810,13 +5812,11 @@ function setGatewayCapabilities(caps) {
       browserControlDeveloperMode: nextDeveloperMode,
       browserControlArtifactTransport: nextArtifactTransport,
     };
-    void browserApi.storage.local.get('hermesBrowserSettings')
-      .then((stored) => browserApi.storage.local.set({
-        hermesBrowserSettings: {
-          ...(stored?.hermesBrowserSettings || {}),
-          browserControlDeveloperMode: nextDeveloperMode,
-          browserControlArtifactTransport: nextArtifactTransport,
-        },
+    void readBrowserSettingsFromStorage()
+      .then((fresh) => setPackedBrowserSettings({
+        ...fresh,
+        browserControlDeveloperMode: nextDeveloperMode,
+        browserControlArtifactTransport: nextArtifactTransport,
       }))
       .then(() => browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH'))
       .catch(() => undefined);
@@ -8003,7 +8003,7 @@ async function grantWakeMicrophoneAccess() {
 async function setWakeWordEnabled(enabled) {
   const desired = Boolean(enabled);
   settings = { ...settings, wakeWordEnabled: desired };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   renderWakeState({ enabled: desired, state: desired ? 'arming' : 'off', detail: desired ? 'Selecting the safest wake listener…' : 'Wake word is off.' });
   let next = await browserApi.runtime.sendMessage({
     type: WAKE_MESSAGES.setEnabled,
@@ -8016,7 +8016,7 @@ async function setWakeWordEnabled(enabled) {
       next = await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: true, settings });
     } catch (error) {
       settings = { ...settings, wakeWordEnabled: false };
-      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      await setPackedBrowserSettings(settings);
       await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: false, settings }).catch(() => null);
       if (isMicrophonePermissionError(error)) {
         await openMicrophonePermissionPage();
@@ -9089,7 +9089,7 @@ function syncActiveSessionRuntimeFromList() {
   const nextBinding = JSON.stringify(settings.sessionModelBindings?.[session.id] || null);
   const nextOptionsBinding = JSON.stringify(settings.sessionModelOptionBindings?.[session.id] || null);
   if (settings.model !== previousModel || nextBinding !== previousBinding || nextOptionsBinding !== previousOptionsBinding) {
-    void browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    void setPackedBrowserSettings(settings);
     renderModelOptions(availableModels);
   }
 }
@@ -9467,8 +9467,7 @@ function exportCustomTheme(id) {
 }
 
 async function fallbackDeletedCustomThemeSelections(id, { allCustom = false } = {}) {
-  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-  const freshSettings = stored.hermesBrowserSettings || {};
+  const freshSettings = await readBrowserSettingsFromStorage();
   const shouldFallback = (value) => allCustom ? String(value || '').startsWith('custom:') : value === id;
   const panelFallback = shouldFallback(freshSettings.appearanceTheme);
   const webFallback = shouldFallback(freshSettings.webAppearanceTheme);
@@ -9478,7 +9477,7 @@ async function fallbackDeletedCustomThemeSelections(id, { allCustom = false } = 
     ...(panelFallback ? { appearanceTheme: 'nous' } : {}),
     ...(webFallback ? { webAppearanceTheme: 'nous' } : {}),
   };
-  await browserApi.storage.local.set({ hermesBrowserSettings });
+  await setPackedBrowserSettings(hermesBrowserSettings);
   return hermesBrowserSettings;
 }
 
@@ -9571,8 +9570,8 @@ async function handleCustomThemeFileSelection() {
 async function handleCustomThemeStoreChange() {
   const previousTheme = settings.appearanceTheme;
   await refreshCustomThemeStore({ render: false });
-  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-  const freshAppearanceTheme = stored.hermesBrowserSettings?.appearanceTheme ?? previousTheme;
+  const hydrated = await readBrowserSettingsFromStorage();
+  const freshAppearanceTheme = hydrated?.appearanceTheme ?? previousTheme;
   const nextTheme = normalizedPanelThemeId(freshAppearanceTheme);
   if (String(previousTheme || '').startsWith('custom:') && nextTheme === 'nous' && previousTheme !== 'nous') {
     appearanceSaveStatus = customThemeText('custom_theme.active_unavailable', 'Active theme is unavailable. Using Nous.');
@@ -9734,8 +9733,7 @@ function renderAppearanceControls() {
 
 async function persistAppearanceSettings(preferences) {
   const writeAppearance = async () => {
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-    const freshSettings = stored.hermesBrowserSettings || {};
+    const freshSettings = await readBrowserSettingsFromStorage();
     const mergedPreferences = withAppearancePreferenceUpdate(freshSettings, 'panel', preferences);
     const hermesBrowserSettings = {
       ...mergedPreferences,
@@ -9743,7 +9741,7 @@ async function persistAppearanceSettings(preferences) {
       colorMode: normalizeColorMode(preferences.colorMode),
       appearanceTheme: normalizedPanelThemeId(preferences.appearanceTheme),
     };
-    await browserApi.storage.local.set({ hermesBrowserSettings: hermesBrowserSettings });
+    await setPackedBrowserSettings(hermesBrowserSettings);
     return hermesBrowserSettings;
   };
   const pendingWrite = appearanceWriteQueue.then(writeAppearance, writeAppearance);
@@ -10546,7 +10544,7 @@ async function reconcileInlineAssistModelBinding(models = availableModels) {
   const changed = Object.entries(binding).some(([key, value]) => settings[key] !== value);
   if (!changed) return false;
   settings = { ...settings, ...binding };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   return true;
 }
 
@@ -10623,7 +10621,7 @@ async function applyAssistSelectedModel(model) {
     inlineAssistProvider: model.provider || '',
   };
   renderInlineAssistModelOptions();
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   els.modelMenu.hidden = true;
   els.modelMenuButton.setAttribute('aria-expanded', 'false');
   els.inlineAssistModelButton?.setAttribute('aria-expanded', 'false');
@@ -10883,7 +10881,7 @@ function renderModelRuntimeOptions() {
       if (assistTarget) {
         settings.inlineAssistReasoningEffort = normalizeReasoningEffort(value);
         renderModelRuntimeOptions();
-        browserApi.storage.local.set({ hermesBrowserSettings: settings });
+        setPackedBrowserSettings(settings);
       } else {
         setModelRuntimeOption('reasoningEffort', normalizeReasoningEffort(value));
       }
@@ -10894,7 +10892,7 @@ function renderModelRuntimeOptions() {
 }
 
 function persistModelRuntimeOptions() {
-  return browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  return setPackedBrowserSettings(settings);
 }
 
 function setModelRuntimeOption(key, value) {
@@ -11054,7 +11052,7 @@ async function rollBackModelOptionPick(error, { previousOptions, previousPreferr
     extensionPreferredModelOptions: previousPreferredModelOptions,
     sessionModelOptionBindings: previousSessionModelOptionBindings,
   };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   renderModelOptions(availableModels);
   setStatus('error', 'Hermes model options failed', error?.message || String(error), { translateDetail: false });
   return { state: 'failed', error };
@@ -11383,7 +11381,7 @@ function applySelectedModel(selectedId, { persist = true, keepOpen = false } = {
     els.modelMenu.hidden = true;
     els.modelMenuButton.setAttribute('aria-expanded', 'false');
   }
-  if (persist) browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  if (persist) setPackedBrowserSettings(settings);
   if (persist && selected) {
     modelSelectionVersion += 1;
     pendingModelRuntimeAck = {
@@ -11573,7 +11571,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
           extensionPreferredModel: remoteRollbackScope.extensionPreferredModel,
           sessionModelBindings: remoteRollbackScope.sessionModelBindings,
         };
-        await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+        await setPackedBrowserSettings(settings);
         renderModelOptions(availableModels);
       }
       pendingModelRuntimeAck = null;
@@ -11661,7 +11659,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
         extensionPreferredModel: rollbackScope.extensionPreferredModel,
         sessionModelBindings: rollbackScope.sessionModelBindings,
       };
-      browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      setPackedBrowserSettings(settings);
       renderModelOptions(availableModels);
     }
     pendingModelRuntimeAck = null;
@@ -11823,7 +11821,7 @@ function pinProfileDefaultModel(pinnedModel, { persist = true } = {}) {
   renderModelOptions(availableModels);
   renderModelRuntimeOptions();
   updateModelButtonMeta();
-  if (persist) void browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  if (persist) void setPackedBrowserSettings(settings);
 }
 
 async function syncProfileModelSelection(profileName = '', { row = null } = {}) {
@@ -13795,7 +13793,7 @@ function roomMemberBindings() {
 
 async function persistRoomModelBindings(store) {
   settings = { ...settings, groupRoomModelBindings: store };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
 }
 
 function roomMemberBusyNow(name) {
@@ -15830,10 +15828,7 @@ async function completeRegularProfileSwitch(nextProfile = '', { carryContext = f
     activeSessionRuntime = previousRuntime;
     activeConversationTransport = previousTransport;
     sessionRoutesAvailable = previousSessionRoutesAvailable;
-    await browserApi.storage.local.set({
-      hermesBrowserSettings: settings,
-      [previousMessagesKey]: previousMessages,
-    }).catch(() => undefined);
+    await setPackedBrowserSettings(settings, { [previousMessagesKey]: previousMessages }).catch(() => undefined);
     renderProfiles();
     renderActiveProfileIndicator();
     renderMessagesFromStorage();
@@ -15857,7 +15852,7 @@ async function completeRegularProfileSwitch(nextProfile = '', { carryContext = f
       pendingProfileContextHandoff: handoff,
       pendingProfileContextHandoffSessionId: handoff && nextSessionId ? nextSessionId : '',
     };
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    await setPackedBrowserSettings(settings);
   } catch (error) {
     await restorePreviousState();
     setStatus('error', 'Profile switch failed', error?.message || String(error), { translateDetail: false });
@@ -15984,7 +15979,7 @@ async function applySelectedProfile(profileName = '', { quiet = false, viaBotMod
       remoteDashboardSession: { ...(settings.remoteDashboardSession || {}), storedSessionId: '' },
     };
   }
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   renderProfiles();
   renderActiveProfileIndicator();
   renderBotModeRoster(els.botModeSearch?.value);
@@ -16274,7 +16269,7 @@ async function openBotProfile(row) {
   // Falls back to the roster row's model when the dashboard route is offline.
   await syncProfileModelSelection(row.profileName, { row });
 
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
 
   // Desktop parity: clicking a bot loads THAT bot's entire Bot Chat session.
   // Resolve the bot's canonical Bot Chat under its own profile (via the WS
@@ -18115,7 +18110,7 @@ async function persistAgentDiscoverySettings({ ports = getAgentPorts(), host = s
     agentDiscoveryHost: normalizeAgentDiscoveryHost(host || DEFAULT_SETTINGS.agentDiscoveryHost),
     agentDiscoveryScheme: normalizeAgentDiscoveryScheme(scheme || DEFAULT_SETTINGS.agentDiscoveryScheme),
   };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   syncSettingsForm();
 }
 
@@ -18220,7 +18215,7 @@ async function switchAgentGateway(agent) {
     return;
   }
   settings = { ...settings, gatewayMode: 'local-api', gatewayUrl: nextUrl };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   setStatus('ok', 'Switched gateway', `Reconnecting to ${agent.name} (${nextUrl})...`);
   // Re-run the full connect flow against the new gateway.
   try {
@@ -18397,9 +18392,8 @@ function browserLanguageSuggestion() {
 // Settings choice.
 function persistSetupFullTabTheme(theme) {
   const write = async () => {
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-    const current = stored.hermesBrowserSettings || {};
-    await browserApi.storage.local.set({ hermesBrowserSettings: { ...current, webAppearanceTheme: normalizedPanelThemeId(theme) } });
+    const current = await readBrowserSettingsFromStorage();
+    await setPackedBrowserSettings({ ...current, webAppearanceTheme: normalizedPanelThemeId(theme) });
   };
   const pendingWrite = appearanceWriteQueue.then(write, write);
   appearanceWriteQueue = pendingWrite.catch(() => undefined);
@@ -18591,9 +18585,9 @@ async function setResponsePresentation(patch = {}) {
   renderResponsePresentationControls();
   onboardingFlow?.render();
   const write = async () => {
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-    const next = withResponsePresentationUpdate(stored.hermesBrowserSettings || {}, after);
-    await browserApi.storage.local.set({ hermesBrowserSettings: next });
+    const stored = await readBrowserSettingsFromStorage();
+    const next = withResponsePresentationUpdate(stored, after);
+    await setPackedBrowserSettings(next);
   };
   const pendingWrite = appearanceWriteQueue.then(write, write);
   appearanceWriteQueue = pendingWrite.catch(() => undefined);
@@ -18840,7 +18834,7 @@ function applySessionTitleLocally(sessionId, title) {
   }
   if (String(settings.sessionId || '') === id) {
     settings = { ...settings, sessionTitle: clean };
-    void browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    void setPackedBrowserSettings(settings);
   }
   updateSessionLabel();
 }
@@ -20099,7 +20093,7 @@ async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focu
   activeSessionRuntime = { ...activeSessionRuntime, sessionId, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
   sessionRoutesAvailable = true;
   messages = [];
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
+  await setPackedBrowserSettings(settings, { [activeMessagesStorageKey(previousConversationScope)]: [] });
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   await saveSessionBindingForActiveScope({ id: sessionId, title, source: DEFAULT_SETTINGS.sessionSource }, { scopeRevisionId });
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
@@ -20199,7 +20193,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
       };
       activeSessionRuntime = { ...activeSessionRuntime, sessionId: id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
       messages = [];
-      await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
+      await setPackedBrowserSettings(settings, { [activeMessagesStorageKey(previousConversationScope)]: [] });
       if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
       await saveSessionBindingForActiveScope(session, { scopeRevisionId });
       if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
@@ -20276,7 +20270,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
   activeSessionRuntime = { ...activeSessionRuntime, sessionId: session.id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
   sessionRoutesAvailable = true;
   messages = [];
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
+  await setPackedBrowserSettings(settings, { [activeMessagesStorageKey(previousConversationScope)]: [] });
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   await saveSessionBindingForActiveScope(session, { scopeRevisionId });
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
@@ -20460,7 +20454,7 @@ async function openHermesSession(selectedSession) {
   // Show the session's context as it was last reported while the rest loads.
   if (viewedSessionContextEntry()) renderContextWindow();
   sessionRoutesAvailable = true;
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   if (!isCurrentRequest()) return false;
   await saveSessionBindingForActiveScope(session, { scopeRevisionId });
   if (!isCurrentRequest()) return false;
@@ -23473,7 +23467,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   }
   applyAppearanceSettings();
   if (migrateConnectionSchema || migrateDesktopOptionDefaults || migrateModelOptionScope || hasUnboundProfileContextHandoff) {
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    await setPackedBrowserSettings(settings);
   }
   messages = restoreMessages && Array.isArray(stored[messageKey]) ? stored[messageKey] : [];
   syncSettingsForm();
@@ -23688,62 +23682,6 @@ async function forgetSavedConnectionRecords(id) {
   forgetSavedConnectionSessionRecords(id);
 }
 
-async function hermesBrowserSettingsFromStorageChanges(changes) {
-  const raw = changes?.hermesBrowserSettings?.newValue;
-  if (!raw || typeof raw !== 'object') return null;
-  let secrets = Object.hasOwn(changes, SAVED_CONNECTION_SECRETS_STORAGE_KEY)
-    ? changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue
-    : undefined;
-  if (secrets === undefined) {
-    const stored = await browserApi.storage.local.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY);
-    secrets = stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
-  }
-  return hydrateSavedConnectionSecrets(migrateConnectionSettings(raw), secrets);
-}
-
-async function adoptHermesBrowserSettingsStorageChange(changes) {
-  const next = await hermesBrowserSettingsFromStorageChanges(changes);
-  if (!next) return;
-  if (next.activeSavedConnectionId && loadedSavedConnectionId
-    && next.activeSavedConnectionId !== loadedSavedConnectionId) {
-    reloadForSavedConnection(next);
-    return;
-  }
-  // The controller worker and the pairing flow rewrite this record (a
-  // rejected pairing token is dropped, the transport can flip). Without
-  // adopting those writes the panel keeps a stale apiKey and keeps hiding
-  // the connect panel that owns the "Connect to Hermes" repair button,
-  // which leaves tab control stuck with no reachable way to reconnect.
-  const tracked = [
-    'apiKey', 'tokenSource', 'lastConnectionTestedAt',
-    'browserControlEnabled', 'browserControlPaused',
-    'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
-    'trustedDashboardOrigin', 'trustedDashboardTabId',
-    'activeSavedConnectionId', 'savedConnections',
-    // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
-    // panel, they share this record, and adopting another panel's binding would make this one resume
-    // (and then write into) the other panel's session on its next reconnect.
-  ];
-  const patch = {};
-  for (const key of tracked) {
-    if (Object.hasOwn(next, key)) patch[key] = next[key];
-  }
-  if (Object.keys(patch).length) {
-    settings = { ...settings, ...patch };
-    // Another panel may have moved the connection to a remote mode.
-    resetLocalDashboardState();
-    updateConnectionPrompt();
-    renderBrowserControl();
-    renderSavedConnections();
-  }
-  adoptStoredResponsePresentation(next);
-  if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
-  if (Object.hasOwn(next, 'inlineAssistOpenMode')) adoptInlineAssistOpenModeChange(next.inlineAssistOpenMode);
-  if (Object.hasOwn(next, 'inlineAssistModel') && next.inlineAssistModel !== settings.inlineAssistModel) adoptInlineAssistModelChange(next);
-  if (Object.hasOwn(next, 'inlineAssistReasoningEffort') && next.inlineAssistReasoningEffort !== settings.inlineAssistReasoningEffort) adoptInlineAssistEffortChange(next);
-  if (Object.hasOwn(next, 'inlineAssistSessionRetention')) adoptInlineAssistSessionRetentionChange(next.inlineAssistSessionRetention);
-}
-
 function reloadForSavedConnection(next) {
   if (savedConnectionReloading) return;
   savedConnectionReloading = true;
@@ -23786,10 +23724,7 @@ async function updateSavedConnection(action, id = settings.activeSavedConnection
     await withSavedConnectionsLock(async () => {
       await saveSettingsFromForm({ lockHeld: true });
       const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-      const storedSettings = await hydrateSavedConnectionSecrets(
-        stored.hermesBrowserSettings || {},
-        stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
-      );
+      const storedSettings = await hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local);
       const base = savedConnectionsBase(settings, storedSettings, expectedId);
       let next;
       if (action === 'add') next = addSavedConnection(base, name, crypto.randomUUID());
@@ -24231,8 +24166,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     trustedDashboardTabId = null;
   }
   const writeSettingsRecord = async () => {
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-    const freshSettings = stored.hermesBrowserSettings || {};
+    const freshSettings = await readBrowserSettingsFromStorage();
     if (freshSettings.activeSavedConnectionId && loadedSavedConnectionId
       && freshSettings.activeSavedConnectionId !== loadedSavedConnectionId) {
       reloadForSavedConnection(freshSettings);
@@ -24286,12 +24220,18 @@ async function refreshAfterSettingsSave(saved) {
   if (saved?.connectionIdentityChanged === true) await initializeSessionForPanelOpen({ focus: false });
 }
 
+async function setPackedBrowserSettings(nextSettings, extra = {}) {
+  const packed = await packedHermesBrowserSettingsWrite(nextSettings, browserApi.storage.local);
+  return browserApi.storage.local.set({ ...packed, ...extra });
+}
+
+async function readBrowserSettingsFromStorage() {
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+  return hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local);
+}
+
 async function persistHermesBrowserSettings(nextSettings) {
-  const stored = await browserApi.storage.local.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY);
-  await browserApi.storage.local.set(await packSavedConnectionStorage(
-    nextSettings,
-    stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
-  ));
+  await setPackedBrowserSettings(nextSettings);
 }
 
 async function clearStoredToken() {
@@ -24459,9 +24399,9 @@ async function getPageContextViaScripting(tabId, options, originalError) {
 
 async function persistGmailCaptureEnabled(enabled) {
   const desired = enabled === true;
-  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-  const next = { ...(stored.hermesBrowserSettings || {}), gmailCaptureEnabled: desired };
-  await browserApi.storage.local.set({ hermesBrowserSettings: next });
+  const stored = await readBrowserSettingsFromStorage();
+  const next = { ...stored, gmailCaptureEnabled: desired };
+  await setPackedBrowserSettings(next);
   // Only this key: the stored record also holds other panels' session bindings.
   settings = { ...settings, gmailCaptureEnabled: desired };
   if (els.gmailCaptureEnabledInput) els.gmailCaptureEnabledInput.checked = desired;
@@ -25354,7 +25294,7 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
     if (compactedSessionId && compactedSessionId !== settings.sessionId) {
       sessionContextStore = renameSessionContextEntry(sessionContextStore, settings.sessionId, compactedSessionId);
       settings = { ...settings, sessionId: compactedSessionId };
-      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      await setPackedBrowserSettings(settings);
     }
     if (payload && typeof payload === 'object') {
       applySessionRuntimeSnapshot({
@@ -25651,7 +25591,7 @@ async function ensureHermesSession() {
       sessionId: makeBrowserSessionId(),
       sessionTitle: makeBrowserSessionTitle(),
     };
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    await setPackedBrowserSettings(settings);
   }
   const sessionPath = `/api/sessions/${encodeSessionId(settings.sessionId)}`;
   const route = await materializeSessionRoute({
@@ -25666,7 +25606,7 @@ async function ensureHermesSession() {
     beforeCreate: async () => {
       if (!String(settings.sessionTitle || '').trim() || isDefaultBrowserSessionTitle(settings.sessionTitle)) {
         settings = { ...settings, sessionTitle: makeBrowserSessionTitle() };
-        await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+        await setPackedBrowserSettings(settings);
       }
     },
     createBody: () => ({
@@ -26428,7 +26368,7 @@ async function requestDashboardOriginTrust(baseUrl, { local = false } = {}) {
   if (isTrustedDashboardOrigin(baseUrl, settings.trustedDashboardOrigin)) {
     trustedDashboardTabId = tab.id;
     settings = { ...settings, trustedDashboardTabId: tab.id };
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    await setPackedBrowserSettings(settings);
     return origin;
   }
   const approved = globalThis.confirm?.(dashboardTrustPrompt(origin)) === true;
@@ -26442,7 +26382,7 @@ async function requestDashboardOriginTrust(baseUrl, { local = false } = {}) {
   }
   trustedDashboardTabId = tab.id;
   settings = { ...settings, trustedDashboardOrigin: origin, trustedDashboardTabId: tab.id };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   return origin;
 }
 
@@ -26651,7 +26591,7 @@ async function ensureRemoteWsSession(connection) {
   } catch (error) {
     console.warn('[Hermes] Cloud runtime metadata was not acknowledged:', error?.message || error);
   }
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await setPackedBrowserSettings(settings);
   await activateCurrentDelegationSession();
   updateSessionLabel();
   return liveId;
@@ -27279,7 +27219,7 @@ async function connectTicketTransport({ cloud = false } = {}) {
     // This connection is remote now: nothing discovered for the local gateway (its dashboard URL, the
     // socket opened to it, the roster read from it) may be used from here on.
     resetLocalDashboardState();
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    await setPackedBrowserSettings(settings);
     syncSettingsForm();
     const readiness = await runPanelConnectionReadiness({ restoreSettings: false });
     if (!connectionController.isCurrent(generation)) return;
@@ -27454,8 +27394,7 @@ async function connectApiWithPairing() {
 
     settings.tokenSource = 'pairing';
     settings.lastConnectionTestedAt = Date.now();
-    settings = syncActiveSavedConnection(settings);
-    await persistHermesBrowserSettings(settings);
+    await setPackedBrowserSettings(settings);
     syncSettingsForm();
     updateConnectionPrompt();
     // The controller keeps its own copy of the settings; without an explicit
@@ -28121,7 +28060,7 @@ ${streamError.message}`);
         pendingProfileContextHandoff: '',
         pendingProfileContextHandoffSessionId: '',
       };
-      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      await setPackedBrowserSettings(settings);
     }
     if (autoTitle && String(settings.sessionId || '').trim() === runSessionId) await maybeAutoNameCurrentSession(autoTitle);
     if (contextDelivery !== CONTEXT_DELIVERY_MODES.NONE && contextDeliverySessionKey) {
@@ -28573,8 +28512,7 @@ function mountOverlayScrollbars() {
 
 // This panel's settings with Assist's own as saved (model, effort, thinking): the page writes them.
 async function savedInlineAssistSettings() {
-  const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
-  const saved = stored?.hermesBrowserSettings || {};
+  const saved = await readBrowserSettingsFromStorage().catch(() => ({}));
   return { ...settings, ...Object.fromEntries(Object.entries(saved).filter(([key]) => key.startsWith('inlineAssist'))) };
 }
 
@@ -28909,7 +28847,7 @@ async function handleContextMenuRouteChoice(event) {
   if (els.contextMenuRememberRoute?.checked) {
     settings.contextMenuDefaultRoute = route;
     if (els.contextMenuDefaultRoute) els.contextMenuDefaultRoute.value = route;
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    await setPackedBrowserSettings(settings);
   }
   await executeContextMenuRequest(request, route);
 }
@@ -29061,7 +28999,7 @@ async function testConnection() {
       renderRemoteDiagnostics(null);
       setStatus('ok', 'Remote Hermes dashboard connected', `${normalizeGatewayUrl(settings.gatewayUrl)}${modelNote}`);
       settings = { ...settings, lastConnectionTestedAt: Date.now() };
-      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      await setPackedBrowserSettings(settings);
       renderConnectionSecurity();
       ok = true;
       return;
@@ -29160,7 +29098,7 @@ async function testConnection() {
     }
 
     settings = { ...settings, lastConnectionTestedAt: Date.now() };
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    await setPackedBrowserSettings(settings);
     renderConnectionSecurity();
 
     // Reads work, but every message would be refused: not a green test.
@@ -29585,7 +29523,7 @@ function bindEvents() {
     // the deck button visibility, and start the roster fetch when enabling.
     const enabled = els.botModeEnabledInput.checked === true;
     settings = { ...settings, botModeEnabled: enabled };
-    void trackInstantSave('agents', browserApi.storage.local.set({ hermesBrowserSettings: settings })).catch(() => undefined).then(() => {
+    void trackInstantSave('agents', setPackedBrowserSettings(settings)).catch(() => undefined).then(() => {
       renderBotModeRoster(els.botModeSearch?.value);
       if (enabled && !botModeRoster.length) void loadProfiles({ quiet: true });
     });
@@ -29593,13 +29531,13 @@ function bindEvents() {
   els.botModeDisplayDensity?.addEventListener('change', () => {
       const density = els.botModeDisplayDensity?.value === 'compact' ? 'compact' : 'comfortable';
       settings = { ...settings, botModeDisplayDensity: density };
-      void trackInstantSave('agents', browserApi.storage.local.set({ hermesBrowserSettings: settings })).catch(() => undefined).then(() => {
+      void trackInstantSave('agents', setPackedBrowserSettings(settings)).catch(() => undefined).then(() => {
         renderBotModeRoster(els.botModeSearch?.value);
       });
     });
     els.botModeAnimateAvatars?.addEventListener('change', () => {
       settings = { ...settings, botModeAnimateAvatars: els.botModeAnimateAvatars.value === 'on' };
-          void trackInstantSave('agents', browserApi.storage.local.set({ hermesBrowserSettings: settings })).catch(() => undefined).then(async () => {
+          void trackInstantSave('agents', setPackedBrowserSettings(settings)).catch(() => undefined).then(async () => {
             if (settings.botModeAnimateAvatars) await ensurePetGallery().catch(() => undefined);
             renderBotModeRoster(els.botModeSearch?.value);
             renderActiveProfileIndicator();
@@ -29806,7 +29744,7 @@ function bindEvents() {
   });
   els.explicitSiteCaptureDismiss?.addEventListener('click', () => {
     settings = { ...settings, gmailCaptureHidden: true };
-    browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    setPackedBrowserSettings(settings);
     if (els.explicitSiteCaptureWrap) els.explicitSiteCaptureWrap.hidden = true;
     setStatus('ok', 'Gmail capture button hidden', 'Turn it back on any time under Settings → Right-click actions.');
   });
@@ -30140,7 +30078,7 @@ function bindEvents() {
       if (effort) settings.inlineAssistReasoningEffort = normalizeReasoningEffort(effort.dataset.effort);
       if (!toggle && !effort) return;
       renderModelRuntimeOptions();
-      browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      setPackedBrowserSettings(settings);
       return;
     }
     if (toggle) {
@@ -30334,9 +30272,9 @@ function bindEvents() {
       await refreshBrowserControlStatus();
       if (!result?.ok) throw Object.assign(new Error(result?.error || 'scope_change_failed'), { code: result?.error });
       // Read back the settings the worker saved; never publish picker intent.
-      const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-      if (stored.hermesBrowserSettings?.browserControlScope !== scope) throw new Error('scope_unconfirmed');
-      settings = { ...settings, browserControlScope: stored.hermesBrowserSettings.browserControlScope };
+      const stored = await readBrowserSettingsFromStorage();
+      if (stored?.browserControlScope !== scope) throw new Error('scope_unconfirmed');
+      settings = { ...settings, browserControlScope: stored.browserControlScope };
       renderBrowserControl();
     },
   });
@@ -30564,8 +30502,75 @@ function bindEvents() {
   });
   browserApi.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
-    if (Object.hasOwn(changes, 'hermesBrowserSettings')) {
-      void adoptHermesBrowserSettingsStorageChange(changes);
+    if (Object.hasOwn(changes, 'hermesBrowserSettings') || Object.hasOwn(changes, SAVED_CONNECTION_SECRETS_STORAGE_KEY)) {
+      void (async () => {
+        let merged;
+        try {
+          const hasSettingsChange = Object.hasOwn(changes, 'hermesBrowserSettings');
+          const hasSecretsChange = Object.hasOwn(changes, SAVED_CONNECTION_SECRETS_STORAGE_KEY);
+          const newBlob = hasSettingsChange ? changes.hermesBrowserSettings?.newValue : null;
+          if (newBlob && typeof newBlob === 'object') {
+            const sidecar = hasSecretsChange
+              ? changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue
+              : (await browserApi.storage.local.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY))[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
+            merged = await hydrateHermesBrowserSettingsFromStorage({
+              hermesBrowserSettings: newBlob,
+              [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: sidecar,
+            }, null);
+          } else if (hasSecretsChange) {
+            const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+            merged = await hydrateHermesBrowserSettingsFromStorage({
+              ...stored,
+              [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue,
+            }, null);
+          } else {
+            merged = await readBrowserSettingsFromStorage();
+          }
+        } catch {
+          merged = null;
+        }
+        if (!merged || typeof merged !== 'object') return;
+        if (merged.activeSavedConnectionId && loadedSavedConnectionId
+          && merged.activeSavedConnectionId !== loadedSavedConnectionId) {
+          reloadForSavedConnection(merged);
+          return;
+        }
+        // The controller worker and the pairing flow rewrite this record (a
+        // rejected pairing token is dropped, the transport can flip). Without
+        // adopting those writes the panel keeps a stale apiKey and keeps hiding
+        // the connect panel that owns the "Connect to Hermes" repair button,
+        // which leaves tab control stuck with no reachable way to reconnect.
+        // The stored blob omits secrets when saved connections exist; merge from
+        // the sidecar via readBrowserSettingsFromStorage.
+        const tracked = [
+          'apiKey', 'tokenSource', 'lastConnectionTestedAt',
+          'browserControlEnabled', 'browserControlPaused',
+          'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
+          'trustedDashboardOrigin', 'trustedDashboardTabId',
+          'activeSavedConnectionId', 'savedConnections',
+          // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
+          // panel, they share this record, and adopting another panel's binding would make this one resume
+          // (and then write into) the other panel's session on its next reconnect.
+        ];
+        const patch = {};
+        for (const key of tracked) {
+          if (Object.hasOwn(merged, key)) patch[key] = merged[key];
+        }
+        if (Object.keys(patch).length) {
+          settings = { ...settings, ...patch };
+          // Another panel may have moved the connection to a remote mode.
+          resetLocalDashboardState();
+          updateConnectionPrompt();
+          renderBrowserControl();
+          renderSavedConnections();
+        }
+        adoptStoredResponsePresentation(merged);
+        if (Object.hasOwn(merged, 'inlineAssistIcon')) adoptInlineAssistIconChange(merged.inlineAssistIcon);
+        if (Object.hasOwn(merged, 'inlineAssistOpenMode')) adoptInlineAssistOpenModeChange(merged.inlineAssistOpenMode);
+        if (Object.hasOwn(merged, 'inlineAssistModel') && merged.inlineAssistModel !== settings.inlineAssistModel) adoptInlineAssistModelChange(merged);
+        if (Object.hasOwn(merged, 'inlineAssistReasoningEffort') && merged.inlineAssistReasoningEffort !== settings.inlineAssistReasoningEffort) adoptInlineAssistEffortChange(merged);
+        if (Object.hasOwn(merged, 'inlineAssistSessionRetention')) adoptInlineAssistSessionRetentionChange(merged.inlineAssistSessionRetention);
+      })();
     }
     if (Object.hasOwn(changes, INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY)) adoptInlineAssistAutoReplaceChange(changes[INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]?.newValue);
     if (Object.hasOwn(changes, INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY)) adoptInlineAssistSitesChange({ hidden: changes[INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY]?.newValue });
@@ -30623,7 +30628,7 @@ function bindEvents() {
   els.localDocumentApproveButton?.addEventListener('click', async () => {
     try {
       settings = { ...settings, allowLocalDocuments: true };
-      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      await setPackedBrowserSettings(settings);
       dismissLocalDocumentApprovalNotice();
       await refreshContext({ allowLocalDocuments: true });
       await attachBrowserControlToCurrentTab();
