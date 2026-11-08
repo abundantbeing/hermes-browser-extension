@@ -183,12 +183,11 @@ GET /api/plugins/hermes-browser-extension/status
   loads without the route (tools and hooks are unaffected) and the extension
   falls back to the gateway's `/v1/toolsets` list to tell "loaded" from "not
   loaded".
-- On a gateway that serves several profiles at one address, a named profile's
-  routes carry its prefix (`/p/<profile>/api/plugins/hermes-browser-extension/status`
-  and the rest). Hermes routes
-  those to that profile's own copy of the plugin only once it supports plugin
-  routes per profile; until then they answer 404 and the extension reports the
-  plugin as not loaded for that profile.
+- On a gateway that serves several profiles at one address, this plugin registers
+  the status, browser-context and Hermes Control paths on the listener twice:
+  the plain path (default profile) and `/p/<profile>/…` (named profiles), matching
+  how Hermes mirrors its own API routes. The listener-scoped bot roster and avatar
+  routes stay on the plain path only.
 - Dashboard plugin routes (`/api/plugins/<name>/...` on the dashboard port) need
   the Webapp credential and a dashboard manifest, so the plugin does not use them.
 

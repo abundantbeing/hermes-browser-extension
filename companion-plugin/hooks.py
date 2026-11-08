@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from . import tools
+from . import profile_registry, tools
 from .context_store import ContextOwner, owner_from_hook_kwargs
 
 if TYPE_CHECKING:
@@ -33,11 +33,14 @@ def set_store(store: BrowserContextStore) -> None:
     _STORE = store
 
 
-def _ensure_store() -> BrowserContextStore:
-    if _STORE is None:
-        msg = "BrowserContextStore not initialized — plugin register() may have failed."
-        raise RuntimeError(msg)
-    return _STORE
+def _ensure_store(**kwargs: Any) -> BrowserContextStore:
+    if _STORE is not None:
+        return _STORE
+    store = profile_registry.store_for_turn(**kwargs)
+    if store is not None:
+        return store
+    msg = "BrowserContextStore not initialized — plugin register() may have failed."
+    raise RuntimeError(msg)
 
 
 def _text_from_content_parts(parts: list[Any]) -> str:
@@ -99,7 +102,7 @@ def pre_llm_call(**kwargs: Any) -> dict[str, str] | None:
         owner = _owner_from_trusted_hook(**kwargs)
         if owner is None:
             return None
-        store = _ensure_store()
+        store = _ensure_store(**kwargs)
         message = _last_user_message(**kwargs)
         status = store.put_bcp_v2(message, owner)
         if not status.get("available"):
@@ -130,7 +133,7 @@ def pre_tool_call(**kwargs: Any) -> dict[str, str] | None:
         owner = _owner_from_trusted_hook(**kwargs)
         if owner is None:
             return _block()
-        store = _ensure_store()
+        store = _ensure_store(**kwargs)
         args = kwargs.get("args") if isinstance(kwargs.get("args"), dict) else {}
 
         # The runtime hands the same trusted session/task identity to the tool
@@ -193,7 +196,7 @@ def post_tool_call(**kwargs: Any) -> dict[str, bool]:
         except (TypeError, ValueError):
             duration = 0
         tool_name = str(kwargs.get("tool_name") or "unknown")[:120]
-        store = _ensure_store()
+        store = _ensure_store(**kwargs)
         store.record_event(
             "tool.finished",
             {"tool_name": tool_name, "duration_ms": duration},

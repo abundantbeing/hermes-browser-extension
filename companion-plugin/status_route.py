@@ -37,6 +37,9 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
+from .multiplex_routes import add_get_listener_routes, documented_listener_paths, promote_multiplex_plugin_routes
+from .profile_registry import lookup_listener_profile
+
 logger = logging.getLogger(__name__)
 
 PLUGIN_NAME = "hermes-browser-extension"
@@ -93,6 +96,52 @@ def build_status(
     }
 
 
+def make_dynamic_status_handler(
+    adapter: Any,
+    *,
+    tools: Iterable[str],
+    hooks: Iterable[str],
+    routes: Iterable[str],
+    version: str,
+) -> Callable[..., Any]:
+    """Status payload reflects the profile that serves this HTTP request (multiplex)."""
+
+    route_list = sorted({str(path) for path in documented_listener_paths(routes)})
+
+    async def handler(request):
+        from aiohttp import web
+
+        denied = authorize(adapter, request)
+        if denied is not None:
+            return denied
+        lp, name = lookup_listener_profile(request)
+        if lp is None:
+            return web.json_response(
+                {
+                    "error": {
+                        "message": (
+                            f"The companion is not loaded for Hermes profile '{name}'. "
+                            "Open the gateway URL without /p/…/ or use the profile name where this plugin is enabled."
+                        ),
+                        "type": "companion_error",
+                        "code": "companion_profile_unavailable",
+                    }
+                },
+                status=503,
+                headers={"Cache-Control": "no-store"},
+            )
+        body = build_status(
+            version=lp.version or version,
+            profile=name,
+            tools=lp.tools,
+            hooks=lp.hooks,
+            routes=route_list,
+        )
+        return web.json_response(body, headers={"Cache-Control": "no-store"})
+
+    return handler
+
+
 def authorize(adapter: Any, request: Any) -> Optional[Any]:
     """Authenticate one request with the API server's own check.
 
@@ -120,20 +169,6 @@ def authorize(adapter: Any, request: Any) -> Optional[Any]:
     return denied
 
 
-def make_handler(adapter: Any, payload: dict[str, Any]) -> Callable[..., Any]:
-    """The aiohttp handler. Authenticates with the API server's own check."""
-
-    async def handler(request):
-        from aiohttp import web
-
-        denied = authorize(adapter, request)
-        if denied is not None:
-            return denied
-        return web.json_response(payload, headers={"Cache-Control": "no-store"})
-
-    return handler
-
-
 def register_status_route(
     ctx: Any,
     *,
@@ -152,28 +187,28 @@ def register_status_route(
     register = getattr(ctx, "register_platform_handler", None)
     if not callable(register):
         return False
-    try:
-        profile = getattr(ctx, "profile_name", "default")
-    except Exception:
-        profile = "default"
-    payload = build_status(
-        version=version or plugin_version(),
-        profile=profile,
-        tools=tools,
-        hooks=hooks,
-        routes=routes,
-    )
+    version_str = version or plugin_version()
 
     def wire(native, adapter) -> None:
         router = getattr(native, "router", None)
-        add_get = getattr(router, "add_get", None)
-        if not callable(add_get):
+        if router is None:
             return
-        add_get(ROUTE_PATH, make_handler(adapter, payload))
+        add_get_listener_routes(
+            router,
+            ROUTE_PATH,
+            make_dynamic_status_handler(
+                adapter,
+                tools=tools,
+                hooks=hooks,
+                routes=routes,
+                version=version_str,
+            ),
+        )
         # One factory wires every route: Hermes keys factories by plugin and
         # qualified name, so a second closure of this shape would be skipped.
         if callable(wire_extra):
             wire_extra(router, adapter)
+        promote_multiplex_plugin_routes(router)
 
     try:
         register(PLATFORM, wire)

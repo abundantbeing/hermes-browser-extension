@@ -34,6 +34,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from . import profile_registry
 from .context_store import _trusted_identifier
 from .control_broker import (
     CONTROL_ACTIONS,
@@ -112,6 +113,26 @@ def _ensure_screenshot_worker() -> None:
     _screenshot_worker.start()
 
 
+def configured_profile_name() -> str:
+    """Profile last set by ``configure()``; used when Hermes does not pass runtime profile context."""
+    return str(_config.get("profile") or "default").strip() or "default"
+
+
+def _profile_for_control(kwargs: dict[str, Any]) -> str:
+    """Active profile for control tool dispatch (runtime context, then configure fallback)."""
+    if kwargs.get("profile_name"):
+        return profile_registry.normalize_profile(str(kwargs["profile_name"]))
+    resolved = profile_registry.resolve_turn_profile(kwargs)
+    configured = configured_profile_name()
+    # Multiplex turns name the profile in Hermes' runtime scope. Harnesses and older
+    # gateways may leave that unset while register() still pinned one in configure().
+    if resolved != "default":
+        return resolved
+    if configured != "default":
+        return configured
+    return resolved
+
+
 def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default", screenshot_dir: Any = None) -> None:
     """Point the handlers at a broker, the plugin's profile and a screenshot directory (``None``: the temp dir)."""
     _config["broker"] = broker
@@ -126,8 +147,12 @@ def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default
     _ensure_screenshot_worker()
 
 
-def _broker() -> ControlBroker:
-    return _config["broker"] or get_control_broker()
+def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
+    resolved_profile = _profile_for_control(kwargs or {})
+    configured = _config.get("broker")
+    if configured is not None and configured_profile_name() == resolved_profile:
+        return configured
+    return get_control_broker(resolved_profile)
 
 
 def _failure(code: str, message: str) -> str:
@@ -330,8 +355,9 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
         return _failure("url_blocked", refusal)
 
     tool = TOOL_FOR_ACTION[action]
-    broker = _broker()
-    scopes = broker.lane_scopes(profile_id=_config["profile"], session_id=session_id)
+    profile = _profile_for_control(kwargs or {})
+    broker = _broker(kwargs)
+    scopes = broker.lane_scopes(profile_id=profile, session_id=session_id)
     if not scopes:
         return _failure(
             "no_browser",

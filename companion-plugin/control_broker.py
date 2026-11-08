@@ -653,29 +653,49 @@ class ControlBroker:
             return len(self._pending)
 
 
-# One broker per process, shared by the routes (the gateway's event loop) and the
-# tools (agent worker threads): ordinary turns run in the gateway process.
-_BROKER = ControlBroker()
+# One broker per profile on a multiplexed gateway so control routes and tab_* tools
+# never cross profiles through the shared listener app.
+_BROKERS: dict[str, ControlBroker] = {}
+_BROKER_LOCK = threading.RLock()
 
 
-def get_control_broker() -> ControlBroker:
-    """The process-local broker."""
-    return _BROKER
+def get_control_broker(profile: str | None = None) -> ControlBroker:
+    """Broker for the named profile (``default`` when omitted), process-wide."""
+    key = str(profile or "default").strip() or "default"
+    with _BROKER_LOCK:
+        broker = _BROKERS.get(key)
+        if broker is None:
+            broker = ControlBroker()
+            _BROKERS[key] = broker
+        return broker
+
+
+def iter_control_brokers() -> tuple[ControlBroker, ...]:
+    """Every profile broker (ticket consumption across multiplex copies)."""
+    with _BROKER_LOCK:
+        return tuple(_BROKERS.values())
 
 
 # Hermes's directory-plugin loader evicts ``hermes_plugins.<slug>.*`` and
 # re-executes the package on each load (``hermes_cli/plugins_loader.py``).
-# That would mint a fresh ``_BROKER`` and exception classes per load. Keep one
-# canonical module object under a key the loader never evicts and adopt it on
-# later loads so routes and tools always share state and class identities.
+# Adopt one canonical module object under a key the loader never evicts so
+# routes and tab_* tools share ``_BROKERS`` and exception class identities.
 # The key is scoped to one Hermes home (the plugin slug, including ``__home_…``)
-# so two homes in one process never share controller attachments.
+# so two homes in one process never share per-profile brokers.
 def _plugin_home_scope() -> str:
     """The Hermes-home slice of this load's plugin package name."""
     package = __package__ or ""
     if package.startswith("hermes_plugins."):
-        return package.split(".", 1)[1]
-    return package or __name__.rpartition(".")[0] or "default"
+        slug = package.split(".", 1)[1]
+    else:
+        slug = package or __name__.rpartition(".")[0] or "default"
+    # Multiplex profile module copies use a distinct ``__package__`` under one home;
+    # ``__home_…`` slugs stay separate so two homes never share brokers.
+    if "__home_" in slug:
+        return slug
+    if "__profile_" in slug:
+        return slug.split("__profile_", 1)[0]
+    return slug
 
 
 _SHARED_MODULE_KEY = f"_hermes_browser_extension_shared_control_broker.{_plugin_home_scope()}"

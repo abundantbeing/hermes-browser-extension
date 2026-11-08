@@ -113,6 +113,9 @@ class NoCheckAdapter:
     pass
 
 async def exercise(adapter):
+    registry = sys.modules["probe_plugin.profile_registry"]
+    registry.set_multiplex_test_profiles(["default", "luxord"])
+    registry.set_listener_test_profile("luxord")
     ctx = Ctx()
     module.register(ctx)
     app = web.Application()
@@ -150,22 +153,28 @@ print(json.dumps({"good": good, "raising": [raising["ok"], raising["anonymous"]]
   assert.equal(data.good.cache, 'no-store');
   for (const method of ['post', 'put', 'patch', 'delete']) assert.equal(data.good[method], 405, method);
   assert.equal(data.good.other, 404);
-  assert.deepEqual(data.good.routes.filter(([, resource]) => resource.includes('hermes-browser-extension')).sort(), [
-    ['GET', '/api/plugins/hermes-browser-extension/actions'],
-    ['GET', '/api/plugins/hermes-browser-extension/context/status'],
-    ['GET', '/api/plugins/hermes-browser-extension/control/ws'],
-    ['GET', '/api/plugins/hermes-browser-extension/profiles'],
-    ['GET', '/api/plugins/hermes-browser-extension/profiles/{name}/avatar'],
-    ['GET', '/api/plugins/hermes-browser-extension/status'],
-    ['HEAD', '/api/plugins/hermes-browser-extension/actions'],
-    ['HEAD', '/api/plugins/hermes-browser-extension/context/status'],
-    ['HEAD', '/api/plugins/hermes-browser-extension/control/ws'],
-    ['HEAD', '/api/plugins/hermes-browser-extension/profiles'],
-    ['HEAD', '/api/plugins/hermes-browser-extension/profiles/{name}/avatar'],
-    ['HEAD', '/api/plugins/hermes-browser-extension/status'],
-    ['POST', '/api/plugins/hermes-browser-extension/context'],
-    ['POST', '/api/plugins/hermes-browser-extension/control/register'],
-  ]); // aiohttp's add_get also answers HEAD, through the same authenticated handler
+  const companionRoutes = data.good.routes
+    .filter(([, resource]) => resource.includes('hermes-browser-extension'))
+    .map((pair) => pair.join(' '))
+    .sort();
+  const mirror = (path) => `/p/{profile}${path}`;
+  const expectGetHead = (path) => [`GET ${path}`, `HEAD ${path}`, `GET ${mirror(path)}`, `HEAD ${mirror(path)}`];
+  const expected = [
+    ...expectGetHead('/api/plugins/hermes-browser-extension/actions'),
+    ...expectGetHead('/api/plugins/hermes-browser-extension/context/status'),
+    ...expectGetHead('/api/plugins/hermes-browser-extension/control/ws'),
+    ...expectGetHead('/api/plugins/hermes-browser-extension/status'),
+    'GET /api/plugins/hermes-browser-extension/profiles',
+    'HEAD /api/plugins/hermes-browser-extension/profiles',
+    'GET /api/plugins/hermes-browser-extension/profiles/{name}/avatar',
+    'HEAD /api/plugins/hermes-browser-extension/profiles/{name}/avatar',
+    'POST /api/plugins/hermes-browser-extension/context',
+    `POST ${mirror('/api/plugins/hermes-browser-extension/context')}`,
+    'POST /api/plugins/hermes-browser-extension/control/register',
+    `POST ${mirror('/api/plugins/hermes-browser-extension/control/register')}`,
+  ].sort();
+  assert.deepEqual(companionRoutes, expected);
+  assert.doesNotMatch(companionRoutes.join('\n'), /profiles.*\/p\/\{profile\}/);
   assert.equal(data.good.body.profile, 'luxord');
   assert.equal(data.good.body.live, false);
   assert.deepEqual(Object.keys(data.good.body).sort(), ['hooks', 'live', 'object', 'plugin', 'profile', 'routes', 'tools', 'version']);

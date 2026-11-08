@@ -33,6 +33,9 @@ module = importlib.util.module_from_spec(spec)
 module.__package__ = "probe_plugin"
 sys.modules["probe_plugin"] = module
 spec.loader.exec_module(module)
+registry = sys.modules["probe_plugin.profile_registry"]
+registry.set_multiplex_test_profiles(["default", "luxord"])
+registry.set_listener_test_profile("luxord")
 broker_module = sys.modules["probe_plugin.control_broker"]
 routes = sys.modules["probe_plugin.control_routes"]
 tools = sys.modules["probe_plugin.control_tools"]
@@ -82,9 +85,22 @@ def body(session="sess-A", controller="ctl-1", profile="bp-1", caps=CAPS, versio
 async def make(adapter=None, **broker_kwargs):
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
-    broker = broker_module.ControlBroker(**broker_kwargs)
+    registry = sys.modules["probe_plugin.profile_registry"]
+    registry.set_multiplex_test_profiles(["default", "luxord"])
+    registry.set_listener_test_profile("luxord")
+    if broker_kwargs:
+        broker = broker_module.ControlBroker(**broker_kwargs)
+        with broker_module._BROKER_LOCK:
+            broker_module._BROKERS["luxord"] = broker
+    else:
+        broker = broker_module.get_control_broker("luxord")
+    broker.reset()
+    store = registry.ensure_context_store("luxord")
+    registry.register_listener_profile(
+        profile="luxord", store=store, broker=broker, tools=(), hooks=(), version="test"
+    )
     app = web.Application()
-    routes.make_wire_extra(broker, profile="luxord")(app.router, adapter or Adapter())
+    routes.make_wire_extra()(app.router, adapter or Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
     tools.configure(broker=broker, profile="luxord", screenshot_dir=shots)
     client = TestClient(TestServer(app))
@@ -181,7 +197,7 @@ class Ctx:
 ctx = Ctx(owned=["tab_click"])
 module.register(ctx)
 control = {name: entry for name, entry in ctx.registered.items() if name in tools.TOOL_NAMES}
-broker = broker_module.get_control_broker()
+broker = broker_module.get_control_broker("default")
 print(json.dumps({"count": len(control), "skipped_owned": "tab_click" not in control, "toolsets": sorted({e["toolset"] for e in control.values()}),
                   "checks": sorted({repr(e["check_fn"]) for e in control.values()}),
                   "schemas_ok": all(e["schema"]["name"] == name for name, e in control.items())}))
@@ -312,14 +328,17 @@ async def main():
     from aiohttp.test_utils import TestClient, TestServer
 
     module_first = load_plugin(PLUGIN)
+    registry = sys.modules[PLUGIN + ".profile_registry"]
+    registry.set_multiplex_test_profiles(["default", "luxord"])
+    registry.set_listener_test_profile("luxord")
     module_first.register(Ctx())
     routes = sys.modules[PLUGIN + ".control_routes"]
     tools_first = sys.modules[PLUGIN + ".control_tools"]
     broker_first = sys.modules[PLUGIN + ".control_broker"]
-    route_broker = broker_first.get_control_broker()
+    route_broker = broker_first.get_control_broker("luxord")
 
     app = web.Application()
-    routes.make_wire_extra(route_broker, profile="luxord")(app.router, Adapter())
+    routes.make_wire_extra()(app.router, Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
     tools_first.configure(broker=route_broker, profile="luxord", screenshot_dir=shots)
     client = TestClient(TestServer(app))
@@ -334,7 +353,7 @@ async def main():
         module_second.register(Ctx())
         tools_second = sys.modules[PLUGIN + ".control_tools"]
         broker_second = sys.modules[PLUGIN + ".control_broker"]
-        tool_broker = broker_second.get_control_broker()
+        tool_broker = broker_second.get_control_broker("luxord")
         route_seen = len(route_broker.lane_scopes(profile_id="luxord", session_id="sess-A"))
         tool_seen = len(tool_broker.lane_scopes(profile_id="luxord", session_id="sess-A"))
 
@@ -354,7 +373,7 @@ async def main():
         await ws.close()
 
     other_home = load_plugin(OTHER_HOME)
-    other_broker = sys.modules[OTHER_HOME + ".control_broker"].get_control_broker()
+    other_broker = sys.modules[OTHER_HOME + ".control_broker"].get_control_broker("luxord")
 
     return {
         "same_broker": route_broker is tool_broker,
@@ -394,7 +413,7 @@ class Ctx:
     def register_skill(self, name, path): pass
     def register_platform_handler(self, *args, **kwargs): pass
 module.register(Ctx())
-broker = broker_module.get_control_broker()
+broker = broker_module.get_control_broker("default")
 scope = broker_module.ControllerScope(principal_id="p", profile_id="default", session_id="sess-A", controller_id="c",
                                       browser_profile_id="b", transport_family="local-api", capabilities=frozenset(CAPS))
 owner = object()
@@ -483,6 +502,28 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.ok.scope.transport_family, 'local-api');
   assert.match(data.ok.scope.principal_id, /^principal:luxord:[0-9a-f]{32}$/);
   assert.ok(!JSON.stringify(data.ok.scope).includes('paired-token'));
+});
+
+test('multiplex register returns a materialized ws_path, not the {profile} template', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}
+async def main():
+    client, _, _ = await make()
+    async with client:
+        ok = await client.post(
+            "/p/work" + REGISTER,
+            headers={"Authorization": TOKEN},
+            json=body(session="sess-B", profile="bp-w", caps=CAPS),
+        )
+        return {"status": ok.status, "ws_path": (await ok.json()).get("ws_path")}
+print(json.dumps(asyncio.run(main())))
+`);
+  const data = JSON.parse(out);
+  if (skipped(data)) return;
+  assert.equal(data.status, 201);
+  assert.equal(
+    data.ws_path,
+    '/p/work/api/plugins/hermes-browser-extension/control/ws',
+  );
 });
 
 test('through the real factory, register and the socket both refuse an unauthenticated or ticketless caller', () => {

@@ -34,6 +34,8 @@ from typing import Any, Callable, Iterable
 
 from . import actions as action_catalog
 from .protocol import BrowserContextEnvelope
+from .multiplex_routes import add_get_listener_routes, add_post_listener_routes
+from .profile_registry import lookup_listener_profile
 from .status_route import (
     ACTIONS_PATH,
     CONTEXT_STATUS_PATH,
@@ -66,6 +68,18 @@ def _error(status: int, code: str, message: str) -> Any:
     )
 
 
+def _unavailable_profile_error(profile: str) -> Any:
+    return _error(
+        503,
+        "companion_profile_unavailable",
+        (
+            f"The companion is not loaded for Hermes profile '{profile}'. "
+            "Enable the plugin for that profile or use the default listener URL without a "
+            "/p/<profile>/ prefix."
+        ),
+    )
+
+
 def _session_id(request: Any) -> str:
     """The session the caller names, bounded and printable; ``""`` when unusable."""
     raw = request.headers.get(SESSION_HEADER) or request.query.get("session_id") or ""
@@ -81,17 +95,20 @@ def _ms(seconds: float) -> int:
     return max(0, int(seconds * 1000))
 
 
-def make_status_handler(adapter: Any, store: Any) -> Callable[..., Any]:
+def make_status_handler(adapter: Any) -> Callable[..., Any]:
     async def handler(request):
         from aiohttp import web
 
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
+        lp, name = lookup_listener_profile(request)
+        if lp is None:
+            return _unavailable_profile_error(name)
         session = _session_id(request)
         if not session:
             return _error(400, "session_required", f"Send the session id in the {SESSION_HEADER} header.")
-        body = {"object": CONTEXT_STATUS_OBJECT, "plugin": PLUGIN_NAME, **store.session_status(session)}
+        body = {"object": CONTEXT_STATUS_OBJECT, "plugin": PLUGIN_NAME, **lp.store.session_status(session)}
         return web.json_response(body, headers=_NO_STORE)
 
     return handler
@@ -112,13 +129,16 @@ async def _read_bounded(request: Any, limit: int) -> bytes | None:
     return b"".join(chunks)
 
 
-def make_upload_handler(adapter: Any, store: Any) -> Callable[..., Any]:
+def make_upload_handler(adapter: Any) -> Callable[..., Any]:
     async def handler(request):
         from aiohttp import web
 
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
+        lp, name = lookup_listener_profile(request)
+        if lp is None:
+            return _unavailable_profile_error(name)
         session = _session_id(request)
         if not session:
             return _error(400, "session_required", f"Send the session id in the {SESSION_HEADER} header.")
@@ -129,7 +149,7 @@ def make_upload_handler(adapter: Any, store: Any) -> Callable[..., Any]:
             text = body.decode("utf-8")
         except UnicodeDecodeError:
             return _error(400, "invalid_envelope", "The body must be UTF-8 JSON.")
-        stored = store.put_session_upload(session, text)
+        stored = lp.store.put_session_upload(session, text)
         if not stored.get("available"):
             return _error(
                 422,
@@ -160,14 +180,17 @@ def make_upload_handler(adapter: Any, store: Any) -> Callable[..., Any]:
     return handler
 
 
-def make_actions_handler(adapter: Any, payload: dict[str, Any]) -> Callable[..., Any]:
+def make_actions_handler(adapter: Any) -> Callable[..., Any]:
     async def handler(request):
         from aiohttp import web
 
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
-        return web.json_response(payload, headers=_NO_STORE)
+        lp, name = lookup_listener_profile(request)
+        if lp is None:
+            return _unavailable_profile_error(name)
+        return web.json_response(build_actions_payload(version=lp.version), headers=_NO_STORE)
 
     return handler
 
@@ -184,18 +207,13 @@ def build_actions_payload(*, version: str) -> dict[str, Any]:
     }
 
 
-def make_wire_extra(store: Any, *, version: str) -> Callable[[Any, Any], None]:
+def make_wire_extra() -> Callable[[Any, Any], None]:
     """The ``wire_extra`` hook for status_route.register_status_route()."""
-    actions_payload = build_actions_payload(version=version)
 
     def wire_extra(router: Any, adapter: Any) -> None:
-        add_get = getattr(router, "add_get", None)
-        add_post = getattr(router, "add_post", None)
-        if callable(add_get):
-            add_get(CONTEXT_STATUS_PATH, make_status_handler(adapter, store))
-            add_get(ACTIONS_PATH, make_actions_handler(adapter, actions_payload))
-        if callable(add_post):
-            add_post(CONTEXT_UPLOAD_PATH, make_upload_handler(adapter, store))
+        add_get_listener_routes(router, CONTEXT_STATUS_PATH, make_status_handler(adapter))
+        add_get_listener_routes(router, ACTIONS_PATH, make_actions_handler(adapter))
+        add_post_listener_routes(router, CONTEXT_UPLOAD_PATH, make_upload_handler(adapter))
 
     return wire_extra
 

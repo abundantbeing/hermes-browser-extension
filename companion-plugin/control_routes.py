@@ -35,10 +35,12 @@ import concurrent.futures
 import hashlib
 import json
 import logging
+import re
 import time
 from typing import Any, Callable, Optional
 
 from .context_routes import _error, _read_bounded
+from .profile_registry import consume_control_ticket, lookup_listener_profile
 from .control_broker import (
     CONTROL_PROTOCOL_VERSION,
     ControlBroker,
@@ -46,8 +48,10 @@ from .control_broker import (
     PrincipalConflict,
     TicketInvalid,
     filter_capabilities,
+    get_control_broker,
     protocol_supported,
 )
+from .multiplex_routes import add_get_listener_routes, add_post_listener_routes, multiplex_path
 from .status_route import BASE_PATH, authorize
 
 logger = logging.getLogger(__name__)
@@ -55,6 +59,8 @@ logger = logging.getLogger(__name__)
 CONTROL_REGISTER_PATH = f"{BASE_PATH}/control/register"
 CONTROL_WS_PATH = f"{BASE_PATH}/control/ws"
 ROUTE_PATHS = (CONTROL_REGISTER_PATH, CONTROL_WS_PATH)
+
+_PATH_PREFIX = re.compile(r"^/p/([^/]+)(?:/|$)")
 
 WS_PROTOCOL = "hermes-browser-control-v1"
 TICKET_PROTOCOL_PREFIX = "hermes-browser-control-ticket."
@@ -83,6 +89,26 @@ def derive_principal(profile: str, request: Any) -> str:
     token = header[7:].strip() if header.startswith("Bearer ") else ""
     digest = hashlib.sha256(f"{profile}\x00{token}".encode()).hexdigest()
     return f"principal:{profile}:{digest[:32]}"
+
+
+def _control_ws_path(request: Any) -> str:
+    path = str(getattr(getattr(request, "rel_url", None), "path", "") or getattr(request, "path", "") or "")
+    matched = _PATH_PREFIX.match(path)
+    if matched:
+        return f"/p/{matched.group(1)}{CONTROL_WS_PATH}"
+    return CONTROL_WS_PATH
+
+
+def _unavailable_profile(request_profile: str) -> Any:
+    return _error(
+        503,
+        "companion_profile_unavailable",
+        (
+            f"The companion is not loaded for Hermes profile '{request_profile}'. "
+            "Enable the plugin for that profile or use the default listener URL without a "
+            "/p/<profile>/ prefix."
+        ),
+    )
 
 
 def transport_family(request: Any) -> str:
@@ -121,13 +147,17 @@ async def _session_known(adapter: Any, session_id: str) -> bool:
         raise LookupError("session store unavailable") from exc
 
 
-def make_register_handler(adapter: Any, broker: ControlBroker, *, profile: str) -> Callable[..., Any]:
+def make_register_handler(adapter: Any) -> Callable[..., Any]:
     async def handler(request):
         from aiohttp import web
 
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
+        lp, profile = lookup_listener_profile(request)
+        if lp is None:
+            return _unavailable_profile(profile)
+        broker = get_control_broker(profile)
         body = await _read_bounded(request, MAX_REGISTER_BYTES)
         if body is None:
             return _error(413, "registration_too_large", "The registration is too large.")
@@ -186,7 +216,7 @@ def make_register_handler(adapter: Any, broker: ControlBroker, *, profile: str) 
                 # monotonic clock, so after a clock step trust the seconds.
                 "ticket_expires_at": time.time() + ttl,
                 "ticket_expires_in_seconds": ttl,
-                "ws_path": CONTROL_WS_PATH,
+                "ws_path": _control_ws_path(request),
                 "scope": {**{key: getattr(scope, key) for key in _SCOPE_KEYS}, "capabilities": sorted(scope.capabilities)},
             },
             status=201,
@@ -260,7 +290,7 @@ def handle_frame(broker: ControlBroker, scope: ControllerScope, frame: dict, *, 
     return None
 
 
-def make_ws_handler(broker: ControlBroker) -> Callable[..., Any]:
+def make_ws_handler() -> Callable[..., Any]:
     async def handler(request):
         from aiohttp import web
 
@@ -274,7 +304,7 @@ def make_ws_handler(broker: ControlBroker) -> Callable[..., Any]:
         if not ticket:
             raise web.HTTPUnauthorized()
         try:
-            scope = broker.consume_ticket(ticket)
+            broker, scope = consume_control_ticket(ticket)
         except TicketInvalid:
             raise web.HTTPUnauthorized() from None
         except Exception:
@@ -314,15 +344,11 @@ def make_ws_handler(broker: ControlBroker) -> Callable[..., Any]:
     return handler
 
 
-def make_wire_extra(broker: ControlBroker, *, profile: str) -> Callable[[Any, Any], None]:
+def make_wire_extra() -> Callable[[Any, Any], None]:
     """The ``wire_extra`` hook for status_route.register_status_route()."""
 
     def wire_extra(router: Any, adapter: Any) -> None:
-        add_get = getattr(router, "add_get", None)
-        add_post = getattr(router, "add_post", None)
-        if callable(add_post):
-            add_post(CONTROL_REGISTER_PATH, make_register_handler(adapter, broker, profile=profile))
-        if callable(add_get):
-            add_get(CONTROL_WS_PATH, make_ws_handler(broker))
+        add_post_listener_routes(router, CONTROL_REGISTER_PATH, make_register_handler(adapter))
+        add_get_listener_routes(router, CONTROL_WS_PATH, make_ws_handler())
 
     return wire_extra
