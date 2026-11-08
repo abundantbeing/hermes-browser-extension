@@ -148,10 +148,11 @@ def configure(*, broker: Optional[ControlBroker] = None, profile: str = "default
 
 
 def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
+    resolved_profile = _profile_for_control(kwargs or {})
     configured = _config.get("broker")
-    if configured is not None:
+    if configured is not None and configured_profile_name() == resolved_profile:
         return configured
-    return get_control_broker(_profile_for_control(kwargs or {}))
+    return get_control_broker(resolved_profile)
 
 
 def _failure(code: str, message: str) -> str:

@@ -686,8 +686,16 @@ def _plugin_home_scope() -> str:
     """The Hermes-home slice of this load's plugin package name."""
     package = __package__ or ""
     if package.startswith("hermes_plugins."):
-        return package.split(".", 1)[1]
-    return package or __name__.rpartition(".")[0] or "default"
+        slug = package.split(".", 1)[1]
+    else:
+        slug = package or __name__.rpartition(".")[0] or "default"
+    # Multiplex profile module copies use a distinct ``__package__`` under one home;
+    # ``__home_…`` slugs stay separate so two homes never share brokers.
+    if "__home_" in slug:
+        return slug
+    if "__profile_" in slug:
+        return slug.split("__profile_", 1)[0]
+    return slug
 
 
 _SHARED_MODULE_KEY = f"_hermes_browser_extension_shared_control_broker.{_plugin_home_scope()}"

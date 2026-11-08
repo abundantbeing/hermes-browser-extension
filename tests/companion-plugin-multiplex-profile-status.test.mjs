@@ -106,30 +106,46 @@ tools = module.TOOL_NAMES
 discovered_tools = tuple(name for name in tools if not name.startswith("tab_"))
 
 registry.set_multiplex_test_profiles(["work"])
-broker = broker_mod.get_control_broker("work")
-store = registry.ensure_context_store("work")
-registry.register_listener_profile(
-    profile="work",
-    store=store,
-    broker=broker,
-    tools=discovered_tools,
-    hooks=module.HOOK_NAMES,
-    version="discovered",
-)
+loaded = [False]
+discovery_ran = [False]
+
+hermes_cli = types.ModuleType("hermes_cli")
+hermes_cli_plugins = types.ModuleType("hermes_cli.plugins")
+sys.modules["hermes_cli"] = hermes_cli
+sys.modules["hermes_cli.plugins"] = hermes_cli_plugins
+
+def discover_plugins():
+    discovery_ran[0] = True
+    loaded[0] = True
+    broker = broker_mod.get_control_broker("work")
+    store = registry.ensure_context_store("work")
+    registry.register_listener_profile(
+        profile="work",
+        store=store,
+        broker=broker,
+        tools=discovered_tools,
+        hooks=module.HOOK_NAMES,
+        version="discovered",
+    )
+
+hermes_cli_plugins.discover_plugins = discover_plugins
+
+registry._companion_loaded_in_scope = lambda: loaded[0]
 
 class Req:
     path = "/p/work/api/plugins/hermes-browser-extension/status"
 
-registry._companion_loaded_in_scope = lambda: True
 row = registry.materialize_listener_profile("work", request=Req())
 print(json.dumps({
-    "tool_count": len(row.tools),
+    "discovery_ran": discovery_ran[0],
+    "tool_count": len(row.tools) if row else None,
     "discovered_count": len(discovered_tools),
     "full_count": len(tools),
-    "preserved": row.tools == discovered_tools,
+    "preserved": row.tools == discovered_tools if row else False,
 }))
 `;
   const data = runPython(script);
+  assert.equal(data.discovery_ran, true);
   assert.ok(data.discovered_count < data.full_count);
   assert.equal(data.preserved, true);
   assert.equal(data.tool_count, data.discovered_count);
