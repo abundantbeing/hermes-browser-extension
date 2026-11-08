@@ -301,6 +301,74 @@ test('Pause leaves the worker serving the in-memory chat while storage records a
   assert.equal(transport.connections[0]?.options?.settings?.sessionId, 'pause-session');
 });
 
+test('an appearance save during a queued Resume still completes the resume and keeps the theme', async () => {
+  const base = {
+    ...settings(),
+    browserControlPaused: true,
+    appearanceTheme: 'nous',
+    colorMode: 'dark',
+  };
+  const storage = memoryStorage({ hermesBrowserSettings: base });
+  const transport = connector();
+  const executed = [];
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async (frame) => {
+      executed.push(frame);
+      return { ok: true, result: { status: 'done' } };
+    },
+  });
+  await worker.boot();
+  const ready = await ownedReady(worker, 94);
+  let releaseHeartbeat;
+  const heartbeatHeld = new Promise((resolve) => { releaseHeartbeat = resolve; });
+  transport.connections[0].heartbeat = () => heartbeatHeld;
+  const reconciling = worker.reconcile({ reason: 'heartbeat-alarm' });
+  await settle();
+  storage.state.hermesBrowserSettings = {
+    ...storage.state.hermesBrowserSettings,
+    appearanceTheme: 'mono',
+    colorMode: 'light',
+    browserControlPaused: true,
+  };
+  const hydratedTheme = await hydrateSavedConnectionSecrets(
+    storage.state.hermesBrowserSettings,
+    storage.state.hermesBrowserSavedConnectionSecrets,
+  );
+  const syncPromise = worker.syncSettings(hydratedTheme);
+  const resumePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
+  releaseHeartbeat({ ok: true });
+  await reconciling;
+  await resumePromise;
+  await syncPromise;
+  await settle();
+  assert.equal(worker.status().paused, false);
+  assert.equal(storage.state.hermesBrowserSettings.appearanceTheme, 'mono');
+  assert.equal(storage.state.hermesBrowserSettings.colorMode, 'light');
+  assert.equal(storage.state.hermesBrowserSettings.browserControlPaused, false);
+  const generationAfterResume = (await worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.documentReady },
+    extensionSender({ tabId: 94 }),
+  )).documentGeneration;
+  const activeConnection = transport.connections.at(-1);
+  await activeConnection.emit({
+    method: 'browser.controller.command',
+    params: {
+      command_id: 'after-theme-resume',
+      action: 'browser_scroll',
+      arguments: { direction: 'down' },
+      tab_id: 94,
+      document_generation: generationAfterResume,
+    },
+  });
+  await settle();
+  assert.equal(executed.length, 1);
+});
+
 test('a Resume queued behind settings sync does not un-pause after storage reports paused', async () => {
   const base = { ...settings(), browserControlPaused: true, sessionId: 'session-before-resume' };
   const storage = memoryStorage({ hermesBrowserSettings: base });
@@ -330,8 +398,6 @@ test('a Resume queued behind settings sync does not un-pause after storage repor
   transport.connections[0].heartbeat = () => heartbeatHeld;
   const reconciling = worker.reconcile({ reason: 'heartbeat-alarm' });
   await settle();
-  const resumePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
-  await settle();
   storage.state.hermesBrowserSettings = {
     ...storage.state.hermesBrowserSettings,
     browserControlPaused: true,
@@ -340,6 +406,8 @@ test('a Resume queued behind settings sync does not un-pause after storage repor
     storage.state.hermesBrowserSettings,
     storage.state.hermesBrowserSavedConnectionSecrets,
   );
+  const resumePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
+  await settle();
   const syncPromise = worker.syncSettings(hydratedPause);
   releaseHeartbeat({ ok: true });
   await reconciling;

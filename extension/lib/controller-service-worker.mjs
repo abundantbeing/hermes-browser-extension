@@ -342,6 +342,8 @@ export function createControllerServiceWorker({
   let pauseAdmittingCommands = false;
   // Increments on each Pause; Resume drops stale transition work when a newer Pause completed first (#1).
   let pauseSequence = 0;
+  // Bumps only when browserControlPaused changes, or a paused settings sync advances the shared session.
+  let pauseStateRevision = 0;
   let controllerId = '';
   let browserProfileId = '';
   let generation = 1;
@@ -395,6 +397,18 @@ export function createControllerServiceWorker({
   }
 
   const controlPaused = () => pauseAdmittingCommands || settings?.browserControlPaused === true;
+
+  function bumpPauseStateRevisionFromSettings(previous, normalized) {
+    const wasPaused = previous?.browserControlPaused === true;
+    const nextPaused = normalized?.browserControlPaused === true;
+    if (nextPaused !== wasPaused) {
+      pauseStateRevision += 1;
+      return;
+    }
+    if (nextPaused && durableSessionId(normalized) !== durableSessionId(previous)) {
+      pauseStateRevision += 1;
+    }
+  }
 
   function executorContext(base = {}, { lease, tabId, frameId, authoritative }) {
     const ownedLeases = ownedControllerLeases();
@@ -1298,7 +1312,11 @@ export function createControllerServiceWorker({
   async function syncSettingsTransition(nextSettings = {}) {
     await boot();
     const normalized = nextSettings && typeof nextSettings === 'object' ? { ...nextSettings } : {};
+    const previousSettings = settings;
+    const wasPaused = previousSettings?.browserControlPaused === true;
+    const nextPaused = normalized?.browserControlPaused === true;
     if (!controllerRouteChanged(settings, normalized)) {
+      if (wasPaused !== nextPaused) pauseStateRevision += 1;
       settings = normalized;
       return status();
     }
@@ -1310,6 +1328,7 @@ export function createControllerServiceWorker({
       sessionId: settings.sessionId,
       remoteDashboardSession: settings.remoteDashboardSession,
     });
+    if (wasPaused !== nextPaused) pauseStateRevision += 1;
     settings = normalized;
     if (!chatOnly) pausedLeases = {};
     lastTurnTabId = 0;
@@ -1346,6 +1365,7 @@ export function createControllerServiceWorker({
     // Number.isInteger(Number(revision)) treated a missing revision as revision 0
     // and dropped every storage rebind as stale once any explicit refresh had
     // bumped the counter — a freshly paired token then never reached the socket.
+    bumpPauseStateRevisionFromSettings(settings, nextSettings);
     const hasRevision = revision !== null && revision !== undefined && revision !== ''
       && Number.isInteger(Number(revision));
     const requestedRevision = hasRevision ? Number(revision) : settingsRevision + 1;
@@ -1531,6 +1551,7 @@ export function createControllerServiceWorker({
       if (paused === true) {
         pauseAdmittingCommands = true;
         pauseSequence += 1;
+        pauseStateRevision += 1;
         // Pause is Stop plus a hold: the command that is running, or waiting for an approval, ends now. Releasing
         // the debugger alone left it to attach again and carry on.
         stopTurnReads();
@@ -1568,15 +1589,14 @@ export function createControllerServiceWorker({
       });
       if (transitionAfter === true) {
         const capturedResumeSeq = resumePauseSeq;
-        const transitionRevision = settingsRevision + 1;
-        settingsRevision = transitionRevision;
+        const capturedPauseStateRevision = pauseStateRevision;
         await runTransition(async () => {
           if (capturedResumeSeq !== null && capturedResumeSeq !== pauseSequence) return;
           const refreshed = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
           const latest = refreshed?.hermesBrowserSettings && typeof refreshed.hermesBrowserSettings === 'object'
             ? await hydrateSavedConnectionSecrets(refreshed.hermesBrowserSettings, refreshed[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
             : settings;
-          if (transitionRevision !== settingsRevision) {
+          if (capturedPauseStateRevision !== pauseStateRevision) {
             settings = syncActiveSavedConnection(keepChatMove(latest));
             return { ...status(), staleSettingsRevision: true };
           }
