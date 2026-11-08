@@ -246,9 +246,17 @@ export function voiceRouteSummary({ gatewayAvailable = false, browserAvailable =
   return 'none (no Hermes dashboard speech route and no browser speech)';
 }
 
+const READ_ALOUD_ROW_PREFIX = 'r:';
+const READ_ALOUD_TS_MARK = '@';
+
 function readAloudRowId(record) {
   const rowId = record?.rowId;
   return Number.isInteger(rowId) && rowId > 0 ? rowId : null;
+}
+
+function readAloudTs(record) {
+  const ts = Number(record?.ts);
+  return Number.isFinite(ts) && ts > 0 ? ts : null;
 }
 
 /** Content fingerprint for a reply (stable across history refresh). */
@@ -257,20 +265,30 @@ export function readAloudContentKey(record) {
   return `${content.length}:${content.slice(0, 48)}`;
 }
 
-/** Names a reply for playback; includes rowId when the server has assigned one. */
+/** Names a reply for playback; row ids are prefixed so content like `12:30` is not parsed as an id. */
 export function readAloudKey(record) {
   const contentKey = readAloudContentKey(record);
   const rowId = readAloudRowId(record);
-  return rowId !== null ? `${rowId}:${contentKey}` : contentKey;
+  if (rowId !== null) return `${READ_ALOUD_ROW_PREFIX}${rowId}:${contentKey}`;
+  const ts = readAloudTs(record);
+  return ts !== null ? `${contentKey}${READ_ALOUD_TS_MARK}${ts}` : contentKey;
 }
 
 function parseReadAloudTarget(target) {
   const text = String(target ?? '');
-  const firstColon = text.indexOf(':');
-  if (firstColon < 0) return { rowId: null, contentKey: text };
-  const head = text.slice(0, firstColon);
-  const rest = text.slice(firstColon + 1);
-  if (/^\d+$/.test(head) && /^\d+:/.test(rest)) return { rowId: Number(head), contentKey: rest };
+  if (text.startsWith(READ_ALOUD_ROW_PREFIX)) {
+    const after = text.slice(READ_ALOUD_ROW_PREFIX.length);
+    const firstColon = after.indexOf(':');
+    if (firstColon < 0) return { rowId: null, contentKey: text };
+    const head = after.slice(0, firstColon);
+    if (!/^\d+$/.test(head)) return { rowId: null, contentKey: text };
+    return { rowId: Number(head), contentKey: after.slice(firstColon + 1) };
+  }
+  const mark = text.lastIndexOf(READ_ALOUD_TS_MARK);
+  if (mark > 0) {
+    const tail = text.slice(mark + 1);
+    if (/^\d+$/.test(tail)) return { rowId: null, contentKey: text.slice(0, mark) };
+  }
   return { rowId: null, contentKey: text };
 }
 

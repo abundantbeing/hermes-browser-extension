@@ -181,6 +181,20 @@ test('a reply keeps its key when the transcript is drawn again, and two replies 
   assert.notEqual(readAloudKey(live), readAloudKey(refreshed));
   assert.equal(readAloudKeysMatch(readAloudKey(live), refreshed), true);
   assert.equal(readAloudKeysMatch(readAloudKey(refreshed), live), true);
+
+  const prefix = 'A'.repeat(48);
+  const looseOne = { role: 'assistant', content: `${prefix} ending one`, ts: 1 };
+  const looseTwo = { role: 'assistant', content: `${prefix} ending two`, ts: 2 };
+  assert.notEqual(readAloudKey(looseOne), readAloudKey(looseTwo));
+  assert.equal(readAloudKeysMatch(readAloudKey(looseOne), looseTwo), false);
+
+  const departure = { role: 'assistant', content: '12:30 is the next departure.', ts: 1 };
+  const departureLiveKey = readAloudKey(departure);
+  assert.equal(departureLiveKey, '28:12:30 is the next departure.@1');
+  assert.equal(readAloudKeysMatch(departureLiveKey, departure), true);
+  const departureRefreshed = { ...departure, ts: 99, rowId: 28 };
+  assert.equal(readAloudKeysMatch(departureLiveKey, departureRefreshed), true);
+  assert.equal(readAloudKeysMatch(readAloudKey(departureRefreshed), departure), true);
 });
 
 // ---- Audio bytes ---------------------------------------------------------------
