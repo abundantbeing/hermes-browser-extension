@@ -122,6 +122,13 @@ test('Gmail approval persistence merges fresh storage without overwriting anothe
       const packed = await packedHermesBrowserSettingsWrite(structuredClone(next), null);
       stored = { hermesBrowserSettings: packed.hermesBrowserSettings, [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY] };
     },
+    async mergePackedBrowserSettingsFromStorage(mergeFn) {
+      const fresh = await hydrateHermesBrowserSettingsFromStorage(structuredClone(stored), null);
+      const next = typeof mergeFn === 'function' ? mergeFn(fresh) : { ...fresh, ...mergeFn };
+      const packed = await packedHermesBrowserSettingsWrite(structuredClone(next), null);
+      stored = { hermesBrowserSettings: packed.hermesBrowserSettings, [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY] };
+      return next;
+    },
     browserApi: { storage: { local: {
       get: async () => structuredClone(stored),
       set: async () => {},

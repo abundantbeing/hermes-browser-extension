@@ -1563,22 +1563,29 @@ export function createControllerServiceWorker({
           const latest = refreshed?.hermesBrowserSettings && typeof refreshed.hermesBrowserSettings === 'object'
             ? await hydrateSavedConnectionSecrets(refreshed.hermesBrowserSettings, refreshed[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
             : fromStorage;
+          transitionAfter = true;
+        }
+      });
+      if (transitionAfter === true) {
+        const capturedResumeSeq = resumePauseSeq;
+        const transitionRevision = settingsRevision + 1;
+        settingsRevision = transitionRevision;
+        await runTransition(async () => {
+          if (capturedResumeSeq !== null && capturedResumeSeq !== pauseSequence) return;
+          const refreshed = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+          const latest = refreshed?.hermesBrowserSettings && typeof refreshed.hermesBrowserSettings === 'object'
+            ? await hydrateSavedConnectionSecrets(refreshed.hermesBrowserSettings, refreshed[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+            : settings;
+          if (transitionRevision !== settingsRevision) {
+            settings = syncActiveSavedConnection(keepChatMove(latest));
+            return { ...status(), staleSettingsRevision: true };
+          }
           const resumed = syncActiveSavedConnection({ ...keepChatMove(latest), browserControlPaused: false });
           await storageArea.set(await packSavedConnectionStorage(
             resumed,
             refreshed[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
           ));
-          transitionAfter = resumed;
-        }
-      });
-      if (transitionAfter && typeof transitionAfter === 'object') {
-        const capturedResumeSeq = resumePauseSeq;
-        const pendingTransition = transitionAfter;
-        await runTransition(async () => {
-          if (capturedResumeSeq !== null && capturedResumeSeq !== pauseSequence) return;
-          const refreshed = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-          if (refreshed?.hermesBrowserSettings?.browserControlPaused === true) return;
-          return syncSettingsTransition(pendingTransition);
+          return syncSettingsTransition(resumed);
         });
       }
     } finally {

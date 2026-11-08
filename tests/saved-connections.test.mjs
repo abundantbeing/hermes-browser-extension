@@ -534,6 +534,35 @@ test('controller worker boot hydrates apiKey when storage was packed', async () 
   assert.equal(packed.hermesBrowserSettings.apiKey, '');
 });
 
+test('saveSettingsFromForm and saved-connection packing leave no plaintext apiKey in stored blobs', async () => {
+  const plaintextToken = 'sk-stored-blob-proof-token';
+  const h = await createSettingsSaveHarness({ settings: twoConnections() });
+  try {
+    h.els.apiKeyInput.value = plaintextToken;
+    await h.save();
+    const blob = h.store.hermesBrowserSettings;
+    assert.equal(blob.apiKey, '');
+    assert.equal(blob.tokenSource, '');
+    for (const entry of blob.savedConnections) {
+      assert.equal(entry.connection.apiKey, '', `connection ${entry.id} must not store a plaintext apiKey`);
+      assert.equal(entry.connection.tokenSource, '', `connection ${entry.id} must not store a plaintext tokenSource`);
+    }
+    assert.equal(JSON.stringify(h.store).includes(plaintextToken), false, 'no plaintext secret in any storage key');
+
+    const switched = await packSavedConnectionStorage(
+      selectSavedConnection(twoConnections(), 'work'),
+      h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+    );
+    for (const entry of switched.hermesBrowserSettings.savedConnections) {
+      assert.equal(entry.connection.apiKey, '');
+      assert.equal(entry.connection.tokenSource, '');
+    }
+    assert.equal(switched.hermesBrowserSettings.apiKey, '');
+  } finally {
+    h.close();
+  }
+});
+
 test('after Save, hydrated storage reads restore the active gateway key for followers', async () => {
   const h = await createSettingsSaveHarness({ settings: twoConnections() });
   try {

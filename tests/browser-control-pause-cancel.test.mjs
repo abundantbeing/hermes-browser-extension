@@ -4,7 +4,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { CONTROLLER_WORKER_MESSAGES, createControllerServiceWorker } from '../extension/lib/controller-service-worker.mjs';
-import { withSavedConnectionsLock } from '../extension/lib/saved-connections.mjs';
+import {
+  hydrateSavedConnectionSecrets,
+  withSavedConnectionsLock,
+} from '../extension/lib/saved-connections.mjs';
 import { TAB_LEASE_KINDS, TAB_LEASE_OWNERSHIPS } from '../extension/lib/tab-leases.mjs';
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
@@ -296,6 +299,73 @@ test('Pause leaves the worker serving the in-memory chat while storage records a
   await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.pause }, extensionSender());
   assert.equal(storage.state.hermesBrowserSettings.sessionId, 'session-b');
   assert.equal(transport.connections[0]?.options?.settings?.sessionId, 'pause-session');
+});
+
+test('a Resume queued behind settings sync does not un-pause after storage reports paused', async () => {
+  const base = { ...settings(), browserControlPaused: true, sessionId: 'session-before-resume' };
+  const storage = memoryStorage({ hermesBrowserSettings: base });
+  const transport = connector();
+  const executed = [];
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async (frame) => {
+      executed.push(frame);
+      return { ok: true, result: { status: 'done' } };
+    },
+  });
+  await worker.boot();
+  const ready = await ownedReady(worker, 93);
+  storage.state.hermesBrowserSettings = {
+    ...base,
+    sessionId: 'session-after-chat-change',
+    sessionTitle: 'Advanced chat',
+    browserControlPaused: true,
+  };
+  let releaseHeartbeat;
+  const heartbeatHeld = new Promise((resolve) => { releaseHeartbeat = resolve; });
+  transport.connections[0].heartbeat = () => heartbeatHeld;
+  const reconciling = worker.reconcile({ reason: 'heartbeat-alarm' });
+  await settle();
+  const resumePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
+  await settle();
+  storage.state.hermesBrowserSettings = {
+    ...storage.state.hermesBrowserSettings,
+    browserControlPaused: true,
+  };
+  const hydratedPause = await hydrateSavedConnectionSecrets(
+    storage.state.hermesBrowserSettings,
+    storage.state.hermesBrowserSavedConnectionSecrets,
+  );
+  const syncPromise = worker.syncSettings(hydratedPause);
+  releaseHeartbeat({ ok: true });
+  await reconciling;
+  await resumePromise;
+  await syncPromise;
+  await settle();
+  assert.equal(worker.status().paused, true);
+  assert.equal(storage.state.hermesBrowserSettings.browserControlPaused, true);
+  const activeConnection = transport.connections.at(-1);
+  const generationAfterSync = (await worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.documentReady },
+    extensionSender({ tabId: 93 }),
+  )).documentGeneration;
+  await activeConnection.emit({
+    method: 'browser.controller.command',
+    params: {
+      command_id: 'after-sync-pause-during-resume',
+      action: 'browser_scroll',
+      arguments: { direction: 'down' },
+      tab_id: 93,
+      document_generation: generationAfterSync,
+    },
+  });
+  await settle();
+  assert.equal(executed.length, 0);
+  assert.equal(terminalOf(activeConnection, 'after-sync-pause-during-resume')?.error?.code, 'controller_paused');
 });
 
 test('a Pause between Resume lock release and its transition is not overridden by that Resume', async () => {

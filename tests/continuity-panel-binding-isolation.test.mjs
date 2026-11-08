@@ -121,11 +121,11 @@ test('the toggle that persists Gmail capture adopts only its own key, not the wh
   const context = vm.createContext({
     settings: { ...mine, gmailCaptureEnabled: false },
     els: { gmailCaptureEnabledInput: { checked: false }, explicitSiteCaptureWrap: { hidden: false }, explicitSiteCaptureButton: { hidden: true } },
-    async readBrowserSettingsFromStorage() {
-      return structuredClone(stored.hermesBrowserSettings);
-    },
-    async setPackedBrowserSettings(value) {
-      writes.push({ hermesBrowserSettings: value });
+    async mergePackedBrowserSettingsFromStorage(mergeFn) {
+      const fresh = structuredClone(stored.hermesBrowserSettings);
+      const next = typeof mergeFn === 'function' ? mergeFn(fresh) : { ...fresh, ...mergeFn };
+      writes.push({ hermesBrowserSettings: next });
+      return next;
     },
     browserApi: { storage: { local: { get: async () => structuredClone(stored), set: async (value) => { writes.push(value); } } } },
   });

@@ -5812,12 +5812,11 @@ function setGatewayCapabilities(caps) {
       browserControlDeveloperMode: nextDeveloperMode,
       browserControlArtifactTransport: nextArtifactTransport,
     };
-    void readBrowserSettingsFromStorage()
-      .then((fresh) => setPackedBrowserSettings({
-        ...fresh,
-        browserControlDeveloperMode: nextDeveloperMode,
-        browserControlArtifactTransport: nextArtifactTransport,
-      }))
+    void mergePackedBrowserSettingsFromStorage((fresh) => ({
+      ...fresh,
+      browserControlDeveloperMode: nextDeveloperMode,
+      browserControlArtifactTransport: nextArtifactTransport,
+    }))
       .then(() => browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH'))
       .catch(() => undefined);
   }
@@ -9467,18 +9466,17 @@ function exportCustomTheme(id) {
 }
 
 async function fallbackDeletedCustomThemeSelections(id, { allCustom = false } = {}) {
-  const freshSettings = await readBrowserSettingsFromStorage();
-  const shouldFallback = (value) => allCustom ? String(value || '').startsWith('custom:') : value === id;
-  const panelFallback = shouldFallback(freshSettings.appearanceTheme);
-  const webFallback = shouldFallback(freshSettings.webAppearanceTheme);
-  if (!panelFallback && !webFallback) return freshSettings;
-  const hermesBrowserSettings = {
-    ...freshSettings,
-    ...(panelFallback ? { appearanceTheme: 'nous' } : {}),
-    ...(webFallback ? { webAppearanceTheme: 'nous' } : {}),
-  };
-  await setPackedBrowserSettings(hermesBrowserSettings);
-  return hermesBrowserSettings;
+  return mergePackedBrowserSettingsFromStorage((freshSettings) => {
+    const shouldFallback = (value) => allCustom ? String(value || '').startsWith('custom:') : value === id;
+    const panelFallback = shouldFallback(freshSettings.appearanceTheme);
+    const webFallback = shouldFallback(freshSettings.webAppearanceTheme);
+    if (!panelFallback && !webFallback) return freshSettings;
+    return {
+      ...freshSettings,
+      ...(panelFallback ? { appearanceTheme: 'nous' } : {}),
+      ...(webFallback ? { webAppearanceTheme: 'nous' } : {}),
+    };
+  });
 }
 
 async function handleCustomThemeDelete(id) {
@@ -9732,7 +9730,7 @@ function renderAppearanceControls() {
 }
 
 async function persistAppearanceSettings(preferences) {
-  const writeAppearance = async () => {
+  const writeAppearance = async () => withSavedConnectionsLock(async () => {
     const freshSettings = await readBrowserSettingsFromStorage();
     const mergedPreferences = withAppearancePreferenceUpdate(freshSettings, 'panel', preferences);
     const hermesBrowserSettings = {
@@ -9743,7 +9741,7 @@ async function persistAppearanceSettings(preferences) {
     };
     await setPackedBrowserSettings(hermesBrowserSettings);
     return hermesBrowserSettings;
-  };
+  });
   const pendingWrite = appearanceWriteQueue.then(writeAppearance, writeAppearance);
   appearanceWriteQueue = pendingWrite.catch(() => undefined);
   return pendingWrite;
@@ -18391,10 +18389,10 @@ function browserLanguageSuggestion() {
 // Setup picks one theme for both surfaces; afterwards each keeps its own
 // Settings choice.
 function persistSetupFullTabTheme(theme) {
-  const write = async () => {
-    const current = await readBrowserSettingsFromStorage();
-    await setPackedBrowserSettings({ ...current, webAppearanceTheme: normalizedPanelThemeId(theme) });
-  };
+  const write = async () => mergePackedBrowserSettingsFromStorage((current) => ({
+    ...current,
+    webAppearanceTheme: normalizedPanelThemeId(theme),
+  }));
   const pendingWrite = appearanceWriteQueue.then(write, write);
   appearanceWriteQueue = pendingWrite.catch(() => undefined);
   return pendingWrite;
@@ -18584,11 +18582,9 @@ async function setResponsePresentation(patch = {}) {
   applyResponsePresentation();
   renderResponsePresentationControls();
   onboardingFlow?.render();
-  const write = async () => {
-    const stored = await readBrowserSettingsFromStorage();
-    const next = withResponsePresentationUpdate(stored, after);
-    await setPackedBrowserSettings(next);
-  };
+  const write = async () => mergePackedBrowserSettingsFromStorage(
+    (stored) => withResponsePresentationUpdate(stored, after),
+  );
   const pendingWrite = appearanceWriteQueue.then(write, write);
   appearanceWriteQueue = pendingWrite.catch(() => undefined);
   return pendingWrite;
@@ -24286,6 +24282,16 @@ async function readBrowserSettingsFromStorage() {
   return hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local);
 }
 
+async function mergePackedBrowserSettingsFromStorage(mergeFn, { lockHeld = false, extra = {} } = {}) {
+  const write = async () => {
+    const freshSettings = await readBrowserSettingsFromStorage();
+    const next = typeof mergeFn === 'function' ? mergeFn(freshSettings) : { ...freshSettings, ...mergeFn };
+    await setPackedBrowserSettings(next, extra);
+    return next;
+  };
+  return lockHeld ? write() : withSavedConnectionsLock(write);
+}
+
 async function persistHermesBrowserSettings(nextSettings) {
   await setPackedBrowserSettings(nextSettings);
 }
@@ -24455,9 +24461,7 @@ async function getPageContextViaScripting(tabId, options, originalError) {
 
 async function persistGmailCaptureEnabled(enabled) {
   const desired = enabled === true;
-  const stored = await readBrowserSettingsFromStorage();
-  const next = { ...stored, gmailCaptureEnabled: desired };
-  await setPackedBrowserSettings(next);
+  await mergePackedBrowserSettingsFromStorage((stored) => ({ ...stored, gmailCaptureEnabled: desired }));
   // Only this key: the stored record also holds other panels' session bindings.
   settings = { ...settings, gmailCaptureEnabled: desired };
   if (els.gmailCaptureEnabledInput) els.gmailCaptureEnabledInput.checked = desired;
