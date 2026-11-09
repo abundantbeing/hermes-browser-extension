@@ -54,10 +54,15 @@ export function gatewayMoveResets(previous = {}, next = {}) {
   const after = gatewayKey(next?.gatewayUrl);
   if (!before || !after || before === after) return {};
   const pairedToken = next?.tokenSource === 'pairing' && String(next?.apiKey ?? '') === String(previous?.apiKey ?? '');
+  // Custom headers are bound to the origin they were saved for: they are secrets for that proxy and
+  // never go to another address, not even for the first health request of a Connect.
+  const headersBound = Array.isArray(previous?.connectionHeaders) ? previous.connectionHeaders.length > 0 : previous?.connectionHeaders === null;
   return {
     activeProfile: '',
     botModeSelectedProfile: '',
     botModeReturnProfile: '',
     ...(pairedToken ? { apiKey: '', tokenSource: '' } : {}),
+    ...(headersBound ? { connectionHeaders: [] } : {}),
+    ...(previous?.connectionTrustSelfSigned === true ? { connectionTrustSelfSigned: false } : {}),
   };
 }
