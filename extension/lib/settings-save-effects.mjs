@@ -29,6 +29,22 @@ export function sessionIdForSave({ typed = '', synced, viewed = '', fallback = '
   return value || fallback;
 }
 
+/** Same contract as sessionIdForSave, for the Session title field on the settings form. */
+export function sessionTitleForSave({ typed = '', synced, viewed = '', fallback = '' } = {}) {
+  const value = String(typed ?? '').trim();
+  const untouched = typeof synced === 'string' && value === synced.trim();
+  if (untouched) return String(viewed ?? '').trim() || fallback;
+  return value || fallback;
+}
+
+/** Which session a Save title rename belongs to after a mid-write successor landed on screen. */
+export function sessionTitleRenameTarget(previous = {}, current = {}) {
+  const formSessionId = String(previous?.sessionId ?? '').trim();
+  const viewedSessionId = String(current?.sessionId ?? '').trim();
+  if (!formSessionId) return viewedSessionId;
+  return viewedSessionId !== formSessionId ? formSessionId : viewedSessionId;
+}
+
 // The gateway a URL names, for "is this the same gateway": scheme, host and port, with every
 // loopback spelling (localhost, 127.0.0.1, [::1]) as one host. '' for a value that is no URL.
 export function gatewayKey(value) {
@@ -74,11 +90,11 @@ export function applyStoredSettingsAfterSave(stored = {}, live = {}, owned = {})
   const storedId = String(stored?.sessionId ?? '').trim();
   if (!liveId || liveId === storedId) return stored;
   const binding = live?.remoteDashboardSession;
-  const titleFromForm = owned && typeof owned === 'object' && 'sessionTitle' in owned;
+  const liveTitle = String(live?.sessionTitle ?? '').trim();
   return {
     ...stored,
     sessionId: liveId,
-    ...(!titleFromForm ? { sessionTitle: live?.sessionTitle ?? stored?.sessionTitle } : {}),
+    sessionTitle: liveTitle || liveId,
     ...(binding?.storedSessionId === liveId
       ? { remoteDashboardSession: { ...(stored?.remoteDashboardSession || {}), ...binding, storedSessionId: liveId } }
       : {}),

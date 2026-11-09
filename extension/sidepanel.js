@@ -476,7 +476,7 @@ import {
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
-import { applyStoredSettingsAfterSave, connectionIdentityChanged, gatewayMoveResets, sessionIdForSave } from './lib/settings-save-effects.mjs';
+import { applyStoredSettingsAfterSave, connectionIdentityChanged, gatewayMoveResets, sessionIdForSave, sessionTitleForSave, sessionTitleRenameTarget } from './lib/settings-save-effects.mjs';
 import { changesMadeBy, undoChanges } from './lib/settings-rollback.mjs';
 import { fetchSessionHistoryPages } from './lib/session-history-pages.mjs';
 import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
@@ -20190,9 +20190,12 @@ async function renameHermesSessionTitle(sessionId, title, { quiet = false } = {}
 
 async function maybeRenameCurrentSessionTitle(previousSettings = {}, nextTitle = settings.sessionTitle) {
   const cleanTitle = String(nextTitle || '').trim() || DEFAULT_SETTINGS.sessionTitle;
-  const sessionId = settings.sessionId || previousSettings.sessionId;
+  const formSessionId = String(previousSettings.sessionId || '').trim();
+  const sessionId = sessionTitleRenameTarget(previousSettings, settings) || settings.sessionId || formSessionId;
   const current = availableSessions.find((session) => session.id === sessionId);
-  const previousTitle = String(current?.title || previousSettings.sessionTitle || '').trim();
+  const previousTitle = String(
+    current?.title || (sessionId === formSessionId ? previousSettings.sessionTitle : '') || '',
+  ).trim();
   if (!sessionId || !cleanTitle || cleanTitle === previousTitle) return false;
   try {
     return await renameHermesSessionTitle(sessionId, cleanTitle);
@@ -24440,6 +24443,7 @@ function syncSettingsForm() {
   // What the field was filled with, so Save can tell a typed id from a stale copy.
   els.sessionIdInput.dataset.syncedValue = settings.sessionId;
   els.sessionTitleInput.value = settings.sessionTitle;
+  els.sessionTitleInput.dataset.syncedValue = settings.sessionTitle;
   for (const input of els.contextDepthInputs) input.checked = input.value === (settings.contextDepth || DEFAULT_SETTINGS.contextDepth);
   els.includeTabsInput.checked = Boolean(settings.includeTabs);
   els.includePageTextInput.checked = Boolean(settings.includePageText);
@@ -24551,7 +24555,12 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
       viewed: settings.sessionId,
       fallback: DEFAULT_SETTINGS.sessionId,
     }),
-    sessionTitle: els.sessionTitleInput.value.trim() || DEFAULT_SETTINGS.sessionTitle,
+    sessionTitle: sessionTitleForSave({
+      typed: els.sessionTitleInput.value,
+      synced: els.sessionTitleInput.dataset.syncedValue,
+      viewed: settings.sessionTitle,
+      fallback: DEFAULT_SETTINGS.sessionTitle,
+    }),
     activeProfile: settings.activeProfile || DEFAULT_SETTINGS.activeProfile,
     botModeEnabled: els.botModeEnabledInput ? els.botModeEnabledInput.checked : settings.botModeEnabled === true,
     botModeDisplayDensity: els.botModeDisplayDensity?.value === 'compact' ? 'compact' : 'comfortable',
@@ -24652,6 +24661,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
       'panel',
       panelAppearancePreferences(),
     ), t('connections.default_name', { number: 1 }));
+    const titleForRename = settings.sessionTitle;
     try {
       await persistHermesBrowserSettings(next, { lockHeld: true });
     } catch (error) {
@@ -24662,9 +24672,11 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     }
     settings = applyStoredSettingsAfterSave(next, settings, changedBySave);
     applyAppearanceSettings();
+    return titleForRename;
   };
-  if (lockHeld) await writeSettingsRecord();
-  else await withSavedConnectionsLock(writeSettingsRecord);
+  let titleForRename = settings.sessionTitle;
+  if (lockHeld) titleForRename = await writeSettingsRecord();
+  else titleForRename = await withSavedConnectionsLock(writeSettingsRecord);
   // A Hermes account sign-in belongs to the connection it was made for.
   if (identityChanged) void clearAccountForConnection();
   await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]: settings.inlineAssistAutoReplace !== false });
@@ -24681,7 +24693,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     || connectionChanged;
   const wakeWordEnabled = settings.wakeWordEnabled;
   if (wakeChanged && !lockHeld) await setWakeWordEnabled(wakeWordEnabled);
-  await maybeRenameCurrentSessionTitle(previousSettings, settings.sessionTitle);
+  await maybeRenameCurrentSessionTitle(previousSettings, titleForRename);
   syncSettingsForm();
   updateConnectionPrompt();
   return {

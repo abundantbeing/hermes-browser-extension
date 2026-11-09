@@ -114,6 +114,9 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
     updateConnectionPrompt: record('updateConnectionPrompt'),
     getAgentPorts: () => target.settings.agentPorts || imported.get('DEFAULT_SETTINGS')?.agentPorts || [8642],
   };
+  for (const [name, value] of imported) {
+    if (!(name in target)) target[name] = value;
+  }
   const compiled = new Map();
   const scope = new Proxy(target, {
     has: (obj, key) => typeof key === 'string' && (key in obj || imported.has(key) || functions.has(key)),
