@@ -40,6 +40,7 @@ function adoptContext(initialSettings, secrets = undefined) {
     readAloudDashboardIdentity: '',
     readAloudDashboardProbe: null,
     notifyReadAloudDashboardProbeChanged() {},
+    settingsAdoptionSequence: 0,
     adoptInlineAssistAutoReplaceChange() {},
     adoptInlineAssistIconChange() {},
     adoptInlineAssistOpenModeChange() {},
@@ -93,6 +94,33 @@ test('credential and connection changes written by the controller or the pairing
   assert.equal(vm.runInContext('settings.apiKey', context), 'fresh');
   assert.equal(vm.runInContext('settings.gatewayMode', context), 'remote-dashboard');
   assert.equal(vm.runInContext('settings.trustedDashboardTabId', context), 7);
+});
+
+test('a settings event that finishes late does not replace what a newer event already applied', async () => {
+  const context = adoptContext({ ...mine, apiKey: 'start-key' });
+  let releaseRead;
+  context.browserApi = { storage: { local: { get: () => new Promise((resolve) => { releaseRead = () => resolve({}); }) } } };
+  const adopt = vm.runInContext('adoptHermesBrowserSettingsStorageChange', context);
+  const older = adopt({ hermesBrowserSettings: { newValue: { ...mine, apiKey: 'older-key' } } });
+  await adopt({
+    hermesBrowserSettings: { newValue: { ...mine, apiKey: 'newer-key' } },
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: { newValue: {} },
+  });
+  releaseRead();
+  await older;
+  assert.equal(vm.runInContext('settings.apiKey', context), 'newer-key');
+});
+
+test('a secrets-only event does not discard a settings event that is still being read', async () => {
+  const context = adoptContext({ ...mine, apiKey: 'start-key' });
+  let releaseRead;
+  context.browserApi = { storage: { local: { get: () => new Promise((resolve) => { releaseRead = () => resolve({}); }) } } };
+  const adopt = vm.runInContext('adoptHermesBrowserSettingsStorageChange', context);
+  const pending = adopt({ hermesBrowserSettings: { newValue: { ...mine, apiKey: 'pending-key' } } });
+  await adopt({ [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: { newValue: {} } });
+  releaseRead();
+  await pending;
+  assert.equal(vm.runInContext('settings.apiKey', context), 'pending-key');
 });
 
 test('a shared write that only changes appearance leaves read aloud playing', async () => {

@@ -306,6 +306,30 @@ export async function packedHermesBrowserSettingsWrite(nextSettings = {}, storag
   return packSavedConnectionStorage(nextSettings, existing && typeof existing === 'object' ? existing : {});
 }
 
+/**
+ * Writes the live settings of the connection a panel, the worker or the wake listener is on.
+ * Run under the lock every change to the saved list takes, it keeps the list as stored (another
+ * panel may have added, renamed or deleted a connection since this copy was read) and writes
+ * nothing when the stored active connection is no longer the one the caller is on.
+ * A caller that already holds the lock and has merged with the stored record passes lockHeld
+ * and its settings are written as they are.
+ * `extra` may be a function, read just before the write.
+ */
+export async function writeSettingsOnStoredConnections(settings, storageArea, { extra = {}, lockHeld = false } = {}) {
+  const records = () => (typeof extra === 'function' ? extra() : extra);
+  const write = async (next) => {
+    await storageArea.set({ ...(await packedHermesBrowserSettingsWrite(next, storageArea)), ...records() });
+    return true;
+  };
+  if (lockHeld) return write(settings);
+  return withSavedConnectionsLock(async () => {
+    const stored = await hydrateHermesBrowserSettingsFromStorage({}, storageArea);
+    const activeId = settings?.activeSavedConnectionId;
+    if (activeId && stored.activeSavedConnectionId && stored.activeSavedConnectionId !== activeId) return false;
+    return write(withStoredSavedConnections(settings, stored));
+  });
+}
+
 export function savedConnectionSummary(connection = {}, modeLabels = {}) {
   const mode = connection.connectionMode === 'cloud' || connection.connectionMode === 'remote' ? connection.connectionMode : 'local';
   const label = modeLabels[mode] || mode;

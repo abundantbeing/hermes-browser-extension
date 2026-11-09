@@ -15,6 +15,7 @@ import {
   hydrateHermesBrowserSettingsFromStorage,
   packedHermesBrowserSettingsWrite,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+  withSavedConnectionsLock,
 } from './saved-connections.mjs';
 
 const LOCAL_DASHBOARD_URL = 'http://127.0.0.1:9119';
@@ -22,6 +23,16 @@ const LOCAL_DASHBOARD_URL = 'http://127.0.0.1:9119';
 const NATIVE_WAKE_LOCAL_ONLY_DETAIL = 'Native wake needs the local Hermes gateway on this computer. Remote connections can use browser wake instead.';
 const NATIVE_WAKE_SESSION_ID = 'hermes-browser-wake';
 const WAKE_REPLY_TIMEOUT_MS = 3 * 60 * 1000;
+
+const WAKE_CONNECTION_KEYS = ['activeSavedConnectionId', 'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl'];
+
+// A change of connection while wake is on: native wake belongs to the local gateway, so it must follow the switch.
+export function wakeNeedsReconfigure(previous, next) {
+  const before = previous && typeof previous === 'object' ? previous : {};
+  const after = next && typeof next === 'object' ? next : {};
+  if (after.wakeWordEnabled !== true) return false;
+  return WAKE_CONNECTION_KEYS.some((key) => String(before[key] ?? '') !== String(after[key] ?? ''));
+}
 
 function runtimeVersion(chromeApi) {
   return chromeApi.runtime?.getManifest?.()?.version || '0.0.0';
@@ -294,6 +305,7 @@ export function createWakeBackgroundController({
   }
 
   async function tryNativeWake() {
+    clearNativeConnection();
     if (!(await localGatewayIsActive())) {
       return { ok: false, reason: NATIVE_WAKE_LOCAL_ONLY_DETAIL };
     }
@@ -398,18 +410,21 @@ export function createWakeBackgroundController({
   }
 
   async function setEnabled(enabled, settings = {}) {
-    const stored = await chromeApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-    const blob = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
-      ? stored.hermesBrowserSettings
-      : {};
-    const usesSavedConnections = Array.isArray(blob.savedConnections) && blob.savedConnections.length > 0;
-    const current = usesSavedConnections
-      ? await hydrateHermesBrowserSettingsFromStorage(stored, chromeApi.storage.local)
-      : blob;
-    const merged = { ...current, ...pickWakeSettings(settings), wakeWordEnabled: Boolean(enabled) };
-    await chromeApi.storage.local.set(usesSavedConnections
-      ? await packedHermesBrowserSettingsWrite(merged, chromeApi.storage.local)
-      : { hermesBrowserSettings: merged });
+    const merged = await withSavedConnectionsLock(async () => {
+      const stored = await chromeApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+      const blob = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+        ? stored.hermesBrowserSettings
+        : {};
+      const usesSavedConnections = Array.isArray(blob.savedConnections) && blob.savedConnections.length > 0;
+      const current = usesSavedConnections
+        ? await hydrateHermesBrowserSettingsFromStorage(stored, chromeApi.storage.local)
+        : blob;
+      const next = { ...current, ...pickWakeSettings(settings), wakeWordEnabled: Boolean(enabled) };
+      await chromeApi.storage.local.set(usesSavedConnections
+        ? await packedHermesBrowserSettingsWrite(next, chromeApi.storage.local)
+        : { hermesBrowserSettings: next });
+      return next;
+    });
     return configureSerialized(merged);
   }
 

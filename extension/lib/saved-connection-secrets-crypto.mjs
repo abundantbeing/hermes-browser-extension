@@ -67,21 +67,33 @@ async function idbGetKey(db, id) {
 }
 
 /**
+ * Keeps the first key written. Every panel and the worker share this one row, so reading and
+ * writing happen in one transaction: a second writer gets the stored key back, never replaces it.
  * @param {IDBDatabase|Map<string, CryptoKey>} db
  * @param {string} id
- * @param {CryptoKey} key
+ * @param {CryptoKey} candidate
+ * @returns {Promise<CryptoKey>}
  */
-async function idbPutKey(db, id, key) {
+async function idbKeepFirstKey(db, id, candidate) {
   if (db instanceof Map) {
-    db.set(id, key);
-    return;
+    if (!db.has(id)) db.set(id, candidate);
+    return db.get(id);
   }
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const putReq = store.put({ id, key });
-    putReq.onsuccess = () => resolve(undefined);
-    putReq.onerror = () => reject(putReq.error);
+    const getReq = store.get(id);
+    getReq.onerror = () => reject(getReq.error);
+    getReq.onsuccess = () => {
+      const stored = getReq.result?.key;
+      if (stored) {
+        resolve(stored);
+        return;
+      }
+      const putReq = store.put({ id, key: candidate });
+      putReq.onsuccess = () => resolve(candidate);
+      putReq.onerror = () => reject(putReq.error);
+    };
   });
 }
 
@@ -99,13 +111,12 @@ export async function ensureSavedSecretsWrappingKey() {
       const db = await openMetaStore();
       const existing = await idbGetKey(db, KEY_RECORD_ID);
       if (existing) return existing;
-      const key = await subtle.generateKey(
+      const candidate = await subtle.generateKey(
         { name: 'AES-GCM', length: 256 },
         false,
         ['encrypt', 'decrypt'],
       );
-      await idbPutKey(db, KEY_RECORD_ID, key);
-      return key;
+      return await idbKeepFirstKey(db, KEY_RECORD_ID, candidate);
     } catch {
       cachedKeyPromise = null;
       return null;

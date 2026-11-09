@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createWakeBackgroundController } from '../extension/lib/wake-background.mjs';
+import { createWakeBackgroundController, wakeNeedsReconfigure } from '../extension/lib/wake-background.mjs';
 import { WS_EVENTS, WS_METHODS } from '../extension/lib/gateway-ws.mjs';
 import { WAKE_MESSAGES, WAKE_STORAGE_KEYS } from '../extension/lib/wake-word.mjs';
 import { readFileSync } from 'node:fs';
+import { addSavedConnection, rememberSavedConnection, withSavedConnectionsLock } from '../extension/lib/saved-connections.mjs';
 
 function mockChrome() {
   const values = { hermesBrowserSettings: {} };
@@ -236,6 +237,83 @@ test('wake reply resumes local listener when spoken replies are disabled', async
   await controller.handleMessage({ type: WAKE_MESSAGES.turnReply, text: 'Done.' });
   assert.ok(chrome.messages.some((message) => message.type === WAKE_MESSAGES.resumeLocal));
   assert.equal(chrome.messages.some((message) => message.type === WAKE_MESSAGES.speak), false);
+});
+
+test('WAKE_SET_ENABLED waits for a saved-connections change in progress instead of overwriting it', async () => {
+  const chrome = mockChrome();
+  const base = rememberSavedConnection({ connectionMode: 'local', gatewayUrl: 'http://127.0.0.1:8642' });
+  chrome.values.hermesBrowserSettings = base;
+  const read = chrome.api.storage.local.get;
+  chrome.api.storage.local.get = async (key) => {
+    const snapshot = await read(key);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    return snapshot;
+  };
+  const controller = createWakeBackgroundController({ chromeApi: chrome.api, openPanel: async () => {} });
+  const otherPanelAdds = withSavedConnectionsLock(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    chrome.values.hermesBrowserSettings = addSavedConnection(base, 'Added', 'added');
+  });
+  await new Promise((resolve) => setTimeout(resolve, 2));
+  await Promise.all([otherPanelAdds, controller.handleMessage({ type: WAKE_MESSAGES.setEnabled, enabled: false, settings: {} })]);
+  assert.equal(chrome.values.hermesBrowserSettings.savedConnections.length, 2, 'the connection another panel added survives');
+});
+
+test('the native wake client closes when the active connection stops being the local gateway', async () => {
+  const chrome = mockChrome();
+  const local = { connectionMode: 'local', connectionTransport: 'local-api', gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', wakeWordEnabled: true, wakeWordPreferNative: true, wakeWordBrowserFallback: false };
+  chrome.values.hermesBrowserSettings = local;
+  chrome.api.tabs.query = async (query = {}) => (query.active
+    ? [{ id: 7, active: true, currentWindow: true }]
+    : [{ id: 9, status: 'complete', discarded: false, url: 'http://127.0.0.1:9119/' }]);
+  chrome.api.scripting.executeScript = async () => [{ result: { ok: true, ticket: 'single-use-ticket', ttlSeconds: 30 } }];
+  const calls = [];
+  const client = {
+    connect: async () => calls.push('connect'),
+    request: async (method) => {
+      calls.push(method);
+      if (method === WS_METHODS.wakeStatus) return { available: true, provider: 'openwakeword' };
+      if (method === WS_METHODS.wakeStart) return { started: true, provider: 'openwakeword' };
+      return { ok: true };
+    },
+    on: () => () => {},
+    close: () => calls.push('close'),
+  };
+  const controller = createWakeBackgroundController({
+    chromeApi: chrome.api,
+    gatewayClientFactory: () => client,
+    fetchFn: async () => ({ ok: true, text: async () => '<script>window.__HERMES_SESSION_TOKEN__ = "loopback-token";</script>' }),
+    openPanel: async () => {},
+  });
+  await controller.configure(local);
+  for (let attempt = 0; attempt < 10 && controller.state().state !== 'listening'; attempt += 1) {
+    await new Promise((resolve) => globalThis.setImmediate(resolve));
+  }
+  assert.equal(controller.state().state, 'listening');
+  chrome.values.hermesBrowserSettings = {
+    ...local, connectionMode: 'remote', connectionTransport: 'remote-api', gatewayMode: 'remote-api', gatewayUrl: 'https://remote.example',
+  };
+  await controller.restore();
+  for (let attempt = 0; attempt < 20 && controller.state().state === 'arming'; attempt += 1) {
+    await new Promise((resolve) => globalThis.setImmediate(resolve));
+  }
+  assert.ok(calls.includes('close'), 'the loopback client is closed');
+  assert.equal(controller.state().state, 'unavailable', 'wake is no longer listening through the local gateway');
+  assert.match(controller.state().detail, /local Hermes gateway/);
+});
+
+test('a change of connection with wake on reconfigures wake; other changes and wake off do not', () => {
+  const local = { wakeWordEnabled: true, connectionMode: 'local', gatewayUrl: 'http://127.0.0.1:8642', activeSavedConnectionId: 'default' };
+  assert.equal(wakeNeedsReconfigure(local, { ...local, activeSavedConnectionId: 'work' }), true);
+  assert.equal(wakeNeedsReconfigure(local, { ...local, connectionMode: 'remote' }), true);
+  assert.equal(wakeNeedsReconfigure(local, { ...local, gatewayUrl: 'https://remote.example' }), true);
+  assert.equal(wakeNeedsReconfigure(local, { ...local, appearanceTheme: 'mono' }), false);
+  assert.equal(wakeNeedsReconfigure({ ...local, wakeWordEnabled: false }, { ...local, wakeWordEnabled: false, activeSavedConnectionId: 'work' }), false);
+});
+
+test('the real extension background reconfigures wake when the connection changes', () => {
+  const background = readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8');
+  assert.match(background, /wakeNeedsReconfigure\(changes\.hermesBrowserSettings\.oldValue, changes\.hermesBrowserSettings\.newValue\)[\s\S]{0,200}wakeController\.restore\(\)/);
 });
 
 test('WAKE_SET_ENABLED merges only wake settings, never gateway or control settings from the caller', async () => {

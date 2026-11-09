@@ -59,6 +59,6 @@ test('the Save handler passes what saveSettingsFromForm reports, and saveSetting
   assert.match(source, /const saved = await saveSettingsFromForm\(\);\s*persisted = true;/);
   assert.match(source, /await refreshAfterSettingsSave\(saved\);/);
   const save = source.match(/async function saveSettingsFromForm\([^)]*\)[\s\S]*?\n\}\n/)[0];
-  assert.match(save, /return \{ connectionIdentityChanged: identityChanged \};/);
+  assert.match(save, /return \{\s*connectionIdentityChanged: identityChanged,/);
   assert.match(save, /connectionIdentityChanged\(previousSettings, settings, normalizeGatewayUrl\)/);
 });

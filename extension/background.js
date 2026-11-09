@@ -43,7 +43,7 @@ import {
   assistModelFallbackNotice,
   buildAssistModelRouteRequest,
 } from './lib/assist-model-contract.mjs';
-import { createWakeBackgroundController } from './lib/wake-background.mjs';
+import { createWakeBackgroundController, wakeNeedsReconfigure } from './lib/wake-background.mjs';
 import { WAKE_MESSAGES } from './lib/wake-word.mjs';
 import { initI18n, subscribeLocale, translateUiText } from './lib/i18n.mjs';
 import {
@@ -1124,6 +1124,10 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
         console.warn('[Hermes Browser] Controller settings rebind failed:', error);
       }
     })();
+  }
+  if (changes.hermesBrowserSettings?.newValue
+    && wakeNeedsReconfigure(changes.hermesBrowserSettings.oldValue, changes.hermesBrowserSettings.newValue)) {
+    wakeController.restore().catch((error) => console.warn('[Hermes Browser] Wake could not follow the connection change:', error));
   }
   let changed = false;
   if (Object.hasOwn(changes, 'hermesBrowserSettings')) {

@@ -38,9 +38,9 @@ import {
   syncActiveSavedConnection,
   packSavedConnectionStorage,
   hydrateSavedConnectionSecrets,
-  packedHermesBrowserSettingsWrite,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
   withSavedConnectionsLock,
+  writeSettingsOnStoredConnections,
 } from './saved-connections.mjs';
 import { CONTROL_TOOL_FAMILIES, controlToolFamily, controlToolName, setControlToolFamily } from './control-tool-names.mjs';
 
@@ -662,16 +662,15 @@ export function createControllerServiceWorker({
     persistChain = persistChain
       .catch(() => undefined)
       .then(async () => {
-        const packed = includeSettings
-          ? await packedHermesBrowserSettingsWrite(syncActiveSavedConnection(savedSettings()), storageArea)
-          : {};
-        await storageArea.set({
-          ...packed,
+        const records = () => ({
           [CONTROLLER_WORKER_STORAGE_KEY]: workerSnapshot(),
           [CONTROLLER_REGISTRY_STORAGE_KEY]: registry.snapshot(),
           [TAB_LEASE_STORAGE_KEY]: leases.snapshot(),
           [CONTROLLER_LIFECYCLE_STORAGE_KEY]: lifecycle.snapshot(),
         });
+        const wroteSettings = includeSettings
+          && await writeSettingsOnStoredConnections(syncActiveSavedConnection(savedSettings()), storageArea, { extra: records });
+        if (!wroteSettings) await storageArea.set(records());
       });
     return persistChain;
   }
@@ -1152,23 +1151,25 @@ export function createControllerServiceWorker({
           // or on a 403 that was decided after the token authenticated.
           settings = { ...settings, tokenSource: '', lastConnectionTestedAt: 0 };
           settings.apiKey = '';
-          const stored = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-          const current = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
-            ? await hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
-            : {};
-          const authStillMatches = String(current.gatewayUrl || '') === attemptedAuth.gatewayUrl
-            && String(current.apiKey || '') === attemptedAuth.apiKey
-            && String(current.tokenSource || '') === attemptedAuth.tokenSource
-            && String(current.activeSavedConnectionId || '') === attemptedAuth.activeSavedConnectionId;
-          if (authStillMatches) {
-            current.tokenSource = '';
-            current.lastConnectionTestedAt = 0;
-            current.apiKey = '';
-            await storageArea.set(await packSavedConnectionStorage(
-              syncActiveSavedConnection(current),
-              stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
-            ));
-          }
+          await withSavedConnectionsLock(async () => {
+            const stored = await storageArea.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+            const current = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+              ? await hydrateSavedConnectionSecrets(stored.hermesBrowserSettings, stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+              : {};
+            const authStillMatches = String(current.gatewayUrl || '') === attemptedAuth.gatewayUrl
+              && String(current.apiKey || '') === attemptedAuth.apiKey
+              && String(current.tokenSource || '') === attemptedAuth.tokenSource
+              && String(current.activeSavedConnectionId || '') === attemptedAuth.activeSavedConnectionId;
+            if (authStillMatches) {
+              current.tokenSource = '';
+              current.lastConnectionTestedAt = 0;
+              current.apiKey = '';
+              await storageArea.set(await packSavedConnectionStorage(
+                syncActiveSavedConnection(current),
+                stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+              ));
+            }
+          });
         }
         await persist();
         return {
@@ -1639,11 +1640,8 @@ export function createControllerServiceWorker({
     }
     approvals.clear?.();
     const nextSettings = { ...settings, browserControlEnabled: false, browserControlPaused: false };
-    await storageArea.set(await packedHermesBrowserSettingsWrite(
-      syncActiveSavedConnection(savedSettings(nextSettings)),
-      storageArea,
-    ));
-    await syncSettingsTransition(nextSettings);
+    const wrote = await writeSettingsOnStoredConnections(syncActiveSavedConnection(savedSettings(nextSettings)), storageArea);
+    if (wrote) await syncSettingsTransition(nextSettings);
     return { ok: true, cancelled: stopped.cancelled, releasedTabIds };
   }
 

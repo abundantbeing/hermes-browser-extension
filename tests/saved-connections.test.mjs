@@ -199,6 +199,49 @@ test('the cards mark the active connection and show the address, never the key',
   } finally { h.close(); }
 });
 
+test('Enter that confirms an input-method choice does not save the name', async () => {
+  const h = await createSettingsSaveHarness({ settings: twoConnections() });
+  try {
+    const updates = [];
+    Object.assign(h.scope, {
+      savedConnectionBusy: false, savedConnectionTool: 'add', sending: false,
+      updateSavedConnection: (action, options) => updates.push({ action, options }),
+    });
+    h.fn('bindSavedConnectionControls')();
+    const input = h.els.savedConnectionNameInput;
+    const { KeyboardEvent } = h.document.defaultView;
+    const press = (init, keyCode) => {
+      const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, ...init });
+      if (keyCode) Object.defineProperty(event, 'keyCode', { value: keyCode });
+      input.dispatchEvent(event);
+    };
+    input.value = 'Draft';
+    press({ isComposing: true });
+    press({}, 229);
+    assert.deepEqual(updates, [], 'choosing a character is not a request to save');
+    press({});
+    assert.deepEqual(updates, [{ action: 'add', options: { name: 'Draft' } }]);
+  } finally { h.close(); }
+});
+
+test('a refresh that changes nothing keeps the focused card, and a changed list gives focus back to the same connection', async () => {
+  const h = await createSettingsSaveHarness({ settings: twoConnections() });
+  try {
+    Object.assign(h.scope, { savedConnectionBusy: false, savedConnectionTool: '' });
+    h.fn('renderSavedConnections')();
+    const card = h.els.savedConnectionList.querySelector('[data-saved-connection-id="work"]');
+    card.focus();
+    assert.equal(h.document.activeElement, card);
+    h.fn('renderSavedConnections')();
+    assert.equal(h.document.activeElement, card, 'the same card still has focus');
+    h.scope.settings = renameSavedConnection(h.scope.settings, 'work', 'Production');
+    h.fn('renderSavedConnections')();
+    const rebuilt = h.els.savedConnectionList.querySelector('[data-saved-connection-id="work"]');
+    assert.equal(rebuilt.querySelector('.conn-mode-title').textContent, 'Production');
+    assert.equal(h.document.activeElement, rebuilt, 'focus returns to the same connection');
+  } finally { h.close(); }
+});
+
 test('the connection tools show one state at a time: the buttons, the name field or the delete question', async () => {
   const h = await createSettingsSaveHarness({ settings: twoConnections() });
   try {
@@ -472,6 +515,31 @@ test('overlapping panel Add and Rename cannot lose a saved connection', async ()
     assert.equal(stored.savedConnections.length, 2, 'the added connection is still saved');
     assert.ok(stored.savedConnections.some((entry) => entry.name === 'Added'));
     assert.ok(stored.savedConnections.some((entry) => entry.id === stored.activeSavedConnectionId), 'the active ID names a saved connection');
+  } finally { first.close(); second.close(); }
+});
+
+test('a panel that has left its connection cannot overwrite the saved list with an older copy', async () => {
+  const first = await openPanel(rememberSavedConnection(local), null);
+  const second = await openPanel(rememberSavedConnection(local), first);
+  try {
+    await second.fn('updateSavedConnection')('add', { name: 'Added' });
+    await first.fn('persistBrowserControlPreferences')({ browserControlEnabled: true });
+    const stored = first.store.hermesBrowserSettings;
+    assert.equal(stored.savedConnections.length, 2, 'the connection another panel added survives');
+    assert.notEqual(stored.activeSavedConnectionId, 'default', 'and stays the active one');
+    assert.notEqual(stored.browserControlEnabled, true, 'the panel that left wrote nothing');
+  } finally { first.close(); second.close(); }
+});
+
+test('a write from a panel still on the connection keeps what another panel renamed', async () => {
+  const first = await openPanel(rememberSavedConnection(local), null);
+  const second = await openPanel(rememberSavedConnection(local), first);
+  try {
+    await second.fn('updateSavedConnection')('rename', { name: 'Renamed' });
+    await first.fn('persistBrowserControlPreferences')({ browserControlEnabled: true });
+    const stored = first.store.hermesBrowserSettings;
+    assert.equal(stored.savedConnections.find((entry) => entry.id === 'default').name, 'Renamed');
+    assert.equal(stored.browserControlEnabled, true, 'the preference itself is saved');
   } finally { first.close(); second.close(); }
 });
 

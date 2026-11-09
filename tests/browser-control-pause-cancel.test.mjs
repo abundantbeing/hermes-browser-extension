@@ -5,7 +5,9 @@ import test from 'node:test';
 
 import { CONTROLLER_WORKER_MESSAGES, createControllerServiceWorker } from '../extension/lib/controller-service-worker.mjs';
 import {
+  addSavedConnection,
   hydrateSavedConnectionSecrets,
+  rememberSavedConnection,
   withSavedConnectionsLock,
 } from '../extension/lib/saved-connections.mjs';
 import { TAB_LEASE_KINDS, TAB_LEASE_OWNERSHIPS } from '../extension/lib/tab-leases.mjs';
@@ -367,6 +369,25 @@ test('an appearance save during a queued Resume still completes the resume and k
   });
   await settle();
   assert.equal(executed.length, 1);
+});
+
+test('turning control off from a worker that is still on the old connection does not overwrite the saved list', async () => {
+  const onDefault = rememberSavedConnection({ ...settings(), browserControlEnabled: true });
+  const storage = memoryStorage({ hermesBrowserSettings: onDefault });
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: connector(),
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async () => ({ ok: true, result: { status: 'done' } }),
+  });
+  await worker.boot();
+  storage.state.hermesBrowserSettings = addSavedConnection(onDefault, 'Added', 'added');
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.detach }, extensionSender());
+  const stored = storage.state.hermesBrowserSettings;
+  assert.equal(stored.savedConnections.length, 2, 'the added connection survives');
+  assert.equal(stored.activeSavedConnectionId, 'added', 'and stays the active one');
 });
 
 test('a theme save that arrives while a Resume waits behind the heartbeat does not cancel that Resume', async () => {

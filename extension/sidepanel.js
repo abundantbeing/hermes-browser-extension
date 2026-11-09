@@ -724,7 +724,6 @@ import {
   hydrateHermesBrowserSettingsFromStorage,
   hydrateSavedConnectionSecrets,
   packSavedConnectionStorage,
-  packedHermesBrowserSettingsWrite,
   rememberSavedConnection,
   renameSavedConnection,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
@@ -736,6 +735,7 @@ import {
   syncActiveSavedConnection,
   withSavedConnectionsLock,
   withStoredSavedConnections,
+  writeSettingsOnStoredConnections,
 } from './lib/saved-connections.mjs';
 import { assertCloudAgentTabStillMatches, resolveActiveCloudAgentTab } from './lib/cloud-agent-tab.mjs';
 import {
@@ -1375,6 +1375,7 @@ let settings = { ...DEFAULT_SETTINGS };
 let loadedSavedConnectionId = '';
 let savedConnectionBusy = false;
 let savedConnectionTool = '';
+let settingsAdoptionSequence = 0;
 let savedConnectionReloading = false;
 let appearanceMutationId = 0;
 let appearanceSaveStatus = '';
@@ -9930,7 +9931,7 @@ async function persistAppearanceSettings(preferences) {
       colorMode: normalizeColorMode(preferences.colorMode),
       appearanceTheme: normalizedPanelThemeId(preferences.appearanceTheme),
     };
-    await setPackedBrowserSettings(hermesBrowserSettings);
+    await setPackedBrowserSettings(hermesBrowserSettings, {}, { lockHeld: true });
     return hermesBrowserSettings;
   });
   const pendingWrite = appearanceWriteQueue.then(writeAppearance, writeAppearance);
@@ -23845,7 +23846,7 @@ function renderTranscriptProviderField() {
   if (els.transcriptProviderField) els.transcriptProviderField.hidden = !custom;
 }
 
-function savedConnectionCard(entry, { active, labels }) {
+function savedConnectionCard(entry, { active, summary }) {
   const card = document.createElement('button');
   card.type = 'button';
   card.className = `conn-mode-card saved-connection-card${active ? ' selected' : ''}`;
@@ -23863,7 +23864,7 @@ function savedConnectionCard(entry, { active, labels }) {
   head.append(title, check);
   const detail = document.createElement('span');
   detail.className = 'conn-mode-desc';
-  detail.textContent = savedConnectionSummary(entry.connection, labels);
+  detail.textContent = summary;
   card.append(head, detail);
   return card;
 }
@@ -23873,9 +23874,18 @@ function renderSavedConnections() {
   const current = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
   const active = current.savedConnections.find((entry) => entry.id === current.activeSavedConnectionId);
   const labels = { local: t('ui.local.gateway'), cloud: t('ui.hermes.cloud'), remote: t('ui.remote.gateway') };
-  els.savedConnectionList.replaceChildren(...current.savedConnections.map((entry) => (
-    savedConnectionCard(entry, { active: entry === active, labels })
-  )));
+  const cards = current.savedConnections.map((entry) => ({
+    entry,
+    active: entry === active,
+    summary: savedConnectionSummary(entry.connection, labels),
+  }));
+  const signature = JSON.stringify([savedConnectionBusy, ...cards.map(({ entry, active: isActive, summary }) => [entry.id, entry.name, summary, isActive])]);
+  if (els.savedConnectionList.dataset.cards !== signature) {
+    const focusedId = els.savedConnectionList.contains(document.activeElement) ? document.activeElement.dataset.savedConnectionId : '';
+    els.savedConnectionList.replaceChildren(...cards.map((card) => savedConnectionCard(card.entry, card)));
+    els.savedConnectionList.dataset.cards = signature;
+    if (focusedId) els.savedConnectionList.querySelector(`[data-saved-connection-id="${focusedId}"]`)?.focus();
+  }
   const naming = savedConnectionTool === 'add' || savedConnectionTool === 'rename';
   els.savedConnectionActions.hidden = savedConnectionTool !== '';
   els.savedConnectionEditor.hidden = !naming;
@@ -23948,7 +23958,7 @@ function bindSavedConnectionControls() {
     void updateSavedConnection('delete');
   });
   els.savedConnectionNameInput?.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter') return;
+    if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return;
     event.preventDefault();
     submitSavedConnectionName();
   });
@@ -23990,8 +24000,10 @@ async function hermesBrowserSettingsFromStorageChanges(changes) {
 }
 
 async function adoptHermesBrowserSettingsStorageChange(changes) {
+  const carriesSettings = changes?.hermesBrowserSettings?.newValue && typeof changes.hermesBrowserSettings.newValue === 'object';
+  const adoption = carriesSettings ? ++settingsAdoptionSequence : settingsAdoptionSequence;
   const next = await hermesBrowserSettingsFromStorageChanges(changes);
-  if (!next) return;
+  if (!next || adoption !== settingsAdoptionSequence) return;
   if (next.activeSavedConnectionId && loadedSavedConnectionId
     && next.activeSavedConnectionId !== loadedSavedConnectionId) {
     reloadForSavedConnection(next);
@@ -24077,9 +24089,10 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
   savedConnectionBusy = true;
   renderSavedConnections();
   const expectedId = current.activeSavedConnectionId;
+  let saved = null;
   try {
     await withSavedConnectionsLock(async () => {
-      await saveSettingsFromForm({ lockHeld: true });
+      saved = await saveSettingsFromForm({ lockHeld: true });
       const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
       const storedSettings = await hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local);
       const base = savedConnectionsBase(settings, storedSettings, expectedId);
@@ -24088,11 +24101,12 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
       else if (action === 'rename') next = renameSavedConnection(base, expectedId, name);
       else if (action === 'delete') next = deleteSavedConnection(base, expectedId);
       else next = selectSavedConnection(base, id);
-      await persistHermesBrowserSettings(next);
+      await persistHermesBrowserSettings(next, { lockHeld: true });
       if (action === 'delete') await forgetSavedConnectionRecords(expectedId);
       if (next.activeSavedConnectionId !== expectedId) reloadForSavedConnection(next);
       else settings = next;
     });
+    await saved?.applyWake?.().catch(() => undefined);
   } catch {
     showOperationToast({ kind: 'warn', title: t('connections.error') });
   } finally {
@@ -24541,7 +24555,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     );
     applyAppearanceSettings();
     settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
-    await persistHermesBrowserSettings(settings);
+    await persistHermesBrowserSettings(settings, { lockHeld: true });
   };
   if (lockHeld) await writeSettingsRecord();
   else await withSavedConnectionsLock(writeSettingsRecord);
@@ -24557,11 +24571,16 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     || previousSettings.wakeWordBrowserFallback !== settings.wakeWordBrowserFallback
     || previousSettings.wakeWordSpeakReplies !== settings.wakeWordSpeakReplies
     || connectionChanged;
-  if (wakeChanged) await setWakeWordEnabled(settings.wakeWordEnabled);
+  const wakeWordEnabled = settings.wakeWordEnabled;
+  if (wakeChanged && !lockHeld) await setWakeWordEnabled(wakeWordEnabled);
   await maybeRenameCurrentSessionTitle(previousSettings, settings.sessionTitle);
   syncSettingsForm();
   updateConnectionPrompt();
-  return { connectionIdentityChanged: identityChanged };
+  return {
+    connectionIdentityChanged: identityChanged,
+    // The wake listener takes the same lock to save its setting, so a caller holding it applies wake afterwards.
+    applyWake: wakeChanged && lockHeld ? () => setWakeWordEnabled(wakeWordEnabled) : null,
+  };
 }
 
 // After Save: re-read what the gateway offers, and re-establish the session only when the connection
@@ -24578,9 +24597,8 @@ async function refreshAfterSettingsSave(saved) {
   if (saved?.connectionIdentityChanged === true) await initializeSessionForPanelOpen({ focus: false });
 }
 
-async function setPackedBrowserSettings(nextSettings, extra = {}) {
-  const packed = await packedHermesBrowserSettingsWrite(nextSettings, browserApi.storage.local);
-  return browserApi.storage.local.set({ ...packed, ...extra });
+async function setPackedBrowserSettings(nextSettings, extra = {}, { lockHeld = false } = {}) {
+  return writeSettingsOnStoredConnections(nextSettings, browserApi.storage.local, { extra, lockHeld });
 }
 
 async function readBrowserSettingsFromStorage() {
@@ -24592,14 +24610,14 @@ async function mergePackedBrowserSettingsFromStorage(mergeFn, { lockHeld = false
   const write = async () => {
     const freshSettings = await readBrowserSettingsFromStorage();
     const next = typeof mergeFn === 'function' ? mergeFn(freshSettings) : { ...freshSettings, ...mergeFn };
-    await setPackedBrowserSettings(next, extra);
+    await setPackedBrowserSettings(next, extra, { lockHeld: true });
     return next;
   };
   return lockHeld ? write() : withSavedConnectionsLock(write);
 }
 
-async function persistHermesBrowserSettings(nextSettings) {
-  await setPackedBrowserSettings(nextSettings);
+async function persistHermesBrowserSettings(nextSettings, { lockHeld = false } = {}) {
+  await setPackedBrowserSettings(nextSettings, {}, { lockHeld });
 }
 
 async function clearStoredToken() {
