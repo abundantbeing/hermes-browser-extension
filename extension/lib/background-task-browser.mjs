@@ -1,4 +1,4 @@
-import { BACKGROUND_BROWSER_SESSION, CONTROLLER_BROWSER_CAPABILITIES, CONTROLLER_METHODS } from './controller-protocol.mjs';
+import { BACKGROUND_BROWSER_SESSION, CONTROLLER_METHODS } from './controller-protocol.mjs';
 import { createLoadWaiter } from './browser-control-browser-adapters.mjs';
 import { validateBrowserControlUrl } from './browser-control-safety.mjs';
 import { safeNetworkUrl } from './browser-control-executor.mjs';
@@ -39,6 +39,10 @@ const PAGE_ACTIONS = new Set([
   'browser_scroll', 'browser_scroll_to', 'browser_select', 'browser_snapshot', 'browser_type',
 ]);
 
+export const BACKGROUND_BROWSER_ACTIONS = [
+  ...PAGE_ACTIONS, 'browser_tabs', 'browser_tab_create', 'browser_tab_group',
+];
+
 export function createBackgroundTaskBrowser({ browserApi, connector, runtime, product }) {
   const { tabs, windows, tabGroups, storage, alarms } = browserApi;
   const { waitForLoad } = createLoadWaiter({ browserApi });
@@ -49,7 +53,7 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   let route;
   let revision = 0;
   let sync = Promise.resolve();
-  let queue = Promise.resolve();
+  const sessionQueues = new Map();
 
   async function getTab(id) {
     try {
@@ -105,7 +109,8 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     }
   }
 
-  async function execute(params, signal) {
+  async function execute(params, controller) {
+    const { signal } = controller;
     const { action, arguments: args = {}, background_session: sessionId } = params;
     if (typeof sessionId !== 'string' || !sessionId || sessionId.length > 256) {
       return failure('no_session', 'The background command has no Hermes session.');
@@ -140,7 +145,7 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     const lease = state.tabs.get(id);
     if (!lease) return failure('lease_not_owned', 'Use tab_create to open a tab owned by this Hermes session.');
     const tab = await getTab(id);
-    if (!tab || tab.incognito) return failure('lease_not_owned', 'The task tab is no longer available.');
+    if (!tab || tab.incognito || !state.tabs.has(id)) return failure('lease_not_owned', 'The task tab is no longer available.');
     if (lease.url !== tab.url) {
       lease.url = tab.url;
       lease.document += 1;
@@ -150,16 +155,21 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
       controllerId, leaseOwnerId: controllerId, leaseId: lease.leaseId, leaseGeneration: 1,
       tabId: id, frameId: 0, documentGeneration: lease.document,
     };
-    const result = await runtime.execute({
-      ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
-    }, {
-      scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
-      currentWindowId: tab.windowId,
-      currentDocumentGeneration: () => lease.document,
-      controlHalted: () => signal.aborted || !state.tabs.has(id),
-    }, { browserControlEnabled: true });
-    if (result.ok) state.lastTab = id;
-    return result;
+    lease.abort = () => controller.abort();
+    try {
+      const result = await runtime.execute({
+        ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
+      }, {
+        scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
+        currentWindowId: tab.windowId,
+        currentDocumentGeneration: () => lease.document,
+        controlHalted: () => signal.aborted || !state.tabs.has(id),
+      }, { browserControlEnabled: true });
+      if (result.ok) state.lastTab = id;
+      return result;
+    } finally {
+      delete lease.abort;
+    }
   }
 
   function onFrame(frame, socket, connectionRevision) {
@@ -174,11 +184,12 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     const controller = new AbortController();
     pending.set(id, controller);
     const timer = setTimeout(() => controller.abort(), 28_000);
-    queue = queue.then(async () => {
+    const sessionId = params.background_session;
+    const queue = (sessionQueues.get(sessionId) || Promise.resolve()).then(async () => {
       let outcome;
       try {
         controller.signal.throwIfAborted();
-        outcome = await execute(params, controller.signal);
+        outcome = await execute(params, controller);
       } catch {
         outcome = controller.signal.aborted
           ? failure('cancelled', 'The background command was cancelled.')
@@ -188,7 +199,10 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
         pending.delete(id);
       }
       await socket()?.send({ method: CONTROLLER_METHODS.result, params: { command_id: id, ...outcome } });
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => {
+      if (sessionQueues.get(sessionId) === queue) sessionQueues.delete(sessionId);
+    });
+    sessionQueues.set(sessionId, queue);
   }
 
   function close() {
@@ -237,7 +251,7 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     candidate = await connector.connect({
       settings,
       identity: { controllerId, browserProfileId: controllerId, hermesSessionId: BACKGROUND_BROWSER_SESSION,
-        product, capabilities: CONTROLLER_BROWSER_CAPABILITIES },
+        product, capabilities: BACKGROUND_BROWSER_ACTIONS },
       onFrame: (frame) => onFrame(frame, () => candidate, connectionRevision),
       onClose: () => { if (connection === candidate) close(); },
     });
@@ -275,8 +289,9 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
         }
       }
     },
-    tabRemoved(id) {
+    releaseTab(id) {
       for (const [session, state] of sessions) {
+        state.tabs.get(id)?.abort?.();
         if (state.tabs.delete(id) && !state.tabs.size) sessions.delete(session);
       }
     },

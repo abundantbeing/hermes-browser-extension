@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "백그라운드 작업 탭",
+  "browser_control.background_help": "메시지 앱에서 시작한 작업을 포함하여 이 로컬 Hermes 프로필의 작업이 연결 없이 자체 Chrome 탭 그룹을 열고 제어하도록 허용합니다.",
+  "browser_control.background_save_error": "백그라운드 브라우저 권한을 저장하지 못했습니다.",
+  "browser_control.background_unavailable": "백그라운드 작업에는 이 게이트웨이에서 동반 플러그인의 탭 도구가 필요합니다.",
   "ui.effort.title": "추론 강도",
   "ui.effort.slider": "슬라이더",
   "ui.effort.buttons": "버튼",

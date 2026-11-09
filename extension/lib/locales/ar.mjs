@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "علامات تبويب المهام في الخلفية",
+  "browser_control.background_help": "اسمح لمهام ملف Hermes المحلي، بما فيها مهام تطبيقات المراسلة، بفتح مجموعات علامات تبويب Chrome الخاصة بها والتحكم فيها دون إرفاق.",
+  "browser_control.background_save_error": "تعذر حفظ إذن المتصفح في الخلفية.",
+  "browser_control.background_unavailable": "تتطلب مهام الخلفية أدوات علامات التبويب الخاصة بالملحق المرافق على هذه البوابة.",
   "ui.effort.title": "الجهد",
   "ui.effort.slider": "شريط تمرير",
   "ui.effort.buttons": "أزرار",

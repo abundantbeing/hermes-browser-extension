@@ -82,7 +82,7 @@ def body(session="sess-A", controller="ctl-1", profile="bp-1", caps=CAPS, versio
     return {"protocol_version": version, "controller_id": controller, "browser_profile_id": profile,
             "session_id": session, "capabilities": caps}
 
-async def make(adapter=None, **broker_kwargs):
+async def make(adapter=None, listed_tools=(), **broker_kwargs):
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
     registry = sys.modules["probe_plugin.profile_registry"]
@@ -97,7 +97,7 @@ async def make(adapter=None, **broker_kwargs):
     broker.reset()
     store = registry.ensure_context_store("luxord")
     registry.register_listener_profile(
-        profile="luxord", store=store, broker=broker, tools=(), hooks=(), version="test"
+        profile="luxord", store=store, broker=broker, tools=listed_tools, hooks=(), version="test"
     )
     app = web.Application()
     routes.make_wire_extra()(app.router, adapter or Adapter())
@@ -1296,10 +1296,23 @@ print(json.dumps({"passed": passed, "blank": blank, "missing": json.loads(missin
   assert.equal(data.none.code, 'no_browser');
 });
 
+test('the background registration requires the companion tab tools', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}
+async def main():
+    client, _, _ = await make(adapter=StoreAdapter(set()))
+    async with client:
+        status, payload = await register(client, session=broker_module.BACKGROUND_SESSION)
+        assert status == 403 and payload["error"]["code"] == "background_browser_unsupported", payload
+    print(json.dumps({"passed": True}))
+asyncio.run(main())
+`);
+  if (!skipped(JSON.parse(out))) assert.deepEqual(JSON.parse(out), { passed: true });
+});
+
 test('an opted-in loopback controller receives the trusted session id without manual Attach', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 async def main():
-    client, broker, _ = await make(adapter=StoreAdapter({"feishu-real-session"}))
+    client, broker, _ = await make(adapter=StoreAdapter({"feishu-real-session"}), listed_tools=("tab_create", "tab_snapshot"))
     async with client:
         background = broker_module.BACKGROUND_SESSION
         ws, _ = await attach(client, broker, session=background, caps=["browser_tab_create", "browser_snapshot"])
@@ -1314,6 +1327,8 @@ async def main():
             "command_id": frame["params"]["command_id"], "ok": True, "result": {"tab": {"id": 42}}
         }})
         assert json.loads(await task)["tab"]["id"] == 42
+        batch = json.loads(await call("browser_batch", {"actions": [{"action": "scroll", "direction": "down"}]}, session="feishu-real-session"))
+        assert batch["code"] == "background_action_unavailable"
         assert json.loads(await call("browser_tab_create", {"url": "https://example.com"}, session=background))["code"] == "no_session"
         manual, _ = await attach(client, broker, session="feishu-real-session", controller="manual")
         task = asyncio.create_task(call("browser_snapshot", {"tab_id": 42}, session="feishu-real-session"))

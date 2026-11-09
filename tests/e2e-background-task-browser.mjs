@@ -10,7 +10,13 @@ import {
 } from './e2e-phase6-browser-control.mjs';
 
 const profile = await mkdtemp(path.join(os.tmpdir(), 'hermes-background-e2e-'));
-const fixture = await startControllerFixture({ controlPath: '/api/plugins/hermes-browser-extension/control' });
+let held = false;
+let releasePage;
+const pageGate = new Promise((resolve) => { releasePage = resolve; });
+const fixture = await startControllerFixture({
+  controlPath: '/api/plugins/hermes-browser-extension/control',
+  holdPage() { held = true; return pageGate; },
+});
 const extensionId = unpackedExtensionId(DIST);
 const chrome = launchChrome(chromeExecutable(), [
   '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run',
@@ -37,6 +43,7 @@ try {
   }, hermesBackgroundBrowserConsent: ${JSON.stringify(consent)}})`);
   const controller = await waitFor(() => fixture.connections[0]);
   assert.equal(fixture.registrations[0].session_id, 'hermes:background-browser:v1');
+  assert.equal(fixture.registrations[0].capabilities.includes('browser_batch'), false);
   assert.equal(await page.evaluate('chrome.tabs.query({}).then(tabs => tabs.length)'), 1);
 
   let sequence = 0;
@@ -67,7 +74,17 @@ try {
   assert.equal(clicked.ok, true, JSON.stringify(clicked));
   assert.match(JSON.stringify(clicked.result), /Applied/);
 
-  const other = await command('browser_navigate', { url: `${gatewayUrl}/second` }, 'feishu-session-B');
+  const slow = command('browser_tab_create', { url: `${gatewayUrl}/held` });
+  await waitFor(() => held);
+  let other;
+  try {
+    other = await command('browser_navigate', { url: `${gatewayUrl}/second` }, 'feishu-session-B');
+    assert.equal(other.ok, true, JSON.stringify(other));
+    assert.equal(fixture.results.length < sequence, true, 'the other session finished while the first page was held');
+  } finally {
+    releasePage();
+    await slow;
+  }
   assert.equal(other.ok, true, JSON.stringify(other));
   assert.notEqual(other.result.groupId, groupId);
   assert.equal((await command('browser_snapshot', { tab_id: tab.id }, 'feishu-session-B')).error.code, 'lease_not_owned');
@@ -78,6 +95,7 @@ try {
   await waitFor(() => controller.closedAt);
   console.log('Background browser passed: real Chrome grouped and clicked in the background, isolated sessions, and revoked consent.');
 } finally {
+  releasePage();
   page?.close();
   killChrome(chrome);
   await fixture.close();

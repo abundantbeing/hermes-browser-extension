@@ -180,6 +180,8 @@ def make_register_handler(adapter: Any) -> Callable[..., Any]:
                 "controller_id, browser_profile_id, and session_id are required.",
             )
         if session_id == BACKGROUND_SESSION:
+            if "tab_create" not in lp.tools:
+                return _error(403, "background_browser_unsupported", "Background browser control requires the companion plugin's tab tools.")
             if transport_family(request) != "local-api":
                 return _error(403, "background_browser_local_only", "Background browser control requires a loopback gateway.")
             known = True

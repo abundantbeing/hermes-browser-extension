@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Baggrundsfaner til opgaver",
+  "browser_control.background_help": "Tillad opgaver på denne lokale Hermes-profil, også fra beskedapps, at åbne og styre egne Chrome-fanegrupper uden tilknytning.",
+  "browser_control.background_save_error": "Tilladelsen til baggrundsbrowseren kunne ikke gemmes.",
+  "browser_control.background_unavailable": "Baggrundsopgaver kræver ledsagerpluginnets faneværktøjer på denne gateway.",
   "ui.effort.title": "Indsats",
   "ui.effort.slider": "Skyder",
   "ui.effort.buttons": "Knapper",

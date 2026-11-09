@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Вкладки фоновых задач",
+  "browser_control.background_help": "Разрешить задачам этого локального профиля Hermes, в том числе из мессенджеров, открывать собственные группы вкладок Chrome и управлять ими без подключения вкладок.",
+  "browser_control.background_save_error": "Не удалось сохранить разрешение для фонового браузера.",
+  "browser_control.background_unavailable": "Для фоновых задач на этом шлюзе нужны инструменты вкладок сопутствующего плагина.",
   "ui.effort.title": "Усилие",
   "ui.effort.slider": "Ползунок",
   "ui.effort.buttons": "Кнопки",

@@ -158,6 +158,8 @@ def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
 
 def background_browser_available(session_id: str, kwargs: dict[str, Any]) -> bool:
     """Whether this session can use the opted-in background controller."""
+    if core_extension_control_on():
+        return False
     broker = _broker(kwargs)
     profile = _profile_for_control(kwargs)
     if broker.lane_scopes(profile_id=profile, session_id=session_id):
@@ -374,7 +376,7 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
     scopes = broker.lane_scopes(profile_id=profile, session_id=session_id)
     background_scopes = [
         scope for scope in broker.lane_scopes(profile_id=profile, session_id=BACKGROUND_SESSION)
-        if broker.select(scope, action) is not None
+        if broker.offered_capabilities(scope) is not None
     ]
     if not scopes and not background_scopes:
         return _failure(
@@ -421,6 +423,11 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
                         or error.detail.get("code") not in ("target_unavailable", "target_not_attached")
                         or len(background_scopes) != 1):
                     raise
+        if broker.select(background_scopes[0], action) is None:
+            return _failure(
+                "background_action_unavailable",
+                f"{tool} is unavailable in background task tabs. Use individual page actions or manually attach a tab.",
+            )
         result = broker.dispatch(
             background_scopes[0], action=action, arguments=values, tool_call_id=tool_call_id,
             background_session=session_id,

@@ -87,16 +87,16 @@ the full tool reference.
 
 ## Background task tabs
 
-For a paired local Chromium gateway, enable **Background task tabs** under
+For a paired local Chromium gateway with the companion plugin’s tab tools, enable **Background task tabs** under
 **Hermes Control** in the side panel once. With the browser open, gateway chats
 such as Feishu can use `tab_create` to open a page without Attach. The first page
 opens an independent background group, and later pages from the same Hermes
 session join it. Existing tabs and tabs from other sessions are outside its
-scope. Use manual Attach for actions that require the foreground or an approval.
+scope. Use individual page actions in this mode. Use manual Attach for batches and actions that require the foreground or an approval.
 
 Turn off **Background task tabs** to revoke the background connection. Chrome
 may leave task tabs open after revocation or an extension restart. A new worker
-does not take control of those old tabs.
+does not take control of those old tabs. Cancelling Chrome’s debugging banner also removes that tab from the background session.
 
 ## Disclosure
 

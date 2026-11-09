@@ -1,3 +1,4 @@
+import { controllerProfilePath } from './lib/controller-protocol.mjs';
 import {
   INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY,
   INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY,
@@ -436,7 +437,7 @@ import {
 } from './lib/capabilities.mjs';
 import { capabilityIdentity } from './lib/capability-status.mjs';
 import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
-import { COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
+import { COMPANION_STATUS_PATH, parseCompanionStatusPayload, COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
 import { botAvatarRoute } from './lib/bot-roster-source.mjs';
 import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
 import { stageImageViaSessionSocket } from './lib/session-socket-image.mjs';
@@ -869,38 +870,43 @@ function initBackgroundTaskBrowserSetting() {
   const storage = browserApi.storage?.local;
   if (!row || !input || !storage || !browserApi.tabGroups || !browserApi.debugger) return;
 
-  function copy() {
-    return getLocale() === 'zh-CN' ? {
-      label: '后台任务标签页',
-      help: '允许此本机 Hermes 配置中的任务（包括飞书等消息应用）创建和控制自己的 Chrome 标签组，无需逐次 Attach。',
-      error: '无法保存后台浏览器授权。',
-    } : {
-      label: 'Background task tabs',
-      help: 'Allow tasks on this local Hermes profile, including messaging apps, to open and control their own Chrome tab groups without Attach.',
-      error: 'Could not save background browser authorization.',
-    };
-  }
-
-  function renderCopy() {
-    const { label, help } = copy();
-    document.getElementById('backgroundTaskBrowserLabel').textContent = label;
-    document.getElementById('backgroundTaskBrowserHelp').textContent = help;
-  }
-  renderCopy();
-  subscribeLocale(renderCopy);
-
   async function read() {
     const stored = await storage.get(['hermesBrowserSettings', BACKGROUND_BROWSER_CONSENT]);
     return {
       gateway: backgroundBrowserGateway(stored.hermesBrowserSettings),
       consent: stored[BACKGROUND_BROWSER_CONSENT],
+      connection: stored.hermesBrowserSettings,
     };
   }
 
+  let renderRevision = 0;
   async function render() {
-    const { gateway, consent } = await read();
+    const revision = ++renderRevision;
+    const { gateway, consent, connection } = await read();
+    if (revision !== renderRevision) return;
     row.hidden = !gateway;
     input.checked = Boolean(gateway && gateway === consent);
+    input.disabled = true;
+    if (!gateway) return;
+    let available = false;
+    try {
+      const url = new URL(connection.gatewayUrl);
+      url.pathname = url.pathname.replace(/\/+$/, '') + controllerProfilePath(COMPANION_STATUS_PATH, connection.activeProfile);
+      url.search = '';
+      url.hash = '';
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${connection.apiKey}` },
+        redirect: 'error',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      });
+      available = response.ok && parseCompanionStatusPayload(await response.json()).tools?.includes('tab_create');
+    } catch {
+      // No trustworthy plugin response: leave the setting disabled.
+    }
+    if (revision !== renderRevision) return;
+    input.disabled = !available && !input.checked;
+    status.textContent = available ? '' : t('browser_control.background_unavailable');
   }
 
   input.addEventListener('change', async () => {
@@ -915,17 +921,18 @@ function initBackgroundTaskBrowserSetting() {
       }
       status.textContent = '';
     } catch {
-      status.textContent = copy().error;
-    } finally {
+      status.textContent = t('browser_control.background_save_error');
       input.disabled = false;
-      await render().catch(() => {});
+      return;
     }
+    await render().catch(() => {});
   });
   browserApi.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && (changes.hermesBrowserSettings || changes[BACKGROUND_BROWSER_CONSENT])) {
       void render().catch(() => {});
     }
   });
+  subscribeLocale(() => { void render().catch(() => {}); });
   void render().catch(() => {});
 }
 initBackgroundTaskBrowserSetting();

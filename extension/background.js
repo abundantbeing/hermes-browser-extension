@@ -207,6 +207,8 @@ const controllerWorker = typeof browserApi.storage?.local?.set === 'function'
     })
   : null;
 browserControlRuntime.setDebuggerDetachHandler((event) => {
+  // An external detach revokes the lease, including when Chrome's banner is cancelled.
+  backgroundTaskBrowser?.releaseTab(event.tabId);
   controllerWorker?.handleDebuggerDetach(event)
     .catch((error) => console.warn('[Hermes Browser] Debugger detach reconciliation failed:', error));
 });
@@ -1106,7 +1108,7 @@ browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo, tab) => {
 browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
   hermesWebOpening.handleTabRemoved(tabId)
     .catch((error) => console.warn('[Hermes Browser] Could not clean up the Hermes Web opening page:', error));
-  backgroundTaskBrowser?.tabRemoved(tabId);
+  backgroundTaskBrowser?.releaseTab(tabId);
   controllerWorker?.handleTabRemoved(tabId)
     .catch((error) => console.warn('[Hermes Browser] Could not release removed controller tab state:', error));
 });

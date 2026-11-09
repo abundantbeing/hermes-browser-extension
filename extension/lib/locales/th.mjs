@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "แท็บงานเบื้องหลัง",
+  "browser_control.background_help": "อนุญาตให้งานในโปรไฟล์ Hermes ภายในเครื่องนี้ รวมถึงงานจากแอปส่งข้อความ เปิดและควบคุมกลุ่มแท็บ Chrome ของตัวเองได้โดยไม่ต้องแนบแท็บ",
+  "browser_control.background_save_error": "บันทึกสิทธิ์ของเบราว์เซอร์เบื้องหลังไม่ได้",
+  "browser_control.background_unavailable": "งานเบื้องหลังต้องใช้เครื่องมือแท็บของปลั๊กอินเสริมบนเกตเวย์นี้",
   "ui.effort.title": "ระดับการใช้เหตุผล",
   "ui.effort.slider": "แถบเลื่อน",
   "ui.effort.buttons": "ปุ่ม",
