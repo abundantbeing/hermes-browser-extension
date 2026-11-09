@@ -381,15 +381,20 @@ test('a theme save that arrives while a Resume waits behind the heartbeat does n
     },
   };
   const transport = connector();
+  const executed = [];
   const worker = createControllerServiceWorker({
     storageArea: area,
     connector: transport,
     product: PRODUCT,
     randomUUID: uuids(),
     extensionOrigin: 'chrome-extension://fixture',
-    executeBrowserCommand: async () => ({ ok: true, result: { status: 'done' } }),
+    executeBrowserCommand: async (frame) => {
+      executed.push(frame);
+      return { ok: true, result: { status: 'done' } };
+    },
   });
   await worker.boot();
+  await ownedReady(worker, 95);
   let releaseHeartbeat;
   const heartbeatHeld = new Promise((resolve) => { releaseHeartbeat = resolve; });
   transport.connections[0].heartbeat = () => heartbeatHeld;
@@ -398,12 +403,37 @@ test('a theme save that arrives while a Resume waits behind the heartbeat does n
   const resumePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
   await settle();
   const pausedBeforeTheme = pausedWrites.length;
+  storage.state.hermesBrowserSettings = { ...storage.state.hermesBrowserSettings, appearanceTheme: 'mono' };
   const themeSave = worker.syncSettings({ ...base, appearanceTheme: 'mono' });
   releaseHeartbeat({ ok: true });
   await reconciling;
   await resumePromise;
   await themeSave;
   assert.deepEqual(pausedWrites.slice(pausedBeforeTheme), [false]);
+  // The storage event Resume's own write produces reaches the worker last, as it does in the browser.
+  await worker.syncSettings(await hydrateSavedConnectionSecrets(
+    storage.state.hermesBrowserSettings,
+    storage.state.hermesBrowserSavedConnectionSecrets,
+  ));
+  await settle();
+  assert.equal(worker.status().paused, false);
+  assert.equal(storage.state.hermesBrowserSettings.appearanceTheme, 'mono');
+  const generation = (await worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.documentReady },
+    extensionSender({ tabId: 95 }),
+  )).documentGeneration;
+  await transport.connections.at(-1).emit({
+    method: 'browser.controller.command',
+    params: {
+      command_id: 'after-resume-with-theme-save',
+      action: 'browser_scroll',
+      arguments: { direction: 'down' },
+      tab_id: 95,
+      document_generation: generation,
+    },
+  });
+  await settle();
+  assert.equal(executed.length, 1);
 });
 
 test('a Resume queued behind settings sync does not un-pause after storage reports paused', async () => {
