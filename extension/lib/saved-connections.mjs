@@ -174,13 +174,17 @@ export async function packSavedConnectionStorage(settings = {}, existingSecrets 
   }
   const storedSecrets = {};
   for (const [id, bag] of Object.entries(merged.secrets)) {
+    // A record that is already encrypted is unchanged: keep it as it is, so a browser that cannot reach its key never loses it.
+    if (isEncryptedSecretRecord(bag)) { storedSecrets[id] = bag; continue; }
     let plain = isPlainSecretBag(bag) ? bag : (await plaintextSecretBagFromStored(bag));
     if (plain && isPlainSecretBag(bag) && bag.headers === undefined && existingSecrets?.[id]) {
       plain = { ...plain, headers: (await plaintextSecretBagFromStored(existingSecrets[id]))?.headers ?? [] };
     }
     if (!plain || (!plain.apiKey && !plain.tokenSource && !secretBagHeaders(plain.headers).length)) continue;
     const encrypted = await encryptSavedConnectionSecretBag(plain);
-    storedSecrets[id] = encrypted || plain;
+    // Never fall back to plaintext: refuse the save and leave every stored record as it was.
+    if (!encrypted) throw new Error('Saved keys cannot be encrypted in this browser, so nothing was saved.');
+    storedSecrets[id] = encrypted;
   }
   return {
     hermesBrowserSettings: merged.settings,
