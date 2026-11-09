@@ -24109,6 +24109,10 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
       else next = selectSavedConnection(base, id);
       await persistHermesBrowserSettings(next, { lockHeld: true });
       if (action === 'delete') await forgetSavedConnectionRecords(expectedId);
+      // A connection added without a key signs in through the browser: the panel it reloads into starts that.
+      if (action === 'add' && connection && !connection.apiKey) {
+        try { globalThis.sessionStorage?.setItem('hermesBrowserConnectAfterAdd', '1'); } catch { /* optional */ }
+      }
       if (next.activeSavedConnectionId !== expectedId) reloadForSavedConnection(next);
       else settings = next;
     });
@@ -31426,10 +31430,13 @@ bindEvents();
 void loadBotProfileOverrides();
 void refreshPetAvatarCache();
 await runStartupReadiness();
+const connectAfterAdd = globalThis.sessionStorage?.getItem('hermesBrowserConnectAfterAdd') === '1';
+if (connectAfterAdd) globalThis.sessionStorage.removeItem('hermesBrowserConnectAfterAdd');
 if (globalThis.sessionStorage?.getItem('hermesBrowserOpenConnections') === '1') {
   globalThis.sessionStorage.removeItem('hermesBrowserOpenConnections');
-  openSettingsDialog({ pane: 'connections' });
+  if (!connectAfterAdd) openSettingsDialog({ pane: 'connections' });
 }
+if (connectAfterAdd && !settings.apiKey) void connectToHermes().catch(() => undefined);
 renderBrowserControl();
 await refreshBrowserControlStatus();
 scheduleBrowserControlPoll();

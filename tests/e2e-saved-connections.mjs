@@ -523,6 +523,15 @@ async function main() {
     }, 20_000, 500).catch(() => ({ plain: 'still-sent', socket: '' }));
     check('removing the header stops it being sent', !without.plain && !without.socket, JSON.stringify(without));
 
+    // Choosing Browser adds the connection without a key and starts signing in straight away.
+    await openConnectionsPane(panel);
+    const pairingBefore = first.requests.length;
+    await addThroughWindow(panel, { type: 'local', name: 'Sign in through the browser', address: first.baseUrl, method: 'browser' });
+    await waitFor(() => first.requests.slice(pairingBefore).some((request) => request.method === 'POST' && request.path === '/api/browser-extension/pair/start'), 20_000)
+      .then(() => check('Browser sign-in starts the pairing as soon as the connection is added', true))
+      .catch(() => check('Browser sign-in starts the pairing as soon as the connection is added', false));
+    check('that connection holds no key', (await panel.evaluate("chrome.storage.local.get('hermesBrowserSettings').then((r) => r.hermesBrowserSettings.apiKey || '')")) === '');
+
     // 8. A long name and several connections still fit a narrow panel, in the light theme too.
     const longName = 'A connection with a very long name that keeps going past the edge of the card';
     await openConnectionsPane(panel);
@@ -536,7 +545,7 @@ async function main() {
     await panel.evaluate('window.location.reload(); true');
     await panelReady(panel);
     await openConnectionsPane(panel);
-    check('five connections are listed', (await selectOptions(panel)).length === 5);
+    check('six connections are listed', (await selectOptions(panel)).length === 6);
     check('a long name wraps inside its card and the pane does not scroll sideways', await panel.evaluate(`(() => {
       const cards = Array.from(document.querySelectorAll('${cardSelector}'));
       const pane = document.querySelector('#settingsPane-connections');

@@ -56,3 +56,11 @@ test('Add opens a window of its own that makes a new connection, never a copy of
   const window = html.slice(html.indexOf('id="addConnectionDialog"'), html.indexOf('id="profileSwitchDialog"'));
   assert.doesNotMatch(window, /<form/, 'a form in here would be a form inside the Settings form');
 });
+
+test('a connection added without a key starts signing in when its panel opens, and leaves Settings closed', () => {
+  assert.match(panel, /action === 'add' && connection && !connection\.apiKey\) \{\s*try \{ globalThis\.sessionStorage\?\.setItem\('hermesBrowserConnectAfterAdd', '1'\)/);
+  assert.match(panel, /const connectAfterAdd = globalThis\.sessionStorage\?\.getItem\('hermesBrowserConnectAfterAdd'\) === '1';/);
+  assert.match(panel, /if \(!connectAfterAdd\) openSettingsDialog\(\{ pane: 'connections' \}\);/);
+  assert.match(panel, /if \(connectAfterAdd && !settings\.apiKey\) void connectToHermes\(\)/);
+});
+
