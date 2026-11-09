@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Cette adresse utilise son propre certificat (auto-signé)",
   "addconn.cert_hint": "Votre navigateur décide quels certificats il accepte. S’il refuse celui-ci, l’extension ouvre l’adresse pour que vous l’acceptiez là-bas, une seule fois.",
   "addconn.private_title": "Connexion privée",
-  "addconn.private_hint": "SSH et Mosh nécessitent une application capable de les ouvrir. Une extension de navigateur ne le peut pas, ils ne sont donc pas proposés ici.",
+  "addconn.private_hint": "Les tunnels SSH, Tailscale, WireGuard et les autres réseaux privés ne nécessitent rien de particulier ici. Lancez d'abord la connexion, puis ajoutez une Passerelle distante à l'adresse qu'elle indique, avec votre clé API. Cette extension ne peut pas ouvrir elle-même une session SSH.",
   "addconn.add": "Ajouter la connexion",
   "addconn.testing": "Test en cours…",
   "addconn.try_again": "Réessayer",

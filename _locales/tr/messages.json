@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH ve Mosh’u açabilen bir uygulama gerekir. Tarayıcı eklentisi bunu yapamaz, bu yüzden burada sunulmazlar.",
+    "message": "SSH tünelleri, Tailscale, WireGuard ve diğer özel ağlar için burada özel bir ayar gerekmez. Önce bağlantıyı başlatın, ardından verdiği adreste API anahtarınızla birlikte bir Uzak Gateway ekleyin. Bu eklenti SSH oturumunu kendi başına açamaz.",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH और Mosh के लिए ऐसा ऐप चाहिए जो उन्हें खोल सके। ब्राउज़र एक्सटेंशन ऐसा नहीं कर सकता, इसलिए वे यहाँ नहीं दिए जाते।",
+    "message": "SSH टनल, Tailscale, WireGuard और अन्य निजी नेटवर्क के लिए यहाँ कुछ खास करने की ज़रूरत नहीं है। पहले कनेक्शन शुरू करें, फिर जो पता वह दे उस पर अपनी API कुंजी के साथ एक दूरस्थ प्रवेशद्वार जोड़ें। यह एक्सटेंशन खुद SSH सत्र नहीं खोल सकता।",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

@@ -46,7 +46,7 @@ export default Object.freeze({
   "addconn.cert_label": "This address uses its own (self-signed) certificate",
   "addconn.cert_hint": "Your browser decides which certificates to trust. If it does not accept this one, the extension opens the address so you can accept it there, once.",
   "addconn.private_title": "Private connection",
-  "addconn.private_hint": "SSH and Mosh need an app that can open them. A browser extension cannot, so they are not offered here.",
+  "addconn.private_hint": "SSH tunnels, Tailscale, WireGuard and other private networks need nothing special here. Start the connection first, then add a Remote gateway at the address it gives you, with your API key. This extension cannot open an SSH session itself.",
   "addconn.add": "Add connection",
   "addconn.testing": "Testing…",
   "addconn.try_again": "Try again",

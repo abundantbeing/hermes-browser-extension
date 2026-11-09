@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Dit adres gebruikt een eigen (zelfondertekend) certificaat",
   "addconn.cert_hint": "Je browser bepaalt welke certificaten worden vertrouwd. Accepteert hij dit certificaat niet, dan opent de extensie het adres zodat je het daar één keer kunt accepteren.",
   "addconn.private_title": "Privéverbinding",
-  "addconn.private_hint": "SSH en Mosh hebben een app nodig die ze kan openen. Een browserextensie kan dat niet, dus ze worden hier niet aangeboden.",
+  "addconn.private_hint": "SSH-tunnels, Tailscale, WireGuard en andere privénetwerken vereisen hier niets bijzonders. Start eerst de verbinding en voeg daarna een Externe gateway toe op het adres dat die geeft, met je API sleutel. Deze extensie kan zelf geen SSH-sessie openen.",
   "addconn.add": "Verbinding toevoegen",
   "addconn.testing": "Testen…",
   "addconn.try_again": "Opnieuw proberen",

@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Ten adres używa własnego certyfikatu (samopodpisanego)",
   "addconn.cert_hint": "Przeglądarka decyduje, którym certyfikatom ufać. Jeśli nie zaakceptuje tego, rozszerzenie otworzy adres, abyś mógł go tam jednorazowo zaakceptować.",
   "addconn.private_title": "Połączenie prywatne",
-  "addconn.private_hint": "SSH i Mosh wymagają aplikacji, która je obsłuży. Rozszerzenie przeglądarki tego nie potrafi, więc nie są tu oferowane.",
+  "addconn.private_hint": "Tunele SSH, Tailscale, WireGuard i inne prywatne sieci nie wymagają tu niczego szczególnego. Najpierw uruchom połączenie, a potem dodaj Zdalną bramkę pod adresem, który poda, wraz z kluczem API. To rozszerzenie nie potrafi samo otworzyć sesji SSH.",
   "addconn.add": "Dodaj połączenie",
   "addconn.testing": "Testowanie…",
   "addconn.try_again": "Spróbuj ponownie",

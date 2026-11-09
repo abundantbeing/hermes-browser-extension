@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH e Mosh precisam de um app que consiga abri-los. Uma extensão de navegador não consegue, então eles não são oferecidos aqui.",
+    "message": "Túneis SSH, Tailscale, WireGuard e outras redes privadas não precisam de nada especial aqui. Inicie a conexão primeiro e depois adicione um Gateway remoto no endereço que ela fornecer, com sua API chave. Esta extensão não consegue abrir uma sessão SSH por conta própria.",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

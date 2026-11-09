@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "このアドレスは独自の（自己署名）証明書を使用しています",
   "addconn.cert_hint": "どの証明書を信頼するかはブラウザーが決めます。ブラウザーがこの証明書を受け入れない場合、拡張機能はアドレスを開くので、そこで一度だけ受け入れられます。",
   "addconn.private_title": "プライベート接続",
-  "addconn.private_hint": "SSH と Mosh は、それを開けるアプリが必要です。ブラウザー拡張機能では開けないため、ここでは提供していません。",
+  "addconn.private_hint": "SSH トンネル、Tailscale、WireGuard などのプライベートネットワークは、ここでは特別な設定は不要です。先に接続を開始し、表示されたアドレスに API キーを使ってリモートゲートウェイを追加してください。この拡張機能では SSH セッションを直接開くことはできません。",
   "addconn.add": "接続を追加",
   "addconn.testing": "テスト中…",
   "addconn.try_again": "もう一度試す",

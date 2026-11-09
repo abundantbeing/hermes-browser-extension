@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Questo indirizzo usa un proprio certificato (autofirmato)",
   "addconn.cert_hint": "Il tuo navigatore decide quali certificati considerare attendibili. Se non accetta questo, l'estensione apre l'indirizzo così puoi accettarlo lì, una volta sola.",
   "addconn.private_title": "Connessione privata",
-  "addconn.private_hint": "SSH e Mosh richiedono un'app in grado di aprirli. Un'estensione del navigatore non può farlo, quindi qui non sono proposti.",
+  "addconn.private_hint": "I tunnel SSH, Tailscale, WireGuard e le altre reti private non richiedono nulla di speciale qui. Avvia prima la connessione, poi aggiungi un Gateway remoto all'indirizzo che ti viene indicato, con la tua chiave API. Questa estensione non può aprire da sola una sessione SSH.",
   "addconn.add": "Aggiungi connessione",
   "addconn.testing": "Verifica in corso…",
   "addconn.try_again": "Riprova",

@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Bu adres kendi (kendinden imzalı) sertifikasını kullanır",
   "addconn.cert_hint": "Hangi sertifikalara güveneceğine tarayıcınız karar verir. Tarayıcı bu sertifikayı kabul etmezse, eklenti adresi açar; böylece sertifikayı orada bir kez kabul edebilirsiniz.",
   "addconn.private_title": "Özel bağlantı",
-  "addconn.private_hint": "SSH ve Mosh’u açabilen bir uygulama gerekir. Tarayıcı eklentisi bunu yapamaz, bu yüzden burada sunulmazlar.",
+  "addconn.private_hint": "SSH tünelleri, Tailscale, WireGuard ve diğer özel ağlar için burada özel bir ayar gerekmez. Önce bağlantıyı başlatın, ardından verdiği adreste API anahtarınızla birlikte bir Uzak Gateway ekleyin. Bu eklenti SSH oturumunu kendi başına açamaz.",
   "addconn.add": "Bağlantı ekle",
   "addconn.testing": "Test ediliyor…",
   "addconn.try_again": "Yeniden dene",

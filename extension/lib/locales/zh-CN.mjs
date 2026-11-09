@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "此地址使用自己的（自签名）证书",
   "addconn.cert_hint": "浏览器决定信任哪些证书。如果它不接受此证书，扩展会打开该地址，让你在那里接受一次。",
   "addconn.private_title": "私密连接",
-  "addconn.private_hint": "SSH 和 Mosh 需要能够打开它们的应用。浏览器扩展无法做到，因此这里不提供。",
+  "addconn.private_hint": "SSH 隧道、Tailscale、WireGuard 和其他专用网络在这里无需特别设置。请先启动连接，然后用你的 API 密钥，在它提供的地址上添加远程网关。本扩展本身无法打开 SSH 会话。",
   "addconn.add": "添加连接",
   "addconn.testing": "测试中…",
   "addconn.try_again": "重试",

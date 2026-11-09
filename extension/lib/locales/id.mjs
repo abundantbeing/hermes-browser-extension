@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Alamat ini memakai sertifikatnya sendiri (ditandatangani sendiri)",
   "addconn.cert_hint": "Peramban Anda yang menentukan sertifikat mana yang dipercaya. Jika tidak menerima yang ini, ekstensi akan membuka alamat itu agar Anda dapat menerimanya di sana, sekali saja.",
   "addconn.private_title": "Koneksi privat",
-  "addconn.private_hint": "SSH dan Mosh memerlukan aplikasi yang dapat membukanya. Ekstensi peramban tidak bisa, jadi keduanya tidak ditawarkan di sini.",
+  "addconn.private_hint": "Terowongan SSH, Tailscale, WireGuard dan jaringan privat lain tidak memerlukan pengaturan khusus di sini. Mulai koneksi terlebih dahulu, lalu tambahkan Gerbang jarak jauh di alamat yang diberikannya, dengan API kunci Anda. Ekstensi ini tidak dapat membuka sesi SSH sendiri.",
   "addconn.add": "Tambahkan koneksi",
   "addconn.testing": "Menguji…",
   "addconn.try_again": "Coba lagi",

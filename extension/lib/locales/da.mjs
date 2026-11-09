@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Denne adresse bruger sit eget (selvsignerede) certifikat",
   "addconn.cert_hint": "Din browser afgør, hvilke certifikater den stoler på. Accepterer den ikke dette, åbner udvidelsen adressen, så du kan acceptere det dér, én gang.",
   "addconn.private_title": "Privat forbindelse",
-  "addconn.private_hint": "SSH og Mosh kræver en app, der kan åbne dem. En browserudvidelse kan ikke det, så de tilbydes ikke her.",
+  "addconn.private_hint": "SSH-tunneller, Tailscale, WireGuard og andre private netværk kræver ikke noget særligt her. Start forbindelsen først, og tilføj derefter en Fjernbetjent gateway på den adresse, den giver dig, med din API nøgle. Udvidelsen kan ikke selv åbne en SSH-session.",
   "addconn.add": "Tilføj forbindelse",
   "addconn.testing": "Tester…",
   "addconn.try_again": "Prøv igen",

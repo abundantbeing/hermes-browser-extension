@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "此位址使用自己的（自簽署）憑證",
   "addconn.cert_hint": "瀏覽器決定要信任哪些憑證。如果它不接受此憑證，擴充功能會開啟該位址，讓你在那裡接受一次。",
   "addconn.private_title": "私人連線",
-  "addconn.private_hint": "SSH 和 Mosh 需要能開啟它們的應用程式。瀏覽器擴充功能無法做到，因此這裡不提供。",
+  "addconn.private_hint": "SSH 隧道、Tailscale、WireGuard 和其他私人網路在這裡不需要特別設定。請先啟動連線，再用你的 API 金鑰，在它提供的位址新增遠端閘道器。本擴充功能無法自行開啟 SSH 工作階段。",
   "addconn.add": "新增連線",
   "addconn.testing": "測試中…",
   "addconn.try_again": "重試",

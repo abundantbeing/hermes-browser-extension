@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH と Mosh は、それを開けるアプリが必要です。ブラウザー拡張機能では開けないため、ここでは提供していません。",
+    "message": "SSH トンネル、Tailscale、WireGuard などのプライベートネットワークは、ここでは特別な設定は不要です。先に接続を開始し、表示されたアドレスに API キーを使ってリモートゲートウェイを追加してください。この拡張機能では SSH セッションを直接開くことはできません。",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

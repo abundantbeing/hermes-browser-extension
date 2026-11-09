@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH en Mosh hebben een app nodig die ze kan openen. Een browserextensie kan dat niet, dus ze worden hier niet aangeboden.",
+    "message": "SSH-tunnels, Tailscale, WireGuard en andere privénetwerken vereisen hier niets bijzonders. Start eerst de verbinding en voeg daarna een Externe gateway toe op het adres dat die geeft, met je API sleutel. Deze extensie kan zelf geen SSH-sessie openen.",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

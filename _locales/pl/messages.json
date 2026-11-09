@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH i Mosh wymagają aplikacji, która je obsłuży. Rozszerzenie przeglądarki tego nie potrafi, więc nie są tu oferowane.",
+    "message": "Tunele SSH, Tailscale, WireGuard i inne prywatne sieci nie wymagają tu niczego szczególnego. Najpierw uruchom połączenie, a potem dodaj Zdalną bramkę pod adresem, który poda, wraz z kluczem API. To rozszerzenie nie potrafi samo otworzyć sesji SSH.",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

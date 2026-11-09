@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH และ Mosh ต้องใช้แอปที่เปิดได้ ส่วนขยายเบราว์เซอร์เปิดไม่ได้ จึงไม่มีให้เลือกที่นี่",
+    "message": "อุโมงค์ SSH, Tailscale, WireGuard และเครือข่ายส่วนตัวอื่น ๆ ไม่ต้องตั้งค่าอะไรพิเศษที่นี่ เริ่มการเชื่อมต่อก่อน แล้วเพิ่มเกตเวย์ระยะไกลที่ที่อยู่ซึ่งระบบให้มา พร้อมคีย์ API ของคุณ ส่วนขยายนี้ไม่สามารถเปิดเซสชัน SSH ได้เอง",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

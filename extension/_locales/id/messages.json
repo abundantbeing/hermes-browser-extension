@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH dan Mosh memerlukan aplikasi yang dapat membukanya. Ekstensi peramban tidak bisa, jadi keduanya tidak ditawarkan di sini.",
+    "message": "Terowongan SSH, Tailscale, WireGuard dan jaringan privat lain tidak memerlukan pengaturan khusus di sini. Mulai koneksi terlebih dahulu, lalu tambahkan Gerbang jarak jauh di alamat yang diberikannya, dengan API kunci Anda. Ekstensi ini tidak dapat membuka sesi SSH sendiri.",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Este endereço usa certificado próprio (autoassinado)",
   "addconn.cert_hint": "Seu navegador decide quais certificados confiar. Se ele não aceitar este, a extensão abre o endereço para você aceitá-lo lá, uma vez.",
   "addconn.private_title": "Conexão privada",
-  "addconn.private_hint": "SSH e Mosh precisam de um app que consiga abri-los. Uma extensão de navegador não consegue, então eles não são oferecidos aqui.",
+  "addconn.private_hint": "Túneis SSH, Tailscale, WireGuard e outras redes privadas não precisam de nada especial aqui. Inicie a conexão primeiro e depois adicione um Gateway remoto no endereço que ela fornecer, com sua API chave. Esta extensão não consegue abrir uma sessão SSH por conta própria.",
   "addconn.add": "Adicionar conexão",
   "addconn.testing": "Testando…",
   "addconn.try_again": "Tentar novamente",

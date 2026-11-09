@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "이 주소는 자체 서명 인증서를 사용합니다",
   "addconn.cert_hint": "어떤 인증서를 신뢰할지는 브라우저가 정합니다. 브라우저가 이 인증서를 받아들이지 않으면, 확장 프로그램이 주소를 열어 한 번만 거기서 수락할 수 있게 합니다.",
   "addconn.private_title": "비공개 연결",
-  "addconn.private_hint": "SSH와 Mosh는 이를 열 수 있는 앱이 필요합니다. 브라우저 확장 프로그램은 열 수 없어서 여기서는 제공하지 않습니다.",
+  "addconn.private_hint": "SSH 터널, Tailscale, WireGuard 및 기타 사설 네트워크는 여기서 별도로 설정할 필요가 없습니다. 먼저 연결을 시작한 다음, 표시된 주소에 API 키와 함께 원격 게이트웨이를 추가하세요. 이 확장 프로그램은 SSH 세션을 직접 열 수 없습니다.",
   "addconn.add": "연결 추가",
   "addconn.testing": "테스트 중…",
   "addconn.try_again": "다시 시도",

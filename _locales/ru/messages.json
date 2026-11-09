@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH и Mosh требуют приложение, которое умеет их открывать. Расширение браузера не умеет, поэтому здесь они не предлагаются.",
+    "message": "SSH-туннели, Tailscale, WireGuard и другие частные сети здесь ничего особенного не требуют. Сначала запустите подключение, затем добавьте Удаленный шлюз по адресу, который оно выдаст, вместе с ключом API. Расширение само по себе не может открыть сеанс SSH.",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Diese Adresse nutzt ein eigenes (selbstsigniertes) Zertifikat",
   "addconn.cert_hint": "Dein Browser entscheidet, welchen Zertifikaten er vertraut. Akzeptiert er dieses nicht, öffnet die Erweiterung die Adresse, damit du es dort einmalig akzeptieren kannst.",
   "addconn.private_title": "Private Verbindung",
-  "addconn.private_hint": "SSH und Mosh brauchen eine App, die sie öffnen kann. Eine Browser-Erweiterung kann das nicht, daher werden sie hier nicht angeboten.",
+  "addconn.private_hint": "SSH-Tunnel, Tailscale, WireGuard und andere private Netzwerke brauchen hier nichts Besonderes. Starte zuerst die Verbindung und füge dann ein Remote-Gateway unter der Adresse hinzu, die sie dir nennt, mit deinem API-Schlüssel. Diese Erweiterung kann selbst keine SSH-Sitzung öffnen.",
   "addconn.add": "Verbindung hinzufügen",
   "addconn.testing": "Wird getestet…",
   "addconn.try_again": "Erneut versuchen",

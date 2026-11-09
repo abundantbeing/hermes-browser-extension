@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH 和 Mosh 需要能够打开它们的应用。浏览器扩展无法做到，因此这里不提供。",
+    "message": "SSH 隧道、Tailscale、WireGuard 和其他专用网络在这里无需特别设置。请先启动连接，然后用你的 API 密钥，在它提供的地址上添加远程网关。本扩展本身无法打开 SSH 会话。",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

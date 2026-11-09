@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH và Mosh cần một ứng dụng có thể mở chúng. Tiện ích trình duyệt không làm được việc này, nên chúng không được cung cấp ở đây.",
+    "message": "Đường hầm SSH, Tailscale, WireGuard và các mạng riêng khác không cần thiết lập gì đặc biệt ở đây. Hãy khởi động kết nối trước, sau đó thêm Cổng từ xa tại địa chỉ mà kết nối cung cấp, cùng với khóa API của bạn. Tiện ích này không thể tự mở phiên SSH.",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

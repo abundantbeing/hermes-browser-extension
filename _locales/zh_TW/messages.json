@@ -272,7 +272,7 @@
     "description": "Runtime interface message addconn.open_address"
   },
   "runtime_addconn_private_hint": {
-    "message": "SSH 和 Mosh 需要能開啟它們的應用程式。瀏覽器擴充功能無法做到，因此這裡不提供。",
+    "message": "SSH 隧道、Tailscale、WireGuard 和其他私人網路在這裡不需要特別設定。請先啟動連線，再用你的 API 金鑰，在它提供的位址新增遠端閘道器。本擴充功能無法自行開啟 SSH 工作階段。",
     "description": "Runtime interface message addconn.private_hint"
   },
   "runtime_addconn_private_title": {

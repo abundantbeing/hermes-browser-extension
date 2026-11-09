@@ -44,7 +44,7 @@ export default Object.freeze({
   "addconn.cert_label": "Địa chỉ này dùng chứng chỉ riêng (tự ký)",
   "addconn.cert_hint": "Trình duyệt của bạn quyết định chứng chỉ nào được tin cậy. Nếu không chấp nhận chứng chỉ này, tiện ích sẽ mở địa chỉ để bạn chấp nhận ở đó, một lần.",
   "addconn.private_title": "Kết nối riêng tư",
-  "addconn.private_hint": "SSH và Mosh cần một ứng dụng có thể mở chúng. Tiện ích trình duyệt không làm được việc này, nên chúng không được cung cấp ở đây.",
+  "addconn.private_hint": "Đường hầm SSH, Tailscale, WireGuard và các mạng riêng khác không cần thiết lập gì đặc biệt ở đây. Hãy khởi động kết nối trước, sau đó thêm Cổng từ xa tại địa chỉ mà kết nối cung cấp, cùng với khóa API của bạn. Tiện ích này không thể tự mở phiên SSH.",
   "addconn.add": "Thêm kết nối",
   "addconn.testing": "Đang kiểm tra…",
   "addconn.try_again": "Thử lại",
