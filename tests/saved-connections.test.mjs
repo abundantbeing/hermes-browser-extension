@@ -538,6 +538,25 @@ test('an edited gateway address saved by Delete starts a fresh chat here, and on
   }
 });
 
+test('a save that fails leaves the panel on the connection and chat it was on', async () => {
+  const h = await createSettingsSaveHarness({
+    settings: rememberSavedConnection({ ...local, sessionId: 'old-chat', sessionTitle: 'Old chat' }),
+  });
+  try {
+    const before = { gatewayUrl: h.scope.settings.gatewayUrl, apiKey: h.scope.settings.apiKey, sessionId: h.scope.settings.sessionId };
+    h.els.gatewayUrlInput.value = 'https://moved.example.test';
+    h.els.apiKeyInput.value = 'a-different-key';
+    h.scope.browserApi.storage.local.set = async () => { throw new Error('Saved keys cannot be encrypted in this browser, so nothing was saved.'); };
+    await assert.rejects(h.save(), /cannot be encrypted/);
+    assert.deepEqual(
+      { gatewayUrl: h.scope.settings.gatewayUrl, apiKey: h.scope.settings.apiKey, sessionId: h.scope.settings.sessionId },
+      before,
+      'the live address, key and chat are the ones that are still stored',
+    );
+    assert.equal(h.callsTo('clearAccountForConnection').length, 0, 'the account sign-in is kept: the connection did not change');
+  } finally { h.close(); }
+});
+
 async function openPanel(settings, shareWith) {
   const h = await createSettingsSaveHarness({ settings });
   if (shareWith) h.scope.browserApi = shareWith.scope.browserApi;

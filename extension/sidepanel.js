@@ -24613,8 +24613,6 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     || previousSettings.connectionTransport !== settings.connectionTransport
     || normalizeGatewayUrl(previousSettings.gatewayUrl) !== normalizeGatewayUrl(settings.gatewayUrl);
   const identityChanged = connectionIdentityChanged(previousSettings, settings, normalizeGatewayUrl);
-  // A Hermes account sign-in belongs to the connection it was made for.
-  if (identityChanged) void clearAccountForConnection();
   if (connectionChanged) {
     connectionController.cancel('connection settings changed');
     try {
@@ -24653,10 +24651,19 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     );
     applyAppearanceSettings();
     settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
-    await persistHermesBrowserSettings(settings, { lockHeld: true });
+    try {
+      await persistHermesBrowserSettings(settings, { lockHeld: true });
+    } catch (error) {
+      // Nothing was stored, so the panel stays on the connection it was on, with its chat.
+      settings = previousSettings;
+      applyAppearanceSettings();
+      throw error;
+    }
   };
   if (lockHeld) await writeSettingsRecord();
   else await withSavedConnectionsLock(writeSettingsRecord);
+  // A Hermes account sign-in belongs to the connection it was made for.
+  if (identityChanged) void clearAccountForConnection();
   await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]: settings.inlineAssistAutoReplace !== false });
   const sitesModel = readInlineAssistSitesModel(els.inlineAssistSitesValue);
   inlineSiteContextPreferences = normalizeInlineSiteContextPreferences(sitesModel.contextPrefs);
