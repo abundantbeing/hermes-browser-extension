@@ -7590,7 +7590,27 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 .add-connection-error[hidden] { display: none; }
 .add-connection-group { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--hermes-line); min-width: 0; }
 .add-connection-group[hidden] { display: none; }
-.add-connection-group h3 { margin: 0; font: 500 calc(15px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-display); color: var(--hermes-ink); }
+.add-connection-group h3 {
+  margin: 0;
+  color: var(--hermes-ink);
+  font-family: var(--hermes-font-mono);
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.add-connection-card .add-connection-heading h2 {
+  margin: 0;
+  font-family: var(--hermes-font-display);
+  font-weight: 500;
+  font-synthesis: none;
+  font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  overflow-wrap: anywhere;
+}
 .add-connection-headers { display: grid; gap: 8px; }
 .add-connection-headers:empty { display: none; }
 .add-connection-header-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: start; }
@@ -12028,6 +12048,8 @@ html[dir="rtl"] #inlineAssistModelButton,
 html[dir="rtl"] #pageCommentTraySend,
 html[dir="rtl"] #refreshProfilesButton,
 html[dir="rtl"] #textZoomPresetGrid [data-text-zoom-percent],
+html[dir="rtl"] .add-connection-card .add-connection-heading h2,
+html[dir="rtl"] .add-connection-group h3,
 html[dir="rtl"] .agent-card-meta,
 html[dir="rtl"] .agent-card-name,
 html[dir="rtl"] .agent-card-status,
