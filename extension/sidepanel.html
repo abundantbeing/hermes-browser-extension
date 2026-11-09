@@ -1861,9 +1861,10 @@
             </section>
             <section class="add-connection-group" id="addConnectionCertGroup" aria-labelledby="addConnectionCertTitle">
               <h3 id="addConnectionCertTitle" data-i18n="addconn.cert_title">Certificate</h3>
-              <label class="add-connection-check" for="addConnectionTrust">
-                <input id="addConnectionTrust" type="checkbox" />
-                <span data-i18n="addconn.cert_label">This address uses its own (self-signed) certificate</span>
+              <label class="settings-toggle-card" for="addConnectionTrust">
+                <span class="settings-toggle-copy"><strong data-i18n="addconn.cert_label">This address uses its own (self-signed) certificate</strong></span>
+                <input id="addConnectionTrust" class="settings-switch-input" type="checkbox" />
+                <span class="settings-switch" aria-hidden="true"></span>
               </label>
               <p class="add-connection-hint" data-i18n="addconn.cert_hint">Your browser decides which certificates to trust. If it does not accept this one, the extension opens the address so you can accept it there, once.</p>
             </section>
