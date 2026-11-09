@@ -3559,6 +3559,58 @@
     "message": "Projeler için Hermes Web oturumu gerekiyor. Hermes Web’i bir kez açın (hermes webapp çalıştırın), sonra tekrar deneyin.",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
   },
+  "runtime_read_aloud_failed": {
+    "message": "Bu yanıt sesli okunamadı",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "Ses (sesli okuma)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "Kaynak: bu tarayıcı (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "Kaynak: Hermes kontrol paneli (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "Kaynak: yok",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "Bu yanıtta okunacak metin yok.",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "Yanıtlar bu tarayıcının kendi konuşma sesiyle okunur. Hermes kontrol paneline buradan ulaşılamıyor ya da konuşma yolu yok; bu yüzden profilinizin sesi kullanılmıyor.",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "Yanıtlar, Hermes profilinizde ayarlı sesle okunur. Sesi Hermes kontrol paneli üretir, bu panel de çalar.",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "Yanıtlar Hermes profilinizin sesiyle okunur. Son seferde Hermes sesi üretemedi ({reason}); bu yüzden bu tarayıcının kendi sesi okudu.",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "Kullanılabilir ses yok: Hermes kontrol paneline ulaşılamıyor ve bu tarayıcıda konuşma sesi yok; bu yüzden sesli okuma düğmesi gizli.",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "Tarayıcı konuşması",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "Ağ geçidi TTS",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "Yok",
+    "description": "Runtime interface message read_aloud.route.none"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "İki tarafta baloncuklar",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7195,6 +7247,10 @@
     "message": "Aralık",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "Sesli oku",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "Görünen konuyu oku",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7982,6 +8038,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hermes'i durdur",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "Sesli okumayı durdur",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "Oturum değiştirmeden önce etkin çalıştırmayı durdurun.",

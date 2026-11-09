@@ -3559,6 +3559,58 @@
     "message": "Dự án cần phiên đăng nhập của Hermes Web. Hãy mở Hermes Web một lần (chạy hermes webapp), rồi thử lại.",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
   },
+  "runtime_read_aloud_failed": {
+    "message": "Không thể đọc to phản hồi này",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "Giọng nói (đọc to)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "Nguồn: trình duyệt này (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "Nguồn: bảng điều khiển Hermes (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "Nguồn: không có",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "Phản hồi này không có văn bản để đọc.",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "Phản hồi được đọc bằng giọng nói riêng của trình duyệt này. Không truy cập được bảng điều khiển Hermes từ đây hoặc nó không có đường dẫn giọng nói, nên giọng của hồ sơ bạn không được dùng.",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "Phản hồi được đọc bằng giọng đã thiết lập trong hồ sơ Hermes của bạn. Bảng điều khiển Hermes tạo âm thanh và bảng này phát lại.",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "Phản hồi được đọc bằng giọng của hồ sơ Hermes của bạn. Lần trước Hermes không tạo được âm thanh ({reason}), nên giọng riêng của trình duyệt này đã đọc.",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "Không có giọng nói nào: không truy cập được bảng điều khiển Hermes và trình duyệt này không có giọng nói, nên nút đọc to bị ẩn.",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "Giọng nói của trình duyệt",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "TTS của cổng",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "Không có",
+    "description": "Runtime interface message read_aloud.route.none"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Bong bóng hai bên",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7195,6 +7247,10 @@
     "message": "Phạm vi",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "Đọc to",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "Đọc chuỗi đang hiện",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7982,6 +8038,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Dừng Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "Dừng đọc to",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "Dừng lượt chạy đang hoạt động trước khi chuyển phiên.",

@@ -3559,6 +3559,58 @@
     "message": "تحتاج المشاريع إلى تسجيل الدخول في Hermes Web. افتح Hermes Web مرة واحدة (شغّل hermes webapp) ثم حاول مجددًا.",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
   },
+  "runtime_read_aloud_failed": {
+    "message": "تعذّرت قراءة هذا الرد بصوت عالٍ",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "الصوت (القراءة بصوت عالٍ)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "المصدر: هذا المتصفح (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "المصدر: لوحة تحكم Hermes (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "المصدر: لا شيء",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "لا يوجد نص للقراءة في هذا الرد.",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "تُقرأ الردود بصوت الكلام الخاص بهذا المتصفح. لا يمكن الوصول إلى لوحة تحكم Hermes من هنا أو ليس لها مسار للكلام، لذلك لا يُستخدم صوت ملفك الشخصي.",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "تُقرأ الردود بالصوت المضبوط في ملف Hermes الشخصي الخاص بك. تنشئ لوحة تحكم Hermes الصوت وتشغّله هذه اللوحة.",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "تُقرأ الردود بصوت ملف Hermes الشخصي الخاص بك. في المرة الأخيرة لم يتمكن Hermes من إنشاء الصوت ({reason})، فقرأها صوت هذا المتصفح نفسه.",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "لا يتوفر أي صوت: لا يمكن الوصول إلى لوحة تحكم Hermes وليس في هذا المتصفح صوت كلام، لذلك زر القراءة بصوت عالٍ مخفي.",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "كلام المتصفح",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "TTS البوابة",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "لا شيء",
+    "description": "Runtime interface message read_aloud.route.none"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "فقاعات على الجانبين",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7195,6 +7247,10 @@
     "message": "يتراوح",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "قراءة بصوت عالٍ",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "قراءة المحادثة الظاهرة",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7982,6 +8038,10 @@
   "runtime_ui_stop_hermes": {
     "message": "وقف Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "إيقاف القراءة بصوت عالٍ",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "أوقف التشغيل النشط قبل تبديل الجلسات.",

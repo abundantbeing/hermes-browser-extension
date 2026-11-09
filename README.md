@@ -243,6 +243,10 @@ After the Hermes backend is responding again, reopen the panel or use **Test con
 
 Hermes transcription needs an advertised API transcription route or a reachable dashboard transcription route. If neither is available, the panel uses browser speech when that browser supports it. A slow or unavailable browser speech download now falls through instead of leaving the click waiting, but browser speech itself depends on the browser.
 
+### A reply is not read aloud
+
+The speaker button beside Copy reads the finished reply aloud when you press it. With the Hermes dashboard reachable on this computer it uses your Hermes profile's own voice (the `tts` setting of that profile) through the dashboard's `/api/audio/speak` route; otherwise it uses the browser's speech voices, which are the ones your operating system offers. Settings → About & Diagnostics shows a **Voice (read aloud)** row naming the route in use: Gateway TTS, Browser speech or None. If Hermes has no voice set up or cannot make the audio, that row says the last read fell back to the browser's voice and gives Hermes' reason.
+
 ### Filing a support issue
 
 Open Settings → **Support diagnostics** → **Copy Diagnostics** and paste the report into the GitHub issue or support thread.

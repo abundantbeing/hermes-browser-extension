@@ -109,26 +109,45 @@ export function acquireReviewLock(filename) {
   catch (error) {
     if (error.code !== 'EEXIST') throw error;
     const guard = `${lock}.reclaim`;
-    let fd;
-    try { fd = fs.openSync(guard, 'wx'); }
-    catch (guardError) {
-      if (guardError.code !== 'EEXIST') throw guardError;
-      // A reclaimer may itself have died between creating the guard and removing
-      // the stale lock. Reclaim the guard only when its owner is provably gone.
-      let guardOwner = null;
-      try { guardOwner = JSON.parse(fs.readFileSync(guard, 'utf8')); } catch { /* incomplete guard */ }
-      let guardAlive = false;
-      if (Number.isSafeInteger(guardOwner?.pid) && guardOwner.pid > 0) {
-        try { process.kill(guardOwner.pid, 0); guardAlive = true; } catch (probe) { guardAlive = probe.code !== 'ESRCH'; }
+    const spin = () => { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5); };
+    const deadline = Date.now() + 15_000;
+    let reclaimFd;
+    for (;;) {
+      try {
+        reclaimFd = fs.openSync(guard, 'wx');
+        break;
+      } catch (guardError) {
+        if (guardError.code !== 'EEXIST') throw guardError;
+        if (Date.now() >= deadline) throw new Error('Review lock recovery timed out waiting for the reclaim guard');
+        // Stale lock may already be gone; take it without reclaiming.
+        if (!fs.existsSync(lock)) {
+          try {
+            create();
+          } catch (e) {
+            if (e.code === 'EEXIST') { spin(); continue; }
+            throw e;
+          }
+          return () => {
+            try {
+              const owner = JSON.parse(fs.readFileSync(lock, 'utf8'));
+              if (owner.token === token && owner.pid === process.pid) fs.unlinkSync(lock);
+            } catch (err) { if (err.code !== 'ENOENT' && !(err instanceof SyntaxError)) throw err; }
+          };
+        }
+        // Another reclaimer holds `guard`: wait until it finishes or prove it is dead.
+        let guardOwner = null;
+        try { guardOwner = JSON.parse(fs.readFileSync(guard, 'utf8')); } catch { /* incomplete guard */ }
+        let guardAlive = false;
+        if (Number.isSafeInteger(guardOwner?.pid) && guardOwner.pid > 0) {
+          try { process.kill(guardOwner.pid, 0); guardAlive = true; } catch (probe) { guardAlive = probe.code !== 'ESRCH'; }
+        }
+        if (guardAlive) { spin(); continue; }
+        try { fs.unlinkSync(guard); } catch { spin(); continue; }
       }
-      if (guardAlive) throw new Error('Review lock recovery is already in progress; refusing concurrent run');
-      fs.unlinkSync(guard);
-      fd = fs.openSync(guard, 'wx');
-      fs.writeFileSync(fd, JSON.stringify({ pid: process.pid, token, started: new Date().toISOString() }));
     }
     let failure = null;
     try {
-      fs.writeFileSync(fd, JSON.stringify({ pid: process.pid, token, started: new Date().toISOString() }));
+      fs.writeFileSync(reclaimFd, JSON.stringify({ pid: process.pid, token, started: new Date().toISOString() }));
       // Re-read only after taking the recovery guard. A competitor may already
       // have replaced the stale owner while we were waiting to reach this code.
       const owner = JSON.parse(fs.readFileSync(lock, 'utf8'));
@@ -142,7 +161,7 @@ export function acquireReviewLock(filename) {
     finally {
       // Cleanup never masks the real failure: a throw here would replace the
       // original error and hide why the run was refused.
-      try { fs.closeSync(fd); } catch { /* already closed */ }
+      try { fs.closeSync(reclaimFd); } catch { /* already closed */ }
       try { fs.unlinkSync(guard); } catch (e) { if (e.code !== 'ENOENT' && !failure) failure = e; }
     }
     if (failure) throw failure;

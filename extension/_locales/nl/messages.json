@@ -3559,6 +3559,58 @@
     "message": "Projecten heeft de login van Hermes Web nodig. Open Hermes Web één keer (voer hermes webapp uit) en probeer het opnieuw.",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
   },
+  "runtime_read_aloud_failed": {
+    "message": "Dit antwoord kon niet worden voorgelezen",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "Stem (voorlezen)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "Bron: deze browser (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "Bron: Hermes-dashboard (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "Bron: geen",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "Dit antwoord bevat geen tekst om voor te lezen.",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "Antwoorden worden voorgelezen met de eigen spraakstem van deze browser. Het Hermes-dashboard is van hieruit niet bereikbaar of heeft geen spraakroute, dus de stem van je profiel wordt niet gebruikt.",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "Antwoorden worden voorgelezen met de stem die in je Hermes-profiel is ingesteld. Het Hermes-dashboard maakt de audio en dit paneel speelt die af.",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "Antwoorden worden voorgelezen met de stem van je Hermes-profiel. De vorige keer kon Hermes de audio niet maken ({reason}), dus las de eigen stem van deze browser voor.",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "Geen stem beschikbaar: het Hermes-dashboard is niet bereikbaar en deze browser heeft geen spraakstem, dus de knop Voorlezen is verborgen.",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "Spraak van de browser",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "Gateway-TTS",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "Geen",
+    "description": "Runtime interface message read_aloud.route.none"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Bubbels aan beide kanten",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7195,6 +7247,10 @@
     "message": "Bereik",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "Voorlezen",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "Zichtbare thread lezen",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7982,6 +8038,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hermes stoppen",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "Stop met voorlezen",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "Stop de actieve uitvoering voordat je van sessie wisselt.",

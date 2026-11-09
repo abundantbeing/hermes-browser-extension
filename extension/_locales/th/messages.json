@@ -3559,6 +3559,58 @@
     "message": "โปรเจกต์ต้องใช้การลงชื่อเข้าใช้ของ Hermes Web เปิด Hermes Web หนึ่งครั้ง (รัน hermes webapp) แล้วลองอีกครั้ง",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
   },
+  "runtime_read_aloud_failed": {
+    "message": "ไม่สามารถอ่านคำตอบนี้ออกเสียงได้",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "เสียง (อ่านออกเสียง)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "ที่มา: เบราว์เซอร์นี้ (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "ที่มา: แดชบอร์ด Hermes (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "ที่มา: ไม่มี",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "คำตอบนี้ไม่มีข้อความให้อ่าน",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "คำตอบจะถูกอ่านด้วยเสียงพูดของเบราว์เซอร์นี้เอง เข้าถึงแดชบอร์ด Hermes จากที่นี่ไม่ได้หรือไม่มีเส้นทางเสียงพูด จึงไม่ได้ใช้เสียงของโปรไฟล์คุณ",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "คำตอบจะถูกอ่านด้วยเสียงที่ตั้งไว้ในโปรไฟล์ Hermes ของคุณ แดชบอร์ด Hermes สร้างเสียง และแผงนี้เล่นเสียงนั้น",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "คำตอบจะถูกอ่านด้วยเสียงของโปรไฟล์ Hermes ของคุณ ครั้งล่าสุด Hermes สร้างเสียงไม่ได้ ({reason}) เบราว์เซอร์นี้จึงอ่านด้วยเสียงของตัวเองแทน",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "ไม่มีเสียงให้ใช้: เข้าถึงแดชบอร์ด Hermes ไม่ได้ และเบราว์เซอร์นี้ไม่มีเสียงพูด จึงซ่อนปุ่มอ่านออกเสียงไว้",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "เสียงพูดของเบราว์เซอร์",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "TTS ของเกตเวย์",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "ไม่มี",
+    "description": "Runtime interface message read_aloud.route.none"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "บับเบิลทั้งสองฝั่ง",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7195,6 +7247,10 @@
     "message": "พิสัย",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "อ่านออกเสียง",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "อ่านเธรดที่มองเห็น",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7982,6 +8038,10 @@
   "runtime_ui_stop_hermes": {
     "message": "หยุด Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "หยุดอ่านออกเสียง",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "หยุดการทำงานที่กำลังใช้งานอยู่ก่อนสลับเซสชัน",

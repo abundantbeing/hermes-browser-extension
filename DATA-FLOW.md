@@ -42,6 +42,7 @@ Depending on context scope, settings, and page availability, a turn can include:
 - attached text files or metadata for non-text files
 - pasted/attached images as inline data, or as a local path when the connected Hermes runtime advertises image upload support
 - voice transcript text from Hermes STT or Browser speech fallback
+- reply text you ask to have read aloud, sent only when you press a reply's speaker button, to the Hermes dashboard on this computer (`/api/audio/speak`) or spoken by the browser's own speech synthesis
 - selected model/session/profile/settings metadata needed to route the request
 - for a model-backed Hermes Assist action: the current draft plus only the bounded site context enabled for that site
 

@@ -20,6 +20,10 @@ Pictures attached to a message are stored on the machine running Hermes. Reopeni
 
 Voice dictation uses the API transcription route first, then the dashboard route, then browser speech. A dashboard that does not provide its session token is skipped. Browser speech can still fail independently when the browser has not finished installing its language pack or does not support the requested recognition mode.
 
+### A reply is not read aloud, or the voice is not the one I set in Hermes
+
+The speaker button uses the Hermes dashboard's `/api/audio/speak` route, which synthesizes with the active profile's `tts` setting and returns the audio to the panel. It needs the Hermes Desktop dashboard (or the Hermes Web listener you are signed in to) to be reachable from this computer, the same as dictation through the dashboard. Settings → About & Diagnostics → **Voice (read aloud)** shows which route is active. If it says Browser speech, the dashboard was not reachable or has no speech route, and the browser's own voice reads; if it says the last read fell back, Hermes could not make the audio (no text-to-speech provider or key for that profile is the usual cause) and its reason is shown there. A gateway on another computer uses the browser voice for now.
+
 ### The Projects tab says projects are not available
 
 Projects and Move need the Hermes dashboard WebSocket and a gateway that advertises session authority. The tab names which of these is missing: a REST-only connection, a gateway that did not report session authority (update Hermes), a connection that has not finished connecting, or a gateway that answered "method not found" for a projects call. Recents keeps working in every case. A project's folder is a path on the machine running Hermes, so type it; a browser cannot browse that machine's folders. If a move says it was not confirmed, or that the connection dropped, open the move again and check the session's folder before relying on it.

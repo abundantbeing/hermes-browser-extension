@@ -3559,6 +3559,58 @@
     "message": "प्रोजेक्ट को Hermes Web के साइन-इन की ज़रूरत है। Hermes Web को एक बार खोलें (hermes webapp चलाएँ), फिर दोबारा कोशिश करें।",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
   },
+  "runtime_read_aloud_failed": {
+    "message": "इस उत्तर को ज़ोर से नहीं पढ़ा जा सका",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "आवाज़ (ज़ोर से पढ़ना)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "स्रोत: यह ब्राउज़र (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "स्रोत: Hermes डैशबोर्ड (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "स्रोत: कोई नहीं",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "इस उत्तर में पढ़ने के लिए कोई टेक्स्ट नहीं है।",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "उत्तर इस ब्राउज़र की अपनी आवाज़ में पढ़े जाते हैं। यहाँ से Hermes डैशबोर्ड तक पहुँचा नहीं जा सकता या उसमें आवाज़ का रास्ता नहीं है, इसलिए आपकी प्रोफ़ाइल की आवाज़ इस्तेमाल नहीं हो रही।",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "उत्तर आपकी Hermes प्रोफ़ाइल में सेट की गई आवाज़ में पढ़े जाते हैं। ऑडियो Hermes डैशबोर्ड बनाता है और यह पैनल उसे चलाता है।",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "उत्तर आपकी Hermes प्रोफ़ाइल की आवाज़ में पढ़े जाते हैं। पिछली बार Hermes ऑडियो नहीं बना सका ({reason}), इसलिए इस ब्राउज़र की अपनी आवाज़ ने पढ़ा।",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "कोई आवाज़ उपलब्ध नहीं है: Hermes डैशबोर्ड तक पहुँचा नहीं जा सकता और इस ब्राउज़र में कोई आवाज़ नहीं है, इसलिए ज़ोर से पढ़ने का बटन छिपा है।",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "ब्राउज़र की आवाज़",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "गेटवे TTS",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "कोई नहीं",
+    "description": "Runtime interface message read_aloud.route.none"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "दोनों तरफ़ बबल",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7195,6 +7247,10 @@
     "message": "श्रेणी",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "ज़ोर से पढ़ें",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "दिखाई दे रहा थ्रेड पढ़ें",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7982,6 +8038,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hermes रोकें",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "ज़ोर से पढ़ना रोकें",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "सत्र बदलने से पहले सक्रिय रन को रोकें।",

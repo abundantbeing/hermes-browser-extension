@@ -3559,6 +3559,58 @@
     "message": "프로젝트에는 Hermes Web 로그인이 필요합니다. Hermes Web을 한 번 열고(hermes webapp 실행) 다시 시도하세요.",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
   },
+  "runtime_read_aloud_failed": {
+    "message": "이 답변을 소리 내어 읽을 수 없습니다",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "음성(소리 내어 읽기)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "출처: 이 브라우저 (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "출처: Hermes 대시보드 (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "출처: 없음",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "이 답변에는 읽을 텍스트가 없습니다.",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "답변은 이 브라우저 자체 음성으로 읽습니다. 여기서 Hermes 대시보드에 연결할 수 없거나 음성 경로가 없어 프로필의 음성은 사용되지 않습니다.",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "답변은 Hermes 프로필에 설정된 음성으로 읽습니다. Hermes 대시보드가 오디오를 만들고 이 패널이 재생합니다.",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "답변은 Hermes 프로필의 음성으로 읽습니다. 지난번에는 Hermes가 오디오를 만들지 못해({reason}) 이 브라우저 자체 음성이 읽었습니다.",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "사용할 수 있는 음성이 없습니다. Hermes 대시보드에 연결할 수 없고 이 브라우저에도 음성이 없어 소리 내어 읽기 버튼이 숨겨집니다.",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "브라우저 음성",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "게이트웨이 TTS",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "없음",
+    "description": "Runtime interface message read_aloud.route.none"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "양쪽 말풍선",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7195,6 +7247,10 @@
     "message": "범위",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "소리 내어 읽기",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "보이는 스레드 읽기",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7982,6 +8038,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hermes 중지",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "소리 내어 읽기 중지",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "세션을 전환하기 전에 활성 실행을 중지하세요.",

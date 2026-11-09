@@ -756,6 +756,20 @@ import { buildCleanClipboardPayload, writeAssistantClipboardEvent } from './lib/
 import { normalizeMessageTimestamp } from './lib/message-meta.mjs';
 import { setRailCopyEnabled } from './lib/message-actions.mjs';
 import { createMessageThreadUi } from './lib/message-thread-ui.mjs';
+import {
+  createBrowserSpeech,
+  createGatewayAudioPlayback,
+  createReadAloudPlayer,
+  describeVoiceRoute,
+  ensureReadAloudReplyId,
+  preserveReadAloudReplyIds,
+  readAloudKey,
+  readAloudKeysMatch,
+  readAloudRouteOrder,
+  readableTextFromElement,
+  requestGatewaySpeech,
+  voiceRouteSummary,
+} from './lib/read-aloud.mjs';
 import { bindWheelScrollX } from './lib/wheel-scroll-x.mjs';
 import {
   NEAR_BOTTOM_THRESHOLD_PX,
@@ -1386,6 +1400,94 @@ const pageAnnotationImages = createPageAnnotationImageStore();
 let selectedTabs = []; // null = all tabs; array of SafeTab = user-filtered set
 let messages = [];
 let panelMessageThread = null;
+
+// -- Read aloud ---------------------------------------------------------------
+// A finished reply's speaker button. The profile's own voice comes from the Hermes
+// dashboard (POST /api/audio/speak returns the audio, so it plays here and Stop works);
+// the browser's speechSynthesis reads when the dashboard cannot. Click only.
+const readAloudAudio = createGatewayAudioPlayback();
+let readAloudDashboard = null;
+let readAloudDashboardIdentity = '';
+// What the last dashboard probe found, kept apart from the capability ledger, which forgets probes whenever a socket reconnects.
+let readAloudDashboardProbe = null;
+let readAloudTurnWasRunning = false;
+
+async function resolveReadAloudDashboard() {
+  const baseUrl = await resolveDashboardMediaBaseUrl();
+  const token = baseUrl ? await fetchDashboardSessionToken({ baseUrl, timeoutMs: 2_500 }) : '';
+  return { baseUrl, token };
+}
+
+function readAloudProfile() {
+  const bot = soloBotRow();
+  return String(bot?.profileName || settings.activeProfile || '').trim();
+}
+
+const readAloudPlayer = createReadAloudPlayer({
+  gateway: {
+    prepare() {
+      readAloudAudio.prepare();
+      readAloudDashboard = null;
+      readAloudDashboardIdentity = '';
+    },
+    async synthesize(text, { signal } = {}) {
+      const identity = `${settings.gatewayUrl}|${settings.gatewayMode}|${settings.connectionTransport}`;
+      if (readAloudDashboardIdentity !== identity) {
+        readAloudDashboard = null;
+        readAloudDashboardIdentity = identity;
+      }
+      readAloudDashboard ||= resolveReadAloudDashboard();
+      const { baseUrl, token } = await readAloudDashboard;
+      const speech = await requestGatewaySpeech({
+        baseUrl, token, profile: readAloudProfile(), text, signal, fetchFn: (url, init) => fetch(url, init),
+      });
+      return speech.bytes;
+    },
+    play: (bytes) => readAloudAudio.play(bytes),
+  },
+  browser: { speak: (chunks) => createBrowserSpeech({ lang: getLocale() }).speak(chunks) },
+  onChange: () => {
+    panelMessageThread?.refreshReadAloud();
+    renderCompatibilityPanel();
+  },
+});
+
+function readAloudAvailability() {
+  const probe = readAloudDashboardProbe;
+  const dashboardReachable = probe?.reachable === true
+    && probe.gatewayUrl === settings.gatewayUrl
+    && normalizeGatewayMode(settings.gatewayMode) === 'local-api';
+  return {
+    gatewayAvailable: readAloudAudio.available && dashboardReachable,
+    browserAvailable: createBrowserSpeech().available,
+    lastFallback: readAloudPlayer.state().lastFallback,
+  };
+}
+
+function readAloudStateOf(record) {
+  const state = readAloudPlayer.state();
+  return state.target !== null && readAloudKeysMatch(state.target, record) ? state.status : 'idle';
+}
+
+async function toggleReadAloud(record, node) {
+  const key = readAloudKey(record);
+  const state = readAloudPlayer.state();
+  if (state.target !== null && readAloudKeysMatch(state.target, record) && state.status !== 'idle') {
+    readAloudPlayer.stop();
+    return;
+  }
+  const text = readableTextFromElement(node?.querySelector?.('.message-content'));
+  if (!text) {
+    showOperationToast({ kind: 'warn', title: t('read_aloud.failed'), detail: t('read_aloud.nothing') });
+    return;
+  }
+  void refreshDashboardRoutes().catch(() => undefined);
+  const result = await readAloudPlayer.toggle(key, text, { order: readAloudRouteOrder(readAloudAvailability()) });
+  if (result?.ok === false) showOperationToast({ kind: 'warn', title: t('read_aloud.failed'), detail: result.error });
+}
+
+window.addEventListener('pagehide', () => readAloudPlayer.stop());
+
 let fileHistoryRestoreGeneration = 0;
 let taskStackStore = {};
 let taskStackExpanded = true;
@@ -4075,6 +4177,27 @@ function renderRemoteDiagnostics(diagnostic = lastRemoteDiagnostic) {
   renderStatusActions();
 }
 
+// The Voice row: which route read aloud takes, said from what this panel can do now.
+function buildVoiceRouteRow() {
+  const voice = describeVoiceRoute(readAloudAvailability());
+  const entry = document.createElement('li');
+  entry.className = `compatibility-row ${voice.status}`;
+  entry.dataset.capability = 'voiceOutput';
+  entry.dataset.voiceRoute = voice.route;
+  const label = document.createElement('span');
+  label.textContent = t('read_aloud.label');
+  const state = document.createElement('strong');
+  state.textContent = t(voice.stateKey);
+  const reason = document.createElement('small');
+  reason.textContent = t(voice.reasonKey, voice.params);
+  const meta = document.createElement('small');
+  meta.className = 'compatibility-meta';
+  meta.textContent = t(`read_aloud.meta.${voice.route}`);
+  entry.append(label, state, reason, meta);
+  entry.title = `${label.textContent}: ${state.textContent}. ${reason.textContent}`;
+  return entry;
+}
+
 function renderCompatibilityPanel() {
   if (!els.compatibilityList) return;
   const locale = getLocale();
@@ -4099,6 +4222,7 @@ function renderCompatibilityPanel() {
     entry.append(label, state, reason, meta);
     els.compatibilityList.appendChild(entry);
   }
+  els.compatibilityList.appendChild(buildVoiceRouteRow());
   if (els.compatibilityStatus) els.compatibilityStatus.textContent = capabilitySummaryText(rows, { t });
   renderBrowserLimitsPanel();
 }
@@ -4204,6 +4328,7 @@ async function copySupportDiagnostics() {
         build: gatewayCapabilities.raw?.build || gatewayCapabilities.raw?.commit || '',
       },
       capabilities: gatewayCapabilities,
+      voiceOutput: voiceRouteSummary(readAloudAvailability()),
       capabilityRows: (syncCapabilityRuntime(), capabilityRuntime.rows(gatewayCapabilities, { browserSpeechAvailable: Boolean(speechRecognitionConstructor()) })),
       selectedModel: currentSelectedModel() || {},
       contextScope,
@@ -5890,21 +6015,42 @@ async function refreshCompanionPluginStatus({ force = false } = {}) {
 // panel has; the three rows then say "served by the dashboard" instead of "unavailable".
 // An advertised gateway route keeps its own record. Never for a remote dashboard.
 let dashboardRoutesProbeAt = 0;
+function notifyReadAloudDashboardProbeChanged() {
+  renderCompatibilityPanel();
+  panelMessageThread?.refreshAfterReadAloudProbe?.();
+}
 async function refreshDashboardRoutes({ force = false } = {}) {
-  if (isRemoteWsMode() || !settings.gatewayUrl) return null;
+  if (isRemoteWsMode() || !settings.gatewayUrl) {
+    readAloudDashboardProbe = null;
+    notifyReadAloudDashboardProbeChanged();
+    return null;
+  }
   if (!force && Date.now() - dashboardRoutesProbeAt < 30_000) return null;
   dashboardRoutesProbeAt = Date.now();
-  syncCapabilityRuntime();
-  const identityKey = capabilityRuntime.ledger.identityKey;
-  const baseUrl = await resolveDashboardMediaBaseUrl().catch(() => '');
-  if (!baseUrl) return null;
-  const token = await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }).catch(() => '');
-  const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
-  const fields = dashboardRouteRecordFields(probe);
-  if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
-  for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);
-  refreshCapabilityViews();
-  return probe;
+  let identityKey = '';
+  try {
+    syncCapabilityRuntime();
+    identityKey = capabilityRuntime.ledger.identityKey;
+    const baseUrl = await resolveDashboardMediaBaseUrl().catch(() => '');
+    if (!baseUrl) {
+      readAloudDashboardProbe = { reachable: false, gatewayUrl: settings.gatewayUrl };
+      notifyReadAloudDashboardProbeChanged();
+      return null;
+    }
+    const token = await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }).catch(() => '');
+    const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
+    readAloudDashboardProbe = { reachable: probe.reachable === true, gatewayUrl: settings.gatewayUrl };
+    notifyReadAloudDashboardProbeChanged();
+    const fields = dashboardRouteRecordFields(probe);
+    if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
+    for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);
+    refreshCapabilityViews();
+    return probe;
+  } catch {
+    readAloudDashboardProbe = { reachable: false, gatewayUrl: settings.gatewayUrl };
+    notifyReadAloudDashboardProbeChanged();
+    return null;
+  }
 }
 
 async function loadGatewayCapabilities({ quiet = false, publicOnly = false, healthOk = false } = {}) {
@@ -6667,7 +6813,10 @@ function currentComposerDraftState() {
 }
 
 function updateComposerBusyState() {
-  document.body.classList.toggle('turn-running', viewedSessionIsRunning());
+  const turnRunning = viewedSessionIsRunning();
+  if (turnRunning && !readAloudTurnWasRunning) readAloudPlayer.turnStarted();
+  readAloudTurnWasRunning = turnRunning;
+  document.body.classList.toggle('turn-running', turnRunning);
   panelMessageThread?.refreshActions();
   renderRunControlRecovery();
   const state = currentComposerDraftState();
@@ -14346,6 +14495,7 @@ function claimGroupComposer() {
   const lease = { id: ++groupComposerSerial };
   activeComposerLease = lease;
   sending = true;
+  readAloudPlayer.turnStarted();
   updateComposerBusyState();
   return lease;
 }
@@ -21088,7 +21238,7 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
     ? messages
     : (sessionAssistantStylesBySession.get(String(sessionId || '').trim()) || []);
   messages = preserveAssistantResponseStyles(
-    preserveUserImageAttachments(incoming, messages).map((message) => {
+    preserveReadAloudReplyIds(preserveUserImageAttachments(incoming, messages), messages).map((message) => {
       const extracted = extractHistoryMediaAttachments(message);
       if (!extracted.length || normalizeUserImageAttachments(message.attachments).length) return message;
       return { ...message, attachments: extracted };
@@ -22321,6 +22471,9 @@ function messageThreadUi() {
   panelMessageThread ||= createMessageThreadUi({
     root: els.messages, document, window, locale: getLocale, translate: translateUiText,
     onCopy: (record, node) => copyMessageRecord(record.role, record, node),
+    canReadAloud: () => readAloudRouteOrder(readAloudAvailability()).length > 0,
+    readAloudStateFor: (record) => readAloudStateOf(record),
+    onReadAloud: (record, node) => { void toggleReadAloud(record, node); },
     replyLabelFor: (record) => roomReplyLabel(record),
     durationLabelFor: (record) => turnDurationLabel(turnDurationByRecord.get(record)),
     onReply: (record) => replyToRoomMember(record),
@@ -22786,6 +22939,7 @@ function addMessage(role, content, {
     });
   }
   if (roleLabel) record.roleLabel = roleLabel;
+  if (role === 'assistant') ensureReadAloudReplyId(record);
   if (Number.isInteger(rowId) && rowId > 0) record.rowId = rowId;
   if (speaker) record.speaker = speaker;
   if (thread) record.thread = thread;
@@ -23463,6 +23617,7 @@ function renderMessagesFromStorage() {
   if (opening) {
     openPin.arm(performance.now(), messageListIsLaidOut());
     newBelowTracker.reset();
+    readAloudPlayer.chatChanged();
   }
   const stickToBottom = !scroller || opening || openPin.isActive(performance.now()) || isMessageStreamNearBottom();
   const previousTop = scroller?.scrollTop || 0;
@@ -30346,14 +30501,29 @@ function bindEvents() {
           // panel, they share this record, and adopting another panel's binding would make this one resume
           // (and then write into) the other panel's session on its next reconnect.
         ];
+        const connectionKeys = new Set([
+          'apiKey', 'tokenSource', 'lastConnectionTestedAt',
+          'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
+          'trustedDashboardOrigin', 'trustedDashboardTabId',
+        ]);
         const patch = {};
+        let connectionChanged = false;
         for (const key of tracked) {
-          if (Object.hasOwn(next, key)) patch[key] = next[key];
+          if (!Object.hasOwn(next, key) || next[key] === settings[key]) continue;
+          patch[key] = next[key];
+          if (connectionKeys.has(key)) connectionChanged = true;
         }
         if (Object.keys(patch).length) {
           settings = { ...settings, ...patch };
-          // Another panel may have moved the connection to a remote mode.
-          resetLocalDashboardState();
+          if (connectionChanged) {
+            readAloudDashboard = null;
+            readAloudDashboardIdentity = '';
+            readAloudDashboardProbe = null;
+            readAloudPlayer.stop();
+            // Another panel may have moved the connection to a remote mode.
+            resetLocalDashboardState();
+            notifyReadAloudDashboardProbeChanged();
+          }
           updateConnectionPrompt();
           renderBrowserControl();
         }

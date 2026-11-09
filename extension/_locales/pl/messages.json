@@ -3559,6 +3559,58 @@
     "message": "Projekty wymagają logowania do Hermes Web. Otwórz Hermes Web raz (uruchom hermes webapp) i spróbuj ponownie.",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
   },
+  "runtime_read_aloud_failed": {
+    "message": "Nie udało się przeczytać tej odpowiedzi na głos",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "Głos (czytanie na głos)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "Źródło: ta przeglądarka (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "Źródło: panel Hermes (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "Źródło: brak",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "W tej odpowiedzi nie ma tekstu do przeczytania.",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "Odpowiedzi są czytane własnym głosem syntezatora tej przeglądarki. Panel Hermes jest stąd niedostępny albo nie ma trasy mowy, więc głos Twojego profilu nie jest używany.",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "Odpowiedzi są czytane głosem ustawionym w Twoim profilu Hermes. Panel Hermes tworzy dźwięk, a ten panel go odtwarza.",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "Odpowiedzi są czytane głosem Twojego profilu Hermes. Ostatnio Hermes nie mógł utworzyć dźwięku ({reason}), więc przeczytał je własny głos tej przeglądarki.",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "Brak dostępnego głosu: panel Hermes jest niedostępny, a ta przeglądarka nie ma głosu syntezatora, więc przycisk czytania na głos jest ukryty.",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "Mowa przeglądarki",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "TTS bramy",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "Brak",
+    "description": "Runtime interface message read_aloud.route.none"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Dymki po obu stronach",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7195,6 +7247,10 @@
     "message": "Zasięg",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "Czytaj na głos",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "Czytaj widoczny wątek",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7982,6 +8038,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Zatrzymaj Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "Przestań czytać na głos",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "Zatrzymaj aktywne uruchomienie przed przełączeniem sesji.",

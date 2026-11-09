@@ -6,6 +6,7 @@ import { messageDisplayText } from '../extension/lib/common.mjs';
 import { preserveAssistantResponseStyles, responsePresentationFromSettings } from '../extension/lib/response-presentation.mjs';
 import { preserveUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments } from '../extension/lib/image-render.mjs';
 import { bindRowIdsFromHistory } from '../extension/lib/message-rewind.mjs';
+import { preserveReadAloudReplyIds } from '../extension/lib/read-aloud.mjs';
 
 const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const body = source.slice(source.indexOf('async function commitFetchedSessionMessages('), source.indexOf('let completionRevealSequence'));
@@ -19,7 +20,7 @@ function build({ save, hydrate }) {
     reconcileBrowserUserHistory: history.reconcileBrowserUserHistory,
     preserveAssistantResponseStyles, responsePresentationFromSettings,
     preserveUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments,
-    bindRowIdsFromHistory, messageDisplayText,
+    bindRowIdsFromHistory, messageDisplayText, preserveReadAloudReplyIds,
     scopeRevision: { current: () => 1, isCurrent: (id) => id === 1 },
     settings: { sessionId: 'test-session', responseStyle: 'rich' },
     sessionLoadRequestId: 1,
