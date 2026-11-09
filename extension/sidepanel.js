@@ -477,6 +477,7 @@ import {
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
 import { connectionIdentityChanged, gatewayMoveResets, sessionIdForSave } from './lib/settings-save-effects.mjs';
+import { changesMadeBy, undoChanges } from './lib/settings-rollback.mjs';
 import { fetchSessionHistoryPages } from './lib/session-history-pages.mjs';
 import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
 import { compressionSuccessor, createSessionLineage, rosterSuccessor } from './lib/session-lineage.mjs';
@@ -24599,6 +24600,8 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     moved.gatewayMode = legacyGatewayModeForConnection({ connectionMode, connectionTransport: moved.connectionTransport });
   }
   settings = { ...settings, ...moved };
+  // What this Save changed, so a refused write undoes that and nothing a newer update set meanwhile.
+  const changedBySave = changesMadeBy(previousSettings, settings);
   await refreshContextConsentPrincipal({ settingsOverride: settings });
   const consentIdentity = currentContextConsentIdentity(settings);
   if (consentIdentity && els.browserContextConsentInput && !els.browserContextConsentInput.disabled) {
@@ -24644,21 +24647,21 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     for (const webAppearanceKey of ['webTextZoomPercent', 'webFontProfile', 'webCustomFontFamily', 'webTextSize']) {
       delete panelSettings[webAppearanceKey];
     }
-    settings = withAppearancePreferenceUpdate(
+    const next = rememberSavedConnection(withAppearancePreferenceUpdate(
       { ...freshSettings, ...panelSettings },
       'panel',
       panelAppearancePreferences(),
-    );
-    applyAppearanceSettings();
-    settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
+    ), t('connections.default_name', { number: 1 }));
     try {
-      await persistHermesBrowserSettings(settings, { lockHeld: true });
+      await persistHermesBrowserSettings(next, { lockHeld: true });
     } catch (error) {
-      // Nothing was stored, so the panel stays on the connection it was on, with its chat.
-      settings = previousSettings;
+      // Nothing was stored: the merged settings never went live, and only this Save's own changes are undone.
+      settings = undoChanges(settings, changedBySave);
       applyAppearanceSettings();
       throw error;
     }
+    settings = next;
+    applyAppearanceSettings();
   };
   if (lockHeld) await writeSettingsRecord();
   else await withSavedConnectionsLock(writeSettingsRecord);

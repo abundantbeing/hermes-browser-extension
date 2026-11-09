@@ -557,6 +557,37 @@ test('a save that fails leaves the panel on the connection and chat it was on', 
   } finally { h.close(); }
 });
 
+test('a failed Save keeps a newer key another panel set while it waited, and still undoes its own changes', async () => {
+  for (const mine of [false, true]) {
+    const h = await createSettingsSaveHarness({
+      settings: rememberSavedConnection({ ...local, sessionId: 'old-chat', sessionTitle: 'Old chat' }),
+    });
+    try {
+      h.els.gatewayUrlInput.value = 'https://moved.example.test';
+      if (mine) h.els.apiKeyInput.value = 'key-typed-here';
+      h.scope.browserApi.storage.local.set = async () => {
+        // Another panel changed the key while this Save waited; this panel adopts it, then its own write fails.
+        h.scope.settings = { ...h.scope.settings, apiKey: 'newer-key-from-another-panel' };
+        throw new Error('Saved keys cannot be encrypted in this browser, so nothing was saved.');
+      };
+      await assert.rejects(h.save(), /cannot be encrypted/);
+      assert.equal(h.scope.settings.apiKey, 'newer-key-from-another-panel', 'the newer key is never replaced by an older one');
+      assert.equal(h.scope.settings.gatewayUrl, local.gatewayUrl, 'the address this Save moved is put back');
+      assert.equal(h.scope.settings.sessionId, 'old-chat');
+    } finally { h.close(); }
+  }
+});
+
+test('a failed Save puts back the key it typed when nothing newer has changed it', async () => {
+  const h = await createSettingsSaveHarness({ settings: rememberSavedConnection({ ...local, sessionId: 'old-chat' }) });
+  try {
+    h.els.apiKeyInput.value = 'key-typed-here';
+    h.scope.browserApi.storage.local.set = async () => { throw new Error('refused'); };
+    await assert.rejects(h.save(), /refused/);
+    assert.equal(h.scope.settings.apiKey, local.apiKey);
+  } finally { h.close(); }
+});
+
 async function openPanel(settings, shareWith) {
   const h = await createSettingsSaveHarness({ settings });
   if (shareWith) h.scope.browserApi = shareWith.scope.browserApi;
