@@ -385,7 +385,7 @@ export function createWakeBackgroundController({
     const task = nativeStartup.catch(() => null)
       .then(() => (generation === configurationGeneration ? tryNativeWake(generation) : STALE_START));
     nativeStartup = task;
-    nativeInFlight = { key, task };
+    nativeInFlight = { key, generation, task };
     task.finally(() => { if (nativeInFlight?.task === task) nativeInFlight = null; }).catch(() => null);
     return task;
   }
@@ -393,10 +393,12 @@ export function createWakeBackgroundController({
   async function configure(settings = {}) {
     currentSettings = normalizeWakeWordSettings(settings);
     const key = startupKey(settings);
-    if (currentSettings.enabled && currentSettings.preferNative && nativeInFlight?.key === key) return state;
+    const startUnderway = nativeInFlight?.key === key && nativeInFlight.generation === configurationGeneration;
+    if (currentSettings.enabled && currentSettings.preferNative && startUnderway) return state;
     const generation = ++configurationGeneration;
     clearReplyTimer();
     if (!currentSettings.enabled) {
+      nativeInFlight = null;
       if (nativeClient) {
         await nativeClient.request(WS_METHODS.wakeStop, { persist: true }).catch(() => null);
       }

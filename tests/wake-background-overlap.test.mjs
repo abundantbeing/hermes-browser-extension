@@ -136,6 +136,29 @@ test('the same configuration arriving twice while the first is starting starts w
   assert.ok(clients[0].calls.includes(WS_METHODS.voiceToggle));
 });
 
+test('turning wake off and back on while a start waits for its credential ends up listening', async () => {
+  const chrome = mockChrome(local);
+  const clients = [];
+  let fetches = 0;
+  let releaseFirst;
+  const controller = createWakeBackgroundController({
+    chromeApi: chrome.api,
+    gatewayClientFactory: () => { const client = fakeClient(clients.length); clients.push(client); return client; },
+    fetchFn: () => (fetches++ === 0 ? new Promise((resolve) => { releaseFirst = () => resolve(tokenPage()); }) : tokenPage()),
+    openPanel: async () => {},
+  });
+  await controller.configure(local);
+  await settle();
+  await controller.configure({ ...local, wakeWordEnabled: false });
+  assert.equal(controller.state().state, 'off');
+  await controller.configure(local);
+  releaseFirst();
+  await settle(40);
+  assert.equal(clients.length, 1, 'the overtaken start opened nothing and the new one opened one client');
+  assert.equal(controller.state().state, 'listening', 'wake did not stay off');
+  assert.equal(controller.state().enabled, true);
+});
+
 test('wake stored as off stops the listener even when the panel that saved it never sent a message', async () => {
   const chrome = mockChrome(local);
   const clients = [];
