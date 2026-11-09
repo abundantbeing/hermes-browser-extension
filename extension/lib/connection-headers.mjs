@@ -143,9 +143,15 @@ export function createHeaderRuleSync({ read, apply, onError = () => {} }) {
 }
 
 export const PROBE_PARAM = 'hermes_probe';
-const PROBE_RULE_ID_BASE = 7750;
-const PROBE_RULE_ID_SLOTS = 40;
-let probeRuleCounter = 0;
+// Session rule ids are shared by every open panel and the worker, and a counter restarts in each
+// document, so a test takes a random id from a range nothing else uses and never replaces another's.
+const PROBE_RULE_ID_BASE = 1_000_000;
+const PROBE_RULE_ID_SPAN = 2 ** 30;
+
+export function newProbeRuleId() {
+  const [random] = globalThis.crypto?.getRandomValues?.(new Uint32Array(1)) || [Math.floor(Math.random() * 2 ** 32)];
+  return PROBE_RULE_ID_BASE + (random % PROBE_RULE_ID_SPAN);
+}
 
 /**
  * A test of a connection at the active connection's own address must send only the draft's headers.
@@ -193,12 +199,19 @@ export async function withProbeHeaderIsolation(
   dnr = globalThis.chrome?.declarativeNetRequest || globalThis.browser?.declarativeNetRequest,
 ) {
   const marker = probeMarker();
-  const id = PROBE_RULE_ID_BASE + (probeRuleCounter++ % PROBE_RULE_ID_SLOTS);
-  const rule = dnr?.updateSessionRules ? probeHeaderRule({ gatewayUrl, headers, active, extensionHost, marker, id }) : null;
-  if (rule) await dnr.updateSessionRules({ removeRuleIds: [id], addRules: [rule] });
+  let rule = dnr?.updateSessionRules ? probeHeaderRule({ gatewayUrl, headers, active, extensionHost, marker, id: newProbeRuleId() }) : null;
+  for (let attempt = 0; rule; attempt += 1) {
+    try {
+      await dnr.updateSessionRules({ addRules: [rule] });
+      break;
+    } catch (error) {
+      if (attempt >= 2) throw error;
+      rule = { ...rule, id: newProbeRuleId() };
+    }
+  }
   try {
     return await probe(rule ? marker : '');
   } finally {
-    if (rule) await dnr.updateSessionRules({ removeRuleIds: [id] }).catch(() => undefined);
+    if (rule) await dnr.updateSessionRules({ removeRuleIds: [rule.id] }).catch(() => undefined);
   }
 }

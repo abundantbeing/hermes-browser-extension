@@ -113,6 +113,28 @@ test('the isolation rule exists only while the test runs, and each test has its 
   assert.notEqual(calls[0].addRules[0].id, calls[2].addRules[0].id, 'overlapping tests never remove each other\'s rule');
 });
 
+test('two panels never pick the same rule id, and a taken id is replaced instead of overwritten', async () => {
+  const first = await import('../extension/lib/connection-headers.mjs?panel=one');
+  const second = await import('../extension/lib/connection-headers.mjs?panel=two');
+  const ids = new Set([...Array.from({ length: 200 }, () => first.newProbeRuleId()), ...Array.from({ length: 200 }, () => second.newProbeRuleId())]);
+  assert.equal(ids.size, 400, 'a counter that restarts in each document would repeat');
+  assert.ok([...ids].every((id) => id >= 1_000_000 && id !== 7746));
+
+  const calls = [];
+  let refused = 0;
+  const dnr = {
+    updateSessionRules: async (change) => {
+      calls.push(change);
+      if (change.addRules && refused++ === 0) throw new Error('Rule with id already exists');
+    },
+  };
+  await withProbeHeaderIsolation({ gatewayUrl: 'https://hermes.example.com', headers: [], active, extensionHost: 'abc' }, async () => 'done', dnr);
+  const adds = calls.filter((change) => change.addRules);
+  assert.equal(adds.length, 2);
+  assert.notEqual(adds[0].addRules[0].id, adds[1].addRules[0].id);
+  assert.ok(calls.every((change) => !change.removeRuleIds || change.removeRuleIds[0] === adds[1].addRules[0].id), 'only its own rule is ever removed');
+});
+
 test('the rule is removed when the test fails, and no rule is made when none is needed', async () => {
   const calls = [];
   const dnr = { updateSessionRules: async (change) => calls.push(change) };
