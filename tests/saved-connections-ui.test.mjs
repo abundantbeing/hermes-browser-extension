@@ -64,3 +64,10 @@ test('a connection added without a key starts signing in when its panel opens, a
   assert.match(panel, /if \(connectAfterAdd && !settings\.apiKey\) void connectToHermes\(\)/);
 });
 
+test('Options changes the connection in use through the same window, and Hermes Cloud has none', () => {
+  assert.match(html, /<button id="savedConnectionOptions" type="button" data-i18n="connections\.options">/);
+  assert.match(panel, /els\.savedConnectionOptions\?\.addEventListener\('click', openConnectionOptionsWindow\)/);
+  assert.match(panel, /els\.savedConnectionOptions\.disabled = savedConnectionBusy \|\| settings\.connectionMode === 'cloud'/);
+  assert.match(panel, /else if \(action === 'options'\) next = \{ \.\.\.base, connectionHeaders: options\.headers, connectionTrustSelfSigned: options\.trustSelfSigned \}/);
+});
+

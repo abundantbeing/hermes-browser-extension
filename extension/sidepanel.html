@@ -954,6 +954,7 @@
           <div id="savedConnectionList" class="saved-connection-list"></div>
           <div id="savedConnectionActions" class="saved-connection-actions">
             <button id="savedConnectionAdd" type="button" data-i18n="ui.add">Add</button>
+            <button id="savedConnectionOptions" type="button" data-i18n="connections.options">Options</button>
             <button id="savedConnectionRename" type="button" data-i18n="ui.rename">Rename</button>
             <button id="savedConnectionDelete" type="button" data-i18n="ui.delete" disabled>Delete</button>
           </div>
@@ -1799,7 +1800,7 @@
         <div class="add-connection-head">
           <button id="addConnectionBack" class="add-connection-icon" type="button" aria-label="Back" title="Back" data-i18n-aria-label="ui.back" data-i18n-title="ui.back" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
           <div class="add-connection-heading">
-            <span class="session-ownership-kicker" data-i18n="addconn.kicker">NEW CONNECTION</span>
+            <span id="addConnectionKicker" class="session-ownership-kicker" data-i18n="addconn.kicker">NEW CONNECTION</span>
             <h2 id="addConnectionTitle"></h2>
             <p id="addConnectionSteps" class="add-connection-steps" aria-live="polite"></p>
           </div>

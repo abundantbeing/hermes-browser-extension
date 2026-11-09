@@ -1253,6 +1253,7 @@ const els = {
   savedConnectionList: $('#savedConnectionList'),
   savedConnectionActions: $('#savedConnectionActions'),
   savedConnectionAdd: $('#savedConnectionAdd'),
+  savedConnectionOptions: $('#savedConnectionOptions'),
   savedConnectionRename: $('#savedConnectionRename'),
   savedConnectionDelete: $('#savedConnectionDelete'),
   savedConnectionEditor: $('#savedConnectionEditor'),
@@ -23893,6 +23894,7 @@ function renderSavedConnections() {
   els.savedConnectionConfirm.hidden = savedConnectionTool !== 'delete';
   els.savedConnectionConfirmTitle.textContent = t('connections.delete_confirm', { name: active.name });
   els.savedConnectionAdd.disabled = savedConnectionBusy;
+  els.savedConnectionOptions.disabled = savedConnectionBusy || settings.connectionMode === 'cloud';
   els.savedConnectionRename.disabled = savedConnectionBusy;
   els.savedConnectionDelete.disabled = savedConnectionBusy || current.savedConnections.length < 2;
   for (const button of [els.savedConnectionNameSave, els.savedConnectionNameCancel, els.savedConnectionDeleteCancel, els.savedConnectionDeleteConfirm]) {
@@ -23949,6 +23951,7 @@ function bindSavedConnectionControls() {
     void updateSavedConnection('switch', { id: card.dataset.savedConnectionId });
   });
   els.savedConnectionAdd?.addEventListener('click', openAddConnectionWindow);
+  els.savedConnectionOptions?.addEventListener('click', openConnectionOptionsWindow);
   els.savedConnectionRename?.addEventListener('click', () => openSavedConnectionTool('rename'));
   els.savedConnectionDelete?.addEventListener('click', () => openSavedConnectionTool('delete'));
   els.savedConnectionNameSave?.addEventListener('click', submitSavedConnectionName);
@@ -24081,7 +24084,7 @@ function reloadForSavedConnection(next) {
 }
 
 // Whether the change was made: the Add window stays open when it was not.
-async function updateSavedConnection(action, { id = settings.activeSavedConnectionId, name = '', connection = null } = {}) {
+async function updateSavedConnection(action, { id = settings.activeSavedConnectionId, name = '', connection = null, options = null } = {}) {
   if (savedConnectionBusy) return false;
   if (sending) {
     showOperationToast({ kind: 'warn', title: t('connections.busy') });
@@ -24105,6 +24108,7 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
         next = addSavedConnection(base, name || t('connections.default_name', { number: base.savedConnections.length + 1 }), crypto.randomUUID(), connection);
       }
       else if (action === 'rename') next = renameSavedConnection(base, expectedId, name);
+      else if (action === 'options') next = { ...base, connectionHeaders: options.headers, connectionTrustSelfSigned: options.trustSelfSigned };
       else if (action === 'delete') next = deleteSavedConnection(base, expectedId);
       else next = selectSavedConnection(base, id);
       await persistHermesBrowserSettings(next, { lockHeld: true });
@@ -24139,9 +24143,23 @@ function addConnectionWindow() {
       onAdd: async ({ name, connection }) => {
         if (!(await updateSavedConnection('add', { name, connection }))) throw new Error(t('connections.error'));
       },
+      onSaveOptions: async (options) => {
+        if (!(await updateSavedConnection('options', { options }))) throw new Error(t('connections.error'));
+      },
     });
   }
   return addConnectionDialog;
+}
+
+function openConnectionOptionsWindow() {
+  if (savedConnectionBusy) return;
+  if (sending) {
+    showOperationToast({ kind: 'warn', title: t('connections.busy') });
+    return;
+  }
+  const current = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
+  const active = current.savedConnections.find((entry) => entry.id === current.activeSavedConnectionId);
+  addConnectionWindow()?.show({ mode: 'options', name: active.name, connection: current });
 }
 
 function openAddConnectionWindow() {

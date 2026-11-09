@@ -11,7 +11,7 @@ import {
   stepProblems,
   stepsFor,
 } from './add-connection.mjs';
-import { MAX_CONNECTION_HEADERS } from './connection-headers.mjs';
+import { MAX_CONNECTION_HEADERS, normalizeConnectionHeaders } from './connection-headers.mjs';
 import { probeConnection } from './probe-connection.mjs';
 
 const TITLE_KEYS = Object.freeze({ where: 'addconn.title_where', signin: 'addconn.title_signin', options: 'addconn.title_options' });
@@ -41,12 +41,14 @@ export function createAddConnectionDialog({
   probe = probeConnection,
   openAddress = () => {},
   onAdd = async () => {},
+  onSaveOptions = async () => {},
   onClose = () => {},
 } = {}) {
   const dialog = root?.getElementById?.('addConnectionDialog');
   if (!dialog) return null;
   const byId = (id) => root.getElementById(id);
   const ui = {
+    kicker: byId('addConnectionKicker'),
     title: byId('addConnectionTitle'),
     stepCount: byId('addConnectionSteps'),
     back: byId('addConnectionBack'),
@@ -75,12 +77,14 @@ export function createAddConnectionDialog({
 
   let draft = newConnectionDraft();
   let step = 'where';
+  // 'add' walks the steps for a new connection; 'options' changes the options of the one in use.
+  let mode = 'add';
   let busy = false;
   let failed = false;
   let problems = {};
   let headerRowsBuilt = -1;
 
-  const stepList = () => stepsFor(draft);
+  const stepList = () => (mode === 'options' ? ['options'] : stepsFor(draft));
   const isLast = () => stepList().at(-1) === step;
   const focusables = () => [...dialog.querySelectorAll('button, input, a[href]')]
     .filter((node) => !node.disabled && !node.hidden && node.offsetParent !== null);
@@ -173,7 +177,8 @@ export function createAddConnectionDialog({
     renderHeaderErrors();
     ui.addHeader.disabled = draft.headers.length >= MAX_CONNECTION_HEADERS;
     ui.next.disabled = busy;
-    ui.next.textContent = busy ? translate('addconn.testing') : translate(failed ? 'addconn.try_again' : (isLast() ? 'addconn.add' : 'ui.next'));
+    const lastLabel = mode === 'options' ? 'addconn.save_options' : 'addconn.add';
+    ui.next.textContent = busy ? translate('addconn.testing') : translate(failed ? 'addconn.try_again' : (isLast() ? lastLabel : 'ui.next'));
     ui.anyway.hidden = !failed;
     ui.anyway.disabled = busy;
     ui.openAddress.hidden = !(failed && ui.result.dataset.status === 'unreachable' && certificateAddress(draft));
@@ -204,7 +209,28 @@ export function createAddConnectionDialog({
     dialog.querySelector(`[data-add-step="${step}"] input:not([hidden]), [data-add-step="${step}"] [aria-checked="true"]`)?.focus();
   }
 
+  async function saveOptions() {
+    problems = stepProblems(draft, 'options');
+    if (Object.keys(problems).length) {
+      render();
+      focusProblem();
+      return;
+    }
+    busy = true;
+    clearResult();
+    render();
+    try {
+      await onSaveOptions({ headers: normalizeConnectionHeaders(draft.headers), trustSelfSigned: draft.trustSelfSigned === true });
+      hide();
+    } catch {
+      busy = false;
+      showResult(translate('connections.error'), 'error', 'failed');
+      render();
+    }
+  }
+
   async function finish({ skipTest = false } = {}) {
+    if (mode === 'options') { await saveOptions(); return; }
     const invalid = firstInvalidStep(draft);
     if (invalid) {
       if (invalid !== step) goTo(invalid);
@@ -256,9 +282,19 @@ export function createAddConnectionDialog({
     await finish();
   }
 
-  function show() {
-    draft = newConnectionDraft();
-    step = 'where';
+  function show({ mode: wanted = 'add', name = '', connection = null } = {}) {
+    mode = wanted === 'options' ? 'options' : 'add';
+    draft = mode === 'options'
+      ? newConnectionDraft({
+        type: connection?.connectionMode || 'remote',
+        address: connection?.gatewayUrl || '',
+        method: connection?.apiKey ? 'token' : 'browser',
+        trustSelfSigned: connection?.connectionTrustSelfSigned === true,
+        headers: normalizeConnectionHeaders(connection?.connectionHeaders).map((header) => ({ ...header })),
+      })
+      : newConnectionDraft();
+    step = mode === 'options' ? 'options' : 'where';
+    ui.kicker.textContent = mode === 'options' ? name : translate('addconn.kicker');
     busy = false;
     problems = {};
     headerRowsBuilt = -1;

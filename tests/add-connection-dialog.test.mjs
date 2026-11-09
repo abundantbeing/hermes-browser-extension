@@ -9,11 +9,12 @@ const html = await readFile(new URL('../extension/sidepanel.html', import.meta.u
 const translate = (key, params) => (params ? `${key} ${JSON.stringify(params)}` : key);
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-function openWindow({ probe = async () => ({ ok: true, status: 'ok' }) } = {}) {
+function openWindow({ probe = async () => ({ ok: true, status: 'ok' }), show = {} } = {}) {
   const dom = new JSDOM(html, { url: 'chrome-extension://hermes/sidepanel.html' });
   const root = dom.window.document;
   const added = [];
   const opened = [];
+  const savedOptions = [];
   let closed = 0;
   const dialog = createAddConnectionDialog({
     root,
@@ -21,9 +22,10 @@ function openWindow({ probe = async () => ({ ok: true, status: 'ok' }) } = {}) {
     probe,
     openAddress: (address) => opened.push(address),
     onAdd: async (made) => { added.push(made); },
+    onSaveOptions: async (options) => { savedOptions.push(options); },
     onClose: () => { closed += 1; },
   });
-  dialog.show();
+  dialog.show(show);
   const $ = (selector) => root.querySelector(selector);
   const type = (selector, value) => {
     const input = $(selector);
@@ -34,7 +36,7 @@ function openWindow({ probe = async () => ({ ok: true, status: 'ok' }) } = {}) {
     new dom.window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init }),
   );
   return {
-    dom, root, dialog, added, opened, $, type, press,
+    dom, root, dialog, added, opened, savedOptions, $, type, press,
     closed: () => closed,
     step: () => [...root.querySelectorAll('[data-add-step]')].find((panel) => !panel.hidden)?.dataset.addStep,
     click: async (selector) => { $(selector).click(); await tick(); },
@@ -229,3 +231,59 @@ test('the certificate group is for a remote gateway only', async () => {
   await w.click('#addConnectionNext');
   assert.equal(w.added[0].connection.connectionTrustSelfSigned, true);
 });
+
+const inUse = {
+  connectionMode: 'remote', gatewayUrl: 'https://hermes.example.com', apiKey: 'k',
+  connectionHeaders: [{ name: 'X-Proxy-Token', value: 'proxy-value' }], connectionTrustSelfSigned: true,
+};
+
+test('Options opens on one step for the connection in use, with what it has now', async () => {
+  const w = openWindow({ show: { mode: 'options', name: 'Studio', connection: inUse } });
+  assert.equal(w.step(), 'options');
+  assert.equal(w.$('#addConnectionKicker').textContent, 'Studio');
+  assert.equal(w.$('#addConnectionBack').hidden, true);
+  assert.equal(w.$('#addConnectionSteps').hidden, true, 'one step needs no count');
+  assert.equal(w.$('#addConnectionNext').textContent, 'addconn.save_options');
+  assert.equal(w.$('[data-header-field="name"]').value, 'X-Proxy-Token');
+  assert.equal(w.$('[data-header-field="value"]').value, 'proxy-value');
+  assert.equal(w.$('#addConnectionTrust').checked, true);
+  assert.equal(w.$('#addConnectionCertGroup').hidden, false);
+});
+
+test('saving options hands over the headers and the certificate note without testing or adding anything', async () => {
+  let probed = 0;
+  const w = openWindow({ probe: async () => { probed += 1; return { ok: true, status: 'ok' }; }, show: { mode: 'options', name: 'Studio', connection: inUse } });
+  await w.click('#addConnectionAddHeader');
+  w.type('[data-header-field="name"][data-header-index="1"]', 'X-Tenant');
+  w.type('[data-header-field="value"][data-header-index="1"]', 'acme');
+  w.$('#addConnectionTrust').click();
+  await w.click('#addConnectionNext');
+  assert.deepEqual(w.savedOptions, [{
+    headers: [{ name: 'X-Proxy-Token', value: 'proxy-value' }, { name: 'X-Tenant', value: 'acme' }],
+    trustSelfSigned: false,
+  }]);
+  assert.equal(probed, 0);
+  assert.equal(w.added.length, 0);
+  assert.equal(w.dialog.isOpen(), false);
+});
+
+test('clearing every header saves an empty list, and a refused header keeps the window open', async () => {
+  const w = openWindow({ show: { mode: 'options', name: 'Studio', connection: inUse } });
+  w.type('[data-header-field="name"]', 'Cookie');
+  await w.click('#addConnectionNext');
+  assert.equal(w.savedOptions.length, 0);
+  assert.equal(w.$('[data-header-error="0"]').textContent, 'addconn.err_header_blocked');
+  await w.click('[data-header-remove="0"]');
+  await w.click('#addConnectionNext');
+  assert.deepEqual(w.savedOptions, [{ headers: [], trustSelfSigned: true }]);
+});
+
+test('Add after Options starts again from the first step with an empty draft', async () => {
+  const w = openWindow({ show: { mode: 'options', name: 'Studio', connection: inUse } });
+  w.dialog.hide();
+  w.dialog.show();
+  assert.equal(w.step(), 'where');
+  assert.equal(w.$('#addConnectionKicker').textContent, 'addconn.kicker');
+  assert.equal(w.root.querySelectorAll('.add-connection-header-row').length, 0);
+});
+

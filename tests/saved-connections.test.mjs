@@ -503,6 +503,22 @@ async function openPanel(settings, shareWith) {
   return h;
 }
 
+test('saving options writes the headers and certificate note to the connection in use, protected', async () => {
+  const panel = await openPanel(rememberSavedConnection(local), null);
+  try {
+    const headers = [{ name: 'X-Proxy-Token', value: 'options-secret-value' }];
+    const made = await panel.fn('updateSavedConnection')('options', { options: { headers, trustSelfSigned: true } });
+    assert.equal(made, true);
+    const stored = panel.store.hermesBrowserSettings;
+    assert.equal(JSON.stringify(panel.store).includes('options-secret-value'), false, 'no plain header value in storage');
+    assert.equal(stored.connectionTrustSelfSigned, true);
+    const restored = await hydrateSavedConnectionSecrets(stored, panel.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+    assert.deepEqual(restored.connectionHeaders, headers);
+    assert.deepEqual(restored.savedConnections.find((entry) => entry.id === 'default').connection.connectionHeaders, headers);
+    assert.deepEqual(panel.scope.settings.connectionHeaders, headers, 'this panel uses them straight away');
+  } finally { panel.close(); }
+});
+
 test('overlapping panel Add and Rename cannot lose a saved connection', async () => {
   const first = await openPanel(rememberSavedConnection(local), null);
   const second = await openPanel(rememberSavedConnection(local), first);

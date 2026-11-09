@@ -7544,7 +7544,7 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 .saved-connection-list { display: grid; gap: 8px; min-width: 0; }
 .saved-connection-card { width: 100%; min-width: 0; text-align: start; }
 .saved-connection-card .conn-mode-title { overflow-wrap: anywhere; }
-.saved-connection-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.saved-connection-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .saved-connection-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .saved-connection-editor,
 .saved-connection-confirm { display: grid; gap: 8px; min-width: 0; }

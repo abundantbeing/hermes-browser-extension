@@ -488,20 +488,39 @@ async function main() {
     check('no native browser dialog was opened', panel.dialogs.length === 0, JSON.stringify(panel.dialogs));
 
     // 7. Custom headers reach the gateway on every request, and only that gateway. A browser cannot put headers on a WebSocket handshake.
-    const setHeaders = (headers) => panel.evaluate(`(async () => {
-      const lib = await import('./lib/saved-connections.mjs');
-      const stored = await chrome.storage.local.get(['hermesBrowserSettings', lib.SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
-      const live = await lib.hydrateHermesBrowserSettingsFromStorage(stored);
-      await chrome.storage.local.set(await lib.packedHermesBrowserSettingsWrite({ ...live, connectionHeaders: ${JSON.stringify(headers)} }, chrome.storage.local));
-      return true;
-    })()`);
+    const saveOptions = async (headers) => {
+      await openConnectionsPane(panel);
+      await click(panel, '#savedConnectionOptions');
+      await waitFor(() => visible(panel, '#addConnectionDialog'));
+      while (await panel.evaluate("document.querySelectorAll('[data-header-remove]').length")) await click(panel, '[data-header-remove]');
+      for (const [index, header] of headers.entries()) {
+        await click(panel, '#addConnectionAddHeader');
+        await setField(panel, `[data-header-field="name"][data-header-index="${index}"]`, header.name);
+        await setField(panel, `[data-header-field="value"][data-header-index="${index}"]`, header.value);
+      }
+      await click(panel, '#addConnectionNext');
+      await waitFor(async () => !(await visible(panel, '#addConnectionDialog')));
+    };
     const probe = async (gateway) => {
       const before = gateway.requests.length;
       await setup.evaluate(`fetch(${JSON.stringify(`${gateway.baseUrl}/headers-probe`)}).then((response) => response.status)`);
       const seen = gateway.requests.slice(before);
       return { plain: seen.find((request) => request.path === '/headers-probe')?.headers['x-proxy-token'] || '', socket: '' };
     };
-    await setHeaders([{ name: 'X-Proxy-Token', value: 'proxy-e2e-value' }]);
+    await openConnectionsPane(panel);
+    await click(panel, '#savedConnectionOptions');
+    await waitFor(() => visible(panel, '#addConnectionDialog'));
+    check('Options opens on its own step, named for the connection', (await panel.evaluate("document.querySelector('#addConnectionKicker').textContent")) === 'Primary'
+      && (await visible(panel, '[data-add-step="options"]')) && !(await visible(panel, '#addConnectionBack')));
+    await shot(panel, '13-options');
+    await pressKey(panel, 'Escape');
+    await saveOptions([{ name: 'X-Proxy-Token', value: 'proxy-e2e-value' }]);
+    await openConnectionsPane(panel);
+    await click(panel, '#savedConnectionOptions');
+    await waitFor(() => visible(panel, '#addConnectionDialog'));
+    check('Options shows the header that was saved', (await panel.evaluate("document.querySelector('[data-header-field=\"name\"]')?.value")) === 'X-Proxy-Token'
+      && (await panel.evaluate("document.querySelector('[data-header-field=\"value\"]')?.value")) === 'proxy-e2e-value');
+    await pressKey(panel, 'Escape');
     const withHeader = await waitFor(async () => {
       const result = await probe(first);
       return result.plain ? result : null;
@@ -516,7 +535,7 @@ async function main() {
     check("another service on the same machine does not receive it", !unrelated.plain && !unrelated.socket, JSON.stringify(unrelated));
     const storedWithHeaders = JSON.stringify(await setup.evaluate('chrome.storage.local.get(null)'));
     check('the header value is not stored in plain text', !storedWithHeaders.includes('proxy-e2e-value'));
-    await setHeaders([]);
+    await saveOptions([]);
     const without = await waitFor(async () => {
       const result = await probe(first);
       return !result.plain ? result : null;
