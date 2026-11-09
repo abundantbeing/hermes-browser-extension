@@ -1319,6 +1319,162 @@
     "message": "正在等待此交談",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "請先開啟側邊欄（Ctrl+Shift+H 或工具列按鈕），再撰寫草稿。或選擇在背景執行。",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "會開啟側邊面板的 Assist 草稿",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox 只允許擴充功能在使用者操作時開啟其側邊欄。從頁面轉送到背景工作程序的點按尚未測試；當 Firefox 拒絕且沒有側邊欄開啟時，Hermes 會停止草稿並請你開啟側邊欄或在背景執行。",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes 會逐一執行這些步驟。",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control：批次操作",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Firefox 轉接器目前尚未提供批次操作，而且批次中的大多數步驟（點按、輸入）在那裡本來就無法使用。",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "請在獨立分頁中開啟含有框架的頁面。",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control：框架內的控制項",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "框架控制需要除錯器 API，而 Firefox 沒有此 API；Hermes 讀取的頁面文字不包含框架內容。",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "需要更大位移時重複捲動，或請使用者手動捲動。",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control：導覽、返回與捲動",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Firefox 的捲動呼叫會以固定距離移動頁面，並忽略 Chromium 會遵守的 amount 參數。",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes 可以讀取頁面並開啟網址；點按或輸入請自行完成，或為此工作改用 Chromium 瀏覽器。",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control：點按、輸入與按鍵",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox 沒有除錯器 API，因此擴充功能無法送出受信任的點按、輸入或按鍵，Hermes 也不會以頁面事件模仿這些操作。",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "請 Hermes 依據頁面文字工作；將框架內的內容複製到對話中。",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control：讀取頁面",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox 沒有供擴充功能使用的協助工具樹狀結構：Hermes 透過內容腳本讀取頁面頂層文字及其控制項清單，不讀取框架內的任何內容。",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "在設定中按一下「允許在 Firefox 中截圖」，或請 Hermes 讀取頁面文字。",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control：截圖",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox 只有在授予所有網站存取權限時才允許擷取畫面；此權限為選用，需透過點按要求。只能擷取整個可見分頁，且必須是視窗目前顯示的分頁。",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes 仍會開啟和關閉自己的分頁，只是這些分頁不會分組。",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control：分頁群組",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox 有 tabs.group 呼叫，但 Firefox 轉接器目前尚未提供分組功能。",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "改用：{text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "請改為輸入文字，或在您的 Hermes 閘道器上開啟音訊轉錄。",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "撰寫區中的語音輸入",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox 沒有瀏覽器語音辨識功能，因此語音輸入只能透過 Hermes 自己的轉錄功能運作（需要啟用音訊轉錄的閘道器，或本機上的 Dashboard）。",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "側邊欄會在各分頁之間保持開啟；工具列按鈕可將其關閉。",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "側邊面板綁定到單一分頁",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox 會讓擴充功能的側邊欄在視窗的每個分頁上保持開啟；若為每個分頁提供一個面板，就會重新載入並結束進行中的對話。",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "連線到本機閘道以使用 Hermes 喚醒，或從側邊面板開始聊天。",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "側邊面板中的喚醒詞",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox 沒有離屏文件，因此本機監聽無法運作。Hermes 內建的喚醒引擎只在本機閘道運作，不適用於遠端或雲端連線。",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "實驗性",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "受限",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "無法使用",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "在 Firefox 上受限或無法使用：{count}。開啟即可查看原因以及可改用的做法。",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Firefox 限制",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "核准事件",
     "description": "Runtime interface message capability.feature.approvalEvents"
@@ -3430,6 +3586,58 @@
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "專案需要 Hermes Web 的登入。請開啟一次 Hermes Web（執行 hermes webapp），然後重試。",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
+  "runtime_read_aloud_failed": {
+    "message": "無法朗讀此回覆",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "語音（朗讀）",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "來源：此瀏覽器 (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "來源：Hermes 儀表板 (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "來源：無",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "此回覆中沒有可朗讀的文字。",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "回覆會以此瀏覽器內建的語音朗讀。無法從這裡連到 Hermes 儀表板，或它沒有語音路由，因此不會使用你的設定檔的聲音。",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "回覆會以你的 Hermes 設定檔中設定的聲音朗讀。音訊由 Hermes 儀表板產生，由此面板播放。",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "回覆會以你的 Hermes 設定檔的聲音朗讀。上一次 Hermes 未能產生音訊（{reason}），因此改由此瀏覽器內建的聲音朗讀。",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "沒有可用的語音：無法連到 Hermes 儀表板，且此瀏覽器沒有語音，因此朗讀按鈕已隱藏。",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "瀏覽器語音",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "閘道 TTS",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "無",
+    "description": "Runtime interface message read_aloud.route.none"
   },
   "runtime_responses_layout_bubbles": {
     "message": "兩側都使用泡泡",
@@ -7067,6 +7275,10 @@
     "message": "範圍",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "朗讀",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "讀取可見的對話",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7854,6 +8066,10 @@
   "runtime_ui_stop_hermes": {
     "message": "停止 Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "停止朗讀",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "切換工作階段前，請先停止目前的執行。",

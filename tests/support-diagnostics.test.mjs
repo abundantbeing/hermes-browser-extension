@@ -169,3 +169,9 @@ test('sidepanel exposes inline diagnostics action for remote setup failures', ()
   assert.match(css, /\.status-actions/);
   assert.doesNotMatch(html, /<textarea[^>]+diagnostics/i);
 });
+
+test('the report says which voice route read aloud uses, and leaves the line out when none is given', () => {
+  const withVoice = buildSupportDiagnostics({ voiceOutput: 'gateway TTS (Hermes dashboard /api/audio/speak), then browser speech if it fails' });
+  assert.match(withVoice.markdown, /- Voice output \(read aloud\): gateway TTS \(Hermes dashboard \/api\/audio\/speak\)/);
+  assert.doesNotMatch(buildSupportDiagnostics({}).markdown, /Voice output/);
+});

@@ -81,6 +81,8 @@ The extension supports two voice modes:
 
 No audio is intentionally saved by the voice dictation page.
 
+Reading a reply aloud is a third voice feature and starts only when you press a reply's speaker button. With the Hermes dashboard on this computer reachable, the reply's text (never code blocks, tool activity or thinking notes) is sent to that dashboard, which turns it into audio with your Hermes profile's configured text-to-speech provider, and the audio is played in the panel and not stored. Without the dashboard, the browser's own `speechSynthesis` reads the text; what the browser does with it depends on the voice you choose (some operating-system voices work online).
+
 ## Hermes Web sign-in
 
 With a gateway that carries the extension-pairing routes, **Open Hermes Web** needs no sign-in step and nothing is kept: the panel asks the paired gateway on this computer for a one-use ticket (the paired token is sent to that gateway only, as it already is for chat) and the new tab is signed in with it. Hermes Web grants access to host files and a shell, so approve a pairing only for an extension you trust.

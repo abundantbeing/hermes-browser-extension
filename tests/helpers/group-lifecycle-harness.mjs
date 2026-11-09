@@ -5,6 +5,7 @@ import { describeGroupContextOutcome, groupBrowserContextAllowed } from '../../e
 // Extracted orchestration tests must load their real lifecycle dependencies.
 // No-op replacements would conceal abort/composer ownership regressions.
 export function installGroupLifecycleHarness(context, source) {
+  context.readAloudPlayer ??= { stop() {}, turnStarted() {}, chatChanged() {} };
   context.backgroundGroupTurn ??= null;
   context.activeComposerLease ??= null;
   context.groupComposerSerial ??= 0;

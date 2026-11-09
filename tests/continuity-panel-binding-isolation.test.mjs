@@ -35,6 +35,11 @@ function adoptContext(initialSettings, secrets = undefined) {
     migrateConnectionSettings: (value) => value,
     hydrateSavedConnectionSecrets,
     SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+    readAloudPlayer: { stop() {} },
+    readAloudDashboard: null,
+    readAloudDashboardIdentity: '',
+    readAloudDashboardProbe: null,
+    notifyReadAloudDashboardProbeChanged() {},
     adoptInlineAssistAutoReplaceChange() {},
     adoptInlineAssistIconChange() {},
     adoptInlineAssistOpenModeChange() {},
@@ -88,6 +93,31 @@ test('credential and connection changes written by the controller or the pairing
   assert.equal(vm.runInContext('settings.apiKey', context), 'fresh');
   assert.equal(vm.runInContext('settings.gatewayMode', context), 'remote-dashboard');
   assert.equal(vm.runInContext('settings.trustedDashboardTabId', context), 7);
+});
+
+test('a shared write that only changes appearance leaves read aloud playing', async () => {
+  const context = adoptContext({ ...mine, appearanceTheme: 'nous' });
+  let stops = 0;
+  context.readAloudPlayer = { stop() { stops += 1; } };
+  await vm.runInContext('adoptHermesBrowserSettingsStorageChange', context)({
+    hermesBrowserSettings: { newValue: { ...mine, appearanceTheme: 'mono' } },
+  });
+  assert.equal(stops, 0);
+});
+
+test('a connection change written by another panel stops read aloud and drops the dashboard probe', async () => {
+  const context = adoptContext({ ...mine, gatewayMode: 'local-api' });
+  let stops = 0;
+  let probeNotices = 0;
+  context.readAloudPlayer = { stop() { stops += 1; } };
+  context.readAloudDashboardProbe = { reachable: true };
+  context.notifyReadAloudDashboardProbeChanged = () => { probeNotices += 1; };
+  await vm.runInContext('adoptHermesBrowserSettingsStorageChange', context)({
+    hermesBrowserSettings: { newValue: { ...mine, gatewayMode: 'remote-dashboard' } },
+  });
+  assert.equal(stops, 1);
+  assert.equal(probeNotices, 1);
+  assert.equal(context.readAloudDashboardProbe, null);
 });
 
 test('a packed settings save still restores the active gateway key for this panel', async () => {

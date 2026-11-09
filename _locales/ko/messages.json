@@ -1319,6 +1319,162 @@
     "message": "이 채팅을 기다리는 중",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "먼저 사이드바를 연 다음(Ctrl+Shift+H 또는 도구 모음 버튼) 초안을 작성하세요. 또는 백그라운드에서 실행을 선택하세요.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "측면 패널을 여는 Assist 초안",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox에서는 사용자 동작에서만 확장 프로그램이 사이드바를 열 수 있습니다. 페이지에서 백그라운드 워커로 전달된 클릭은 테스트되지 않았으며, Firefox가 거부하고 사이드바가 열려 있지 않으면 Hermes는 초안을 중단하고 사이드바를 열거나 백그라운드에서 실행하라고 안내합니다.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes는 단계를 하나씩 실행합니다.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: 작업 일괄 실행",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Firefox 어댑터는 아직 일괄 실행을 제공하지 않으며, 일괄 실행의 대부분 단계(클릭, 입력)는 어차피 Firefox에서 사용할 수 없습니다.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "프레임이 있는 페이지를 별도의 탭에서 여세요.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: 프레임 안의 컨트롤",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "프레임 제어에는 Firefox에 없는 debugger API가 필요하며, Hermes가 읽는 페이지 텍스트에는 프레임이 빠집니다.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "더 크게 움직이려면 스크롤을 반복하거나 사용자에게 직접 스크롤해 달라고 요청하세요.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: 이동, 뒤로 가기, 스크롤",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Firefox의 스크롤 호출은 페이지에서 고정 거리만 움직이며 Chromium이 인정하는 amount 인수를 무시합니다.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes는 페이지를 읽고 주소를 열 수 있으므로, 클릭이나 입력은 직접 하거나 이 작업에는 Chromium 브라우저를 사용하세요.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: 클릭, 입력, 키 누르기",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox에는 debugger API가 없어 확장 프로그램이 신뢰할 수 있는 클릭, 입력, 키 누르기를 보낼 수 없으며, Hermes도 페이지 이벤트로 이를 흉내 내지 않습니다.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Hermes에게 페이지 텍스트를 기준으로 작업하도록 요청하고, 프레임 안의 내용은 채팅에 복사하세요.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: 페이지 읽기",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox에는 확장 프로그램용 접근성 트리가 없어 Hermes는 콘텐츠 스크립트로 최상위 페이지 텍스트와 컨트롤 목록을 읽으며, 프레임 안의 내용은 읽지 않습니다.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "설정에서 'Firefox에서 스크린샷 허용'을 클릭하거나, Hermes가 페이지 텍스트를 읽게 하세요.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: 스크린샷",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox는 모든 사이트 액세스 권한이 있을 때만 캡처를 허용하며, 이 권한은 선택 사항이고 클릭으로 요청됩니다. 보이는 탭 전체만 캡처할 수 있으며, 창이 표시하고 있는 탭이어야 합니다.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes는 여전히 자신의 탭을 열고 닫지만, 그 탭들은 그룹으로 묶이지 않습니다.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: 탭 그룹",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox에는 tabs.group 호출이 있지만, Firefox 어댑터는 아직 그룹화를 제공하지 않습니다.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "대신: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "대신 직접 입력하거나, Hermes 게이트웨이에서 오디오 전사를 켜세요.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "작성 창의 음성 받아쓰기",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox에는 브라우저 음성 인식이 없으므로, 받아쓰기는 Hermes 자체 전사(오디오 전사를 지원하는 게이트웨이 또는 이 컴퓨터의 대시보드)를 통해서만 작동합니다.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "사이드바는 탭 사이에서도 열려 있으며, 도구 모음 버튼으로 닫습니다.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "탭 하나에 연결된 측면 패널",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox는 창의 모든 탭에서 애드온 사이드바를 열어 두며, 탭마다 패널을 두면 사이드바가 다시 로드되고 진행 중인 채팅이 끝납니다.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Hermes 웨이크를 쓰려면 로컬 게이트웨이에 연결하거나 패널에서 대화를 시작하세요.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "측면 패널의 호출어",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox에는 오프스크린 문서가 없어 로컬 리스너를 실행할 수 없습니다. Hermes 자체 웨이크 엔진은 이 컴퓨터의 로컬 게이트웨이에서만 동작하며 원격·클라우드 연결에서는 동작하지 않습니다.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "실험적",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "제한됨",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "사용 불가",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Firefox에서 제한되거나 사용할 수 없는 항목: {count}개. 열면 이유와 대신 할 수 있는 방법을 확인할 수 있습니다.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Firefox 제한",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "승인 이벤트",
     "description": "Runtime interface message capability.feature.approvalEvents"
@@ -3430,6 +3586,58 @@
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "프로젝트에는 Hermes Web 로그인이 필요합니다. Hermes Web을 한 번 열고(hermes webapp 실행) 다시 시도하세요.",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
+  "runtime_read_aloud_failed": {
+    "message": "이 답변을 소리 내어 읽을 수 없습니다",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "음성(소리 내어 읽기)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "출처: 이 브라우저 (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "출처: Hermes 대시보드 (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "출처: 없음",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "이 답변에는 읽을 텍스트가 없습니다.",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "답변은 이 브라우저 자체 음성으로 읽습니다. 여기서 Hermes 대시보드에 연결할 수 없거나 음성 경로가 없어 프로필의 음성은 사용되지 않습니다.",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "답변은 Hermes 프로필에 설정된 음성으로 읽습니다. Hermes 대시보드가 오디오를 만들고 이 패널이 재생합니다.",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "답변은 Hermes 프로필의 음성으로 읽습니다. 지난번에는 Hermes가 오디오를 만들지 못해({reason}) 이 브라우저 자체 음성이 읽었습니다.",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "사용할 수 있는 음성이 없습니다. Hermes 대시보드에 연결할 수 없고 이 브라우저에도 음성이 없어 소리 내어 읽기 버튼이 숨겨집니다.",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "브라우저 음성",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "게이트웨이 TTS",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "없음",
+    "description": "Runtime interface message read_aloud.route.none"
   },
   "runtime_responses_layout_bubbles": {
     "message": "양쪽 말풍선",
@@ -7067,6 +7275,10 @@
     "message": "범위",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "소리 내어 읽기",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "보이는 스레드 읽기",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7854,6 +8066,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hermes 중지",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "소리 내어 읽기 중지",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "세션을 전환하기 전에 활성 실행을 중지하세요.",

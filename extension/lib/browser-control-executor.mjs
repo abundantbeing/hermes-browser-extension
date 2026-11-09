@@ -10,6 +10,7 @@ import {
   base64ToBytes,
 } from './browser-control-artifacts.mjs';
 import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
+import { controlToolName } from './control-tool-names.mjs';
 import { renderControlSnapshot, SNAPSHOT_VIEW_BUDGETS } from './browser-control-snapshot-view.mjs';
 
 const MAX_RESULT_TEXT = 100_000;
@@ -224,6 +225,21 @@ export function safeNetworkUrl(value = '') {
     }
   }
   return redactSensitiveText(url);
+}
+
+const ADAPTER_GAP_WHY = Object.freeze({
+  'trusted-input-unavailable': 'It needs trusted input, which this browser does not let an extension send.',
+  'not-offered': "This browser's control does not offer it.",
+});
+
+// What the model reads when it asks for an action this browser cannot do: why, what it can do, and who can do the rest.
+function unsupportedActionMessage(action, contract = {}, step = 0) {
+  const name = action ? controlToolName(action) : 'this action';
+  const lead = step ? `Step ${step}: ` : '';
+  if (!contract.enabled) return `${lead}The active browser adapter does not support ${name}.`;
+  const why = ADAPTER_GAP_WHY[(contract.gaps || []).find((gap) => gap.action === action)?.reason] || '';
+  const offered = (contract.actions || []).map((offeredAction) => controlToolName(offeredAction)).join(', ');
+  return `${lead}${name} is not available in this browser.${why ? ` ${why}` : ''} This browser offers: ${offered}. Use one of those, or ask the person to do this step. Do not retry ${name}.`;
 }
 
 function errorOutcome(code, message = '') {
@@ -552,7 +568,7 @@ export function createBrowserControlExecutor({
       }
     }
     if (!adapter.contract.enabled || !adapter.contract.actions?.includes(action)) {
-      return errorOutcome('unsupported_action', `The active browser adapter does not support ${action || 'this action'}.`);
+      return errorOutcome('unsupported_action', unsupportedActionMessage(action, adapter.contract));
     }
 
     const startedAt = Number(now());
@@ -1178,7 +1194,7 @@ export function createBrowserControlExecutor({
           return { error: 'batch_action_not_allowed', message: `Step ${index + 1}: ${stepAction || 'a step without an action'} cannot run inside a batch.` };
         }
         if (!adapter.contract.actions.includes(stepAction)) {
-          return { error: 'unsupported_action', message: `Step ${index + 1}: the active browser adapter does not support ${stepAction}.` };
+          return { error: 'unsupported_action', message: unsupportedActionMessage(stepAction, adapter.contract, index + 1) };
         }
         const stepArgs = { ...raw };
         delete stepArgs.action;

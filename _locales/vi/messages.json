@@ -1319,6 +1319,162 @@
     "message": "Đang chờ cuộc trò chuyện này",
     "description": "Runtime interface message browser_control.waiting_title"
   },
+  "runtime_browser_limits_assist_panel_route_instead": {
+    "message": "Mở thanh bên trước (Ctrl+Shift+H hoặc nút trên thanh công cụ), rồi soạn bản nháp. Hoặc chọn Chạy trong nền.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.instead"
+  },
+  "runtime_browser_limits_assist_panel_route_label": {
+    "message": "Bản nháp Assist mở bảng điều khiển bên",
+    "description": "Runtime interface message browser_limits.assist_panel_route.label"
+  },
+  "runtime_browser_limits_assist_panel_route_reason": {
+    "message": "Firefox chỉ cho phép tiện ích mở thanh bên của nó khi có thao tác từ người dùng. Thao tác nhấp được chuyển từ trang đến trình nền chưa được kiểm thử; khi Firefox từ chối và không có thanh bên nào đang mở, Hermes dừng bản nháp và yêu cầu bạn mở thanh bên hoặc chạy trong nền.",
+    "description": "Runtime interface message browser_limits.assist_panel_route.reason"
+  },
+  "runtime_browser_limits_control_batch_instead": {
+    "message": "Hermes chạy từng bước một.",
+    "description": "Runtime interface message browser_limits.control_batch.instead"
+  },
+  "runtime_browser_limits_control_batch_label": {
+    "message": "Hermes Control: nhóm thao tác",
+    "description": "Runtime interface message browser_limits.control_batch.label"
+  },
+  "runtime_browser_limits_control_batch_reason": {
+    "message": "Bộ điều hợp Firefox chưa hỗ trợ nhóm thao tác, và hầu hết các bước trong nhóm (nhấp, nhập) vốn cũng không khả dụng ở đó.",
+    "description": "Runtime interface message browser_limits.control_batch.reason"
+  },
+  "runtime_browser_limits_control_frames_instead": {
+    "message": "Mở trang có khung trong thẻ riêng của nó.",
+    "description": "Runtime interface message browser_limits.control_frames.instead"
+  },
+  "runtime_browser_limits_control_frames_label": {
+    "message": "Hermes Control: điều khiển bên trong khung",
+    "description": "Runtime interface message browser_limits.control_frames.label"
+  },
+  "runtime_browser_limits_control_frames_reason": {
+    "message": "Điều khiển khung cần API trình gỡ lỗi, mà Firefox không có; văn bản trang mà Hermes đọc không bao gồm nội dung trong khung.",
+    "description": "Runtime interface message browser_limits.control_frames.reason"
+  },
+  "runtime_browser_limits_control_navigate_instead": {
+    "message": "Lặp lại thao tác cuộn để di chuyển xa hơn, hoặc nhờ người dùng cuộn thủ công.",
+    "description": "Runtime interface message browser_limits.control_navigate.instead"
+  },
+  "runtime_browser_limits_control_navigate_label": {
+    "message": "Hermes Control: điều hướng, quay lại và cuộn",
+    "description": "Runtime interface message browser_limits.control_navigate.label"
+  },
+  "runtime_browser_limits_control_navigate_reason": {
+    "message": "Lệnh cuộn của Firefox dịch chuyển trang một khoảng cố định và bỏ qua tham số lượng mà Chromium tôn trọng.",
+    "description": "Runtime interface message browser_limits.control_navigate.reason"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_instead": {
+    "message": "Hermes có thể đọc trang và mở địa chỉ; hãy tự nhấp hoặc nhập, hoặc dùng trình duyệt Chromium cho tác vụ đó.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.instead"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_label": {
+    "message": "Hermes Control: nhấp chuột, nhập liệu và nhấn phím",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.label"
+  },
+  "runtime_browser_limits_control_pointer_keyboard_reason": {
+    "message": "Firefox không có API trình gỡ lỗi nên tiện ích không thể gửi các thao tác nhấp, nhập hoặc nhấn phím đáng tin cậy, và Hermes không giả lập chúng bằng sự kiện của trang.",
+    "description": "Runtime interface message browser_limits.control_pointer_keyboard.reason"
+  },
+  "runtime_browser_limits_control_read_page_instead": {
+    "message": "Yêu cầu Hermes làm việc dựa trên văn bản trang; sao chép mọi nội dung trong khung vào khung trò chuyện.",
+    "description": "Runtime interface message browser_limits.control_read_page.instead"
+  },
+  "runtime_browser_limits_control_read_page_label": {
+    "message": "Hermes Control: đọc trang",
+    "description": "Runtime interface message browser_limits.control_read_page.label"
+  },
+  "runtime_browser_limits_control_read_page_reason": {
+    "message": "Firefox không có cây trợ năng cho tiện ích: Hermes đọc văn bản đầu trang và danh sách điều khiển bằng một content script, và không đọc gì bên trong khung.",
+    "description": "Runtime interface message browser_limits.control_read_page.reason"
+  },
+  "runtime_browser_limits_control_screenshot_instead": {
+    "message": "Nhấp Cho phép chụp ảnh màn hình trên Firefox trong Cài đặt, hoặc yêu cầu Hermes đọc văn bản trang.",
+    "description": "Runtime interface message browser_limits.control_screenshot.instead"
+  },
+  "runtime_browser_limits_control_screenshot_label": {
+    "message": "Hermes Control: ảnh chụp màn hình",
+    "description": "Runtime interface message browser_limits.control_screenshot.label"
+  },
+  "runtime_browser_limits_control_screenshot_reason": {
+    "message": "Firefox chỉ cho phép chụp khi có quyền truy cập tất cả các trang; quyền này là tùy chọn và được yêu cầu bằng một cú nhấp. Chỉ chụp được toàn bộ thẻ đang hiển thị, và phải là thẻ mà cửa sổ đang hiển thị.",
+    "description": "Runtime interface message browser_limits.control_screenshot.reason"
+  },
+  "runtime_browser_limits_control_tab_groups_instead": {
+    "message": "Hermes vẫn mở và đóng các thẻ của riêng nó; chỉ là chúng không được nhóm.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.instead"
+  },
+  "runtime_browser_limits_control_tab_groups_label": {
+    "message": "Hermes Control: nhóm thẻ",
+    "description": "Runtime interface message browser_limits.control_tab_groups.label"
+  },
+  "runtime_browser_limits_control_tab_groups_reason": {
+    "message": "Firefox có lệnh tabs.group, nhưng bộ điều hợp Firefox chưa hỗ trợ nhóm thẻ.",
+    "description": "Runtime interface message browser_limits.control_tab_groups.reason"
+  },
+  "runtime_browser_limits_instead": {
+    "message": "Thay vào đó: {text}",
+    "description": "Runtime interface message browser_limits.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_instead": {
+    "message": "Hãy gõ thay thế, hoặc bật chuyển âm thanh thành văn bản trên cổng Hermes của bạn.",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.instead"
+  },
+  "runtime_browser_limits_side_panel_dictation_label": {
+    "message": "Đọc chính tả bằng giọng nói trong ô soạn thảo",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.label"
+  },
+  "runtime_browser_limits_side_panel_dictation_reason": {
+    "message": "Firefox không có nhận dạng giọng nói của trình duyệt, nên tính năng đọc chính tả chỉ hoạt động qua dịch vụ chuyển giọng nói của chính Hermes (cổng có bật chuyển âm thanh thành văn bản, hoặc Dashboard trên máy tính này).",
+    "description": "Runtime interface message browser_limits.side_panel_dictation.reason"
+  },
+  "runtime_browser_limits_side_panel_per_tab_instead": {
+    "message": "Thanh bên vẫn mở trên các thẻ; nút trên thanh công cụ sẽ đóng nó.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.instead"
+  },
+  "runtime_browser_limits_side_panel_per_tab_label": {
+    "message": "Bảng điều khiển bên gắn với một thẻ",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.label"
+  },
+  "runtime_browser_limits_side_panel_per_tab_reason": {
+    "message": "Firefox giữ thanh bên của tiện ích mở trên mọi thẻ trong cửa sổ, còn nếu cấp cho nó một bảng điều khiển riêng cho mỗi thẻ thì nó sẽ tải lại và kết thúc các cuộc trò chuyện đang diễn ra.",
+    "description": "Runtime interface message browser_limits.side_panel_per_tab.reason"
+  },
+  "runtime_browser_limits_side_panel_wake_word_instead": {
+    "message": "Kết nối tới cổng nội bộ để dùng Hermes wake, hoặc bắt đầu trò chuyện từ bảng điều khiển.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.instead"
+  },
+  "runtime_browser_limits_side_panel_wake_word_label": {
+    "message": "Từ đánh thức trong bảng điều khiển bên",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.label"
+  },
+  "runtime_browser_limits_side_panel_wake_word_reason": {
+    "message": "Firefox không có tài liệu offscreen nên trình lắng nghe cục bộ không chạy được. Cơ chế đánh thức tích hợp của Hermes chỉ chạy trên cổng nội bộ trên máy này, không chạy qua kết nối từ xa hoặc đám mây.",
+    "description": "Runtime interface message browser_limits.side_panel_wake_word.reason"
+  },
+  "runtime_browser_limits_status_experimental": {
+    "message": "Thử nghiệm",
+    "description": "Runtime interface message browser_limits.status_experimental"
+  },
+  "runtime_browser_limits_status_limited": {
+    "message": "Hạn chế",
+    "description": "Runtime interface message browser_limits.status_limited"
+  },
+  "runtime_browser_limits_status_unavailable": {
+    "message": "Không khả dụng",
+    "description": "Runtime interface message browser_limits.status_unavailable"
+  },
+  "runtime_browser_limits_summary": {
+    "message": "Hạn chế hoặc không khả dụng trên Firefox: {count}. Mở để xem lý do và cách thay thế.",
+    "description": "Runtime interface message browser_limits.summary"
+  },
+  "runtime_browser_limits_title": {
+    "message": "Giới hạn của Firefox",
+    "description": "Runtime interface message browser_limits.title"
+  },
   "runtime_capability_feature_approvalEvents": {
     "message": "Sự kiện phê duyệt",
     "description": "Runtime interface message capability.feature.approvalEvents"
@@ -3430,6 +3586,58 @@
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "Dự án cần phiên đăng nhập của Hermes Web. Hãy mở Hermes Web một lần (chạy hermes webapp), rồi thử lại.",
     "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
+  "runtime_read_aloud_failed": {
+    "message": "Không thể đọc to phản hồi này",
+    "description": "Runtime interface message read_aloud.failed"
+  },
+  "runtime_read_aloud_label": {
+    "message": "Giọng nói (đọc to)",
+    "description": "Runtime interface message read_aloud.label"
+  },
+  "runtime_read_aloud_meta_browser": {
+    "message": "Nguồn: trình duyệt này (speechSynthesis)",
+    "description": "Runtime interface message read_aloud.meta.browser"
+  },
+  "runtime_read_aloud_meta_gateway": {
+    "message": "Nguồn: bảng điều khiển Hermes (/api/audio/speak)",
+    "description": "Runtime interface message read_aloud.meta.gateway"
+  },
+  "runtime_read_aloud_meta_none": {
+    "message": "Nguồn: không có",
+    "description": "Runtime interface message read_aloud.meta.none"
+  },
+  "runtime_read_aloud_nothing": {
+    "message": "Phản hồi này không có văn bản để đọc.",
+    "description": "Runtime interface message read_aloud.nothing"
+  },
+  "runtime_read_aloud_reason_browser": {
+    "message": "Phản hồi được đọc bằng giọng nói riêng của trình duyệt này. Không truy cập được bảng điều khiển Hermes từ đây hoặc nó không có đường dẫn giọng nói, nên giọng của hồ sơ bạn không được dùng.",
+    "description": "Runtime interface message read_aloud.reason.browser"
+  },
+  "runtime_read_aloud_reason_gateway": {
+    "message": "Phản hồi được đọc bằng giọng đã thiết lập trong hồ sơ Hermes của bạn. Bảng điều khiển Hermes tạo âm thanh và bảng này phát lại.",
+    "description": "Runtime interface message read_aloud.reason.gateway"
+  },
+  "runtime_read_aloud_reason_gateway_fell_back": {
+    "message": "Phản hồi được đọc bằng giọng của hồ sơ Hermes của bạn. Lần trước Hermes không tạo được âm thanh ({reason}), nên giọng riêng của trình duyệt này đã đọc.",
+    "description": "Runtime interface message read_aloud.reason.gateway_fell_back"
+  },
+  "runtime_read_aloud_reason_none": {
+    "message": "Không có giọng nói nào: không truy cập được bảng điều khiển Hermes và trình duyệt này không có giọng nói, nên nút đọc to bị ẩn.",
+    "description": "Runtime interface message read_aloud.reason.none"
+  },
+  "runtime_read_aloud_route_browser": {
+    "message": "Giọng nói của trình duyệt",
+    "description": "Runtime interface message read_aloud.route.browser"
+  },
+  "runtime_read_aloud_route_gateway": {
+    "message": "TTS của cổng",
+    "description": "Runtime interface message read_aloud.route.gateway"
+  },
+  "runtime_read_aloud_route_none": {
+    "message": "Không có",
+    "description": "Runtime interface message read_aloud.route.none"
   },
   "runtime_responses_layout_bubbles": {
     "message": "Bong bóng hai bên",
@@ -7067,6 +7275,10 @@
     "message": "Phạm vi",
     "description": "Runtime interface message ui.range"
   },
+  "runtime_ui_read_aloud": {
+    "message": "Đọc to",
+    "description": "Runtime interface message ui.read.aloud"
+  },
   "runtime_ui_read_the_visible_thread": {
     "message": "Đọc chuỗi đang hiện",
     "description": "Runtime interface message ui.read.the.visible.thread"
@@ -7854,6 +8066,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Dừng Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_reading_aloud": {
+    "message": "Dừng đọc to",
+    "description": "Runtime interface message ui.stop.reading.aloud"
   },
   "runtime_ui_stop_the_active_run_before_switching_sessions": {
     "message": "Dừng lượt chạy đang hoạt động trước khi chuyển phiên.",

@@ -441,7 +441,8 @@ class FakeState:
         self.values[key] = value
 
 class FakeCtx:
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, profile_name):
+        self.profile_name = profile_name
         self.state = FakeState(data_dir)
         self.tools = []
         self.hooks = []
@@ -459,7 +460,7 @@ with tempfile.TemporaryDirectory() as home_a, tempfile.TemporaryDirectory() as h
     # Hermes imports a directory plugin once per Hermes-home scope under its own module name.
     module_a, hooks_a, tools_a, _ = load_plugin("hermes_plugins.hermes_browser_companion")
     module_b, hooks_b, tools_b, _ = load_plugin("hermes_plugins.hermes_browser_companion__home_0123456789ab")
-    ctx_a, ctx_b = FakeCtx(home_a), FakeCtx(home_b)
+    ctx_a, ctx_b = FakeCtx(home_a, "profile_a"), FakeCtx(home_b, "profile_b")
     module_a.register(ctx_a)
     module_b.register(ctx_b)
 

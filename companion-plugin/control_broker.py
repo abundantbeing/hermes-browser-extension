@@ -31,11 +31,14 @@ and any feature flag. The plugin being enabled for a profile is the switch.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import secrets
+import sys
 import threading
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
@@ -394,6 +397,11 @@ class ControlBroker:
         controller = self._live_controller(scope)
         return controller if controller is not None and capability in controller.scope.capabilities else None
 
+    def offered_capabilities(self, scope: ControllerScope) -> Optional[frozenset]:
+        """What the live controller for ``scope`` offers, or ``None`` when it is offline or absent."""
+        controller = self._live_controller(scope)
+        return None if controller is None else controller.scope.capabilities
+
     def is_owner(self, scope: ControllerScope, owner: Any) -> bool:
         """Whether ``owner`` is the exact live transport for ``scope`` (capability-independent)."""
         controller = self._live_controller(scope)
@@ -645,11 +653,57 @@ class ControlBroker:
             return len(self._pending)
 
 
-# One broker per process, shared by the routes (the gateway's event loop) and the
-# tools (agent worker threads): ordinary turns run in the gateway process.
-_BROKER = ControlBroker()
+# One broker per profile on a multiplexed gateway so control routes and tab_* tools
+# never cross profiles through the shared listener app.
+_BROKERS: dict[str, ControlBroker] = {}
+_BROKER_LOCK = threading.RLock()
 
 
-def get_control_broker() -> ControlBroker:
-    """The process-local broker."""
-    return _BROKER
+def get_control_broker(profile: str | None = None) -> ControlBroker:
+    """Broker for the named profile (``default`` when omitted), process-wide."""
+    key = str(profile or "default").strip() or "default"
+    with _BROKER_LOCK:
+        broker = _BROKERS.get(key)
+        if broker is None:
+            broker = ControlBroker()
+            _BROKERS[key] = broker
+        return broker
+
+
+def iter_control_brokers() -> tuple[ControlBroker, ...]:
+    """Every profile broker (ticket consumption across multiplex copies)."""
+    with _BROKER_LOCK:
+        return tuple(_BROKERS.values())
+
+
+# Hermes's directory-plugin loader evicts ``hermes_plugins.<slug>.*`` and
+# re-executes the package on each load (``hermes_cli/plugins_loader.py``).
+# Adopt one canonical module object under a key the loader never evicts so
+# routes and tab_* tools share ``_BROKERS`` and exception class identities.
+# The key is scoped to one Hermes home (the plugin slug, including ``__home_…``)
+# so two homes in one process never share per-profile brokers.
+def _plugin_home_scope() -> str:
+    """The Hermes-home slice of this load's plugin package name."""
+    package = __package__ or ""
+    if package.startswith("hermes_plugins."):
+        slug = package.split(".", 1)[1]
+    else:
+        slug = package or __name__.rpartition(".")[0] or "default"
+    # Multiplex profile module copies use a distinct ``__package__`` under one home;
+    # ``__home_…`` slugs stay separate so two homes never share brokers.
+    if "__home_" in slug:
+        return slug
+    if "__profile_" in slug:
+        return slug.split("__profile_", 1)[0]
+    return slug
+
+
+_SHARED_MODULE_KEY = f"_hermes_browser_extension_shared_control_broker.{_plugin_home_scope()}"
+_SOURCE_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+_shared_mod = sys.modules.get(_SHARED_MODULE_KEY)
+if _shared_mod is not None and getattr(_shared_mod, "_SOURCE_DIGEST", None) == _SOURCE_DIGEST:
+    globals().update({name: value for name, value in vars(_shared_mod).items() if not name.startswith("__")})
+else:
+    sys.modules[_SHARED_MODULE_KEY] = sys.modules[__name__]
+del _shared_mod

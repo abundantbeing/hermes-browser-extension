@@ -47,6 +47,7 @@ test('the dashboard-route probe stays off a remote dashboard and feeds only the 
   assert.match(fn, /isRemoteWsMode\(\)/);
   assert.match(fn, /fetchDashboardSessionToken\(/);
   assert.match(fn, /for \(const id of DASHBOARD_ROUTE_CAPABILITIES\) capabilityRuntime\.ledger\.observeProbe\(id, fields\)/);
+  assert.match(fn, /notifyReadAloudDashboardProbeChanged\(\)/);
 });
 
 test('a pasted image without an API upload route goes through the dashboard before staying inline', () => {

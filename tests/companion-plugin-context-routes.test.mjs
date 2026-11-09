@@ -92,6 +92,9 @@ class Adapter:
 async def served(adapter=None):
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
+    registry = sys.modules["probe_plugin.profile_registry"]
+    registry.set_multiplex_test_profiles(["default", "luxord"])
+    registry.set_listener_test_profile("luxord")
     ctx = Ctx()
     module.register(ctx)
     app = web.Application()
@@ -150,16 +153,24 @@ print(json.dumps(asyncio.run(main())))
   for (const name of ['status', 'upload', 'actions']) assert.deepEqual(data[name], [401, 401], name);
   assert.deepEqual(data.raising, [401, 401, 401]);
   assert.deepEqual(data.nocheck, [401, 401, 401]);
-  assert.deepEqual(data.listed, [
+  const mirror = (path) => `/p/{profile}${path}`;
+  const multiplexed = [
     '/api/plugins/hermes-browser-extension/actions',
     '/api/plugins/hermes-browser-extension/context',
     '/api/plugins/hermes-browser-extension/context/status',
     '/api/plugins/hermes-browser-extension/control/register',
     '/api/plugins/hermes-browser-extension/control/ws',
+    '/api/plugins/hermes-browser-extension/status',
+    mirror('/api/plugins/hermes-browser-extension/actions'),
+    mirror('/api/plugins/hermes-browser-extension/context'),
+    mirror('/api/plugins/hermes-browser-extension/context/status'),
+    mirror('/api/plugins/hermes-browser-extension/control/register'),
+    mirror('/api/plugins/hermes-browser-extension/control/ws'),
+    mirror('/api/plugins/hermes-browser-extension/status'),
     '/api/plugins/hermes-browser-extension/profiles',
     '/api/plugins/hermes-browser-extension/profiles/{name}/avatar',
-    '/api/plugins/hermes-browser-extension/status',
-  ]);
+  ].sort();
+  assert.deepEqual([...data.listed].sort(), multiplexed);
 });
 
 test('an upload is validated by the hook parser, parked for its session, and answered with metadata only', () => {
@@ -199,7 +210,7 @@ async def main():
         # header at the real handler too, without relying on client serialization.
         from aiohttp.test_utils import make_mocked_request
         ctl_request = make_mocked_request("POST", BASE + "/context", headers={**AUTH, "X-Hermes-Session-Id": "a\\x01b"})
-        bad["ctl_header"] = (await routes.make_upload_handler(Adapter(), module.STORE)(ctl_request)).status
+        bad["ctl_header"] = (await routes.make_upload_handler(Adapter())(ctl_request)).status
         bad["get_on_post"] = (await client.get(BASE + "/context", headers=h)).status
         seen["bad"] = bad
         # the refused uploads did not replace the good one
@@ -431,8 +442,8 @@ test('the extension\'s own full and reference serializations interoperate: same 
 import os
 upload = os.environ["UPLOAD_ENVELOPE"]
 turn = os.environ["REFERENCE_TURN"]
-store = module.STORE
 module.register(Ctx())
+store = module.STORE
 parked = store.put_session_upload("sess-A", upload)
 other = hooks.pre_llm_call(user_message=turn, **ids(session="sess-B"))
 notice = hooks.pre_llm_call(user_message=turn, **ids())
