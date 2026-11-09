@@ -287,11 +287,15 @@ export function withSavedConnectionsLock(task, locks = globalThis.navigator?.loc
   return run;
 }
 
-// The stored list is the truth; a panel's copy can be older than another panel's write.
+// The stored list is the truth; a panel's copy can be older than another panel's write. The switch
+// revision only ever goes up: a panel that has not seen the latest switch cannot take it back.
 export function withStoredSavedConnections(settings, stored) {
-  return Array.isArray(stored?.savedConnections)
-    ? { ...settings, savedConnections: stored.savedConnections }
-    : settings;
+  if (!Array.isArray(stored?.savedConnections)) return settings;
+  return {
+    ...settings,
+    savedConnections: stored.savedConnections,
+    savedConnectionSwitchRevision: Math.max(Number(settings?.savedConnectionSwitchRevision) || 0, Number(stored.savedConnectionSwitchRevision) || 0),
+  };
 }
 
 export function savedConnectionsBase(settings, stored, expectedId) {

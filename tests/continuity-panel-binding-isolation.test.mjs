@@ -26,10 +26,11 @@ function functionSource(name) {
   return lines.slice(start, end + 1).join('\n');
 }
 
-function adoptContext(initialSettings, secrets = undefined) {
+function adoptContext(initialSettings, secrets = undefined, storedSettings = undefined) {
   const context = vm.createContext({
     settings: initialSettings,
     loadedSavedConnectionId: initialSettings.activeSavedConnectionId || '',
+    loadedSavedConnectionRevision: Number(initialSettings.savedConnectionSwitchRevision) || 0,
     reloads: [],
     reloadForSavedConnection(next) { this.reloads.push(next); },
     migrateConnectionSettings: (value) => value,
@@ -57,16 +58,17 @@ function adoptContext(initialSettings, secrets = undefined) {
         local: {
           get: async (key) => {
             const keys = Array.isArray(key) ? key : [key];
-            if (keys.includes(SAVED_CONNECTION_SECRETS_STORAGE_KEY)) {
-              return { [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: secrets };
-            }
-            return {};
+            return {
+              ...(keys.includes(SAVED_CONNECTION_SECRETS_STORAGE_KEY) ? { [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: secrets } : {}),
+              ...(keys.includes('hermesBrowserSettings') && storedSettings ? { hermesBrowserSettings: storedSettings } : {}),
+            };
           },
         },
       },
     },
   });
   vm.runInContext(functionSource('hermesBrowserSettingsFromStorageChanges'), context);
+  vm.runInContext(functionSource('panelBehindSavedConnectionSwitch'), context);
   vm.runInContext(functionSource('adoptHermesBrowserSettingsStorageChange'), context);
   return context;
 }
@@ -127,7 +129,8 @@ test('a settings event that finishes late does not replace what a newer event al
 test('a secrets-only event does not discard a settings event that is still being read', async () => {
   const context = adoptContext({ ...mine, apiKey: 'start-key' });
   let releaseRead;
-  context.browserApi = { storage: { local: { get: () => new Promise((resolve) => { releaseRead = () => resolve({}); }) } } };
+  let reads = 0;
+  context.browserApi = { storage: { local: { get: () => (reads++ === 0 ? new Promise((resolve) => { releaseRead = () => resolve({}); }) : Promise.resolve({})) } } };
   const adopt = vm.runInContext('adoptHermesBrowserSettingsStorageChange', context);
   const pending = adopt({ hermesBrowserSettings: { newValue: { ...mine, apiKey: 'pending-key' } } });
   await adopt({ [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: { newValue: {} } });
@@ -184,6 +187,59 @@ test('a saved-connection switch in another panel reloads before adopting its ses
   assert.equal(context.reloads.length, 1);
   assert.equal(context.reloads[0].activeSavedConnectionId, 'work');
   assert.equal(vm.runInContext('settings.sessionId', context), 'A');
+});
+
+test('a panel that is on the same connection but missed a switch reloads, and an ordinary write does not', async () => {
+  const onDefault = { ...mine, activeSavedConnectionId: 'default', savedConnectionSwitchRevision: 0 };
+  const context = adoptContext({ ...onDefault });
+  context.reloadForSavedConnection = (value) => context.reloads.push(value);
+  const adopt = vm.runInContext('adoptHermesBrowserSettingsStorageChange', context);
+  await adopt({ hermesBrowserSettings: { newValue: { ...onDefault, appearanceTheme: 'mono' } } });
+  assert.equal(context.reloads.length, 0, 'the same revision is the same chat');
+  await adopt({ hermesBrowserSettings: { newValue: { ...onDefault, savedConnectionSwitchRevision: 2 } } });
+  assert.equal(context.reloads.length, 1, 'A to B to A is two switches: this panel starts fresh');
+  assert.equal(context.reloads[0].savedConnectionSwitchRevision, 2);
+  assert.equal(vm.runInContext('settings.sessionId', context), 'A', 'its own session stays until the reload');
+});
+
+test('the newest event wins when A to B to A arrives while B is still being read', async () => {
+  const onDefault = { ...mine, activeSavedConnectionId: 'default', savedConnectionSwitchRevision: 0 };
+  const context = adoptContext({ ...onDefault });
+  context.reloadForSavedConnection = (value) => context.reloads.push(value);
+  let releaseRead;
+  let reads = 0;
+  context.browserApi = { storage: { local: { get: () => (reads++ === 0 ? new Promise((resolve) => { releaseRead = () => resolve({}); }) : Promise.resolve({})) } } };
+  const adopt = vm.runInContext('adoptHermesBrowserSettingsStorageChange', context);
+  const toB = adopt({ hermesBrowserSettings: { newValue: { ...onDefault, activeSavedConnectionId: 'work', savedConnectionSwitchRevision: 1 } } });
+  await adopt({ hermesBrowserSettings: { newValue: { ...onDefault, savedConnectionSwitchRevision: 2 } } });
+  releaseRead();
+  await toB;
+  assert.equal(context.reloads.length, 1, 'the answer to A is acted on although B was dropped');
+  assert.equal(context.reloads[0].activeSavedConnectionId, 'default');
+});
+
+test('a change to the protected record alone, such as removing a header, is adopted by this panel', async () => {
+  const withHeader = rememberSavedConnection({
+    gatewayMode: 'remote-api', gatewayUrl: 'https://hermes.example', apiKey: 'live-key', tokenSource: 'manual',
+    activeSavedConnectionId: 'default', connectionHeaders: [{ name: 'X-Proxy-Token', value: 'proxy-value' }],
+  });
+  const first = await packSavedConnectionStorage(withHeader);
+  const removed = await packSavedConnectionStorage({ ...withHeader, connectionHeaders: [] });
+  assert.equal(JSON.stringify(first.hermesBrowserSettings), JSON.stringify(removed.hermesBrowserSettings), 'only the protected record differs');
+  const context = adoptContext({ ...withHeader }, first[SAVED_CONNECTION_SECRETS_STORAGE_KEY], removed.hermesBrowserSettings);
+  let stops = 0;
+  context.readAloudPlayer = { stop() { stops += 1; } };
+  await vm.runInContext('adoptHermesBrowserSettingsStorageChange', context)({
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: { newValue: removed[SAVED_CONNECTION_SECRETS_STORAGE_KEY] },
+  });
+  assert.deepEqual(vm.runInContext('settings.connectionHeaders', context), [], 'the removed header is no longer sent from this panel');
+  assert.equal(stops, 1, 'new headers change how requests are made');
+});
+
+test('a protected-record event with no settings stored adopts nothing', async () => {
+  const context = adoptContext({ ...mine, apiKey: 'keep' }, {}, undefined);
+  await vm.runInContext('adoptHermesBrowserSettingsStorageChange', context)({ [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: { newValue: {} } });
+  assert.equal(vm.runInContext('settings.apiKey', context), 'keep');
 });
 
 test('the toggle that persists Gmail capture adopts only its own key, not the whole shared record', async () => {

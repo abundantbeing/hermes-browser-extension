@@ -1375,6 +1375,7 @@ const els = {
 
 let settings = { ...DEFAULT_SETTINGS };
 let loadedSavedConnectionId = '';
+let loadedSavedConnectionRevision = 0;
 let savedConnectionBusy = false;
 let savedConnectionTool = '';
 let settingsAdoptionSequence = 0;
@@ -23560,6 +23561,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   settings = { ...DEFAULT_SETTINGS, ...storedSettings, ...storedPanelAppearance };
   settings = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
   loadedSavedConnectionId = settings.activeSavedConnectionId;
+  loadedSavedConnectionRevision = Number(settings.savedConnectionSwitchRevision) || 0;
   noteSavedConnectionSwitchBaseline();
   loadContextScopeForInstance();
   const messageKey = activeMessagesStorageKey(previousConversationScope);
@@ -23990,9 +23992,15 @@ async function forgetSavedConnectionRecords(id) {
   forgetSavedConnectionSessionRecords(id);
 }
 
+// A change to the protected record alone (the headers of the connection in use, after Options) leaves
+// the settings record as it was, so the settings come from storage and the new secrets from the change.
 async function hermesBrowserSettingsFromStorageChanges(changes) {
-  const raw = changes?.hermesBrowserSettings?.newValue;
-  if (!raw || typeof raw !== 'object') return null;
+  let raw = changes?.hermesBrowserSettings?.newValue;
+  if (!raw || typeof raw !== 'object') {
+    if (!Object.hasOwn(changes || {}, SAVED_CONNECTION_SECRETS_STORAGE_KEY)) return null;
+    raw = (await browserApi.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings;
+    if (!raw || typeof raw !== 'object') return null;
+  }
   let secrets = Object.hasOwn(changes, SAVED_CONNECTION_SECRETS_STORAGE_KEY)
     ? changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue
     : undefined;
@@ -24003,13 +24011,20 @@ async function hermesBrowserSettingsFromStorageChanges(changes) {
   return hydrateSavedConnectionSecrets(migrateConnectionSettings(raw), secrets);
 }
 
+// Another panel moved to a different connection, or switched again since this one loaded (A to B to A
+// is two switches and a fresh chat each, even though this panel is on A both times).
+function panelBehindSavedConnectionSwitch(next) {
+  if (!next.activeSavedConnectionId || !loadedSavedConnectionId) return false;
+  return next.activeSavedConnectionId !== loadedSavedConnectionId
+    || (Number(next.savedConnectionSwitchRevision) || 0) > loadedSavedConnectionRevision;
+}
+
 async function adoptHermesBrowserSettingsStorageChange(changes) {
   const carriesSettings = changes?.hermesBrowserSettings?.newValue && typeof changes.hermesBrowserSettings.newValue === 'object';
   const adoption = carriesSettings ? ++settingsAdoptionSequence : settingsAdoptionSequence;
   const next = await hermesBrowserSettingsFromStorageChanges(changes);
   if (!next || adoption !== settingsAdoptionSequence) return;
-  if (next.activeSavedConnectionId && loadedSavedConnectionId
-    && next.activeSavedConnectionId !== loadedSavedConnectionId) {
+  if (panelBehindSavedConnectionSwitch(next)) {
     reloadForSavedConnection(next);
     return;
   }
@@ -24594,8 +24609,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
   }
   const writeSettingsRecord = async () => {
     const freshSettings = await readBrowserSettingsFromStorage();
-    if (freshSettings.activeSavedConnectionId && loadedSavedConnectionId
-      && freshSettings.activeSavedConnectionId !== loadedSavedConnectionId) {
+    if (panelBehindSavedConnectionSwitch(freshSettings)) {
       reloadForSavedConnection(freshSettings);
       throw new Error(t('connections.error'));
     }
