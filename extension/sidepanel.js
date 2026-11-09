@@ -798,7 +798,7 @@ import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-
 import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteFromInput, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
-import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserGateway } from './lib/background-task-browser.mjs';
+import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
@@ -873,21 +873,23 @@ function initBackgroundTaskBrowserSetting() {
   async function read() {
     const stored = await storage.get(['hermesBrowserSettings', BACKGROUND_BROWSER_CONSENT]);
     return {
-      gateway: backgroundBrowserGateway(stored.hermesBrowserSettings),
+      consentIdentity: await backgroundBrowserConsentIdentity(stored.hermesBrowserSettings),
       consent: stored[BACKGROUND_BROWSER_CONSENT],
       connection: stored.hermesBrowserSettings,
     };
   }
 
   let renderRevision = 0;
+  let displayedConsentIdentity = '';
   async function render() {
     const revision = ++renderRevision;
-    const { gateway, consent, connection } = await read();
-    if (revision !== renderRevision) return;
-    row.hidden = !gateway;
-    input.checked = Boolean(gateway && gateway === consent);
+    displayedConsentIdentity = '';
     input.disabled = true;
-    if (!gateway) return;
+    const { consentIdentity, consent, connection } = await read();
+    if (revision !== renderRevision) return;
+    row.hidden = !consentIdentity;
+    input.checked = Boolean(consentIdentity && consentIdentity === consent);
+    if (!consentIdentity) return;
     let available = false;
     try {
       const url = new URL(connection.gatewayUrl);
@@ -905,6 +907,7 @@ function initBackgroundTaskBrowserSetting() {
       // No trustworthy plugin response: leave the setting disabled.
     }
     if (revision !== renderRevision) return;
+    displayedConsentIdentity = consentIdentity;
     input.disabled = !available && !input.checked;
     status.textContent = available ? '' : t('browser_control.background_unavailable');
   }
@@ -913,9 +916,8 @@ function initBackgroundTaskBrowserSetting() {
     const checked = input.checked;
     input.disabled = true;
     try {
-      const { gateway } = await read();
-      if (checked && gateway) {
-        await storage.set({ [BACKGROUND_BROWSER_CONSENT]: gateway });
+      if (checked && displayedConsentIdentity) {
+        await storage.set({ [BACKGROUND_BROWSER_CONSENT]: displayedConsentIdentity });
       } else {
         await storage.remove(BACKGROUND_BROWSER_CONSENT);
       }

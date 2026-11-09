@@ -1,5 +1,6 @@
 import { BACKGROUND_BROWSER_SESSION, CONTROLLER_METHODS } from './controller-protocol.mjs';
 import { createLoadWaiter } from './browser-control-browser-adapters.mjs';
+import { sha256Hex } from './browser-control-artifacts.mjs';
 import { validateBrowserControlUrl } from './browser-control-safety.mjs';
 import { safeNetworkUrl } from './browser-control-executor.mjs';
 import { redactSensitiveText } from './browser-context-protocol.mjs';
@@ -7,10 +8,10 @@ import { redactSensitiveText } from './browser-context-protocol.mjs';
 export const BACKGROUND_BROWSER_CONSENT = 'hermesBackgroundBrowserConsent';
 export const BACKGROUND_BROWSER_ALARM = 'hermes-background-browser-reconnect';
 
-export function backgroundBrowserGateway(settings = {}) {
+function backgroundBrowserGateway(settings = {}) {
   try {
     const url = new URL(settings.gatewayUrl);
-    if (settings.connectionTransport !== 'local-api' || !settings.apiKey
+    if (settings.connectionTransport !== 'local-api' || !backgroundBrowserApiKey(settings)
       || !['http:', 'https:'].includes(url.protocol) || url.username || url.password
       || !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) return '';
     return JSON.stringify([url.href, String(settings.activeProfile || '')]);
@@ -19,16 +20,31 @@ export function backgroundBrowserGateway(settings = {}) {
   }
 }
 
+function backgroundBrowserApiKey(settings) {
+  return String(settings?.apiKey || '').trim();
+}
+
+export async function backgroundBrowserConsentIdentity(settings) {
+  const gateway = backgroundBrowserGateway(settings);
+  if (!gateway) return '';
+  const fingerprint = await sha256Hex(backgroundBrowserApiKey(settings));
+  return JSON.stringify([gateway, fingerprint]);
+}
+
 function failure(code, message) {
   return { ok: false, error: { code, message } };
 }
 
 function tabView(tab) {
+  const urls = [tab.url, tab.pendingUrl].filter(Boolean);
+  const restricted = !urls.length || urls.some((url) => !validateBrowserControlUrl(url).ok);
   return {
     id: tab.id,
     windowId: tab.windowId,
-    title: redactSensitiveText(String(tab.title || '').slice(0, 500)),
-    url: safeNetworkUrl(tab.url || tab.pendingUrl),
+    ...(restricted ? { title: 'Restricted page' } : {
+      title: redactSensitiveText(String(tab.title || '').slice(0, 500)),
+      url: safeNetworkUrl(tab.url || tab.pendingUrl),
+    }),
     active: tab.active === true,
     loading: tab.status === 'loading',
   };
@@ -215,11 +231,11 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   async function reconcile() {
     const readRevision = revision;
     const saved = await storage.local.get(['hermesBrowserSettings', BACKGROUND_BROWSER_CONSENT]);
-    if (readRevision !== revision) return;
     const settings = saved.hermesBrowserSettings || {};
-    const gateway = backgroundBrowserGateway(settings);
-    const enabled = gateway && saved[BACKGROUND_BROWSER_CONSENT] === gateway;
-    const nextRoute = enabled ? JSON.stringify([gateway, settings.apiKey]) : null;
+    const consentIdentity = await backgroundBrowserConsentIdentity(settings);
+    if (readRevision !== revision) return;
+    const enabled = consentIdentity && saved[BACKGROUND_BROWSER_CONSENT] === consentIdentity;
+    const nextRoute = enabled ? consentIdentity : null;
     if (nextRoute !== route) {
       close();
       const resetRevision = revision;
@@ -267,7 +283,7 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
       const change = changes.hermesBrowserSettings;
       if (changes[BACKGROUND_BROWSER_CONSENT] || (change && (
         backgroundBrowserGateway(change.oldValue) !== backgroundBrowserGateway(change.newValue)
-        || change.oldValue?.apiKey !== change.newValue?.apiKey
+        || backgroundBrowserApiKey(change.oldValue) !== backgroundBrowserApiKey(change.newValue)
       ))) {
         // Invalidate before the reconcile queue can wait on an older handshake.
         close();

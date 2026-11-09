@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BACKGROUND_BROWSER_CONSENT, backgroundBrowserGateway, createBackgroundTaskBrowser,
+  BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity, createBackgroundTaskBrowser,
 } from '../extension/lib/background-task-browser.mjs';
 
 function deferred() {
@@ -14,7 +14,7 @@ test('revocation rejects an in-flight controller registration and ignores its co
   const settings = {
     connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'test-key',
   };
-  const consent = backgroundBrowserGateway(settings);
+  const consent = await backgroundBrowserConsentIdentity(settings);
   const saved = { hermesBrowserSettings: settings, [BACKGROUND_BROWSER_CONSENT]: consent };
   const started = deferred();
   const handshake = deferred();
@@ -47,7 +47,7 @@ test('revocation rejects an in-flight controller registration and ignores its co
   assert.equal(replies, 0);
 });
 
-test('an external debugger detach aborts the active command and revokes the tab', async () => {
+test('background tabs hide restricted metadata and lose control on debugger detach', async () => {
   const settings = { connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'test-key' };
   const started = deferred();
   const opened = { id: 21, windowId: 1, status: 'complete', url: 'https://example.test/' };
@@ -57,7 +57,7 @@ test('an external debugger detach aborts the active command and revokes the tab'
   const controller = createBackgroundTaskBrowser({
     browserApi: {
       storage: { local: { get: async () => ({
-        hermesBrowserSettings: settings, [BACKGROUND_BROWSER_CONSENT]: backgroundBrowserGateway(settings),
+        hermesBrowserSettings: settings, [BACKGROUND_BROWSER_CONSENT]: await backgroundBrowserConsentIdentity(settings),
       }) } },
       alarms: { create() {}, clear() {} },
       windows: { getLastFocused: async () => ({ id: 1, type: 'normal' }) },
@@ -90,11 +90,67 @@ test('an external debugger detach aborts the active command and revokes the tab'
     } });
     return reply.promise;
   }
-  assert.equal((await command('create', 'browser_tab_create', { url: opened.url })).ok, true);
+  const publicUrl = opened.url;
+  opened.url = 'https://example.test/?access_token=private';
+  opened.title = 'Private sign-in';
+  const created = await command('create', 'browser_tab_create', { url: publicUrl });
+  assert.equal(created.ok, true);
+  assert.equal(created.result.tab.title, 'Restricted page');
+  assert.equal(Object.hasOwn(created.result.tab, 'url'), false);
+
+  opened.url = publicUrl;
+  opened.pendingUrl = 'chrome://settings/';
+  const listed = await command('list', 'browser_tabs');
+  assert.equal(listed.result.tabs[0].title, 'Restricted page');
+  assert.equal(Object.hasOwn(listed.result.tabs[0], 'url'), false);
+  delete opened.pendingUrl;
+  opened.title = 'Public page';
+  const ordinary = await command('list-public', 'browser_tabs');
+  assert.equal(ordinary.result.tabs[0].title, 'Public page');
+  assert.equal(ordinary.result.tabs[0].url, publicUrl);
   const active = command('snapshot', 'browser_snapshot', { tab_id: opened.id });
   await started.promise;
   controller.releaseTab(opened.id);
   assert.equal((await active).error.code, 'cancelled');
   assert.equal((await command('retry', 'browser_snapshot', { tab_id: opened.id })).error.code, 'lease_not_owned');
   assert.equal(executions, 1);
+});
+
+test('changing the API key disconnects background control until the new key is authorized', async () => {
+  const settings = {
+    connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', activeProfile: 'default', apiKey: 'key-a',
+  };
+  const saved = { hermesBrowserSettings: settings };
+  const registrations = [];
+  let closed = 0;
+  const controller = createBackgroundTaskBrowser({
+    browserApi: {
+      storage: { local: { get: async () => ({ ...saved }) } },
+      alarms: { create() {}, clear() {} },
+      tabs: {},
+    },
+    connector: {
+      async connect({ settings }) {
+        registrations.push(settings.apiKey);
+        return { close() { closed += 1; } };
+      },
+    },
+  });
+
+  saved[BACKGROUND_BROWSER_CONSENT] = JSON.stringify([new URL(settings.gatewayUrl).href, settings.activeProfile]);
+  await controller.sync();
+  assert.deepEqual(registrations, [], 'legacy consent cannot authorize an unspecified key');
+  saved[BACKGROUND_BROWSER_CONSENT] = await backgroundBrowserConsentIdentity(settings);
+  assert.equal(saved[BACKGROUND_BROWSER_CONSENT].includes(settings.apiKey), false);
+  await controller.sync();
+
+  const updated = { ...settings, apiKey: 'key-b' };
+  saved.hermesBrowserSettings = updated;
+  await controller.settingsChanged({ hermesBrowserSettings: { oldValue: settings, newValue: updated } });
+  assert.equal(closed, 1);
+  assert.deepEqual(registrations, ['key-a']);
+
+  saved[BACKGROUND_BROWSER_CONSENT] = await backgroundBrowserConsentIdentity(updated);
+  await controller.settingsChanged({ [BACKGROUND_BROWSER_CONSENT]: {} });
+  assert.deepEqual(registrations, ['key-a', 'key-b']);
 });

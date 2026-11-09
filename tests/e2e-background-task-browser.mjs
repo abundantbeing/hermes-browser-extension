@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity } from '../extension/lib/background-task-browser.mjs';
 import { launchChrome } from './e2e-chrome-env.mjs';
 import {
   CdpClient, DIST, TEST_ACCESS_VALUE, chromeExecutable, ensureExtensionStartupPage,
@@ -36,11 +37,13 @@ try {
   await page.connect();
   const foreground = await page.evaluate('(async () => (await chrome.tabs.query({active:true,currentWindow:true}))[0].id)()');
   const gatewayUrl = fixture.baseUrl;
-  const consent = JSON.stringify([new URL(gatewayUrl).href, '']);
-  await page.evaluate(`chrome.storage.local.set({hermesBrowserSettings: {
-    gatewayUrl: ${JSON.stringify(gatewayUrl)}, connectionTransport: 'local-api',
-    apiKey: ${JSON.stringify(TEST_ACCESS_VALUE)}, browserControlEnabled: false
-  }, hermesBackgroundBrowserConsent: ${JSON.stringify(consent)}})`);
+  const settings = {
+    gatewayUrl, connectionTransport: 'local-api', apiKey: TEST_ACCESS_VALUE, browserControlEnabled: false,
+  };
+  const consent = await backgroundBrowserConsentIdentity(settings);
+  await page.evaluate(`chrome.storage.local.set(${JSON.stringify({
+    hermesBrowserSettings: settings, [BACKGROUND_BROWSER_CONSENT]: consent,
+  })})`);
   const controller = await waitFor(() => fixture.connections[0]);
   assert.equal(fixture.registrations[0].session_id, 'hermes:background-browser:v1');
   assert.equal(fixture.registrations[0].capabilities.includes('browser_batch'), false);
