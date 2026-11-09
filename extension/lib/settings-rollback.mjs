@@ -4,7 +4,21 @@
 
 import { gatewayKey } from './settings-save-effects.mjs';
 
-const GATEWAY_BOUND_FIELDS = new Set(['connectionHeaders', 'connectionTrustSelfSigned']);
+// Gateway-move side effects must not be undone unless the Save's target address is still live.
+const GATEWAY_MOVE_FIELDS = new Set([
+  'connectionHeaders',
+  'connectionTrustSelfSigned',
+  'apiKey',
+  'tokenSource',
+  'activeProfile',
+  'botModeSelectedProfile',
+  'botModeReturnProfile',
+]);
+
+function saveTargetGatewayStillLive(current = {}, owned = {}) {
+  if (!owned.gatewayUrl) return true;
+  return gatewayKey(current.gatewayUrl) === gatewayKey(owned.gatewayUrl.to);
+}
 
 function same(a, b) {
   if (Object.is(a, b)) return true;
@@ -31,13 +45,10 @@ export function changesMadeBy(before = {}, after = {}) {
  */
 export function undoChanges(current = {}, owned = {}) {
   const next = { ...current };
-  const saveGateway = owned.gatewayUrl ? owned.gatewayUrl.to : null;
+  const gatewayUndosAllowed = saveTargetGatewayStillLive(current, owned);
   for (const [key, change] of Object.entries(owned)) {
     if (!same(current[key], change.to)) continue;
-    if (GATEWAY_BOUND_FIELDS.has(key)) {
-      const bindGateway = saveGateway ?? current.gatewayUrl;
-      if (gatewayKey(current.gatewayUrl) !== gatewayKey(bindGateway)) continue;
-    }
+    if (GATEWAY_MOVE_FIELDS.has(key) && !gatewayUndosAllowed) continue;
     if (change.had) next[key] = change.from;
     else delete next[key];
   }

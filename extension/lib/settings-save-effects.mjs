@@ -74,9 +74,11 @@ export function applyStoredSettingsAfterSave(stored = {}, live = {}, owned = {})
   const storedId = String(stored?.sessionId ?? '').trim();
   if (!liveId || liveId === storedId) return stored;
   const binding = live?.remoteDashboardSession;
+  const titleFromForm = owned && typeof owned === 'object' && 'sessionTitle' in owned;
   return {
     ...stored,
     sessionId: liveId,
+    ...(!titleFromForm ? { sessionTitle: live?.sessionTitle ?? stored?.sessionTitle } : {}),
     ...(binding?.storedSessionId === liveId
       ? { remoteDashboardSession: { ...(stored?.remoteDashboardSession || {}), ...binding, storedSessionId: liveId } }
       : {}),

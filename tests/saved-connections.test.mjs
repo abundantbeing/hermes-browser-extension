@@ -21,6 +21,7 @@ import {
 } from '../extension/lib/saved-connection-secrets-crypto.mjs';
 import { createRevisionGate } from '../extension/lib/context-scope-transition.mjs';
 import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
+import { createHermesClient } from '../extension/lib/hermes-client.mjs';
 import {
   CONTROLLER_WORKER_MESSAGES,
   createControllerServiceWorker,
@@ -611,6 +612,17 @@ test('a failed Save does not put an older proxy secret onto a newer address anot
     await assert.rejects(h.save(), /cannot be encrypted/);
     assert.equal(h.scope.settings.gatewayUrl, 'http://proxy-c.test:8642');
     assert.deepEqual(h.scope.settings.connectionHeaders, []);
+    const captured = [];
+    const client = createHermesClient({
+      fetchImpl: async (url, init) => {
+        captured.push({ url: String(url), headers: init.headers });
+        return { ok: true, status: 200, text: async () => '{}' };
+      },
+      getConnection: () => h.scope.settings,
+    });
+    await client.fetch('/health', { method: 'GET' });
+    assert.match(captured[0].url, /proxy-c\.test:8642\/health/);
+    assert.equal(captured[0].headers['X-Proxy-Token'], undefined, 'A\'s proxy token must not ride on C\'s health request');
   } finally { h.close(); }
 });
 

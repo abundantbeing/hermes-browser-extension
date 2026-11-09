@@ -4,7 +4,6 @@ import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { applyStoredSettingsAfterSave, connectionIdentityChanged } from '../extension/lib/settings-save-effects.mjs';
-import { createSessionLineage } from '../extension/lib/session-lineage.mjs';
 import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
 import { rememberSavedConnection } from '../extension/lib/saved-connections.mjs';
 import { normalizeGatewayUrl } from '../extension/lib/common.mjs';
@@ -59,21 +58,34 @@ test('a Save with no connection ready does nothing to the session', async () => 
 });
 
 test('applyStoredSettingsAfterSave keeps a successor session when Save did not edit Session ID', () => {
-  const stored = { sessionId: 'parent', remoteDashboardSession: { storedSessionId: 'parent' } };
+  const stored = { sessionId: 'parent', sessionTitle: 'Parent title', remoteDashboardSession: { storedSessionId: 'parent' } };
   const live = {
     sessionId: 'child',
+    sessionTitle: 'Child title',
     remoteDashboardSession: { transport: 'rest', storedSessionId: 'child' },
   };
   const merged = applyStoredSettingsAfterSave(stored, live, {});
   assert.equal(merged.sessionId, 'child');
+  assert.equal(merged.sessionTitle, 'Child title');
   assert.equal(merged.remoteDashboardSession.storedSessionId, 'child');
 });
 
 test('applyStoredSettingsAfterSave keeps the stored session when Save changed Session ID', () => {
-  const stored = { sessionId: 'typed-id' };
-  const live = { sessionId: 'child' };
+  const stored = { sessionId: 'typed-id', sessionTitle: 'Typed title' };
+  const live = { sessionId: 'child', sessionTitle: 'Child title' };
   const owned = { sessionId: { had: true, from: 'parent', to: 'typed-id' } };
-  assert.equal(applyStoredSettingsAfterSave(stored, live, owned).sessionId, 'typed-id');
+  const merged = applyStoredSettingsAfterSave(stored, live, owned);
+  assert.equal(merged.sessionId, 'typed-id');
+  assert.equal(merged.sessionTitle, 'Typed title');
+});
+
+test('applyStoredSettingsAfterSave keeps the stored title when Save edited Session title', () => {
+  const stored = { sessionId: 'parent', sessionTitle: 'Typed rename' };
+  const live = { sessionId: 'child', sessionTitle: 'Child title' };
+  const owned = { sessionTitle: { had: true, from: 'Parent title', to: 'Typed rename' } };
+  const merged = applyStoredSettingsAfterSave(stored, live, owned);
+  assert.equal(merged.sessionId, 'child');
+  assert.equal(merged.sessionTitle, 'Typed rename');
 });
 
 test('a successful Save keeps the child session adopted while the write waited', async () => {
@@ -82,37 +94,43 @@ test('a successful Save keeps the child session adopted while the write waited',
     activeSavedConnectionId: 'default',
     savedConnections: [{ id: 'default', name: 'Default', connection: { ...base } }],
     sessionId: 'parent',
+    sessionTitle: 'Parent title',
     remoteDashboardSession: { transport: 'rest', storedSessionId: 'parent' },
   });
   const h = await createSettingsSaveHarness({ settings });
   try {
-    const lineage = createSessionLineage();
-    lineage.adopt('parent', 'child');
+    const renames = [];
     Object.assign(h.scope, {
-      queuedTurn: null,
-      activeSessionRuntime: null,
-      sessionLineage: lineage,
-      sessionContextStore: { entries: {} },
-      renameSessionContextEntry: (store) => store,
-      scheduleSessionContextPersist: () => {},
-      updateSessionLabel: () => {},
-      saveSessionBindingForActiveScope: async () => {},
-      setPackedBrowserSettings: async (next) => {
-        Object.assign(h.store, await import('../extension/lib/saved-connections.mjs').then((m) => m.packSavedConnectionStorage(next, h.store[m.SAVED_CONNECTION_SECRETS_STORAGE_KEY] || {})));
-      },
+      availableSessions: [
+        { id: 'parent', title: 'Parent title' },
+        { id: 'child', title: 'Child title' },
+      ],
+      renameHermesSessionTitle: async (id, title) => { renames.push({ id, title }); return true; },
       refreshAfterSettingsSave: async () => {},
     });
     h.els.sessionIdInput.value = 'parent';
     h.els.sessionIdInput.dataset.syncedValue = 'parent';
-    const read = h.fn('readBrowserSettingsFromStorage');
-    h.scope.readBrowserSettingsFromStorage = async () => {
-      await h.fn('adoptSessionSuccessor')('parent', 'child', null);
-      return read();
+    h.els.sessionTitleInput.value = 'Parent title';
+    const persist = h.fn('persistHermesBrowserSettings');
+    h.scope.persistHermesBrowserSettings = async (next, options) => {
+      assert.equal(next.sessionId, 'parent', 'next was built before the successor landed');
+      assert.equal(next.sessionTitle, 'Parent title', 'next keeps the title the form snapshot had');
+      // The chat advanced after next was frozen while its write is still queued behind Save.
+      h.scope.settings = {
+        ...h.scope.settings,
+        sessionId: 'child',
+        sessionTitle: 'Child title',
+        remoteDashboardSession: { transport: 'rest', storedSessionId: 'child' },
+      };
+      return persist(next, options);
     };
     h.els.includeTabsInput.checked = !h.scope.settings.includeTabs;
     await h.save();
     assert.equal(h.scope.settings.sessionId, 'child', 'the live successor stays on screen after Save');
-    assert.equal(h.store.hermesBrowserSettings.sessionId, 'child', 'storage keeps the child id too');
+    assert.equal(h.scope.settings.sessionTitle, 'Child title', 'the live chat keeps its own title');
+    assert.deepEqual(renames, [], 'Save does not rename the newly opened chat to the previous title');
+    const storedSession = (await h.scope.browserApi.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings;
+    assert.equal(storedSession.sessionId, 'parent', 'storage still carries the write that landed first');
   } finally {
     h.close();
   }

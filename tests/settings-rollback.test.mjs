@@ -29,6 +29,17 @@ test('undo keeps a newer change to a field the Save never touched', () => {
   assert.equal(undoChanges({ apiKey: 'newer', gatewayUrl: 'b' }, owned).apiKey, 'newer');
 });
 
+test('undo does not restore a cleared pairing key onto a newer address', () => {
+  const owned = changesMadeBy(
+    { gatewayUrl: 'http://proxy-a.test:8642', apiKey: 'pairing-token', tokenSource: 'pairing' },
+    { gatewayUrl: 'http://proxy-b.test:8642', apiKey: '', tokenSource: '' },
+  );
+  const current = { gatewayUrl: 'http://proxy-c.test:8642', apiKey: '', tokenSource: '' };
+  const undone = undoChanges(current, owned);
+  assert.equal(undone.apiKey, '');
+  assert.equal(undone.tokenSource, '');
+});
+
 test('undo does not attach an older gateway\'s proxy headers to a newer address', () => {
   const secret = [{ name: 'X-Proxy-Token', value: 'proxy-secret' }];
   const owned = changesMadeBy(
