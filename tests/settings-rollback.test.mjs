@@ -29,10 +29,31 @@ test('undo keeps a newer change to a field the Save never touched', () => {
   assert.equal(undoChanges({ apiKey: 'newer', gatewayUrl: 'b' }, owned).apiKey, 'newer');
 });
 
+test('undo does not attach an older gateway\'s proxy headers to a newer address', () => {
+  const secret = [{ name: 'X-Proxy-Token', value: 'proxy-secret' }];
+  const owned = changesMadeBy(
+    { gatewayUrl: 'http://proxy-a.test:8642', connectionHeaders: secret },
+    { gatewayUrl: 'http://proxy-b.test:8642', connectionHeaders: [] },
+  );
+  const current = { gatewayUrl: 'http://proxy-c.test:8642', connectionHeaders: [] };
+  assert.deepEqual(undoChanges(current, owned).connectionHeaders, []);
+});
+
+test('undo still clears proxy headers when the Save\'s address is still live', () => {
+  const secret = [{ name: 'X-Proxy-Token', value: 'proxy-secret' }];
+  const owned = changesMadeBy(
+    { gatewayUrl: 'http://proxy-a.test:8642', connectionHeaders: secret },
+    { gatewayUrl: 'http://proxy-b.test:8642', connectionHeaders: [] },
+  );
+  const undone = undoChanges({ gatewayUrl: 'http://proxy-b.test:8642', connectionHeaders: [] }, owned);
+  assert.deepEqual(undone.gatewayUrl, 'http://proxy-a.test:8642');
+  assert.deepEqual(undone.connectionHeaders, secret);
+});
+
 test('Save never restores a whole snapshot taken before it waited', () => {
   const save = source.slice(source.indexOf('async function saveSettingsFromForm('), source.indexOf('async function refreshAfterSettingsSave('));
   assert.doesNotMatch(save, /settings = previousSettings;/);
   assert.match(save, /settings = undoChanges\(settings, changedBySave\);/);
   assert.match(save, /const next = rememberSavedConnection\(/, 'the merged settings are built aside and go live only once stored');
-  assert.ok(save.indexOf('await persistHermesBrowserSettings(next') < save.indexOf('settings = next;'));
+  assert.ok(save.indexOf('await persistHermesBrowserSettings(next') < save.indexOf('settings = applyStoredSettingsAfterSave'));
 });

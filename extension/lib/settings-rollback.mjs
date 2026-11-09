@@ -2,6 +2,10 @@
 // settings while Save waits for a lock or a consent answer, and a snapshot taken at the start
 // would put those older values back over the newer ones.
 
+import { gatewayKey } from './settings-save-effects.mjs';
+
+const GATEWAY_BOUND_FIELDS = new Set(['connectionHeaders', 'connectionTrustSelfSigned']);
+
 function same(a, b) {
   if (Object.is(a, b)) return true;
   if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
@@ -27,8 +31,13 @@ export function changesMadeBy(before = {}, after = {}) {
  */
 export function undoChanges(current = {}, owned = {}) {
   const next = { ...current };
+  const saveGateway = owned.gatewayUrl ? owned.gatewayUrl.to : null;
   for (const [key, change] of Object.entries(owned)) {
     if (!same(current[key], change.to)) continue;
+    if (GATEWAY_BOUND_FIELDS.has(key)) {
+      const bindGateway = saveGateway ?? current.gatewayUrl;
+      if (gatewayKey(current.gatewayUrl) !== gatewayKey(bindGateway)) continue;
+    }
     if (change.had) next[key] = change.from;
     else delete next[key];
   }

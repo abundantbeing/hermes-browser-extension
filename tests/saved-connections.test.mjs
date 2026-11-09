@@ -588,6 +588,32 @@ test('a failed Save puts back the key it typed when nothing newer has changed it
   } finally { h.close(); }
 });
 
+test('a failed Save does not put an older proxy secret onto a newer address another panel saved', async () => {
+  const headers = [{ name: 'X-Proxy-Token', value: 'proxy-secret-value' }];
+  const h = await createSettingsSaveHarness({
+    settings: rememberSavedConnection({
+      ...local,
+      gatewayUrl: 'http://proxy-a.test:8642',
+      connectionHeaders: headers,
+      sessionId: 'old-chat',
+    }),
+  });
+  try {
+    h.els.gatewayUrlInput.value = 'http://proxy-b.test:8642';
+    h.scope.browserApi.storage.local.set = async () => {
+      h.scope.settings = {
+        ...h.scope.settings,
+        gatewayUrl: 'http://proxy-c.test:8642',
+        connectionHeaders: [],
+      };
+      throw new Error('Saved keys cannot be encrypted in this browser, so nothing was saved.');
+    };
+    await assert.rejects(h.save(), /cannot be encrypted/);
+    assert.equal(h.scope.settings.gatewayUrl, 'http://proxy-c.test:8642');
+    assert.deepEqual(h.scope.settings.connectionHeaders, []);
+  } finally { h.close(); }
+});
+
 async function openPanel(settings, shareWith) {
   const h = await createSettingsSaveHarness({ settings });
   if (shareWith) h.scope.browserApi = shareWith.scope.browserApi;

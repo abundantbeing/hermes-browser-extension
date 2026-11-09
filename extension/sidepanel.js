@@ -476,7 +476,7 @@ import {
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
-import { connectionIdentityChanged, gatewayMoveResets, sessionIdForSave } from './lib/settings-save-effects.mjs';
+import { applyStoredSettingsAfterSave, connectionIdentityChanged, gatewayMoveResets, sessionIdForSave } from './lib/settings-save-effects.mjs';
 import { changesMadeBy, undoChanges } from './lib/settings-rollback.mjs';
 import { fetchSessionHistoryPages } from './lib/session-history-pages.mjs';
 import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
@@ -24660,7 +24660,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
       applyAppearanceSettings();
       throw error;
     }
-    settings = next;
+    settings = applyStoredSettingsAfterSave(next, settings, changedBySave);
     applyAppearanceSettings();
   };
   if (lockHeld) await writeSettingsRecord();

@@ -31,7 +31,7 @@ export function sessionIdForSave({ typed = '', synced, viewed = '', fallback = '
 
 // The gateway a URL names, for "is this the same gateway": scheme, host and port, with every
 // loopback spelling (localhost, 127.0.0.1, [::1]) as one host. '' for a value that is no URL.
-function gatewayKey(value) {
+export function gatewayKey(value) {
   try {
     const url = new URL(String(value ?? '').trim());
     const loopback = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(url.hostname.toLowerCase());
@@ -64,5 +64,21 @@ export function gatewayMoveResets(previous = {}, next = {}) {
     ...(pairedToken ? { apiKey: '', tokenSource: '' } : {}),
     ...(headersBound ? { connectionHeaders: [] } : {}),
     ...(previous?.connectionTrustSelfSigned === true ? { connectionTrustSelfSigned: false } : {}),
+  };
+}
+
+/** After a successful Save, keep session identity the panel advanced while the write waited. */
+export function applyStoredSettingsAfterSave(stored = {}, live = {}, owned = {}) {
+  if (owned && typeof owned === 'object' && 'sessionId' in owned) return stored;
+  const liveId = String(live?.sessionId ?? '').trim();
+  const storedId = String(stored?.sessionId ?? '').trim();
+  if (!liveId || liveId === storedId) return stored;
+  const binding = live?.remoteDashboardSession;
+  return {
+    ...stored,
+    sessionId: liveId,
+    ...(binding?.storedSessionId === liveId
+      ? { remoteDashboardSession: { ...(stored?.remoteDashboardSession || {}), ...binding, storedSessionId: liveId } }
+      : {}),
   };
 }
