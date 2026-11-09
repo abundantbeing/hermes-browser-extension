@@ -718,6 +718,7 @@ import {
   transportUsesDashboardTicket,
 } from './lib/connection-modes.mjs';
 import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForConnect } from './lib/connection-dispatch.mjs';
+import { createAddConnectionDialog } from './lib/add-connection-dialog.mjs';
 import {
   addSavedConnection,
   deleteSavedConnection,
@@ -20928,7 +20929,7 @@ const gatewayMediaReader = createGatewayMediaReader({
 });
 
 function gatewayMediaIdentity() {
-  return JSON.stringify([settings.gatewayUrl || '', settings.activeProfile || '', settings.apiKey || '']);
+  return JSON.stringify([settings.gatewayUrl || '', settings.activeProfile || '', settings.apiKey || '', settings.connectionHeaders ?? null]);
 }
 
 function fetchGatewayMediaDataUrl(filePath = '') {
@@ -23947,7 +23948,7 @@ function bindSavedConnectionControls() {
     savedConnectionTool = '';
     void updateSavedConnection('switch', { id: card.dataset.savedConnectionId });
   });
-  els.savedConnectionAdd?.addEventListener('click', () => openSavedConnectionTool('add'));
+  els.savedConnectionAdd?.addEventListener('click', openAddConnectionWindow);
   els.savedConnectionRename?.addEventListener('click', () => openSavedConnectionTool('rename'));
   els.savedConnectionDelete?.addEventListener('click', () => openSavedConnectionTool('delete'));
   els.savedConnectionNameSave?.addEventListener('click', submitSavedConnectionName);
@@ -24079,18 +24080,20 @@ function reloadForSavedConnection(next) {
   window.location.reload();
 }
 
-async function updateSavedConnection(action, { id = settings.activeSavedConnectionId, name = '' } = {}) {
-  if (savedConnectionBusy) return;
+// Whether the change was made: the Add window stays open when it was not.
+async function updateSavedConnection(action, { id = settings.activeSavedConnectionId, name = '', connection = null } = {}) {
+  if (savedConnectionBusy) return false;
   if (sending) {
     showOperationToast({ kind: 'warn', title: t('connections.busy') });
     renderSavedConnections();
-    return;
+    return false;
   }
   const current = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
   savedConnectionBusy = true;
   renderSavedConnections();
   const expectedId = current.activeSavedConnectionId;
   let saved = null;
+  let made = false;
   try {
     await withSavedConnectionsLock(async () => {
       saved = await saveSettingsFromForm({ lockHeld: true });
@@ -24098,7 +24101,9 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
       const storedSettings = await hydrateHermesBrowserSettingsFromStorage(stored, browserApi.storage.local);
       const base = savedConnectionsBase(settings, storedSettings, expectedId);
       let next;
-      if (action === 'add') next = addSavedConnection(base, name, crypto.randomUUID());
+      if (action === 'add') {
+        next = addSavedConnection(base, name || t('connections.default_name', { number: base.savedConnections.length + 1 }), crypto.randomUUID(), connection);
+      }
       else if (action === 'rename') next = renameSavedConnection(base, expectedId, name);
       else if (action === 'delete') next = deleteSavedConnection(base, expectedId);
       else next = selectSavedConnection(base, id);
@@ -24108,6 +24113,7 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
       else settings = next;
     });
     await saved?.applyWake?.().catch(() => undefined);
+    made = true;
   } catch {
     showOperationToast({ kind: 'warn', title: t('connections.error') });
   } finally {
@@ -24115,6 +24121,32 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
     renderSavedConnections();
     if (action === 'rename') els.savedConnectionRename.focus();
   }
+  return made;
+}
+
+let addConnectionDialog = null;
+
+function addConnectionWindow() {
+  if (!addConnectionDialog) {
+    addConnectionDialog = createAddConnectionDialog({
+      root: document,
+      translate: t,
+      openAddress: (address) => { void browserApi.tabs.create({ url: address }); },
+      onAdd: async ({ name, connection }) => {
+        if (!(await updateSavedConnection('add', { name, connection }))) throw new Error(t('connections.error'));
+      },
+    });
+  }
+  return addConnectionDialog;
+}
+
+function openAddConnectionWindow() {
+  if (savedConnectionBusy) return;
+  if (sending) {
+    showOperationToast({ kind: 'warn', title: t('connections.busy') });
+    return;
+  }
+  addConnectionWindow()?.show();
 }
 
 // Settings → Hermes Assist → Sites: where Assist reads the visible thread and where the circle is hidden,
@@ -28886,7 +28918,7 @@ async function finalInlineDraftReply(sessionId, answer) {
 }
 
 // The side panel's vertical scroll areas, each floating the branded thumb over its content.
-const OVERLAY_SCROLL_AREAS = '.app-scroll, .settings-dialog, .browser-control-dialog, .tool-call-list, .task-stack-list, .subagent-stack-stream, .bot-mode-cron-list, .marketplace-theme-results, .branded-select-list';
+const OVERLAY_SCROLL_AREAS = '.app-scroll, .settings-dialog, .add-connection-body, .browser-control-dialog, .tool-call-list, .task-stack-list, .subagent-stack-stream, .bot-mode-cron-list, .marketplace-theme-results, .branded-select-list';
 
 function mountOverlayScrollbars() {
   const style = document.createElement('style');

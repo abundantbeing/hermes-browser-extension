@@ -234,13 +234,13 @@ export function selectSavedConnection(settings, id) {
   };
 }
 
-export function addSavedConnection(settings, name, id) {
+export function addSavedConnection(settings, name, id, connection = null) {
   const current = rememberSavedConnection(settings);
   if (!/^[\w-]{1,80}$/.test(id || '') || current.savedConnections.some((entry) => entry.id === id)) {
     throw new Error('Invalid saved connection ID.');
   }
   const savedConnections = [...current.savedConnections, {
-    id, name: connectionName(name), connection: connectionConfig(DEFAULT_SETTINGS),
+    id, name: connectionName(name), connection: connectionConfig({ ...DEFAULT_SETTINGS, ...(connection || {}) }),
   }];
   return selectSavedConnection({ ...current, savedConnections }, id);
 }

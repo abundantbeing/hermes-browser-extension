@@ -47,3 +47,12 @@ test('the connection tools show one state at a time and keep their controls squa
   const block = css.slice(css.indexOf('.saved-connection-list {'), css.indexOf('.saved-connection-confirm p {') + 200);
   assert.doesNotMatch(block, /border-radius|text-transform|letter-spacing/);
 });
+
+test('Add opens a window of its own that makes a new connection, never a copy of the current one', () => {
+  assert.match(html, /<section id="addConnectionDialog"[^>]*role="dialog"[^>]*aria-modal="true"[^>]*hidden>/);
+  assert.match(panel, /els\.savedConnectionAdd\?\.addEventListener\('click', openAddConnectionWindow\)/);
+  assert.match(panel, /addSavedConnection\(base, name \|\| t\('connections\.default_name'[\s\S]*?crypto\.randomUUID\(\), connection\)/);
+  assert.match(panel, /OVERLAY_SCROLL_AREAS = '[^']*\.add-connection-body/);
+  const window = html.slice(html.indexOf('id="addConnectionDialog"'), html.indexOf('id="profileSwitchDialog"'));
+  assert.doesNotMatch(window, /<form/, 'a form in here would be a form inside the Settings form');
+});

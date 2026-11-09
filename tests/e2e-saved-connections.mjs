@@ -201,7 +201,7 @@ const selectOptions = (panel) => panel.evaluate(`Array.from(document.querySelect
   summary: card.querySelector('.conn-mode-desc').textContent,
   selected: card.getAttribute('aria-current') === 'true',
 }))`);
-const visible = (panel, selector) => panel.evaluate(`(() => { const node = document.querySelector(${JSON.stringify(selector)}); return Boolean(node) && !node.hidden && node.offsetParent !== null; })()`);
+const visible = (panel, selector) => panel.evaluate(`(() => { const node = document.querySelector(${JSON.stringify(selector)}); return Boolean(node) && !node.hidden && node.getClientRects().length > 0; })()`);
 const click = (panel, selector) => panel.evaluate(`document.querySelector(${JSON.stringify(selector)}).click(); true`);
 const clickCard = (panel, id) => click(panel, `${cardSelector}[data-saved-connection-id="${id}"]`);
 const settingsOpen = (panel) => panel.evaluate("document.querySelector('#settingsDialog')?.hidden === false");
@@ -221,6 +221,35 @@ async function nameConnection(panel, trigger, name, { how = 'button', reloads = 
   if (reloads) await markPanel(panel);
   if (how === 'enter') await pressKey(panel, 'Enter');
   else await click(panel, '#savedConnectionNameSave');
+}
+
+async function addThroughWindow(panel, { type = 'remote', name = '', address = '', method = 'token', key = '', headers = [], untested = false, failureShot = '' } = {}) {
+  await click(panel, '#savedConnectionAdd');
+  await waitFor(() => visible(panel, '#addConnectionDialog'));
+  await click(panel, `[data-add-type="${type}"]`);
+  if (address) await setField(panel, '#addConnectionAddress', address);
+  if (name) await setField(panel, '#addConnectionName', name);
+  if (type !== 'cloud') {
+    await click(panel, '#addConnectionNext');
+    await waitFor(() => visible(panel, '[data-add-step="signin"]'));
+    await click(panel, `[data-add-method="${method}"]`);
+    if (key) await setField(panel, '#addConnectionKey', key);
+    await click(panel, '#addConnectionNext');
+    await waitFor(() => visible(panel, '[data-add-step="options"]'));
+    for (const [index, header] of headers.entries()) {
+      await click(panel, '#addConnectionAddHeader');
+      await setField(panel, `[data-header-field="name"][data-header-index="${index}"]`, header.name);
+      await setField(panel, `[data-header-field="value"][data-header-index="${index}"]`, header.value);
+    }
+  }
+  await markPanel(panel);
+  await click(panel, '#addConnectionNext');
+  if (untested) {
+    await waitFor(() => visible(panel, '#addConnectionAnyway'));
+    if (failureShot) await shot(panel, failureShot);
+    await click(panel, '#addConnectionAnyway');
+  }
+  await panelReady(panel);
 }
 
 async function saveSettings(panel) {
@@ -310,21 +339,36 @@ async function main() {
     check('the card names the kind and address, not the key', initialOptions[0].summary === `Local gateway \u00b7 ${new URL(first.baseUrl).host}`, initialOptions[0].summary);
     await shot(panel, '1-first-connection');
 
-    // The name field opens inline, Escape closes only it, and an empty name is not accepted.
-    await click(panel, '#savedConnectionAdd');
+    // The inline name field belongs to Rename: it opens in place of the buttons, Escape closes only it, an empty name is refused.
+    await click(panel, '#savedConnectionRename');
     await waitFor(() => visible(panel, '#savedConnectionEditor'));
-    check('Add opens an inline name field in place of the buttons', (await visible(panel, '#savedConnectionNameInput')) && !(await visible(panel, '#savedConnectionActions')));
+    check('Rename opens an inline name field in place of the buttons', (await visible(panel, '#savedConnectionNameInput')) && !(await visible(panel, '#savedConnectionActions')));
     check('the name field has focus', (await focusedId(panel)) === 'savedConnectionNameInput');
     await shot(panel, '5-name-field');
     await pressKey(panel, 'Escape');
     check('Escape closes the name field and keeps Settings open', !(await visible(panel, '#savedConnectionEditor')) && (await visible(panel, '#savedConnectionActions')) && (await settingsOpen(panel)));
-    check('focus returns to the Add button', (await focusedId(panel)) === 'savedConnectionAdd');
-    await click(panel, '#savedConnectionAdd');
+    check('focus returns to the Rename button', (await focusedId(panel)) === 'savedConnectionRename');
+    await click(panel, '#savedConnectionRename');
     await waitFor(() => visible(panel, '#savedConnectionEditor'));
     await setField(panel, '#savedConnectionNameInput', '   ');
     await pressKey(panel, 'Enter');
     check('an empty name is not accepted', (await visible(panel, '#savedConnectionEditor')) && (await selectOptions(panel)).length === 1);
     await click(panel, '#savedConnectionNameCancel');
+
+    // Add opens a window of its own, with steps; the connection is not copied from the current one.
+    await click(panel, '#savedConnectionAdd');
+    await waitFor(() => visible(panel, '#addConnectionDialog'));
+    check('Add opens the window on its first step', (await panel.evaluate("document.querySelector('#addConnectionTitle').textContent")) === 'Where is it?'
+      && (await panel.evaluate("document.querySelector('#addConnectionSteps').textContent")).includes('1'));
+    check('a local gateway is chosen to begin with', await panel.evaluate("document.querySelector('[data-add-type=\"local\"]').getAttribute('aria-checked') === 'true'"));
+    await shot(panel, '8-add-where');
+    await click(panel, '[data-add-type="remote"]');
+    await click(panel, '#addConnectionNext');
+    check('a remote connection needs an address', await visible(panel, '#addConnectionAddressError'));
+    await shot(panel, '9-add-where-error');
+    await pressKey(panel, 'Escape');
+    check('Escape closes the window and keeps Settings open', !(await visible(panel, '#addConnectionDialog')) && (await settingsOpen(panel)));
+    check('nothing was added by looking', (await selectOptions(panel)).length === 1);
 
     // 2. A draft typed on the first connection.
     await panel.evaluate(`(() => { document.querySelector('#settingsDialog')?.querySelector('[data-settings-close], #closeSettingsButton')?.click(); return true; })()`);
@@ -336,28 +380,46 @@ async function main() {
     })()`);
     await new Promise((resolve) => setTimeout(resolve, 1200));
 
-    // 3. Add a second connection, point it at the second gateway with its own key.
+    // 3. Add a second connection through the window: a remote gateway, an API key and a custom header, tested before it is added.
     await openConnectionsPane(panel);
-    await nameConnection(panel, '#savedConnectionAdd', 'Second gateway', { how: 'enter', reloads: true });
+    await click(panel, '#savedConnectionAdd');
+    await waitFor(() => visible(panel, '#addConnectionDialog'));
+    await click(panel, '[data-add-type="remote"]');
+    await setField(panel, '#addConnectionAddress', second.baseUrl);
+    await setField(panel, '#addConnectionName', 'Second gateway');
+    await click(panel, '#addConnectionNext');
+    await waitFor(() => visible(panel, '[data-add-step="signin"]'));
+    check('the sign-in step offers Browser and Token', (await visible(panel, '[data-add-method="browser"]')) && (await visible(panel, '[data-add-method="token"]')));
+    await shot(panel, '10-add-signin');
+    await click(panel, '#addConnectionNext');
+    check('a remote key is required', await visible(panel, '#addConnectionKeyError'));
+    await setField(panel, '#addConnectionKey', KEY_SECOND);
+    await click(panel, '#addConnectionNext');
+    await waitFor(() => visible(panel, '[data-add-step="options"]'));
+    await click(panel, '#addConnectionAddHeader');
+    await setField(panel, '[data-header-field="name"][data-header-index="0"]', 'Host');
+    await setField(panel, '[data-header-field="value"][data-header-index="0"]', 'blocked-value');
+    await click(panel, '#addConnectionNext');
+    check('a header the browser controls is refused', await panel.evaluate("document.querySelector('[data-header-error=\"0\"]').hidden === false"));
+    await setField(panel, '[data-header-field="name"][data-header-index="0"]', 'X-Proxy-Token');
+    await setField(panel, '[data-header-field="value"][data-header-index="0"]', 'proxy-wizard-value');
+    await shot(panel, '11-add-options');
+    await markPanel(panel);
+    await click(panel, '#addConnectionNext');
     await panelReady(panel);
     const secondId = await storedActive(setup);
-    check('Add makes the new connection active', secondId && secondId !== firstId);
+    check('the window adds the connection and makes it active', secondId && secondId !== firstId);
+    check('the connection was tested with its key and its header', second.requests.some((request) => request.path === '/api/sessions' && request.authorization === `Bearer ${KEY_SECOND}` && request.headers['x-proxy-token'] === 'proxy-wizard-value'));
     await openConnectionsPane(panel);
     const twoOptions = await selectOptions(panel);
     check('both connections are listed, the new one selected', twoOptions.length === 2 && twoOptions.find((option) => option.selected)?.label === 'Second gateway', JSON.stringify(twoOptions));
-    await setField(panel, '#gatewayUrlInput', second.baseUrl);
-    await setField(panel, '#apiKeyInput', KEY_SECOND);
-    await saveSettings(panel);
-    await markPanel(panel);
-    await panel.evaluate('window.location.reload(); true');
-    await panelReady(panel);
+    check('the window set the address, so the Settings form shows it', (await panelGateway(panel)) === second.baseUrl);
     await waitFor(() => second.requests.some((request) => request.authorization === `Bearer ${KEY_SECOND}`), 20_000);
     check('second gateway receives its own key', second.requests.some((request) => request.authorization === `Bearer ${KEY_SECOND}`));
     check('second gateway never receives the first key', !second.requests.some((request) => request.authorization === `Bearer ${KEY_FIRST}`));
-    check('the second card shows the second address', (await selectOptions(panel)).find((option) => option.label === 'Second gateway')?.summary === `Local gateway \u00b7 ${new URL(second.baseUrl).host}`);
+    check('the second card shows its kind and address', (await selectOptions(panel)).find((option) => option.label === 'Second gateway')?.summary === `Remote gateway \u00b7 ${new URL(second.baseUrl).host}`);
     const draftOnSecond = await panel.evaluate("document.querySelector('#promptInput').value");
     check('the second connection starts with an empty composer', draftOnSecond === '', JSON.stringify(draftOnSecond));
-    await openConnectionsPane(panel);
     await shot(panel, '2-second-connection');
 
     // 4. Credentials are not in storage in plain text.
@@ -463,12 +525,11 @@ async function main() {
 
     // 8. A long name and several connections still fit a narrow panel, in the light theme too.
     const longName = 'A connection with a very long name that keeps going past the edge of the card';
-    await nameConnection(panel, '#savedConnectionAdd', longName, { reloads: true });
-    await panelReady(panel);
+    await openConnectionsPane(panel);
+    await addThroughWindow(panel, { name: longName, address: 'http://127.0.0.1:9', key: 'unused', untested: true, failureShot: '12-add-test-failed' });
     for (const extra of ['Staging', 'Home lab', 'Work']) {
       await openConnectionsPane(panel);
-      await nameConnection(panel, '#savedConnectionAdd', extra, { reloads: true });
-      await panelReady(panel);
+      await addThroughWindow(panel, { name: extra, address: 'http://127.0.0.1:9', key: 'unused', untested: true });
     }
     await setup.evaluate("chrome.storage.local.get('hermesBrowserSettings').then((r) => chrome.storage.local.set({ hermesBrowserSettings: { ...r.hermesBrowserSettings, colorMode: 'light' } }))");
     await markPanel(panel);

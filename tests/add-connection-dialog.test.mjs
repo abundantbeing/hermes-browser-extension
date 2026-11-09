@@ -1,0 +1,231 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+import { JSDOM } from 'jsdom';
+
+import { createAddConnectionDialog } from '../extension/lib/add-connection-dialog.mjs';
+
+const html = await readFile(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+const translate = (key, params) => (params ? `${key} ${JSON.stringify(params)}` : key);
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+function openWindow({ probe = async () => ({ ok: true, status: 'ok' }) } = {}) {
+  const dom = new JSDOM(html, { url: 'chrome-extension://hermes/sidepanel.html' });
+  const root = dom.window.document;
+  const added = [];
+  const opened = [];
+  let closed = 0;
+  const dialog = createAddConnectionDialog({
+    root,
+    translate,
+    probe,
+    openAddress: (address) => opened.push(address),
+    onAdd: async (made) => { added.push(made); },
+    onClose: () => { closed += 1; },
+  });
+  dialog.show();
+  const $ = (selector) => root.querySelector(selector);
+  const type = (selector, value) => {
+    const input = $(selector);
+    input.value = value;
+    input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  };
+  const press = (selector, key, init = {}) => $(selector).dispatchEvent(
+    new dom.window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init }),
+  );
+  return {
+    dom, root, dialog, added, opened, $, type, press,
+    closed: () => closed,
+    step: () => [...root.querySelectorAll('[data-add-step]')].find((panel) => !panel.hidden)?.dataset.addStep,
+    click: async (selector) => { $(selector).click(); await tick(); },
+  };
+}
+
+test('the window opens on where the connection is, with a local gateway chosen', () => {
+  const w = openWindow();
+  assert.equal(w.step(), 'where');
+  assert.equal($check(w, 'local'), 'true');
+  assert.equal(w.$('#addConnectionTitle').textContent, 'addconn.title_where');
+  assert.match(w.$('#addConnectionSteps').textContent, /"current":1,"total":3/);
+  assert.equal(w.$('#addConnectionBack').hidden, true, 'there is nothing to go back to on the first step');
+  assert.equal(w.$('#addConnectionNext').textContent, 'ui.next');
+});
+
+function $check(w, type) {
+  return w.$(`[data-add-type="${type}"]`).getAttribute('aria-checked');
+}
+
+test('Next walks the steps, Back returns, and the last step adds', async () => {
+  const w = openWindow();
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'signin');
+  assert.equal(w.$('#addConnectionBack').hidden, false);
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'options');
+  assert.equal(w.$('#addConnectionNext').textContent, 'addconn.add');
+  await w.click('#addConnectionBack');
+  assert.equal(w.step(), 'signin');
+});
+
+test('Hermes Cloud is one step and adds straight away without a test', async () => {
+  let probed = 0;
+  const w = openWindow({ probe: async () => { probed += 1; return { ok: true, status: 'ok' }; } });
+  await w.click('[data-add-type="cloud"]');
+  assert.equal(w.$('#addConnectionAddressField').hidden, true);
+  assert.equal(w.$('#addConnectionNext').textContent, 'addconn.add');
+  await w.click('#addConnectionNext');
+  assert.equal(probed, 0);
+  assert.equal(w.added.length, 1);
+  assert.equal(w.added[0].connection.connectionMode, 'cloud');
+  assert.equal(w.dialog.isOpen(), false);
+});
+
+test('a remote connection is held on its step until the address and key are given', async () => {
+  const w = openWindow();
+  await w.click('[data-add-type="remote"]');
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'where');
+  assert.equal(w.$('#addConnectionAddressError').hidden, false);
+  assert.equal(w.$('#addConnectionAddressError').textContent, 'addconn.err_address_required');
+  w.type('#addConnectionAddress', 'https://hermes.example.com');
+  assert.equal(w.$('#addConnectionAddressError').hidden, true, 'typing clears the message');
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'signin');
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'signin');
+  assert.equal(w.$('#addConnectionKeyError').textContent, 'addconn.err_key_required');
+  w.type('#addConnectionKey', 'a-key');
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'options');
+});
+
+test('choosing Browser asks for no key and says what happens next', async () => {
+  const w = openWindow();
+  await w.click('[data-add-type="remote"]');
+  w.type('#addConnectionAddress', 'https://hermes.example.com');
+  await w.click('#addConnectionNext');
+  await w.click('[data-add-method="browser"]');
+  assert.equal(w.$('#addConnectionKeyField').hidden, true);
+  assert.equal(w.$('#addConnectionBrowserNote').hidden, false);
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'options');
+});
+
+test('a connection that tests well is added with its name and settings, and the window closes', async () => {
+  const probes = [];
+  const w = openWindow({ probe: async (request) => { probes.push(request); return { ok: true, status: 'ok' }; } });
+  await w.click('[data-add-type="remote"]');
+  w.type('#addConnectionAddress', 'https://hermes.example.com');
+  w.type('#addConnectionName', '  Studio  ');
+  await w.click('#addConnectionNext');
+  w.type('#addConnectionKey', 'studio-key');
+  await w.click('#addConnectionNext');
+  await w.click('#addConnectionAddHeader');
+  w.type('[data-header-field="name"]', 'X-Proxy-Token');
+  w.type('[data-header-field="value"]', 'proxy-value');
+  await w.click('#addConnectionNext');
+  assert.deepEqual(probes[0], {
+    gatewayUrl: 'https://hermes.example.com', apiKey: 'studio-key', headers: [{ name: 'X-Proxy-Token', value: 'proxy-value' }],
+  });
+  assert.equal(w.added[0].name, 'Studio');
+  assert.equal(w.added[0].connection.apiKey, 'studio-key');
+  assert.deepEqual(w.added[0].connection.connectionHeaders, [{ name: 'X-Proxy-Token', value: 'proxy-value' }]);
+  assert.equal(w.dialog.isOpen(), false);
+  assert.equal(w.closed(), 1);
+});
+
+test('a connection that fails its test is not added, and can be retried or added untested', async () => {
+  let answer = { ok: false, status: 'unreachable' };
+  const w = openWindow({ probe: async () => answer });
+  await w.click('[data-add-type="remote"]');
+  w.type('#addConnectionAddress', 'https://box.example.com');
+  await w.click('#addConnectionNext');
+  w.type('#addConnectionKey', 'k');
+  await w.click('#addConnectionNext');
+  await w.click('#addConnectionNext');
+  assert.equal(w.added.length, 0);
+  assert.equal(w.dialog.isOpen(), true);
+  assert.equal(w.$('#addConnectionResult').hidden, false);
+  assert.match(w.$('#addConnectionResult').textContent, /addconn\.result_unreachable addconn\.result_cert/);
+  assert.equal(w.$('#addConnectionNext').textContent, 'addconn.try_again');
+  assert.equal(w.$('#addConnectionAnyway').hidden, false);
+  assert.equal(w.$('#addConnectionOpenAddress').hidden, false, 'an https address can be opened so the browser can ask about its certificate');
+  await w.click('#addConnectionOpenAddress');
+  assert.deepEqual(w.opened, ['https://box.example.com']);
+  answer = { ok: true, status: 'ok' };
+  await w.click('#addConnectionNext');
+  assert.equal(w.added.length, 1);
+});
+
+test('Add without testing skips the test, and a plain http address offers no certificate help', async () => {
+  const w = openWindow({ probe: async () => ({ ok: false, status: 'unauthorized' }) });
+  await w.click('[data-add-type="remote"]');
+  w.type('#addConnectionAddress', 'http://192.168.1.20:8642');
+  await w.click('#addConnectionNext');
+  w.type('#addConnectionKey', 'wrong');
+  await w.click('#addConnectionNext');
+  await w.click('#addConnectionNext');
+  assert.match(w.$('#addConnectionResult').textContent, /addconn\.result_unauthorized/);
+  assert.equal(w.$('#addConnectionOpenAddress').hidden, true);
+  await w.click('#addConnectionAnyway');
+  assert.equal(w.added.length, 1);
+});
+
+test('signing in through the browser to a dashboard is not tested before it is added', async () => {
+  let probed = 0;
+  const w = openWindow({ probe: async () => { probed += 1; return { ok: true, status: 'ok' }; } });
+  await w.click('[data-add-type="remote"]');
+  w.type('#addConnectionAddress', 'https://hermes.example.com');
+  await w.click('#addConnectionNext');
+  await w.click('[data-add-method="browser"]');
+  await w.click('#addConnectionNext');
+  await w.click('#addConnectionNext');
+  assert.equal(probed, 0);
+  assert.equal(w.added[0].connection.connectionTransport, 'remote-dashboard');
+});
+
+test('header rows are added and removed, refused when the browser owns the name, and capped at ten', async () => {
+  const w = openWindow();
+  await w.click('[data-add-type="remote"]');
+  w.type('#addConnectionAddress', 'https://hermes.example.com');
+  await w.click('#addConnectionNext');
+  w.type('#addConnectionKey', 'k');
+  await w.click('#addConnectionNext');
+  await w.click('#addConnectionAddHeader');
+  w.type('[data-header-field="name"]', 'Host');
+  w.type('[data-header-field="value"]', 'x');
+  await w.click('#addConnectionNext');
+  assert.equal(w.added.length, 0, 'a refused header holds the step');
+  assert.equal(w.$('[data-header-error="0"]').textContent, 'addconn.err_header_blocked');
+  await w.click('[data-header-remove="0"]');
+  assert.equal(w.root.querySelectorAll('.add-connection-header-row').length, 0);
+  for (let count = 0; count < 12; count += 1) await w.click('#addConnectionAddHeader');
+  assert.equal(w.root.querySelectorAll('.add-connection-header-row').length, 10);
+  assert.equal(w.$('#addConnectionAddHeader').disabled, true);
+});
+
+test('Escape closes the window, and Enter that picks an input-method character does not move on', async () => {
+  const w = openWindow();
+  w.press('#addConnectionAddress', 'Enter', { isComposing: true });
+  await tick();
+  assert.equal(w.step(), 'where');
+  w.press('#addConnectionAddress', 'Enter');
+  await tick();
+  assert.equal(w.step(), 'signin', 'a plain Enter is Next');
+  w.press('#addConnectionKey', 'Escape');
+  assert.equal(w.dialog.isOpen(), false);
+});
+
+test('the certificate group is for a remote gateway only', async () => {
+  const w = openWindow();
+  assert.equal(w.$('#addConnectionCertGroup').hidden, true);
+  await w.click('[data-add-type="remote"]');
+  assert.equal(w.$('#addConnectionCertGroup').hidden, false);
+  w.$('#addConnectionTrust').click();
+  w.type('#addConnectionAddress', 'https://box.example.com');
+  await w.click('#addConnectionNext');
+  w.type('#addConnectionKey', 'k');
+  await w.click('#addConnectionNext');
+  await w.click('#addConnectionNext');
+  assert.equal(w.added[0].connection.connectionTrustSelfSigned, true);
+});

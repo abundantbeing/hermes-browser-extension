@@ -185,6 +185,6 @@ test('connectTicketTransport resets right after the remote settings are adopted,
 
 test('a mode change written by another panel resets this panel as well', () => {
   const at = source.indexOf('async function adoptHermesBrowserSettingsStorageChange(changes)');
-  const block = source.slice(at, at + 2600);
+  const block = source.slice(at, source.indexOf('function reloadForSavedConnection(', at));
   assert.match(block, /resetLocalDashboardState\(\)/);
 });
