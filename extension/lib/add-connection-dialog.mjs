@@ -83,6 +83,16 @@ export function createAddConnectionDialog({
   let failed = false;
   let problems = {};
   let headerRowsBuilt = -1;
+  // Each Add press is one attempt. Closing the window ends it: a test still waiting must never add anything.
+  let attempt = 0;
+  let pendingTest = null;
+  let committing = false;
+
+  function endAttempt() {
+    attempt += 1;
+    pendingTest?.abort();
+    pendingTest = null;
+  }
 
   const stepList = () => (mode === 'options' ? ['options'] : stepsFor(draft));
   const isLast = () => stepList().at(-1) === step;
@@ -201,12 +211,17 @@ export function createAddConnectionDialog({
     target?.focus();
   }
 
+  function stepFocusTarget() {
+    const find = (selector) => dialog.querySelector(`[data-add-step="${step}"] ${selector}`);
+    return find('[aria-checked="true"]') || find('input:not([hidden]):not(.settings-switch-input)') || find('button:not([hidden]):not(:disabled)');
+  }
+
   function goTo(nextStep) {
     step = nextStep;
     problems = {};
     clearResult();
     render();
-    dialog.querySelector(`[data-add-step="${step}"] input:not([hidden]), [data-add-step="${step}"] [aria-checked="true"]`)?.focus();
+    stepFocusTarget()?.focus();
   }
 
   async function saveOptions() {
@@ -242,12 +257,18 @@ export function createAddConnectionDialog({
     busy = true;
     clearResult();
     render();
+    endAttempt();
+    const mine = attempt;
+    const controller = new AbortController();
+    pendingTest = controller;
+    const live = () => mine === attempt && !dialog.hidden;
     const connection = connectionFromDraft(draft);
     const testable = connection.connectionMode !== 'cloud' && connection.connectionTransport !== 'remote-dashboard';
     let outcome = { ok: true, status: 'untested' };
     if (testable && !skipTest) {
-      outcome = await probe({ gatewayUrl: connection.gatewayUrl, apiKey: connection.apiKey, headers: connection.connectionHeaders })
+      outcome = await probe({ gatewayUrl: connection.gatewayUrl, apiKey: connection.apiKey, headers: connection.connectionHeaders, signal: controller.signal })
         .catch((error) => ({ ok: false, status: 'unreachable', detail: String(error?.message || error) }));
+      if (!live()) return;
     }
     if (!outcome.ok) {
       busy = false;
@@ -258,10 +279,13 @@ export function createAddConnectionDialog({
       render();
       return;
     }
+    committing = true;
     try {
       await onAdd({ name: draft.name.trim(), connection });
+      committing = false;
       hide();
     } catch {
+      committing = false;
       busy = false;
       failed = true;
       showResult(translate('connections.error'), 'error', 'failed');
@@ -301,15 +325,18 @@ export function createAddConnectionDialog({
     ui.address.value = '';
     ui.name.value = '';
     ui.key.value = '';
+    endAttempt();
+    committing = false;
     clearResult();
     render();
     dialog.hidden = false;
     dialog.setAttribute('aria-hidden', 'false');
-    (dialog.querySelector('[data-add-type][aria-checked="true"]') || dialog).focus();
+    (stepFocusTarget() || dialog).focus();
   }
 
   function hide() {
-    if (dialog.hidden) return;
+    if (dialog.hidden || committing) return;
+    endAttempt();
     dialog.hidden = true;
     dialog.setAttribute('aria-hidden', 'true');
     busy = false;

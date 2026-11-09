@@ -126,7 +126,9 @@ test('a connection that tests well is added with its name and settings, and the 
   w.type('[data-header-field="name"]', 'X-Proxy-Token');
   w.type('[data-header-field="value"]', 'proxy-value');
   await w.click('#addConnectionNext');
-  assert.deepEqual(probes[0], {
+  const { signal, ...asked } = probes[0];
+  assert.ok(signal && typeof signal.addEventListener === 'function', 'the test can be cancelled');
+  assert.deepEqual(asked, {
     gatewayUrl: 'https://hermes.example.com', apiKey: 'studio-key', headers: [{ name: 'X-Proxy-Token', value: 'proxy-value' }],
   });
   assert.equal(w.added[0].name, 'Studio');
@@ -285,5 +287,126 @@ test('Add after Options starts again from the first step with an empty draft', a
   assert.equal(w.step(), 'where');
   assert.equal(w.$('#addConnectionKicker').textContent, 'addconn.kicker');
   assert.equal(w.root.querySelectorAll('.add-connection-header-row').length, 0);
+});
+
+function pendingProbe() {
+  const asked = [];
+  return {
+    asked,
+    probe: (request) => new Promise((resolve) => { asked.push({ request, resolve }); }),
+  };
+}
+
+async function fillRemote(w) {
+  await w.click('[data-add-type="remote"]');
+  w.type('#addConnectionAddress', 'https://hermes.example.com');
+  await w.click('#addConnectionNext');
+  w.type('#addConnectionKey', 'studio-key');
+  await w.click('#addConnectionNext');
+}
+
+test('closing the window while the test is waiting cancels it, and a late answer adds nothing', async () => {
+  const pending = pendingProbe();
+  const w = openWindow({ probe: pending.probe });
+  await fillRemote(w);
+  await w.click('#addConnectionNext');
+  assert.equal(pending.asked.length, 1);
+  assert.equal(w.$('#addConnectionClose').disabled, false);
+  await w.click('#addConnectionClose');
+  assert.equal(pending.asked[0].request.signal.aborted, true, 'the request itself is cancelled');
+  pending.asked[0].resolve({ ok: true, status: 'ok' });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(w.added.length, 0, 'no connection was added');
+  assert.equal(w.dialog.isOpen(), false);
+});
+
+test('Escape cancels a waiting test the same way as the close button', async () => {
+  const pending = pendingProbe();
+  const w = openWindow({ probe: pending.probe });
+  await fillRemote(w);
+  await w.click('#addConnectionNext');
+  w.press('#addConnectionKey', 'Escape');
+  pending.asked[0].resolve({ ok: true, status: 'ok' });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(w.added.length, 0);
+});
+
+test('a test left over from a closed window never reaches a window opened after it', async () => {
+  const pending = pendingProbe();
+  const w = openWindow({ probe: pending.probe });
+  await fillRemote(w);
+  await w.click('#addConnectionNext');
+  w.dialog.hide();
+  w.dialog.show();
+  await fillRemote(w);
+  await w.click('#addConnectionNext');
+  assert.equal(pending.asked.length, 2);
+  pending.asked[0].resolve({ ok: true, status: 'ok' });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(w.added.length, 0, 'the old answer is not the new window\'s');
+  pending.asked[1].resolve({ ok: true, status: 'ok' });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(w.added.length, 1, 'the new window\'s own answer adds');
+  assert.equal(w.added[0].connection.apiKey, 'studio-key');
+});
+
+test('closing while the connection is being saved waits for the save instead of leaving it half done', async () => {
+  let finishSave;
+  const dom = new JSDOM(html, { url: 'chrome-extension://hermes/sidepanel.html' });
+  const root = dom.window.document;
+  const added = [];
+  const dialog = createAddConnectionDialog({
+    root,
+    translate,
+    probe: async () => ({ ok: true, status: 'ok' }),
+    onAdd: (made) => new Promise((resolve) => { added.push(made); finishSave = resolve; }),
+  });
+  dialog.show();
+  root.querySelector('[data-add-type="remote"]').click();
+  const address = root.querySelector('#addConnectionAddress');
+  address.value = 'https://hermes.example.com';
+  address.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  root.querySelector('#addConnectionNext').click();
+  await tick();
+  const key = root.querySelector('#addConnectionKey');
+  key.value = 'studio-key';
+  key.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  root.querySelector('#addConnectionNext').click();
+  await tick();
+  root.querySelector('#addConnectionNext').click();
+  await tick();
+  await tick();
+  assert.equal(added.length, 1);
+  root.querySelector('#addConnectionClose').click();
+  assert.equal(dialog.isOpen(), true, 'the save is under way and the window stays until it ends');
+  finishSave();
+  await tick();
+  assert.equal(dialog.isOpen(), false);
+});
+
+test('Options puts focus inside the window, on something the person can see', () => {
+  const w = openWindow({ show: { mode: 'options', name: 'Studio', connection: { ...inUse, connectionHeaders: [] } } });
+  assert.ok(w.$('#addConnectionDialog').contains(w.root.activeElement), 'focus is in the window');
+  assert.equal(w.root.activeElement.id, 'addConnectionAddHeader');
+  const withHeader = openWindow({ show: { mode: 'options', name: 'Studio', connection: inUse } });
+  assert.equal(withHeader.root.activeElement.dataset.headerField, 'name', 'the first header name when there is one');
+  const adding = openWindow();
+  assert.equal(adding.root.activeElement.dataset.addType, 'local', 'Add focuses the chosen tile');
+});
+
+test('moving to a step puts focus on its chosen tile, its first field, or its first button', async () => {
+  const w = openWindow();
+  await w.click('[data-add-type="remote"]');
+  w.type('#addConnectionAddress', 'https://hermes.example.com');
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'signin');
+  assert.equal(w.root.activeElement.dataset.addMethod, 'token');
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'signin', 'a key is required first');
+  w.type('#addConnectionKey', 'studio-key');
+  await w.click('#addConnectionNext');
+  assert.equal(w.step(), 'options');
+  assert.equal(w.root.activeElement.id, 'addConnectionAddHeader');
+  assert.notEqual(w.root.activeElement.id, 'addConnectionTrust', 'never the hidden switch input');
 });
 
