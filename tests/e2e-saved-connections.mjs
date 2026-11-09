@@ -49,9 +49,10 @@ function json(res, status, payload) {
 
 async function startStubGateway(label) {
   const requests = [];
+  const flags = { sessionsMissing: false };
   const server = createServer((req, res) => {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
-    requests.push({ method: req.method, path: url.pathname, authorization: req.headers.authorization || '', headers: req.headers, at: Date.now() });
+    requests.push({ method: req.method, path: url.pathname, search: url.search, authorization: req.headers.authorization || '', headers: req.headers, at: Date.now() });
     if (req.method === 'OPTIONS') { json(res, 204, {}); return; }
     if (url.pathname === '/health' || url.pathname === '/v1/health') { json(res, 200, { status: 'ok', platform: 'hermes-agent', version: label }); return; }
     if (url.pathname === '/v1/capabilities') {
@@ -68,7 +69,11 @@ async function startStubGateway(label) {
       });
       return;
     }
-    if (url.pathname === '/api/sessions' && req.method === 'GET') { json(res, 200, { sessions: [], total: 0 }); return; }
+    if (url.pathname === '/api/sessions' && req.method === 'GET') {
+      if (flags.sessionsMissing) { json(res, 404, {}); return; }
+      json(res, 200, { sessions: [], total: 0 });
+      return;
+    }
     if (url.pathname === '/api/sessions' && req.method === 'POST') { json(res, 200, { session: { id: `${label}-session` } }); return; }
     if (url.pathname === '/v1/models') { json(res, 200, { data: [{ id: 'e2e/test-model', object: 'model' }] }); return; }
     json(res, 200, {});
@@ -79,7 +84,7 @@ async function startStubGateway(label) {
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address();
-  return { label, baseUrl: `http://127.0.0.1:${port}`, requests, close: () => new Promise((resolve) => server.close(resolve)) };
+  return { label, baseUrl: `http://127.0.0.1:${port}`, requests, flags, close: () => new Promise((resolve) => server.close(resolve)) };
 }
 
 async function waitFor(check, timeoutMs = 25_000, intervalMs = 150) {
@@ -362,6 +367,17 @@ async function main() {
       && (await panel.evaluate("document.querySelector('#addConnectionSteps').textContent")).includes('1'));
     check('a local gateway is chosen to begin with', await panel.evaluate("document.querySelector('[data-add-type=\"local\"]').getAttribute('aria-checked') === 'true'"));
     await shot(panel, '8-add-where');
+    check('the choice is marked with the extension square, never a circle or a tick', await panel.evaluate(`(() => {
+      const marks = Array.from(document.querySelectorAll('#addConnectionDialog .conn-mode-check'));
+      return marks.length >= 5 && marks.every((mark) => {
+        const box = getComputedStyle(mark);
+        return box.borderTopLeftRadius === '0px' && box.width === '17px' && box.height === '17px';
+      });
+    })()`));
+    check('the chosen tile shows the filled square', await panel.evaluate(`(() => {
+      const inner = getComputedStyle(document.querySelector('[data-add-type="local"] .conn-mode-check'), '::after');
+      return inner.content === '""' && inner.width === '7px' && inner.height === '7px' && inner.borderTopLeftRadius === '0px';
+    })()`));
     await click(panel, '[data-add-type="remote"]');
     await click(panel, '#addConnectionNext');
     check('a remote connection needs an address', await visible(panel, '#addConnectionAddressError'));
@@ -404,6 +420,17 @@ async function main() {
     await setField(panel, '[data-header-field="name"][data-header-index="0"]', 'X-Proxy-Token');
     await setField(panel, '[data-header-field="value"][data-header-index="0"]', 'proxy-wizard-value');
     await shot(panel, '11-add-options');
+    check('the certificate choice is the extension switch: a square track, no native checkbox look', await panel.evaluate(`(() => {
+      const input = document.querySelector('#addConnectionTrust');
+      const track = input.parentElement.querySelector('.settings-switch');
+      const style = getComputedStyle(track);
+      return input.type === 'checkbox' && input.classList.contains('settings-switch-input')
+        && style.borderTopLeftRadius === '0px' && style.width === '31px' && style.height === '17px';
+    })()`));
+    await click(panel, '#addConnectionCertGroup .settings-toggle-card');
+    check('pressing it turns it on', await panel.evaluate("document.querySelector('#addConnectionTrust').checked === true"));
+    await click(panel, '#addConnectionCertGroup .settings-toggle-card');
+    check('and pressing again turns it off', await panel.evaluate("document.querySelector('#addConnectionTrust').checked === false"));
     await markPanel(panel);
     await click(panel, '#addConnectionNext');
     await panelReady(panel);
@@ -526,6 +553,42 @@ async function main() {
       return result.plain ? result : null;
     }, 20_000, 500).catch(() => ({ plain: '', socket: '' }));
     check('a custom header reaches the gateway on a plain request', withHeader.plain === 'proxy-e2e-value', JSON.stringify(withHeader));
+
+    // A test of a connection at this same address sends only the headers typed into the window, and a
+    // gateway that answers /health but not its sessions is refused instead of added.
+    first.flags.sessionsMissing = true;
+    const testAtActiveAddress = async (headers) => {
+      await openConnectionsPane(panel);
+      await click(panel, '#savedConnectionAdd');
+      await waitFor(() => visible(panel, '#addConnectionDialog'));
+      await click(panel, '[data-add-type="remote"]');
+      await setField(panel, '#addConnectionAddress', first.baseUrl);
+      await click(panel, '#addConnectionNext');
+      await waitFor(() => visible(panel, '[data-add-step="signin"]'));
+      await setField(panel, '#addConnectionKey', KEY_FIRST);
+      await click(panel, '#addConnectionNext');
+      await waitFor(() => visible(panel, '[data-add-step="options"]'));
+      for (const [index, header] of headers.entries()) {
+        await click(panel, '#addConnectionAddHeader');
+        await setField(panel, `[data-header-field="name"][data-header-index="${index}"]`, header.name);
+        await setField(panel, `[data-header-field="value"][data-header-index="${index}"]`, header.value);
+      }
+      const before = first.requests.length;
+      await click(panel, '#addConnectionNext');
+      await waitFor(() => visible(panel, '#addConnectionAnyway'));
+      const status = await panel.evaluate("document.querySelector('#addConnectionResult').dataset.status");
+      const seen = first.requests.slice(before).filter((request) => request.path === '/health' || request.path === '/api/sessions');
+      await pressKey(panel, 'Escape');
+      return { status, seen: seen.map((request) => ({ path: request.path, header: request.headers['x-proxy-token'] || '', marked: request.search.includes('hermes_probe=') })) };
+    };
+    const bare = await testAtActiveAddress([]);
+    check('a test with no headers of its own does not send the active connection\'s', bare.seen.length >= 2 && bare.seen.every((request) => request.header === '' && request.marked), JSON.stringify(bare));
+    const own = await testAtActiveAddress([{ name: 'X-Proxy-Token', value: 'draft-value' }]);
+    check('a test sends the headers typed into the window, not the active ones', own.seen.length >= 2 && own.seen.every((request) => request.header === 'draft-value'), JSON.stringify(own));
+    check('a gateway that answers health but not its sessions is refused, not added', bare.status === 'not-hermes' && own.status === 'not-hermes' && (await selectOptions(panel)).length === 1, `${bare.status}/${own.status}`);
+    first.flags.sessionsMissing = false;
+    const afterTests = await probe(first);
+    check('the active connection sends its own header again once the test is over', afterTests.plain === 'proxy-e2e-value', JSON.stringify(afterTests));
     await markPanel(panel);
     await panel.evaluate('window.location.reload(); true');
     await panelReady(panel);
