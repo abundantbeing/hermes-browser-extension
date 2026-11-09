@@ -113,3 +113,20 @@ test('opening it again starts with nothing chosen', async () => {
   assert.equal(w.$('#deleteConnectionConfirm').disabled, true);
   assert.ok(w.rows().every((row) => row.getAttribute('aria-checked') === 'false'));
 });
+
+test('while a delete runs, focus pulled outside comes back to a control that still takes it', async () => {
+  let finish;
+  const w = openWindow({ onDelete: () => new Promise((resolve) => { finish = resolve; }) });
+  await w.click('[data-delete-id="lab"]');
+  await w.click('#deleteConnectionConfirm');
+  assert.ok(w.rows().every((row) => row.disabled), 'every row is disabled while it runs');
+  const outside = w.root.createElement('button');
+  w.root.body.append(outside);
+  outside.focus();
+  assert.equal(w.root.activeElement, w.$('#deleteConnectionClose'), 'focus lands on the enabled close button, not a disabled row');
+  w.press('Escape');
+  assert.equal(w.dialog.isOpen(), true, 'Escape still reaches the window and waits');
+  finish();
+  await tick();
+  assert.equal(w.dialog.isOpen(), false);
+});

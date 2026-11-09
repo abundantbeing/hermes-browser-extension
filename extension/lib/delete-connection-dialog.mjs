@@ -25,7 +25,12 @@ export function createDeleteConnectionDialog({
   let entries = [];
   let chosenId = '';
   let busy = false;
-  const focusHold = holdFocusInside(root, dialog, () => ui.list.querySelector('[aria-checked="true"]') || ui.list.querySelector('button'));
+  // Rows are disabled while a delete runs, so focus falls back to the first control that still takes it.
+  const focusHold = holdFocusInside(root, dialog, () => [
+    ui.list.querySelector('[aria-checked="true"]'),
+    ui.list.querySelector('button'),
+    ui.close,
+  ].find((node) => node && !node.disabled));
 
   const focusables = () => [...dialog.querySelectorAll('button')]
     .filter((node) => !node.disabled && !node.hidden && node.offsetParent !== null);
