@@ -24096,6 +24096,7 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
   const expectedId = current.activeSavedConnectionId;
   let saved = null;
   let made = false;
+  let reloading = false;
   try {
     await withSavedConnectionsLock(async () => {
       saved = await saveSettingsFromForm({ lockHeld: true });
@@ -24116,11 +24117,14 @@ async function updateSavedConnection(action, { id = settings.activeSavedConnecti
       if (action === 'add' && connection && !connection.apiKey) {
         try { globalThis.sessionStorage?.setItem('hermesBrowserConnectAfterAdd', '1'); } catch { /* optional */ }
       }
-      if (next.activeSavedConnectionId !== expectedId) reloadForSavedConnection(next);
+      reloading = next.activeSavedConnectionId !== expectedId;
+      if (reloading) reloadForSavedConnection(next);
       else settings = next;
     });
     await saved?.applyWake?.().catch(() => undefined);
     made = true;
+    // The form was saved first: an edited gateway address starts a fresh chat here, as Save does.
+    if (!reloading && saved?.connectionIdentityChanged === true) await refreshAfterSettingsSave(saved).catch(() => undefined);
   } catch {
     showOperationToast({ kind: 'warn', title: t('connections.error') });
   } finally {

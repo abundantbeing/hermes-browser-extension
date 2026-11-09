@@ -514,6 +514,30 @@ test('deleting a connection that is not in use leaves the one in use, and its re
   } finally { h.close(); }
 });
 
+test('an edited gateway address saved by Delete starts a fresh chat here, and one that was not edited does not', async () => {
+  for (const edited of [true, false]) {
+    const settings = selectSavedConnection(addSavedConnection(twoConnections(), 'Other', 'other'), 'work');
+    const h = await createSettingsSaveHarness({ settings });
+    try {
+      const refreshed = [];
+      Object.assign(h.scope, {
+        savedConnectionBusy: false, sending: false, savedConnectionReloading: false,
+        scopeRevision: createRevisionGate(), restoringComposerDraft: false, composerDraftSaveTimer: 0, attachments: [],
+        renderSavedConnections: () => {}, showOperationToast: () => {}, stopConnectionProbeLoop: () => {},
+        refreshAfterSettingsSave: async (saved) => { refreshed.push(saved.connectionIdentityChanged); },
+        window: { location: { reload: () => {} } },
+      });
+      h.store.hermesBrowserSettings = structuredClone(settings);
+      h.els.gatewayUrlInput.value = settings.gatewayUrl;
+      h.els.apiKeyInput.value = settings.apiKey;
+      await h.fn('saveSettingsFromForm')({ lockHeld: true });
+      if (edited) h.els.gatewayUrlInput.value = 'https://moved.example.test';
+      assert.equal(await h.fn('updateSavedConnection')('delete', { id: 'other' }), true);
+      assert.deepEqual(refreshed, edited ? [true] : [], edited ? 'the new address refreshes the panel and starts a fresh chat' : 'nothing moved, nothing refreshes');
+    } finally { h.close(); }
+  }
+});
+
 async function openPanel(settings, shareWith) {
   const h = await createSettingsSaveHarness({ settings });
   if (shareWith) h.scope.browserApi = shareWith.scope.browserApi;
