@@ -2335,6 +2335,14 @@
     "message": "Адрес, учётные данные, черновики и сохранённая история чатов на этом устройстве будут удалены. Чаты останутся на его шлюзе.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Выберите, какое подключение удалить.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Удаление подключения",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "Не удалось обновить сохранённые подключения.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "При переключении текущие настройки сохраняются. У каждого подключения свой адрес и учётные данные.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "Используется",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Название подключения",

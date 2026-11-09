@@ -19,16 +19,20 @@ test('saved connections use the panel itself, never the browser\'s own dialogs',
   assert.doesNotMatch(connectionsCode, /window\.(prompt|confirm|alert)\(|[^.\w](prompt|confirm|alert)\(/);
 });
 
-test('the saved connections are cards, with the name field and the delete question inline', () => {
+test('the saved connections are cards, with the name field inline and Delete opening a window that lists them', () => {
   assert.match(html, /id="savedConnectionList"/);
   assert.doesNotMatch(html, /id="savedConnectionSelect"/);
   assert.match(html, /id="savedConnectionEditor"[^>]*hidden/);
-  assert.match(html, /id="savedConnectionConfirm"[^>]*role="alertdialog"[^>]*hidden/);
+  assert.doesNotMatch(html, /id="savedConnectionConfirm"/, 'Delete no longer asks about the connection in use');
+  assert.match(html, /<section id="deleteConnectionDialog"[^>]*role="dialog"[^>]*aria-modal="true"[^>]*hidden>/);
+  assert.match(html, /id="deleteConnectionList"[^>]*role="radiogroup"/);
+  assert.match(html, /id="deleteConnectionConfirm"[^>]*disabled/, 'nothing is chosen to begin with');
+  assert.match(connectionsCode, /els\.savedConnectionDelete\?\.addEventListener\('click', openDeleteConnectionWindow\)/);
   assert.match(connectionsCode, /className = `conn-mode-card saved-connection-card/);
 });
 
-test('the name field never submits Settings, and Escape only closes the field or the question', () => {
-  const editor = html.slice(html.indexOf('id="savedConnectionEditor"'), html.indexOf('id="savedConnectionConfirm"'));
+test('the name field never submits Settings, and Escape only closes the field', () => {
+  const editor = html.slice(html.indexOf('id="savedConnectionEditor"'), html.indexOf('id="savedConnectionHelp"'));
   assert.doesNotMatch(editor, /<form|type="submit"/);
   assert.match(connectionsCode, /event\.key !== 'Enter'[\s\S]*event\.preventDefault\(\)[\s\S]*submitSavedConnectionName\(\)/);
   assert.match(connectionsCode, /event\.key !== 'Escape'[\s\S]*event\.stopPropagation\(\)[\s\S]*closeSavedConnectionTool\(\)/);
@@ -41,10 +45,10 @@ test('the two stacks of tiles are told apart by their headings', () => {
 });
 
 test('the connection tools show one state at a time and keep their controls square', () => {
-  for (const selector of ['.saved-connection-actions', '.saved-connection-editor', '.saved-connection-confirm']) {
+  for (const selector of ['.saved-connection-actions', '.saved-connection-editor']) {
     assert.ok(css.includes(`${selector}[hidden]`), `${selector} can be hidden`);
   }
-  const block = css.slice(css.indexOf('.saved-connection-list {'), css.indexOf('.saved-connection-confirm p {') + 200);
+  const block = css.slice(css.indexOf('.saved-connection-list {'), css.indexOf('.saved-connection-editor input {') + 100);
   assert.doesNotMatch(block, /border-radius|text-transform|letter-spacing/);
 });
 

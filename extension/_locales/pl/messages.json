@@ -2335,6 +2335,14 @@
     "message": "Adres, dane uwierzytelniające, szkice i zapisana historia czatów na tym urządzeniu zostaną usunięte. Czaty pozostają na swoim Gateway.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Wybierz połączenie do usunięcia.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Usuń połączenie",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "Nie udało się zaktualizować zapisanych połączeń.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "Przełączenie zapisuje bieżące ustawienia. Każde połączenie zachowuje własny adres i dane uwierzytelniające.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "W użyciu",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Nazwa połączenia",

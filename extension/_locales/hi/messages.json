@@ -2335,6 +2335,14 @@
     "message": "इसका पता, क्रेडेंशियल, ड्राफ्ट और इस डिवाइस पर सहेजा गया चैट इतिहास हटा दिया जाता है। चैट उसके प्रवेशद्वार पर ही रहती हैं।",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "जिसे मिटाना है, उसे चुनें।",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "एक कनेक्शन मिटाएं",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "सहेजे गए कनेक्शन अपडेट नहीं हो सके।",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "बदलने पर मौजूदा सेटिंग सहेजी जाती हैं। हर कनेक्शन अपना पता और क्रेडेंशियल रखता है।",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "उपयोग में",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "कनेक्शन का नाम",

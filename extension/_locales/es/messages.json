@@ -2335,6 +2335,14 @@
     "message": "Se eliminan su dirección, credenciales, borradores y el historial de chats guardado en este dispositivo. Los chats permanecen en su gateway.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Elige la que quieres eliminar.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Eliminar una conexión",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "No se pudieron actualizar las conexiones guardadas.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "Al cambiar se guarda la configuración actual. Cada conexión conserva su dirección y sus credenciales.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "En uso",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Nombre de la conexión",

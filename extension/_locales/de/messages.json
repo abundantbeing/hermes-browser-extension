@@ -2335,6 +2335,14 @@
     "message": "Adresse, Zugangsdaten, Entwürfe und gespeicherter Chatverlauf auf diesem Gerät werden entfernt. Chats bleiben auf dem zugehörigen Gateway.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Wähle die Verbindung, die gelöscht werden soll.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Verbindung löschen",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "Gespeicherte Verbindungen konnten nicht aktualisiert werden.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "Beim Wechsel werden die aktuellen Einstellungen gespeichert. Jede Verbindung behält ihre Adresse und Zugangsdaten.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "Aktiv",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Verbindungsname",

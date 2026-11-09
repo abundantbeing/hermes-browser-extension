@@ -2335,6 +2335,14 @@
     "message": "Địa chỉ, thông tin xác thực, bản nháp và lịch sử trò chuyện đã lưu trên thiết bị này sẽ bị xóa. Các cuộc trò chuyện vẫn ở trên cổng của kết nối đó.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Chọn kết nối cần xóa.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Xóa một kết nối",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "Không thể cập nhật các kết nối đã lưu.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "Chuyển kết nối sẽ lưu cài đặt hiện tại. Mỗi kết nối giữ riêng địa chỉ và thông tin xác thực.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "Đang dùng",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Tên kết nối",

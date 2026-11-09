@@ -242,23 +242,21 @@ test('a refresh that changes nothing keeps the focused card, and a changed list 
   } finally { h.close(); }
 });
 
-test('the connection tools show one state at a time: the buttons, the name field or the delete question', async () => {
+test('the connection tools show one state at a time: the buttons or the name field', async () => {
   const h = await createSettingsSaveHarness({ settings: twoConnections() });
   try {
     h.scope.savedConnectionBusy = false;
     const shown = (tool) => {
       h.scope.savedConnectionTool = tool;
       h.fn('renderSavedConnections')();
-      return ['savedConnectionActions', 'savedConnectionEditor', 'savedConnectionConfirm'].filter((id) => !h.els[id].hidden);
+      return ['savedConnectionActions', 'savedConnectionEditor'].filter((id) => !h.els[id].hidden);
     };
     assert.deepEqual(shown(''), ['savedConnectionActions']);
     assert.deepEqual(shown('add'), ['savedConnectionEditor']);
     assert.deepEqual(shown('rename'), ['savedConnectionEditor']);
-    assert.deepEqual(shown('delete'), ['savedConnectionConfirm']);
-    assert.match(h.els.savedConnectionConfirmTitle.textContent, /connections\.delete_confirm .*work/i);
     h.scope.savedConnectionBusy = true;
     h.fn('renderSavedConnections')();
-    assert.ok(h.els.savedConnectionDeleteConfirm.disabled && h.els.savedConnectionNameSave.disabled);
+    assert.ok(h.els.savedConnectionNameSave.disabled && h.els.savedConnectionDelete.disabled);
     assert.ok([...h.els.savedConnectionList.querySelectorAll('button')].every((card) => card.disabled));
   } finally { h.close(); }
 });
@@ -487,6 +485,33 @@ test('deleting a connection removes its stored records and does not save its dep
     else delete globalThis.sessionStorage;
     h.close();
   }
+});
+
+test('deleting a connection that is not in use leaves the one in use, and its records, alone', async () => {
+  const settings = selectSavedConnection(addSavedConnection(twoConnections(), 'Other', 'other'), 'work');
+  const h = await createSettingsSaveHarness({
+    settings,
+    storage: {
+      'hermesBrowserMessages:connection:work': [{ role: 'user', content: 'work chat' }],
+      'hermesBrowserMessages:connection:other': [{ role: 'user', content: 'other chat' }],
+    },
+  });
+  try {
+    const reloads = [];
+    Object.assign(h.scope, {
+      savedConnectionBusy: false, sending: false, savedConnectionReloading: false,
+      scopeRevision: createRevisionGate(), restoringComposerDraft: false, composerDraftSaveTimer: 0, attachments: [],
+      renderSavedConnections: () => {}, showOperationToast: () => {}, stopConnectionProbeLoop: () => {},
+      window: { location: { reload: () => reloads.push('reload') } },
+    });
+    h.store.hermesBrowserSettings = structuredClone(settings);
+    assert.equal(await h.fn('updateSavedConnection')('delete', { id: 'other' }), true);
+    assert.equal(reloads.length, 0, 'the panel stays on its connection');
+    assert.equal(h.store.hermesBrowserSettings.activeSavedConnectionId, 'work');
+    assert.deepEqual(h.store.hermesBrowserSettings.savedConnections.map((entry) => entry.id).sort(), ['default', 'work']);
+    assert.equal(h.store['hermesBrowserMessages:connection:other'], undefined, 'the deleted connection\'s records are gone');
+    assert.ok(h.store['hermesBrowserMessages:connection:work'], 'the connection in use keeps its own');
+  } finally { h.close(); }
 });
 
 async function openPanel(settings, shareWith) {

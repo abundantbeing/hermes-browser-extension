@@ -2335,6 +2335,14 @@
     "message": "Alamat, kredensial, draf, dan riwayat obrolan tersimpan di perangkat ini akan dihapus. Obrolan tetap ada di gerbangnya.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Pilih koneksi yang ingin dihapus.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Hapus koneksi",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "Tidak dapat memperbarui koneksi tersimpan.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "Beralih akan menyimpan pengaturan saat ini. Setiap koneksi menyimpan alamat dan kredensialnya sendiri.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "Digunakan",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Nama koneksi",

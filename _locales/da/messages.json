@@ -2335,6 +2335,14 @@
     "message": "Dens adresse, legitimationsoplysninger, kladder og gemte chathistorik på denne enhed fjernes. Chats forbliver på dens gateway.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Vælg den, der skal slettes.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Slet en forbindelse",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "De gemte forbindelser kunne ikke opdateres.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "Skift gemmer de aktuelle indstillinger. Hver forbindelse beholder sin adresse og sine legitimationsoplysninger.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "I brug",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Forbindelsesnavn",

@@ -2335,6 +2335,14 @@
     "message": "Bu cihazdaki adresi, kimlik bilgileri, taslakları ve kayıtlı sohbet geçmişi kaldırılır. Sohbetler kendi Gateway'inde kalır.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Silinecek bağlantıyı seçin.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Bir bağlantıyı sil",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "Kayıtlı bağlantılar güncellenemedi.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "Geçiş sırasında mevcut ayarlar kaydedilir. Her bağlantı kendi adresini ve kimlik bilgilerini saklar.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "Kullanımda",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Bağlantı adı",

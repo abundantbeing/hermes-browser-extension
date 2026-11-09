@@ -466,7 +466,8 @@ async function main() {
     check('the first connection points at the first gateway', (await panelGateway(panel)) === first.baseUrl);
     await waitFor(() => first.requests.length > firstRequestsBeforeSwitch && first.requests.slice(firstRequestsBeforeSwitch).some((request) => request.authorization === `Bearer ${KEY_FIRST}`), 20_000);
     check('the first gateway gets its own key again', first.requests.slice(firstRequestsBeforeSwitch).some((request) => request.authorization === `Bearer ${KEY_FIRST}`));
-    check('the first gateway never receives the second key', !first.requests.some((request) => request.authorization === `Bearer ${KEY_SECOND}`));
+    const leaked = first.requests.filter((request) => request.authorization === `Bearer ${KEY_SECOND}`);
+    check('the first gateway never receives the second key', leaked.length === 0, JSON.stringify(leaked.map((request) => [request.method, request.path, request.at - first.requests[0].at])));
     const draftBack = await waitFor(async () => {
       const value = await panel.evaluate("document.querySelector('#promptInput').value");
       return value || null;
@@ -489,21 +490,33 @@ async function main() {
     await clickCard(panel, secondId);
     await panelReady(panel);
     await openConnectionsPane(panel);
+    const deleteRows = () => panel.evaluate(`Array.from(document.querySelectorAll('#deleteConnectionList [data-delete-id]')).map((row) => ({
+      id: row.dataset.deleteId, name: row.querySelector('.conn-mode-title').textContent, desc: row.querySelector('.conn-mode-desc').textContent,
+      chosen: row.getAttribute('aria-checked') === 'true', square: getComputedStyle(row.querySelector('.conn-mode-check')).borderTopLeftRadius === '0px',
+    }))`);
     await click(panel, '#savedConnectionDelete');
-    await waitFor(() => visible(panel, '#savedConnectionConfirm'));
-    check('Delete asks inline, naming the connection and what is removed', (await panel.evaluate("document.querySelector('#savedConnectionConfirmTitle').textContent")).includes('Second gateway')
-      && (await panel.evaluate("document.querySelector('#savedConnectionConfirmDetail').textContent")).includes('Chats stay'));
+    await waitFor(() => visible(panel, '#deleteConnectionDialog'));
+    const listed = await deleteRows();
+    check('Delete opens a window that lists every connection, and nothing is chosen', listed.length === 2 && listed.every((row) => !row.chosen)
+      && (await panel.evaluate("document.querySelector('#deleteConnectionConfirm').disabled === true")), JSON.stringify(listed));
+    check('the list names the connection in use and marks its choices with the square', listed.find((row) => row.name === 'Second gateway')?.desc.includes('In use')
+      && !listed.find((row) => row.name === 'Primary').desc.includes('In use') && listed.every((row) => row.square));
     await shot(panel, '6-delete-confirm');
+    await click(panel, `[data-delete-id="${secondId}"]`);
+    check('choosing one names it and enables Delete', (await panel.evaluate("document.querySelector('#deleteConnectionChosen').textContent")).includes('Second gateway')
+      && (await panel.evaluate("document.querySelector('#deleteConnectionConfirm').disabled === false")));
     await pressKey(panel, 'Escape');
-    check('Escape cancels Delete and keeps the connection', !(await visible(panel, '#savedConnectionConfirm')) && (await selectOptions(panel)).length === 2 && (await settingsOpen(panel)));
+    const afterEscape = { open: await visible(panel, '#deleteConnectionDialog'), cards: (await selectOptions(panel)).length, settings: await settingsOpen(panel), focus: await panel.evaluate('document.activeElement?.id || document.activeElement?.className || document.activeElement?.tagName') };
+    check('Escape cancels Delete and keeps the connection', !afterEscape.open && afterEscape.cards === 2 && afterEscape.settings, JSON.stringify(afterEscape));
     await click(panel, '#savedConnectionDelete');
-    await waitFor(() => visible(panel, '#savedConnectionConfirm'));
-    await click(panel, '#savedConnectionDeleteCancel');
+    await waitFor(() => visible(panel, '#deleteConnectionDialog'));
+    await click(panel, '#deleteConnectionCancel');
     check('Cancel keeps the connection', (await selectOptions(panel)).length === 2);
     await click(panel, '#savedConnectionDelete');
-    await waitFor(() => visible(panel, '#savedConnectionConfirm'));
+    await waitFor(() => visible(panel, '#deleteConnectionDialog'));
+    await click(panel, `[data-delete-id="${secondId}"]`);
     await markPanel(panel);
-    await click(panel, '#savedConnectionDeleteConfirm');
+    await click(panel, '#deleteConnectionConfirm');
     await waitFor(async () => (await selectOptions(panel)).length === 1, 15_000);
     await waitFor(async () => (await storedActive(setup)) === firstId, 15_000).catch(() => {});
     const afterDelete = await selectOptions(panel);

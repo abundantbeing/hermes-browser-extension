@@ -7546,20 +7546,12 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 .saved-connection-card .conn-mode-title { overflow-wrap: anywhere; }
 .saved-connection-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .saved-connection-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.saved-connection-editor,
-.saved-connection-confirm { display: grid; gap: 8px; min-width: 0; }
+.saved-connection-editor { display: grid; gap: 8px; min-width: 0; }
 .saved-connection-actions[hidden],
-.saved-connection-editor[hidden],
-.saved-connection-confirm[hidden] { display: none; }
+.saved-connection-editor[hidden] { display: none; }
 .saved-connection-editor input { width: 100%; min-width: 0; }
-.saved-connection-confirm {
-  padding: 10px;
-  border: 1px solid rgba(var(--hermes-accent-rgb), 0.62);
-  background: rgba(var(--hermes-accent-rgb), 0.08);
-  color: var(--hermes-ink);
-}
-.saved-connection-confirm strong { font-size: calc(11px * var(--hermes-text-zoom, 1)); font-weight: 600; overflow-wrap: anywhere; }
-.saved-connection-confirm p { margin: 0; font-size: calc(10px * var(--hermes-text-zoom, 1)); line-height: 1.45; color: var(--hermes-muted); }
+.delete-connection-card { grid-template-rows: auto minmax(0, 1fr) auto auto; }
+.delete-connection-card .conn-mode-title { overflow-wrap: anywhere; }
 .add-connection-card { width: min(440px, 100%); max-height: calc(100vh - 36px); grid-template-rows: auto minmax(0, 1fr) auto; gap: 12px; }
 .add-connection-head { display: flex; align-items: flex-start; gap: 10px; }
 .add-connection-heading { display: grid; gap: 4px; flex: 1; min-width: 0; }

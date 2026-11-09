@@ -2335,6 +2335,14 @@
     "message": "Indirizzo, credenziali, bozze e cronologia delle chiacchierate salvata su questo dispositivo vengono rimossi. Le chiacchierate restano sul suo gateway.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "Scegli quella da eliminare.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Elimina una connessione",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "Impossibile aggiornare le connessioni salvate.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "Il cambio salva le impostazioni attuali. Ogni connessione conserva indirizzo e credenziali.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "In uso",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "Nome della connessione",

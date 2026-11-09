@@ -2335,6 +2335,14 @@
     "message": "이 기기에 저장된 주소, 인증 정보, 임시 저장 글, 채팅 기록이 삭제됩니다. 채팅은 해당 게이트웨이에 그대로 남습니다.",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "삭제할 연결을 선택하세요.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "연결 삭제",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "저장된 연결을 업데이트하지 못했습니다.",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "전환 시 현재 설정이 저장됩니다. 각 연결은 주소와 인증 정보를 따로 보관합니다.",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "사용 중",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "연결 이름",

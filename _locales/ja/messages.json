@@ -2335,6 +2335,14 @@
     "message": "このデバイス上のアドレス、認証情報、下書き、保存済みのチャット履歴が削除されます。チャットはそのゲートウェイに残ります。",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "削除する接続を選んでください。",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "接続を削除",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "保存済みの接続を更新できませんでした。",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "切り替え時に現在の設定を保存します。接続ごとにアドレスと認証情報を保持します。",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "使用中",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "接続名",

@@ -965,14 +965,6 @@
               <button id="savedConnectionNameCancel" type="button" data-i18n="ui.cancel">Cancel</button>
             </div>
           </div>
-          <div id="savedConnectionConfirm" class="saved-connection-confirm" role="alertdialog" aria-labelledby="savedConnectionConfirmTitle" aria-describedby="savedConnectionConfirmDetail" hidden>
-            <strong id="savedConnectionConfirmTitle"></strong>
-            <p id="savedConnectionConfirmDetail" data-i18n="connections.delete_detail">Its address, credentials, drafts and saved chat history on this device are removed. Chats stay on its gateway.</p>
-            <div class="saved-connection-pair">
-              <button id="savedConnectionDeleteCancel" type="button" data-i18n="ui.cancel">Cancel</button>
-              <button id="savedConnectionDeleteConfirm" type="button" data-i18n="ui.delete">Delete</button>
-            </div>
-          </div>
           <p id="savedConnectionHelp" class="hint" data-i18n="connections.help">Switching saves your current settings. Each connection keeps its address and credentials.</p>
         </div>
 
@@ -1881,6 +1873,27 @@
             <button id="addConnectionAnyway" type="button" data-i18n="addconn.add_anyway" hidden>Add without testing</button>
           </div>
           <button id="addConnectionOpenAddress" type="button" data-i18n="addconn.open_address" hidden>Open address</button>
+        </div>
+      </div>
+    </section>
+    <section id="deleteConnectionDialog" class="profile-switch-dialog add-connection-dialog" role="dialog" aria-modal="true" aria-labelledby="deleteConnectionTitle" aria-describedby="deleteConnectionDetail" tabindex="-1" hidden>
+      <div class="profile-switch-card add-connection-card delete-connection-card">
+        <div class="add-connection-head">
+          <div class="add-connection-heading">
+            <h2 id="deleteConnectionTitle" data-i18n="connections.delete_title">Delete a connection</h2>
+            <p class="add-connection-steps" data-i18n="connections.delete_pick">Choose the one to delete.</p>
+          </div>
+          <button id="deleteConnectionClose" class="add-connection-icon" type="button" aria-label="Close" title="Close" data-i18n-aria-label="ui.close" data-i18n-title="ui.close">&times;</button>
+        </div>
+        <div id="deleteConnectionList" class="add-connection-body add-connection-tiles" role="radiogroup" aria-labelledby="deleteConnectionTitle"></div>
+        <p id="deleteConnectionDetail" class="add-connection-hint" data-i18n="connections.delete_detail">Its address, credentials, drafts and saved chat history on this device are removed. Chats stay on its gateway.</p>
+        <div class="add-connection-footer">
+          <p id="deleteConnectionChosen" class="add-connection-result" role="status" aria-live="polite" hidden></p>
+          <p id="deleteConnectionError" class="add-connection-error" role="alert" data-i18n="connections.error" hidden>Could not change the saved connection.</p>
+          <div class="add-connection-actions">
+            <button id="deleteConnectionCancel" type="button" data-i18n="ui.cancel">Cancel</button>
+            <button id="deleteConnectionConfirm" class="primary" type="button" data-i18n="ui.delete" disabled>Delete</button>
+          </div>
         </div>
       </div>
     </section>

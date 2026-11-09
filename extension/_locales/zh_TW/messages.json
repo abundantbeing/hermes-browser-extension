@@ -2335,6 +2335,14 @@
     "message": "將刪除其位址、憑證、草稿，以及此裝置上儲存的交談記錄。交談仍保留在其閘道器上。",
     "description": "Runtime interface message connections.delete_detail"
   },
+  "runtime_connections_delete_pick": {
+    "message": "請選擇要刪除的連線。",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "刪除連線",
+    "description": "Runtime interface message connections.delete_title"
+  },
   "runtime_connections_error": {
     "message": "無法更新已儲存的連線。",
     "description": "Runtime interface message connections.error"
@@ -2342,6 +2350,10 @@
   "runtime_connections_help": {
     "message": "切換時會儲存目前設定。每個連線分別保留位址和憑證。",
     "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "使用中",
+    "description": "Runtime interface message connections.in_use"
   },
   "runtime_connections_name_prompt": {
     "message": "連線名稱",
