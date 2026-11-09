@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "اسم الاتصال",
   "connections.default_name": "الاتصال {number}",
   "connections.delete_confirm": "هل تريد حذف \"{name}\"؟",
+  "connections.delete_detail": "تتم إزالة عنوانه وبيانات اعتماده ومسوداته وسجل الدردشات المحفوظ على هذا الجهاز. تبقى الدردشات على بوابته.",
   "connections.busy": "انتظر حتى تكتمل الإجابة الحالية قبل تبديل الاتصال.",
   "connections.error": "تعذر تحديث الاتصالات المحفوظة.",
   "ui.effort.title": "الجهد",

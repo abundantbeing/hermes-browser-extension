@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "कनेक्शन का नाम",
   "connections.default_name": "कनेक्शन {number}",
   "connections.delete_confirm": "\"{name}\" मिटाएं?",
+  "connections.delete_detail": "इसका पता, क्रेडेंशियल, ड्राफ्ट और इस डिवाइस पर सहेजा गया चैट इतिहास हटा दिया जाता है। चैट उसके प्रवेशद्वार पर ही रहती हैं।",
   "connections.busy": "कनेक्शन बदलने से पहले मौजूदा जवाब पूरा होने दें।",
   "connections.error": "सहेजे गए कनेक्शन अपडेट नहीं हो सके।",
   "ui.effort.title": "प्रयास",

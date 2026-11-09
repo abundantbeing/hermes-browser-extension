@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Tên kết nối",
   "connections.default_name": "Kết nối {number}",
   "connections.delete_confirm": "Xóa \"{name}\"?",
+  "connections.delete_detail": "Địa chỉ, thông tin xác thực, bản nháp và lịch sử trò chuyện đã lưu trên thiết bị này sẽ bị xóa. Các cuộc trò chuyện vẫn ở trên cổng của kết nối đó.",
   "connections.busy": "Chờ câu trả lời hiện tại hoàn tất trước khi chuyển kết nối.",
   "connections.error": "Không thể cập nhật các kết nối đã lưu.",
   "ui.effort.title": "Mức suy luận",

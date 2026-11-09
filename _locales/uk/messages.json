@@ -2139,6 +2139,10 @@
     "message": "Видалити «{name}»?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Адресу, облікові дані, чернетки та збережену історію чатів на цьому пристрої буде видалено. Чати залишаться на його шлюзі.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "Не вдалося оновити збережені підключення.",
     "description": "Runtime interface message connections.error"

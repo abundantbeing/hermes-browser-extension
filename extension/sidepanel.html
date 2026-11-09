@@ -949,18 +949,34 @@
             </div>
           </div>
 
-        <div class="saved-connections">
-          <label for="savedConnectionSelect" data-i18n="connections.saved_label">Saved connection</label>
-          <select id="savedConnectionSelect" data-settings-live aria-describedby="savedConnectionHelp"></select>
-          <div class="saved-connection-actions">
+        <div class="saved-connections" role="group" aria-labelledby="savedConnectionLabel" aria-describedby="savedConnectionHelp">
+          <label id="savedConnectionLabel" data-i18n="connections.saved_label">Saved connection</label>
+          <div id="savedConnectionList" class="saved-connection-list"></div>
+          <div id="savedConnectionActions" class="saved-connection-actions">
             <button id="savedConnectionAdd" type="button" data-i18n="ui.add">Add</button>
             <button id="savedConnectionRename" type="button" data-i18n="ui.rename">Rename</button>
             <button id="savedConnectionDelete" type="button" data-i18n="ui.delete" disabled>Delete</button>
           </div>
+          <div id="savedConnectionEditor" class="saved-connection-editor" data-settings-live hidden>
+            <input id="savedConnectionNameInput" type="text" maxlength="80" autocomplete="off" spellcheck="false" aria-label="Connection name" placeholder="Connection name" data-i18n-aria-label="connections.name_prompt" data-i18n-placeholder="connections.name_prompt" />
+            <div class="saved-connection-pair">
+              <button id="savedConnectionNameSave" type="button" data-i18n="ui.save">Save</button>
+              <button id="savedConnectionNameCancel" type="button" data-i18n="ui.cancel">Cancel</button>
+            </div>
+          </div>
+          <div id="savedConnectionConfirm" class="saved-connection-confirm" role="alertdialog" aria-labelledby="savedConnectionConfirmTitle" aria-describedby="savedConnectionConfirmDetail" hidden>
+            <strong id="savedConnectionConfirmTitle"></strong>
+            <p id="savedConnectionConfirmDetail" data-i18n="connections.delete_detail">Its address, credentials, drafts and saved chat history on this device are removed. Chats stay on its gateway.</p>
+            <div class="saved-connection-pair">
+              <button id="savedConnectionDeleteCancel" type="button" data-i18n="ui.cancel">Cancel</button>
+              <button id="savedConnectionDeleteConfirm" type="button" data-i18n="ui.delete">Delete</button>
+            </div>
+          </div>
           <p id="savedConnectionHelp" class="hint" data-i18n="connections.help">Switching saves your current settings. Each connection keeps its address and credentials.</p>
         </div>
 
-        <div class="gateway-mode" role="radiogroup" aria-label="Connection mode" data-i18n-aria-label="ui.connection.mode">
+        <label id="connectionModeLabel" data-i18n="ui.connection.mode">Connection mode</label>
+        <div class="gateway-mode" role="radiogroup" aria-labelledby="connectionModeLabel">
           <button class="conn-mode-card" type="button" data-connection-mode="local" role="radio" aria-checked="true">
             <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.local.gateway">Local gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
             <span class="conn-mode-desc" data-i18n="ui.hermes.on.this.machine.default.and.offline.capable">Hermes on this machine. Default and offline-capable.</span>

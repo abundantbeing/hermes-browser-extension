@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "ชื่อการเชื่อมต่อ",
   "connections.default_name": "การเชื่อมต่อ {number}",
   "connections.delete_confirm": "ลบ \"{name}\" หรือไม่?",
+  "connections.delete_detail": "ที่อยู่ ข้อมูลรับรอง แบบร่าง และประวัติแชทที่บันทึกไว้ในอุปกรณ์นี้จะถูกลบ แชทยังอยู่บนเกตเวย์ของการเชื่อมต่อนั้น",
   "connections.busy": "รอให้คำตอบปัจจุบันเสร็จก่อนสลับการเชื่อมต่อ",
   "connections.error": "อัปเดตการเชื่อมต่อที่บันทึกไว้ไม่ได้",
   "ui.effort.title": "ระดับการใช้เหตุผล",

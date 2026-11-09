@@ -2139,6 +2139,10 @@
     "message": "Hapus \"{name}\"?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Alamat, kredensial, draf, dan riwayat obrolan tersimpan di perangkat ini akan dihapus. Obrolan tetap ada di gerbangnya.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "Tidak dapat memperbarui koneksi tersimpan.",
     "description": "Runtime interface message connections.error"

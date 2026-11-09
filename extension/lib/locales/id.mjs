@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Nama koneksi",
   "connections.default_name": "Koneksi {number}",
   "connections.delete_confirm": "Hapus \"{name}\"?",
+  "connections.delete_detail": "Alamat, kredensial, draf, dan riwayat obrolan tersimpan di perangkat ini akan dihapus. Obrolan tetap ada di gerbangnya.",
   "connections.busy": "Tunggu balasan saat ini selesai sebelum beralih koneksi.",
   "connections.error": "Tidak dapat memperbarui koneksi tersimpan.",
   "ui.effort.title": "Upaya",

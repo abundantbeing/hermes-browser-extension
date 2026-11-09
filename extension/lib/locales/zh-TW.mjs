@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "連線名稱",
   "connections.default_name": "連線 {number}",
   "connections.delete_confirm": "刪除「{name}」？",
+  "connections.delete_detail": "將刪除其位址、憑證、草稿，以及此裝置上儲存的交談記錄。交談仍保留在其閘道器上。",
   "connections.busy": "請等待目前回覆完成後再切換連線。",
   "connections.error": "無法更新已儲存的連線。",
   "ui.effort.title": "推理強度",

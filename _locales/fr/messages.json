@@ -2139,6 +2139,10 @@
     "message": "Supprimer « {name} » ?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Son adresse, ses identifiants, ses brouillons et l'historique des discussions enregistré sur cet appareil sont supprimés. Les discussions restent sur sa passerelle.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "Impossible de mettre à jour les connexions enregistrées.",
     "description": "Runtime interface message connections.error"

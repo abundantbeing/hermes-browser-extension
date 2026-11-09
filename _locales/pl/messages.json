@@ -2139,6 +2139,10 @@
     "message": "Usunąć „{name}”?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Adres, dane uwierzytelniające, szkice i zapisana historia czatów na tym urządzeniu zostaną usunięte. Czaty pozostają na swoim Gateway.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "Nie udało się zaktualizować zapisanych połączeń.",
     "description": "Runtime interface message connections.error"

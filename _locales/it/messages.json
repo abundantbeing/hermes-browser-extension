@@ -2139,6 +2139,10 @@
     "message": "Eliminare \"{name}\"?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Indirizzo, credenziali, bozze e cronologia delle chiacchierate salvata su questo dispositivo vengono rimossi. Le chiacchierate restano sul suo gateway.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "Impossibile aggiornare le connessioni salvate.",
     "description": "Runtime interface message connections.error"

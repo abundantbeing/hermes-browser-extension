@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Forbindelsesnavn",
   "connections.default_name": "Forbindelse {number}",
   "connections.delete_confirm": "Slet \"{name}\"?",
+  "connections.delete_detail": "Dens adresse, legitimationsoplysninger, kladder og gemte chathistorik på denne enhed fjernes. Chats forbliver på dens gateway.",
   "connections.busy": "Vent, til det aktuelle svar er færdigt, før du skifter forbindelse.",
   "connections.error": "De gemte forbindelser kunne ikke opdateres.",
   "ui.effort.title": "Indsats",

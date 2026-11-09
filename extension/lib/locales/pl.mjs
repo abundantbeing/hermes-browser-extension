@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Nazwa połączenia",
   "connections.default_name": "Połączenie {number}",
   "connections.delete_confirm": "Usunąć „{name}”?",
+  "connections.delete_detail": "Adres, dane uwierzytelniające, szkice i zapisana historia czatów na tym urządzeniu zostaną usunięte. Czaty pozostają na swoim Gateway.",
   "connections.busy": "Poczekaj na zakończenie bieżącej odpowiedzi przed zmianą połączenia.",
   "connections.error": "Nie udało się zaktualizować zapisanych połączeń.",
   "ui.effort.title": "Wysiłek",

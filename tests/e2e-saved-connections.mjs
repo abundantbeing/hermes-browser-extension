@@ -163,7 +163,7 @@ async function openPanel(devtoolsBase, extensionId) {
 }
 
 const PANEL_READY = `document.readyState === 'complete' && window.__qaMark === undefined
-  && Boolean(document.querySelector('#promptInput')) && document.querySelector('#savedConnectionSelect')?.options.length > 0`;
+  && Boolean(document.querySelector('#promptInput')) && document.querySelectorAll('#savedConnectionList [data-saved-connection-id]').length > 0`;
 
 async function panelReady(panel) {
   await waitFor(async () => {
@@ -172,7 +172,7 @@ async function panelReady(panel) {
 }
 
 const markPanel = (panel) => panel.evaluate('window.__qaMark = 1; true');
-const panelActive = (panel) => panel.evaluate("document.querySelector('#savedConnectionSelect').value");
+const panelActive = (panel) => panel.evaluate("document.querySelector('#savedConnectionList [aria-current=\"true\"]')?.dataset.savedConnectionId || ''");
 const panelGateway = (panel) => panel.evaluate("document.querySelector('#gatewayUrlInput').value");
 const storedActive = (setup) => setup.evaluate("chrome.storage.local.get('hermesBrowserSettings').then((r) => r.hermesBrowserSettings.activeSavedConnectionId || '')");
 
@@ -190,7 +190,34 @@ async function openConnectionsPane(panel) {
   await waitFor(() => panel.evaluate("document.querySelector('#settingsPane-connections')?.hidden === false"));
 }
 
-const selectOptions = (panel) => panel.evaluate(`Array.from(document.querySelector('#savedConnectionSelect').options).map((option) => ({ value: option.value, label: option.textContent, selected: option.selected }))`);
+const cardSelector = '#savedConnectionList [data-saved-connection-id]';
+const selectOptions = (panel) => panel.evaluate(`Array.from(document.querySelectorAll('${cardSelector}')).map((card) => ({
+  value: card.dataset.savedConnectionId,
+  label: card.querySelector('.conn-mode-title').textContent,
+  summary: card.querySelector('.conn-mode-desc').textContent,
+  selected: card.getAttribute('aria-current') === 'true',
+}))`);
+const visible = (panel, selector) => panel.evaluate(`(() => { const node = document.querySelector(${JSON.stringify(selector)}); return Boolean(node) && !node.hidden && node.offsetParent !== null; })()`);
+const click = (panel, selector) => panel.evaluate(`document.querySelector(${JSON.stringify(selector)}).click(); true`);
+const clickCard = (panel, id) => click(panel, `${cardSelector}[data-saved-connection-id="${id}"]`);
+const settingsOpen = (panel) => panel.evaluate("document.querySelector('#settingsDialog')?.hidden === false");
+const focusedId = (panel) => panel.evaluate("document.activeElement?.id || ''");
+
+async function pressKey(panel, key) {
+  const code = { Enter: 13, Escape: 27 }[key];
+  for (const type of ['keyDown', 'keyUp']) {
+    await panel.call('Input.dispatchKeyEvent', { type, key, code: key, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code });
+  }
+}
+
+async function nameConnection(panel, trigger, name, { how = 'button', reloads = false } = {}) {
+  await click(panel, trigger);
+  await waitFor(() => visible(panel, '#savedConnectionEditor'));
+  await setField(panel, '#savedConnectionNameInput', name);
+  if (reloads) await markPanel(panel);
+  if (how === 'enter') await pressKey(panel, 'Enter');
+  else await click(panel, '#savedConnectionNameSave');
+}
 
 async function saveSettings(panel) {
   await panel.evaluate("document.querySelector('#saveSettingsTopButton').click(); true");
@@ -276,7 +303,24 @@ async function main() {
     const initialOptions = await selectOptions(panel);
     check('the current setup is the first saved connection', initialOptions.length === 1 && initialOptions[0].selected, JSON.stringify(initialOptions));
     check('the only connection cannot be deleted', await panel.evaluate("document.querySelector('#savedConnectionDelete').disabled === true"));
+    check('the card names the kind and address, not the key', initialOptions[0].summary === `Local gateway \u00b7 ${new URL(first.baseUrl).host}`, initialOptions[0].summary);
     await shot(panel, '1-first-connection');
+
+    // The name field opens inline, Escape closes only it, and an empty name is not accepted.
+    await click(panel, '#savedConnectionAdd');
+    await waitFor(() => visible(panel, '#savedConnectionEditor'));
+    check('Add opens an inline name field in place of the buttons', (await visible(panel, '#savedConnectionNameInput')) && !(await visible(panel, '#savedConnectionActions')));
+    check('the name field has focus', (await focusedId(panel)) === 'savedConnectionNameInput');
+    await shot(panel, '5-name-field');
+    await pressKey(panel, 'Escape');
+    check('Escape closes the name field and keeps Settings open', !(await visible(panel, '#savedConnectionEditor')) && (await visible(panel, '#savedConnectionActions')) && (await settingsOpen(panel)));
+    check('focus returns to the Add button', (await focusedId(panel)) === 'savedConnectionAdd');
+    await click(panel, '#savedConnectionAdd');
+    await waitFor(() => visible(panel, '#savedConnectionEditor'));
+    await setField(panel, '#savedConnectionNameInput', '   ');
+    await pressKey(panel, 'Enter');
+    check('an empty name is not accepted', (await visible(panel, '#savedConnectionEditor')) && (await selectOptions(panel)).length === 1);
+    await click(panel, '#savedConnectionNameCancel');
 
     // 2. A draft typed on the first connection.
     await panel.evaluate(`(() => { document.querySelector('#settingsDialog')?.querySelector('[data-settings-close], #closeSettingsButton')?.click(); return true; })()`);
@@ -290,9 +334,7 @@ async function main() {
 
     // 3. Add a second connection, point it at the second gateway with its own key.
     await openConnectionsPane(panel);
-    panel.dialogAnswers.push({ accept: true, promptText: 'Second gateway' });
-    await markPanel(panel);
-    await panel.evaluate("document.querySelector('#savedConnectionAdd').click(); true");
+    await nameConnection(panel, '#savedConnectionAdd', 'Second gateway', { how: 'enter', reloads: true });
     await panelReady(panel);
     const secondId = await storedActive(setup);
     check('Add makes the new connection active', secondId && secondId !== firstId);
@@ -308,6 +350,7 @@ async function main() {
     await waitFor(() => second.requests.some((request) => request.authorization === `Bearer ${KEY_SECOND}`), 20_000);
     check('second gateway receives its own key', second.requests.some((request) => request.authorization === `Bearer ${KEY_SECOND}`));
     check('second gateway never receives the first key', !second.requests.some((request) => request.authorization === `Bearer ${KEY_FIRST}`));
+    check('the second card shows the second address', (await selectOptions(panel)).find((option) => option.label === 'Second gateway')?.summary === `Local gateway \u00b7 ${new URL(second.baseUrl).host}`);
     const draftOnSecond = await panel.evaluate("document.querySelector('#promptInput').value");
     check('the second connection starts with an empty composer', draftOnSecond === '', JSON.stringify(draftOnSecond));
     await openConnectionsPane(panel);
@@ -324,7 +367,7 @@ async function main() {
     const firstRequestsBeforeSwitch = first.requests.length;
     await markPanel(panel);
     await markPanel(other);
-    await panel.evaluate(`(() => { const select = document.querySelector('#savedConnectionSelect'); select.value = ${JSON.stringify(firstId)}; select.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+    await clickCard(panel, firstId);
     await panelReady(panel);
     check('switching back selects the first connection', (await panelActive(panel)) === firstId && (await storedActive(setup)) === firstId);
     check('the first connection points at the first gateway', (await panelGateway(panel)) === first.baseUrl);
@@ -342,17 +385,32 @@ async function main() {
 
     // 6. Rename, then delete the second connection.
     await openConnectionsPane(panel);
-    panel.dialogAnswers.push({ accept: true, promptText: 'Primary' });
-    await panel.evaluate("document.querySelector('#savedConnectionRename').click(); true");
+    await click(panel, '#savedConnectionRename');
+    await waitFor(() => visible(panel, '#savedConnectionEditor'));
+    check('Rename opens the name field with the current name', (await panel.evaluate("document.querySelector('#savedConnectionNameInput').value")) === 'Connection 1');
+    await setField(panel, '#savedConnectionNameInput', 'Primary');
+    await click(panel, '#savedConnectionNameSave');
     await waitFor(async () => (await selectOptions(panel)).some((option) => option.label === 'Primary'), 10_000);
     check('Rename changes the label', (await selectOptions(panel)).some((option) => option.label === 'Primary'));
     await markPanel(panel);
-    await panel.evaluate(`(() => { const select = document.querySelector('#savedConnectionSelect'); select.value = ${JSON.stringify(secondId)}; select.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+    await clickCard(panel, secondId);
     await panelReady(panel);
     await openConnectionsPane(panel);
-    panel.dialogAnswers.push({ accept: true });
+    await click(panel, '#savedConnectionDelete');
+    await waitFor(() => visible(panel, '#savedConnectionConfirm'));
+    check('Delete asks inline, naming the connection and what is removed', (await panel.evaluate("document.querySelector('#savedConnectionConfirmTitle').textContent")).includes('Second gateway')
+      && (await panel.evaluate("document.querySelector('#savedConnectionConfirmDetail').textContent")).includes('Chats stay'));
+    await shot(panel, '6-delete-confirm');
+    await pressKey(panel, 'Escape');
+    check('Escape cancels Delete and keeps the connection', !(await visible(panel, '#savedConnectionConfirm')) && (await selectOptions(panel)).length === 2 && (await settingsOpen(panel)));
+    await click(panel, '#savedConnectionDelete');
+    await waitFor(() => visible(panel, '#savedConnectionConfirm'));
+    await click(panel, '#savedConnectionDeleteCancel');
+    check('Cancel keeps the connection', (await selectOptions(panel)).length === 2);
+    await click(panel, '#savedConnectionDelete');
+    await waitFor(() => visible(panel, '#savedConnectionConfirm'));
     await markPanel(panel);
-    await panel.evaluate("document.querySelector('#savedConnectionDelete').click(); true");
+    await click(panel, '#savedConnectionDeleteConfirm');
     await waitFor(async () => (await selectOptions(panel)).length === 1, 15_000);
     await waitFor(async () => (await storedActive(setup)) === firstId, 15_000).catch(() => {});
     const afterDelete = await selectOptions(panel);
@@ -361,6 +419,29 @@ async function main() {
     check('Delete removes the connection\'s stored records', keysLeft.length === 0, JSON.stringify(keysLeft));
     check('the last connection cannot be deleted', await panel.evaluate("document.querySelector('#savedConnectionDelete').disabled === true"));
     await shot(panel, '4-after-delete');
+    check('no native browser dialog was opened', panel.dialogs.length === 0, JSON.stringify(panel.dialogs));
+
+    // 7. A long name and several connections still fit a narrow panel, in the light theme too.
+    const longName = 'A connection with a very long name that keeps going past the edge of the card';
+    await nameConnection(panel, '#savedConnectionAdd', longName, { reloads: true });
+    await panelReady(panel);
+    for (const extra of ['Staging', 'Home lab', 'Work']) {
+      await openConnectionsPane(panel);
+      await nameConnection(panel, '#savedConnectionAdd', extra, { reloads: true });
+      await panelReady(panel);
+    }
+    await setup.evaluate("chrome.storage.local.get('hermesBrowserSettings').then((r) => chrome.storage.local.set({ hermesBrowserSettings: { ...r.hermesBrowserSettings, colorMode: 'light' } }))");
+    await markPanel(panel);
+    await panel.evaluate('window.location.reload(); true');
+    await panelReady(panel);
+    await openConnectionsPane(panel);
+    check('five connections are listed', (await selectOptions(panel)).length === 5);
+    check('a long name wraps inside its card and the pane does not scroll sideways', await panel.evaluate(`(() => {
+      const cards = Array.from(document.querySelectorAll('${cardSelector}'));
+      const pane = document.querySelector('#settingsPane-connections');
+      return cards.every((card) => card.scrollWidth <= card.clientWidth + 1) && pane.scrollWidth <= pane.clientWidth + 1;
+    })()`));
+    await shot(panel, '7-five-connections-light');
   } finally {
     for (const open of panels) open.close();
     setup?.close();

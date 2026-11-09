@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Nome da conexão",
   "connections.default_name": "Conexão {number}",
   "connections.delete_confirm": "Excluir \"{name}\"?",
+  "connections.delete_detail": "Endereço, credenciais, rascunhos e histórico de chats salvo neste dispositivo serão removidos. Os chats continuam no gateway dele.",
   "connections.busy": "Aguarde a resposta atual terminar antes de trocar de conexão.",
   "connections.error": "Não foi possível atualizar as conexões salvas.",
   "ui.effort.title": "Esforço",

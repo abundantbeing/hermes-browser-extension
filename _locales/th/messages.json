@@ -2139,6 +2139,10 @@
     "message": "ลบ \"{name}\" หรือไม่?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "ที่อยู่ ข้อมูลรับรอง แบบร่าง และประวัติแชทที่บันทึกไว้ในอุปกรณ์นี้จะถูกลบ แชทยังอยู่บนเกตเวย์ของการเชื่อมต่อนั้น",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "อัปเดตการเชื่อมต่อที่บันทึกไว้ไม่ได้",
     "description": "Runtime interface message connections.error"

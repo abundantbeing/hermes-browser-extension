@@ -2139,6 +2139,10 @@
     "message": "هل تريد حذف \"{name}\"؟",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "تتم إزالة عنوانه وبيانات اعتماده ومسوداته وسجل الدردشات المحفوظ على هذا الجهاز. تبقى الدردشات على بوابته.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "تعذر تحديث الاتصالات المحفوظة.",
     "description": "Runtime interface message connections.error"

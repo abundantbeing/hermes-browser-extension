@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "연결 이름",
   "connections.default_name": "연결 {number}",
   "connections.delete_confirm": "\"{name}\"을(를) 삭제할까요?",
+  "connections.delete_detail": "이 기기에 저장된 주소, 인증 정보, 임시 저장 글, 채팅 기록이 삭제됩니다. 채팅은 해당 게이트웨이에 그대로 남습니다.",
   "connections.busy": "현재 응답이 완료된 후 연결을 전환하세요.",
   "connections.error": "저장된 연결을 업데이트하지 못했습니다.",
   "ui.effort.title": "추론 강도",

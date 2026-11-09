@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Verbindingsnaam",
   "connections.default_name": "Verbinding {number}",
   "connections.delete_confirm": "\"{name}\" verwijderen?",
+  "connections.delete_detail": "Het adres, de inloggegevens, concepten en opgeslagen chatgeschiedenis op dit apparaat worden verwijderd. Chats blijven op de bijbehorende Gateway.",
   "connections.busy": "Wacht tot het huidige antwoord klaar is voordat je van verbinding wisselt.",
   "connections.error": "Opgeslagen verbindingen konden niet worden bijgewerkt.",
   "ui.effort.title": "Inspanning",

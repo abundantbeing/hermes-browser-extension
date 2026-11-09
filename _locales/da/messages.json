@@ -2139,6 +2139,10 @@
     "message": "Slet \"{name}\"?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Dens adresse, legitimationsoplysninger, kladder og gemte chathistorik på denne enhed fjernes. Chats forbliver på dens gateway.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "De gemte forbindelser kunne ikke opdateres.",
     "description": "Runtime interface message connections.error"

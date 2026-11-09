@@ -2139,6 +2139,10 @@
     "message": "¿Eliminar \"{name}\"?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Se eliminan su dirección, credenciales, borradores y el historial de chats guardado en este dispositivo. Los chats permanecen en su gateway.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "No se pudieron actualizar las conexiones guardadas.",
     "description": "Runtime interface message connections.error"

@@ -10,6 +10,7 @@ import {
   renameSavedConnection,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
   savedConnectionStorageKey,
+  savedConnectionSummary,
   selectSavedConnection,
   savedConnectionsBase,
   withSavedConnectionsLock,
@@ -132,7 +133,7 @@ test('the panel switch saves form edits, persists the selected key and reloads o
     h.els.gatewayUrlInput.value = 'https://work.example.test';
     h.els.connectionModeInput.value = 'remote';
     h.els.apiKeyInput.value = 'updated-work-token';
-    await h.fn('updateSavedConnection')('switch', 'default');
+    await h.fn('updateSavedConnection')('switch', { id: 'default' });
     assert.equal(h.store.hermesBrowserSettings.apiKey, '', 'packed storage does not keep a plaintext top-level key');
     assert.equal(h.store.hermesBrowserSettings.activeSavedConnectionId, 'default');
     assert.equal(h.store.hermesBrowserSettings.savedConnections.find((entry) => entry.id === 'work').connection.apiKey, '');
@@ -146,7 +147,7 @@ test('the panel switch saves form edits, persists the selected key and reloads o
     assert.equal(h.callsTo('reload').length, 1);
     assert.equal(h.callsTo('toast').length, 0);
     h.scope.sending = true;
-    await h.fn('updateSavedConnection')('switch', 'work');
+    await h.fn('updateSavedConnection')('switch', { id: 'work' });
     assert.equal(h.callsTo('reload').length, 1, 'an active reply blocks switching');
   } finally { h.close(); }
 });
@@ -176,10 +177,46 @@ test('connection labels are rendered as text and the last connection cannot be d
   const h = await createSettingsSaveHarness({ settings: rememberSavedConnection(local, '<img src=x>') });
   try {
     h.scope.savedConnectionBusy = false;
+    h.scope.savedConnectionTool = '';
     h.fn('renderSavedConnections')();
-    assert.equal(h.els.savedConnectionSelect.options[0].textContent, '<img src=x>');
-    assert.equal(h.els.savedConnectionSelect.querySelector('img'), null);
+    assert.equal(h.els.savedConnectionList.querySelector('.conn-mode-title').textContent, '<img src=x>');
+    assert.equal(h.els.savedConnectionList.querySelector('img'), null);
     assert.equal(h.els.savedConnectionDelete.disabled, true);
+  } finally { h.close(); }
+});
+
+test('the cards mark the active connection and show the address, never the key', async () => {
+  const h = await createSettingsSaveHarness({ settings: twoConnections() });
+  try {
+    h.scope.savedConnectionBusy = false;
+    h.scope.savedConnectionTool = '';
+    h.fn('renderSavedConnections')();
+    const cards = [...h.els.savedConnectionList.querySelectorAll('[data-saved-connection-id]')];
+    assert.deepEqual(cards.map((card) => card.dataset.savedConnectionId), ['default', 'work']);
+    assert.deepEqual(cards.map((card) => card.getAttribute('aria-current')), [null, 'true']);
+    assert.ok(cards[1].classList.contains('selected'));
+    assert.doesNotMatch(h.els.savedConnectionList.textContent, /test-token/);
+  } finally { h.close(); }
+});
+
+test('the connection tools show one state at a time: the buttons, the name field or the delete question', async () => {
+  const h = await createSettingsSaveHarness({ settings: twoConnections() });
+  try {
+    h.scope.savedConnectionBusy = false;
+    const shown = (tool) => {
+      h.scope.savedConnectionTool = tool;
+      h.fn('renderSavedConnections')();
+      return ['savedConnectionActions', 'savedConnectionEditor', 'savedConnectionConfirm'].filter((id) => !h.els[id].hidden);
+    };
+    assert.deepEqual(shown(''), ['savedConnectionActions']);
+    assert.deepEqual(shown('add'), ['savedConnectionEditor']);
+    assert.deepEqual(shown('rename'), ['savedConnectionEditor']);
+    assert.deepEqual(shown('delete'), ['savedConnectionConfirm']);
+    assert.match(h.els.savedConnectionConfirmTitle.textContent, /connections\.delete_confirm .*work/i);
+    h.scope.savedConnectionBusy = true;
+    h.fn('renderSavedConnections')();
+    assert.ok(h.els.savedConnectionDeleteConfirm.disabled && h.els.savedConnectionNameSave.disabled);
+    assert.ok([...h.els.savedConnectionList.querySelectorAll('button')].every((card) => card.disabled));
   } finally { h.close(); }
 });
 
@@ -409,7 +446,7 @@ test('deleting a connection removes its stored records and does not save its dep
   }
 });
 
-async function openPanel(settings, shareWith, prompt = () => 'Panel name') {
+async function openPanel(settings, shareWith) {
   const h = await createSettingsSaveHarness({ settings });
   if (shareWith) h.scope.browserApi = shareWith.scope.browserApi;
   else h.store.hermesBrowserSettings = structuredClone(settings);
@@ -418,16 +455,19 @@ async function openPanel(settings, shareWith, prompt = () => 'Panel name') {
     scopeRevision: createRevisionGate(), restoringComposerDraft: false, composerDraftSaveTimer: 0, attachments: [],
     renderSavedConnections: () => {}, showOperationToast: () => {}, stopConnectionProbeLoop: () => {},
     persistCurrentComposerDraft: () => {},
-    window: { prompt, confirm: () => true, location: { reload: () => {} } },
+    window: { location: { reload: () => {} } },
   });
   return h;
 }
 
 test('overlapping panel Add and Rename cannot lose a saved connection', async () => {
-  const first = await openPanel(rememberSavedConnection(local), null, () => 'Added');
-  const second = await openPanel(rememberSavedConnection(local), first, () => 'Renamed');
+  const first = await openPanel(rememberSavedConnection(local), null);
+  const second = await openPanel(rememberSavedConnection(local), first);
   try {
-    await Promise.all([first.fn('updateSavedConnection')('add'), second.fn('updateSavedConnection')('rename')]);
+    await Promise.all([
+      first.fn('updateSavedConnection')('add', { name: 'Added' }),
+      second.fn('updateSavedConnection')('rename', { name: 'Renamed' }),
+    ]);
     const stored = first.store.hermesBrowserSettings;
     assert.equal(stored.savedConnections.length, 2, 'the added connection is still saved');
     assert.ok(stored.savedConnections.some((entry) => entry.name === 'Added'));
@@ -617,4 +657,14 @@ test('pause in another panel keeps a saved-connection switch already in storage'
   assert.equal(state.hermesBrowserSettings.activeSavedConnectionId, 'default');
   assert.equal(state.hermesBrowserSettings.savedConnections.length, 2);
   assert.equal(state.hermesBrowserSettings.browserControlPaused, true);
+});
+
+test('a saved connection is summarised by its kind and address, never by its credential', () => {
+  const labels = { local: 'Local gateway', cloud: 'Hermes Cloud', remote: 'Remote gateway' };
+  assert.equal(savedConnectionSummary({ connectionMode: 'local', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'secret-value' }, labels), 'Local gateway · 127.0.0.1:8642');
+  assert.equal(savedConnectionSummary({ connectionMode: 'remote', gatewayUrl: 'https://hermes.example/path?token=abc' }, labels), 'Remote gateway · hermes.example');
+  assert.equal(savedConnectionSummary({ connectionMode: 'cloud', gatewayUrl: 'https://cloud.example' }, labels), 'Hermes Cloud');
+  assert.equal(savedConnectionSummary({ connectionMode: 'remote', gatewayUrl: 'not a url' }, labels), 'Remote gateway');
+  assert.equal(savedConnectionSummary({}, labels), 'Local gateway');
+  assert.doesNotMatch(savedConnectionSummary({ connectionMode: 'remote', gatewayUrl: 'https://user:pass@hermes.example/x' }, labels), /pass|user/);
 });

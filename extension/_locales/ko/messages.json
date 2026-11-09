@@ -2139,6 +2139,10 @@
     "message": "\"{name}\"을(를) 삭제할까요?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "이 기기에 저장된 주소, 인증 정보, 임시 저장 글, 채팅 기록이 삭제됩니다. 채팅은 해당 게이트웨이에 그대로 남습니다.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "저장된 연결을 업데이트하지 못했습니다.",
     "description": "Runtime interface message connections.error"

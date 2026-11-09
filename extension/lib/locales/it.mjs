@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Nome della connessione",
   "connections.default_name": "Connessione {number}",
   "connections.delete_confirm": "Eliminare \"{name}\"?",
+  "connections.delete_detail": "Indirizzo, credenziali, bozze e cronologia delle chiacchierate salvata su questo dispositivo vengono rimossi. Le chiacchierate restano sul suo gateway.",
   "connections.busy": "Attendi la fine della risposta attuale prima di cambiare connessione.",
   "connections.error": "Impossibile aggiornare le connessioni salvate.",
   "ui.effort.title": "Sforzo",

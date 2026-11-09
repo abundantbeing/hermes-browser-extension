@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "接続名",
   "connections.default_name": "接続 {number}",
   "connections.delete_confirm": "「{name}」を削除しますか？",
+  "connections.delete_detail": "このデバイス上のアドレス、認証情報、下書き、保存済みのチャット履歴が削除されます。チャットはそのゲートウェイに残ります。",
   "connections.busy": "現在の返信が完了してから接続を切り替えてください。",
   "connections.error": "保存済みの接続を更新できませんでした。",
   "ui.effort.title": "推論の強度",

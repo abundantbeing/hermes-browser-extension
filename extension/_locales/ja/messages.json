@@ -2139,6 +2139,10 @@
     "message": "「{name}」を削除しますか？",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "このデバイス上のアドレス、認証情報、下書き、保存済みのチャット履歴が削除されます。チャットはそのゲートウェイに残ります。",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "保存済みの接続を更新できませんでした。",
     "description": "Runtime interface message connections.error"

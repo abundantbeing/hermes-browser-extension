@@ -2139,6 +2139,10 @@
     "message": "Xóa \"{name}\"?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Địa chỉ, thông tin xác thực, bản nháp và lịch sử trò chuyện đã lưu trên thiết bị này sẽ bị xóa. Các cuộc trò chuyện vẫn ở trên cổng của kết nối đó.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "Không thể cập nhật các kết nối đã lưu.",
     "description": "Runtime interface message connections.error"

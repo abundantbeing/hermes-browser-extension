@@ -2139,6 +2139,10 @@
     "message": "\"{name}\" silinsin mi?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "Bu cihazdaki adresi, kimlik bilgileri, taslakları ve kayıtlı sohbet geçmişi kaldırılır. Sohbetler kendi Gateway'inde kalır.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "Kayıtlı bağlantılar güncellenemedi.",
     "description": "Runtime interface message connections.error"

@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Bağlantı adı",
   "connections.default_name": "Bağlantı {number}",
   "connections.delete_confirm": "\"{name}\" silinsin mi?",
+  "connections.delete_detail": "Bu cihazdaki adresi, kimlik bilgileri, taslakları ve kayıtlı sohbet geçmişi kaldırılır. Sohbetler kendi Gateway'inde kalır.",
   "connections.busy": "Bağlantıyı değiştirmeden önce mevcut yanıtın bitmesini bekleyin.",
   "connections.error": "Kayıtlı bağlantılar güncellenemedi.",
   "ui.effort.title": "Çaba",

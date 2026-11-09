@@ -2139,6 +2139,10 @@
     "message": "\"{name}\" मिटाएं?",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "इसका पता, क्रेडेंशियल, ड्राफ्ट और इस डिवाइस पर सहेजा गया चैट इतिहास हटा दिया जाता है। चैट उसके प्रवेशद्वार पर ही रहती हैं।",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "सहेजे गए कनेक्शन अपडेट नहीं हो सके।",
     "description": "Runtime interface message connections.error"

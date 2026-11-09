@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Nom de la connexion",
   "connections.default_name": "Connexion {number}",
   "connections.delete_confirm": "Supprimer « {name} » ?",
+  "connections.delete_detail": "Son adresse, ses identifiants, ses brouillons et l'historique des discussions enregistré sur cet appareil sont supprimés. Les discussions restent sur sa passerelle.",
   "connections.busy": "Attendez la fin de la réponse en cours avant de changer de connexion.",
   "connections.error": "Impossible de mettre à jour les connexions enregistrées.",
   "ui.effort.title": "Effort",

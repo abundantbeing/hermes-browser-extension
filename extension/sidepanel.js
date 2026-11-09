@@ -730,6 +730,7 @@ import {
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
   savedConnectionRecordKeys,
   savedConnectionStorageKey,
+  savedConnectionSummary,
   savedConnectionsBase,
   selectSavedConnection,
   syncActiveSavedConnection,
@@ -1248,10 +1249,19 @@ const els = {
   gatewayModeInput: $('#gatewayModeInput'),
   remoteTransportRow: $('#remoteTransportRow'),
   gatewayUrlInput: $('#gatewayUrlInput'),
-  savedConnectionSelect: $('#savedConnectionSelect'),
+  savedConnectionList: $('#savedConnectionList'),
+  savedConnectionActions: $('#savedConnectionActions'),
   savedConnectionAdd: $('#savedConnectionAdd'),
   savedConnectionRename: $('#savedConnectionRename'),
   savedConnectionDelete: $('#savedConnectionDelete'),
+  savedConnectionEditor: $('#savedConnectionEditor'),
+  savedConnectionNameInput: $('#savedConnectionNameInput'),
+  savedConnectionNameSave: $('#savedConnectionNameSave'),
+  savedConnectionNameCancel: $('#savedConnectionNameCancel'),
+  savedConnectionConfirm: $('#savedConnectionConfirm'),
+  savedConnectionConfirmTitle: $('#savedConnectionConfirmTitle'),
+  savedConnectionDeleteCancel: $('#savedConnectionDeleteCancel'),
+  savedConnectionDeleteConfirm: $('#savedConnectionDeleteConfirm'),
   hermesWebAddressInput: $('#hermesWebAddressInput'),
   webappKeepSignedInInput: $('#webappKeepSignedInInput'),
   hermesAccountRow: $('#hermesAccountRow'),
@@ -1364,6 +1374,7 @@ const els = {
 let settings = { ...DEFAULT_SETTINGS };
 let loadedSavedConnectionId = '';
 let savedConnectionBusy = false;
+let savedConnectionTool = '';
 let savedConnectionReloading = false;
 let appearanceMutationId = 0;
 let appearanceSaveStatus = '';
@@ -23834,20 +23845,121 @@ function renderTranscriptProviderField() {
   if (els.transcriptProviderField) els.transcriptProviderField.hidden = !custom;
 }
 
+function savedConnectionCard(entry, { active, labels }) {
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = `conn-mode-card saved-connection-card${active ? ' selected' : ''}`;
+  card.dataset.savedConnectionId = entry.id;
+  card.disabled = savedConnectionBusy;
+  if (active) card.setAttribute('aria-current', 'true');
+  const head = document.createElement('span');
+  head.className = 'conn-mode-head';
+  const title = document.createElement('span');
+  title.className = 'conn-mode-title';
+  title.textContent = entry.name;
+  const check = document.createElement('span');
+  check.className = 'conn-mode-check';
+  check.setAttribute('aria-hidden', 'true');
+  head.append(title, check);
+  const detail = document.createElement('span');
+  detail.className = 'conn-mode-desc';
+  detail.textContent = savedConnectionSummary(entry.connection, labels);
+  card.append(head, detail);
+  return card;
+}
+
 function renderSavedConnections() {
-  if (!els.savedConnectionSelect) return;
+  if (!els.savedConnectionList) return;
   const current = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
-  els.savedConnectionSelect.replaceChildren(...current.savedConnections.map((entry) => {
-    const option = document.createElement('option');
-    option.value = entry.id;
-    option.textContent = entry.name;
-    return option;
-  }));
-  els.savedConnectionSelect.value = current.activeSavedConnectionId;
-  els.savedConnectionSelect.disabled = savedConnectionBusy;
+  const active = current.savedConnections.find((entry) => entry.id === current.activeSavedConnectionId);
+  const labels = { local: t('ui.local.gateway'), cloud: t('ui.hermes.cloud'), remote: t('ui.remote.gateway') };
+  els.savedConnectionList.replaceChildren(...current.savedConnections.map((entry) => (
+    savedConnectionCard(entry, { active: entry === active, labels })
+  )));
+  const naming = savedConnectionTool === 'add' || savedConnectionTool === 'rename';
+  els.savedConnectionActions.hidden = savedConnectionTool !== '';
+  els.savedConnectionEditor.hidden = !naming;
+  els.savedConnectionConfirm.hidden = savedConnectionTool !== 'delete';
+  els.savedConnectionConfirmTitle.textContent = t('connections.delete_confirm', { name: active.name });
   els.savedConnectionAdd.disabled = savedConnectionBusy;
   els.savedConnectionRename.disabled = savedConnectionBusy;
   els.savedConnectionDelete.disabled = savedConnectionBusy || current.savedConnections.length < 2;
+  for (const button of [els.savedConnectionNameSave, els.savedConnectionNameCancel, els.savedConnectionDeleteCancel, els.savedConnectionDeleteConfirm]) {
+    button.disabled = savedConnectionBusy;
+  }
+}
+
+function openSavedConnectionTool(tool) {
+  if (savedConnectionBusy) return;
+  if (sending) {
+    showOperationToast({ kind: 'warn', title: t('connections.busy') });
+    return;
+  }
+  const current = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
+  const active = current.savedConnections.find((entry) => entry.id === current.activeSavedConnectionId);
+  savedConnectionTool = tool;
+  if (tool !== 'delete') {
+    els.savedConnectionNameInput.value = tool === 'add'
+      ? t('connections.default_name', { number: current.savedConnections.length + 1 })
+      : active.name;
+  }
+  renderSavedConnections();
+  if (tool === 'delete') {
+    els.savedConnectionDeleteCancel.focus();
+  } else {
+    els.savedConnectionNameInput.focus();
+    els.savedConnectionNameInput.select();
+  }
+}
+
+function closeSavedConnectionTool() {
+  const trigger = { add: els.savedConnectionAdd, rename: els.savedConnectionRename, delete: els.savedConnectionDelete }[savedConnectionTool];
+  savedConnectionTool = '';
+  renderSavedConnections();
+  trigger?.focus();
+}
+
+function submitSavedConnectionName() {
+  const name = els.savedConnectionNameInput.value.trim();
+  if (!name) {
+    els.savedConnectionNameInput.focus();
+    return;
+  }
+  const action = savedConnectionTool;
+  savedConnectionTool = '';
+  void updateSavedConnection(action, { name });
+}
+
+function bindSavedConnectionControls() {
+  els.savedConnectionList?.addEventListener('click', (event) => {
+    const card = event.target.closest('[data-saved-connection-id]');
+    if (!card || card.getAttribute('aria-current') === 'true') return;
+    savedConnectionTool = '';
+    void updateSavedConnection('switch', { id: card.dataset.savedConnectionId });
+  });
+  els.savedConnectionAdd?.addEventListener('click', () => openSavedConnectionTool('add'));
+  els.savedConnectionRename?.addEventListener('click', () => openSavedConnectionTool('rename'));
+  els.savedConnectionDelete?.addEventListener('click', () => openSavedConnectionTool('delete'));
+  els.savedConnectionNameSave?.addEventListener('click', submitSavedConnectionName);
+  els.savedConnectionNameCancel?.addEventListener('click', closeSavedConnectionTool);
+  els.savedConnectionDeleteCancel?.addEventListener('click', closeSavedConnectionTool);
+  els.savedConnectionDeleteConfirm?.addEventListener('click', () => {
+    savedConnectionTool = '';
+    void updateSavedConnection('delete');
+  });
+  els.savedConnectionNameInput?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    submitSavedConnectionName();
+  });
+  for (const area of [els.savedConnectionEditor, els.savedConnectionConfirm]) {
+    area?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeSavedConnectionTool();
+    });
+  }
 }
 
 function forgetSavedConnectionSessionRecords(id) {
@@ -23954,7 +24066,7 @@ function reloadForSavedConnection(next) {
   window.location.reload();
 }
 
-async function updateSavedConnection(action, id = settings.activeSavedConnectionId) {
+async function updateSavedConnection(action, { id = settings.activeSavedConnectionId, name = '' } = {}) {
   if (savedConnectionBusy) return;
   if (sending) {
     showOperationToast({ kind: 'warn', title: t('connections.busy') });
@@ -23962,14 +24074,6 @@ async function updateSavedConnection(action, id = settings.activeSavedConnection
     return;
   }
   const current = rememberSavedConnection(settings, t('connections.default_name', { number: 1 }));
-  const active = current.savedConnections.find((entry) => entry.id === current.activeSavedConnectionId);
-  let name;
-  if (action === 'add' || action === 'rename') {
-    name = window.prompt(t('connections.name_prompt'), action === 'add'
-      ? t('connections.default_name', { number: current.savedConnections.length + 1 }) : active.name);
-    if (!name?.trim()) { renderSavedConnections(); return; }
-  }
-  if (action === 'delete' && !window.confirm(t('connections.delete_confirm', { name: active.name }))) return;
   savedConnectionBusy = true;
   renderSavedConnections();
   const expectedId = current.activeSavedConnectionId;
@@ -23994,6 +24098,7 @@ async function updateSavedConnection(action, id = settings.activeSavedConnection
   } finally {
     savedConnectionBusy = false;
     renderSavedConnections();
+    if (action === 'rename') els.savedConnectionRename.focus();
   }
 }
 
@@ -29474,12 +29579,7 @@ function eventPathContains(event, node) {
 function bindEvents() {
   bindPromptCard();
   bindFirefoxScreenshotControl();
-  els.savedConnectionSelect?.addEventListener('change', () => {
-    void updateSavedConnection('switch', els.savedConnectionSelect.value);
-  });
-  els.savedConnectionAdd?.addEventListener('click', () => void updateSavedConnection('add'));
-  els.savedConnectionRename?.addEventListener('click', () => void updateSavedConnection('rename'));
-  els.savedConnectionDelete?.addEventListener('click', () => void updateSavedConnection('delete'));
+  bindSavedConnectionControls();
   portalDockFloatingPanels();
   observeDockFloatingAnchor();
   bindJumpToLatest();

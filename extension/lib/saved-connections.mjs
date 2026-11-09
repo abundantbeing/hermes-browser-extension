@@ -305,3 +305,12 @@ export async function packedHermesBrowserSettingsWrite(nextSettings = {}, storag
     : undefined;
   return packSavedConnectionStorage(nextSettings, existing && typeof existing === 'object' ? existing : {});
 }
+
+export function savedConnectionSummary(connection = {}, modeLabels = {}) {
+  const mode = connection.connectionMode === 'cloud' || connection.connectionMode === 'remote' ? connection.connectionMode : 'local';
+  const label = modeLabels[mode] || mode;
+  if (mode === 'cloud') return label;
+  let host = '';
+  try { host = new URL(String(connection.gatewayUrl || '')).host; } catch { /* no usable address */ }
+  return host ? `${label} · ${host}` : label;
+}

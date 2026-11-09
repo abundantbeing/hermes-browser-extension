@@ -2139,6 +2139,10 @@
     "message": "刪除「{name}」？",
     "description": "Runtime interface message connections.delete_confirm"
   },
+  "runtime_connections_delete_detail": {
+    "message": "將刪除其位址、憑證、草稿，以及此裝置上儲存的交談記錄。交談仍保留在其閘道器上。",
+    "description": "Runtime interface message connections.delete_detail"
+  },
   "runtime_connections_error": {
     "message": "無法更新已儲存的連線。",
     "description": "Runtime interface message connections.error"

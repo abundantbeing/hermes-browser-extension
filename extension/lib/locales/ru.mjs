@@ -4,6 +4,7 @@ export default Object.freeze({
   "connections.name_prompt": "Название подключения",
   "connections.default_name": "Подключение {number}",
   "connections.delete_confirm": "Удалить «{name}»?",
+  "connections.delete_detail": "Адрес, учётные данные, черновики и сохранённая история чатов на этом устройстве будут удалены. Чаты останутся на его шлюзе.",
   "connections.busy": "Дождитесь завершения текущего ответа перед переключением подключения.",
   "connections.error": "Не удалось обновить сохранённые подключения.",
   "ui.effort.title": "Усилие",
