@@ -56,7 +56,7 @@ import { createVscodeMarketplaceClient } from './lib/vscode-marketplace.mjs';
 import { createThemeMarketplaceController } from './lib/theme-marketplace-controller.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { installLoopbackCorsRules, handleLoopbackFetchMessage, LOOPBACK_FETCH_MESSAGE } from './lib/loopback-cors.mjs';
-import { applyConnectionHeaderRules } from './lib/connection-headers.mjs';
+import { applyConnectionHeaderRules, createHeaderRuleSync, extensionInitiatorHost } from './lib/connection-headers.mjs';
 import {
   CONTROLLER_HEARTBEAT_ALARM,
   CONTROLLER_RECONCILE_ALARM,
@@ -1034,15 +1034,15 @@ void initI18n().catch((error) => {
 });
 
 // The active connection's custom headers ride on every request to its address, WebSocket handshake included.
-function syncConnectionHeaders() {
-  return readStoredSettings()
-    .then((settings) => applyConnectionHeaderRules({
-      gatewayUrl: settings.gatewayUrl,
-      headers: settings.connectionHeaders,
-      extensionId: browserApi.runtime?.id,
-    }))
-    .catch((error) => console.warn('[Hermes Browser] Connection header rules failed:', error));
-}
+const syncConnectionHeaders = createHeaderRuleSync({
+  read: readStoredSettings,
+  apply: (settings) => applyConnectionHeaderRules({
+    gatewayUrl: settings.gatewayUrl,
+    headers: settings.connectionHeaders,
+    extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
+  }),
+  onError: (error) => console.warn('[Hermes Browser] Connection header rules failed:', error),
+});
 void installLoopbackCorsRules().catch((error) => {
   console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
 });

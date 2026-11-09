@@ -719,6 +719,8 @@ import {
 } from './lib/connection-modes.mjs';
 import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForConnect } from './lib/connection-dispatch.mjs';
 import { createAddConnectionDialog } from './lib/add-connection-dialog.mjs';
+import { connectionHeadersAsObject, extensionInitiatorHost, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
+import { probeConnection } from './lib/probe-connection.mjs';
 import {
   addSavedConnection,
   deleteSavedConnection,
@@ -24154,6 +24156,16 @@ function addConnectionWindow() {
     addConnectionDialog = createAddConnectionDialog({
       root: document,
       translate: t,
+      probe: ({ gatewayUrl, apiKey, headers, signal }) => withProbeHeaderIsolation(
+        {
+          gatewayUrl,
+          headers,
+          active: { gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders },
+          extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
+        },
+        (marker) => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
+        browserApi.declarativeNetRequest,
+      ),
       openAddress: (address) => { void browserApi.tabs.create({ url: address }); },
       onAdd: async ({ name, connection }) => {
         if (!(await updateSavedConnection('add', { name, connection }))) throw new Error(t('connections.error'));
@@ -27457,6 +27469,7 @@ async function publicApiFetch(path, options = {}) {
     ...options,
     redirect: 'error',
     headers: {
+      ...connectionHeadersAsObject(settings.connectionHeaders),
       ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       ...(options.headers || {}),
     },

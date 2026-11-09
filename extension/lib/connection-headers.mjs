@@ -93,27 +93,112 @@ function originPattern(address) {
 
 const RESOURCE_TYPES = ['xmlhttprequest', 'websocket', 'other', 'image', 'media', 'font', 'stylesheet', 'script', 'ping'];
 
+/**
+ * The host of this extension's own pages, which is what a request's initiator is: the extension id in
+ * Chrome, but a per-install UUID in Firefox (its runtime id is the add-on id, which matches nothing).
+ */
+export function extensionInitiatorHost(getURL) {
+  try {
+    return new URL(String(getURL('/'))).hostname;
+  } catch {
+    return '';
+  }
+}
+
 /** The network rule for the active connection: its headers, its address, requests from this extension only. */
-export function connectionHeaderRules({ gatewayUrl, headers, extensionId } = {}) {
+export function connectionHeaderRules({ gatewayUrl, headers, extensionHost } = {}) {
   const requestHeaders = normalizeConnectionHeaders(headers).map(({ name, value }) => ({ header: name, operation: 'set', value }));
   const pattern = originPattern(gatewayUrl);
-  if (!requestHeaders.length || !pattern || !extensionId) return [];
+  if (!requestHeaders.length || !pattern || !extensionHost) return [];
   return [{
     id: HEADER_RULE_ID,
     priority: 2,
     action: { type: 'modifyHeaders', requestHeaders },
-    condition: { regexFilter: pattern, initiatorDomains: [extensionId], resourceTypes: RESOURCE_TYPES },
+    condition: { regexFilter: pattern, initiatorDomains: [extensionHost], resourceTypes: RESOURCE_TYPES },
   }];
 }
 
 export async function applyConnectionHeaderRules(
-  { gatewayUrl, headers, extensionId } = {},
+  { gatewayUrl, headers, extensionHost } = {},
   dnr = globalThis.chrome?.declarativeNetRequest || globalThis.browser?.declarativeNetRequest,
 ) {
   if (!dnr?.updateSessionRules) return false;
   await dnr.updateSessionRules({
     removeRuleIds: [HEADER_RULE_ID],
-    addRules: connectionHeaderRules({ gatewayUrl, headers, extensionId }),
+    addRules: connectionHeaderRules({ gatewayUrl, headers, extensionHost }),
   });
   return true;
+}
+
+/**
+ * Header syncs run one after another. Each reads what is stored when it starts, so the last one queued
+ * always installs the newest headers, and an older read can never put a removed header back.
+ */
+export function createHeaderRuleSync({ read, apply, onError = () => {} }) {
+  let chain = Promise.resolve();
+  return () => {
+    chain = chain.then(async () => apply(await read())).catch(onError);
+    return chain;
+  };
+}
+
+export const PROBE_PARAM = 'hermes_probe';
+const PROBE_RULE_ID_BASE = 7750;
+const PROBE_RULE_ID_SLOTS = 40;
+let probeRuleCounter = 0;
+
+/**
+ * A test of a connection at the active connection's own address must send only the draft's headers.
+ * The active rule would replace them, so a short-lived rule of higher priority, for that one test's
+ * requests only (they carry the marker in their query), sets the draft's headers and removes the active
+ * connection's others. Null when the test does not meet the active rule.
+ */
+export function probeHeaderRule({ gatewayUrl, headers, active, extensionHost, marker, id = PROBE_RULE_ID_BASE } = {}) {
+  const pattern = originPattern(gatewayUrl);
+  const activeNames = normalizeConnectionHeaders(active?.headers).map(({ name }) => name);
+  if (!pattern || !extensionHost || !/^[a-z0-9]{6,}$/.test(String(marker || ''))) return null;
+  if (!activeNames.length || originPattern(active?.gatewayUrl) !== pattern) return null;
+  const draft = normalizeConnectionHeaders(headers);
+  const draftNames = new Set(draft.map(({ name }) => name.toLowerCase()));
+  return {
+    id,
+    priority: 3,
+    action: {
+      type: 'modifyHeaders',
+      requestHeaders: [
+        ...draft.map(({ name, value }) => ({ header: name, operation: 'set', value })),
+        ...activeNames.filter((name) => !draftNames.has(name.toLowerCase())).map((name) => ({ header: name, operation: 'remove' })),
+      ],
+    },
+    condition: {
+      regexFilter: `${pattern}[^#]*[?&]${PROBE_PARAM}=${marker}(?:&|$)`,
+      initiatorDomains: [extensionHost],
+      resourceTypes: ['xmlhttprequest'],
+    },
+  };
+}
+
+function probeMarker() {
+  const bytes = globalThis.crypto?.getRandomValues?.(new Uint8Array(8)) || Array.from({ length: 8 }, () => Math.floor(Math.random() * 256));
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Runs `probe` with the isolation rule installed while it runs. `probe` is called with the marker to put
+ * in each request's query (empty when no rule was needed) and is always cleaned up after.
+ */
+export async function withProbeHeaderIsolation(
+  { gatewayUrl, headers, active, extensionHost },
+  probe,
+  dnr = globalThis.chrome?.declarativeNetRequest || globalThis.browser?.declarativeNetRequest,
+) {
+  const marker = probeMarker();
+  const id = PROBE_RULE_ID_BASE + (probeRuleCounter++ % PROBE_RULE_ID_SLOTS);
+  const rule = dnr?.updateSessionRules ? probeHeaderRule({ gatewayUrl, headers, active, extensionHost, marker, id }) : null;
+  if (rule) await dnr.updateSessionRules({ removeRuleIds: [id], addRules: [rule] });
+  try {
+    return await probe(rule ? marker : '');
+  } finally {
+    if (rule) await dnr.updateSessionRules({ removeRuleIds: [id] }).catch(() => undefined);
+  }
 }

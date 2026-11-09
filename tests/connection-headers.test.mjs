@@ -70,7 +70,7 @@ test('a form is told which row and field is wrong', () => {
 });
 
 test('the network rule covers the connection\'s address and this extension only', () => {
-  const [rule] = connectionHeaderRules({ gatewayUrl: 'https://hermes.example.com/path', headers: proxied.connectionHeaders, extensionId: 'abcdefgh' });
+  const [rule] = connectionHeaderRules({ gatewayUrl: 'https://hermes.example.com/path', headers: proxied.connectionHeaders, extensionHost: 'abcdefgh' });
   assert.equal(rule.id, HEADER_RULE_ID);
   assert.deepEqual(rule.action.requestHeaders, [{ header: 'X-Proxy-Token', operation: 'set', value: SECRET }]);
   assert.deepEqual(rule.condition.initiatorDomains, ['abcdefgh']);
@@ -80,15 +80,16 @@ test('the network rule covers the connection\'s address and this extension only'
   assert.ok(!matches('http://hermes.example.com/api') && !matches('https://hermes.example.com:8443/api'));
   assert.ok(!matches('https://other.example.com/api') && !matches('https://hermes.example.com.evil.test/api'));
   assert.ok(rule.condition.resourceTypes.includes('websocket') && rule.condition.resourceTypes.includes('xmlhttprequest'));
-  assert.deepEqual(connectionHeaderRules({ gatewayUrl: 'https://hermes.example.com', headers: [], extensionId: 'abcdefgh' }), []);
-  assert.deepEqual(connectionHeaderRules({ gatewayUrl: 'not a url', headers: proxied.connectionHeaders, extensionId: 'abcdefgh' }), []);
+  assert.deepEqual(connectionHeaderRules({ gatewayUrl: 'https://hermes.example.com', headers: [], extensionHost: 'abcdefgh' }), []);
+  assert.deepEqual(connectionHeaderRules({ gatewayUrl: 'not a url', headers: proxied.connectionHeaders, extensionHost: 'abcdefgh' }), []);
+  assert.deepEqual(connectionHeaderRules({ gatewayUrl: 'https://hermes.example.com', headers: proxied.connectionHeaders }), [], 'no initiator, no rule');
 });
 
 test('applying rules replaces the previous rule, and removes it when there are no headers', async () => {
   const calls = [];
   const dnr = { updateSessionRules: async (change) => calls.push(change) };
-  await applyConnectionHeaderRules({ gatewayUrl: 'https://hermes.example.com', headers: proxied.connectionHeaders, extensionId: 'abc' }, dnr);
-  await applyConnectionHeaderRules({ gatewayUrl: 'https://hermes.example.com', headers: [], extensionId: 'abc' }, dnr);
+  await applyConnectionHeaderRules({ gatewayUrl: 'https://hermes.example.com', headers: proxied.connectionHeaders, extensionHost: 'abc' }, dnr);
+  await applyConnectionHeaderRules({ gatewayUrl: 'https://hermes.example.com', headers: [], extensionHost: 'abc' }, dnr);
   assert.deepEqual(calls[0].removeRuleIds, [HEADER_RULE_ID]);
   assert.equal(calls[0].addRules.length, 1);
   assert.equal(calls[1].addRules.length, 0);
@@ -96,7 +97,7 @@ test('applying rules replaces the previous rule, and removes it when there are n
 });
 
 test('headers for a loopback gateway do not reach another service on the same machine', () => {
-  const [rule] = connectionHeaderRules({ gatewayUrl: 'http://127.0.0.1:8642', headers: proxied.connectionHeaders, extensionId: 'abc' });
+  const [rule] = connectionHeaderRules({ gatewayUrl: 'http://127.0.0.1:8642', headers: proxied.connectionHeaders, extensionHost: 'abc' });
   const matches = (address) => new RegExp(rule.condition.regexFilter).test(address);
   assert.ok(matches('http://127.0.0.1:8642/v1/health') && matches('ws://127.0.0.1:8642/ws'));
   assert.ok(!matches('http://127.0.0.1:9119/api/status'), 'the dashboard on the same host is not this connection');
@@ -154,9 +155,17 @@ test('the client sends the connection custom headers and never lets them replace
   assert.equal(seen[0].Authorization, 'Bearer real-key');
 });
 
+test('the panel\'s own public requests carry the headers directly, so a browser that skips the network rule still signs in', async () => {
+  const panel = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const body = /async function publicApiFetch\(path, options = \{\}\) \{[\s\S]*?\n\}/.exec(panel)?.[0] || '';
+  assert.match(body, /\.\.\.connectionHeadersAsObject\(settings\.connectionHeaders\),[\s\S]*\.\.\.\(options\.headers \|\| \{\}\)/, 'the sign-in headers of a request still win');
+});
+
 test('the background keeps the network rule in step with the active connection', async () => {
   const background = await readFile(new URL('../extension/background.js', import.meta.url), 'utf8');
-  assert.match(background, /applyConnectionHeaderRules\(\{\s*gatewayUrl: settings\.gatewayUrl,\s*headers: settings\.connectionHeaders,\s*extensionId: browserApi\.runtime\?\.id/);
+  assert.match(background, /applyConnectionHeaderRules\(\{\s*gatewayUrl: settings\.gatewayUrl,\s*headers: settings\.connectionHeaders,\s*extensionHost: extensionInitiatorHost\(/);
+  assert.doesNotMatch(background, /extensionHost: browserApi\.runtime/, 'the initiator is the host of the extension pages, not the runtime id');
+  assert.match(background, /const syncConnectionHeaders = createHeaderRuleSync\(/, 'updates run one after another');
   assert.match(background, /changes\.hermesBrowserSettings \|\| changes\[SAVED_CONNECTION_SECRETS_STORAGE_KEY\]\) void syncConnectionHeaders\(\)/);
   assert.match(background, /onStartup\.addListener\(async \(\) => \{[\s\S]*await syncConnectionHeaders\(\)/);
 });
