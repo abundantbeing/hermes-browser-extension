@@ -26,13 +26,21 @@ const WAKE_REPLY_TIMEOUT_MS = 3 * 60 * 1000;
 
 const WAKE_CONNECTION_KEYS = ['activeSavedConnectionId', 'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl'];
 
-// A change of connection while wake is on: native wake belongs to the local gateway, so it must follow the switch.
+// Wake follows what is stored, whoever wrote it. A change of connection while wake is on: native wake
+// belongs to the local gateway, so it must follow the switch. Wake stored as off while it was on: the
+// listener stops even when the panel that saved it was reloading and never sent its own message.
 export function wakeNeedsReconfigure(previous, next) {
   const before = previous && typeof previous === 'object' ? previous : {};
   const after = next && typeof next === 'object' ? next : {};
-  if (after.wakeWordEnabled !== true) return false;
+  if (after.wakeWordEnabled !== true) return before.wakeWordEnabled === true;
   return WAKE_CONNECTION_KEYS.some((key) => String(before[key] ?? '') !== String(after[key] ?? ''));
 }
+
+function startupKey(settings) {
+  return JSON.stringify([normalizeWakeWordSettings(settings), ...WAKE_CONNECTION_KEYS.map((key) => String(settings?.[key] ?? ''))]);
+}
+
+const STALE_START = Object.freeze({ ok: false, stale: true });
 
 function runtimeVersion(chromeApi) {
   return chromeApi.runtime?.getManifest?.()?.version || '0.0.0';
@@ -73,6 +81,8 @@ export function createWakeBackgroundController({
   const claimedTurnIds = new Set();
   let configuring = null;
   let configurationGeneration = 0;
+  let nativeStartup = Promise.resolve();
+  let nativeInFlight = null;
 
   async function publish(next = {}) {
     state = publicState({ ...state, ...next, updatedAt: Date.now() });
@@ -304,12 +314,17 @@ export function createWakeBackgroundController({
     return legacyGatewayModeForConnection(stored?.hermesBrowserSettings || {}) === 'local-api';
   }
 
-  async function tryNativeWake() {
+  // One start owns its own client from credential to cleanup, and a newer configuration makes it stale:
+  // it closes what it opened and reports { stale: true } instead of touching a client that is not its own.
+  async function tryNativeWake(generation) {
+    const current = () => generation === configurationGeneration;
     clearNativeConnection();
     if (!(await localGatewayIsActive())) {
-      return { ok: false, reason: NATIVE_WAKE_LOCAL_ONLY_DETAIL };
+      return current() ? { ok: false, reason: NATIVE_WAKE_LOCAL_ONLY_DETAIL } : STALE_START;
     }
+    if (!current()) return STALE_START;
     const credential = await localDashboardCredential(LOCAL_DASHBOARD_URL);
+    if (!current()) return STALE_START;
     if (!credential.ok) return { ok: false, reason: credential.reason || 'dashboard-auth-unavailable' };
     const baseUrl = credential.baseUrl || LOCAL_DASHBOARD_URL;
     const client = gatewayClientFactory({
@@ -322,12 +337,20 @@ export function createWakeBackgroundController({
       client.on(WS_EVENTS.wakeDetected, handleNativeWake),
       client.on(WS_EVENTS.voiceTranscript, handleNativeTranscript),
       client.on('close', () => {
-        if (currentSettings.enabled) configureBrowserFallback().catch(() => null);
+        if (nativeClient === client && currentSettings.enabled) configureBrowserFallback().catch(() => null);
       }),
     ];
     nativeClient = client;
+    const release = () => {
+      if (nativeClient === client) clearNativeConnection();
+      else client.close?.();
+    };
     try {
       await client.connect(buildDashboardWsUrlWithCredential(baseUrl, credential.name, credential.value));
+      if (!current()) {
+        release();
+        return STALE_START;
+      }
       const status = normalizeWakeStatus(await client.request(WS_METHODS.wakeStatus, {}));
       if (!status.available) throw new Error(status.hint || 'Hermes native wake word is unavailable.');
       const started = await client.request(WS_METHODS.wakeStart, {
@@ -341,21 +364,36 @@ export function createWakeBackgroundController({
           ? `Wake-word microphone is already owned${owner ? ` by ${owner}` : ''}.`
           : String(started?.reason || 'Hermes refused to start the wake listener.'));
       }
+      if (!current()) {
+        release();
+        return STALE_START;
+      }
       nativeKeepalive = globalThis.setInterval(() => {
         nativeClient?.request(WS_METHODS.wakeStatus, {}).catch(() => null);
       }, 20_000);
       nativeKeepalive?.unref?.();
       return { ok: true, started, status };
     } catch (error) {
-      for (const off of nativeOffs.splice(0)) off?.();
-      client.close();
-      if (nativeClient === client) nativeClient = null;
-      return { ok: false, reason: error?.message || String(error) };
+      release();
+      return current() ? { ok: false, reason: error?.message || String(error) } : STALE_START;
     }
+  }
+
+  // Starts run one after another. A start that a newer configuration has overtaken never begins, and one
+  // already running notices at its next step: two configurations in a row never leave two listeners.
+  function startNative(generation, key) {
+    const task = nativeStartup.catch(() => null)
+      .then(() => (generation === configurationGeneration ? tryNativeWake(generation) : STALE_START));
+    nativeStartup = task;
+    nativeInFlight = { key, task };
+    task.finally(() => { if (nativeInFlight?.task === task) nativeInFlight = null; }).catch(() => null);
+    return task;
   }
 
   async function configure(settings = {}) {
     currentSettings = normalizeWakeWordSettings(settings);
+    const key = startupKey(settings);
+    if (currentSettings.enabled && currentSettings.preferNative && nativeInFlight?.key === key) return state;
     const generation = ++configurationGeneration;
     clearReplyTimer();
     if (!currentSettings.enabled) {
@@ -370,8 +408,8 @@ export function createWakeBackgroundController({
     if (currentSettings.preferNative) {
       await stopBrowserFallback();
       await publish({ state: 'arming', mode: 'native', detail: 'Starting Hermes’ native wake engine…' });
-      tryNativeWake().then(async (native) => {
-        if (generation !== configurationGeneration || !currentSettings.enabled) {
+      startNative(generation, key).then(async (native) => {
+        if (native.stale || generation !== configurationGeneration || !currentSettings.enabled) {
           if (native.ok) clearNativeConnection();
           return;
         }
