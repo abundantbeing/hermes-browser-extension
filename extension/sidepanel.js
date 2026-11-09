@@ -797,6 +797,7 @@ import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-
 import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteFromInput, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
+import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserGateway } from './lib/background-task-browser.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
@@ -860,6 +861,74 @@ hbeBootEmit('panel:body-start');
 const $ = (selector) => document.querySelector(selector);
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
+
+function initBackgroundTaskBrowserSetting() {
+  const row = document.getElementById('backgroundTaskBrowserSetting');
+  const input = document.getElementById('backgroundTaskBrowserInput');
+  const status = document.getElementById('backgroundTaskBrowserStatus');
+  const storage = browserApi.storage?.local;
+  if (!row || !input || !storage || !browserApi.tabGroups || !browserApi.debugger) return;
+
+  function copy() {
+    return getLocale() === 'zh-CN' ? {
+      label: '后台任务标签页',
+      help: '允许此本机 Hermes 配置中的任务（包括飞书等消息应用）创建和控制自己的 Chrome 标签组，无需逐次 Attach。',
+      error: '无法保存后台浏览器授权。',
+    } : {
+      label: 'Background task tabs',
+      help: 'Allow tasks on this local Hermes profile, including messaging apps, to open and control their own Chrome tab groups without Attach.',
+      error: 'Could not save background browser authorization.',
+    };
+  }
+
+  function renderCopy() {
+    const { label, help } = copy();
+    document.getElementById('backgroundTaskBrowserLabel').textContent = label;
+    document.getElementById('backgroundTaskBrowserHelp').textContent = help;
+  }
+  renderCopy();
+  subscribeLocale(renderCopy);
+
+  async function read() {
+    const stored = await storage.get(['hermesBrowserSettings', BACKGROUND_BROWSER_CONSENT]);
+    return {
+      gateway: backgroundBrowserGateway(stored.hermesBrowserSettings),
+      consent: stored[BACKGROUND_BROWSER_CONSENT],
+    };
+  }
+
+  async function render() {
+    const { gateway, consent } = await read();
+    row.hidden = !gateway;
+    input.checked = Boolean(gateway && gateway === consent);
+  }
+
+  input.addEventListener('change', async () => {
+    const checked = input.checked;
+    input.disabled = true;
+    try {
+      const { gateway } = await read();
+      if (checked && gateway) {
+        await storage.set({ [BACKGROUND_BROWSER_CONSENT]: gateway });
+      } else {
+        await storage.remove(BACKGROUND_BROWSER_CONSENT);
+      }
+      status.textContent = '';
+    } catch {
+      status.textContent = copy().error;
+    } finally {
+      input.disabled = false;
+      await render().catch(() => {});
+    }
+  });
+  browserApi.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && (changes.hermesBrowserSettings || changes[BACKGROUND_BROWSER_CONSENT])) {
+      void render().catch(() => {});
+    }
+  });
+  void render().catch(() => {});
+}
+initBackgroundTaskBrowserSetting();
 const dashboardFetch = createBackgroundLoopbackFetch({
   sendMessage: (message) => browserApi.runtime.sendMessage(message),
   fetchFn: globalThis.fetch?.bind(globalThis),

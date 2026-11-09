@@ -249,7 +249,7 @@ test('manifest packaging assumptions are explicit for Chromium, Firefox, and Saf
   assert.equal(chromium.panelMode, 'side-panel');
   assert.equal(firefox.backgroundMode, 'background-scripts-module');
   assert.equal(firefox.panelMode, 'sidebar-action');
-  assert.deepEqual(firefox.removedPermissions, ['debugger', 'offscreen', 'sidePanel']);
+  assert.deepEqual(firefox.removedPermissions, ['debugger', 'offscreen', 'sidePanel', 'tabGroups']);
   assert.equal(safari.packaging, 'xcode-safari-web-extension-converter');
   assert.equal(safari.requiresMacOS, true);
   assert.equal(safari.directBuildSupported, false);

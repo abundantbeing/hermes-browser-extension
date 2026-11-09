@@ -69,7 +69,7 @@ the full tool reference.
 ## What it adds to Hermes
 
 - **Twenty Hermes Control tools**, always listed and acting only while your
-  browser is attached to the chat: `tab_list`, `tab_create`, `tab_activate`, `tab_close`,
+  browser is attached to the chat or Background task tabs are authorized: `tab_list`, `tab_create`, `tab_activate`, `tab_close`,
   `tab_group`, `tab_ungroup` to manage tabs, and `tab_navigate`, `tab_back`,
   `tab_snapshot`, `tab_screenshot`, `tab_click`, `tab_type`, `tab_fill`,
   `tab_select`, `tab_press`, `tab_hover`, `tab_drag`, `tab_scroll`,
@@ -84,6 +84,19 @@ the full tool reference.
   skill (`hermes-browser-extension`) and six routes on the API server under
   `/api/plugins/hermes-browser-extension/`, each behind the API server's own
   authentication.
+
+## Background task tabs
+
+For a paired local Chromium gateway, enable **Background task tabs** under
+**Hermes Control** in the side panel once. With the browser open, gateway chats
+such as Feishu can use `tab_create` to open a page without Attach. The first page
+opens an independent background group, and later pages from the same Hermes
+session join it. Existing tabs and tabs from other sessions are outside its
+scope. Use manual Attach for actions that require the foreground or an approval.
+
+Turn off **Background task tabs** to revoke the background connection. Chrome
+may leave task tabs open after revocation or an extension restart. A new worker
+does not take control of those old tabs.
 
 ## Disclosure
 

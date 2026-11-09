@@ -68,6 +68,9 @@ import {
 } from './lib/controller-service-worker.mjs';
 import { createBrowserControlRuntime } from './lib/browser-control-runtime.mjs';
 import {
+  BACKGROUND_BROWSER_ALARM, BACKGROUND_BROWSER_CONSENT, createBackgroundTaskBrowser,
+} from './lib/background-task-browser.mjs';
+import {
   createBrowserControlArtifactClient,
   createBrowserControlArtifactHttpTransport,
 } from './lib/browser-control-artifacts.mjs';
@@ -172,6 +175,15 @@ const controllerConnector = createControllerConnector({
   tabsApi: browserApi.tabs,
   scriptingApi: browserApi.scripting,
 });
+const backgroundTaskBrowser = browserProduct.engine === 'chromium' && browserApi.tabGroups
+  ? createBackgroundTaskBrowser({
+      browserApi, connector: controllerConnector, runtime: browserControlRuntime, product: browserProduct,
+    })
+  : null;
+function syncBackgroundTaskBrowser() {
+  return backgroundTaskBrowser?.sync().catch(() => {});
+}
+void syncBackgroundTaskBrowser();
 const extensionOrigin = (() => {
   try {
     const parsed = new URL(browserApi.runtime.getURL(''));
@@ -229,6 +241,7 @@ sweepDebuggerOrphans();
 
 browserApi.alarms?.onAlarm?.addListener?.((alarm) => {
   if (!alarm?.name) return;
+  if (alarm.name === BACKGROUND_BROWSER_ALARM) void syncBackgroundTaskBrowser();
   if (alarm.name === CONTROLLER_HEARTBEAT_ALARM || alarm.name === CONTROLLER_RECONCILE_ALARM) {
     sweepDebuggerOrphans();
     controllerWorker?.reconcile({ reason: alarm.name })
@@ -1063,6 +1076,7 @@ browserApi.contextMenus?.onClicked?.addListener?.((info, tab) => {
 });
 browserApi.tabs?.onActivated?.addListener?.(({ tabId }) => reapplyPanelResidencyForTab(tabId));
 browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
+  backgroundTaskBrowser?.tabUpdated(tabId, changeInfo);
   controllerWorker?.handleTabUpdated(tabId, changeInfo)
     .catch((error) => console.warn('[Hermes Browser] Could not invalidate controller document authority:', error));
 });
@@ -1092,11 +1106,15 @@ browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo, tab) => {
 browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
   hermesWebOpening.handleTabRemoved(tabId)
     .catch((error) => console.warn('[Hermes Browser] Could not clean up the Hermes Web opening page:', error));
+  backgroundTaskBrowser?.tabRemoved(tabId);
   controllerWorker?.handleTabRemoved(tabId)
     .catch((error) => console.warn('[Hermes Browser] Could not release removed controller tab state:', error));
 });
 browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   if (areaName !== 'local') return;
+  if (changes.hermesBrowserSettings || changes[BACKGROUND_BROWSER_CONSENT]) {
+    backgroundTaskBrowser?.settingsChanged(changes).catch(() => {});
+  }
   contextMenuController.handleStorageChanged(changes, areaName)
     .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
   if (changes.hermesBrowserSettings?.newValue && controllerWorker) {

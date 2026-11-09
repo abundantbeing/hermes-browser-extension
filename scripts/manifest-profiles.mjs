@@ -24,7 +24,7 @@ const MANIFEST_PROFILES = Object.freeze({
     backgroundMode: 'background-scripts-module',
     panelMode: 'sidebar-action',
     removedManifestKeys: Object.freeze(['side_panel', 'minimum_chrome_version']),
-    removedPermissions: Object.freeze(['debugger', 'offscreen', 'sidePanel']),
+    removedPermissions: Object.freeze(['debugger', 'offscreen', 'sidePanel', 'tabGroups']),
     removedOptionalPermissions: Object.freeze(['audioCapture']),
     // tabs.captureVisibleTab needs all-sites access on Firefox. It is asked for from a click, never at install.
     optionalHostPermissions: Object.freeze(['<all_urls>']),

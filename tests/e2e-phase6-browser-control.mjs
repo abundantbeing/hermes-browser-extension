@@ -158,7 +158,7 @@ function decodeClientFrames(connection, chunk, onFrame) {
   }
 }
 
-export async function startControllerFixture() {
+export async function startControllerFixture({ controlPath = "/v1/browser-control" } = {}) {
   const registrations = [];
   const connections = [];
   const results = [];
@@ -254,7 +254,7 @@ export async function startControllerFixture() {
       json(res, 200, { object: 'list', data: [] });
       return;
     }
-    if (url.pathname === '/v1/browser-control/register' && req.method === 'POST') {
+    if (url.pathname === `${controlPath}/register` && req.method === 'POST') {
       assert.equal(req.headers.authorization, ['Bearer', TEST_ACCESS_VALUE].join(' '));
       const body = await requestBody(req);
       assert.ok(String(body.session_id || '').trim(), 'Controller registration session_id is required.');
@@ -285,7 +285,7 @@ export async function startControllerFixture() {
   server.on('upgrade', (req, socket) => {
     try {
       const url = new URL(req.url || '/', 'http://127.0.0.1');
-      assert.equal(url.pathname, '/v1/browser-control/ws');
+      assert.equal(url.pathname, `${controlPath}/ws`);
       assert.equal(url.search, '', 'Controller ticket must never appear in the WebSocket URL.');
       const protocols = String(req.headers['sec-websocket-protocol'] || '')
         .split(',')

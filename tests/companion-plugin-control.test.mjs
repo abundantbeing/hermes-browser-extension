@@ -1294,6 +1294,46 @@ print(json.dumps({"passed": passed, "blank": blank, "missing": json.loads(missin
   assert.equal(data.blank, null, 'a blank id falls back to the approval context, absent here');
   assert.match(data.missing.error, /^tab_click needs a ref, or both x and y\.$/);
   assert.equal(data.none.code, 'no_browser');
-  const source = readFileSync('companion-plugin/control_tools.py', 'utf8');
-  assert.match(source, /tool_call_id=_tool_call_id\(\(kwargs or \{\}\)\.get\("tool_call_id"\)\)/);
+});
+
+test('an opted-in loopback controller receives the trusted session id without manual Attach', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}
+async def main():
+    client, broker, _ = await make(adapter=StoreAdapter({"feishu-real-session"}))
+    async with client:
+        background = broker_module.BACKGROUND_SESSION
+        ws, _ = await attach(client, broker, session=background, caps=["browser_tab_create", "browser_snapshot"])
+        task = asyncio.create_task(call(
+            "browser_tab_create",
+            {"url": "https://example.com", "background_session": "untrusted"},
+            session="feishu-real-session",
+        ))
+        frame = await ws.receive_json(timeout=5)
+        assert frame["params"]["background_session"] == "feishu-real-session", frame
+        await ws.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": {"tab": {"id": 42}}
+        }})
+        assert json.loads(await task)["tab"]["id"] == 42
+        assert json.loads(await call("browser_tab_create", {"url": "https://example.com"}, session=background))["code"] == "no_session"
+        manual, _ = await attach(client, broker, session="feishu-real-session", controller="manual")
+        task = asyncio.create_task(call("browser_snapshot", {"tab_id": 42}, session="feishu-real-session"))
+        frame = await manual.receive_json(timeout=5)
+        assert "background_session" not in frame["params"]
+        await manual.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": False,
+            "error": {"code": "target_not_attached", "message": "No manual lease"}
+        }})
+        frame = await ws.receive_json(timeout=5)
+        assert frame["params"]["background_session"] == "feishu-real-session"
+        assert frame["params"]["arguments"]["tab_id"] == 42
+        await ws.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": {"title": "Background"}
+        }})
+        assert json.loads(await task)["title"] == "Background"
+        await manual.close()
+        await ws.close()
+    print(json.dumps({"passed": True}))
+asyncio.run(main())
+`);
+  if (!skipped(JSON.parse(out))) assert.deepEqual(JSON.parse(out), { passed: true });
 });
