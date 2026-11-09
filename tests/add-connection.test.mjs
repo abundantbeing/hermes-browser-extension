@@ -97,19 +97,57 @@ test('a new connection starts from what the window collected and leaves the othe
   assert.equal(first.connection.apiKey, 'first-key');
 });
 
+const HERMES_HEALTH = { status: 'ok', platform: 'hermes-agent', version: '1' };
+
+// A handler is a status, an Error, or { status, body }; /health answers as Hermes unless told otherwise.
 function gateway(handlers) {
   const seen = [];
   return {
     seen,
     fetchImpl: async (url, init) => {
-      const path = new URL(url).pathname;
-      seen.push({ path, headers: init.headers });
+      const parsed = new URL(url);
+      const path = parsed.pathname;
+      seen.push({ path, search: parsed.search, headers: init.headers, signal: init.signal });
       const answer = handlers[path];
       if (answer instanceof Error) throw answer;
-      return { ok: (answer ?? 200) < 400, status: answer ?? 200 };
+      const status = typeof answer === 'object' && answer ? answer.status : (answer ?? 200);
+      const body = typeof answer === 'object' && answer && 'body' in answer ? answer.body : (path === '/health' ? HERMES_HEALTH : { sessions: [] });
+      return { ok: status < 400, status, json: async () => { if (body === undefined) throw new SyntaxError('no json'); return body; } };
     },
   };
 }
+
+test('only a gateway that answers as Hermes and serves its sessions passes the test', async () => {
+  const check = async (handlers, extra = {}) => probeConnection({ gatewayUrl: 'https://h.example.com', apiKey: 'k', fetchImpl: gateway(handlers).fetchImpl, ...extra });
+  assert.equal((await check({ '/health': { status: 200, body: { status: 'ok' } } })).status, 'not-hermes', 'a health answer that is not Hermes');
+  assert.equal((await check({ '/health': { status: 200, body: { platform: 'other-service' } } })).status, 'not-hermes');
+  assert.equal((await check({ '/health': { status: 200, body: undefined } })).status, 'not-hermes', 'a page that is not JSON, such as a proxy sign-in page');
+  assert.deepEqual(await check({ '/api/sessions': 404 }), { ok: false, status: 'not-hermes', detail: 'HTTP 404' });
+  assert.equal((await check({ '/api/sessions': 500 })).status, 'not-hermes');
+  assert.equal((await check({ '/api/sessions': 403 })).status, 'unauthorized');
+  assert.deepEqual(await check({}), { ok: true, status: 'ok' });
+});
+
+test('without a key the sessions answer decides: open gateways pass, signed-in ones ask for a sign-in', async () => {
+  const open = await probeConnection({ gatewayUrl: 'https://h.example.com', fetchImpl: gateway({}).fetchImpl });
+  assert.deepEqual(open, { ok: true, status: 'ok' });
+  const gated = await probeConnection({ gatewayUrl: 'https://h.example.com', fetchImpl: gateway({ '/api/sessions': 401 }).fetchImpl });
+  assert.deepEqual(gated, { ok: true, status: 'untested', detail: 'needs-sign-in' });
+  assert.equal((await probeConnection({ gatewayUrl: 'https://h.example.com', fetchImpl: gateway({ '/api/sessions': 404 }).fetchImpl })).status, 'not-hermes');
+});
+
+test('a test marker rides in every request, and a cancel signal reaches the request', async () => {
+  const marked = gateway({});
+  const controller = new AbortController();
+  await probeConnection({ gatewayUrl: 'https://h.example.com', apiKey: 'k', marker: 'abc123def456', signal: controller.signal, fetchImpl: marked.fetchImpl });
+  assert.deepEqual(marked.seen.map((entry) => entry.search), ['?hermes_probe=abc123def456', '?limit=1&hermes_probe=abc123def456']);
+  controller.abort();
+  assert.ok(marked.seen.every((entry) => entry.signal), 'each request can be cancelled');
+  assert.equal(marked.seen[0].signal.aborted, true);
+  const plain = gateway({});
+  await probeConnection({ gatewayUrl: 'https://h.example.com', apiKey: 'k', fetchImpl: plain.fetchImpl });
+  assert.deepEqual(plain.seen.map((entry) => entry.search), ['', '?limit=1']);
+});
 
 test('the probe says whether the address answers, the key works, and sends the custom headers', async () => {
   const good = gateway({});
