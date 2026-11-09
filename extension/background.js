@@ -56,6 +56,7 @@ import { createVscodeMarketplaceClient } from './lib/vscode-marketplace.mjs';
 import { createThemeMarketplaceController } from './lib/theme-marketplace-controller.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { installLoopbackCorsRules, handleLoopbackFetchMessage, LOOPBACK_FETCH_MESSAGE } from './lib/loopback-cors.mjs';
+import { applyConnectionHeaderRules } from './lib/connection-headers.mjs';
 import {
   CONTROLLER_HEARTBEAT_ALARM,
   CONTROLLER_RECONCILE_ALARM,
@@ -1032,19 +1033,32 @@ void initI18n().catch((error) => {
   console.warn('[Hermes Browser] Localization initialization failed:', error);
 });
 
+// The active connection's custom headers ride on every request to its address, WebSocket handshake included.
+function syncConnectionHeaders() {
+  return readStoredSettings()
+    .then((settings) => applyConnectionHeaderRules({
+      gatewayUrl: settings.gatewayUrl,
+      headers: settings.connectionHeaders,
+      extensionId: browserApi.runtime?.id,
+    }))
+    .catch((error) => console.warn('[Hermes Browser] Connection header rules failed:', error));
+}
 void installLoopbackCorsRules().catch((error) => {
   console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
 });
+void syncConnectionHeaders();
 browserApi.runtime.onInstalled.addListener((details) => {
   void installLoopbackCorsRules().catch((error) => {
     console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
   });
+  void syncConnectionHeaders();
   return configureInstalledSurfaces(details);
 });
 browserApi.runtime.onStartup.addListener(async () => {
   await installLoopbackCorsRules().catch((error) => {
     console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
   });
+  await syncConnectionHeaders();
   await configureInstalledSurfaces({ controllerReason: 'browser-startup' });
   restoreWakeController();
 });
@@ -1125,6 +1139,7 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
       }
     })();
   }
+  if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]) void syncConnectionHeaders();
   if (changes.hermesBrowserSettings?.newValue
     && wakeNeedsReconfigure(changes.hermesBrowserSettings.oldValue, changes.hermesBrowserSettings.newValue)) {
     wakeController.restore().catch((error) => console.warn('[Hermes Browser] Wake could not follow the connection change:', error));

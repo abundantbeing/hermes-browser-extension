@@ -96,6 +96,19 @@ test('credential and connection changes written by the controller or the pairing
   assert.equal(vm.runInContext('settings.trustedDashboardTabId', context), 7);
 });
 
+test('headers changed by another panel are adopted, and an unchanged list leaves read aloud playing', async () => {
+  const headers = [{ name: 'X-Proxy-Token', value: 'proxy-value' }];
+  const context = adoptContext({ ...mine, connectionHeaders: [] });
+  let stops = 0;
+  context.readAloudPlayer = { stop() { stops += 1; } };
+  const adopt = vm.runInContext('adoptHermesBrowserSettingsStorageChange', context);
+  await adopt({ hermesBrowserSettings: { newValue: { ...mine, connectionHeaders: headers } } });
+  assert.deepEqual(vm.runInContext('settings.connectionHeaders', context), headers);
+  assert.equal(stops, 1, 'new headers change how requests are made');
+  await adopt({ hermesBrowserSettings: { newValue: { ...mine, connectionHeaders: [...headers] } } });
+  assert.equal(stops, 1, 'the same headers are not a change');
+});
+
 test('a settings event that finishes late does not replace what a newer event already applied', async () => {
   const context = adoptContext({ ...mine, apiKey: 'start-key' });
   let releaseRead;

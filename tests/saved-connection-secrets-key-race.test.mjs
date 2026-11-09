@@ -77,6 +77,6 @@ test('credentials one panel encrypts can still be read by the other after a firs
       second.ensureSavedSecretsWrappingKey(),
     ]);
     const bag = await second.decryptSavedConnectionSecretBag(record);
-    assert.deepEqual(bag, { apiKey: 'race-test-key', tokenSource: 'manual' });
+    assert.deepEqual(bag, { apiKey: 'race-test-key', tokenSource: 'manual', headers: [] });
   } finally { globalThis.indexedDB = original; }
 });

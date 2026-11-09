@@ -1,3 +1,5 @@
+import { connectionHeadersAsObject } from './connection-headers.mjs';
+
 export const SESSION_LIST_TIMEOUT_MS = 15_000;
 // Ordinary calls (status, session CRUD, run control) answer in seconds. A
 // gateway that stops answering must not leave them pending forever, so they get
@@ -93,6 +95,7 @@ export function createHermesClient({
     if (!base) throw new Error('Hermes gateway URL is not configured.');
     const hasBody = typeof options.body !== 'undefined';
     const headers = {
+      ...connectionHeadersAsObject(connection.connectionHeaders),
       ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       ...(connection.apiKey ? { Authorization: `${AUTH_SCHEME} ${connection.apiKey}` } : {}),
       ...(connection.activeProfile ? { 'X-Hermes-Profile': connection.activeProfile } : {}),

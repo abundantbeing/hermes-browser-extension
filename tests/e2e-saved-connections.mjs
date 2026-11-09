@@ -51,7 +51,7 @@ async function startStubGateway(label) {
   const requests = [];
   const server = createServer((req, res) => {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
-    requests.push({ method: req.method, path: url.pathname, authorization: req.headers.authorization || '', at: Date.now() });
+    requests.push({ method: req.method, path: url.pathname, authorization: req.headers.authorization || '', headers: req.headers, at: Date.now() });
     if (req.method === 'OPTIONS') { json(res, 204, {}); return; }
     if (url.pathname === '/health' || url.pathname === '/v1/health') { json(res, 200, { status: 'ok', platform: 'hermes-agent', version: label }); return; }
     if (url.pathname === '/v1/capabilities') {
@@ -72,6 +72,10 @@ async function startStubGateway(label) {
     if (url.pathname === '/api/sessions' && req.method === 'POST') { json(res, 200, { session: { id: `${label}-session` } }); return; }
     if (url.pathname === '/v1/models') { json(res, 200, { data: [{ id: 'e2e/test-model', object: 'model' }] }); return; }
     json(res, 200, {});
+  });
+  server.on('upgrade', (req, socket) => {
+    requests.push({ method: 'UPGRADE', path: req.url, authorization: '', headers: req.headers, at: Date.now() });
+    socket.destroy();
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address();
@@ -421,7 +425,43 @@ async function main() {
     await shot(panel, '4-after-delete');
     check('no native browser dialog was opened', panel.dialogs.length === 0, JSON.stringify(panel.dialogs));
 
-    // 7. A long name and several connections still fit a narrow panel, in the light theme too.
+    // 7. Custom headers reach the gateway on every request, and only that gateway. A browser cannot put headers on a WebSocket handshake.
+    const setHeaders = (headers) => panel.evaluate(`(async () => {
+      const lib = await import('./lib/saved-connections.mjs');
+      const stored = await chrome.storage.local.get(['hermesBrowserSettings', lib.SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+      const live = await lib.hydrateHermesBrowserSettingsFromStorage(stored);
+      await chrome.storage.local.set(await lib.packedHermesBrowserSettingsWrite({ ...live, connectionHeaders: ${JSON.stringify(headers)} }, chrome.storage.local));
+      return true;
+    })()`);
+    const probe = async (gateway) => {
+      const before = gateway.requests.length;
+      await setup.evaluate(`fetch(${JSON.stringify(`${gateway.baseUrl}/headers-probe`)}).then((response) => response.status)`);
+      const seen = gateway.requests.slice(before);
+      return { plain: seen.find((request) => request.path === '/headers-probe')?.headers['x-proxy-token'] || '', socket: '' };
+    };
+    await setHeaders([{ name: 'X-Proxy-Token', value: 'proxy-e2e-value' }]);
+    const withHeader = await waitFor(async () => {
+      const result = await probe(first);
+      return result.plain ? result : null;
+    }, 20_000, 500).catch(() => ({ plain: '', socket: '' }));
+    check('a custom header reaches the gateway on a plain request', withHeader.plain === 'proxy-e2e-value', JSON.stringify(withHeader));
+    await markPanel(panel);
+    await panel.evaluate('window.location.reload(); true');
+    await panelReady(panel);
+    const ownRequests = await waitFor(() => first.requests.some((request) => request.path === '/health' && request.headers['x-proxy-token'] === 'proxy-e2e-value'), 15_000).catch(() => false);
+    check('and on the panel itself', Boolean(ownRequests));
+    const unrelated = await probe(second);
+    check("another service on the same machine does not receive it", !unrelated.plain && !unrelated.socket, JSON.stringify(unrelated));
+    const storedWithHeaders = JSON.stringify(await setup.evaluate('chrome.storage.local.get(null)'));
+    check('the header value is not stored in plain text', !storedWithHeaders.includes('proxy-e2e-value'));
+    await setHeaders([]);
+    const without = await waitFor(async () => {
+      const result = await probe(first);
+      return !result.plain ? result : null;
+    }, 20_000, 500).catch(() => ({ plain: 'still-sent', socket: '' }));
+    check('removing the header stops it being sent', !without.plain && !without.socket, JSON.stringify(without));
+
+    // 8. A long name and several connections still fit a narrow panel, in the light theme too.
     const longName = 'A connection with a very long name that keeps going past the edge of the card';
     await nameConnection(panel, '#savedConnectionAdd', longName, { reloads: true });
     await panelReady(panel);

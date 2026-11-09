@@ -139,8 +139,15 @@ function fromB64(s) {
   return out;
 }
 
+/** Custom headers kept with a connection's credentials: [{ name, value }]. */
+export function secretBagHeaders(list) {
+  return Array.isArray(list)
+    ? list.map((entry) => ({ name: String(entry?.name ?? ''), value: String(entry?.value ?? '') })).filter((entry) => entry.name)
+    : [];
+}
+
 /**
- * @param {{ apiKey?: string, tokenSource?: string }} bag
+ * @param {{ apiKey?: string, tokenSource?: string, headers?: Array<{ name: string, value: string }> }} bag
  * @returns {Promise<{ v: number, iv: string, ct: string }|null>}
  */
 export async function encryptSavedConnectionSecretBag(bag) {
@@ -153,6 +160,7 @@ export async function encryptSavedConnectionSecretBag(bag) {
   const plain = enc.encode(JSON.stringify({
     apiKey: String(bag?.apiKey ?? ''),
     tokenSource: String(bag?.tokenSource ?? ''),
+    headers: secretBagHeaders(bag?.headers),
   }));
   const cipher = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, key, plain));
   return { v: 1, iv: toB64(iv), ct: toB64(cipher) };
@@ -176,6 +184,7 @@ export async function decryptSavedConnectionSecretBag(record) {
     return {
       apiKey: String(parsed?.apiKey ?? ''),
       tokenSource: String(parsed?.tokenSource ?? ''),
+      headers: secretBagHeaders(parsed?.headers),
     };
   } catch {
     return null;

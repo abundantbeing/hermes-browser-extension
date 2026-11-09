@@ -6,6 +6,7 @@ import {
   encryptSavedConnectionSecretBag,
   isEncryptedSecretRecord,
   isPlainSecretBag,
+  secretBagHeaders,
 } from './saved-connection-secrets-crypto.mjs';
 
 // Only connection configuration is saved. Sessions, browser-control grants,
@@ -15,6 +16,7 @@ const CONNECTION_FIELDS = [
   'gatewayUrl', 'apiKey', 'tokenSource', 'hermesWebAddress', 'webappKeepSignedIn',
   'trustedDashboardOrigin', 'trustedDashboardTabId',
   'agentDiscoveryHost', 'agentDiscoveryScheme', 'agentPorts', 'customModelSources',
+  'connectionTrustSelfSigned', 'connectionHeaders',
 ];
 
 function connectionConfig(settings = {}) {
@@ -74,12 +76,13 @@ async function plaintextSecretBagFromStored(value) {
   if (!value || typeof value !== 'object') return null;
   if (isEncryptedSecretRecord(value)) {
     const decrypted = await decryptSavedConnectionSecretBag(value);
-    return decrypted || { apiKey: '', tokenSource: '' };
+    return decrypted || { apiKey: '', tokenSource: '', headers: [] };
   }
   if (isPlainSecretBag(value)) {
     return {
       apiKey: String(value.apiKey ?? ''),
       tokenSource: String(value.tokenSource ?? ''),
+      headers: secretBagHeaders(value.headers),
     };
   }
   return null;
@@ -92,15 +95,18 @@ export function mergeSavedConnectionSecrets(settings = {}, secrets = {}) {
   const savedConnections = settings.savedConnections.map((entry) => {
     if (!entry || typeof entry.id !== 'string') return entry;
     const conn = entry.connection && typeof entry.connection === 'object' ? entry.connection : {};
-    if (conn.apiKey || conn.tokenSource) {
+    // A list means the writer has the headers in hand; null or nothing means it never read them, so the stored ones stay.
+    const headersInHand = Array.isArray(conn.connectionHeaders);
+    if (conn.apiKey || conn.tokenSource || headersInHand) {
       nextSecrets[entry.id] = {
         apiKey: String(conn.apiKey || ''),
         tokenSource: String(conn.tokenSource || ''),
+        ...(headersInHand ? { headers: secretBagHeaders(conn.connectionHeaders) } : {}),
       };
     }
     return {
       ...entry,
-      connection: { ...conn, apiKey: '', tokenSource: '' },
+      connection: { ...conn, apiKey: '', tokenSource: '', ...(conn.connectionHeaders === undefined ? {} : { connectionHeaders: null }) },
     };
   });
   const liveIds = new Set(savedConnections.map((e) => e?.id).filter((id) => typeof id === 'string'));
@@ -126,6 +132,7 @@ export async function hydrateSavedConnectionSecrets(settings = {}, secrets = {})
         ...conn,
         apiKey: bag.apiKey ?? '',
         tokenSource: bag.tokenSource ?? '',
+        connectionHeaders: bag.headers ?? [],
       },
     };
   }));
@@ -139,6 +146,7 @@ export async function hydrateSavedConnectionSecrets(settings = {}, secrets = {})
     ...(activeConn ? {
       apiKey: activeConn.apiKey ?? merged.settings.apiKey ?? '',
       tokenSource: activeConn.tokenSource ?? merged.settings.tokenSource ?? '',
+      connectionHeaders: activeConn.connectionHeaders ?? merged.settings.connectionHeaders ?? null,
     } : {}),
   };
 }
@@ -148,24 +156,29 @@ export async function packSavedConnectionStorage(settings = {}, existingSecrets 
   const activeId = merged.settings.activeSavedConnectionId;
   const topApiKey = String(merged.settings.apiKey ?? '');
   const topTokenSource = String(merged.settings.tokenSource ?? '');
-  if (typeof activeId === 'string' && activeId && (topApiKey || topTokenSource)) {
+  const topHeaders = Array.isArray(merged.settings.connectionHeaders) ? secretBagHeaders(merged.settings.connectionHeaders) : null;
+  if (typeof activeId === 'string' && activeId && (topApiKey || topTokenSource || topHeaders)) {
     const existing = merged.secrets[activeId];
     const existingPlain = existing ? await plaintextSecretBagFromStored(existing) : null;
     merged = {
-      settings: { ...merged.settings, apiKey: '', tokenSource: '' },
+      settings: { ...merged.settings, apiKey: '', tokenSource: '', connectionHeaders: null },
       secrets: {
         ...merged.secrets,
         [activeId]: {
           apiKey: topApiKey || existingPlain?.apiKey || '',
           tokenSource: topTokenSource || existingPlain?.tokenSource || '',
+          headers: topHeaders ?? existingPlain?.headers ?? [],
         },
       },
     };
   }
   const storedSecrets = {};
   for (const [id, bag] of Object.entries(merged.secrets)) {
-    const plain = isPlainSecretBag(bag) ? bag : (await plaintextSecretBagFromStored(bag));
-    if (!plain || (!plain.apiKey && !plain.tokenSource)) continue;
+    let plain = isPlainSecretBag(bag) ? bag : (await plaintextSecretBagFromStored(bag));
+    if (plain && isPlainSecretBag(bag) && bag.headers === undefined && existingSecrets?.[id]) {
+      plain = { ...plain, headers: (await plaintextSecretBagFromStored(existingSecrets[id]))?.headers ?? [] };
+    }
+    if (!plain || (!plain.apiKey && !plain.tokenSource && !secretBagHeaders(plain.headers).length)) continue;
     const encrypted = await encryptSavedConnectionSecretBag(plain);
     storedSecrets[id] = encrypted || plain;
   }
@@ -188,6 +201,9 @@ export function selectSavedConnection(settings, id) {
   if (id === current.activeSavedConnectionId) return current;
   return {
     ...current,
+    // Options a connection never set are off for it, not carried over from the one being left.
+    connectionHeaders: [],
+    connectionTrustSelfSigned: false,
     ...connectionConfig(target.connection),
     activeSavedConnectionId: id,
     // Each switch starts a fresh chat in every open panel. Each panel remembers

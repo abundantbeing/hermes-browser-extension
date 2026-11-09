@@ -24019,7 +24019,7 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     'browserControlEnabled', 'browserControlPaused',
     'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
     'trustedDashboardOrigin', 'trustedDashboardTabId',
-    'activeSavedConnectionId', 'savedConnections',
+    'activeSavedConnectionId', 'savedConnections', 'connectionHeaders', 'connectionTrustSelfSigned',
     // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
     // panel, they share this record, and adopting another panel's binding would make this one resume
     // (and then write into) the other panel's session on its next reconnect.
@@ -24027,14 +24027,15 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
   const connectionKeys = new Set([
     'apiKey', 'tokenSource', 'lastConnectionTestedAt',
     'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
-    'trustedDashboardOrigin', 'trustedDashboardTabId',
+    'trustedDashboardOrigin', 'trustedDashboardTabId', 'connectionHeaders', 'connectionTrustSelfSigned',
   ]);
   const patch = {};
   let connectionChanged = false;
   for (const key of tracked) {
     if (!Object.hasOwn(next, key)) continue;
     patch[key] = next[key];
-    if (connectionKeys.has(key) && next[key] !== settings[key]) connectionChanged = true;
+    const differs = Array.isArray(next[key]) ? JSON.stringify(next[key]) !== JSON.stringify(settings[key]) : next[key] !== settings[key];
+    if (connectionKeys.has(key) && differs) connectionChanged = true;
   }
   if (Object.keys(patch).length) {
     settings = { ...settings, ...patch };
