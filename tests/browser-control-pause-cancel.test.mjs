@@ -369,6 +369,43 @@ test('an appearance save during a queued Resume still completes the resume and k
   assert.equal(executed.length, 1);
 });
 
+test('a theme save that arrives while a Resume waits behind the heartbeat does not cancel that Resume', async () => {
+  const base = { ...settings(), browserControlPaused: true, appearanceTheme: 'nous' };
+  const storage = memoryStorage({ hermesBrowserSettings: base });
+  const pausedWrites = [];
+  const area = {
+    ...storage.area,
+    async set(values) {
+      if (values.hermesBrowserSettings) pausedWrites.push(values.hermesBrowserSettings.browserControlPaused);
+      return storage.area.set(values);
+    },
+  };
+  const transport = connector();
+  const worker = createControllerServiceWorker({
+    storageArea: area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async () => ({ ok: true, result: { status: 'done' } }),
+  });
+  await worker.boot();
+  let releaseHeartbeat;
+  const heartbeatHeld = new Promise((resolve) => { releaseHeartbeat = resolve; });
+  transport.connections[0].heartbeat = () => heartbeatHeld;
+  const reconciling = worker.reconcile({ reason: 'heartbeat-alarm' });
+  await settle();
+  const resumePromise = worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.resume }, extensionSender());
+  await settle();
+  const pausedBeforeTheme = pausedWrites.length;
+  const themeSave = worker.syncSettings({ ...base, appearanceTheme: 'mono' });
+  releaseHeartbeat({ ok: true });
+  await reconciling;
+  await resumePromise;
+  await themeSave;
+  assert.deepEqual(pausedWrites.slice(pausedBeforeTheme), [false]);
+});
+
 test('a Resume queued behind settings sync does not un-pause after storage reports paused', async () => {
   const base = { ...settings(), browserControlPaused: true, sessionId: 'session-before-resume' };
   const storage = memoryStorage({ hermesBrowserSettings: base });
