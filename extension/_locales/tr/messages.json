@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "Tarayıcı üzerinden oturum açmak için https adresi gerekir; bu bilgisayardaki adresler hariç.",
+    "message": "Tarayıcı üzerinden oturum açmak için https adresi gerekir.",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

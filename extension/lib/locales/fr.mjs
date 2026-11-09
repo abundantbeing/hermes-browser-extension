@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Saisissez l’adresse de la passerelle.",
   "addconn.err_address_invalid": "Cette adresse n’est pas une adresse http ou https valide.",
   "addconn.err_address_not_local": "Une connexion locale doit se trouver sur cet ordinateur. Choisissez Passerelle distante pour une autre adresse.",
-  "addconn.err_address_https": "La connexion par le navigateur nécessite une adresse https, sauf si elle se trouve sur cet ordinateur.",
+  "addconn.err_address_https": "La connexion par le navigateur nécessite une adresse https.",
   "addconn.method_browser": "Navigateur",
   "addconn.method_browser_desc": "Connectez-vous sur la page de la passerelle, ou approuvez cette extension là-bas. Le mot de passe se saisit sur cette page.",
   "addconn.method_token": "Jeton",

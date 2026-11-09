@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "กรอกที่อยู่ของเกตเวย์",
   "addconn.err_address_invalid": "นั่นไม่ใช่ที่อยู่ http หรือ https ที่ถูกต้อง",
   "addconn.err_address_not_local": "การเชื่อมต่อแบบท้องถิ่นต้องอยู่บนคอมพิวเตอร์เครื่องนี้ เลือกเกตเวย์ระยะไกลสำหรับที่อยู่อื่น",
-  "addconn.err_address_https": "การลงชื่อเข้าใช้ผ่านเบราว์เซอร์ต้องใช้ที่อยู่ https เว้นแต่จะอยู่บนคอมพิวเตอร์เครื่องนี้",
+  "addconn.err_address_https": "การลงชื่อเข้าใช้ผ่านเบราว์เซอร์ต้องใช้ที่อยู่ https",
   "addconn.method_browser": "เบราว์เซอร์",
   "addconn.method_browser_desc": "ลงชื่อเข้าใช้ที่หน้าของเกตเวย์เอง หรืออนุมัติส่วนขยายนี้ที่นั่น รหัสผ่านพิมพ์ในหน้านั้น",
   "addconn.method_token": "โทเค็น",

@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "Aanmelden via de browser vereist een https-adres, tenzij het op deze computer staat.",
+    "message": "Aanmelden via de browser vereist een https-adres.",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Gateway’in adresini girin.",
   "addconn.err_address_invalid": "Bu, geçerli bir http veya https adresi değil.",
   "addconn.err_address_not_local": "Yerel bağlantı bu bilgisayarda olmalıdır. Başka bir adres için Uzak Gateway’i seçin.",
-  "addconn.err_address_https": "Tarayıcı üzerinden oturum açmak için https adresi gerekir; bu bilgisayardaki adresler hariç.",
+  "addconn.err_address_https": "Tarayıcı üzerinden oturum açmak için https adresi gerekir.",
   "addconn.method_browser": "Tarayıcı",
   "addconn.method_browser_desc": "Gateway’in kendi sayfasında oturum açın veya bu eklentiyi orada onaylayın. Parola o sayfada yazılır.",
   "addconn.method_token": "Belirteç",

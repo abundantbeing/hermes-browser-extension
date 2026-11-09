@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "أدخل عنوان البوابة.",
   "addconn.err_address_invalid": "هذا ليس عنوان http أو https صالحاً.",
   "addconn.err_address_not_local": "يجب أن يكون الاتصال المحلي على هذا الجهاز. اختر «البوابة البعيدة» لعنوان آخر.",
-  "addconn.err_address_https": "يتطلب تسجيل الدخول عبر المتصفح عنواناً من نوع https، إلا إذا كانت البوابة على هذا الجهاز.",
+  "addconn.err_address_https": "يتطلب تسجيل الدخول عبر المتصفح عنواناً من نوع https.",
   "addconn.method_browser": "المتصفح",
   "addconn.method_browser_desc": "سجّل الدخول في صفحة البوابة نفسها، أو وافق على هذه الإضافة هناك. تُكتب كلمة المرور في تلك الصفحة.",
   "addconn.method_token": "الرمز",

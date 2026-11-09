@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "通过浏览器登录需要 https 地址，位于这台电脑上的地址除外。",
+    "message": "通过浏览器登录需要 https 地址。",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

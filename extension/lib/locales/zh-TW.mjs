@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "請輸入閘道器的位址。",
   "addconn.err_address_invalid": "這不是有效的 http 或 https 位址。",
   "addconn.err_address_not_local": "本機連線必須位於這台電腦上。若要其他位址，請選擇「遠端閘道器」。",
-  "addconn.err_address_https": "透過瀏覽器登入需要 https 位址，位於這台電腦上的位址除外。",
+  "addconn.err_address_https": "透過瀏覽器登入需要 https 位址。",
   "addconn.method_browser": "瀏覽器",
   "addconn.method_browser_desc": "在閘道器自己的頁面上登入，或在該頁面核准此擴充功能。密碼在該頁面輸入。",
   "addconn.method_token": "權杖",

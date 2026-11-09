@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "Вход через браузер требует адрес https, если только он не на этом компьютере.",
+    "message": "Вход через браузер требует адрес https.",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

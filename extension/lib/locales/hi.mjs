@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "प्रवेशद्वार का पता दर्ज करें।",
   "addconn.err_address_invalid": "यह मान्य http या https पता नहीं है।",
   "addconn.err_address_not_local": "स्थानीय कनेक्शन इसी कंप्यूटर पर होना चाहिए। किसी दूसरे पते के लिए दूरस्थ प्रवेशद्वार चुनें।",
-  "addconn.err_address_https": "ब्राउज़र से साइन इन के लिए https पता चाहिए, जब तक वह इसी कंप्यूटर पर न हो।",
+  "addconn.err_address_https": "ब्राउज़र से साइन इन के लिए https पता चाहिए।",
   "addconn.method_browser": "ब्राउज़र",
   "addconn.method_browser_desc": "प्रवेशद्वार के अपने पेज पर साइन इन करें, या वहीं इस एक्सटेंशन को मंज़ूरी दें। पासवर्ड उसी पेज पर टाइप होता है।",
   "addconn.method_token": "टोकन",

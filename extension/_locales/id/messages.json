@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "Masuk lewat peramban memerlukan alamat https, kecuali alamat itu ada di komputer ini.",
+    "message": "Masuk lewat peramban memerlukan alamat https.",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

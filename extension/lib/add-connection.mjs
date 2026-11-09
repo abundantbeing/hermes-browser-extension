@@ -66,7 +66,7 @@ export function stepProblems(draft, step) {
       problems.address = 'invalid';
     } else if (draft.type === 'local' && !isLoopbackGatewayUrl(parsed.origin)) {
       problems.address = LOCAL_ONLY;
-    } else if (draft.type === 'remote' && draft.method === 'browser' && parsed.protocol !== 'https:' && !isLoopbackGatewayUrl(parsed.origin)) {
+    } else if (draft.type === 'remote' && draft.method === 'browser' && parsed.protocol !== 'https:') {
       problems.address = 'https-required';
     }
   }

@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Введите адрес шлюза.",
   "addconn.err_address_invalid": "Это не допустимый адрес http или https.",
   "addconn.err_address_not_local": "Локальное подключение должно быть на этом компьютере. Для другого адреса выберите Удаленный шлюз.",
-  "addconn.err_address_https": "Вход через браузер требует адрес https, если только он не на этом компьютере.",
+  "addconn.err_address_https": "Вход через браузер требует адрес https.",
   "addconn.method_browser": "Браузер",
   "addconn.method_browser_desc": "Войдите на странице самого шлюза или подтвердите там это расширение. Пароль вводится на этой странице.",
   "addconn.method_token": "Токен",

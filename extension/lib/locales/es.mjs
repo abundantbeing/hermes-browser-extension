@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Introduzca la dirección del gateway.",
   "addconn.err_address_invalid": "Esa no es una dirección http o https válida.",
   "addconn.err_address_not_local": "Una conexión local debe estar en este equipo. Elija Gateway remoto para otra dirección.",
-  "addconn.err_address_https": "Iniciar sesión a través del navegador requiere una dirección https, salvo que esté en este equipo.",
+  "addconn.err_address_https": "Iniciar sesión a través del navegador requiere una dirección https.",
   "addconn.method_browser": "Navegador",
   "addconn.method_browser_desc": "Inicie sesión en la página propia del gateway o apruebe esta extensión allí. La contraseña se escribe en esa página.",
   "addconn.method_token": "Token",

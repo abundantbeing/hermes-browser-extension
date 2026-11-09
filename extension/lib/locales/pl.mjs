@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Wpisz adres Gateway.",
   "addconn.err_address_invalid": "To nie jest prawidłowy adres http ani https.",
   "addconn.err_address_not_local": "Połączenie lokalne musi być na tym komputerze. Dla innego adresu wybierz Zdalna bramka.",
-  "addconn.err_address_https": "Logowanie przez przeglądarkę wymaga adresu https, chyba że adres jest na tym komputerze.",
+  "addconn.err_address_https": "Logowanie przez przeglądarkę wymaga adresu https.",
   "addconn.method_browser": "Przeglądarka",
   "addconn.method_browser_desc": "Zaloguj się na stronie samego Gateway albo zatwierdź tam to rozszerzenie. Hasło wpisuje się na tej stronie.",
   "addconn.method_token": "Token",

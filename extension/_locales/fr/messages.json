@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "La connexion par le navigateur nécessite une adresse https, sauf si elle se trouve sur cet ordinateur.",
+    "message": "La connexion par le navigateur nécessite une adresse https.",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

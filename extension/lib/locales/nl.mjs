@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Vul het adres van de gateway in.",
   "addconn.err_address_invalid": "Dat is geen geldig http- of https-adres.",
   "addconn.err_address_not_local": "Een lokale verbinding moet op deze computer staan. Kies Externe gateway voor een ander adres.",
-  "addconn.err_address_https": "Aanmelden via de browser vereist een https-adres, tenzij het op deze computer staat.",
+  "addconn.err_address_https": "Aanmelden via de browser vereist een https-adres.",
   "addconn.method_browser": "Browser",
   "addconn.method_browser_desc": "Meld je aan op de eigen pagina van de gateway, of keur deze extensie daar goed. Een wachtwoord typ je op die pagina.",
   "addconn.method_token": "Token",

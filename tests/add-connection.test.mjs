@@ -30,7 +30,15 @@ test('a local connection may leave the address empty, and must stay on this comp
   assert.equal(stepProblems(draft({ type: 'local', address: 'https://hermes.example.com' }), 'where').address, 'not-local');
 });
 
-test('a remote connection needs a real address, and the browser sign-in needs https off this computer', () => {
+test('the browser sign-in of a remote gateway needs https, loopback included: the dashboard connection is https only', () => {
+  for (const address of ['http://127.0.0.1:9119', 'http://localhost:9119', 'http://[::1]:9119', 'http://192.168.1.20:9119']) {
+    assert.equal(stepProblems(draft({ type: 'remote', address, method: 'browser' }), 'where').address, 'https-required', address);
+  }
+  assert.deepEqual(stepProblems(draft({ type: 'remote', address: 'https://hermes.example.com', method: 'browser' }), 'where'), {});
+  assert.deepEqual(stepProblems(draft({ type: 'remote', address: 'http://127.0.0.1:8642', method: 'token', apiKey: 'k' }), 'where'), {}, 'a key over a tunnel to loopback is the API connection and may use http');
+});
+
+test('a remote connection needs a real address, and the browser sign-in needs https', () => {
   assert.equal(stepProblems(draft({ type: 'remote' }), 'where').address, 'required');
   assert.equal(stepProblems(draft({ type: 'remote', address: 'ftp://hermes.example.com' }), 'where').address, 'invalid');
   assert.equal(stepProblems(draft({ type: 'remote', address: 'https://user:pass@hermes.example.com' }), 'where').address, 'invalid');

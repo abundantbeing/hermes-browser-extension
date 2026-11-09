@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "ゲートウェイのアドレスを入力してください。",
   "addconn.err_address_invalid": "有効な http または https のアドレスではありません。",
   "addconn.err_address_not_local": "ローカル接続はこのコンピューター上にある必要があります。別のアドレスは「リモートゲートウェイ」を選んでください。",
-  "addconn.err_address_https": "ブラウザー経由のサインインには、このコンピューター上にある場合を除き https アドレスが必要です。",
+  "addconn.err_address_https": "ブラウザー経由のサインインには https アドレスが必要です。",
   "addconn.method_browser": "ブラウザー",
   "addconn.method_browser_desc": "ゲートウェイのページでサインインするか、そのページでこの拡張機能を承認します。パスワードはそのページに入力します。",
   "addconn.method_token": "トークン",

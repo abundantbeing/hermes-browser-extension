@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Nhập địa chỉ của cổng.",
   "addconn.err_address_invalid": "Đây không phải địa chỉ http hoặc https hợp lệ.",
   "addconn.err_address_not_local": "Kết nối cục bộ phải nằm trên máy tính này. Với địa chỉ khác, hãy chọn Cổng từ xa.",
-  "addconn.err_address_https": "Đăng nhập qua trình duyệt cần địa chỉ https, trừ khi địa chỉ nằm trên máy tính này.",
+  "addconn.err_address_https": "Đăng nhập qua trình duyệt cần địa chỉ https.",
   "addconn.method_browser": "Trình duyệt",
   "addconn.method_browser_desc": "Đăng nhập trên trang riêng của cổng, hoặc chấp thuận tiện ích này ở đó. Mật khẩu được nhập trên trang đó.",
   "addconn.method_token": "Mã thông báo",

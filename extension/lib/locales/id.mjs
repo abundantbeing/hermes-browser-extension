@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Masukkan alamat gerbang.",
   "addconn.err_address_invalid": "Itu bukan alamat http atau https yang valid.",
   "addconn.err_address_not_local": "Koneksi lokal harus berada di komputer ini. Pilih Gerbang jarak jauh untuk alamat lain.",
-  "addconn.err_address_https": "Masuk lewat peramban memerlukan alamat https, kecuali alamat itu ada di komputer ini.",
+  "addconn.err_address_https": "Masuk lewat peramban memerlukan alamat https.",
   "addconn.method_browser": "Peramban",
   "addconn.method_browser_desc": "Masuk di halaman gerbang itu sendiri, atau setujui ekstensi ini di sana. Kata sandi diketik di halaman tersebut.",
   "addconn.method_token": "Token",

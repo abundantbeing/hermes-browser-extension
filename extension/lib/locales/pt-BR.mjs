@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Informe o endereço do gateway.",
   "addconn.err_address_invalid": "Esse não é um endereço http ou https válido.",
   "addconn.err_address_not_local": "Uma conexão local precisa estar neste computador. Escolha Gateway remoto para outro endereço.",
-  "addconn.err_address_https": "Entrar pelo navegador exige um endereço https, a menos que ele esteja neste computador.",
+  "addconn.err_address_https": "Entrar pelo navegador exige um endereço https.",
   "addconn.method_browser": "Navegador",
   "addconn.method_browser_desc": "Entre na própria página do gateway ou aprove esta extensão lá. A senha é digitada nessa página.",
   "addconn.method_token": "Token",

@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "透過瀏覽器登入需要 https 位址，位於這台電腦上的位址除外。",
+    "message": "透過瀏覽器登入需要 https 位址。",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

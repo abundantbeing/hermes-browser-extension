@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "请输入网关地址。",
   "addconn.err_address_invalid": "这不是有效的 http 或 https 地址。",
   "addconn.err_address_not_local": "本地连接必须位于这台电脑上。如需其他地址，请选择“远程网关”。",
-  "addconn.err_address_https": "通过浏览器登录需要 https 地址，位于这台电脑上的地址除外。",
+  "addconn.err_address_https": "通过浏览器登录需要 https 地址。",
   "addconn.method_browser": "浏览器",
   "addconn.method_browser_desc": "在网关自己的页面上登录，或在该页面批准此扩展。密码在该页面输入。",
   "addconn.method_token": "令牌",

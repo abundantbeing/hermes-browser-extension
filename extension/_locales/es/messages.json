@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "Iniciar sesión a través del navegador requiere una dirección https, salvo que esté en este equipo.",
+    "message": "Iniciar sesión a través del navegador requiere una dirección https.",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

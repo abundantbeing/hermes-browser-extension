@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "게이트웨이 주소를 입력하세요.",
   "addconn.err_address_invalid": "올바른 http 또는 https 주소가 아닙니다.",
   "addconn.err_address_not_local": "로컬 연결은 이 컴퓨터에 있어야 합니다. 다른 주소는 원격 게이트웨이를 선택하세요.",
-  "addconn.err_address_https": "브라우저로 로그인하려면 https 주소가 필요합니다. 이 컴퓨터에 있는 주소라면 예외입니다.",
+  "addconn.err_address_https": "브라우저로 로그인하려면 https 주소가 필요합니다.",
   "addconn.method_browser": "브라우저",
   "addconn.method_browser_desc": "게이트웨이의 페이지에서 로그인하거나, 그 페이지에서 이 확장 프로그램을 승인합니다. 비밀번호는 그 페이지에 입력합니다.",
   "addconn.method_token": "토큰",

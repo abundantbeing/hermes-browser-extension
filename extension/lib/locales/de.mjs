@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Gib die Adresse des Gateways ein.",
   "addconn.err_address_invalid": "Das ist keine gültige http- oder https-Adresse.",
   "addconn.err_address_not_local": "Eine lokale Verbindung muss auf diesem Computer liegen. Wähle für eine andere Adresse Remote-Gateway.",
-  "addconn.err_address_https": "Die Anmeldung über den Browser braucht eine https-Adresse, außer das Gateway liegt auf diesem Computer.",
+  "addconn.err_address_https": "Die Anmeldung über den Browser braucht eine https-Adresse.",
   "addconn.method_browser": "Browser",
   "addconn.method_browser_desc": "Melde dich auf der eigenen Seite des Gateways an oder bestätige diese Erweiterung dort. Das Passwort gibst du auf dieser Seite ein.",
   "addconn.method_token": "Token",

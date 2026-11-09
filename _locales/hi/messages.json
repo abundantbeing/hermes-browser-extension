@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "ब्राउज़र से साइन इन के लिए https पता चाहिए, जब तक वह इसी कंप्यूटर पर न हो।",
+    "message": "ब्राउज़र से साइन इन के लिए https पता चाहिए।",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

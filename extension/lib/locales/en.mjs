@@ -22,7 +22,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Enter the gateway’s address.",
   "addconn.err_address_invalid": "That is not a valid http or https address.",
   "addconn.err_address_not_local": "A local connection has to be on this computer. Choose Remote gateway for another address.",
-  "addconn.err_address_https": "Signing in through the browser needs an https address, unless it is on this computer.",
+  "addconn.err_address_https": "Signing in through the browser needs an https address.",
   "addconn.method_browser": "Browser",
   "addconn.method_browser_desc": "Sign in on the gateway’s own page, or approve this extension there. A password is typed on that page.",
   "addconn.method_token": "Token",

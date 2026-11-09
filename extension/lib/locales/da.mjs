@@ -20,7 +20,7 @@ export default Object.freeze({
   "addconn.err_address_required": "Angiv gatewayens adresse.",
   "addconn.err_address_invalid": "Det er ikke en gyldig http- eller https-adresse.",
   "addconn.err_address_not_local": "En lokal forbindelse skal være på denne computer. Vælg Fjernbetjent gateway for en anden adresse.",
-  "addconn.err_address_https": "Login via browseren kræver en https-adresse, medmindre gatewayen er på denne computer.",
+  "addconn.err_address_https": "Login via browseren kræver en https-adresse.",
   "addconn.method_browser": "Browser",
   "addconn.method_browser_desc": "Log ind på gatewayens egen side, eller godkend denne udvidelse dér. En adgangskode skrives på den side.",
   "addconn.method_token": "Token",

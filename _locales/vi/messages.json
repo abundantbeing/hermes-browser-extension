@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "Đăng nhập qua trình duyệt cần địa chỉ https, trừ khi địa chỉ nằm trên máy tính này.",
+    "message": "Đăng nhập qua trình duyệt cần địa chỉ https.",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {

@@ -168,7 +168,7 @@
     "description": "Runtime interface message addconn.cert_title"
   },
   "runtime_addconn_err_address_https": {
-    "message": "Login via browseren kræver en https-adresse, medmindre gatewayen er på denne computer.",
+    "message": "Login via browseren kræver en https-adresse.",
     "description": "Runtime interface message addconn.err_address_https"
   },
   "runtime_addconn_err_address_invalid": {
