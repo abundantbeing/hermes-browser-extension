@@ -12,6 +12,7 @@ import {
   stepsFor,
 } from './add-connection.mjs';
 import { MAX_CONNECTION_HEADERS, normalizeConnectionHeaders } from './connection-headers.mjs';
+import { holdFocusInside } from './dialog-focus.mjs';
 import { probeConnection } from './probe-connection.mjs';
 
 const TITLE_KEYS = Object.freeze({ where: 'addconn.title_where', signin: 'addconn.title_signin', options: 'addconn.title_options' });
@@ -87,6 +88,7 @@ export function createAddConnectionDialog({
   let attempt = 0;
   let pendingTest = null;
   let committing = false;
+  const focusHold = holdFocusInside(root, dialog, () => stepFocusTarget());
 
   function endAttempt() {
     attempt += 1;
@@ -331,11 +333,13 @@ export function createAddConnectionDialog({
     render();
     dialog.hidden = false;
     dialog.setAttribute('aria-hidden', 'false');
+    focusHold.start();
     (stepFocusTarget() || dialog).focus();
   }
 
   function hide() {
     if (dialog.hidden || committing) return;
+    focusHold.stop();
     endAttempt();
     dialog.hidden = true;
     dialog.setAttribute('aria-hidden', 'true');
