@@ -34,7 +34,9 @@ test('classic content runtime is generated deterministically from the authored e
 test('generated classic runtime exposes the same schema and version without module imports', async () => {
   const rendered = await renderContentExtractorRuntime({ rootDir });
   const context = vm.createContext({ globalThis: {} });
+  context.globalThis = context;
   new vm.Script(rendered, { filename: 'content-extractor.js' }).runInContext(context);
+  await new Promise((resolve) => setTimeout(resolve, 0));
 
   const api = context.globalThis.HermesContentExtractor;
   assert.equal(api.schema, EXTRACTION_SCHEMA);
@@ -61,8 +63,8 @@ test('registered page script bundle loads the extractor before the content bridg
   const { buildRegisteredPageScriptDefinition } = await import('../extension/lib/page-script-host-policy.mjs');
   const packaged = buildRegisteredPageScriptDefinition({}, { packaged: true });
   const repository = buildRegisteredPageScriptDefinition({}, { packaged: false });
-  assert.deepEqual(packaged.js.slice(1, 3), ['content-extractor.js', 'content.js']);
-  assert.deepEqual(repository.js.slice(1, 3), ['extension/content-extractor.js', 'extension/content.js']);
+  assert.deepEqual(packaged.js.slice(2, 4), ['content-extractor.js', 'content.js']);
+  assert.deepEqual(repository.js.slice(2, 4), ['extension/content-extractor.js', 'extension/content.js']);
 });
 
 test('build scripts generate the classic runtime before copying extension files', async () => {

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { writeContentExtractorRuntime } from './build-content-runtime.mjs';
+import { writePageContextInstallGuard } from './build-page-context-guard.mjs';
 import { checkReferencedFonts } from './check-referenced-fonts.mjs';
 import { checkSelfContained } from './check-self-contained.mjs';
 import { syncHermesContextWindows } from './sync-hermes-context-windows.mjs';
@@ -13,6 +14,7 @@ const dest = path.join(root, 'dist');
 const buildInfoFileName = 'build-info.json';
 
 await writeContentExtractorRuntime({ rootDir: root });
+await writePageContextInstallGuard({ rootDir: root });
 await syncHermesContextWindows({ root });
 checkReferencedFonts({ root });
 checkSelfContained(src);

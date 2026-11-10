@@ -74,7 +74,7 @@ function classicModuleBody(source, authoredPath) {
 function renderClassicModule(module, source) {
   const sourceHash = createHash('sha256').update(source).digest('hex').slice(0, 16);
   const body = classicModuleBody(source, module.path);
-  return `/* ${module.path} · SHA-256 ${sourceHash} */\n(function ${module.runtimeName}(hermesGlobal) {\n  'use strict';\n  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;\n\n${body}\n\n  hermesGlobal.${module.globalName} = ${module.apiName};\n})(globalThis);`;
+  return `/* ${module.path} · SHA-256 ${sourceHash} */\n(function ${module.runtimeName}(hermesGlobal) {\n  'use strict';\n\n${body}\n\n  hermesGlobal.${module.globalName} = ${module.apiName};\n})(globalThis);`;
 }
 
 export async function renderContentExtractorRuntime({ rootDir = defaultRootDir } = {}) {
@@ -85,7 +85,8 @@ export async function renderContentExtractorRuntime({ rootDir = defaultRootDir }
     rendered.push(renderClassicModule(module, source));
   }
   const sources = AUTHORED_MODULES.map((module) => module.path).join(', ');
-  return `/* Generated from ${sources}. Do not edit directly. */\n${rendered.join('\n\n')}\n`;
+  const modules = rendered.join('\n\n');
+  return `/* Generated from ${sources}. Do not edit directly. */\n(function hermesContentExtractorPolicyGate() {\n  const policyReady = typeof globalThis.hermesPageScriptPolicyPromise === 'function'\n    ? globalThis.hermesPageScriptPolicyPromise()\n    : Promise.resolve(!globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__);\n  return policyReady.then(function hermesContentExtractorGate(inject) {\n    if (!inject) return;\n${modules}\n  });\n})();\n`;
 }
 
 export async function writeContentExtractorRuntime({

@@ -26,6 +26,9 @@ test('privateNetworkHost classifies RFC1918, loopback, and local names with edge
   assert.equal(privateNetworkHost('router.local'), true);
   assert.equal(privateNetworkHost('news.ycombinator.com'), false);
   assert.equal(privateNetworkHost('10.example.com'), false);
+  assert.equal(privateNetworkHost('127.0.0.2'), true);
+  assert.equal(privateNetworkHost('fd00::1'), true);
+  assert.equal(privateNetworkHost('fe80::1'), true);
 });
 
 test('isPrivateNetworkPageUrl ignores public sites and file URLs', () => {
@@ -118,7 +121,7 @@ test('registered page script definitions include a document_start guard', () => 
   const guard = defs.find((def) => def.runAt === 'document_start');
   const bundle = defs.find((def) => def.runAt === 'document_idle');
   assert.equal(guard?.js?.[0], 'page-context-install-guard.js');
-  assert.deepEqual(bundle.js.slice(0, 2), ['lib/browser-api-global.js', 'content-extractor.js']);
+  assert.deepEqual(bundle.js.slice(0, 3), ['lib/page-context-bundle-gate.js', 'lib/browser-api-global.js', 'content-extractor.js']);
   const def = buildRegisteredPageScriptDefinition({}, { packaged: true });
   assert.equal(def.id, 'hermes-page-context-bundle');
   assert.equal(def.runAt, 'document_idle');

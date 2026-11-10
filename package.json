@@ -35,6 +35,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build:content-runtime": "node scripts/build-content-runtime.mjs",
+    "build:page-context-guard": "node scripts/build-page-context-guard.mjs",
     "build": "node scripts/build.mjs",
     "build:firefox": "node scripts/build-firefox.mjs",
     "lint:firefox": "web-ext lint --self-hosted --source-dir dist/firefox",

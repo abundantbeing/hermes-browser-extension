@@ -1,8 +1,13 @@
 /* Generated from extension/lib/content-extraction-core.mjs, extension/lib/appearance-themes.mjs, extension/lib/site-adapters.mjs, extension/lib/inline-draft-policy.mjs, extension/lib/appearance-preferences.mjs, extension/lib/inline-assist-look.mjs, extension/lib/overlay-scrollbar.mjs, extension/lib/page-annotation-content.mjs. Do not edit directly. */
+(function hermesContentExtractorPolicyGate() {
+  const policyReady = typeof globalThis.hermesPageScriptPolicyPromise === 'function'
+    ? globalThis.hermesPageScriptPolicyPromise()
+    : Promise.resolve(!globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__);
+  return policyReady.then(function hermesContentExtractorGate(inject) {
+    if (!inject) return;
 /* extension/lib/content-extraction-core.mjs · SHA-256 62d0b33e7f417d7a */
 (function hermesContentExtractorRuntime(hermesGlobal) {
   'use strict';
-  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
 
 const EXTRACTION_SCHEMA = 'hermes.browser.extraction.v1';
 const EXTRACTION_VERSION = '1.0.0';
@@ -876,7 +881,6 @@ const CONTENT_EXTRACTION_API = Object.freeze({
 /* extension/lib/appearance-themes.mjs · SHA-256 668c0366c68e7abe */
 (function hermesAppearanceRuntime(hermesGlobal) {
   'use strict';
-  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
 
 const APPEARANCE_THEMES = Object.freeze([
   {
@@ -1069,7 +1073,6 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
 /* extension/lib/site-adapters.mjs · SHA-256 3fecf925f27e2d9a */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
-  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
 
 const SITE_ADAPTER_SCHEMA = 'hermes.browser.site-capability.v1';
 const SITE_ADAPTER_VERSION = '2.0.0';
@@ -2632,7 +2635,6 @@ const SITE_ADAPTER_API = Object.freeze({
 /* extension/lib/inline-draft-policy.mjs · SHA-256 46184a3ce861c257 */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
-  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
 
 const INLINE_DRAFT_MODE = 'draft-copy-only';
 const INLINE_DRAFT_SCHEMA = 'hermes.browser.inline-draft.v1';
@@ -3348,7 +3350,6 @@ const INLINE_DRAFT_API = Object.freeze({
 /* extension/lib/appearance-preferences.mjs · SHA-256 6a50d76677377924 */
 (function hermesAppearancePreferencesRuntime(hermesGlobal) {
   'use strict';
-  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
 
 // Pure appearance-preference contract shared by the side panel and Hermes Web.
 //
@@ -3628,7 +3629,6 @@ const APPEARANCE_PREFERENCES_API = Object.freeze({
 /* extension/lib/inline-assist-look.mjs · SHA-256 c35c62e3dba14d0a */
 (function hermesInlineAssistLookRuntime(hermesGlobal) {
   'use strict';
-  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
 
 // How Hermes Assist looks on a page: which icon the trigger circle carries, which tone the circle takes
 // against the page behind it, and what clicking it opens. Import-free: scripts/build-content-runtime.mjs
@@ -3988,7 +3988,6 @@ const INLINE_ASSIST_LOOK_API = Object.freeze({
 /* extension/lib/overlay-scrollbar.mjs · SHA-256 4dd92f9f9642735f */
 (function hermesOverlayScrollbarRuntime(hermesGlobal) {
   'use strict';
-  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
 
 // Scrollbars that float over what they scroll. The browser's own bar is hidden, so nothing keeps a strip
 // beside the content, and the branded thumb is the area's own ::before box: sticky at the top of what
@@ -4165,7 +4164,6 @@ const OVERLAY_SCROLLBAR_API = Object.freeze({
 /* extension/lib/page-annotation-content.mjs · SHA-256 b97ab46ad11b8032 */
 (function hermesPageAnnotationRuntime(hermesGlobal) {
   'use strict';
-  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
 
 const PAGE_ANNOTATION_MESSAGES = Object.freeze({
   START: 'HERMES_START_PAGE_ANNOTATION',
@@ -4733,3 +4731,5 @@ const PAGE_ANNOTATION_CONTENT_API = Object.freeze({
 
   hermesGlobal.HermesPageAnnotation = PAGE_ANNOTATION_CONTENT_API;
 })(globalThis);
+  });
+})();
