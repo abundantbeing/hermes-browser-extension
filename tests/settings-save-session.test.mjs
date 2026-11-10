@@ -4,20 +4,6 @@ import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { applyStoredSettingsAfterSave, connectionIdentityChanged, sessionTitleRenameTarget } from '../extension/lib/settings-save-effects.mjs';
-
-function maybeRenameLikeProduction(scope) {
-  return async (previousSettings, nextTitle, savedSessionId = '') => {
-    const cleanTitle = String(nextTitle || '').trim();
-    const formSessionId = String(previousSettings.sessionId || '').trim();
-    const sessionId = sessionTitleRenameTarget(savedSessionId, scope.settings.sessionId);
-    const current = scope.availableSessions?.find((session) => session.id === sessionId);
-    const previousTitle = String(
-      current?.title || (sessionId === formSessionId ? previousSettings.sessionTitle : '') || '',
-    ).trim();
-    if (!sessionId || !cleanTitle || cleanTitle === previousTitle) return false;
-    return scope.renameHermesSessionTitle(sessionId, cleanTitle);
-  };
-}
 import { createSettingsSaveHarness } from './helpers/settings-save-harness.mjs';
 import { rememberSavedConnection } from '../extension/lib/saved-connections.mjs';
 import { normalizeGatewayUrl } from '../extension/lib/common.mjs';
@@ -134,7 +120,9 @@ test('a successful Save keeps the child session adopted while the write waited',
       ],
       renameHermesSessionTitle: async (id, title) => { renames.push({ id, title }); return true; },
       refreshAfterSettingsSave: async () => {},
+      setStatus: () => {},
     });
+    delete h.scope.maybeRenameCurrentSessionTitle;
     h.els.sessionIdInput.value = 'parent';
     h.els.sessionIdInput.dataset.syncedValue = 'parent';
     h.els.sessionTitleInput.value = 'Parent title';
@@ -180,9 +168,10 @@ test('a typed title during a mid-write successor renames the form chat, not the 
         { id: 'child', title: 'Child title' },
       ],
       renameHermesSessionTitle: async (id, title) => { renames.push({ id, title }); return true; },
-      maybeRenameCurrentSessionTitle: maybeRenameLikeProduction(h.scope),
       refreshAfterSettingsSave: async () => {},
+      setStatus: () => {},
     });
+    delete h.scope.maybeRenameCurrentSessionTitle;
     h.els.sessionIdInput.value = 'parent';
     h.els.sessionIdInput.dataset.syncedValue = 'parent';
     h.els.sessionTitleInput.value = 'Typed rename';
@@ -238,9 +227,10 @@ test('Save renames the session ID the form chose when Session ID and title are e
         { id: 'session-b', title: 'Title B' },
       ],
       renameHermesSessionTitle: async (id, title) => { renames.push({ id, title }); return true; },
-      maybeRenameCurrentSessionTitle: maybeRenameLikeProduction(h.scope),
       refreshAfterSettingsSave: async () => {},
+      setStatus: () => {},
     });
+    delete h.scope.maybeRenameCurrentSessionTitle;
     h.els.sessionIdInput.value = 'session-b';
     h.els.sessionIdInput.dataset.syncedValue = 'session-a';
     h.els.sessionTitleInput.value = 'Renamed for B';
