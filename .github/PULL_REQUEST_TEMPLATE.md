@@ -40,6 +40,7 @@ Fixes #
 ### Code & Manifest
 
 - [ ] I've read the [Contributing Guide](https://github.com/abundantbeing/hermes-browser-extension/blob/main/CONTRIBUTING.md)
+- [ ] This PR changes extension code or extension docs (not third-party/vendor setup)
 - [ ] My commit messages follow Conventional Commits (`fix(scope):`, `feat(scope):`, etc.)
 - [ ] My PR contains **only** changes related to this fix/feature (no unrelated commits or workspace artifacts)
 - [ ] All tests pass: `npm test` (and `npm run verify`)

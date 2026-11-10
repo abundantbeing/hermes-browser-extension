@@ -2,6 +2,10 @@
 
 Thank you for contributing to Hermes Browser Extension! This guide outlines our architecture, development workflow, and the quality standards required to get pull requests reviewed and merged.
 
+## Scope
+
+This repo covers the browser extension only. We don't accept docs, examples, or configs for third-party tools, search providers, MCP servers, or other vendor integrations that don't involve changes to the extension's code. That belongs in the Hermes docs or the vendor's own docs. This applies equally to all vendors, including affiliated contributors. PRs of this kind will be closed without review.
+
 ---
 
 ## 1. Core Architecture Principles
