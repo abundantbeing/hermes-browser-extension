@@ -2,7 +2,7 @@ name: Scope check
 
 on:
   pull_request_target:
-    types: [opened, edited]
+    types: [opened, edited, synchronize]
 
 permissions:
   contents: read
@@ -26,6 +26,18 @@ jobs:
               /search provider/i,
               /opt-in .* configuration/i,
             ];
+
+            // Guide basenames that look like vendor/MCP setup docs — edit this pattern
+            const vendorGuideBasenamePattern = /mcp|search-provider|-search/i;
+
+            const isVendorSetupPath = (filename) => {
+              if (filename.startsWith('examples/')) return true;
+              if (filename.startsWith('guides/')) {
+                const basename = filename.slice('guides/'.length);
+                return vendorGuideBasenamePattern.test(basename);
+              }
+              return false;
+            };
 
             const { owner, repo, number } = context.issue;
             const pr = context.payload.pull_request;
@@ -53,14 +65,10 @@ jobs:
               if (response.data.length < 100) break;
             }
 
-            const onlyGuidesOrExamples =
-              files.length > 0 &&
-              files.every(
-                (file) =>
-                  file.filename.startsWith('guides/') || file.filename.startsWith('examples/'),
-              );
+            const onlyVendorSetupPaths =
+              files.length > 0 && files.every((file) => isVendorSetupPath(file.filename));
 
-            if (!keywordMatch && !onlyGuidesOrExamples) {
+            if (!keywordMatch && !onlyVendorSetupPaths) {
               core.info('PR is in scope; no action.');
               return;
             }
