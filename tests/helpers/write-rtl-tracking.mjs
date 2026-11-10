@@ -36,7 +36,12 @@ export function expectedBlock() {
 
 if (process.argv[1]?.endsWith('write-rtl-tracking.mjs')) {
   const file = path.join(root, 'extension/sidepanel.css');
-  const css = withoutRtlBlock(fs.readFileSync(file, 'utf8'));
-  fs.writeFileSync(file, `${css.replace(/\n*$/, '\n')}\n${expectedBlock()}`);
+  const source = fs.readFileSync(file, 'utf8');
+  const start = source.indexOf(RTL_BLOCK_START);
+  const end = start < 0 ? -1 : source.indexOf(RTL_BLOCK_END, start);
+  const block = expectedBlock();
+  fs.writeFileSync(file, end < 0
+    ? `${source.replace(/\n*$/, '\n')}\n${block}`
+    : `${source.slice(0, start)}${block.replace(/\n$/, '')}${source.slice(end + RTL_BLOCK_END.length)}`);
   console.log('wrote the RTL typography block');
 }

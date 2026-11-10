@@ -1,3 +1,4 @@
+import { hydrateHermesBrowserSettingsFromStorage, SAVED_CONNECTION_SECRETS_STORAGE_KEY } from './saved-connections.mjs';
 import { BACKGROUND_BROWSER_SESSION, CONTROLLER_METHODS } from './controller-protocol.mjs';
 import { createLoadWaiter } from './browser-control-browser-adapters.mjs';
 import { sha256Hex } from './browser-control-artifacts.mjs';
@@ -230,8 +231,10 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
 
   async function reconcile() {
     const readRevision = revision;
-    const saved = await storage.local.get(['hermesBrowserSettings', BACKGROUND_BROWSER_CONSENT]);
-    const settings = saved.hermesBrowserSettings || {};
+    const saved = await storage.local.get([
+      'hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY, BACKGROUND_BROWSER_CONSENT,
+    ]);
+    const settings = await hydrateHermesBrowserSettingsFromStorage(saved);
     const consentIdentity = await backgroundBrowserConsentIdentity(settings);
     if (readRevision !== revision) return;
     const enabled = consentIdentity && saved[BACKGROUND_BROWSER_CONSENT] === consentIdentity;
@@ -281,7 +284,7 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   return {
     settingsChanged(changes) {
       const change = changes.hermesBrowserSettings;
-      if (changes[BACKGROUND_BROWSER_CONSENT] || (change && (
+      if (changes[BACKGROUND_BROWSER_CONSENT] || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || (change && (
         backgroundBrowserGateway(change.oldValue) !== backgroundBrowserGateway(change.newValue)
         || backgroundBrowserApiKey(change.oldValue) !== backgroundBrowserApiKey(change.newValue)
       ))) {

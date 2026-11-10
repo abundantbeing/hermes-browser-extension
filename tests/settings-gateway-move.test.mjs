@@ -34,6 +34,18 @@ test('the same gateway, under another spelling, keeps everything', () => {
   assert.equal(gatewayMoveResets(local, { ...local, gatewayUrl: 'http://127.0.0.1:8643' }).activeProfile, '');
 });
 
+test('custom headers stay with the origin they were saved for: another address, even another loopback port, gets none', () => {
+  const proxied = { ...local, connectionHeaders: [{ name: 'X-Proxy-Token', value: 'secret' }], connectionTrustSelfSigned: true };
+  for (const gatewayUrl of ['http://127.0.0.1:8643', 'http://100.64.0.9:8642', 'https://agent.example.com']) {
+    const resets = gatewayMoveResets(proxied, { ...proxied, gatewayUrl });
+    assert.deepEqual(resets.connectionHeaders, [], gatewayUrl);
+    assert.equal(resets.connectionTrustSelfSigned, false, gatewayUrl);
+  }
+  assert.deepEqual(gatewayMoveResets(proxied, { ...proxied, gatewayUrl: 'http://localhost:8642/' }), {}, 'the same origin keeps them');
+  assert.equal('connectionHeaders' in gatewayMoveResets({ ...local, connectionHeaders: [] }, { ...local, gatewayUrl: 'http://10.0.0.2:8642' }), false, 'nothing to clear');
+  assert.deepEqual(gatewayMoveResets({ ...local, connectionHeaders: null }, { ...local, gatewayUrl: 'http://10.0.0.2:8642' }).connectionHeaders, [], 'headers not read yet are not carried either');
+});
+
 test('Save and an unsaved Connect both apply the resets', () => {
   const save = source.slice(source.indexOf('async function saveSettingsFromForm('), source.indexOf('const connectionChanged = previousSettings.connectionMode'));
   assert.match(save, /const moved = gatewayMoveResets\(previousSettings, settings\);/);

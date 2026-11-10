@@ -8,6 +8,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 import { materializeSessionRoute, sessionRouteError } from '../extension/lib/session-materialization.mjs';
+import { packedHermesBrowserSettingsWrite } from '../extension/lib/saved-connections.mjs';
 
 const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 
@@ -29,6 +30,9 @@ function harness(answers, { sessionId = '' } = {}) {
     gatewayCapabilities: {},
     gatewayQuirks: { load: async () => {}, beginProbe: () => false, endProbe: () => {} },
     GATEWAY_QUIRK: { SESSION_SOURCE_PATCH: 'x' },
+    setPackedBrowserSettings: async (next) => {
+      stored.push(await packedHermesBrowserSettingsWrite(structuredClone(next), null));
+    },
     browserApi: { storage: { local: { set: async (value) => { stored.push(value); } } } },
     makeBrowserSessionId: () => 'hermes-browser-extension-draft-1',
     makeBrowserSessionTitle: () => 'Hermes Browser Extension draft 1',

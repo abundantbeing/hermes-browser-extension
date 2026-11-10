@@ -382,8 +382,8 @@ test('a changed connection clears the sign-in made for the old one, and only tha
   await p.run('clearAccountForConnection()');
   assert.ok(await p.run('hermesAccountStore().get(\'https://hermes.example.com\')'), 'this connection\'s sign-in stays');
   assert.equal(await p.run('hermesAccountStore().get(\'https://other.example.com\')'), null, 'the other connection\'s is gone');
-  // Save runs it when the identity changed
-  const save = slice('const identityChanged = connectionIdentityChanged(', 'if (connectionChanged) {');
+  // Save runs it when the identity changed, once the new settings are stored: a refused save keeps the sign-in
+  const save = slice('let renameFor = { title: settings.sessionTitle, sessionId: settings.sessionId };', 'await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]');
   assert.match(save, /if \(identityChanged\) void clearAccountForConnection\(\)/);
 });
 

@@ -41,9 +41,13 @@ try {
     gatewayUrl, connectionTransport: 'local-api', apiKey: TEST_ACCESS_VALUE, browserControlEnabled: false,
   };
   const consent = await backgroundBrowserConsentIdentity(settings);
-  await page.evaluate(`chrome.storage.local.set(${JSON.stringify({
-    hermesBrowserSettings: settings, [BACKGROUND_BROWSER_CONSENT]: consent,
-  })})`);
+  const storedApiKey = await page.evaluate(`(async () => {
+    const { packSavedConnectionStorage } = await import(chrome.runtime.getURL('lib/saved-connections.mjs'));
+    const packed = await packSavedConnectionStorage(${JSON.stringify(settings)});
+    await chrome.storage.local.set({ ...packed, [${JSON.stringify(BACKGROUND_BROWSER_CONSENT)}]: ${JSON.stringify(consent)} });
+    return packed.hermesBrowserSettings.apiKey;
+  })()`);
+  assert.equal(storedApiKey, '', 'background control must load the key from encrypted storage');
   const controller = await waitFor(() => fixture.connections[0]);
   assert.equal(fixture.registrations[0].session_id, 'hermes:background-browser:v1');
   assert.equal(fixture.registrations[0].capabilities.includes('browser_batch'), false);

@@ -29,9 +29,24 @@ export function sessionIdForSave({ typed = '', synced, viewed = '', fallback = '
   return value || fallback;
 }
 
+/** Same contract as sessionIdForSave, for the Session title field on the settings form. */
+export function sessionTitleForSave({ typed = '', synced, viewed = '', fallback = '' } = {}) {
+  const value = String(typed ?? '').trim();
+  const untouched = typeof synced === 'string' && value === synced.trim();
+  if (untouched) return String(viewed ?? '').trim() || fallback;
+  return value || fallback;
+}
+
+/** Which session a Save title rename belongs to: the id the form composed, not a later live successor. */
+export function sessionTitleRenameTarget(savedSessionId = '', liveSessionId = '') {
+  const saved = String(savedSessionId ?? '').trim();
+  if (saved) return saved;
+  return String(liveSessionId ?? '').trim();
+}
+
 // The gateway a URL names, for "is this the same gateway": scheme, host and port, with every
 // loopback spelling (localhost, 127.0.0.1, [::1]) as one host. '' for a value that is no URL.
-function gatewayKey(value) {
+export function gatewayKey(value) {
   try {
     const url = new URL(String(value ?? '').trim());
     const loopback = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(url.hostname.toLowerCase());
@@ -54,10 +69,33 @@ export function gatewayMoveResets(previous = {}, next = {}) {
   const after = gatewayKey(next?.gatewayUrl);
   if (!before || !after || before === after) return {};
   const pairedToken = next?.tokenSource === 'pairing' && String(next?.apiKey ?? '') === String(previous?.apiKey ?? '');
+  // Custom headers are bound to the origin they were saved for: they are secrets for that proxy and
+  // never go to another address, not even for the first health request of a Connect.
+  const headersBound = Array.isArray(previous?.connectionHeaders) ? previous.connectionHeaders.length > 0 : previous?.connectionHeaders === null;
   return {
     activeProfile: '',
     botModeSelectedProfile: '',
     botModeReturnProfile: '',
     ...(pairedToken ? { apiKey: '', tokenSource: '' } : {}),
+    ...(headersBound ? { connectionHeaders: [] } : {}),
+    ...(previous?.connectionTrustSelfSigned === true ? { connectionTrustSelfSigned: false } : {}),
+  };
+}
+
+/** After a successful Save, keep session identity the panel advanced while the write waited. */
+export function applyStoredSettingsAfterSave(stored = {}, live = {}, owned = {}) {
+  if (owned && typeof owned === 'object' && 'sessionId' in owned) return stored;
+  const liveId = String(live?.sessionId ?? '').trim();
+  const storedId = String(stored?.sessionId ?? '').trim();
+  if (!liveId || liveId === storedId) return stored;
+  const binding = live?.remoteDashboardSession;
+  const liveTitle = String(live?.sessionTitle ?? '').trim();
+  return {
+    ...stored,
+    sessionId: liveId,
+    sessionTitle: liveTitle || liveId,
+    ...(binding?.storedSessionId === liveId
+      ? { remoteDashboardSession: { ...(stored?.remoteDashboardSession || {}), ...binding, storedSessionId: liveId } }
+      : {}),
   };
 }

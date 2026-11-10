@@ -54,6 +54,7 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
       local: {
         get: async (key) => (typeof key === 'string' ? { [key]: structuredClone(store[key]) } : structuredClone(store)),
         set: async (patch) => { Object.assign(store, structuredClone(patch)); },
+        remove: async (keys) => { for (const key of [keys].flat()) delete store[key]; },
       },
     },
   };
@@ -75,6 +76,9 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
     browserApi,
     availableModels: [],
     settings: { ...imported.get('DEFAULT_SETTINGS'), ...initial },
+    loadedSavedConnectionId: initial.activeSavedConnectionId || '',
+    loadedSavedConnectionRevision: Number(initial.savedConnectionSwitchRevision) || 0,
+    appearanceWriteQueue: Promise.resolve(),
     connectionController: { cancel: record('connectionController.cancel') },
     remoteWsConnection: null,
     profileWsConnection: null,
@@ -110,6 +114,9 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
     updateConnectionPrompt: record('updateConnectionPrompt'),
     getAgentPorts: () => target.settings.agentPorts || imported.get('DEFAULT_SETTINGS')?.agentPorts || [8642],
   };
+  for (const [name, value] of imported) {
+    if (!(name in target)) target[name] = value;
+  }
   const compiled = new Map();
   const scope = new Proxy(target, {
     has: (obj, key) => typeof key === 'string' && (key in obj || imported.has(key) || functions.has(key)),
