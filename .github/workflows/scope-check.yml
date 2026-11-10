@@ -12,6 +12,9 @@ permissions:
 jobs:
   scope-check:
     runs-on: ubuntu-latest
+    concurrency:
+      group: scope-check-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
     # Do not skip PRs from the repo owner: vendor-scope docs should be flagged the same as any other contributor.
     steps:
       - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
@@ -91,10 +94,9 @@ jobs:
             }
 
             const marker = '<!-- scope-check -->';
-            const commentBody = `${marker}
-Thanks for the PR! A quick heads-up: this repo covers the browser extension itself, so docs or configs for third-party tools, search providers or MCP servers usually belong in the Hermes docs or the vendor's docs. See the Scope section in CONTRIBUTING.md. A maintainer will take a look.`;
+            const commentBody = `${marker}\nThanks for the PR! A quick heads-up: this repo covers the browser extension itself, so docs or configs for third-party tools, search providers or MCP servers usually belong in the Hermes docs or the vendor's docs. See the Scope section in CONTRIBUTING.md. A maintainer will take a look.`;
 
-            const { data: comments } = await github.rest.issues.listComments({
+            const comments = await github.paginate(github.rest.issues.listComments, {
               owner,
               repo,
               issue_number: number,
