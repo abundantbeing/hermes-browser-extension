@@ -346,7 +346,8 @@ export function privateNetworkHost(host = '') {
   const name = String(host || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
   if (!name) return false;
   if (name === 'localhost' || name.endsWith('.localhost') || name === '::1') return true;
-  if (/^(fc|fd)[0-9a-f]{2}:|^fe80:/.test(name)) return true;
+  if (/^(fc|fd)[0-9a-f]{2}:/.test(name)) return true;
+  if (/^fe[89ab][0-9a-f]:/i.test(name)) return true;
   const ipv4 = name.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (ipv4) {
     const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];

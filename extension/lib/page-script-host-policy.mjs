@@ -90,8 +90,7 @@ export function urlMatchesExcludedOrigin(url = '', excludedOrigins = []) {
   const host = parsed.hostname.toLowerCase();
   const port = parsed.port ? `:${parsed.port}` : '';
   const candidate = `${parsed.protocol}//${host}${port}`;
-  const candidateDefaultPort = `${parsed.protocol}//${host}`;
-  return origins.some((origin) => origin === candidate || origin === candidateDefaultPort);
+  return origins.some((origin) => origin === candidate);
 }
 
 /**
@@ -168,7 +167,17 @@ export function originToExcludeMatchPatterns(origin = '') {
   const host = parsed.hostname.includes(':') && !parsed.hostname.startsWith('[')
     ? `[${parsed.hostname}]`
     : parsed.hostname;
-  return [`http://${host}/*`, `https://${host}/*`];
+  return [`${parsed.protocol}//${host}/*`];
+}
+
+/** Whether the active extension serves page-context scripts from dist/ (lib/...) or repo root (extension/...). */
+export function extensionPageContextPackaged(getManifest = () => {
+  const runtime = globalThis.browser?.runtime || globalThis.chrome?.runtime;
+  return typeof runtime?.getManifest === 'function' ? runtime.getManifest() : {};
+}) {
+  const files = (getManifest()?.content_scripts || []).flatMap((entry) => entry.js || []);
+  if (files.some((file) => String(file).startsWith('extension/'))) return false;
+  return true;
 }
 
 export function buildPageScriptExcludeMatchPatterns(settings = {}) {

@@ -4236,7 +4236,7 @@
     "description": "Runtime interface message settings.models.title"
   },
   "runtime_settings_page_context_excluded_detail": {
-    "message": "One origin per line, such as https://192.168.8.1:9443 or https://news.example.com. Applies on public and private sites.",
+    "message": "Un’origine per riga, ad es. https://192.168.8.1:9443 o https://news.example.com. Vale su siti pubblici e privati.",
     "description": "Runtime interface message settings.page_context_excluded.detail"
   },
   "runtime_settings_page_context_excluded_placeholder": {
@@ -4244,23 +4244,23 @@
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
   "runtime_settings_page_context_excluded_title": {
-    "message": "Exclude these origins from page scripts",
+    "message": "Escludi queste origini dagli script di pagina",
     "description": "Runtime interface message settings.page_context_excluded.title"
   },
   "runtime_settings_page_context_private_enable_detail": {
-    "message": "Turn this on when you want Assist, extraction, and inline help on router dashboards, Tailscale hosts, or other non-public addresses.",
+    "message": "Attivalo quando vuoi Assist, estrazione e aiuto inline su dashboard router, host Tailscale o altri indirizzi non pubblici.",
     "description": "Runtime interface message settings.page_context_private.enable_detail"
   },
   "runtime_settings_page_context_private_enable_label": {
-    "message": "Run page scripts on private and LAN sites",
+    "message": "Esegui script di pagina su siti privati e LAN",
     "description": "Runtime interface message settings.page_context_private.enable_label"
   },
   "runtime_settings_page_context_private_summary": {
-    "message": "Hermes skips its page scripts on home, office, and router addresses by default so self-hosted dashboards keep rendering. Loopback Hermes Web launch pages still use their own lightweight hand-off scripts.",
+    "message": "Hermes salta per impostazione predefinita gli script di pagina su indirizzi domestici, di ufficio e router così le dashboard self-hosted continuano a essere renderizzate. Le pagine di avvio Hermes Web in loopback usano script di passaggio leggeri propri.",
     "description": "Runtime interface message settings.page_context_private.summary"
   },
   "runtime_settings_page_context_private_title": {
-    "message": "Private and LAN pages",
+    "message": "Pagine private e LAN",
     "description": "Runtime interface message settings.page_context_private.title"
   },
   "runtime_settings_permissions_copy": {
@@ -4356,15 +4356,15 @@
     "description": "Runtime interface message status.page_context_restricted"
   },
   "runtime_status_page_context_skipped": {
-    "message": "{url} — Page context was skipped because Hermes did not inject scripts on this page.",
+    "message": "{url} — Contesto pagina saltato perché Hermes non ha iniettato script su questa pagina.",
     "description": "Runtime interface message status.page_context_skipped"
   },
   "runtime_status_page_context_skipped_excluded": {
-    "message": "{url} — Hermes left page scripts off for this site because it is on your exclude list in Settings → Permissions.",
+    "message": "{url} — Hermes ha lasciato gli script di pagina disattivati per questo sito perché è nell’elenco esclusioni in Impostazioni → Autorizzazioni.",
     "description": "Runtime interface message status.page_context_skipped_excluded"
   },
   "runtime_status_page_context_skipped_private": {
-    "message": "{url} — Hermes did not inject page scripts on this private or LAN address. Turn on private page scripts in Settings → Permissions, or remove the origin from the exclude list.",
+    "message": "{url} — Hermes non ha iniettato script di pagina su questo indirizzo privato o LAN. Attiva gli script privati in Impostazioni → Autorizzazioni o rimuovi l’origine dall’elenco esclusioni.",
     "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
@@ -7280,11 +7280,11 @@
     "description": "Runtime interface message ui.page"
   },
   "runtime_ui_page_context_off_chip": {
-    "message": "📎 Page context off for this site",
+    "message": "📎 Contesto pagina disattivato per questo sito",
     "description": "Runtime interface message ui.page_context_off_chip"
   },
   "runtime_ui_page_context_skipped": {
-    "message": "Page context skipped",
+    "message": "Contesto pagina saltato",
     "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {

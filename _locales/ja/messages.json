@@ -4236,7 +4236,7 @@
     "description": "Runtime interface message settings.models.title"
   },
   "runtime_settings_page_context_excluded_detail": {
-    "message": "One origin per line, such as https://192.168.8.1:9443 or https://news.example.com. Applies on public and private sites.",
+    "message": "1 行に 1 オリジン。例: https://192.168.8.1:9443 または https://news.example.com. 公開・プライベートの両方に適用されます。",
     "description": "Runtime interface message settings.page_context_excluded.detail"
   },
   "runtime_settings_page_context_excluded_placeholder": {
@@ -4244,23 +4244,23 @@
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
   "runtime_settings_page_context_excluded_title": {
-    "message": "Exclude these origins from page scripts",
+    "message": "これらのオリジンをページスクリプトから除外",
     "description": "Runtime interface message settings.page_context_excluded.title"
   },
   "runtime_settings_page_context_private_enable_detail": {
-    "message": "Turn this on when you want Assist, extraction, and inline help on router dashboards, Tailscale hosts, or other non-public addresses.",
+    "message": "ルーターダッシュボード、Tailscale ホスト、その他の非公開アドレスで Assist・抽出・インラインヘルプが必要なときにオンにします。",
     "description": "Runtime interface message settings.page_context_private.enable_detail"
   },
   "runtime_settings_page_context_private_enable_label": {
-    "message": "Run page scripts on private and LAN sites",
+    "message": "プライベートおよび LAN サイトでページスクリプトを実行",
     "description": "Runtime interface message settings.page_context_private.enable_label"
   },
   "runtime_settings_page_context_private_summary": {
-    "message": "Hermes skips its page scripts on home, office, and router addresses by default so self-hosted dashboards keep rendering. Loopback Hermes Web launch pages still use their own lightweight hand-off scripts.",
+    "message": "Hermes は既定で自宅・オフィス・ルーターアドレスではページスクリプトをスキップし、自己ホストのダッシュボードが描画され続けます。ループバックの Hermes Web 起動ページは独自の軽量ハンドオフスクリプトを使います。",
     "description": "Runtime interface message settings.page_context_private.summary"
   },
   "runtime_settings_page_context_private_title": {
-    "message": "Private and LAN pages",
+    "message": "プライベートおよび LAN ページ",
     "description": "Runtime interface message settings.page_context_private.title"
   },
   "runtime_settings_permissions_copy": {
@@ -4356,15 +4356,15 @@
     "description": "Runtime interface message status.page_context_restricted"
   },
   "runtime_status_page_context_skipped": {
-    "message": "{url} — Page context was skipped because Hermes did not inject scripts on this page.",
+    "message": "{url} — このページに Hermes がスクリプトを注入しなかったため、ページコンテキストをスキップしました。",
     "description": "Runtime interface message status.page_context_skipped"
   },
   "runtime_status_page_context_skipped_excluded": {
-    "message": "{url} — Hermes left page scripts off for this site because it is on your exclude list in Settings → Permissions.",
+    "message": "{url} — Hermesは設定 → 権限の除外リストに含まれるため、このサイトではページスクリプトはオフのままです。",
     "description": "Runtime interface message status.page_context_skipped_excluded"
   },
   "runtime_status_page_context_skipped_private": {
-    "message": "{url} — Hermes did not inject page scripts on this private or LAN address. Turn on private page scripts in Settings → Permissions, or remove the origin from the exclude list.",
+    "message": "{url} — このプライベートまたは LAN アドレスでは Hermes はページスクリプトを注入しませんでした。設定 → 権限でプライベートページスクリプトをオンにするか、除外リストからオリジンを削除してください。",
     "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
@@ -7280,11 +7280,11 @@
     "description": "Runtime interface message ui.page"
   },
   "runtime_ui_page_context_off_chip": {
-    "message": "📎 Page context off for this site",
+    "message": "📎 このサイトではページコンテキストオフ",
     "description": "Runtime interface message ui.page_context_off_chip"
   },
   "runtime_ui_page_context_skipped": {
-    "message": "Page context skipped",
+    "message": "ページコンテキストをスキップ",
     "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {

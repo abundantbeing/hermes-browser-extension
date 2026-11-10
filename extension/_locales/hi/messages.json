@@ -4236,7 +4236,7 @@
     "description": "Runtime interface message settings.models.title"
   },
   "runtime_settings_page_context_excluded_detail": {
-    "message": "One origin per line, such as https://192.168.8.1:9443 or https://news.example.com. Applies on public and private sites.",
+    "message": "प्रति पंक्ति एक मूल, जैसे https://192.168.8.1:9443 या https://news.example.com. सार्वजनिक और निजी साइटों पर लागू।",
     "description": "Runtime interface message settings.page_context_excluded.detail"
   },
   "runtime_settings_page_context_excluded_placeholder": {
@@ -4244,23 +4244,23 @@
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
   "runtime_settings_page_context_excluded_title": {
-    "message": "Exclude these origins from page scripts",
+    "message": "इन मूलों को पेज स्क्रिप्ट से बाहर रखें",
     "description": "Runtime interface message settings.page_context_excluded.title"
   },
   "runtime_settings_page_context_private_enable_detail": {
-    "message": "Turn this on when you want Assist, extraction, and inline help on router dashboards, Tailscale hosts, or other non-public addresses.",
+    "message": "राउटर डैशबोर्ड, Tailscale होस्ट या अन्य गैर-सार्वजनिक पते पर Assist, एक्सट्रैक्शन और इनलाइन मदद चाहिए तो इसे चालू करें।",
     "description": "Runtime interface message settings.page_context_private.enable_detail"
   },
   "runtime_settings_page_context_private_enable_label": {
-    "message": "Run page scripts on private and LAN sites",
+    "message": "निजी और LAN साइटों पर पेज स्क्रिप्ट चलाएँ",
     "description": "Runtime interface message settings.page_context_private.enable_label"
   },
   "runtime_settings_page_context_private_summary": {
-    "message": "Hermes skips its page scripts on home, office, and router addresses by default so self-hosted dashboards keep rendering. Loopback Hermes Web launch pages still use their own lightweight hand-off scripts.",
+    "message": "Hermes डिफ़ॉल्ट रूप से घर, ऑफिस और राउटर पतों पर अपने पेज स्क्रिप्ट छोड़ देता है ताकि सेल्फ-होस्टेड डैशबोर्ड रेंडर होते रहें। लूपबैक Hermes Web लॉन्च पेज अपने हल्के हैंड-ऑफ स्क्रिप्ट उपयोग करते हैं।",
     "description": "Runtime interface message settings.page_context_private.summary"
   },
   "runtime_settings_page_context_private_title": {
-    "message": "Private and LAN pages",
+    "message": "निजी और LAN पेज",
     "description": "Runtime interface message settings.page_context_private.title"
   },
   "runtime_settings_permissions_copy": {
@@ -4356,15 +4356,15 @@
     "description": "Runtime interface message status.page_context_restricted"
   },
   "runtime_status_page_context_skipped": {
-    "message": "{url} — Page context was skipped because Hermes did not inject scripts on this page.",
+    "message": "{url} — पेज संदर्भ छोड़ा गया क्योंकि Hermes ने इस पेज पर स्क्रिप्ट इंजेक्ट नहीं किए।",
     "description": "Runtime interface message status.page_context_skipped"
   },
   "runtime_status_page_context_skipped_excluded": {
-    "message": "{url} — Hermes left page scripts off for this site because it is on your exclude list in Settings → Permissions.",
+    "message": "{url} — Hermes ने इस साइट के लिए पेज स्क्रिप्ट बंद रखे क्योंकि यह सेटिंग्स → अनुमतियाँ में आपकी बहिष्करण सूची में है।",
     "description": "Runtime interface message status.page_context_skipped_excluded"
   },
   "runtime_status_page_context_skipped_private": {
-    "message": "{url} — Hermes did not inject page scripts on this private or LAN address. Turn on private page scripts in Settings → Permissions, or remove the origin from the exclude list.",
+    "message": "{url} — Hermes ने इस निजी या LAN पते पर पेज स्क्रिप्ट इंजेक्ट नहीं किए। सेटिंग्स → अनुमतियाँ में निजी पेज स्क्रिप्ट चालू करें, या मूल को बहिष्करण सूची से हटाएँ।",
     "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
@@ -7280,11 +7280,11 @@
     "description": "Runtime interface message ui.page"
   },
   "runtime_ui_page_context_off_chip": {
-    "message": "📎 Page context off for this site",
+    "message": "📎 इस साइट के लिए पेज संदर्भ बंद",
     "description": "Runtime interface message ui.page_context_off_chip"
   },
   "runtime_ui_page_context_skipped": {
-    "message": "Page context skipped",
+    "message": "पेज संदर्भ छोड़ा गया",
     "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {

@@ -113,3 +113,88 @@ test('guard uses callback sendMessage when sendMessage returns void (Chrome)', a
   assert.equal(inject, true);
   assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, false);
 });
+
+test('guard stays fail-closed until an authoritative inject decision arrives', async () => {
+  const source = await readFile(new URL('../extension/page-context-install-guard.js', import.meta.url), 'utf8');
+  assert.match(source, /fail closed/);
+  assert.doesNotMatch(source, /finish\(!likelyPrivate\)/);
+});
+
+test('slow excluded-public denial keeps bundle blocked until decision resolves false', async () => {
+  const source = await readFile(new URL('../extension/page-context-install-guard.js', import.meta.url), 'utf8');
+  let resolveLate;
+  const policy = new Promise((resolve) => { resolveLate = resolve; });
+  const context = {
+    location: { hostname: 'example.com', href: 'https://example.com/' },
+    setTimeout,
+    clearTimeout,
+    browser: {
+      runtime: {
+        sendMessage() {
+          return policy;
+        },
+      },
+    },
+    globalThis: {},
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(source, context);
+  assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, true);
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  assert.equal(context.__HERMES_PAGE_SCRIPT_POLICY__.decided, false);
+  resolveLate({ inject: false });
+  const inject = await context.__HERMES_PAGE_SCRIPT_POLICY__.promise;
+  assert.equal(inject, false);
+  assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, true);
+});
+
+test('messaging failure leaves bundle blocked with no decision', async () => {
+  const source = await readFile(new URL('../extension/page-context-install-guard.js', import.meta.url), 'utf8');
+  const context = {
+    location: { hostname: 'example.com', href: 'https://example.com/' },
+    setTimeout,
+    clearTimeout,
+    browser: {
+      runtime: {
+        sendMessage() {
+          return Promise.reject(new Error('offline'));
+        },
+      },
+    },
+    globalThis: {},
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(source, context);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, true);
+  assert.equal(context.__HERMES_PAGE_SCRIPT_POLICY__.decided, false);
+});
+
+test('late private allow resolves policy after opt-in', async () => {
+  const source = await readFile(new URL('../extension/page-context-install-guard.js', import.meta.url), 'utf8');
+  let resolveLate;
+  const policy = new Promise((resolve) => { resolveLate = resolve; });
+  const context = {
+    location: { hostname: '192.168.8.1', href: 'http://192.168.8.1/' },
+    setTimeout,
+    clearTimeout,
+    browser: {
+      runtime: {
+        sendMessage() {
+          return policy;
+        },
+      },
+    },
+    globalThis: {},
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(source, context);
+  assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, true);
+  resolveLate({ inject: true });
+  const inject = await context.__HERMES_PAGE_SCRIPT_POLICY__.promise;
+  assert.equal(inject, true);
+  assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, false);
+});

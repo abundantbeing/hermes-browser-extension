@@ -78,7 +78,7 @@ import {
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
 } from './lib/saved-connections.mjs';
 import { createPageScriptRegistrar } from './lib/page-script-registration.mjs';
-import { pageContextInjectionDecision } from './lib/page-script-host-policy.mjs';
+import { extensionPageContextPackaged, pageContextInjectionDecision } from './lib/page-script-host-policy.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -90,12 +90,16 @@ const browserProduct = detectBrowserProduct({
 });
 const pageScriptRegistrar = createPageScriptRegistrar({
   scriptingApi: browserApi.scripting,
-  packaged: true,
+  packaged: extensionPageContextPackaged(() => browserApi.runtime.getManifest()),
 });
 
 const syncPageContextScripts = createHeaderRuleSync({
   read: readStoredSettings,
-  apply: (settings) => pageScriptRegistrar.sync(settings),
+  apply: async (settings) => {
+    const result = await pageScriptRegistrar.sync(settings);
+    if (result?.ok === false) throw new Error(result.reason || 'page-script-registration-failed');
+    return result;
+  },
   onError: (error) => {
     console.warn('[Hermes Browser] Page script registration failed:', error);
     return { ok: false, reason: error?.message || String(error) };

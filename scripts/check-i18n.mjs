@@ -100,6 +100,20 @@ function validateReverseCoverage(relativePath) {
   }
 }
 
+const PAGE_CONTEXT_TRANSLATION_KEYS = [
+  'settings.page_context_private.title',
+  'settings.page_context_private.summary',
+  'settings.page_context_private.enable_label',
+  'settings.page_context_private.enable_detail',
+  'settings.page_context_excluded.title',
+  'settings.page_context_excluded.detail',
+  'status.page_context_skipped_private',
+  'status.page_context_skipped_excluded',
+  'status.page_context_skipped',
+  'ui.page_context_skipped',
+  'ui.page_context_off_chip',
+];
+
 const englishKeys = Object.keys(english).sort();
 for (const locale of SUPPORTED_LOCALES) {
   if (locale.id === 'en') continue;
@@ -115,6 +129,14 @@ for (const locale of SUPPORTED_LOCALES) {
   const stale = localeKeys.filter((key) => !Object.hasOwn(english, key));
   if (missing.length) errors.push(`${locale.id} missing keys: ${missing.join(', ')}`);
   if (stale.length) errors.push(`${locale.id} stale keys: ${stale.join(', ')}`);
+    for (const key of PAGE_CONTEXT_TRANSLATION_KEYS) {
+      if (!Object.hasOwn(catalog, key)) continue;
+      const source = typeof english[key] === 'string' ? english[key] : '';
+      const translated = typeof catalog[key] === 'string' ? catalog[key] : '';
+      if (translated === source) {
+        errors.push(`${locale.id} must translate ${key}; copy matches English`);
+      }
+    }
   for (const key of englishKeys) {
     if (!Object.hasOwn(catalog, key)) continue;
     if (!sameMessageType(english[key], catalog[key])) {

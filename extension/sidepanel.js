@@ -125,7 +125,9 @@ import {
   interceptChatLinkClick,
 } from './lib/common.mjs';
 import {
-  packagedPageContextScriptFiles,
+  buildRegisteredPageScriptDefinition,
+  extensionPageContextPackaged,
+  normalizePageContextExcludedOrigins,
   pageContextInjectionDecision,
   pageContextSkipMessageKey,
 } from './lib/page-script-host-policy.mjs';
@@ -24856,7 +24858,36 @@ async function tabsForCurrentScope() {
 }
 
 function manifestContentScriptFiles() {
-  return packagedPageContextScriptFiles();
+  const packaged = extensionPageContextPackaged(() => browserApi.runtime.getManifest());
+  return buildRegisteredPageScriptDefinition(settings, { packaged }).js;
+}
+
+async function refreshTabPageScriptPolicy(tabId) {
+  if (!tabId) return false;
+  try {
+    const [result] = await browserApi.scripting.executeScript({
+      target: { tabId },
+      func: () => globalThis.hermesRefreshPageScriptPolicy?.(),
+    });
+    return Boolean(result?.result);
+  } catch {
+    return false;
+  }
+}
+
+async function persistPageContextPermissions() {
+  const pageContextOnPrivateNetworks = els.pageContextOnPrivateNetworksInput?.checked === true;
+  const pageContextExcludedOrigins = els.pageContextExcludedOriginsInput
+    ? normalizePageContextExcludedOrigins(els.pageContextExcludedOriginsInput.value)
+    : normalizePageContextExcludedOrigins(settings.pageContextExcludedOrigins);
+  settings = {
+    ...settings,
+    pageContextOnPrivateNetworks,
+    pageContextExcludedOrigins,
+  };
+  await setPackedBrowserSettings(settings);
+  if (els.pageContextOnPrivateNetworksInput) adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
+  if (els.pageContextExcludedOriginsInput) adoptSettingsBaselineValue(els.pageContextExcludedOriginsInput);
 }
 
 async function resolveTabUrlForPageScriptPolicy(tabId, tabUrl = '') {
@@ -24878,6 +24909,7 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
     skipError.hermesPageContextSkipped = true;
     throw skipError;
   }
+  await refreshTabPageScriptPolicy(tabId);
   const messageOptions = Number(frameId) > 0 ? { frameId: Number(frameId) } : undefined;
   const scriptTarget = Number(frameId) > 0
     ? { tabId, frameIds: [Number(frameId)] }
@@ -24954,6 +24986,7 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
+    await refreshTabPageScriptPolicy(tabId);
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
     const scriptTarget = Number(options?.frameId) > 0
@@ -30893,6 +30926,16 @@ function bindEvents() {
     trackInstantSave('permissions', setBrowserContextConsent(els.browserContextConsentInput.checked)).catch((error) => {
       renderBrowserContextConsentControl();
       setStatus('warn', 'Context sharing unchanged', error?.message || String(error), { translateDetail: false });
+    });
+  });
+  els.pageContextOnPrivateNetworksInput?.addEventListener('change', () => {
+    trackInstantSave('permissions', persistPageContextPermissions()).catch((error) => {
+      setStatus('warn', 'Private page script setting unchanged', error?.message || String(error), { translateDetail: false });
+    });
+  });
+  els.pageContextExcludedOriginsInput?.addEventListener('change', () => {
+    trackInstantSave('permissions', persistPageContextPermissions()).catch((error) => {
+      setStatus('warn', 'Excluded origins unchanged', error?.message || String(error), { translateDetail: false });
     });
   });
   browserControlDialogUi = createBrowserControlDialog({

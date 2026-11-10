@@ -29,6 +29,9 @@ test('privateNetworkHost classifies RFC1918, loopback, and local names with edge
   assert.equal(privateNetworkHost('127.0.0.2'), true);
   assert.equal(privateNetworkHost('fd00::1'), true);
   assert.equal(privateNetworkHost('fe80::1'), true);
+  assert.equal(privateNetworkHost('fe90::1'), true);
+  assert.equal(privateNetworkHost('febf::1'), true);
+  assert.equal(privateNetworkHost('fec0::1'), false);
 });
 
 test('isPrivateNetworkPageUrl ignores public sites and file URLs', () => {
@@ -71,7 +74,19 @@ test('port-specific exclusions do not add host-wide match patterns', () => {
   const withPort = originToExcludeMatchPatterns('https://example.com:9443');
   assert.deepEqual(withPort, []);
   const withoutPort = originToExcludeMatchPatterns('https://example.com');
-  assert.deepEqual(withoutPort, ['http://example.com/*', 'https://example.com/*']);
+  assert.deepEqual(withoutPort, ['https://example.com/*']);
+  const httpOrigin = originToExcludeMatchPatterns('http://example.com');
+  assert.deepEqual(httpOrigin, ['http://example.com/*']);
+});
+
+test('host-wide exclusion uses exact origin matching only', () => {
+  const settings = { pageContextExcludedOrigins: ['https://example.com'] };
+  assert.deepEqual(pageContextInjectionDecision('https://example.com/', settings), {
+    inject: false,
+    reason: 'excluded-origin',
+  });
+  assert.equal(pageContextInjectionDecision('https://example.com:8443/', settings).inject, true);
+  assert.equal(pageContextInjectionDecision('http://example.com/', settings).inject, true);
 });
 
 test('decision keeps other ports reachable when one port is excluded', () => {

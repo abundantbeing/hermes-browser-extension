@@ -15,6 +15,22 @@ test('shared installer path refuses injection when policy blocks the tab URL', (
   assert.equal(pageContextSkipMessageKey(decision.reason), 'status.page_context_skipped_private');
 });
 
+test('manual installs refresh in-tab page-script policy before messaging', async () => {
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const block = source.slice(
+    source.indexOf('async function sendContentMessageWithInstallFallback'),
+    source.indexOf('function collectPageContextWithSharedExtractor'),
+  );
+  assert.match(block, /refreshTabPageScriptPolicy\(tabId\)/);
+});
+
+test('page context permissions save instantly from data-settings-live controls', async () => {
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /pageContextOnPrivateNetworksInput\?\.addEventListener\('change'/);
+  assert.match(source, /persistPageContextPermissions/);
+  assert.match(source, /trackInstantSave\('permissions', persistPageContextPermissions\(\)\)/);
+});
+
 test('element pick failures surface in the operation toast', async () => {
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const block = source.slice(

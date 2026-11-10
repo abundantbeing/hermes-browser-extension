@@ -8,7 +8,8 @@
   const name = String(host || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
   if (!name) return false;
   if (name === 'localhost' || name.endsWith('.localhost') || name === '::1') return true;
-  if (/^(fc|fd)[0-9a-f]{2}:|^fe80:/.test(name)) return true;
+  if (/^(fc|fd)[0-9a-f]{2}:/.test(name)) return true;
+  if (/^fe[89ab][0-9a-f]:/i.test(name)) return true;
   const ipv4 = name.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (ipv4) {
     const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
@@ -20,26 +21,36 @@
 };
 
   const likelyPrivate = privateNetworkHost(location.hostname);
-  if (likelyPrivate) globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
-  let settled = false;
+  globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
 
-  const promise = new Promise((resolve) => {
-    const finish = (inject) => {
-      if (settled) return;
-      settled = true;
+  const gate = { likelyPrivate, decided: false };
+  gate.promise = new Promise((resolve) => {
+    gate._resolvePolicy = (inject) => {
       globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
-      resolve(Boolean(inject));
+      if (!gate.decided) {
+        gate.decided = true;
+        resolve(Boolean(inject));
+      }
+      if (inject && typeof globalThis.__hermesPageScriptPolicyDecided === 'function') {
+        globalThis.__hermesPageScriptPolicyDecided(inject);
+      }
     };
 
-    const timeout = setTimeout(() => finish(!likelyPrivate), 4000);
+    const finish = (inject) => gate._resolvePolicy(inject);
+
+    const timeout = setTimeout(() => {
+      /* fail closed: stay blocked until an authoritative inject decision arrives */
+    }, 4000);
 
     const onDecision = (response) => {
       clearTimeout(timeout);
       if (response && typeof response.inject === 'boolean') finish(response.inject);
-      else finish(!likelyPrivate);
     };
 
-    const fail = () => finish(!likelyPrivate);
+    const fail = () => {
+      /* fail closed: messaging failure leaves scripts blocked */
+    };
+
     const message = { type: 'HERMES_PAGE_SCRIPT_POLICY', url: location.href };
 
     try {
@@ -56,5 +67,5 @@
     }
   });
 
-  globalThis.__HERMES_PAGE_SCRIPT_POLICY__ = { promise, likelyPrivate };
+  globalThis.__HERMES_PAGE_SCRIPT_POLICY__ = gate;
 })();

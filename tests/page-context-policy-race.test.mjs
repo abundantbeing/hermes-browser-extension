@@ -31,7 +31,7 @@ test('late deny blocks bundle after guard starts (excluded public port)', async 
     promise: new Promise((resolve) => { resolvePolicy = resolve; }),
     likelyPrivate: false,
   };
-  context.__HERMES_PAGE_SCRIPTS_BLOCKED__ = false;
+  context.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
   context.globalThis = context;
   vm.createContext(context);
   const gate = await read(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
