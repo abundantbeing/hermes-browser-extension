@@ -77,6 +77,7 @@ import {
   hydrateSavedConnectionSecrets,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
 } from './lib/saved-connections.mjs';
+import { createPageScriptRegistrar } from './lib/page-script-registration.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -86,6 +87,25 @@ const browserProduct = detectBrowserProduct({
   braveApi: globalThis.navigator?.brave || null,
   extensionUrl: browserApi.runtime.getURL(''),
 });
+const pageScriptRegistrar = createPageScriptRegistrar({
+  scriptingApi: browserApi.scripting,
+  packaged: true,
+});
+
+async function syncPageContextScripts() {
+  try {
+    const settings = await readStoredSettings();
+    const result = await pageScriptRegistrar.sync(settings);
+    if (result.ok === false && result.reason !== 'scripting-unavailable') {
+      console.warn('[Hermes Browser] Page script registration failed:', result.reason);
+    }
+    return result;
+  } catch (error) {
+    console.warn('[Hermes Browser] Page script registration failed:', error);
+    return { ok: false, reason: error?.message || String(error) };
+  }
+}
+
 const browserControlRuntime = createBrowserControlRuntime({
   browserApi,
   product: browserProduct,
@@ -1047,11 +1067,13 @@ void installLoopbackCorsRules().catch((error) => {
   console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
 });
 void syncConnectionHeaders();
+void syncPageContextScripts();
 browserApi.runtime.onInstalled.addListener((details) => {
   void installLoopbackCorsRules().catch((error) => {
     console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
   });
   void syncConnectionHeaders();
+  void syncPageContextScripts();
   return configureInstalledSurfaces(details);
 });
 browserApi.runtime.onStartup.addListener(async () => {
@@ -1059,6 +1081,7 @@ browserApi.runtime.onStartup.addListener(async () => {
     console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
   });
   await syncConnectionHeaders();
+  await syncPageContextScripts();
   await configureInstalledSurfaces({ controllerReason: 'browser-startup' });
   restoreWakeController();
 });
@@ -1140,6 +1163,13 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
     })();
   }
   if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]) void syncConnectionHeaders();
+  if (changes.hermesBrowserSettings?.newValue) {
+    const previous = changes.hermesBrowserSettings.oldValue || {};
+    const next = changes.hermesBrowserSettings.newValue || {};
+    const pageContextKeys = ['pageContextOnPrivateNetworks', 'pageContextExcludedOrigins'];
+    const pageContextChanged = pageContextKeys.some((key) => JSON.stringify(previous[key]) !== JSON.stringify(next[key]));
+    if (pageContextChanged) void syncPageContextScripts();
+  }
   if (changes.hermesBrowserSettings?.newValue
     && wakeNeedsReconfigure(changes.hermesBrowserSettings.oldValue, changes.hermesBrowserSettings.newValue)) {
     wakeController.restore().catch((error) => console.warn('[Hermes Browser] Wake could not follow the connection change:', error));
