@@ -6,10 +6,10 @@ import vm from 'node:vm';
 import { applyStoredSettingsAfterSave, connectionIdentityChanged, sessionTitleRenameTarget } from '../extension/lib/settings-save-effects.mjs';
 
 function maybeRenameLikeProduction(scope) {
-  return async (previousSettings, nextTitle) => {
+  return async (previousSettings, nextTitle, savedSessionId = '') => {
     const cleanTitle = String(nextTitle || '').trim();
     const formSessionId = String(previousSettings.sessionId || '').trim();
-    const sessionId = sessionTitleRenameTarget(previousSettings, scope.settings);
+    const sessionId = sessionTitleRenameTarget(savedSessionId, scope.settings.sessionId);
     const current = scope.availableSessions?.find((session) => session.id === sessionId);
     const previousTitle = String(
       current?.title || (sessionId === formSessionId ? previousSettings.sessionTitle : '') || '',
@@ -110,14 +110,9 @@ test('applyStoredSettingsAfterSave never falls back to the previous title when t
 });
 
 test('sessionTitleRenameTarget keeps a typed rename on the form session when a successor is live', () => {
-  assert.equal(
-    sessionTitleRenameTarget({ sessionId: 'parent' }, { sessionId: 'child' }),
-    'parent',
-  );
-  assert.equal(
-    sessionTitleRenameTarget({ sessionId: 'parent' }, { sessionId: 'parent' }),
-    'parent',
-  );
+  assert.equal(sessionTitleRenameTarget('parent', 'child'), 'parent');
+  assert.equal(sessionTitleRenameTarget('session-b', 'child'), 'session-b');
+  assert.equal(sessionTitleRenameTarget('', 'child'), 'child');
 });
 
 test('a successful Save keeps the child session adopted while the write waited', async () => {
@@ -221,7 +216,40 @@ test('the Save handler passes what saveSettingsFromForm reports, and saveSetting
   assert.match(save, /return \{\s*connectionIdentityChanged: identityChanged,/);
   assert.match(save, /connectionIdentityChanged\(previousSettings, settings, normalizeGatewayUrl\)/);
   assert.match(save, /settings = applyStoredSettingsAfterSave\(next, settings, changedBySave\);/);
-  assert.match(save, /const titleForRename = settings\.sessionTitle;/);
+  assert.match(save, /const renameFor = \{ title: settings\.sessionTitle, sessionId: settings\.sessionId \};/);
   const maybeRename = source.match(/async function maybeRenameCurrentSessionTitle\([^)]*\)[\s\S]*?\n\}\n/)?.[0] || '';
-  assert.match(maybeRename, /sessionTitleRenameTarget\(previousSettings, settings\)/);
+  assert.match(maybeRename, /sessionTitleRenameTarget\(savedSessionId, settings\.sessionId\)/);
+});
+
+test('Save renames the session ID the form chose when Session ID and title are edited together', async () => {
+  const settings = rememberSavedConnection({
+    ...base,
+    activeSavedConnectionId: 'default',
+    savedConnections: [{ id: 'default', name: 'Default', connection: { ...base } }],
+    sessionId: 'session-a',
+    sessionTitle: 'Title A',
+  });
+  const h = await createSettingsSaveHarness({ settings });
+  try {
+    const renames = [];
+    Object.assign(h.scope, {
+      availableSessions: [
+        { id: 'session-a', title: 'Title A' },
+        { id: 'session-b', title: 'Title B' },
+      ],
+      renameHermesSessionTitle: async (id, title) => { renames.push({ id, title }); return true; },
+      maybeRenameCurrentSessionTitle: maybeRenameLikeProduction(h.scope),
+      refreshAfterSettingsSave: async () => {},
+    });
+    h.els.sessionIdInput.value = 'session-b';
+    h.els.sessionIdInput.dataset.syncedValue = 'session-a';
+    h.els.sessionTitleInput.value = 'Renamed for B';
+    h.els.sessionTitleInput.dataset.syncedValue = 'Title A';
+    h.els.includeTabsInput.checked = !h.scope.settings.includeTabs;
+    await h.save();
+    assert.deepEqual(renames, [{ id: 'session-b', title: 'Renamed for B' }]);
+    assert.ok(!renames.some((entry) => entry.id === 'session-a'));
+  } finally {
+    h.close();
+  }
 });

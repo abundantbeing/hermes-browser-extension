@@ -20188,10 +20188,14 @@ async function renameHermesSessionTitle(sessionId, title, { quiet = false } = {}
   return true;
 }
 
-async function maybeRenameCurrentSessionTitle(previousSettings = {}, nextTitle = settings.sessionTitle) {
+async function maybeRenameCurrentSessionTitle(
+  previousSettings = {},
+  nextTitle = settings.sessionTitle,
+  savedSessionId = '',
+) {
   const cleanTitle = String(nextTitle || '').trim() || DEFAULT_SETTINGS.sessionTitle;
   const formSessionId = String(previousSettings.sessionId || '').trim();
-  const sessionId = sessionTitleRenameTarget(previousSettings, settings) || settings.sessionId || formSessionId;
+  const sessionId = sessionTitleRenameTarget(savedSessionId, settings.sessionId);
   const current = availableSessions.find((session) => session.id === sessionId);
   const previousTitle = String(
     current?.title || (sessionId === formSessionId ? previousSettings.sessionTitle : '') || '',
@@ -24661,7 +24665,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
       'panel',
       panelAppearancePreferences(),
     ), t('connections.default_name', { number: 1 }));
-    const titleForRename = settings.sessionTitle;
+    const renameFor = { title: settings.sessionTitle, sessionId: settings.sessionId };
     try {
       await persistHermesBrowserSettings(next, { lockHeld: true });
     } catch (error) {
@@ -24672,11 +24676,11 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     }
     settings = applyStoredSettingsAfterSave(next, settings, changedBySave);
     applyAppearanceSettings();
-    return titleForRename;
+    return renameFor;
   };
-  let titleForRename = settings.sessionTitle;
-  if (lockHeld) titleForRename = await writeSettingsRecord();
-  else titleForRename = await withSavedConnectionsLock(writeSettingsRecord);
+  let renameFor = { title: settings.sessionTitle, sessionId: settings.sessionId };
+  if (lockHeld) renameFor = await writeSettingsRecord();
+  else renameFor = await withSavedConnectionsLock(writeSettingsRecord);
   // A Hermes account sign-in belongs to the connection it was made for.
   if (identityChanged) void clearAccountForConnection();
   await browserApi.storage.local.set({ [INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY]: settings.inlineAssistAutoReplace !== false });
@@ -24693,7 +24697,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     || connectionChanged;
   const wakeWordEnabled = settings.wakeWordEnabled;
   if (wakeChanged && !lockHeld) await setWakeWordEnabled(wakeWordEnabled);
-  await maybeRenameCurrentSessionTitle(previousSettings, titleForRename);
+  await maybeRenameCurrentSessionTitle(previousSettings, renameFor.title, renameFor.sessionId);
   syncSettingsForm();
   updateConnectionPrompt();
   return {

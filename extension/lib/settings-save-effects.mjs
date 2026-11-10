@@ -37,12 +37,11 @@ export function sessionTitleForSave({ typed = '', synced, viewed = '', fallback 
   return value || fallback;
 }
 
-/** Which session a Save title rename belongs to after a mid-write successor landed on screen. */
-export function sessionTitleRenameTarget(previous = {}, current = {}) {
-  const formSessionId = String(previous?.sessionId ?? '').trim();
-  const viewedSessionId = String(current?.sessionId ?? '').trim();
-  if (!formSessionId) return viewedSessionId;
-  return viewedSessionId !== formSessionId ? formSessionId : viewedSessionId;
+/** Which session a Save title rename belongs to: the id the form composed, not a later live successor. */
+export function sessionTitleRenameTarget(savedSessionId = '', liveSessionId = '') {
+  const saved = String(savedSessionId ?? '').trim();
+  if (saved) return saved;
+  return String(liveSessionId ?? '').trim();
 }
 
 // The gateway a URL names, for "is this the same gateway": scheme, host and port, with every
