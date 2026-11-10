@@ -125,6 +125,7 @@ import {
   interceptChatLinkClick,
 } from './lib/common.mjs';
 import {
+  packagedPageContextScriptFiles,
   pageContextInjectionDecision,
   pageContextSkipMessageKey,
 } from './lib/page-script-host-policy.mjs';
@@ -24826,8 +24827,7 @@ async function tabsForCurrentScope() {
 }
 
 function manifestContentScriptFiles() {
-  const scripts = browserApi.runtime.getManifest()?.content_scripts?.flatMap((entry) => entry?.js || []) || [];
-  return scripts.length ? scripts : ['content-extractor.js', 'content.js'];
+  return packagedPageContextScriptFiles();
 }
 
 async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0 } = {}) {
@@ -25755,10 +25755,20 @@ async function refreshContextPreview() {
     } else {
       const injection = pageContextInjectionDecision(tab.url, settings);
       if (!injection.inject) {
+        const skippedContext = {
+          ok: false,
+          skipped: true,
+          skipReason: injection.reason,
+          reason: t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+          text: '',
+          selectedText: '',
+          meta: {},
+        };
+        currentContext = { ...currentContext, pageContext: skippedContext };
         setStatus(
           'warn',
           tab.title || t('ui.page_context_skipped'),
-          t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+          skippedContext.reason,
           { translateTitle: false, translateDetail: false },
         );
       } else {

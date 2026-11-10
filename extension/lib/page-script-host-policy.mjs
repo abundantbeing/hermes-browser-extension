@@ -10,6 +10,11 @@ const PACKAGED_PAGE_SCRIPT_JS = Object.freeze([
   'content-inline-helper.js',
 ]);
 
+/** Packaged extension paths used by dynamic page-context registration and side-panel injection fallback. */
+export function packagedPageContextScriptFiles() {
+  return [...PACKAGED_PAGE_SCRIPT_JS];
+}
+
 const REPOSITORY_PAGE_SCRIPT_JS = Object.freeze([
   'extension/lib/browser-api-global.js',
   'extension/content-extractor.js',
