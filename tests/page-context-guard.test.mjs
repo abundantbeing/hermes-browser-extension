@@ -36,7 +36,8 @@ test('generated guard embeds the same privateNetworkHost classifier as common.mj
 
 test('guard resolves policy over promise-based sendMessage (Firefox)', async () => {
   const source = await readFile(new URL('../extension/page-context-install-guard.js', import.meta.url), 'utf8');
-  assert.match(source, /typeof maybePromise\.then === 'function'/);
+  assert.match(source, /globalThis\.browser\.runtime\.sendMessage\(message\)/);
+  assert.doesNotMatch(source, /sendMessage\(message\);\s*if \(maybePromise/);
   assert.match(source, /Generated from extension\/lib\/common\.mjs privateNetworkHost/);
 
   const context = {
@@ -59,6 +60,32 @@ test('guard resolves policy over promise-based sendMessage (Firefox)', async () 
   const inject = await context.__HERMES_PAGE_SCRIPT_POLICY__.promise;
   assert.equal(inject, false);
   assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, true);
+});
+
+test('guard calls runtime.sendMessage only once on Chrome', async () => {
+  const source = await readFile(new URL('../extension/page-context-install-guard.js', import.meta.url), 'utf8');
+  let sendCount = 0;
+  const context = {
+    location: { hostname: 'example.com', href: 'https://example.com/' },
+    setTimeout,
+    clearTimeout,
+    chrome: {
+      runtime: {
+        lastError: null,
+        sendMessage(message, callback) {
+          sendCount += 1;
+          assert.equal(message.type, 'HERMES_PAGE_SCRIPT_POLICY');
+          if (typeof callback === 'function') callback({ inject: true });
+        },
+      },
+    },
+    globalThis: {},
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(source, context);
+  await context.__HERMES_PAGE_SCRIPT_POLICY__.promise;
+  assert.equal(sendCount, 1);
 });
 
 test('guard uses callback sendMessage when sendMessage returns void (Chrome)', async () => {

@@ -25287,7 +25287,14 @@ async function startElementPick({ purpose = 'context' } = {}) {
     const wasComment = pageCommentPickActive;
     pageCommentPickActive = false;
     await clearElementPickState({ tabId: tab.id });
-    setStatus('warn', wasComment ? 'Page comments failed' : 'Element pick failed', error?.message || String(error), { translateDetail: false });
+    const detail = error?.message || String(error);
+    setStatus('warn', wasComment ? 'Page comments failed' : 'Element pick failed', detail, { translateDetail: false });
+    showOperationToast({
+      kind: 'warn',
+      title: wasComment ? 'Page comments failed' : 'Element pick failed',
+      detail,
+      duration: 12_000,
+    });
   }
 }
 

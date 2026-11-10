@@ -43,9 +43,8 @@
     const message = { type: 'HERMES_PAGE_SCRIPT_POLICY', url: location.href };
 
     try {
-      const maybePromise = browserApi.runtime.sendMessage(message);
-      if (maybePromise && typeof maybePromise.then === 'function') {
-        maybePromise.then(onDecision).catch(fail);
+      if (typeof globalThis.browser?.runtime?.sendMessage === 'function') {
+        Promise.resolve(globalThis.browser.runtime.sendMessage(message)).then(onDecision).catch(fail);
       } else {
         browserApi.runtime.sendMessage(message, (response) => {
           if (browserApi.runtime.lastError) fail();

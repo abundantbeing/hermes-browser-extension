@@ -15,6 +15,16 @@ test('shared installer path refuses injection when policy blocks the tab URL', (
   assert.equal(pageContextSkipMessageKey(decision.reason), 'status.page_context_skipped_private');
 });
 
+test('element pick failures surface in the operation toast', async () => {
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const block = source.slice(
+    source.indexOf('async function startElementPick'),
+    source.indexOf('function applyPickedElementResult'),
+  );
+  assert.match(block, /showOperationToast\(/);
+  assert.match(block, /Element pick failed/);
+});
+
 test('sidepanel installer enforces pageContextInjectionDecision before scripting fallback', async () => {
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const block = source.slice(
