@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity, createBackgroundTaskBrowser,
 } from '../extension/lib/background-task-browser.mjs';
+import { SAVED_CONNECTION_SECRETS_STORAGE_KEY } from '../extension/lib/saved-connections.mjs';
 
 function deferred() {
   let resolve;
@@ -153,4 +154,133 @@ test('changing the API key disconnects background control until the new key is a
   saved[BACKGROUND_BROWSER_CONSENT] = await backgroundBrowserConsentIdentity(updated);
   await controller.settingsChanged({ [BACKGROUND_BROWSER_CONSENT]: {} });
   assert.deepEqual(registrations, ['key-a', 'key-b']);
+});
+
+test('unrelated settings save keeps background task tab leases when consent identity is unchanged', async () => {
+  const settings = {
+    connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', activeProfile: 'default',
+    apiKey: 'stable-key', botModeDisplayDensity: 'comfortable',
+  };
+  const saved = {
+    hermesBrowserSettings: settings,
+    [BACKGROUND_BROWSER_CONSENT]: await backgroundBrowserConsentIdentity(settings),
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: { default: { apiKey: 'encrypted-stable-key' } },
+  };
+  const opened = { id: 42, windowId: 1, status: 'complete', url: 'https://example.test/task', title: 'Task' };
+  const replies = new Map();
+  let receive;
+  let released = 0;
+  const controller = createBackgroundTaskBrowser({
+    browserApi: {
+      storage: { local: { get: async () => structuredClone(saved) } },
+      alarms: { create() {}, clear() {} },
+      windows: { getLastFocused: async () => ({ id: 1, type: 'normal' }) },
+      tabs: {
+        create: async () => opened, group: async () => 7, update: async () => opened, get: async () => opened,
+      },
+      tabGroups: { update: async () => {} },
+    },
+    connector: {
+      async connect({ onFrame }) {
+        receive = onFrame;
+        return { close() {}, heartbeat: async () => {}, send({ params }) { replies.get(params.command_id).resolve(params); } };
+      },
+    },
+    runtime: {
+      async execute() {
+        return { ok: true, result: { snapshot: true } };
+      },
+      releaseTab() {
+        released += 1;
+      },
+    },
+  });
+  await controller.sync();
+  function command(id, action, args) {
+    const reply = deferred();
+    replies.set(id, reply);
+    receive({ method: 'browser.controller.command', params: {
+      command_id: id, background_session: 'bg-session', action, arguments: args,
+    } });
+    return reply.promise;
+  }
+  const created = await command('open', 'browser_tab_create', { url: opened.url });
+  assert.equal(created.ok, true);
+
+  const updatedSettings = { ...settings, botModeDisplayDensity: 'compact' };
+  saved.hermesBrowserSettings = updatedSettings;
+  saved[SAVED_CONNECTION_SECRETS_STORAGE_KEY] = {
+    default: { apiKey: 're-encrypted-stable-key' },
+  };
+  await controller.settingsChanged({
+    hermesBrowserSettings: { oldValue: settings, newValue: updatedSettings },
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: {
+      oldValue: { default: { apiKey: 'encrypted-stable-key' } },
+      newValue: saved[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+    },
+  });
+  await controller.sync();
+  const snapshot = await command('snapshot', 'browser_snapshot', { tab_id: opened.id });
+  assert.equal(snapshot.ok, true);
+  assert.equal(released, 0);
+});
+
+test('background consent identity change releases task tab leases', async () => {
+  const settings = {
+    connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', activeProfile: 'default', apiKey: 'key-one',
+  };
+  const saved = {
+    hermesBrowserSettings: settings,
+    [BACKGROUND_BROWSER_CONSENT]: await backgroundBrowserConsentIdentity(settings),
+  };
+  const opened = { id: 11, windowId: 1, status: 'complete', url: 'https://example.test/', title: 'Task' };
+  const replies = new Map();
+  let receive;
+  let released = 0;
+  const controller = createBackgroundTaskBrowser({
+    browserApi: {
+      storage: { local: { get: async () => structuredClone(saved) } },
+      alarms: { create() {}, clear() {} },
+      windows: { getLastFocused: async () => ({ id: 1, type: 'normal' }) },
+      tabs: {
+        create: async () => opened, group: async () => 4, update: async () => opened, get: async () => opened,
+      },
+      tabGroups: { update: async () => {} },
+    },
+    connector: {
+      async connect({ onFrame }) {
+        receive = onFrame;
+        return { close() {}, send({ params }) { replies.get(params.command_id).resolve(params); } };
+      },
+    },
+    runtime: {
+      async execute() {
+        return { ok: true, result: {} };
+      },
+      releaseTab() {
+        released += 1;
+      },
+    },
+  });
+  await controller.sync();
+  function command(id, action, args) {
+    const reply = deferred();
+    replies.set(id, reply);
+    receive({ method: 'browser.controller.command', params: {
+      command_id: id, background_session: 'bg-session', action, arguments: args,
+    } });
+    return reply.promise;
+  }
+  const created = await command('open', 'browser_tab_create', { url: opened.url });
+  assert.equal(created.ok, true);
+
+  const updated = { ...settings, apiKey: 'key-two' };
+  saved.hermesBrowserSettings = updated;
+  saved[BACKGROUND_BROWSER_CONSENT] = await backgroundBrowserConsentIdentity(updated);
+  await controller.settingsChanged({ hermesBrowserSettings: { oldValue: settings, newValue: updated } });
+  await controller.sync();
+  const snapshot = await command('snapshot', 'browser_snapshot', { tab_id: opened.id });
+  assert.equal(snapshot.ok, false);
+  assert.equal(snapshot.error.code, 'lease_not_owned');
+  assert.equal(released, 1);
 });

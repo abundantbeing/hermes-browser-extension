@@ -68,6 +68,8 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   const controllerId = `background-${crypto.randomUUID()}`;
   let connection;
   let route;
+  /** Consent identity background task tab leases were opened under. */
+  let sessionRoute;
   let revision = 0;
   let sync = Promise.resolve();
   const sessionQueues = new Map();
@@ -240,14 +242,18 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     const enabled = consentIdentity && saved[BACKGROUND_BROWSER_CONSENT] === consentIdentity;
     const nextRoute = enabled ? consentIdentity : null;
     if (nextRoute !== route) {
-      close();
-      const resetRevision = revision;
-      for (const state of sessions.values()) {
-        for (const id of state.tabs.keys()) await runtime.releaseTab(id);
+      const releaseSessions = sessionRoute !== undefined && nextRoute !== sessionRoute;
+      if (releaseSessions) {
+        close();
+        const resetRevision = revision;
+        for (const state of sessions.values()) {
+          for (const id of state.tabs.keys()) await runtime.releaseTab(id);
+        }
+        sessions.clear();
+        if (resetRevision !== revision) return;
       }
-      sessions.clear();
-      if (resetRevision !== revision) return;
       route = nextRoute;
+      if (releaseSessions || sessionRoute === undefined) sessionRoute = nextRoute;
     }
     if (!enabled) {
       await alarms.clear(BACKGROUND_BROWSER_ALARM);
