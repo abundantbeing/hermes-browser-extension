@@ -3,7 +3,6 @@ export default Object.freeze({
   "defaults": {
     "claude-fable-5": 1000000,
     "claude-fable": 1000000,
-    "claude-mythos": 1000000,
     "claude-opus-5": 1000000,
     "claude-sonnet-5": 1000000,
     "claude-opus-4-8": 1000000,
@@ -181,5 +180,5 @@ export default Object.freeze({
   "suffix": "-900k",
   "fallback": 256000,
   "source": "hermes-upstream",
-  "sourceSha256": "4ff9a95211d5a22844c0078266691707b908a073b0592d11ef86b881b6e08bb8"
+  "sourceSha256": "d19fb4091451650b4e13494d257fc26f58d59e5d9ff0ee898a4c2e659049fbac"
 });
