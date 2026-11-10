@@ -230,11 +230,9 @@ Private or LAN hosts (the same classifier the extension and guard use):
 
 Port-specific excludes (for example `https://example.com:9443`) are enforced at runtime in the install guard, not via registration match patterns, so other ports on the same host stay eligible for page scripts unless you exclude them too.
 
-### Optional web search through MCP
+### Tools available to the agent
 
-For Local or Remote API connections, follow the
-[Parallel Search MCP guide](./guides/parallel-search-mcp.md) to add free web search
-and page fetching to the connected Hermes runtime without a Parallel API key.
+Tools available to the agent come from your Hermes setup. See the [Hermes docs](https://hermes-agent.nousresearch.com/docs).
 
 ### I loaded the extension but nothing works
 
