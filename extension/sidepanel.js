@@ -24043,6 +24043,7 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
     'trustedDashboardOrigin', 'trustedDashboardTabId',
     'activeSavedConnectionId', 'savedConnections', 'connectionHeaders', 'connectionTrustSelfSigned',
+    'pageContextOnPrivateNetworks', 'pageContextExcludedOrigins',
     // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
     // panel, they share this record, and adopting another panel's binding would make this one resume
     // (and then write into) the other panel's session on its next reconnect.
@@ -24060,6 +24061,11 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     const differs = Array.isArray(next[key]) ? JSON.stringify(next[key]) !== JSON.stringify(settings[key]) : next[key] !== settings[key];
     if (connectionKeys.has(key) && differs) connectionChanged = true;
   }
+  let pageContextSettingsChanged = false;
+  if (Object.hasOwn(patch, 'pageContextOnPrivateNetworks')
+    || Object.hasOwn(patch, 'pageContextExcludedOrigins')) {
+    pageContextSettingsChanged = true;
+  }
   if (Object.keys(patch).length) {
     settings = { ...settings, ...patch };
     if (connectionChanged) {
@@ -24074,6 +24080,29 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     updateConnectionPrompt();
     renderBrowserControl();
     renderSavedConnections();
+    if (pageContextSettingsChanged) {
+      const tab = currentContext?.activeTab;
+      if (tab?.url) {
+        const injection = pageContextInjectionDecision(tab.url, settings);
+        if (!injection.inject) {
+          currentContext = {
+            ...currentContext,
+            pageContext: {
+              ok: false,
+              skipped: true,
+              skipReason: injection.reason,
+              reason: t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+              text: '',
+              selectedText: '',
+              meta: {},
+            },
+          };
+        } else if (currentContext?.pageContext?.skipped) {
+          currentContext = { ...currentContext, pageContext: null };
+        }
+        renderContextWindow();
+      }
+    }
   }
   adoptStoredResponsePresentation(next);
   if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
@@ -24830,7 +24859,25 @@ function manifestContentScriptFiles() {
   return packagedPageContextScriptFiles();
 }
 
-async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0 } = {}) {
+async function resolveTabUrlForPageScriptPolicy(tabId, tabUrl = '') {
+  const direct = String(tabUrl || '').trim();
+  if (direct) return direct;
+  try {
+    const tab = await browserApi.tabs.get(tabId);
+    return String(tab?.url || '');
+  } catch {
+    return '';
+  }
+}
+
+async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0, tabUrl = '' } = {}) {
+  const url = await resolveTabUrlForPageScriptPolicy(tabId, tabUrl);
+  const injection = pageContextInjectionDecision(url, settings);
+  if (!injection.inject) {
+    const skipError = new Error(t(pageContextSkipMessageKey(injection.reason), { url }));
+    skipError.hermesPageContextSkipped = true;
+    throw skipError;
+  }
   const messageOptions = Number(frameId) > 0 ? { frameId: Number(frameId) } : undefined;
   const scriptTarget = Number(frameId) > 0
     ? { tabId, frameIds: [Number(frameId)] }
@@ -24892,8 +24939,21 @@ function collectPageContextWithSharedExtractor(options = {}) {
   return HermesSiteAdapters.applySiteAdapterPolicy(pageContext, siteAdapter);
 }
 
-async function getPageContextViaScripting(tabId, options, originalError) {
+async function getPageContextViaScripting(tabId, options, originalError, tabUrl = '') {
   try {
+    const url = await resolveTabUrlForPageScriptPolicy(tabId, tabUrl);
+    const injection = pageContextInjectionDecision(url, settings);
+    if (!injection.inject) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: injection.reason,
+        reason: t(pageContextSkipMessageKey(injection.reason), { url }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
     const scriptTarget = Number(options?.frameId) > 0
@@ -24992,7 +25052,7 @@ async function getPageContext(tab, options = {}) {
         : { ...response, selectedText: String(options.selectedTextOverride || '') };
     }
     if (response?.ok) {
-      const fallback = await getPageContextViaScripting(tab.id, requestOptions, new Error('Stale content script: empty page context'));
+      const fallback = await getPageContextViaScripting(tab.id, requestOptions, new Error('Stale content script: empty page context'), tab.url);
       if (fallback?.ok) {
         return options.selectedTextOverride === undefined
           ? fallback
@@ -25001,7 +25061,18 @@ async function getPageContext(tab, options = {}) {
     }
     return response || { ok: false, error: 'No page context response', text: '', selectedText: '', meta: {} };
   } catch (error) {
-    const fallback = await getPageContextViaScripting(tab.id, requestOptions, error);
+    if (error?.hermesPageContextSkipped) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: pageContextInjectionDecision(tab.url, settings).reason,
+        reason: error.message,
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    const fallback = await getPageContextViaScripting(tab.id, requestOptions, error, tab.url);
     if (fallback?.ok) {
       return options.selectedTextOverride === undefined
         ? fallback

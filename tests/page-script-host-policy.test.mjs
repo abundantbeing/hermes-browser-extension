@@ -5,8 +5,11 @@ import { privateNetworkHost } from '../extension/lib/common.mjs';
 import {
   buildPageScriptExcludeMatchPatterns,
   buildRegisteredPageScriptDefinition,
+  buildRegisteredPageScriptDefinitions,
   isPrivateNetworkPageUrl,
+  isValidMatchPattern,
   normalizePageContextExcludedOrigins,
+  originToExcludeMatchPatterns,
   pageContextInjectionDecision,
   pageContextSkipMessageKey,
 } from '../extension/lib/page-script-host-policy.mjs';
@@ -61,22 +64,63 @@ test('per-origin exclude list applies to public and private sites', () => {
   });
 });
 
-test('buildPageScriptExcludeMatchPatterns includes private patterns unless opted in', () => {
-  const skipped = buildPageScriptExcludeMatchPatterns({});
-  assert.ok(skipped.includes('https://192.168.*/*'));
-  assert.ok(skipped.includes('https://127.0.0.1/*'));
-  const withOrigin = buildPageScriptExcludeMatchPatterns({
-    pageContextOnPrivateNetworks: true,
-    pageContextExcludedOrigins: ['https://192.168.8.1:9443'],
-  });
-  assert.ok(withOrigin.includes('https://192.168.8.1/*'));
-  assert.ok(!withOrigin.includes('https://192.168.*/*'));
+test('port-specific exclusions do not add host-wide match patterns', () => {
+  const withPort = originToExcludeMatchPatterns('https://example.com:9443');
+  assert.deepEqual(withPort, []);
+  const withoutPort = originToExcludeMatchPatterns('https://example.com');
+  assert.deepEqual(withoutPort, ['http://example.com/*', 'https://example.com/*']);
 });
 
-test('registered page script definition uses dynamic bundle files', () => {
+test('decision keeps other ports reachable when one port is excluded', () => {
+  const settings = {
+    pageContextOnPrivateNetworks: true,
+    pageContextExcludedOrigins: ['https://example.com:9443'],
+  };
+  assert.deepEqual(pageContextInjectionDecision('https://example.com:9443/', settings), {
+    inject: false,
+    reason: 'excluded-origin',
+  });
+  assert.deepEqual(pageContextInjectionDecision('https://example.com:8443/', settings), {
+    inject: true,
+    reason: '',
+  });
+});
+
+test('every generated match pattern passes content-script grammar', () => {
+  const defs = buildRegisteredPageScriptDefinitions({
+    pageContextOnPrivateNetworks: false,
+    pageContextExcludedOrigins: ['https://192.168.8.1:9443', 'https://news.example.com'],
+  });
+  for (const def of defs) {
+    for (const pattern of [...def.matches, ...def.excludeMatches]) {
+      assert.equal(isValidMatchPattern(pattern), true, pattern);
+    }
+  }
+  assert.equal(isValidMatchPattern('https://10.*/*'), false);
+  assert.equal(isValidMatchPattern('https://192.168.*/*'), false);
+});
+
+test('buildPageScriptExcludeMatchPatterns omits invalid private IPv4 wildcards', () => {
+  const skipped = buildPageScriptExcludeMatchPatterns({});
+  assert.ok(skipped.includes('https://127.0.0.1/*'));
+  assert.ok(!skipped.includes('https://192.168.*/*'));
+  assert.ok(!skipped.includes('https://10.*/*'));
+  const withOrigin = buildPageScriptExcludeMatchPatterns({
+    pageContextOnPrivateNetworks: true,
+    pageContextExcludedOrigins: ['https://192.168.8.1:9443', 'https://192.168.8.1'],
+  });
+  assert.ok(withOrigin.includes('https://192.168.8.1/*'));
+  assert.ok(!withOrigin.some((pattern) => pattern.includes('192.168.*')));
+});
+
+test('registered page script definitions include a document_start guard', () => {
+  const defs = buildRegisteredPageScriptDefinitions({}, { packaged: true });
+  const guard = defs.find((def) => def.runAt === 'document_start');
+  const bundle = defs.find((def) => def.runAt === 'document_idle');
+  assert.equal(guard?.js?.[0], 'page-context-install-guard.js');
+  assert.deepEqual(bundle.js.slice(0, 2), ['lib/browser-api-global.js', 'content-extractor.js']);
   const def = buildRegisteredPageScriptDefinition({}, { packaged: true });
   assert.equal(def.id, 'hermes-page-context-bundle');
-  assert.deepEqual(def.js.slice(0, 2), ['lib/browser-api-global.js', 'content-extractor.js']);
   assert.equal(def.runAt, 'document_idle');
 });
 

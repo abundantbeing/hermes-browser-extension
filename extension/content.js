@@ -15,6 +15,7 @@
  * Do not hoist any declaration out of the IIFE.
  */
 (() => {
+  if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
   const browserApi = globalThis.hermesBrowserApi;
   const CONTENT_SCRIPT_VERSION = '2026-07-16-extraction-site-adapters-v1';
   const previousListener = globalThis.__HERMES_BROWSER_CONTENT_LISTENER__;

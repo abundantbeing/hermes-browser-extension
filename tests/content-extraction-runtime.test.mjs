@@ -93,7 +93,7 @@ test('normal capture never reinjects the content bridge and fallback injects onl
   const sidepanel = await readFile(path.join(rootDir, 'extension', 'sidepanel.js'), 'utf8');
   const getPageContext = sidepanel.match(/async function getPageContext\(tab, options = \{\}\) \{[\s\S]*?\n\}/)?.[0] || '';
   const getYoutubeTranscript = sidepanel.match(/async function getYoutubeTranscriptForTab\(tab\) \{[\s\S]*?\n\}/)?.[0] || '';
-  const scriptingFallback = sidepanel.match(/async function getPageContextViaScripting\(tabId, options, originalError\) \{[\s\S]*?\n\}/)?.[0] || '';
+  const scriptingFallback = sidepanel.match(/async function getPageContextViaScripting\(tabId, options, originalError, tabUrl = ''\) \{[\s\S]*?\n\}/)?.[0] || '';
 
   assert.doesNotMatch(sidepanel, /async function ensureContentScript\s*\(/);
   assert.doesNotMatch(getPageContext, /ensureContentScript/);

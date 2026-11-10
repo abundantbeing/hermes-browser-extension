@@ -78,6 +78,7 @@ import {
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
 } from './lib/saved-connections.mjs';
 import { createPageScriptRegistrar } from './lib/page-script-registration.mjs';
+import { pageContextInjectionDecision } from './lib/page-script-host-policy.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -92,19 +93,14 @@ const pageScriptRegistrar = createPageScriptRegistrar({
   packaged: true,
 });
 
-async function syncPageContextScripts() {
-  try {
-    const settings = await readStoredSettings();
-    const result = await pageScriptRegistrar.sync(settings);
-    if (result.ok === false && result.reason !== 'scripting-unavailable') {
-      console.warn('[Hermes Browser] Page script registration failed:', result.reason);
-    }
-    return result;
-  } catch (error) {
+const syncPageContextScripts = createHeaderRuleSync({
+  read: readStoredSettings,
+  apply: (settings) => pageScriptRegistrar.sync(settings),
+  onError: (error) => {
     console.warn('[Hermes Browser] Page script registration failed:', error);
     return { ok: false, reason: error?.message || String(error) };
-  }
-}
+  },
+});
 
 const browserControlRuntime = createBrowserControlRuntime({
   browserApi,
@@ -1244,6 +1240,11 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
           ? getYoutubeTranscript(message)
           : message?.type === LOOPBACK_FETCH_MESSAGE
             ? handleLoopbackFetchMessage(message)
+            : message?.type === 'HERMES_PAGE_SCRIPT_POLICY'
+              ? readStoredSettings().then((settings) => {
+                const decision = pageContextInjectionDecision(message?.url || sender?.tab?.url || sender?.url || '', settings);
+                return { inject: decision.inject, reason: decision.reason };
+              })
             : null;
   if (!action) return false;
   action

@@ -1,4 +1,5 @@
 (async () => {
+  if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;
   const generation = Math.max(0, Number(globalThis.__HERMES_INLINE_HELPER_GENERATION__) || 0) + 1;
   globalThis.__HERMES_INLINE_HELPER_GENERATION__ = generation;
   const previousCleanup = globalThis.__HERMES_INLINE_HELPER_CLEANUP__;

@@ -74,7 +74,7 @@ function classicModuleBody(source, authoredPath) {
 function renderClassicModule(module, source) {
   const sourceHash = createHash('sha256').update(source).digest('hex').slice(0, 16);
   const body = classicModuleBody(source, module.path);
-  return `/* ${module.path} · SHA-256 ${sourceHash} */\n(function ${module.runtimeName}(hermesGlobal) {\n  'use strict';\n\n${body}\n\n  hermesGlobal.${module.globalName} = ${module.apiName};\n})(globalThis);`;
+  return `/* ${module.path} · SHA-256 ${sourceHash} */\n(function ${module.runtimeName}(hermesGlobal) {\n  'use strict';\n  if (hermesGlobal.__HERMES_PAGE_SCRIPTS_BLOCKED__) return;\n\n${body}\n\n  hermesGlobal.${module.globalName} = ${module.apiName};\n})(globalThis);`;
 }
 
 export async function renderContentExtractorRuntime({ rootDir = defaultRootDir } = {}) {

@@ -1,7 +1,10 @@
 import {
+  PAGE_CONTEXT_GUARD_SCRIPT_ID,
   PAGE_CONTEXT_SCRIPT_ID,
-  buildRegisteredPageScriptDefinition,
+  buildRegisteredPageScriptDefinitions,
 } from './page-script-host-policy.mjs';
+
+const REGISTERED_PAGE_SCRIPT_IDS = [PAGE_CONTEXT_GUARD_SCRIPT_ID, PAGE_CONTEXT_SCRIPT_ID];
 
 export function createPageScriptRegistrar({
   scriptingApi,
@@ -25,17 +28,22 @@ export function createPageScriptRegistrar({
   return {
     sync(settings = {}) {
       return runExclusive(async () => {
-        const definition = buildRegisteredPageScriptDefinition(settings, { packaged });
+        const definitions = buildRegisteredPageScriptDefinitions(settings, { packaged });
         try {
           const existing = typeof scriptingApi.getRegisteredContentScripts === 'function'
-            ? await scriptingApi.getRegisteredContentScripts({ ids: [PAGE_CONTEXT_SCRIPT_ID] })
+            ? await scriptingApi.getRegisteredContentScripts({ ids: REGISTERED_PAGE_SCRIPT_IDS })
             : [];
-          if (existing?.length) {
-            await scriptingApi.updateContentScripts([definition]);
-          } else {
-            await scriptingApi.registerContentScripts([definition]);
+          const existingIds = new Set((existing || []).map((row) => row.id));
+          const missing = definitions.filter((def) => !existingIds.has(def.id));
+          const present = definitions.filter((def) => existingIds.has(def.id));
+          if (missing.length) {
+            await scriptingApi.registerContentScripts(missing);
           }
-          return { ok: true, excludeCount: definition.excludeMatches.length };
+          if (present.length) {
+            await scriptingApi.updateContentScripts(present);
+          }
+          const bundle = definitions.find((def) => def.id === PAGE_CONTEXT_SCRIPT_ID);
+          return { ok: true, excludeCount: bundle?.excludeMatches?.length || 0 };
         } catch (error) {
           return { ok: false, reason: error?.message || String(error) };
         }

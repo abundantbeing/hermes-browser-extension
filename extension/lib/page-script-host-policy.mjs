@@ -1,6 +1,7 @@
 import { privateNetworkHost } from './common.mjs';
 
 export const PAGE_CONTEXT_SCRIPT_ID = 'hermes-page-context-bundle';
+export const PAGE_CONTEXT_GUARD_SCRIPT_ID = 'hermes-page-context-guard';
 
 const PACKAGED_PAGE_SCRIPT_JS = Object.freeze([
   'lib/browser-api-global.js',
@@ -9,6 +10,9 @@ const PACKAGED_PAGE_SCRIPT_JS = Object.freeze([
   'lib/i18n-content.js',
   'content-inline-helper.js',
 ]);
+
+const PACKAGED_PAGE_CONTEXT_GUARD_JS = 'page-context-install-guard.js';
+const REPOSITORY_PAGE_CONTEXT_GUARD_JS = 'extension/page-context-install-guard.js';
 
 /** Packaged extension paths used by dynamic page-context registration and side-panel injection fallback. */
 export function packagedPageContextScriptFiles() {
@@ -103,7 +107,30 @@ export function pageContextInjectionDecision(url = '', settings = {}) {
   return { inject: true, reason: '' };
 }
 
-/** Match patterns that skip RFC1918, loopback, link-local, and local names when private skip is active. */
+/**
+ * Chrome/Firefox content-script match patterns: host may be * or *.suffix, or a literal host
+ * without interior wildcards. Mid-host wildcards are rejected by the browser.
+ */
+export function isValidMatchPattern(pattern = '') {
+  const text = String(pattern || '').trim();
+  if (!text) return false;
+  if (text === 'file:///*') return true;
+  const parts = /^(\*|https?|file|ftp|urn):\/\/([^/]+)(\/.*)$/.exec(text);
+  if (!parts) return false;
+  const host = parts[2];
+  const path = parts[3];
+  if (!path.startsWith('/')) return false;
+  if (host === '*') return true;
+  if (host.startsWith('*.')) {
+    const suffix = host.slice(2);
+    return Boolean(suffix) && !suffix.includes('*');
+  }
+  if (host.includes('*')) return false;
+  if (host.startsWith('[') && host.endsWith(']')) return !host.slice(1, -1).includes('*');
+  return true;
+}
+
+/** Match patterns that skip loopback and local names when private skip is active (valid grammar only). */
 export function buildPrivateNetworkExcludeMatchPatterns() {
   const patterns = [];
   const schemes = ['http', 'https'];
@@ -118,19 +145,14 @@ export function buildPrivateNetworkExcludeMatchPatterns() {
     patterns.push(`${scheme}://*.internal/*`);
     patterns.push(`${scheme}://*.home.arpa/*`);
     patterns.push(`${scheme}://*.ts.net/*`);
-    patterns.push(`${scheme}://10.*/*`);
-    patterns.push(`${scheme}://192.168.*/*`);
-    patterns.push(`${scheme}://169.254.*/*`);
-    for (let second = 16; second <= 31; second += 1) {
-      patterns.push(`${scheme}://172.${second}.*/*`);
-    }
-    for (let second = 64; second <= 127; second += 1) {
-      patterns.push(`${scheme}://100.${second}.*/*`);
-    }
   }
   return patterns;
 }
 
+/**
+ * Host-wide exclude patterns. Origins with an explicit port are enforced by the document_start guard
+ * (match patterns cannot distinguish ports on the same host).
+ */
 export function originToExcludeMatchPatterns(origin = '') {
   const normalized = normalizeOriginInput(origin);
   if (!normalized) return [];
@@ -140,6 +162,7 @@ export function originToExcludeMatchPatterns(origin = '') {
   } catch {
     return [];
   }
+  if (parsed.port) return [];
   const host = parsed.hostname.includes(':') && !parsed.hostname.startsWith('[')
     ? `[${parsed.hostname}]`
     : parsed.hostname;
@@ -157,15 +180,49 @@ export function buildPageScriptExcludeMatchPatterns(settings = {}) {
   return [...patterns];
 }
 
-export function buildRegisteredPageScriptDefinition(settings = {}, { packaged = true } = {}) {
-  return {
-    id: PAGE_CONTEXT_SCRIPT_ID,
-    matches: ['http://*/*', 'https://*/*', 'file:///*'],
-    excludeMatches: buildPageScriptExcludeMatchPatterns(settings),
-    js: packaged ? [...PACKAGED_PAGE_SCRIPT_JS] : [...REPOSITORY_PAGE_SCRIPT_JS],
-    runAt: 'document_idle',
-    persistAcrossSessions: true,
-  };
+export function assertValidPageScriptPatterns(definitions = []) {
+  const invalid = [];
+  for (const def of definitions) {
+    for (const pattern of [...(def.matches || []), ...(def.excludeMatches || [])]) {
+      if (!isValidMatchPattern(pattern)) invalid.push(pattern);
+    }
+  }
+  if (invalid.length) {
+    throw new Error(`Invalid content-script match patterns: ${invalid.join(', ')}`);
+  }
+}
+
+export function buildRegisteredPageScriptDefinitions(settings = {}, { packaged = true } = {}) {
+  const excludeMatches = buildPageScriptExcludeMatchPatterns(settings);
+  const guardJs = packaged ? PACKAGED_PAGE_CONTEXT_GUARD_JS : REPOSITORY_PAGE_CONTEXT_GUARD_JS;
+  const bundleJs = packaged ? [...PACKAGED_PAGE_SCRIPT_JS] : [...REPOSITORY_PAGE_SCRIPT_JS];
+  const definitions = [
+    {
+      id: PAGE_CONTEXT_GUARD_SCRIPT_ID,
+      matches: ['http://*/*', 'https://*/*', 'file:///*'],
+      excludeMatches,
+      js: [guardJs],
+      runAt: 'document_start',
+      persistAcrossSessions: true,
+    },
+    {
+      id: PAGE_CONTEXT_SCRIPT_ID,
+      matches: ['http://*/*', 'https://*/*', 'file:///*'],
+      excludeMatches,
+      js: bundleJs,
+      runAt: 'document_idle',
+      persistAcrossSessions: true,
+    },
+  ];
+  assertValidPageScriptPatterns(definitions);
+  return definitions;
+}
+
+/** Bundle-only definition (dynamic registration uses a separate guard script). */
+export function buildRegisteredPageScriptDefinition(settings = {}, options = {}) {
+  const [guard, bundle] = buildRegisteredPageScriptDefinitions(settings, options);
+  void guard;
+  return bundle;
 }
 
 export function pageContextSkipMessageKey(reason = '') {
