@@ -24862,14 +24862,23 @@ function manifestContentScriptFiles() {
   return buildRegisteredPageScriptDefinition(settings, { packaged }).js;
 }
 
-async function refreshTabPageScriptPolicy(tabId) {
+async function ensurePageContextGateAndRefresh(tabId, scriptTarget = { tabId }) {
   if (!tabId) return false;
   try {
-    const [result] = await browserApi.scripting.executeScript({
-      target: { tabId },
+    const files = manifestContentScriptFiles();
+    const gateFile = files.find((file) => file.includes('page-context-bundle-gate'));
+    const [hasRefresh] = await browserApi.scripting.executeScript({
+      target: scriptTarget,
+      func: () => typeof globalThis.hermesRefreshPageScriptPolicy === 'function',
+    });
+    if (!hasRefresh?.result && gateFile) {
+      await browserApi.scripting.executeScript({ target: scriptTarget, files: [gateFile] });
+    }
+    const [refreshed] = await browserApi.scripting.executeScript({
+      target: scriptTarget,
       func: () => globalThis.hermesRefreshPageScriptPolicy?.(),
     });
-    return Boolean(result?.result);
+    return Boolean(refreshed?.result);
   } catch {
     return false;
   }
@@ -24909,11 +24918,11 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
     skipError.hermesPageContextSkipped = true;
     throw skipError;
   }
-  await refreshTabPageScriptPolicy(tabId);
   const messageOptions = Number(frameId) > 0 ? { frameId: Number(frameId) } : undefined;
   const scriptTarget = Number(frameId) > 0
     ? { tabId, frameIds: [Number(frameId)] }
     : { tabId };
+  await ensurePageContextGateAndRefresh(tabId, scriptTarget);
   try {
     return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
   } catch (originalError) {
@@ -24936,6 +24945,7 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         ? files.filter((file) => file.endsWith('content-extractor.js'))
         : files;
       if (filesToInject.length) {
+        await ensurePageContextGateAndRefresh(tabId, scriptTarget);
         await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
       }
       return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
@@ -24986,12 +24996,12 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
-    await refreshTabPageScriptPolicy(tabId);
-    const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
-    if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
     const scriptTarget = Number(options?.frameId) > 0
       ? { tabId, frameIds: [Number(options.frameId)] }
       : { tabId };
+    await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+    const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
+    if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
     await browserApi.scripting.executeScript({
       target: scriptTarget,
       files: [extractorPath],

@@ -23,16 +23,18 @@
   const likelyPrivate = privateNetworkHost(location.hostname);
   globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
 
-  const gate = { likelyPrivate, decided: false };
+  const gate = { likelyPrivate, decided: false, latestInject: null };
   gate.promise = new Promise((resolve) => {
     gate._resolvePolicy = (inject) => {
-      globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
+      const allow = Boolean(inject);
+      globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !allow;
+      gate.latestInject = allow;
       if (!gate.decided) {
         gate.decided = true;
-        resolve(Boolean(inject));
+        resolve(allow);
       }
-      if (inject && typeof globalThis.__hermesPageScriptPolicyDecided === 'function') {
-        globalThis.__hermesPageScriptPolicyDecided(inject);
+      if (allow && typeof globalThis.__hermesPageScriptPolicyDecided === 'function') {
+        globalThis.__hermesPageScriptPolicyDecided(allow);
       }
     };
 

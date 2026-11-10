@@ -21,7 +21,7 @@ test('manual installs refresh in-tab page-script policy before messaging', async
     source.indexOf('async function sendContentMessageWithInstallFallback'),
     source.indexOf('function collectPageContextWithSharedExtractor'),
   );
-  assert.match(block, /refreshTabPageScriptPolicy\(tabId\)/);
+  assert.match(block, /ensurePageContextGateAndRefresh\(tabId, scriptTarget\)/);
 });
 
 test('page context permissions save instantly from data-settings-live controls', async () => {

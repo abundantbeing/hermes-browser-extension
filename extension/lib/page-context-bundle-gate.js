@@ -17,7 +17,17 @@
 
   globalThis.__hermesPageScriptPolicyDecided = notifyPolicyDecision;
 
+  function latestPolicyInjectDecision() {
+    const gate = globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
+    if (gate?.decided === true && typeof gate.latestInject === 'boolean') {
+      return gate.latestInject;
+    }
+    return null;
+  }
+
   function pageScriptPolicyPromise() {
+    const latest = latestPolicyInjectDecision();
+    if (latest !== null) return Promise.resolve(latest);
     const gate = globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
     if (gate?.promise) return gate.promise;
     if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__) return Promise.resolve(false);
@@ -38,10 +48,12 @@
     const message = { type: 'HERMES_PAGE_SCRIPT_POLICY', url: location.href };
     const apply = (response) => {
       const inject = response && typeof response.inject === 'boolean' ? response.inject : false;
-      globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
       const gate = globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
       if (gate?._resolvePolicy) gate._resolvePolicy(inject);
-      else globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
+      else {
+        globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
+        if (gate) gate.latestInject = inject;
+      }
       if (inject) notifyPolicyDecision(true);
       return inject;
     };
