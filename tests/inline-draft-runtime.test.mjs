@@ -5,13 +5,22 @@ import test from 'node:test';
 const root = new URL('../', import.meta.url);
 const read = (file) => readFile(new URL(file, root), 'utf8');
 
-test('both manifests load the browser API facade before extractor, bridge, i18n, and inline helper', async () => {
-  const [packaged, repository] = await Promise.all([
+test('page context bundle is registered dynamically, not declared in static manifests', async () => {
+  const [packaged, repository, background] = await Promise.all([
     read('extension/manifest.json').then(JSON.parse),
     read('manifest.json').then(JSON.parse),
+    read('extension/background.js'),
   ]);
-  assert.deepEqual(packaged.content_scripts[0].js, ['lib/browser-api-global.js', 'content-extractor.js', 'content.js', 'lib/i18n-content.js', 'content-inline-helper.js']);
-  assert.deepEqual(repository.content_scripts[0].js, ['extension/lib/browser-api-global.js', 'extension/content-extractor.js', 'extension/content.js', 'extension/lib/i18n-content.js', 'extension/content-inline-helper.js']);
+  const launchPackaged = packaged.content_scripts.find((entry) => (entry.js || []).some((file) => file.endsWith('hermes-web-launch.js')));
+  const launchRepository = repository.content_scripts.find((entry) => (entry.js || []).some((file) => file.endsWith('hermes-web-launch.js')));
+  assert.ok(launchPackaged);
+  assert.ok(launchRepository);
+  assert.equal(
+    packaged.content_scripts.find((entry) => (entry.js || []).includes('content-inline-helper.js')),
+    undefined,
+  );
+  assert.match(background, /syncPageContextScripts/);
+  assert.match(background, /createPageScriptRegistrar/);
 });
 
 test('inline helper uses approved Hermes branding, routes sessions, and supports safe apply and undo', async () => {

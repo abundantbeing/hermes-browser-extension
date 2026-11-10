@@ -4235,6 +4235,34 @@
     "message": "Активна модель",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "One origin per line, such as https://192.168.8.1:9443 or https://news.example.com. Applies on public and private sites.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Exclude these origins from page scripts",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Turn this on when you want Assist, extraction, and inline help on router dashboards, Tailscale hosts, or other non-public addresses.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Run page scripts on private and LAN sites",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes skips its page scripts on home, office, and router addresses by default so self-hosted dashboards keep rendering. Loopback Hermes Web launch pages still use their own lightweight hand-off scripts.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Private and LAN pages",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Чим Hermes може керувати в браузері та які підключення можуть бачити контекст сторінки.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4354,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - контекст обмежено",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Page context was skipped because Hermes did not inject scripts on this page.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes left page scripts off for this site because it is on your exclude list in Settings → Permissions.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes did not inject page scripts on this private or LAN address. Turn on private page scripts in Settings → Permissions, or remove the origin from the exclude list.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "Вибрано {profile}. Перезапустіть шлюз Hermes, якщо активний профіль не зміниться відразу.",
@@ -7238,6 +7278,10 @@
   "runtime_ui_page": {
     "message": "Сторінка",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Page context skipped",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

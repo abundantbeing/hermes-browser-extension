@@ -57,12 +57,12 @@ test('runtime writer can materialize an exact artifact outside the repository', 
   assert.equal(await readFile(destination, 'utf8'), expected);
 });
 
-test('Chromium and repository-root manifests load the extractor before the content bridge', async () => {
-  const extensionManifest = await jsonFile('extension/manifest.json');
-  const rootManifest = await jsonFile('manifest.json');
-
-  assert.deepEqual(extensionManifest.content_scripts[0].js.slice(1, 3), ['content-extractor.js', 'content.js']);
-  assert.deepEqual(rootManifest.content_scripts[0].js.slice(1, 3), ['extension/content-extractor.js', 'extension/content.js']);
+test('registered page script bundle loads the extractor before the content bridge', async () => {
+  const { buildRegisteredPageScriptDefinition } = await import('../extension/lib/page-script-host-policy.mjs');
+  const packaged = buildRegisteredPageScriptDefinition({}, { packaged: true });
+  const repository = buildRegisteredPageScriptDefinition({}, { packaged: false });
+  assert.deepEqual(packaged.js.slice(1, 3), ['content-extractor.js', 'content.js']);
+  assert.deepEqual(repository.js.slice(1, 3), ['extension/content-extractor.js', 'extension/content.js']);
 });
 
 test('build scripts generate the classic runtime before copying extension files', async () => {

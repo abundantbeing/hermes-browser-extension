@@ -105,6 +105,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   includePageText: true,
   includeSelectedText: true,
   gmailCaptureEnabled: false,
+  pageContextOnPrivateNetworks: false,
+  pageContextExcludedOrigins: [],
   browserControlEnabled: false,
   browserControlScope: 'this-tab',
   browserControlPaused: false,
@@ -340,7 +342,7 @@ const SENSITIVE_URL_PATTERNS = [
 
 // A host the API key may travel to in the clear: this computer, a private or link-local address, a
 // tailnet (100.64.0.0/10, *.ts.net), a .local/.lan/.internal/.home.arpa name or a bare machine name.
-function privateNetworkHost(host = '') {
+export function privateNetworkHost(host = '') {
   const name = String(host || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
   if (!name) return false;
   if (name === 'localhost' || name.endsWith('.localhost') || name === '::1') return true;

@@ -125,6 +125,10 @@ import {
   interceptChatLinkClick,
 } from './lib/common.mjs';
 import {
+  pageContextInjectionDecision,
+  pageContextSkipMessageKey,
+} from './lib/page-script-host-policy.mjs';
+import {
   BUILD_RELOAD_BOOT_RECHECK_MS,
   BUILD_RELOAD_WATCH_INTERVAL_MS,
   HBE_RELEASES_URL,
@@ -974,6 +978,8 @@ const els = {
   gmailCaptureEnabledInput: $('#gmailCaptureEnabledInput'),
   gmailCaptureToggleTitle: $('#gmailCaptureToggleTitle'),
   gmailCaptureToggleHint: $('#gmailCaptureToggleHint'),
+  pageContextOnPrivateNetworksInput: $('#pageContextOnPrivateNetworksInput'),
+  pageContextExcludedOriginsInput: $('#pageContextExcludedOriginsInput'),
   contextScopeButton: $('#contextScopeButton'),
   contextScopeLabel: $('#contextScopeLabel'),
   contextScopeMenu: $('#contextScopeMenu'),
@@ -24479,6 +24485,15 @@ function syncSettingsForm() {
   if (els.wakeWordBrowserFallbackInput) els.wakeWordBrowserFallbackInput.checked = settings.wakeWordBrowserFallback !== false;
   if (els.wakeWordSpeakRepliesInput) els.wakeWordSpeakRepliesInput.checked = settings.wakeWordSpeakReplies !== false;
   if (els.gmailCaptureEnabledInput) els.gmailCaptureEnabledInput.checked = settings.gmailCaptureEnabled === true;
+  if (els.pageContextOnPrivateNetworksInput) {
+    els.pageContextOnPrivateNetworksInput.checked = settings.pageContextOnPrivateNetworks === true;
+  }
+  if (els.pageContextExcludedOriginsInput) {
+    const excluded = Array.isArray(settings.pageContextExcludedOrigins)
+      ? settings.pageContextExcludedOrigins
+      : [];
+    els.pageContextExcludedOriginsInput.value = excluded.join('\n');
+  }
   if (els.gmailCaptureToggleTitle) els.gmailCaptureToggleTitle.textContent = translateUiText('Gmail thread context');
   if (els.gmailCaptureToggleHint) els.gmailCaptureToggleHint.textContent = translateUiText('Share the open Gmail thread with Hermes on every message. Stays on until disabled. Inbox lists, drafts and input values stay excluded.');
   renderWakeState();
@@ -24596,6 +24611,12 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
       els.transcriptProviderInput.value,
     ),
     gmailCaptureEnabled: els.gmailCaptureEnabledInput ? els.gmailCaptureEnabledInput.checked : settings.gmailCaptureEnabled === true,
+    pageContextOnPrivateNetworks: els.pageContextOnPrivateNetworksInput
+      ? els.pageContextOnPrivateNetworksInput.checked
+      : settings.pageContextOnPrivateNetworks === true,
+    pageContextExcludedOrigins: els.pageContextExcludedOriginsInput
+      ? els.pageContextExcludedOriginsInput.value.split(/\n+/).map((line) => line.trim()).filter(Boolean)
+      : (Array.isArray(settings.pageContextExcludedOrigins) ? settings.pageContextExcludedOrigins : []),
     wakeWordEnabled: els.wakeWordEnabledInput ? els.wakeWordEnabledInput.checked : Boolean(settings.wakeWordEnabled),
     wakeWordPhrase: normalizeWakeWordSettings({ wakeWordPhrase: els.wakeWordPhraseInput?.value }).phrase,
     wakeWordPreferNative: settings.wakeWordPreferNative !== false,
@@ -24927,6 +24948,19 @@ async function getPageContext(tab, options = {}) {
       ok: false,
       restricted: true,
       reason: 'Hermes Browser Extension does not read browser internals, extension pages, or sensitive account/payment/password pages.',
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
+
+  const injection = pageContextInjectionDecision(tab.url, settings);
+  if (!injection.inject) {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: injection.reason,
+      reason: translateUiText(pageContextSkipMessageKey(injection.reason)),
       text: '',
       selectedText: '',
       meta: {},
@@ -25628,6 +25662,14 @@ async function refreshContext(options = {}) {
     setStatus('warn', 'No active tab detected', 'Open a normal browser tab and try again.');
   } else if (pageContext?.restricted) {
     setStatus('warn', tab.title || translateUiText('Restricted page'), t('status.page_context_restricted', { url: tab.url }), { translateTitle: false, translateDetail: false });
+  } else if (pageContext?.skipped) {
+    const detailKey = pageContextSkipMessageKey(pageContext.skipReason || '');
+    setStatus(
+      'warn',
+      tab.title || t('ui.page_context_skipped'),
+      t(detailKey, { url: tab.url }),
+      { translateTitle: false, translateDetail: false },
+    );
   } else if (pageContext?.ok) {
     setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
   } else {
@@ -25706,7 +25748,17 @@ async function refreshContextPreview() {
     if (isRestrictedUrl(tab.url, { allowLocalDocuments: isLocalDocumentUrl(tab.url) })) {
       setStatus('warn', tab.title || translateUiText('Restricted page'), t('status.page_context_restricted', { url: tab.url }), { translateTitle: false, translateDetail: false });
     } else {
-      setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
+      const injection = pageContextInjectionDecision(tab.url, settings);
+      if (!injection.inject) {
+        setStatus(
+          'warn',
+          tab.title || t('ui.page_context_skipped'),
+          t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+          { translateTitle: false, translateDetail: false },
+        );
+      } else {
+        setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
+      }
     }
   }
   renderLocalDocumentApproval(tab);

@@ -211,6 +211,12 @@ See [`SECURITY.md`](SECURITY.md), [`PERMISSIONS.md`](PERMISSIONS.md), [`DATA-FLO
 
 ## Troubleshooting
 
+### Self-hosted LAN or router dashboards look blank
+
+Some self-hosted dashboards (router admin UIs, Clash or mihomo panels, other Vue or workbox PWAs on private IP addresses) can stop painting when a browser extension injects heavy page scripts at `document_idle`. Hermes now skips its page-context bundle on private and LAN hosts by default. Chat, Hermes Control, and Hermes Web launch still work; only Assist, extraction, and inline page helpers stay off until you opt in.
+
+In **Settings → Permissions → Private and LAN pages**, turn on **Run page scripts on private and LAN sites** when you want page context on those addresses. To block page scripts on a specific origin (public or private), add it under **Exclude these origins from page scripts** (one origin per line, for example `https://192.168.8.1:9443`). The side panel explains when page context is skipped on the active tab.
+
 ### Optional web search through MCP
 
 For Local or Remote API connections, follow the
