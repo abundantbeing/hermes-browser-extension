@@ -4243,6 +4243,10 @@
     "message": "https://192.168.8.1:9443",
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "أصول الاستبعاد لم تتغير",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
   "runtime_settings_page_context_excluded_title": {
     "message": "استبعاد هذه الأصول من برامج الصفحة",
     "description": "Runtime interface message settings.page_context_excluded.title"
@@ -4254,6 +4258,10 @@
   "runtime_settings_page_context_private_enable_label": {
     "message": "تشغيل برامج الصفحة على المواقع الخاصة وLAN",
     "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "إعداد نص الصفحة الخاص لم يتغير",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
   },
   "runtime_settings_page_context_private_summary": {
     "message": "يتخطى Hermes افتراضيًا برامج الصفحة على عناوين المنزل والمكتب والموجه حتى تستمر لوحات التحكم ذاتية الاستضافة في العمل. صفحات إطلاق Hermes Web على الحلقة المحلية تستخدم نصوص تسليم خفيفة خاصة بها.",

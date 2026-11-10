@@ -182,9 +182,9 @@ export function extensionPageContextPackaged(getManifest = () => {
 
 export function buildPageScriptExcludeMatchPatterns(settings = {}) {
   const patterns = new Set();
-  for (const origin of normalizePageContextExcludedOrigins(settings.pageContextExcludedOrigins)) {
-    for (const pattern of originToExcludeMatchPatterns(origin)) patterns.add(pattern);
-  }
+  // User-configured origins are enforced in the document_start guard with exact URL matching.
+  // Content-script exclude patterns cannot distinguish ports on the same host, so they are
+  // intentionally omitted here to keep automatic registration aligned with pageContextInjectionDecision.
   if (settings.pageContextOnPrivateNetworks !== true) {
     for (const pattern of buildPrivateNetworkExcludeMatchPatterns()) patterns.add(pattern);
   }

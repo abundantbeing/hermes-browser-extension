@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "Loại các nguồn này khỏi script trang",
   "settings.page_context_excluded.detail": "Một nguồn mỗi dòng, ví dụ https://192.168.8.1:9443 hoặc https://news.example.com. Áp dụng trên site công khai và riêng.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "Cài đặt script trang mạng riêng không thay đổi",
+  "settings.page_context_excluded.save_unchanged_title": "Nguồn loại trừ không thay đổi",
   "status.page_context_skipped_private": "{url} — Hermes không tiêm script trang trên địa chỉ riêng hoặc LAN này. Bật script trang riêng trong Cài đặt → Quyền, hoặc xóa nguồn khỏi danh sách loại trừ.",
   "status.page_context_skipped_excluded": "{url} — Hermes giữ script trang tắt cho site này vì nó nằm trong danh sách loại trừ ở Cài đặt → Quyền.",
   "status.page_context_skipped": "{url} — Đã bỏ qua ngữ cảnh trang vì Hermes không tiêm script trên trang này.",

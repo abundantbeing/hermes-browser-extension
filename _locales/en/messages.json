@@ -4243,6 +4243,10 @@
     "message": "https://192.168.8.1:9443",
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Excluded origins unchanged",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
   "runtime_settings_page_context_excluded_title": {
     "message": "Exclude these origins from page scripts",
     "description": "Runtime interface message settings.page_context_excluded.title"
@@ -4254,6 +4258,10 @@
   "runtime_settings_page_context_private_enable_label": {
     "message": "Run page scripts on private and LAN sites",
     "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Private page script setting unchanged",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
   },
   "runtime_settings_page_context_private_summary": {
     "message": "Hermes skips its page scripts on home, office, and router addresses by default so self-hosted dashboards keep rendering. Loopback Hermes Web launch pages still use their own lightweight hand-off scripts.",

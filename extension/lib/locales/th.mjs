@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "ยกเว้นต้นทางเหล่านี้จากสคริปต์หน้า",
   "settings.page_context_excluded.detail": "หนึ่งต้นทางต่อบรรทัด เช่น https://192.168.8.1:9443 หรือ https://news.example.com. ใช้ได้ทั้งไซต์สาธารณะและส่วนตัว",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "การตั้งค่าสคริปต์หน้าเครือข่ายส่วนตัวไม่เปลี่ยนแปลง",
+  "settings.page_context_excluded.save_unchanged_title": "ต้นทางที่ยกเว้นไม่เปลี่ยนแปลง",
   "status.page_context_skipped_private": "{url} — Hermes ไม่ได้ฉีดสคริปต์หน้าบนที่อยู่ส่วนตัวหรือ LAN นี้ เปิดสคริปต์หน้าส่วนตัวใน การตั้งค่า → สิทธิ์ หรือลบต้นทางออกจากรายการยกเว้น",
   "status.page_context_skipped_excluded": "{url} — Hermes ปิดสคริปต์หน้าสำหรับไซต์นี้เพราะอยู่ในรายการยกเว้นใน การตั้งค่า → สิทธิ์",
   "status.page_context_skipped": "{url} — ข้ามบริบทหน้าเพราะ Hermes ไม่ได้ฉีดสคริปต์ในหน้านี้",

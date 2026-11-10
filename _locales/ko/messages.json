@@ -4243,6 +4243,10 @@
     "message": "https://192.168.8.1:9443",
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "제외된 오리진이 변경되지 않았습니다",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
   "runtime_settings_page_context_excluded_title": {
     "message": "다음 오리진을 페이지 스크립트에서 제외",
     "description": "Runtime interface message settings.page_context_excluded.title"
@@ -4254,6 +4258,10 @@
   "runtime_settings_page_context_private_enable_label": {
     "message": "프라이빗 및 LAN 사이트에서 페이지 스크립트 실행",
     "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "비공개 페이지 스크립트 설정이 변경되지 않았습니다",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
   },
   "runtime_settings_page_context_private_summary": {
     "message": "Hermes는 기본적으로 가정, 사무실, 라우터 주소에서 페이지 스크립트를 건너뛰어 자체 호스팅 대시보드가 계속 렌더링됩니다. 루프백 Hermes Web 실행 페이지는 자체 경량 핸드오프 스크립트를 사용합니다.",

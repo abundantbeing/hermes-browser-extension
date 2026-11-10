@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "Deze origins uitsluiten van paginascripts",
   "settings.page_context_excluded.detail": "Eén origin per regel, bijv. https://192.168.8.1:9443 of https://news.example.com. Geldt op openbare en privésites.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "Instelling voor privépagina-scripts ongewijzigd",
+  "settings.page_context_excluded.save_unchanged_title": "Uitgesloten origins ongewijzigd",
   "status.page_context_skipped_private": "{url} — Hermes heeft geen paginascripts geïnjecteerd op dit privé- of LAN-adres. Schakel privépaginascripts in via Instellingen → Machtigingen of verwijder de origin van de uitsluitingslijst.",
   "status.page_context_skipped_excluded": "{url} — Hermes liet paginascripts uit voor deze site omdat die op uw uitsluitingslijst staat onder Instellingen → Machtigingen.",
   "status.page_context_skipped": "{url} — Paginacontext overgeslagen omdat Hermes geen scripts op deze pagina heeft geïnjecteerd.",

@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "Wyklucz te pochodzenia ze skryptów strony",
   "settings.page_context_excluded.detail": "Jedno pochodzenie w wierszu, np. https://192.168.8.1:9443 lub https://news.example.com. Dotyczy witryn publicznych i prywatnych.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "Ustawienie skryptów na stronach prywatnych bez zmian",
+  "settings.page_context_excluded.save_unchanged_title": "Wykluczone pochodzenia bez zmian",
   "status.page_context_skipped_private": "{url} — Hermes nie wstrzyknął skryptów strony na tym prywatnym lub LAN adresie. Włącz prywatne skrypty strony w Ustawienia → Uprawnienia lub usuń pochodzenie z listy wykluczeń.",
   "status.page_context_skipped_excluded": "{url} — Hermes pozostawił skrypty strony wyłączone dla tej witryny, bo jest na liście wykluczeń w Ustawienia → Uprawnienia.",
   "status.page_context_skipped": "{url} — Kontekst strony pominięty, bo Hermes nie wstrzyknął skryptów na tej stronie.",

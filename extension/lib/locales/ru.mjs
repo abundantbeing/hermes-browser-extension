@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "Исключить эти источники из скриптов страниц",
   "settings.page_context_excluded.detail": "Один источник в строке, например https://192.168.8.1:9443 или https://news.example.com. Действует на публичных и частных сайтах.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "Настройка скриптов на приватных страницах не изменилась",
+  "settings.page_context_excluded.save_unchanged_title": "Исключённые источники не изменились",
   "status.page_context_skipped_private": "{url} — Hermes не внедрил скрипты страниц на этот частный или LAN-адрес. Включите частные скрипты в Настройки → Разрешения или уберите источник из списка исключений.",
   "status.page_context_skipped_excluded": "{url} — Hermes оставил скрипты страниц выключенными для этого сайта, так как он в списке исключений в Настройки → Разрешения.",
   "status.page_context_skipped": "{url} — Контекст страницы пропущен, так как Hermes не внедрил скрипты на этой странице.",

@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "Diese Origins von Seitenskripten ausschließen",
   "settings.page_context_excluded.detail": "Eine Origin pro Zeile, z. B. https://192.168.8.1:9443 oder https://news.example.com. Gilt für öffentliche und private Websites.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "Einstellung für private Seitenskripte unverändert",
+  "settings.page_context_excluded.save_unchanged_title": "Ausgeschlossene Ursprünge unverändert",
   "status.page_context_skipped_private": "{url} — Hermes hat auf dieser privaten oder LAN-Adresse keine Seitenskripte injiziert. Aktivieren Sie private Seitenskripte unter Einstellungen → Berechtigungen oder entfernen Sie die Origin aus der Ausschlussliste.",
   "status.page_context_skipped_excluded": "{url} — Hermes hat Seitenskripte für diese Website deaktiviert gelassen, weil sie auf Ihrer Ausschlussliste unter Einstellungen → Berechtigungen steht.",
   "status.page_context_skipped": "{url} — Seitenkontext wurde übersprungen, weil Hermes auf dieser Seite keine Skripte injiziert hat.",

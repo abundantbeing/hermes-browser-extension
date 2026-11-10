@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "Bu kökenleri sayfa betiklerinden hariç tut",
   "settings.page_context_excluded.detail": "Satır başına bir köken, örn. https://192.168.8.1:9443 veya https://news.example.com. Kamuya açık ve özel sitelerde geçerlidir.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "Özel sayfa betiği ayarı değişmedi",
+  "settings.page_context_excluded.save_unchanged_title": "Hariç tutulan kaynaklar değişmedi",
   "status.page_context_skipped_private": "{url} — Hermes bu özel veya LAN adresine sayfa betiği enjekte etmedi. Ayarlar → İzinler bölümünde özel sayfa betiklerini açın veya kökeni hariç tutma listesinden kaldırın.",
   "status.page_context_skipped_excluded": "{url} — Bu site Ayarlar → İzinler hariç tutma listesinde olduğu için Hermes sayfa betiklerini kapalı bıraktı.",
   "status.page_context_skipped": "{url} — Hermes bu sayfaya betik enjekte etmediği için sayfa bağlamı atlandı.",

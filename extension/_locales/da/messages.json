@@ -4243,6 +4243,10 @@
     "message": "https://192.168.8.1:9443",
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Ekskluderede oprindelser er uændrede",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
   "runtime_settings_page_context_excluded_title": {
     "message": "Udeluk disse oprindelser fra side-scripts",
     "description": "Runtime interface message settings.page_context_excluded.title"
@@ -4254,6 +4258,10 @@
   "runtime_settings_page_context_private_enable_label": {
     "message": "Kør side-scripts på private og LAN-websteder",
     "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Indstillingen for private sidescripts er uændret",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
   },
   "runtime_settings_page_context_private_summary": {
     "message": "Hermes springer som standard side-scripts over på hjem-, kontor- og routeradresser, så selvhostede dashboards fortsat kan gengives. Loopback Hermes Web-lancerings sider bruger deres egne lette overleveringsscripts.",

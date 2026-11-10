@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "Kecualikan asal ini dari skrip halaman",
   "settings.page_context_excluded.detail": "Satu asal per baris, mis. https://192.168.8.1:9443 atau https://news.example.com. Berlaku di situs publik dan privat.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "Pengaturan skrip halaman privat tidak berubah",
+  "settings.page_context_excluded.save_unchanged_title": "Asal yang dikecualikan tidak berubah",
   "status.page_context_skipped_private": "{url} — Hermes tidak menyuntikkan skrip halaman di alamat privat atau LAN ini. Nyalakan skrip halaman privat di Pengaturan → Izin, atau hapus asal dari daftar pengecualian.",
   "status.page_context_skipped_excluded": "{url} — Hermes membiarkan skrip halaman mati untuk situs ini karena ada di daftar pengecualian di Pengaturan → Izin.",
   "status.page_context_skipped": "{url} — Konteks halaman dilewati karena Hermes tidak menyuntikkan skrip di halaman ini.",

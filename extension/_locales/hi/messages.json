@@ -4243,6 +4243,10 @@
     "message": "https://192.168.8.1:9443",
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "बहिष्कृत मूल अपरिवर्तित",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
   "runtime_settings_page_context_excluded_title": {
     "message": "इन मूलों को पेज स्क्रिप्ट से बाहर रखें",
     "description": "Runtime interface message settings.page_context_excluded.title"
@@ -4254,6 +4258,10 @@
   "runtime_settings_page_context_private_enable_label": {
     "message": "निजी और LAN साइटों पर पेज स्क्रिप्ट चलाएँ",
     "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "निजी पेज स्क्रिप्ट सेटिंग अपरिवर्तित",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
   },
   "runtime_settings_page_context_private_summary": {
     "message": "Hermes डिफ़ॉल्ट रूप से घर, ऑफिस और राउटर पतों पर अपने पेज स्क्रिप्ट छोड़ देता है ताकि सेल्फ-होस्टेड डैशबोर्ड रेंडर होते रहें। लूपबैक Hermes Web लॉन्च पेज अपने हल्के हैंड-ऑफ स्क्रिप्ट उपयोग करते हैं।",

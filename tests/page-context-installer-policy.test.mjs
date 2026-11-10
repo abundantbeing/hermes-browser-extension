@@ -28,7 +28,8 @@ test('page context permissions save instantly from data-settings-live controls',
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(source, /pageContextOnPrivateNetworksInput\?\.addEventListener\('change'/);
   assert.match(source, /persistPageContextPermissions/);
-  assert.match(source, /trackInstantSave\('permissions', persistPageContextPermissions\(\)\)/);
+  assert.match(source, /trackInstantSave\('permissions', persistPageContextPermissions\('private'\)\)/);
+  assert.match(source, /trackInstantSave\('permissions', persistPageContextPermissions\('excluded'\)\)/);
 });
 
 test('element pick failures surface in the operation toast', async () => {
@@ -60,4 +61,5 @@ test('adoptHermesBrowserSettingsStorageChange tracks page-context settings field
   assert.match(block, /pageContextOnPrivateNetworks/);
   assert.match(block, /pageContextExcludedOrigins/);
   assert.match(block, /pageContextSettingsChanged/);
+  assert.match(block, /adoptPageContextPermissionControlsFromStorage\(next\)/);
 });

@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "Exclure ces origines des scripts de page",
   "settings.page_context_excluded.detail": "Une origine par ligne, p. ex. https://192.168.8.1:9443 ou https://news.example.com. S’applique aux sites publics et privés.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "Paramètre de script de page privée inchangé",
+  "settings.page_context_excluded.save_unchanged_title": "Origines exclues inchangées",
   "status.page_context_skipped_private": "{url} — Hermes n’a pas injecté de scripts de page sur cette adresse privée ou LAN. Activez les scripts privés dans Paramètres → Autorisations, ou retirez l’origine de la liste d’exclusion.",
   "status.page_context_skipped_excluded": "{url} — Hermes a laissé les scripts de page désactivés pour ce site car il figure sur votre liste d’exclusion dans Paramètres → Autorisations.",
   "status.page_context_skipped": "{url} — Le contexte de page a été ignoré car Hermes n’a pas injecté de scripts sur cette page.",

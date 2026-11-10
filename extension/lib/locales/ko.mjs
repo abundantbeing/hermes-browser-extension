@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "다음 오리진을 페이지 스크립트에서 제외",
   "settings.page_context_excluded.detail": "한 줄에 오리진 하나, 예: https://192.168.8.1:9443 또는 https://news.example.com. 공개 및 프라이빗 사이트에 적용됩니다.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "비공개 페이지 스크립트 설정이 변경되지 않았습니다",
+  "settings.page_context_excluded.save_unchanged_title": "제외된 오리진이 변경되지 않았습니다",
   "status.page_context_skipped_private": "{url} — 이 프라이빗 또는 LAN 주소에는 Hermes가 페이지 스크립트를 주입하지 않았습니다. 설정 → 권한에서 프라이빗 페이지 스크립트를 켜거나 제외 목록에서 오리진을 제거하세요.",
   "status.page_context_skipped_excluded": "{url} — Hermes는 설정 → 권한의 제외 목록에 있어 이 사이트에서 페이지 스크립트를 꺼진 상태로 두었습니다.",
   "status.page_context_skipped": "{url} — Hermes가 이 페이지에 스크립트를 주입하지 않아 페이지 컨텍스트를 건너뛰었습니다.",

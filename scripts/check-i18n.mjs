@@ -107,6 +107,8 @@ const PAGE_CONTEXT_TRANSLATION_KEYS = [
   'settings.page_context_private.enable_detail',
   'settings.page_context_excluded.title',
   'settings.page_context_excluded.detail',
+  'settings.page_context_private.save_unchanged_title',
+  'settings.page_context_excluded.save_unchanged_title',
   'status.page_context_skipped_private',
   'status.page_context_skipped_excluded',
   'status.page_context_skipped',

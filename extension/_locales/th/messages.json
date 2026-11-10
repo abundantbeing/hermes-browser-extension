@@ -4243,6 +4243,10 @@
     "message": "https://192.168.8.1:9443",
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "ต้นทางที่ยกเว้นไม่เปลี่ยนแปลง",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
   "runtime_settings_page_context_excluded_title": {
     "message": "ยกเว้นต้นทางเหล่านี้จากสคริปต์หน้า",
     "description": "Runtime interface message settings.page_context_excluded.title"
@@ -4254,6 +4258,10 @@
   "runtime_settings_page_context_private_enable_label": {
     "message": "รันสคริปต์หน้าบนไซต์ส่วนตัวและ LAN",
     "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "การตั้งค่าสคริปต์หน้าเครือข่ายส่วนตัวไม่เปลี่ยนแปลง",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
   },
   "runtime_settings_page_context_private_summary": {
     "message": "Hermes ข้ามสคริปต์หน้าโดยค่าเริ่มต้นบนที่อยู่บ้าน สำนักงาน และเราเตอร์ เพื่อให้แดชบอร์ดที่โฮสต์เองยังเรนเดอร์ได้ หน้าเปิด Hermes Web แบบลูปแบ็กใช้สคริปต์ส่งต่อเบาของตนเอง",

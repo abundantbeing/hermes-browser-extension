@@ -4243,6 +4243,10 @@
     "message": "https://192.168.8.1:9443",
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Wykluczone pochodzenia bez zmian",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
   "runtime_settings_page_context_excluded_title": {
     "message": "Wyklucz te pochodzenia ze skryptów strony",
     "description": "Runtime interface message settings.page_context_excluded.title"
@@ -4254,6 +4258,10 @@
   "runtime_settings_page_context_private_enable_label": {
     "message": "Uruchamiaj skrypty strony na prywatnych witrynach i LAN",
     "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Ustawienie skryptów na stronach prywatnych bez zmian",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
   },
   "runtime_settings_page_context_private_summary": {
     "message": "Hermes domyślnie pomija skrypty strony na adresach domowych, biurowych i routera, aby samodzielnie hostowane panele nadal się renderowały. Strony uruchomienia Hermes Web w pętli zwrotnej używają własnych lekkich skryptów przekazania.",

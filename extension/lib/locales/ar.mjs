@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "استبعاد هذه الأصول من برامج الصفحة",
   "settings.page_context_excluded.detail": "أصل واحد في كل سطر، مثل https://192.168.8.1:9443 أو https://news.example.com. ينطبق على المواقع العامة والخاصة.",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "إعداد نص الصفحة الخاص لم يتغير",
+  "settings.page_context_excluded.save_unchanged_title": "أصول الاستبعاد لم تتغير",
   "status.page_context_skipped_private": "{url} — لم يحقن Hermes برامج الصفحة على هذا العنوان الخاص أو LAN. فعّل برامج الصفحة الخاصة في الإعدادات → الأذونات، أو أزل الأصل من قائمة الاستبعاد.",
   "status.page_context_skipped_excluded": "{url} — أبقى Hermes برامج الصفحة متوقفة لهذا الموقع لأنه في قائمة الاستبعاد في الإعدادات → الأذونات.",
   "status.page_context_skipped": "{url} — تم تخطي سياق الصفحة لأن Hermes لم يحقن البرامج على هذه الصفحة.",

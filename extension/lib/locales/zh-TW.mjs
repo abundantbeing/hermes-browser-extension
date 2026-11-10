@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "從頁面指令碼排除這些來源",
   "settings.page_context_excluded.detail": "每行一個來源，例如 https://192.168.8.1:9443 或 https://news.example.com. 適用於公開與私人網站。",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "私人頁面指令碼設定未變更",
+  "settings.page_context_excluded.save_unchanged_title": "排除的來源未變更",
   "status.page_context_skipped_private": "{url} — Hermes 未在此私人或 LAN 位址注入頁面指令碼。請在設定 → 權限中開啟私人頁面指令碼，或從排除清單移除該來源。",
   "status.page_context_skipped_excluded": "{url} — 此網站在設定 → 權限的排除清單中，Hermes 保持頁面指令碼關閉。",
   "status.page_context_skipped": "{url} — 已略過頁面內容，因為 Hermes 未在此頁面注入指令碼。",

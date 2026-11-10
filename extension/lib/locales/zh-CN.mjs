@@ -1837,6 +1837,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "从页面脚本中排除这些来源",
   "settings.page_context_excluded.detail": "每行一个来源，例如 https://192.168.8.1:9443 或 https://news.example.com. 适用于公开和私有站点。",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "私有页面脚本设置未更改",
+  "settings.page_context_excluded.save_unchanged_title": "排除的来源未更改",
   "status.page_context_skipped_private": "{url} — Hermes 未在此私有或 LAN 地址注入页面脚本。请在设置 → 权限中开启私有页面脚本，或从排除列表中移除该来源。",
   "status.page_context_skipped_excluded": "{url} — 该站点在设置 → 权限的排除列表中，Hermes 保持页面脚本关闭。",
   "status.page_context_skipped": "{url} — 已跳过页面上下文，因为 Hermes 未在此页面注入脚本。",

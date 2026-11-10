@@ -4243,6 +4243,10 @@
     "message": "https://192.168.8.1:9443",
     "description": "Runtime interface message settings.page_context_excluded.placeholder"
   },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "除外オリジンは変更されていません",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
   "runtime_settings_page_context_excluded_title": {
     "message": "これらのオリジンをページスクリプトから除外",
     "description": "Runtime interface message settings.page_context_excluded.title"
@@ -4254,6 +4258,10 @@
   "runtime_settings_page_context_private_enable_label": {
     "message": "プライベートおよび LAN サイトでページスクリプトを実行",
     "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "プライベートページのスクリプト設定は変更されていません",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
   },
   "runtime_settings_page_context_private_summary": {
     "message": "Hermes は既定で自宅・オフィス・ルーターアドレスではページスクリプトをスキップし、自己ホストのダッシュボードが描画され続けます。ループバックの Hermes Web 起動ページは独自の軽量ハンドオフスクリプトを使います。",

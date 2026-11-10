@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "इन मूलों को पेज स्क्रिप्ट से बाहर रखें",
   "settings.page_context_excluded.detail": "प्रति पंक्ति एक मूल, जैसे https://192.168.8.1:9443 या https://news.example.com. सार्वजनिक और निजी साइटों पर लागू।",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "निजी पेज स्क्रिप्ट सेटिंग अपरिवर्तित",
+  "settings.page_context_excluded.save_unchanged_title": "बहिष्कृत मूल अपरिवर्तित",
   "status.page_context_skipped_private": "{url} — Hermes ने इस निजी या LAN पते पर पेज स्क्रिप्ट इंजेक्ट नहीं किए। सेटिंग्स → अनुमतियाँ में निजी पेज स्क्रिप्ट चालू करें, या मूल को बहिष्करण सूची से हटाएँ।",
   "status.page_context_skipped_excluded": "{url} — Hermes ने इस साइट के लिए पेज स्क्रिप्ट बंद रखे क्योंकि यह सेटिंग्स → अनुमतियाँ में आपकी बहिष्करण सूची में है।",
   "status.page_context_skipped": "{url} — पेज संदर्भ छोड़ा गया क्योंकि Hermes ने इस पेज पर स्क्रिप्ट इंजेक्ट नहीं किए।",

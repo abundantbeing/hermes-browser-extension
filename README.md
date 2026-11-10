@@ -228,7 +228,7 @@ Private or LAN hosts (the same classifier the extension and guard use):
 | Local names | `localhost`, `*.localhost`, `*.local`, `*.lan`, `*.internal`, `*.home.arpa`, `*.ts.net` |
 | Single-label hostnames | names with no dots (for example a machine name on the LAN) |
 
-Port-specific excludes (for example `https://example.com:9443`) are enforced at runtime, not via match patterns, so other ports on the same host stay eligible for page scripts unless you exclude them too.
+Port-specific excludes (for example `https://example.com:9443`) are enforced at runtime in the install guard, not via registration match patterns, so other ports on the same host stay eligible for page scripts unless you exclude them too.
 
 ### Optional web search through MCP
 

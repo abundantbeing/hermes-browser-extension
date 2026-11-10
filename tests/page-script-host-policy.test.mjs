@@ -123,12 +123,25 @@ test('buildPageScriptExcludeMatchPatterns omits invalid private IPv4 wildcards',
   assert.ok(skipped.includes('https://127.0.0.1/*'));
   assert.ok(!skipped.includes('https://192.168.*/*'));
   assert.ok(!skipped.includes('https://10.*/*'));
-  const withOrigin = buildPageScriptExcludeMatchPatterns({
+  const withUserExclusions = buildPageScriptExcludeMatchPatterns({
     pageContextOnPrivateNetworks: true,
-    pageContextExcludedOrigins: ['https://192.168.8.1:9443', 'https://192.168.8.1'],
+    pageContextExcludedOrigins: ['https://192.168.8.1:9443', 'https://example.com', 'https://example.com:9443'],
   });
-  assert.ok(withOrigin.includes('https://192.168.8.1/*'));
-  assert.ok(!withOrigin.some((pattern) => pattern.includes('192.168.*')));
+  assert.ok(!withUserExclusions.some((pattern) => pattern.includes('example.com')));
+  assert.ok(!withUserExclusions.some((pattern) => pattern.includes('192.168.8.1')));
+});
+
+test('registration stays consistent with port-level policy decisions', () => {
+  const settings = {
+    pageContextOnPrivateNetworks: true,
+    pageContextExcludedOrigins: ['https://example.com:9443'],
+  };
+  const patterns = buildPageScriptExcludeMatchPatterns(settings);
+  assert.ok(!patterns.some((pattern) => pattern.includes('example.com')));
+  assert.deepEqual(pageContextInjectionDecision('https://example.com:8443/', settings), { inject: true, reason: '' });
+  const defs = buildRegisteredPageScriptDefinitions(settings, { packaged: true });
+  const bundle = defs.find((def) => def.id === 'hermes-page-context-bundle');
+  assert.ok(!bundle.excludeMatches.some((pattern) => pattern.includes('example.com')));
 });
 
 test('registered page script definitions include a document_start guard', () => {

@@ -24083,6 +24083,7 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     renderBrowserControl();
     renderSavedConnections();
     if (pageContextSettingsChanged) {
+      adoptPageContextPermissionControlsFromStorage(next);
       const tab = currentContext?.activeTab;
       if (tab?.url) {
         const injection = pageContextInjectionDecision(tab.url, settings);
@@ -24884,19 +24885,58 @@ async function ensurePageContextGateAndRefresh(tabId, scriptTarget = { tabId }) 
   }
 }
 
-async function persistPageContextPermissions() {
-  const pageContextOnPrivateNetworks = els.pageContextOnPrivateNetworksInput?.checked === true;
-  const pageContextExcludedOrigins = els.pageContextExcludedOriginsInput
-    ? normalizePageContextExcludedOrigins(els.pageContextExcludedOriginsInput.value)
-    : normalizePageContextExcludedOrigins(settings.pageContextExcludedOrigins);
+function pageContextPermissionControlDirty(control) {
+  if (!control || !settingsBaseline) return false;
+  const pane = control.closest('[data-settings-pane]')?.dataset.settingsPane || 'permissions';
+  const key = `${pane}\u0000${control.id}:${control.type === 'radio' ? control.value : ''}`;
+  if (!settingsBaseline.has(key)) return false;
+  const baseline = settingsBaseline.get(key);
+  const current = control.type === 'checkbox' ? String(control.checked) : String(control.value);
+  return current !== baseline;
+}
+
+function adoptPageContextPermissionControlsFromStorage(next) {
+  if (!next) return;
+  if (els.pageContextOnPrivateNetworksInput) {
+    const editing = document.activeElement === els.pageContextOnPrivateNetworksInput;
+    const dirty = pageContextPermissionControlDirty(els.pageContextOnPrivateNetworksInput);
+    if (!editing && !dirty && Object.hasOwn(next, 'pageContextOnPrivateNetworks')) {
+      els.pageContextOnPrivateNetworksInput.checked = next.pageContextOnPrivateNetworks === true;
+      adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
+    }
+  }
+  if (els.pageContextExcludedOriginsInput) {
+    const editing = document.activeElement === els.pageContextExcludedOriginsInput;
+    const dirty = pageContextPermissionControlDirty(els.pageContextExcludedOriginsInput);
+    if (!editing && !dirty && Object.hasOwn(next, 'pageContextExcludedOrigins')) {
+      const excluded = Array.isArray(next.pageContextExcludedOrigins) ? next.pageContextExcludedOrigins : [];
+      els.pageContextExcludedOriginsInput.value = excluded.join('\n');
+      adoptSettingsBaselineValue(els.pageContextExcludedOriginsInput);
+    }
+  }
+}
+
+async function persistPageContextPermissions(field = 'all') {
+  const fresh = await readBrowserSettingsFromStorage();
+  const pageContextOnPrivateNetworks = field === 'excluded'
+    ? fresh.pageContextOnPrivateNetworks === true
+    : els.pageContextOnPrivateNetworksInput?.checked === true;
+  const pageContextExcludedOrigins = field === 'private'
+    ? normalizePageContextExcludedOrigins(fresh.pageContextExcludedOrigins)
+    : normalizePageContextExcludedOrigins(els.pageContextExcludedOriginsInput?.value);
   settings = {
     ...settings,
+    ...fresh,
     pageContextOnPrivateNetworks,
     pageContextExcludedOrigins,
   };
   await setPackedBrowserSettings(settings);
-  if (els.pageContextOnPrivateNetworksInput) adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
-  if (els.pageContextExcludedOriginsInput) adoptSettingsBaselineValue(els.pageContextExcludedOriginsInput);
+  if (field !== 'excluded' && els.pageContextOnPrivateNetworksInput) {
+    adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
+  }
+  if (field !== 'private' && els.pageContextExcludedOriginsInput) {
+    adoptSettingsBaselineValue(els.pageContextExcludedOriginsInput);
+  }
 }
 
 async function resolveTabUrlForPageScriptPolicy(tabId, tabUrl = '') {
@@ -30939,13 +30979,13 @@ function bindEvents() {
     });
   });
   els.pageContextOnPrivateNetworksInput?.addEventListener('change', () => {
-    trackInstantSave('permissions', persistPageContextPermissions()).catch((error) => {
-      setStatus('warn', 'Private page script setting unchanged', error?.message || String(error), { translateDetail: false });
+    trackInstantSave('permissions', persistPageContextPermissions('private')).catch((error) => {
+      setStatus('warn', t('settings.page_context_private.save_unchanged_title'), error?.message || String(error), { translateDetail: false });
     });
   });
   els.pageContextExcludedOriginsInput?.addEventListener('change', () => {
-    trackInstantSave('permissions', persistPageContextPermissions()).catch((error) => {
-      setStatus('warn', 'Excluded origins unchanged', error?.message || String(error), { translateDetail: false });
+    trackInstantSave('permissions', persistPageContextPermissions('excluded')).catch((error) => {
+      setStatus('warn', t('settings.page_context_excluded.save_unchanged_title'), error?.message || String(error), { translateDetail: false });
     });
   });
   browserControlDialogUi = createBrowserControlDialog({

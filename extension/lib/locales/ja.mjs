@@ -1838,6 +1838,8 @@ export default Object.freeze({
   "settings.page_context_excluded.title": "これらのオリジンをページスクリプトから除外",
   "settings.page_context_excluded.detail": "1 行に 1 オリジン。例: https://192.168.8.1:9443 または https://news.example.com. 公開・プライベートの両方に適用されます。",
   "settings.page_context_excluded.placeholder": "https://192.168.8.1:9443",
+  "settings.page_context_private.save_unchanged_title": "プライベートページのスクリプト設定は変更されていません",
+  "settings.page_context_excluded.save_unchanged_title": "除外オリジンは変更されていません",
   "status.page_context_skipped_private": "{url} — このプライベートまたは LAN アドレスでは Hermes はページスクリプトを注入しませんでした。設定 → 権限でプライベートページスクリプトをオンにするか、除外リストからオリジンを削除してください。",
   "status.page_context_skipped_excluded": "{url} — Hermesは設定 → 権限の除外リストに含まれるため、このサイトではページスクリプトはオフのままです。",
   "status.page_context_skipped": "{url} — このページに Hermes がスクリプトを注入しなかったため、ページコンテキストをスキップしました。",
