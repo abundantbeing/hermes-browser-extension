@@ -211,11 +211,7 @@ See [`SECURITY.md`](SECURITY.md), [`PERMISSIONS.md`](PERMISSIONS.md), [`DATA-FLO
 
 ## Troubleshooting
 
-### Optional web search through MCP
-
-For Local or Remote API connections, follow the
-[Parallel Search MCP guide](./guides/parallel-search-mcp.md) to add free web search
-and page fetching to the connected Hermes runtime without a Parallel API key.
+Tools available to the agent come from your Hermes setup. See the [Hermes docs](https://hermes-agent.nousresearch.com/docs).
 
 ### I loaded the extension but nothing works
 
