@@ -131,6 +131,198 @@
     "message": "無法連線到此閘道以檢查登入。",
     "description": "Runtime interface message account.unavailable.unreachable"
   },
+  "runtime_addconn_add": {
+    "message": "新增連線",
+    "description": "Runtime interface message addconn.add"
+  },
+  "runtime_addconn_add_anyway": {
+    "message": "不測試直接新增",
+    "description": "Runtime interface message addconn.add_anyway"
+  },
+  "runtime_addconn_address_hint_local": {
+    "message": "留空則使用這台電腦的預設位址。",
+    "description": "Runtime interface message addconn.address_hint_local"
+  },
+  "runtime_addconn_address_hint_remote": {
+    "message": "閘道器的完整位址，若有連接埠請一併填寫。主機名稱、LAN 位址或 Tailscale 位址都可以。",
+    "description": "Runtime interface message addconn.address_hint_remote"
+  },
+  "runtime_addconn_address_label": {
+    "message": "位址",
+    "description": "Runtime interface message addconn.address_label"
+  },
+  "runtime_addconn_browser_note": {
+    "message": "新增連線後，擴充功能會引導你完成登入。",
+    "description": "Runtime interface message addconn.browser_note"
+  },
+  "runtime_addconn_cert_hint": {
+    "message": "瀏覽器決定要信任哪些憑證。如果它不接受此憑證，擴充功能會開啟該位址，讓你在那裡接受一次。",
+    "description": "Runtime interface message addconn.cert_hint"
+  },
+  "runtime_addconn_cert_label": {
+    "message": "此位址使用自己的（自簽署）憑證",
+    "description": "Runtime interface message addconn.cert_label"
+  },
+  "runtime_addconn_cert_title": {
+    "message": "憑證",
+    "description": "Runtime interface message addconn.cert_title"
+  },
+  "runtime_addconn_err_address_https": {
+    "message": "透過瀏覽器登入需要 https 位址。",
+    "description": "Runtime interface message addconn.err_address_https"
+  },
+  "runtime_addconn_err_address_invalid": {
+    "message": "這不是有效的 http 或 https 位址。",
+    "description": "Runtime interface message addconn.err_address_invalid"
+  },
+  "runtime_addconn_err_address_not_local": {
+    "message": "本機連線必須位於這台電腦上。若要其他位址，請選擇「遠端閘道器」。",
+    "description": "Runtime interface message addconn.err_address_not_local"
+  },
+  "runtime_addconn_err_address_required": {
+    "message": "請輸入閘道器的位址。",
+    "description": "Runtime interface message addconn.err_address_required"
+  },
+  "runtime_addconn_err_header_blocked": {
+    "message": "此標頭由瀏覽器或登入控制項管理。",
+    "description": "Runtime interface message addconn.err_header_blocked"
+  },
+  "runtime_addconn_err_header_empty": {
+    "message": "請輸入值。",
+    "description": "Runtime interface message addconn.err_header_empty"
+  },
+  "runtime_addconn_err_header_invalid": {
+    "message": "名稱只能包含字母、數字和連字號；值不能包含換行。",
+    "description": "Runtime interface message addconn.err_header_invalid"
+  },
+  "runtime_addconn_err_header_long": {
+    "message": "這個值太長了。",
+    "description": "Runtime interface message addconn.err_header_long"
+  },
+  "runtime_addconn_err_header_many": {
+    "message": "最多十個標頭。",
+    "description": "Runtime interface message addconn.err_header_many"
+  },
+  "runtime_addconn_err_header_repeated": {
+    "message": "此標頭已在列表中。",
+    "description": "Runtime interface message addconn.err_header_repeated"
+  },
+  "runtime_addconn_err_key_required": {
+    "message": "請輸入金鑰，或選擇「瀏覽器」。",
+    "description": "Runtime interface message addconn.err_key_required"
+  },
+  "runtime_addconn_header_add": {
+    "message": "新增標頭",
+    "description": "Runtime interface message addconn.header_add"
+  },
+  "runtime_addconn_header_name": {
+    "message": "標頭名稱",
+    "description": "Runtime interface message addconn.header_name"
+  },
+  "runtime_addconn_header_remove": {
+    "message": "移除標頭",
+    "description": "Runtime interface message addconn.header_remove"
+  },
+  "runtime_addconn_header_value": {
+    "message": "值",
+    "description": "Runtime interface message addconn.header_value"
+  },
+  "runtime_addconn_headers_hint": {
+    "message": "隨發往此位址的每個請求一起傳送，包括串流回覆。適用於位於驗證代理之後的閘道器。絕不會傳送到其他任何地方。瀏覽器無法將它們加入儀表板的即時 WebSocket 連線。",
+    "description": "Runtime interface message addconn.headers_hint"
+  },
+  "runtime_addconn_headers_title": {
+    "message": "自訂標頭",
+    "description": "Runtime interface message addconn.headers_title"
+  },
+  "runtime_addconn_key_hint": {
+    "message": "加密儲存在這台電腦上，僅用於此連線。",
+    "description": "Runtime interface message addconn.key_hint"
+  },
+  "runtime_addconn_kicker": {
+    "message": "新增連線",
+    "description": "Runtime interface message addconn.kicker"
+  },
+  "runtime_addconn_method_browser": {
+    "message": "瀏覽器",
+    "description": "Runtime interface message addconn.method_browser"
+  },
+  "runtime_addconn_method_browser_desc": {
+    "message": "在閘道器自己的頁面上登入，或在該頁面核准此擴充功能。密碼在該頁面輸入。",
+    "description": "Runtime interface message addconn.method_browser_desc"
+  },
+  "runtime_addconn_method_token": {
+    "message": "權杖",
+    "description": "Runtime interface message addconn.method_token"
+  },
+  "runtime_addconn_method_token_desc": {
+    "message": "來自閘道器的 API 金鑰或瀏覽器權杖。",
+    "description": "Runtime interface message addconn.method_token_desc"
+  },
+  "runtime_addconn_name_label": {
+    "message": "名稱 · 選填",
+    "description": "Runtime interface message addconn.name_label"
+  },
+  "runtime_addconn_name_placeholder": {
+    "message": "家裡、工作室…",
+    "description": "Runtime interface message addconn.name_placeholder"
+  },
+  "runtime_addconn_open_address": {
+    "message": "開啟位址",
+    "description": "Runtime interface message addconn.open_address"
+  },
+  "runtime_addconn_private_hint": {
+    "message": "SSH 隧道、Tailscale、WireGuard 和其他私人網路在這裡不需要特別設定。請先啟動連線，再用你的 API 金鑰，在它提供的位址新增遠端閘道器。本擴充功能無法自行開啟 SSH 工作階段。",
+    "description": "Runtime interface message addconn.private_hint"
+  },
+  "runtime_addconn_private_title": {
+    "message": "私人連線",
+    "description": "Runtime interface message addconn.private_title"
+  },
+  "runtime_addconn_result_cert": {
+    "message": "如果它使用自己的憑證，請開啟該位址，在那裡接受憑證，然後重試。",
+    "description": "Runtime interface message addconn.result_cert"
+  },
+  "runtime_addconn_result_not_hermes": {
+    "message": "此位址有回應，但不是 Hermes。",
+    "description": "Runtime interface message addconn.result_not_hermes"
+  },
+  "runtime_addconn_result_unauthorized": {
+    "message": "閘道器未接受此金鑰。",
+    "description": "Runtime interface message addconn.result_unauthorized"
+  },
+  "runtime_addconn_result_unreachable": {
+    "message": "此位址沒有任何回應。",
+    "description": "Runtime interface message addconn.result_unreachable"
+  },
+  "runtime_addconn_save_options": {
+    "message": "儲存選項",
+    "description": "Runtime interface message addconn.save_options"
+  },
+  "runtime_addconn_step_count": {
+    "message": "第 {current} 步，共 {total} 步",
+    "description": "Runtime interface message addconn.step_count"
+  },
+  "runtime_addconn_testing": {
+    "message": "測試中…",
+    "description": "Runtime interface message addconn.testing"
+  },
+  "runtime_addconn_title_options": {
+    "message": "連線選項",
+    "description": "Runtime interface message addconn.title_options"
+  },
+  "runtime_addconn_title_signin": {
+    "message": "你要如何登入？",
+    "description": "Runtime interface message addconn.title_signin"
+  },
+  "runtime_addconn_title_where": {
+    "message": "它在哪裡？",
+    "description": "Runtime interface message addconn.title_where"
+  },
+  "runtime_addconn_try_again": {
+    "message": "重試",
+    "description": "Runtime interface message addconn.try_again"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -2126,6 +2318,54 @@
   "runtime_connection_not_configured_short": {
     "message": "未設定",
     "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connections_busy": {
+    "message": "請等待目前回覆完成後再切換連線。",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "連線 {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "刪除「{name}」？",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_delete_detail": {
+    "message": "將刪除其位址、憑證、草稿，以及此裝置上儲存的交談記錄。交談仍保留在其閘道器上。",
+    "description": "Runtime interface message connections.delete_detail"
+  },
+  "runtime_connections_delete_pick": {
+    "message": "請選擇要刪除的連線。",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "刪除連線",
+    "description": "Runtime interface message connections.delete_title"
+  },
+  "runtime_connections_error": {
+    "message": "無法更新已儲存的連線。",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "切換時會儲存目前設定。每個連線分別保留位址和憑證。",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "使用中",
+    "description": "Runtime interface message connections.in_use"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "連線名稱",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_options": {
+    "message": "選項",
+    "description": "Runtime interface message connections.options"
+  },
+  "runtime_connections_saved_label": {
+    "message": "已儲存的連線",
+    "description": "Runtime interface message connections.saved_label"
   },
   "runtime_context_consent_share_detail": {
     "message": "在您核准此確切連線前僅限聊天。授權會依端點、帳戶、設定檔與瀏覽器控制器隔離。",

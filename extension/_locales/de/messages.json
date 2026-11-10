@@ -131,6 +131,198 @@
     "message": "Dieses Gateway war nicht erreichbar, um nach einer Anmeldung zu suchen.",
     "description": "Runtime interface message account.unavailable.unreachable"
   },
+  "runtime_addconn_add": {
+    "message": "Verbindung hinzufügen",
+    "description": "Runtime interface message addconn.add"
+  },
+  "runtime_addconn_add_anyway": {
+    "message": "Ohne Test hinzufügen",
+    "description": "Runtime interface message addconn.add_anyway"
+  },
+  "runtime_addconn_address_hint_local": {
+    "message": "Lass dieses Feld leer, um die Standardadresse dieses Computers zu verwenden.",
+    "description": "Runtime interface message addconn.address_hint_local"
+  },
+  "runtime_addconn_address_hint_remote": {
+    "message": "Die vollständige Adresse des Gateways, mit Port, falls es einen hat. Ein Hostname, eine LAN-Adresse oder eine Tailscale-Adresse funktionieren alle.",
+    "description": "Runtime interface message addconn.address_hint_remote"
+  },
+  "runtime_addconn_address_label": {
+    "message": "Adresse",
+    "description": "Runtime interface message addconn.address_label"
+  },
+  "runtime_addconn_browser_note": {
+    "message": "Nach dem Hinzufügen der Verbindung führt dich die Erweiterung durch die Anmeldung.",
+    "description": "Runtime interface message addconn.browser_note"
+  },
+  "runtime_addconn_cert_hint": {
+    "message": "Dein Browser entscheidet, welchen Zertifikaten er vertraut. Akzeptiert er dieses nicht, öffnet die Erweiterung die Adresse, damit du es dort einmalig akzeptieren kannst.",
+    "description": "Runtime interface message addconn.cert_hint"
+  },
+  "runtime_addconn_cert_label": {
+    "message": "Diese Adresse nutzt ein eigenes (selbstsigniertes) Zertifikat",
+    "description": "Runtime interface message addconn.cert_label"
+  },
+  "runtime_addconn_cert_title": {
+    "message": "Zertifikat",
+    "description": "Runtime interface message addconn.cert_title"
+  },
+  "runtime_addconn_err_address_https": {
+    "message": "Die Anmeldung über den Browser braucht eine https-Adresse.",
+    "description": "Runtime interface message addconn.err_address_https"
+  },
+  "runtime_addconn_err_address_invalid": {
+    "message": "Das ist keine gültige http- oder https-Adresse.",
+    "description": "Runtime interface message addconn.err_address_invalid"
+  },
+  "runtime_addconn_err_address_not_local": {
+    "message": "Eine lokale Verbindung muss auf diesem Computer liegen. Wähle für eine andere Adresse Remote-Gateway.",
+    "description": "Runtime interface message addconn.err_address_not_local"
+  },
+  "runtime_addconn_err_address_required": {
+    "message": "Gib die Adresse des Gateways ein.",
+    "description": "Runtime interface message addconn.err_address_required"
+  },
+  "runtime_addconn_err_header_blocked": {
+    "message": "Ein Browser oder die Anmeldesteuerung verwaltet diesen Header.",
+    "description": "Runtime interface message addconn.err_header_blocked"
+  },
+  "runtime_addconn_err_header_empty": {
+    "message": "Gib einen Wert ein.",
+    "description": "Runtime interface message addconn.err_header_empty"
+  },
+  "runtime_addconn_err_header_invalid": {
+    "message": "Der Name darf nur Buchstaben, Ziffern und Bindestriche enthalten; der Wert darf keine Zeilenumbrüche enthalten.",
+    "description": "Runtime interface message addconn.err_header_invalid"
+  },
+  "runtime_addconn_err_header_long": {
+    "message": "Dieser Wert ist zu lang.",
+    "description": "Runtime interface message addconn.err_header_long"
+  },
+  "runtime_addconn_err_header_many": {
+    "message": "Höchstens zehn Header.",
+    "description": "Runtime interface message addconn.err_header_many"
+  },
+  "runtime_addconn_err_header_repeated": {
+    "message": "Dieser Header steht bereits in der Liste.",
+    "description": "Runtime interface message addconn.err_header_repeated"
+  },
+  "runtime_addconn_err_key_required": {
+    "message": "Gib den Schlüssel ein oder wähle Browser.",
+    "description": "Runtime interface message addconn.err_key_required"
+  },
+  "runtime_addconn_header_add": {
+    "message": "Header hinzufügen",
+    "description": "Runtime interface message addconn.header_add"
+  },
+  "runtime_addconn_header_name": {
+    "message": "Header-Name",
+    "description": "Runtime interface message addconn.header_name"
+  },
+  "runtime_addconn_header_remove": {
+    "message": "Header entfernen",
+    "description": "Runtime interface message addconn.header_remove"
+  },
+  "runtime_addconn_header_value": {
+    "message": "Wert",
+    "description": "Runtime interface message addconn.header_value"
+  },
+  "runtime_addconn_headers_hint": {
+    "message": "Werden bei jeder Anfrage an diese Adresse mitgesendet, auch bei gestreamten Antworten. Für ein Gateway hinter einem authentifizierenden Proxy. Werden nirgendwo sonst gesendet. Ein Browser kann sie nicht zur Live-WebSocket-Verbindung des Dashboards hinzufügen.",
+    "description": "Runtime interface message addconn.headers_hint"
+  },
+  "runtime_addconn_headers_title": {
+    "message": "Eigene Header",
+    "description": "Runtime interface message addconn.headers_title"
+  },
+  "runtime_addconn_key_hint": {
+    "message": "Wird auf diesem Computer verschlüsselt und nur für diese Verbindung gespeichert.",
+    "description": "Runtime interface message addconn.key_hint"
+  },
+  "runtime_addconn_kicker": {
+    "message": "NEUE VERBINDUNG",
+    "description": "Runtime interface message addconn.kicker"
+  },
+  "runtime_addconn_method_browser": {
+    "message": "Browser",
+    "description": "Runtime interface message addconn.method_browser"
+  },
+  "runtime_addconn_method_browser_desc": {
+    "message": "Melde dich auf der eigenen Seite des Gateways an oder bestätige diese Erweiterung dort. Das Passwort gibst du auf dieser Seite ein.",
+    "description": "Runtime interface message addconn.method_browser_desc"
+  },
+  "runtime_addconn_method_token": {
+    "message": "Token",
+    "description": "Runtime interface message addconn.method_token"
+  },
+  "runtime_addconn_method_token_desc": {
+    "message": "Ein API-Schlüssel oder Browser-Token von deinem Gateway.",
+    "description": "Runtime interface message addconn.method_token_desc"
+  },
+  "runtime_addconn_name_label": {
+    "message": "Name · optional",
+    "description": "Runtime interface message addconn.name_label"
+  },
+  "runtime_addconn_name_placeholder": {
+    "message": "Zuhause, Studio…",
+    "description": "Runtime interface message addconn.name_placeholder"
+  },
+  "runtime_addconn_open_address": {
+    "message": "Adresse öffnen",
+    "description": "Runtime interface message addconn.open_address"
+  },
+  "runtime_addconn_private_hint": {
+    "message": "SSH-Tunnel, Tailscale, WireGuard und andere private Netzwerke brauchen hier nichts Besonderes. Starte zuerst die Verbindung und füge dann ein Remote-Gateway unter der Adresse hinzu, die sie dir nennt, mit deinem API-Schlüssel. Diese Erweiterung kann selbst keine SSH-Sitzung öffnen.",
+    "description": "Runtime interface message addconn.private_hint"
+  },
+  "runtime_addconn_private_title": {
+    "message": "Private Verbindung",
+    "description": "Runtime interface message addconn.private_title"
+  },
+  "runtime_addconn_result_cert": {
+    "message": "Verwendet sie ein eigenes Zertifikat, öffne die Adresse, akzeptiere es dort und versuche es dann erneut.",
+    "description": "Runtime interface message addconn.result_cert"
+  },
+  "runtime_addconn_result_not_hermes": {
+    "message": "Diese Adresse hat geantwortet, aber nicht als Hermes.",
+    "description": "Runtime interface message addconn.result_not_hermes"
+  },
+  "runtime_addconn_result_unauthorized": {
+    "message": "Das Gateway hat diesen Schlüssel nicht akzeptiert.",
+    "description": "Runtime interface message addconn.result_unauthorized"
+  },
+  "runtime_addconn_result_unreachable": {
+    "message": "Unter dieser Adresse hat niemand geantwortet.",
+    "description": "Runtime interface message addconn.result_unreachable"
+  },
+  "runtime_addconn_save_options": {
+    "message": "Optionen speichern",
+    "description": "Runtime interface message addconn.save_options"
+  },
+  "runtime_addconn_step_count": {
+    "message": "Schritt {current} von {total}",
+    "description": "Runtime interface message addconn.step_count"
+  },
+  "runtime_addconn_testing": {
+    "message": "Wird getestet…",
+    "description": "Runtime interface message addconn.testing"
+  },
+  "runtime_addconn_title_options": {
+    "message": "Verbindungsoptionen",
+    "description": "Runtime interface message addconn.title_options"
+  },
+  "runtime_addconn_title_signin": {
+    "message": "Wie meldest du dich an?",
+    "description": "Runtime interface message addconn.title_signin"
+  },
+  "runtime_addconn_title_where": {
+    "message": "Wo liegt das Gateway?",
+    "description": "Runtime interface message addconn.title_where"
+  },
+  "runtime_addconn_try_again": {
+    "message": "Erneut versuchen",
+    "description": "Runtime interface message addconn.try_again"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -2126,6 +2318,54 @@
   "runtime_connection_not_configured_short": {
     "message": "nicht konfiguriert",
     "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connections_busy": {
+    "message": "Warte, bis die aktuelle Antwort abgeschlossen ist, bevor du die Verbindung wechselst.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "Verbindung {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "„{name}“ löschen?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_delete_detail": {
+    "message": "Adresse, Zugangsdaten, Entwürfe und gespeicherter Chatverlauf auf diesem Gerät werden entfernt. Chats bleiben auf dem zugehörigen Gateway.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
+  "runtime_connections_delete_pick": {
+    "message": "Wähle die Verbindung, die gelöscht werden soll.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Verbindung löschen",
+    "description": "Runtime interface message connections.delete_title"
+  },
+  "runtime_connections_error": {
+    "message": "Gespeicherte Verbindungen konnten nicht aktualisiert werden.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "Beim Wechsel werden die aktuellen Einstellungen gespeichert. Jede Verbindung behält ihre Adresse und Zugangsdaten.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "Aktiv",
+    "description": "Runtime interface message connections.in_use"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "Verbindungsname",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_options": {
+    "message": "Optionen",
+    "description": "Runtime interface message connections.options"
+  },
+  "runtime_connections_saved_label": {
+    "message": "Gespeicherte Verbindung",
+    "description": "Runtime interface message connections.saved_label"
   },
   "runtime_context_consent_share_detail": {
     "message": "Nur Chat, bis du genau diese Verbindung genehmigst. Die Einwilligung ist nach Endpunkt, Konto, Profil und Browser-Controller getrennt.",

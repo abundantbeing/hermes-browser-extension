@@ -131,6 +131,198 @@
     "message": "Không kết nối được tới cổng này để kiểm tra đăng nhập.",
     "description": "Runtime interface message account.unavailable.unreachable"
   },
+  "runtime_addconn_add": {
+    "message": "Thêm kết nối",
+    "description": "Runtime interface message addconn.add"
+  },
+  "runtime_addconn_add_anyway": {
+    "message": "Thêm mà không kiểm tra",
+    "description": "Runtime interface message addconn.add_anyway"
+  },
+  "runtime_addconn_address_hint_local": {
+    "message": "Để trống để dùng địa chỉ mặc định của máy tính này.",
+    "description": "Runtime interface message addconn.address_hint_local"
+  },
+  "runtime_addconn_address_hint_remote": {
+    "message": "Địa chỉ đầy đủ của cổng, kèm cổng kết nối nếu có. Tên máy chủ, địa chỉ LAN hay địa chỉ Tailscale đều được.",
+    "description": "Runtime interface message addconn.address_hint_remote"
+  },
+  "runtime_addconn_address_label": {
+    "message": "Địa chỉ",
+    "description": "Runtime interface message addconn.address_label"
+  },
+  "runtime_addconn_browser_note": {
+    "message": "Sau khi thêm kết nối, tiện ích sẽ hướng dẫn bạn đăng nhập.",
+    "description": "Runtime interface message addconn.browser_note"
+  },
+  "runtime_addconn_cert_hint": {
+    "message": "Trình duyệt của bạn quyết định chứng chỉ nào được tin cậy. Nếu không chấp nhận chứng chỉ này, tiện ích sẽ mở địa chỉ để bạn chấp nhận ở đó, một lần.",
+    "description": "Runtime interface message addconn.cert_hint"
+  },
+  "runtime_addconn_cert_label": {
+    "message": "Địa chỉ này dùng chứng chỉ riêng (tự ký)",
+    "description": "Runtime interface message addconn.cert_label"
+  },
+  "runtime_addconn_cert_title": {
+    "message": "Chứng chỉ",
+    "description": "Runtime interface message addconn.cert_title"
+  },
+  "runtime_addconn_err_address_https": {
+    "message": "Đăng nhập qua trình duyệt cần địa chỉ https.",
+    "description": "Runtime interface message addconn.err_address_https"
+  },
+  "runtime_addconn_err_address_invalid": {
+    "message": "Đây không phải địa chỉ http hoặc https hợp lệ.",
+    "description": "Runtime interface message addconn.err_address_invalid"
+  },
+  "runtime_addconn_err_address_not_local": {
+    "message": "Kết nối cục bộ phải nằm trên máy tính này. Với địa chỉ khác, hãy chọn Cổng từ xa.",
+    "description": "Runtime interface message addconn.err_address_not_local"
+  },
+  "runtime_addconn_err_address_required": {
+    "message": "Nhập địa chỉ của cổng.",
+    "description": "Runtime interface message addconn.err_address_required"
+  },
+  "runtime_addconn_err_header_blocked": {
+    "message": "Trình duyệt hoặc phần đăng nhập kiểm soát tiêu đề này.",
+    "description": "Runtime interface message addconn.err_header_blocked"
+  },
+  "runtime_addconn_err_header_empty": {
+    "message": "Nhập một giá trị.",
+    "description": "Runtime interface message addconn.err_header_empty"
+  },
+  "runtime_addconn_err_header_invalid": {
+    "message": "Tên chỉ gồm chữ cái, chữ số và dấu gạch ngang; giá trị không được có ngắt dòng.",
+    "description": "Runtime interface message addconn.err_header_invalid"
+  },
+  "runtime_addconn_err_header_long": {
+    "message": "Giá trị này quá dài.",
+    "description": "Runtime interface message addconn.err_header_long"
+  },
+  "runtime_addconn_err_header_many": {
+    "message": "Tối đa mười tiêu đề.",
+    "description": "Runtime interface message addconn.err_header_many"
+  },
+  "runtime_addconn_err_header_repeated": {
+    "message": "Tiêu đề này đã có trong danh sách.",
+    "description": "Runtime interface message addconn.err_header_repeated"
+  },
+  "runtime_addconn_err_key_required": {
+    "message": "Nhập khóa, hoặc chọn Trình duyệt.",
+    "description": "Runtime interface message addconn.err_key_required"
+  },
+  "runtime_addconn_header_add": {
+    "message": "Thêm tiêu đề",
+    "description": "Runtime interface message addconn.header_add"
+  },
+  "runtime_addconn_header_name": {
+    "message": "Tên tiêu đề",
+    "description": "Runtime interface message addconn.header_name"
+  },
+  "runtime_addconn_header_remove": {
+    "message": "Xóa tiêu đề",
+    "description": "Runtime interface message addconn.header_remove"
+  },
+  "runtime_addconn_header_value": {
+    "message": "Giá trị",
+    "description": "Runtime interface message addconn.header_value"
+  },
+  "runtime_addconn_headers_hint": {
+    "message": "Được gửi kèm mọi yêu cầu tới địa chỉ này, kể cả các câu trả lời phát trực tuyến. Dành cho cổng nằm sau proxy có xác thực. Không bao giờ gửi đi nơi khác. Trình duyệt không thể thêm chúng vào kết nối WebSocket trực tiếp của bảng điều khiển.",
+    "description": "Runtime interface message addconn.headers_hint"
+  },
+  "runtime_addconn_headers_title": {
+    "message": "Tiêu đề tùy chỉnh",
+    "description": "Runtime interface message addconn.headers_title"
+  },
+  "runtime_addconn_key_hint": {
+    "message": "Được mã hóa và lưu trên máy tính này, chỉ dành cho kết nối này.",
+    "description": "Runtime interface message addconn.key_hint"
+  },
+  "runtime_addconn_kicker": {
+    "message": "KẾT NỐI MỚI",
+    "description": "Runtime interface message addconn.kicker"
+  },
+  "runtime_addconn_method_browser": {
+    "message": "Trình duyệt",
+    "description": "Runtime interface message addconn.method_browser"
+  },
+  "runtime_addconn_method_browser_desc": {
+    "message": "Đăng nhập trên trang riêng của cổng, hoặc chấp thuận tiện ích này ở đó. Mật khẩu được nhập trên trang đó.",
+    "description": "Runtime interface message addconn.method_browser_desc"
+  },
+  "runtime_addconn_method_token": {
+    "message": "Mã thông báo",
+    "description": "Runtime interface message addconn.method_token"
+  },
+  "runtime_addconn_method_token_desc": {
+    "message": "Khóa API hoặc mã thông báo trình duyệt từ cổng của bạn.",
+    "description": "Runtime interface message addconn.method_token_desc"
+  },
+  "runtime_addconn_name_label": {
+    "message": "Tên · không bắt buộc",
+    "description": "Runtime interface message addconn.name_label"
+  },
+  "runtime_addconn_name_placeholder": {
+    "message": "Nhà, Studio…",
+    "description": "Runtime interface message addconn.name_placeholder"
+  },
+  "runtime_addconn_open_address": {
+    "message": "Mở địa chỉ",
+    "description": "Runtime interface message addconn.open_address"
+  },
+  "runtime_addconn_private_hint": {
+    "message": "Đường hầm SSH, Tailscale, WireGuard và các mạng riêng khác không cần thiết lập gì đặc biệt ở đây. Hãy khởi động kết nối trước, sau đó thêm Cổng từ xa tại địa chỉ mà kết nối cung cấp, cùng với khóa API của bạn. Tiện ích này không thể tự mở phiên SSH.",
+    "description": "Runtime interface message addconn.private_hint"
+  },
+  "runtime_addconn_private_title": {
+    "message": "Kết nối riêng tư",
+    "description": "Runtime interface message addconn.private_title"
+  },
+  "runtime_addconn_result_cert": {
+    "message": "Nếu dùng chứng chỉ riêng, hãy mở địa chỉ, chấp nhận chứng chỉ ở đó, rồi thử lại.",
+    "description": "Runtime interface message addconn.result_cert"
+  },
+  "runtime_addconn_result_not_hermes": {
+    "message": "Địa chỉ này có phản hồi, nhưng không phải là Hermes.",
+    "description": "Runtime interface message addconn.result_not_hermes"
+  },
+  "runtime_addconn_result_unauthorized": {
+    "message": "Cổng không chấp nhận khóa này.",
+    "description": "Runtime interface message addconn.result_unauthorized"
+  },
+  "runtime_addconn_result_unreachable": {
+    "message": "Không có phản hồi từ địa chỉ này.",
+    "description": "Runtime interface message addconn.result_unreachable"
+  },
+  "runtime_addconn_save_options": {
+    "message": "Lưu tùy chọn",
+    "description": "Runtime interface message addconn.save_options"
+  },
+  "runtime_addconn_step_count": {
+    "message": "Bước {current} / {total}",
+    "description": "Runtime interface message addconn.step_count"
+  },
+  "runtime_addconn_testing": {
+    "message": "Đang kiểm tra…",
+    "description": "Runtime interface message addconn.testing"
+  },
+  "runtime_addconn_title_options": {
+    "message": "Tùy chọn kết nối",
+    "description": "Runtime interface message addconn.title_options"
+  },
+  "runtime_addconn_title_signin": {
+    "message": "Bạn đăng nhập bằng cách nào?",
+    "description": "Runtime interface message addconn.title_signin"
+  },
+  "runtime_addconn_title_where": {
+    "message": "Nó ở đâu?",
+    "description": "Runtime interface message addconn.title_where"
+  },
+  "runtime_addconn_try_again": {
+    "message": "Thử lại",
+    "description": "Runtime interface message addconn.try_again"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -2126,6 +2318,54 @@
   "runtime_connection_not_configured_short": {
     "message": "chưa được cấu hình",
     "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connections_busy": {
+    "message": "Chờ câu trả lời hiện tại hoàn tất trước khi chuyển kết nối.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "Kết nối {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "Xóa \"{name}\"?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_delete_detail": {
+    "message": "Địa chỉ, thông tin xác thực, bản nháp và lịch sử trò chuyện đã lưu trên thiết bị này sẽ bị xóa. Các cuộc trò chuyện vẫn ở trên cổng của kết nối đó.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
+  "runtime_connections_delete_pick": {
+    "message": "Chọn kết nối cần xóa.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "Xóa một kết nối",
+    "description": "Runtime interface message connections.delete_title"
+  },
+  "runtime_connections_error": {
+    "message": "Không thể cập nhật các kết nối đã lưu.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "Chuyển kết nối sẽ lưu cài đặt hiện tại. Mỗi kết nối giữ riêng địa chỉ và thông tin xác thực.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "Đang dùng",
+    "description": "Runtime interface message connections.in_use"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "Tên kết nối",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_options": {
+    "message": "Tùy chọn",
+    "description": "Runtime interface message connections.options"
+  },
+  "runtime_connections_saved_label": {
+    "message": "Kết nối đã lưu",
+    "description": "Runtime interface message connections.saved_label"
   },
   "runtime_context_consent_share_detail": {
     "message": "Chỉ trò chuyện cho đến khi bạn phê duyệt đúng kết nối này. Sự đồng ý được tách biệt theo điểm cuối, tài khoản, hồ sơ và bộ điều khiển Trình duyệt.",

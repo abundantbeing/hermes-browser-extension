@@ -131,6 +131,198 @@
     "message": "تعذّر الوصول إلى هذه البوابة للتحقق من تسجيل الدخول.",
     "description": "Runtime interface message account.unavailable.unreachable"
   },
+  "runtime_addconn_add": {
+    "message": "أضف الاتصال",
+    "description": "Runtime interface message addconn.add"
+  },
+  "runtime_addconn_add_anyway": {
+    "message": "أضف دون اختبار",
+    "description": "Runtime interface message addconn.add_anyway"
+  },
+  "runtime_addconn_address_hint_local": {
+    "message": "اترك هذا الحقل فارغاً لاستخدام العنوان الافتراضي لهذا الجهاز.",
+    "description": "Runtime interface message addconn.address_hint_local"
+  },
+  "runtime_addconn_address_hint_remote": {
+    "message": "العنوان الكامل للبوابة، مع منفذها إن كان لها منفذ. يصلح اسم المضيف، أو عنوان LAN، أو عنوان Tailscale.",
+    "description": "Runtime interface message addconn.address_hint_remote"
+  },
+  "runtime_addconn_address_label": {
+    "message": "العنوان",
+    "description": "Runtime interface message addconn.address_label"
+  },
+  "runtime_addconn_browser_note": {
+    "message": "بعد إضافة الاتصال، ترشدك الإضافة خلال تسجيل الدخول.",
+    "description": "Runtime interface message addconn.browser_note"
+  },
+  "runtime_addconn_cert_hint": {
+    "message": "يقرر متصفحك الشهادات التي يثق بها. إذا لم يقبل هذه الشهادة، تفتح الإضافة العنوان لتقبلها هناك مرة واحدة.",
+    "description": "Runtime interface message addconn.cert_hint"
+  },
+  "runtime_addconn_cert_label": {
+    "message": "يستخدم هذا العنوان شهادته الخاصة (موقّعة ذاتياً)",
+    "description": "Runtime interface message addconn.cert_label"
+  },
+  "runtime_addconn_cert_title": {
+    "message": "الشهادة",
+    "description": "Runtime interface message addconn.cert_title"
+  },
+  "runtime_addconn_err_address_https": {
+    "message": "يتطلب تسجيل الدخول عبر المتصفح عنواناً من نوع https.",
+    "description": "Runtime interface message addconn.err_address_https"
+  },
+  "runtime_addconn_err_address_invalid": {
+    "message": "هذا ليس عنوان http أو https صالحاً.",
+    "description": "Runtime interface message addconn.err_address_invalid"
+  },
+  "runtime_addconn_err_address_not_local": {
+    "message": "يجب أن يكون الاتصال المحلي على هذا الجهاز. اختر «البوابة البعيدة» لعنوان آخر.",
+    "description": "Runtime interface message addconn.err_address_not_local"
+  },
+  "runtime_addconn_err_address_required": {
+    "message": "أدخل عنوان البوابة.",
+    "description": "Runtime interface message addconn.err_address_required"
+  },
+  "runtime_addconn_err_header_blocked": {
+    "message": "يتحكم المتصفح أو عناصر تسجيل الدخول في هذه الترويسة.",
+    "description": "Runtime interface message addconn.err_header_blocked"
+  },
+  "runtime_addconn_err_header_empty": {
+    "message": "أدخل قيمة.",
+    "description": "Runtime interface message addconn.err_header_empty"
+  },
+  "runtime_addconn_err_header_invalid": {
+    "message": "يقبل الاسم أحرفاً وأرقاماً وشرطات، ولا تقبل القيمة فواصل أسطر.",
+    "description": "Runtime interface message addconn.err_header_invalid"
+  },
+  "runtime_addconn_err_header_long": {
+    "message": "هذه القيمة طويلة جداً.",
+    "description": "Runtime interface message addconn.err_header_long"
+  },
+  "runtime_addconn_err_header_many": {
+    "message": "عشر ترويسات كحد أقصى.",
+    "description": "Runtime interface message addconn.err_header_many"
+  },
+  "runtime_addconn_err_header_repeated": {
+    "message": "هذه الترويسة مدرجة بالفعل.",
+    "description": "Runtime interface message addconn.err_header_repeated"
+  },
+  "runtime_addconn_err_key_required": {
+    "message": "أدخل المفتاح، أو اختر «المتصفح».",
+    "description": "Runtime interface message addconn.err_key_required"
+  },
+  "runtime_addconn_header_add": {
+    "message": "أضف ترويسة",
+    "description": "Runtime interface message addconn.header_add"
+  },
+  "runtime_addconn_header_name": {
+    "message": "اسم الترويسة",
+    "description": "Runtime interface message addconn.header_name"
+  },
+  "runtime_addconn_header_remove": {
+    "message": "احذف الترويسة",
+    "description": "Runtime interface message addconn.header_remove"
+  },
+  "runtime_addconn_header_value": {
+    "message": "القيمة",
+    "description": "Runtime interface message addconn.header_value"
+  },
+  "runtime_addconn_headers_hint": {
+    "message": "تُرسل مع كل طلب إلى هذا العنوان، بما في ذلك الردود المتدفقة. مخصصة للبوابة خلف وكيل مصادقة. لا تُرسل إلى أي جهة أخرى. لا يستطيع المتصفح إضافتها إلى اتصال WebSocket المباشر للوحة التحكم.",
+    "description": "Runtime interface message addconn.headers_hint"
+  },
+  "runtime_addconn_headers_title": {
+    "message": "ترويسات مخصصة",
+    "description": "Runtime interface message addconn.headers_title"
+  },
+  "runtime_addconn_key_hint": {
+    "message": "يُحفظ مشفّراً على هذا الجهاز، ولهذا الاتصال فقط.",
+    "description": "Runtime interface message addconn.key_hint"
+  },
+  "runtime_addconn_kicker": {
+    "message": "اتصال جديد",
+    "description": "Runtime interface message addconn.kicker"
+  },
+  "runtime_addconn_method_browser": {
+    "message": "المتصفح",
+    "description": "Runtime interface message addconn.method_browser"
+  },
+  "runtime_addconn_method_browser_desc": {
+    "message": "سجّل الدخول في صفحة البوابة نفسها، أو وافق على هذه الإضافة هناك. تُكتب كلمة المرور في تلك الصفحة.",
+    "description": "Runtime interface message addconn.method_browser_desc"
+  },
+  "runtime_addconn_method_token": {
+    "message": "الرمز",
+    "description": "Runtime interface message addconn.method_token"
+  },
+  "runtime_addconn_method_token_desc": {
+    "message": "مفتاح API أو رمز متصفح من بوابتك.",
+    "description": "Runtime interface message addconn.method_token_desc"
+  },
+  "runtime_addconn_name_label": {
+    "message": "الاسم · اختياري",
+    "description": "Runtime interface message addconn.name_label"
+  },
+  "runtime_addconn_name_placeholder": {
+    "message": "المنزل، الاستوديو…",
+    "description": "Runtime interface message addconn.name_placeholder"
+  },
+  "runtime_addconn_open_address": {
+    "message": "افتح العنوان",
+    "description": "Runtime interface message addconn.open_address"
+  },
+  "runtime_addconn_private_hint": {
+    "message": "أنفاق SSH وTailscale وWireGuard والشبكات الخاصة الأخرى لا تحتاج هنا إلى أي إعداد خاص. ابدأ الاتصال أولاً، ثم أضف البوابة البعيدة على العنوان الذي يعطيه لك، مع مفتاح API الخاص بك. لا تستطيع هذه الإضافة فتح جلسة SSH بنفسها.",
+    "description": "Runtime interface message addconn.private_hint"
+  },
+  "runtime_addconn_private_title": {
+    "message": "اتصال خاص",
+    "description": "Runtime interface message addconn.private_title"
+  },
+  "runtime_addconn_result_cert": {
+    "message": "إذا كان يستخدم شهادته الخاصة، فافتح العنوان واقبلها هناك، ثم حاول مجدداً.",
+    "description": "Runtime interface message addconn.result_cert"
+  },
+  "runtime_addconn_result_not_hermes": {
+    "message": "ردّ هذا العنوان، لكن ليس بوصفه Hermes.",
+    "description": "Runtime interface message addconn.result_not_hermes"
+  },
+  "runtime_addconn_result_unauthorized": {
+    "message": "لم تقبل البوابة هذا المفتاح.",
+    "description": "Runtime interface message addconn.result_unauthorized"
+  },
+  "runtime_addconn_result_unreachable": {
+    "message": "لم يرد أحد على هذا العنوان.",
+    "description": "Runtime interface message addconn.result_unreachable"
+  },
+  "runtime_addconn_save_options": {
+    "message": "احفظ الخيارات",
+    "description": "Runtime interface message addconn.save_options"
+  },
+  "runtime_addconn_step_count": {
+    "message": "الخطوة {current} من {total}",
+    "description": "Runtime interface message addconn.step_count"
+  },
+  "runtime_addconn_testing": {
+    "message": "جارٍ الاختبار…",
+    "description": "Runtime interface message addconn.testing"
+  },
+  "runtime_addconn_title_options": {
+    "message": "خيارات الاتصال",
+    "description": "Runtime interface message addconn.title_options"
+  },
+  "runtime_addconn_title_signin": {
+    "message": "كيف تسجّل الدخول؟",
+    "description": "Runtime interface message addconn.title_signin"
+  },
+  "runtime_addconn_title_where": {
+    "message": "أين البوابة؟",
+    "description": "Runtime interface message addconn.title_where"
+  },
+  "runtime_addconn_try_again": {
+    "message": "حاول مجدداً",
+    "description": "Runtime interface message addconn.try_again"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -2126,6 +2318,54 @@
   "runtime_connection_not_configured_short": {
     "message": "غير مكوَّن",
     "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connections_busy": {
+    "message": "انتظر حتى تكتمل الإجابة الحالية قبل تبديل الاتصال.",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "الاتصال {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "هل تريد حذف \"{name}\"؟",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_delete_detail": {
+    "message": "تتم إزالة عنوانه وبيانات اعتماده ومسوداته وسجل الدردشات المحفوظ على هذا الجهاز. تبقى الدردشات على بوابته.",
+    "description": "Runtime interface message connections.delete_detail"
+  },
+  "runtime_connections_delete_pick": {
+    "message": "اختر الاتصال الذي تريد حذفه.",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "حذف اتصال",
+    "description": "Runtime interface message connections.delete_title"
+  },
+  "runtime_connections_error": {
+    "message": "تعذر تحديث الاتصالات المحفوظة.",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "يؤدي التبديل إلى حفظ الإعدادات الحالية. يحتفظ كل اتصال بعنوانه وبيانات اعتماده.",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "قيد الاستخدام",
+    "description": "Runtime interface message connections.in_use"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "اسم الاتصال",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_options": {
+    "message": "الخيارات",
+    "description": "Runtime interface message connections.options"
+  },
+  "runtime_connections_saved_label": {
+    "message": "الاتصال المحفوظ",
+    "description": "Runtime interface message connections.saved_label"
   },
   "runtime_context_consent_share_detail": {
     "message": "الدردشة فقط حتى توافق على هذا الاتصال المحدد. تُعزل الموافقة حسب نقطة النهاية والحساب والملف الشخصي ووحدة تحكم المتصفح.",

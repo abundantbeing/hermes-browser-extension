@@ -24,7 +24,7 @@ test('no area in the extension keeps a strip beside its content for a scrollbar'
   assert.deepEqual(found, [], `use attachOverlayScrollbar instead: ${found.join(', ')}`);
 });
 
-const SIDE_PANEL_AREAS = ['.app-scroll', '.settings-dialog', '.browser-control-dialog', '.tool-call-list', '.task-stack-list', '.subagent-stack-stream', '.bot-mode-cron-list', '.marketplace-theme-results', '.branded-select-list'];
+const SIDE_PANEL_AREAS = ['.app-scroll', '.settings-dialog', '.add-connection-body', '.browser-control-dialog', '.tool-call-list', '.task-stack-list', '.subagent-stack-stream', '.bot-mode-cron-list', '.marketplace-theme-results', '.branded-select-list'];
 
 test('the side panel gives every one of its vertical scroll areas the floating thumb', () => {
   const source = read('extension/sidepanel.js');

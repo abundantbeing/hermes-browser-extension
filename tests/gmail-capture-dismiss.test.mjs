@@ -21,7 +21,7 @@ test('the Gmail capture button can be dismissed and re-enabled from settings', (
 test('dismissing the capture button persists the opt-out and hides it', () => {
   assert.match(source, /els\.explicitSiteCaptureDismiss\?\.addEventListener\('click'/);
   assert.match(source, /settings = \{ \.\.\.settings, gmailCaptureHidden: true \};/);
-  assert.match(source, /browserApi\.storage\.local\.set\(\{ hermesBrowserSettings: settings \}\)/);
+  assert.match(source, /void setPackedBrowserSettings\(settings\)|setPackedBrowserSettings\(settings\)/);
   assert.match(source, /els\.explicitSiteCaptureWrap\.hidden = !action \|\| captureEnabled \|\| settings\.gmailCaptureHidden === true;/);
   assert.match(source, /els\.explicitSiteCaptureButton\.hidden = !action \|\| captureEnabled;/);
 });

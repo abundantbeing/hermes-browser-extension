@@ -11,6 +11,7 @@ import vm from 'node:vm';
 import {
   compressionSuccessor, createSessionLineage, rosterSuccessor,
 } from '../extension/lib/session-lineage.mjs';
+import { packedHermesBrowserSettingsWrite } from '../extension/lib/saved-connections.mjs';
 import { renameSessionContextEntry } from '../extension/lib/session-context-store.mjs';
 import { sessionLiveRoster } from '../extension/lib/live-session-attach.mjs';
 
@@ -91,6 +92,9 @@ function adoptHarness({ sending = false, attach = null } = {}) {
     sessionLineage: createSessionLineage(),
     promptController: { bindSession: (live, stored) => bound.push([live, stored]) },
     rememberLiveSessionAlias() {},
+    setPackedBrowserSettings: async (next) => {
+      saved.push(await packedHermesBrowserSettingsWrite(structuredClone(next), null));
+    },
     browserApi: { storage: { local: { set: async (value) => { saved.push(value); } } } },
     queuedTurn: { sessionId: 'S1', text: 'later' },
     sending, liveAttach: attach,
@@ -115,7 +119,8 @@ test('adopting the successor moves the durable identity everywhere the panel kee
   assert.equal(vm.runInContext('queuedTurn.sessionId', context), 'S1-child', 'a held draft follows its session');
   assert.deepEqual(bound, [['live-7', 'S1-child']]);
   assert.equal(vm.runInContext('sessionLineage.resolve("S1")', context), 'S1-child', 'the parent id still resolves for history lookups');
-  assert.equal(saved.at(-1).hermesBrowserSettings.sessionId, 'S1-child');
+  const packed = saved.at(-1);
+  assert.equal(packed.hermesBrowserSettings.sessionId, 'S1-child');
 });
 
 test('the same successor adopted twice changes nothing the second time', async () => {

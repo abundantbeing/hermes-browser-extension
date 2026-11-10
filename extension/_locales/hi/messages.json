@@ -131,6 +131,198 @@
     "message": "साइन-इन जाँचने के लिए इस गेटवे तक नहीं पहुँचा जा सका।",
     "description": "Runtime interface message account.unavailable.unreachable"
   },
+  "runtime_addconn_add": {
+    "message": "कनेक्शन जोड़ें",
+    "description": "Runtime interface message addconn.add"
+  },
+  "runtime_addconn_add_anyway": {
+    "message": "बिना जाँचे जोड़ें",
+    "description": "Runtime interface message addconn.add_anyway"
+  },
+  "runtime_addconn_address_hint_local": {
+    "message": "खाली छोड़ें तो इस कंप्यूटर का डिफ़ॉल्ट पता इस्तेमाल होगा।",
+    "description": "Runtime interface message addconn.address_hint_local"
+  },
+  "runtime_addconn_address_hint_remote": {
+    "message": "प्रवेशद्वार का पूरा पता, अगर उसका पोर्ट है तो उसके साथ। होस्टनाम, LAN पता या Tailscale पता, सब चलते हैं।",
+    "description": "Runtime interface message addconn.address_hint_remote"
+  },
+  "runtime_addconn_address_label": {
+    "message": "पता",
+    "description": "Runtime interface message addconn.address_label"
+  },
+  "runtime_addconn_browser_note": {
+    "message": "कनेक्शन जुड़ने के बाद, एक्सटेंशन आपको साइन इन की प्रक्रिया से गुज़ारेगा।",
+    "description": "Runtime interface message addconn.browser_note"
+  },
+  "runtime_addconn_cert_hint": {
+    "message": "कौन से प्रमाणपत्र भरोसेमंद हैं, यह आपका ब्राउज़र तय करता है। अगर वह इसे स्वीकार नहीं करता, तो एक्सटेंशन पता खोल देता है ताकि आप वहाँ एक बार उसे स्वीकार कर सकें।",
+    "description": "Runtime interface message addconn.cert_hint"
+  },
+  "runtime_addconn_cert_label": {
+    "message": "यह पता अपने ही (सेल्फ़-साइन्ड) प्रमाणपत्र का उपयोग करता है",
+    "description": "Runtime interface message addconn.cert_label"
+  },
+  "runtime_addconn_cert_title": {
+    "message": "प्रमाणपत्र",
+    "description": "Runtime interface message addconn.cert_title"
+  },
+  "runtime_addconn_err_address_https": {
+    "message": "ब्राउज़र से साइन इन के लिए https पता चाहिए।",
+    "description": "Runtime interface message addconn.err_address_https"
+  },
+  "runtime_addconn_err_address_invalid": {
+    "message": "यह मान्य http या https पता नहीं है।",
+    "description": "Runtime interface message addconn.err_address_invalid"
+  },
+  "runtime_addconn_err_address_not_local": {
+    "message": "स्थानीय कनेक्शन इसी कंप्यूटर पर होना चाहिए। किसी दूसरे पते के लिए दूरस्थ प्रवेशद्वार चुनें।",
+    "description": "Runtime interface message addconn.err_address_not_local"
+  },
+  "runtime_addconn_err_address_required": {
+    "message": "प्रवेशद्वार का पता दर्ज करें।",
+    "description": "Runtime interface message addconn.err_address_required"
+  },
+  "runtime_addconn_err_header_blocked": {
+    "message": "यह हेडर ब्राउज़र या साइन-इन के नियंत्रण में है।",
+    "description": "Runtime interface message addconn.err_header_blocked"
+  },
+  "runtime_addconn_err_header_empty": {
+    "message": "मान दर्ज करें।",
+    "description": "Runtime interface message addconn.err_header_empty"
+  },
+  "runtime_addconn_err_header_invalid": {
+    "message": "नाम में अक्षर, अंक और हाइफ़न हो सकते हैं; मान में लाइन ब्रेक नहीं हो सकते।",
+    "description": "Runtime interface message addconn.err_header_invalid"
+  },
+  "runtime_addconn_err_header_long": {
+    "message": "यह मान बहुत लंबा है।",
+    "description": "Runtime interface message addconn.err_header_long"
+  },
+  "runtime_addconn_err_header_many": {
+    "message": "अधिकतम दस हेडर।",
+    "description": "Runtime interface message addconn.err_header_many"
+  },
+  "runtime_addconn_err_header_repeated": {
+    "message": "यह हेडर पहले से सूची में है।",
+    "description": "Runtime interface message addconn.err_header_repeated"
+  },
+  "runtime_addconn_err_key_required": {
+    "message": "कुंजी दर्ज करें, या ब्राउज़र चुनें।",
+    "description": "Runtime interface message addconn.err_key_required"
+  },
+  "runtime_addconn_header_add": {
+    "message": "हेडर जोड़ें",
+    "description": "Runtime interface message addconn.header_add"
+  },
+  "runtime_addconn_header_name": {
+    "message": "हेडर का नाम",
+    "description": "Runtime interface message addconn.header_name"
+  },
+  "runtime_addconn_header_remove": {
+    "message": "हेडर हटाएं",
+    "description": "Runtime interface message addconn.header_remove"
+  },
+  "runtime_addconn_header_value": {
+    "message": "मान",
+    "description": "Runtime interface message addconn.header_value"
+  },
+  "runtime_addconn_headers_hint": {
+    "message": "इस पते के हर अनुरोध के साथ भेजे जाते हैं, स्ट्रीम होने वाले जवाबों सहित। प्रमाणीकरण करने वाले प्रॉक्सी के पीछे के प्रवेशद्वार के लिए। कहीं और कभी नहीं भेजे जाते। ब्राउज़र इन्हें डैशबोर्ड के लाइव WebSocket कनेक्शन में नहीं जोड़ सकता।",
+    "description": "Runtime interface message addconn.headers_hint"
+  },
+  "runtime_addconn_headers_title": {
+    "message": "कस्टम हेडर",
+    "description": "Runtime interface message addconn.headers_title"
+  },
+  "runtime_addconn_key_hint": {
+    "message": "इस कंप्यूटर पर एन्क्रिप्टेड रखी जाती है, सिर्फ़ इसी कनेक्शन के लिए।",
+    "description": "Runtime interface message addconn.key_hint"
+  },
+  "runtime_addconn_kicker": {
+    "message": "नया कनेक्शन",
+    "description": "Runtime interface message addconn.kicker"
+  },
+  "runtime_addconn_method_browser": {
+    "message": "ब्राउज़र",
+    "description": "Runtime interface message addconn.method_browser"
+  },
+  "runtime_addconn_method_browser_desc": {
+    "message": "प्रवेशद्वार के अपने पेज पर साइन इन करें, या वहीं इस एक्सटेंशन को मंज़ूरी दें। पासवर्ड उसी पेज पर टाइप होता है।",
+    "description": "Runtime interface message addconn.method_browser_desc"
+  },
+  "runtime_addconn_method_token": {
+    "message": "टोकन",
+    "description": "Runtime interface message addconn.method_token"
+  },
+  "runtime_addconn_method_token_desc": {
+    "message": "आपके प्रवेशद्वार से मिली API कुंजी या ब्राउज़र टोकन।",
+    "description": "Runtime interface message addconn.method_token_desc"
+  },
+  "runtime_addconn_name_label": {
+    "message": "नाम · वैकल्पिक",
+    "description": "Runtime interface message addconn.name_label"
+  },
+  "runtime_addconn_name_placeholder": {
+    "message": "घर, स्टूडियो…",
+    "description": "Runtime interface message addconn.name_placeholder"
+  },
+  "runtime_addconn_open_address": {
+    "message": "पता खोलें",
+    "description": "Runtime interface message addconn.open_address"
+  },
+  "runtime_addconn_private_hint": {
+    "message": "SSH टनल, Tailscale, WireGuard और अन्य निजी नेटवर्क के लिए यहाँ कुछ खास करने की ज़रूरत नहीं है। पहले कनेक्शन शुरू करें, फिर जो पता वह दे उस पर अपनी API कुंजी के साथ एक दूरस्थ प्रवेशद्वार जोड़ें। यह एक्सटेंशन खुद SSH सत्र नहीं खोल सकता।",
+    "description": "Runtime interface message addconn.private_hint"
+  },
+  "runtime_addconn_private_title": {
+    "message": "निजी कनेक्शन",
+    "description": "Runtime interface message addconn.private_title"
+  },
+  "runtime_addconn_result_cert": {
+    "message": "अगर वह अपना प्रमाणपत्र उपयोग करता है, तो पता खोलें, वहाँ स्वीकार करें, फिर से कोशिश करें।",
+    "description": "Runtime interface message addconn.result_cert"
+  },
+  "runtime_addconn_result_not_hermes": {
+    "message": "इस पते ने जवाब दिया, पर Hermes के रूप में नहीं।",
+    "description": "Runtime interface message addconn.result_not_hermes"
+  },
+  "runtime_addconn_result_unauthorized": {
+    "message": "प्रवेशद्वार ने यह कुंजी स्वीकार नहीं की।",
+    "description": "Runtime interface message addconn.result_unauthorized"
+  },
+  "runtime_addconn_result_unreachable": {
+    "message": "इस पते पर कोई जवाब नहीं मिला।",
+    "description": "Runtime interface message addconn.result_unreachable"
+  },
+  "runtime_addconn_save_options": {
+    "message": "विकल्प सहेजें",
+    "description": "Runtime interface message addconn.save_options"
+  },
+  "runtime_addconn_step_count": {
+    "message": "चरण {current} / {total}",
+    "description": "Runtime interface message addconn.step_count"
+  },
+  "runtime_addconn_testing": {
+    "message": "जाँच हो रही है…",
+    "description": "Runtime interface message addconn.testing"
+  },
+  "runtime_addconn_title_options": {
+    "message": "कनेक्शन के विकल्प",
+    "description": "Runtime interface message addconn.title_options"
+  },
+  "runtime_addconn_title_signin": {
+    "message": "आप साइन इन कैसे करते हैं?",
+    "description": "Runtime interface message addconn.title_signin"
+  },
+  "runtime_addconn_title_where": {
+    "message": "यह कहाँ है?",
+    "description": "Runtime interface message addconn.title_where"
+  },
+  "runtime_addconn_try_again": {
+    "message": "फिर से कोशिश करें",
+    "description": "Runtime interface message addconn.try_again"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -2126,6 +2318,54 @@
   "runtime_connection_not_configured_short": {
     "message": "कॉन्फ़िगर नहीं किया गया",
     "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connections_busy": {
+    "message": "कनेक्शन बदलने से पहले मौजूदा जवाब पूरा होने दें।",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "कनेक्शन {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "\"{name}\" मिटाएं?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_delete_detail": {
+    "message": "इसका पता, क्रेडेंशियल, ड्राफ्ट और इस डिवाइस पर सहेजा गया चैट इतिहास हटा दिया जाता है। चैट उसके प्रवेशद्वार पर ही रहती हैं।",
+    "description": "Runtime interface message connections.delete_detail"
+  },
+  "runtime_connections_delete_pick": {
+    "message": "जिसे मिटाना है, उसे चुनें।",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "एक कनेक्शन मिटाएं",
+    "description": "Runtime interface message connections.delete_title"
+  },
+  "runtime_connections_error": {
+    "message": "सहेजे गए कनेक्शन अपडेट नहीं हो सके।",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "बदलने पर मौजूदा सेटिंग सहेजी जाती हैं। हर कनेक्शन अपना पता और क्रेडेंशियल रखता है।",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "उपयोग में",
+    "description": "Runtime interface message connections.in_use"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "कनेक्शन का नाम",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_options": {
+    "message": "विकल्प",
+    "description": "Runtime interface message connections.options"
+  },
+  "runtime_connections_saved_label": {
+    "message": "सहेजा गया कनेक्शन",
+    "description": "Runtime interface message connections.saved_label"
   },
   "runtime_context_consent_share_detail": {
     "message": "इस सटीक कनेक्शन को मंज़ूरी देने तक केवल चैट उपलब्ध है। सहमति एंडपॉइंट, खाते, प्रोफ़ाइल और ब्राउज़र कंट्रोलर के अनुसार अलग रखी जाती है।",

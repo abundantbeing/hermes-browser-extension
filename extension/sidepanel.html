@@ -949,7 +949,27 @@
             </div>
           </div>
 
-        <div class="gateway-mode" role="radiogroup" aria-label="Connection mode" data-i18n-aria-label="ui.connection.mode">
+        <div class="saved-connections" role="group" aria-labelledby="savedConnectionLabel" aria-describedby="savedConnectionHelp">
+          <label id="savedConnectionLabel" data-i18n="connections.saved_label">Saved connection</label>
+          <div id="savedConnectionList" class="saved-connection-list"></div>
+          <div id="savedConnectionActions" class="saved-connection-actions">
+            <button id="savedConnectionAdd" type="button" data-i18n="ui.add">Add</button>
+            <button id="savedConnectionOptions" type="button" data-i18n="connections.options">Options</button>
+            <button id="savedConnectionRename" type="button" data-i18n="ui.rename">Rename</button>
+            <button id="savedConnectionDelete" type="button" data-i18n="ui.delete" disabled>Delete</button>
+          </div>
+          <div id="savedConnectionEditor" class="saved-connection-editor" data-settings-live hidden>
+            <input id="savedConnectionNameInput" type="text" maxlength="80" autocomplete="off" spellcheck="false" aria-label="Connection name" placeholder="Connection name" data-i18n-aria-label="connections.name_prompt" data-i18n-placeholder="connections.name_prompt" />
+            <div class="saved-connection-pair">
+              <button id="savedConnectionNameSave" type="button" data-i18n="ui.save">Save</button>
+              <button id="savedConnectionNameCancel" type="button" data-i18n="ui.cancel">Cancel</button>
+            </div>
+          </div>
+          <p id="savedConnectionHelp" class="hint" data-i18n="connections.help">Switching saves your current settings. Each connection keeps its address and credentials.</p>
+        </div>
+
+        <label id="connectionModeLabel" data-i18n="ui.connection.mode">Connection mode</label>
+        <div class="gateway-mode" role="radiogroup" aria-labelledby="connectionModeLabel">
           <button class="conn-mode-card" type="button" data-connection-mode="local" role="radio" aria-checked="true">
             <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.local.gateway">Local gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
             <span class="conn-mode-desc" data-i18n="ui.hermes.on.this.machine.default.and.offline.capable">Hermes on this machine. Default and offline-capable.</span>
@@ -1767,6 +1787,116 @@
       <p id="browserControlTooltip" class="browser-control-tooltip" role="tooltip" popover="manual"></p>
     </dialog>
 
+    <section id="addConnectionDialog" class="profile-switch-dialog add-connection-dialog" role="dialog" aria-modal="true" aria-labelledby="addConnectionTitle" tabindex="-1" hidden>
+      <div class="profile-switch-card add-connection-card">
+        <div class="add-connection-head">
+          <button id="addConnectionBack" class="add-connection-icon" type="button" aria-label="Back" title="Back" data-i18n-aria-label="ui.back" data-i18n-title="ui.back" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
+          <div class="add-connection-heading">
+            <span id="addConnectionKicker" class="session-ownership-kicker" data-i18n="addconn.kicker">NEW CONNECTION</span>
+            <h2 id="addConnectionTitle"></h2>
+            <p id="addConnectionSteps" class="add-connection-steps" aria-live="polite"></p>
+          </div>
+          <button id="addConnectionClose" class="add-connection-icon" type="button" aria-label="Close" title="Close" data-i18n-aria-label="ui.close" data-i18n-title="ui.close">&times;</button>
+        </div>
+        <div class="add-connection-body">
+          <div class="add-connection-step" data-add-step="where">
+            <div class="add-connection-tiles" role="radiogroup" aria-label="Connection mode" data-i18n-aria-label="ui.connection.mode">
+              <button class="conn-mode-card" type="button" data-add-type="local" role="radio" aria-checked="false">
+                <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.local.gateway">Local gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+                <span class="conn-mode-desc" data-i18n="ui.hermes.on.this.machine.default.and.offline.capable">Hermes on this machine. Default and offline-capable.</span>
+              </button>
+              <button class="conn-mode-card" type="button" data-add-type="remote" role="radio" aria-checked="false">
+                <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.remote.gateway">Remote gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+                <span class="conn-mode-desc" data-i18n="ui.self.hosted.api.or.dashboard.api.can.use.trusted.lan.http.dashb.152b7f4c">Self-hosted API or dashboard. API can use trusted LAN http; dashboard uses https.</span>
+              </button>
+              <button class="conn-mode-card" type="button" data-add-type="cloud" role="radio" aria-checked="false">
+                <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.hermes.cloud.preview">Hermes Cloud Preview</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+                <span class="conn-mode-desc" data-i18n="ui.attach.the.active.signed.in.hermes.cloud.agent.tab.with.a.one.use.ticket">Attach the active signed-in Hermes Cloud agent tab with a one-use ticket.</span>
+              </button>
+            </div>
+            <div class="add-connection-field" id="addConnectionAddressField">
+              <label for="addConnectionAddress" data-i18n="addconn.address_label">Address</label>
+              <input id="addConnectionAddress" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://hermes.example.com" data-i18n-invariant />
+              <p id="addConnectionAddressHint" class="add-connection-hint"></p>
+              <p id="addConnectionAddressError" class="add-connection-error" role="alert" hidden></p>
+            </div>
+            <div class="add-connection-field">
+              <label for="addConnectionName" data-i18n="addconn.name_label">Name &middot; optional</label>
+              <input id="addConnectionName" type="text" maxlength="80" autocomplete="off" spellcheck="false" placeholder="Home, Studio&hellip;" data-i18n-placeholder="addconn.name_placeholder" />
+            </div>
+          </div>
+          <div class="add-connection-step" data-add-step="signin" hidden>
+            <div class="add-connection-tiles" role="radiogroup" aria-labelledby="addConnectionTitle">
+              <button class="conn-mode-card" type="button" data-add-method="browser" role="radio" aria-checked="false">
+                <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="addconn.method_browser">Browser</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+                <span class="conn-mode-desc" data-i18n="addconn.method_browser_desc">Sign in on the gateway&rsquo;s own page, or approve this extension there. A password is typed on that page.</span>
+              </button>
+              <button class="conn-mode-card" type="button" data-add-method="token" role="radio" aria-checked="false">
+                <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="addconn.method_token">Token</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+                <span class="conn-mode-desc" data-i18n="addconn.method_token_desc">An API key or browser token from your gateway.</span>
+              </button>
+            </div>
+            <div class="add-connection-field" id="addConnectionKeyField">
+              <label for="addConnectionKey" data-i18n="ui.api.key.browser.token">API key / browser token</label>
+              <input id="addConnectionKey" type="password" autocomplete="off" spellcheck="false" />
+              <p class="add-connection-hint" data-i18n="addconn.key_hint">Kept encrypted on this computer, with this connection only.</p>
+              <p id="addConnectionKeyError" class="add-connection-error" role="alert" hidden></p>
+            </div>
+            <p id="addConnectionBrowserNote" class="add-connection-hint" data-i18n="addconn.browser_note" hidden>After the connection is added, the extension takes you through signing in.</p>
+          </div>
+          <div class="add-connection-step" data-add-step="options" hidden>
+            <section class="add-connection-group" aria-labelledby="addConnectionHeadersTitle">
+              <h3 id="addConnectionHeadersTitle" data-i18n="addconn.headers_title">Custom headers</h3>
+              <p class="add-connection-hint" data-i18n="addconn.headers_hint">Sent with every request to this address, streamed replies included. For a gateway behind an authenticating proxy. Never sent anywhere else. A browser cannot add them to the dashboard&rsquo;s live WebSocket connection.</p>
+              <div id="addConnectionHeaders" class="add-connection-headers"></div>
+              <button id="addConnectionAddHeader" type="button" data-i18n="addconn.header_add">Add header</button>
+            </section>
+            <section class="add-connection-group" id="addConnectionCertGroup" aria-labelledby="addConnectionCertTitle">
+              <h3 id="addConnectionCertTitle" data-i18n="addconn.cert_title">Certificate</h3>
+              <label class="settings-toggle-card" for="addConnectionTrust">
+                <span class="settings-toggle-copy"><strong data-i18n="addconn.cert_label">This address uses its own (self-signed) certificate</strong></span>
+                <input id="addConnectionTrust" class="settings-switch-input" type="checkbox" />
+                <span class="settings-switch" aria-hidden="true"></span>
+              </label>
+              <p class="add-connection-hint" data-i18n="addconn.cert_hint">Your browser decides which certificates to trust. If it does not accept this one, the extension opens the address so you can accept it there, once.</p>
+            </section>
+            <section class="add-connection-group" aria-labelledby="addConnectionPrivateTitle">
+              <h3 id="addConnectionPrivateTitle" data-i18n="addconn.private_title">Private connection</h3>
+              <p class="add-connection-hint" data-i18n="addconn.private_hint">SSH tunnels, Tailscale, WireGuard and other private networks need nothing special here. Start the connection first, then add a Remote gateway at the address it gives you, with your API key. This extension cannot open an SSH session itself.</p>
+            </section>
+          </div>
+        </div>
+        <div class="add-connection-footer">
+          <p id="addConnectionResult" class="add-connection-result" role="status" aria-live="polite" hidden></p>
+          <div id="addConnectionActions" class="add-connection-actions">
+            <button id="addConnectionNext" class="primary" type="button"></button>
+            <button id="addConnectionAnyway" type="button" data-i18n="addconn.add_anyway" hidden>Add without testing</button>
+          </div>
+          <button id="addConnectionOpenAddress" type="button" data-i18n="addconn.open_address" hidden>Open address</button>
+        </div>
+      </div>
+    </section>
+    <section id="deleteConnectionDialog" class="profile-switch-dialog add-connection-dialog" role="dialog" aria-modal="true" aria-labelledby="deleteConnectionTitle" aria-describedby="deleteConnectionDetail" tabindex="-1" hidden>
+      <div class="profile-switch-card add-connection-card delete-connection-card">
+        <div class="add-connection-head">
+          <div class="add-connection-heading">
+            <h2 id="deleteConnectionTitle" data-i18n="connections.delete_title">Delete a connection</h2>
+            <p class="add-connection-steps" data-i18n="connections.delete_pick">Choose the one to delete.</p>
+          </div>
+          <button id="deleteConnectionClose" class="add-connection-icon" type="button" aria-label="Close" title="Close" data-i18n-aria-label="ui.close" data-i18n-title="ui.close">&times;</button>
+        </div>
+        <div id="deleteConnectionList" class="add-connection-body add-connection-tiles" role="radiogroup" aria-labelledby="deleteConnectionTitle"></div>
+        <p id="deleteConnectionDetail" class="add-connection-hint" data-i18n="connections.delete_detail">Its address, credentials, drafts and saved chat history on this device are removed. Chats stay on its gateway.</p>
+        <div class="add-connection-footer">
+          <p id="deleteConnectionChosen" class="add-connection-result" role="status" aria-live="polite" hidden></p>
+          <p id="deleteConnectionError" class="add-connection-error" role="alert" data-i18n="connections.error" hidden>Could not change the saved connection.</p>
+          <div class="add-connection-actions">
+            <button id="deleteConnectionCancel" type="button" data-i18n="ui.cancel">Cancel</button>
+            <button id="deleteConnectionConfirm" class="primary" type="button" data-i18n="ui.delete" disabled>Delete</button>
+          </div>
+        </div>
+      </div>
+    </section>
     <section id="profileSwitchDialog" class="profile-switch-dialog" role="dialog" aria-modal="true" aria-labelledby="profileSwitchTitle" aria-describedby="profileSwitchDetail" tabindex="-1" hidden>
       <div class="profile-switch-card">
         <span class="session-ownership-kicker" data-i18n="profile_switch.kicker">PROFILE CHANGE</span>

@@ -339,8 +339,8 @@ test('sidepanel UI has compatibility, token hygiene, and What Hermes saw surface
   assert.match(html, /id="contextControlStatus"/);
   assert.match(js, /browserPairing/);
   assert.match(js, /imageUpload/);
-  assert.match(js, /storage\.local\.get\('hermesBrowserSettings'\)/);
-  assert.match(js, /\.\.\.\(stored\?\.hermesBrowserSettings \|\| \{\}\)/);
+  assert.match(js, /readBrowserSettingsFromStorage\(\)/);
+  assert.match(js, /setPackedBrowserSettings\(/);
   assert.match(js, /browserControlDeveloperMode: nextDeveloperMode[\s\S]{0,240}browserControlArtifactTransport: nextArtifactTransport/);
   assert.match(voiceJs, /SpeechRecognition|webkitSpeechRecognition/);
   assert.match(voiceJs, /Browser speech fallback/);

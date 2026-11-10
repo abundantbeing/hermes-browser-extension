@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { createSettingsSaveHarness, sidepanelHtml, sidepanelSource } from './helpers/settings-save-harness.mjs';
+import {
+  hydrateHermesBrowserSettingsFromStorage,
+  packSavedConnectionStorage,
+  rememberSavedConnection,
+  SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+} from '../extension/lib/saved-connections.mjs';
 
 const inlineHelper = readFileSync(new URL('../extension/content-inline-helper.js', import.meta.url), 'utf8');
 
@@ -61,7 +67,7 @@ test('whole panes of instant controls, and nothing else, are excluded as live', 
   const single = controls.filter((control) => isLive(control) && !livePaneIds.has(control.closest('[data-settings-pane]')?.dataset.settingsPane)).map((control) => control.id);
   assert.deepEqual(single.sort(), [
     'agentHostInput', 'agentPortsInput', 'agentSchemeInput', 'browserContextConsentInput',
-    'browserControlScopeInput', 'gatewayModeInput', 'gmailCaptureEnabledInput', 'inlineAssistSiteInput', 'inlineAssistSitesValue', 'profileSelect',
+    'browserControlScopeInput', 'gatewayModeInput', 'gmailCaptureEnabledInput', 'inlineAssistSiteInput', 'inlineAssistSitesValue', 'profileSelect', 'savedConnectionNameInput',
   ]);
 });
 
@@ -173,7 +179,8 @@ test('a saved gateway URL and key are what the next request uses', async () => {
     h.els.apiKeyInput.value = 'sk-new';
     await h.save();
     assert.equal(h.store.hermesBrowserSettings.gatewayUrl, 'http://10.0.0.5:9000');
-    assert.equal(h.store.hermesBrowserSettings.apiKey, 'sk-new');
+    assert.equal(h.store.hermesBrowserSettings.apiKey, '');
+    assert.equal(h.scope.settings.apiKey, 'sk-new', 'the panel keeps the live key after a packed write');
     assert.equal(h.callsTo('connectionController.cancel').length, 1, 'a changed connection drops the in-flight probe');
 
     await h.client.fetch('/health');
@@ -201,6 +208,115 @@ test('a saved connection mode and wake word take effect through the follow-up ac
     assert.deepEqual(h.callsTo('setWakeWordEnabled').map((call) => call.args[0]), [true], 'turning the wake word on starts it now');
     assert.equal(h.callsTo('applyAppearanceSettings').length, 1, 'message-time visibility is re-applied by Save');
     assert.ok(h.callsTo('syncSettingsForm').length >= 1, 'the form is re-read from what was stored');
+  } finally {
+    h.close();
+  }
+});
+
+test('storage merges that carry credentials hold the saved-connections lock through read and pack', () => {
+  const merge = functionSource('mergePackedBrowserSettingsFromStorage');
+  assert.match(merge, /withSavedConnectionsLock/);
+  assert.match(merge, /readBrowserSettingsFromStorage/);
+  assert.match(merge, /setPackedBrowserSettings/);
+  const persistAppearance = functionSource('persistAppearanceSettings');
+  assert.match(persistAppearance, /withSavedConnectionsLock/);
+  const readIndex = persistAppearance.search(/readBrowserSettingsFromStorage/);
+  const lockIndex = persistAppearance.search(/withSavedConnectionsLock/);
+  assert.ok(lockIndex >= 0 && readIndex > lockIndex, 'appearance must read storage inside the lock');
+});
+
+test('a pending appearance write cannot publish a stale apiKey after another Save replaces it', async () => {
+  const tokenOld = 'sk-appearance-lock-race-old';
+  const tokenNew = 'sk-appearance-lock-race-new';
+  const packedOld = await packSavedConnectionStorage(rememberSavedConnection({
+    gatewayUrl: 'http://127.0.0.1:8642',
+    connectionMode: 'local',
+    apiKey: tokenOld,
+    tokenSource: 'manual',
+    activeSavedConnectionId: 'default',
+    savedConnections: [{ id: 'default', name: 'Home', connection: {} }],
+  }), {});
+  let releaseAppearanceRead;
+  const appearanceReadGate = new Promise((resolve) => { releaseAppearanceRead = resolve; });
+  let blockedAppearanceRead = false;
+  const h = await createSettingsSaveHarness({
+    settings: await hydrateHermesBrowserSettingsFromStorage(packedOld),
+    storage: structuredClone(packedOld),
+  });
+  const baseGet = h.scope.browserApi.storage.local.get.bind(h.scope.browserApi.storage.local);
+  h.scope.browserApi.storage.local.get = async (keys) => {
+    const result = await baseGet(keys);
+  const list = Array.isArray(keys) ? keys : [keys];
+    if (blockedAppearanceRead && list.includes('hermesBrowserSettings')) {
+      await appearanceReadGate;
+    }
+    return result;
+  };
+  try {
+    const preferences = {
+      colorMode: 'system',
+      appearanceTheme: 'nous',
+      textZoomPercent: 115,
+      fontProfile: 'signature',
+      customFontFamily: '',
+    };
+    blockedAppearanceRead = true;
+    const appearanceWrite = h.fn('persistAppearanceSettings')(preferences);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    h.els.apiKeyInput.value = tokenNew;
+    const saveWrite = h.save();
+    let saveFinished = false;
+    saveWrite.finally(() => { saveFinished = true; });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(saveFinished, false, 'Save must wait while appearance holds the saved-connections lock');
+    releaseAppearanceRead();
+    await appearanceWrite;
+    await saveWrite;
+    const hydrated = await hydrateHermesBrowserSettingsFromStorage(h.store);
+    assert.equal(hydrated.apiKey, tokenNew, 'the newer Save must win over a concurrent appearance write');
+    assert.equal(JSON.stringify(h.store).includes(tokenOld), false);
+    assert.equal(JSON.stringify(h.store).includes(tokenNew), false, 'secrets must not appear as plaintext in storage');
+  } finally {
+    h.close();
+  }
+});
+
+test('extension writers never call storage.set with a raw hermesBrowserSettings object', () => {
+  const targets = [
+    '../extension/sidepanel.js',
+    '../extension/background.js',
+    '../extension/lib/wake-background.mjs',
+    '../extension/lib/controller-service-worker.mjs',
+  ];
+  const directWrite = /(?:storage(?:Area)?|browserApi\.storage\.local)\.set\(\s*\{[^}]*\bhermesBrowserSettings\s*:/;
+  for (const rel of targets) {
+    const source = readFileSync(new URL(rel, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, directWrite, `${rel} must route settings through packSavedConnectionStorage`);
+  }
+});
+
+test('Save packs storage so no savedConnections entry or sidecar holds a plaintext gateway key', async () => {
+  const h = await createSettingsSaveHarness({
+    settings: {
+      gatewayUrl: 'http://127.0.0.1:8642',
+      connectionMode: 'local',
+      activeSavedConnectionId: 'default',
+      savedConnections: [{ id: 'default', name: 'Home', connection: {} }],
+    },
+  });
+  try {
+    h.els.apiKeyInput.value = 'sk-panel-save-plaintext-check';
+    await h.save();
+    const json = JSON.stringify(h.store);
+    assert.equal(json.includes('sk-panel-save-plaintext-check'), false, 'no plaintext key in any storage key');
+    assert.equal(h.store.hermesBrowserSettings.apiKey, '');
+    assert.equal(h.store.hermesBrowserSettings.tokenSource, '');
+    const saved = h.store.hermesBrowserSettings.savedConnections.find((e) => e.id === 'default');
+    assert.equal(saved.connection.apiKey, '');
+    assert.equal(saved.connection.tokenSource, '');
+    const sidecar = h.store[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
+    assert.ok(sidecar && typeof sidecar === 'object');
+    assert.equal(JSON.stringify(sidecar).includes('sk-panel-save-plaintext-check'), false);
   } finally {
     h.close();
   }

@@ -43,7 +43,7 @@ import {
   assistModelFallbackNotice,
   buildAssistModelRouteRequest,
 } from './lib/assist-model-contract.mjs';
-import { createWakeBackgroundController } from './lib/wake-background.mjs';
+import { createWakeBackgroundController, wakeNeedsReconfigure } from './lib/wake-background.mjs';
 import { WAKE_MESSAGES } from './lib/wake-word.mjs';
 import { initI18n, subscribeLocale, translateUiText } from './lib/i18n.mjs';
 import {
@@ -56,6 +56,7 @@ import { createVscodeMarketplaceClient } from './lib/vscode-marketplace.mjs';
 import { createThemeMarketplaceController } from './lib/theme-marketplace-controller.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { installLoopbackCorsRules, handleLoopbackFetchMessage, LOOPBACK_FETCH_MESSAGE } from './lib/loopback-cors.mjs';
+import { applyConnectionHeaderRules, createHeaderRuleSync, extensionInitiatorHost } from './lib/connection-headers.mjs';
 import {
   CONTROLLER_HEARTBEAT_ALARM,
   CONTROLLER_RECONCILE_ALARM,
@@ -71,6 +72,11 @@ import {
   createBrowserControlArtifactClient,
   createBrowserControlArtifactHttpTransport,
 } from './lib/browser-control-artifacts.mjs';
+import {
+  hydrateHermesBrowserSettingsFromStorage,
+  hydrateSavedConnectionSecrets,
+  SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+} from './lib/saved-connections.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -100,7 +106,8 @@ const browserControlRuntime = createBrowserControlRuntime({
 // through storage.session. The setting is read from storage each time, so the panel's Save applies here.
 async function readStoredSettings() {
   try {
-    return (await browserApi.storage.local.get('hermesBrowserSettings'))?.hermesBrowserSettings || {};
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+    return hydrateHermesBrowserSettingsFromStorage(stored);
   } catch {
     return {};
   }
@@ -165,6 +172,7 @@ const hermesWebOpening = createHermesWebOpening({
 const hermesWebOpener = { open: (request) => hermesWebOpening.start(request) };
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let panelResidencyHydrated = false;
+let controllerSettingsStorageRebind = 0;
 
 const controllerConnector = createControllerConnector({
   fetchImpl: globalThis.fetch?.bind(globalThis),
@@ -354,8 +362,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
     if (!tab || pageKey(tab.url || tab.pendingUrl) !== pageKey(request.pageUrl)) {
       throw new Error('The originating page changed before Hermes could draft.');
     }
-    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
-    const settings = stored?.hermesBrowserSettings || {};
+    const settings = await readStoredSettings();
     const client = createHermesClient({
       getConnection: () => ({
         gatewayUrl: settings.gatewayUrl || settings.agentApiUrl || '',
@@ -1026,19 +1033,32 @@ void initI18n().catch((error) => {
   console.warn('[Hermes Browser] Localization initialization failed:', error);
 });
 
+// The active connection's custom headers ride on every request to its address, WebSocket handshake included.
+const syncConnectionHeaders = createHeaderRuleSync({
+  read: readStoredSettings,
+  apply: (settings) => applyConnectionHeaderRules({
+    gatewayUrl: settings.gatewayUrl,
+    headers: settings.connectionHeaders,
+    extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
+  }),
+  onError: (error) => console.warn('[Hermes Browser] Connection header rules failed:', error),
+});
 void installLoopbackCorsRules().catch((error) => {
   console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
 });
+void syncConnectionHeaders();
 browserApi.runtime.onInstalled.addListener((details) => {
   void installLoopbackCorsRules().catch((error) => {
     console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
   });
+  void syncConnectionHeaders();
   return configureInstalledSurfaces(details);
 });
 browserApi.runtime.onStartup.addListener(async () => {
   await installLoopbackCorsRules().catch((error) => {
     console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
   });
+  await syncConnectionHeaders();
   await configureInstalledSurfaces({ controllerReason: 'browser-startup' });
   restoreWakeController();
 });
@@ -1100,9 +1120,29 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   contextMenuController.handleStorageChanged(changes, areaName)
     .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
   if (changes.hermesBrowserSettings?.newValue && controllerWorker) {
-    controllerWorker.syncSettings(changes.hermesBrowserSettings.newValue)
-      .then((result) => syncControllerAlarms(result))
-      .catch((error) => console.warn('[Hermes Browser] Controller settings rebind failed:', error));
+    const rebindGeneration = ++controllerSettingsStorageRebind;
+    void (async () => {
+      try {
+        let secrets = Object.hasOwn(changes, SAVED_CONNECTION_SECRETS_STORAGE_KEY)
+          ? changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]?.newValue
+          : undefined;
+        if (secrets === undefined) {
+          const stored = await browserApi.storage.local.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY);
+          secrets = stored[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
+        }
+        const hydrated = await hydrateSavedConnectionSecrets(changes.hermesBrowserSettings.newValue, secrets);
+        if (rebindGeneration !== controllerSettingsStorageRebind) return;
+        const result = await controllerWorker.syncSettings(hydrated);
+        syncControllerAlarms(result);
+      } catch (error) {
+        console.warn('[Hermes Browser] Controller settings rebind failed:', error);
+      }
+    })();
+  }
+  if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]) void syncConnectionHeaders();
+  if (changes.hermesBrowserSettings?.newValue
+    && wakeNeedsReconfigure(changes.hermesBrowserSettings.oldValue, changes.hermesBrowserSettings.newValue)) {
+    wakeController.restore().catch((error) => console.warn('[Hermes Browser] Wake could not follow the connection change:', error));
   }
   let changed = false;
   if (Object.hasOwn(changes, 'hermesBrowserSettings')) {

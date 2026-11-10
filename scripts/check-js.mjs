@@ -6,6 +6,7 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 export const CHECK_JS_COMMANDS = Object.freeze([
+  'node --check extension/lib/saved-connections.mjs',
   'node --check extension/lib/artifact-folder.mjs',
   'node --check extension/lib/bot-browser-bridge.mjs',
   'node --check extension/lib/bot-browser-capture.mjs',

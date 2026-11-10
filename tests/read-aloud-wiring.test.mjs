@@ -61,7 +61,7 @@ test('the gateway voice is offered from what the dashboard probe last found, not
 });
 
 test('a shared settings write that only changes appearance does not stop read aloud', () => {
-  const block = panel.slice(panel.indexOf('browserApi.storage.onChanged.addListener((changes, areaName) => {'), panel.indexOf('if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)'));
+  const block = panel.slice(panel.indexOf('async function adoptHermesBrowserSettingsStorageChange('), panel.indexOf('function reloadForSavedConnection('));
   assert.match(block, /let connectionChanged = false/);
   assert.match(block, /if \(connectionChanged\) \{[\s\S]*readAloudPlayer\.stop\(\)/);
 });
@@ -80,6 +80,6 @@ test('when the connection is remote or has no gateway URL, clearing the probe re
 });
 
 test('after a cross-tab connection change clears the probe, read-aloud rails are refreshed', () => {
-  const block = panel.slice(panel.indexOf('browserApi.storage.onChanged.addListener((changes, areaName) => {'), panel.indexOf('if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)'));
+  const block = panel.slice(panel.indexOf('async function adoptHermesBrowserSettingsStorageChange('), panel.indexOf('function reloadForSavedConnection('));
   assert.match(block, /readAloudDashboardProbe = null;[\s\S]*notifyReadAloudDashboardProbeChanged\(\)/);
 });

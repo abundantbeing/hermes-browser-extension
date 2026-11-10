@@ -319,7 +319,7 @@ test('Phase 5 service worker owns the concrete connector, lifecycle boot, alarms
   assert.match(backgroundSource, /controllerWorker\.reconcile/);
   assert.match(backgroundSource, /CONTROLLER_WORKER_MESSAGES/);
   assert.match(backgroundSource, /controllerWorker\.handleMessage\(message, sender\)/);
-  assert.match(backgroundSource, /controllerWorker\.syncSettings\(changes\.hermesBrowserSettings\.newValue\)/);
+  assert.match(backgroundSource, /hydrateHermesBrowserSettingsFromStorage/);
   assert.equal((backgroundSource.match(/runtime\.onInstalled\.addListener/g) || []).length, 1, 'installed lifecycle has one owner');
   assert.match(contentSource, /HERMES_CONTROLLER_DOCUMENT_READY/);
 

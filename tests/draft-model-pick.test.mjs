@@ -9,6 +9,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import * as common from '../extension/lib/common.mjs';
 import { selectedModelReadiness } from '../extension/lib/readiness.mjs';
+import { packedHermesBrowserSettingsWrite } from '../extension/lib/saved-connections.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const source = readFileSync(path.join(root, 'extension/sidepanel.js'), 'utf8');
@@ -66,6 +67,9 @@ function panel({ sessionId = DEFAULT_ID, sessions = [], lockAnswer = NOT_FOUND, 
     readJsonResponse: async (response) => response.payload,
     renderModelOptions() {},
     setStatus: (kind, title, detail) => statuses.push({ kind, title, detail }),
+    setPackedBrowserSettings: async (next) => {
+      writes.push(await packedHermesBrowserSettingsWrite(structuredClone(next), null));
+    },
     browserApi: { storage: { local: { set: async (value) => { writes.push(value); } } } },
     apiFetch: async (url, init = {}) => {
       calls.push({ url, method: init.method || 'GET' });

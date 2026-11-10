@@ -6,6 +6,11 @@ import { parseHTML } from 'linkedom';
 import { inspectSite, applySiteAdapterPolicy, isGmailThreadUrl } from '../extension/lib/site-adapters.mjs';
 import { buildBrowserTurnEnvelope } from '../extension/lib/browser-context-protocol.mjs';
 import { createPageContextAttachment, stageUserFiles } from '../extension/lib/user-file-attachments.mjs';
+import {
+  hydrateHermesBrowserSettingsFromStorage,
+  packedHermesBrowserSettingsWrite,
+  SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+} from '../extension/lib/saved-connections.mjs';
 
 const root = new URL('../', import.meta.url);
 function documentAt(html, url) {
@@ -104,22 +109,39 @@ test('Medium editor and Substack inbox/feed stay private even with article-shape
 });
 
 test('Gmail approval persistence merges fresh storage without overwriting another surface', async () => {
-  let stored = { model: 'new-model', unrelatedSetting: 42 };
+  let stored = {
+    hermesBrowserSettings: { model: 'new-model', unrelatedSetting: 42 },
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: {},
+  };
   const context = vm.createContext({
     settings: { model: 'stale-model' }, els: {},
+    async readBrowserSettingsFromStorage() {
+      return hydrateHermesBrowserSettingsFromStorage(structuredClone(stored), null);
+    },
+    async setPackedBrowserSettings(next) {
+      const packed = await packedHermesBrowserSettingsWrite(structuredClone(next), null);
+      stored = { hermesBrowserSettings: packed.hermesBrowserSettings, [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY] };
+    },
+    async mergePackedBrowserSettingsFromStorage(mergeFn) {
+      const fresh = await hydrateHermesBrowserSettingsFromStorage(structuredClone(stored), null);
+      const next = typeof mergeFn === 'function' ? mergeFn(fresh) : { ...fresh, ...mergeFn };
+      const packed = await packedHermesBrowserSettingsWrite(structuredClone(next), null);
+      stored = { hermesBrowserSettings: packed.hermesBrowserSettings, [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY] };
+      return next;
+    },
     browserApi: { storage: { local: {
-      get: async () => ({ hermesBrowserSettings: stored }),
-      set: async value => { stored = value.hermesBrowserSettings; },
+      get: async () => structuredClone(stored),
+      set: async () => {},
     } } },
   });
   const source = extractFunction(panelSource, 'async function persistGmailCaptureEnabled(', 'async function getPageContext(');
   const save = vm.runInContext(`${source}; persistGmailCaptureEnabled`, context);
   await save(true);
-  assert.equal(stored.gmailCaptureEnabled, true);
-  assert.equal(stored.model, 'new-model');
-  assert.equal(stored.unrelatedSetting, 42);
+  assert.equal(stored.hermesBrowserSettings.gmailCaptureEnabled, true);
+  assert.equal(stored.hermesBrowserSettings.model, 'new-model');
+  assert.equal(stored.hermesBrowserSettings.unrelatedSetting, 42);
   await save(false);
-  assert.equal(stored.gmailCaptureEnabled, false);
+  assert.equal(stored.hermesBrowserSettings.gmailCaptureEnabled, false);
 });
 
 test('subject-only Gmail capture is not falsely reported as a captured thread', () => {

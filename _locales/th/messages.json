@@ -131,6 +131,198 @@
     "message": "เชื่อมต่อเกตเวย์นี้เพื่อตรวจสอบการลงชื่อเข้าใช้ไม่ได้",
     "description": "Runtime interface message account.unavailable.unreachable"
   },
+  "runtime_addconn_add": {
+    "message": "เพิ่มการเชื่อมต่อ",
+    "description": "Runtime interface message addconn.add"
+  },
+  "runtime_addconn_add_anyway": {
+    "message": "เพิ่มโดยไม่ทดสอบ",
+    "description": "Runtime interface message addconn.add_anyway"
+  },
+  "runtime_addconn_address_hint_local": {
+    "message": "เว้นว่างไว้เพื่อใช้ที่อยู่เริ่มต้นของคอมพิวเตอร์เครื่องนี้",
+    "description": "Runtime interface message addconn.address_hint_local"
+  },
+  "runtime_addconn_address_hint_remote": {
+    "message": "ที่อยู่เต็มของเกตเวย์ พร้อมพอร์ตหากมี ใช้ชื่อโฮสต์ ที่อยู่ LAN หรือที่อยู่ Tailscale ได้ทั้งหมด",
+    "description": "Runtime interface message addconn.address_hint_remote"
+  },
+  "runtime_addconn_address_label": {
+    "message": "ที่อยู่",
+    "description": "Runtime interface message addconn.address_label"
+  },
+  "runtime_addconn_browser_note": {
+    "message": "หลังเพิ่มการเชื่อมต่อแล้ว ส่วนขยายจะพาคุณไปลงชื่อเข้าใช้",
+    "description": "Runtime interface message addconn.browser_note"
+  },
+  "runtime_addconn_cert_hint": {
+    "message": "เบราว์เซอร์ของคุณเป็นผู้กำหนดว่าจะเชื่อถือใบรับรองใด หากไม่ยอมรับใบนี้ ส่วนขยายจะเปิดที่อยู่ให้คุณยอมรับที่นั่นเพียงครั้งเดียว",
+    "description": "Runtime interface message addconn.cert_hint"
+  },
+  "runtime_addconn_cert_label": {
+    "message": "ที่อยู่นี้ใช้ใบรับรองของตนเอง (ลงนามเอง)",
+    "description": "Runtime interface message addconn.cert_label"
+  },
+  "runtime_addconn_cert_title": {
+    "message": "ใบรับรอง",
+    "description": "Runtime interface message addconn.cert_title"
+  },
+  "runtime_addconn_err_address_https": {
+    "message": "การลงชื่อเข้าใช้ผ่านเบราว์เซอร์ต้องใช้ที่อยู่ https",
+    "description": "Runtime interface message addconn.err_address_https"
+  },
+  "runtime_addconn_err_address_invalid": {
+    "message": "นั่นไม่ใช่ที่อยู่ http หรือ https ที่ถูกต้อง",
+    "description": "Runtime interface message addconn.err_address_invalid"
+  },
+  "runtime_addconn_err_address_not_local": {
+    "message": "การเชื่อมต่อแบบท้องถิ่นต้องอยู่บนคอมพิวเตอร์เครื่องนี้ เลือกเกตเวย์ระยะไกลสำหรับที่อยู่อื่น",
+    "description": "Runtime interface message addconn.err_address_not_local"
+  },
+  "runtime_addconn_err_address_required": {
+    "message": "กรอกที่อยู่ของเกตเวย์",
+    "description": "Runtime interface message addconn.err_address_required"
+  },
+  "runtime_addconn_err_header_blocked": {
+    "message": "เบราว์เซอร์หรือตัวควบคุมการลงชื่อเข้าใช้จัดการส่วนหัวนี้",
+    "description": "Runtime interface message addconn.err_header_blocked"
+  },
+  "runtime_addconn_err_header_empty": {
+    "message": "กรอกค่า",
+    "description": "Runtime interface message addconn.err_header_empty"
+  },
+  "runtime_addconn_err_header_invalid": {
+    "message": "ชื่อใช้ได้เฉพาะตัวอักษร ตัวเลข และขีดกลาง ค่าต้องไม่มีการขึ้นบรรทัดใหม่",
+    "description": "Runtime interface message addconn.err_header_invalid"
+  },
+  "runtime_addconn_err_header_long": {
+    "message": "ค่านั้นยาวเกินไป",
+    "description": "Runtime interface message addconn.err_header_long"
+  },
+  "runtime_addconn_err_header_many": {
+    "message": "ไม่เกินสิบส่วนหัว",
+    "description": "Runtime interface message addconn.err_header_many"
+  },
+  "runtime_addconn_err_header_repeated": {
+    "message": "มีส่วนหัวนี้อยู่ในรายการแล้ว",
+    "description": "Runtime interface message addconn.err_header_repeated"
+  },
+  "runtime_addconn_err_key_required": {
+    "message": "กรอกคีย์ หรือเลือกเบราว์เซอร์",
+    "description": "Runtime interface message addconn.err_key_required"
+  },
+  "runtime_addconn_header_add": {
+    "message": "เพิ่มส่วนหัว",
+    "description": "Runtime interface message addconn.header_add"
+  },
+  "runtime_addconn_header_name": {
+    "message": "ชื่อส่วนหัว",
+    "description": "Runtime interface message addconn.header_name"
+  },
+  "runtime_addconn_header_remove": {
+    "message": "ลบส่วนหัว",
+    "description": "Runtime interface message addconn.header_remove"
+  },
+  "runtime_addconn_header_value": {
+    "message": "ค่า",
+    "description": "Runtime interface message addconn.header_value"
+  },
+  "runtime_addconn_headers_hint": {
+    "message": "ส่งพร้อมทุกคำขอไปยังที่อยู่นี้ รวมถึงคำตอบแบบสตรีม สำหรับเกตเวย์ที่อยู่หลังพร็อกซีที่ยืนยันตัวตน ไม่ถูกส่งไปที่อื่นเลย เบราว์เซอร์ไม่สามารถเพิ่มส่วนหัวเหล่านี้ในการเชื่อมต่อ WebSocket แบบสดของแดชบอร์ดได้",
+    "description": "Runtime interface message addconn.headers_hint"
+  },
+  "runtime_addconn_headers_title": {
+    "message": "ส่วนหัวที่กำหนดเอง",
+    "description": "Runtime interface message addconn.headers_title"
+  },
+  "runtime_addconn_key_hint": {
+    "message": "เก็บเข้ารหัสไว้บนคอมพิวเตอร์เครื่องนี้ ใช้กับการเชื่อมต่อนี้เท่านั้น",
+    "description": "Runtime interface message addconn.key_hint"
+  },
+  "runtime_addconn_kicker": {
+    "message": "การเชื่อมต่อใหม่",
+    "description": "Runtime interface message addconn.kicker"
+  },
+  "runtime_addconn_method_browser": {
+    "message": "เบราว์เซอร์",
+    "description": "Runtime interface message addconn.method_browser"
+  },
+  "runtime_addconn_method_browser_desc": {
+    "message": "ลงชื่อเข้าใช้ที่หน้าของเกตเวย์เอง หรืออนุมัติส่วนขยายนี้ที่นั่น รหัสผ่านพิมพ์ในหน้านั้น",
+    "description": "Runtime interface message addconn.method_browser_desc"
+  },
+  "runtime_addconn_method_token": {
+    "message": "โทเค็น",
+    "description": "Runtime interface message addconn.method_token"
+  },
+  "runtime_addconn_method_token_desc": {
+    "message": "คีย์ API หรือโทเค็นเบราว์เซอร์จากเกตเวย์ของคุณ",
+    "description": "Runtime interface message addconn.method_token_desc"
+  },
+  "runtime_addconn_name_label": {
+    "message": "ชื่อ · ไม่บังคับ",
+    "description": "Runtime interface message addconn.name_label"
+  },
+  "runtime_addconn_name_placeholder": {
+    "message": "บ้าน, สตูดิโอ…",
+    "description": "Runtime interface message addconn.name_placeholder"
+  },
+  "runtime_addconn_open_address": {
+    "message": "เปิดที่อยู่",
+    "description": "Runtime interface message addconn.open_address"
+  },
+  "runtime_addconn_private_hint": {
+    "message": "อุโมงค์ SSH, Tailscale, WireGuard และเครือข่ายส่วนตัวอื่น ๆ ไม่ต้องตั้งค่าอะไรพิเศษที่นี่ เริ่มการเชื่อมต่อก่อน แล้วเพิ่มเกตเวย์ระยะไกลที่ที่อยู่ซึ่งระบบให้มา พร้อมคีย์ API ของคุณ ส่วนขยายนี้ไม่สามารถเปิดเซสชัน SSH ได้เอง",
+    "description": "Runtime interface message addconn.private_hint"
+  },
+  "runtime_addconn_private_title": {
+    "message": "การเชื่อมต่อส่วนตัว",
+    "description": "Runtime interface message addconn.private_title"
+  },
+  "runtime_addconn_result_cert": {
+    "message": "หากใช้ใบรับรองของตนเอง ให้เปิดที่อยู่ ยอมรับที่นั่น แล้วลองอีกครั้ง",
+    "description": "Runtime interface message addconn.result_cert"
+  },
+  "runtime_addconn_result_not_hermes": {
+    "message": "ที่อยู่นี้ตอบกลับ แต่ไม่ใช่ในฐานะ Hermes",
+    "description": "Runtime interface message addconn.result_not_hermes"
+  },
+  "runtime_addconn_result_unauthorized": {
+    "message": "เกตเวย์ไม่ยอมรับคีย์นี้",
+    "description": "Runtime interface message addconn.result_unauthorized"
+  },
+  "runtime_addconn_result_unreachable": {
+    "message": "ไม่มีการตอบกลับจากที่อยู่นี้",
+    "description": "Runtime interface message addconn.result_unreachable"
+  },
+  "runtime_addconn_save_options": {
+    "message": "บันทึกตัวเลือก",
+    "description": "Runtime interface message addconn.save_options"
+  },
+  "runtime_addconn_step_count": {
+    "message": "ขั้นที่ {current} จาก {total}",
+    "description": "Runtime interface message addconn.step_count"
+  },
+  "runtime_addconn_testing": {
+    "message": "กำลังทดสอบ…",
+    "description": "Runtime interface message addconn.testing"
+  },
+  "runtime_addconn_title_options": {
+    "message": "ตัวเลือกการเชื่อมต่อ",
+    "description": "Runtime interface message addconn.title_options"
+  },
+  "runtime_addconn_title_signin": {
+    "message": "คุณลงชื่อเข้าใช้อย่างไร?",
+    "description": "Runtime interface message addconn.title_signin"
+  },
+  "runtime_addconn_title_where": {
+    "message": "อยู่ที่ไหน?",
+    "description": "Runtime interface message addconn.title_where"
+  },
+  "runtime_addconn_try_again": {
+    "message": "ลองอีกครั้ง",
+    "description": "Runtime interface message addconn.try_again"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -2126,6 +2318,54 @@
   "runtime_connection_not_configured_short": {
     "message": "ยังไม่ได้กำหนดค่า",
     "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connections_busy": {
+    "message": "รอให้คำตอบปัจจุบันเสร็จก่อนสลับการเชื่อมต่อ",
+    "description": "Runtime interface message connections.busy"
+  },
+  "runtime_connections_default_name": {
+    "message": "การเชื่อมต่อ {number}",
+    "description": "Runtime interface message connections.default_name"
+  },
+  "runtime_connections_delete_confirm": {
+    "message": "ลบ \"{name}\" หรือไม่?",
+    "description": "Runtime interface message connections.delete_confirm"
+  },
+  "runtime_connections_delete_detail": {
+    "message": "ที่อยู่ ข้อมูลรับรอง แบบร่าง และประวัติแชทที่บันทึกไว้ในอุปกรณ์นี้จะถูกลบ แชทยังอยู่บนเกตเวย์ของการเชื่อมต่อนั้น",
+    "description": "Runtime interface message connections.delete_detail"
+  },
+  "runtime_connections_delete_pick": {
+    "message": "เลือกการเชื่อมต่อที่ต้องการลบ",
+    "description": "Runtime interface message connections.delete_pick"
+  },
+  "runtime_connections_delete_title": {
+    "message": "ลบการเชื่อมต่อ",
+    "description": "Runtime interface message connections.delete_title"
+  },
+  "runtime_connections_error": {
+    "message": "อัปเดตการเชื่อมต่อที่บันทึกไว้ไม่ได้",
+    "description": "Runtime interface message connections.error"
+  },
+  "runtime_connections_help": {
+    "message": "การสลับจะบันทึกการตั้งค่าปัจจุบัน แต่ละการเชื่อมต่อเก็บที่อยู่และข้อมูลรับรองของตนเอง",
+    "description": "Runtime interface message connections.help"
+  },
+  "runtime_connections_in_use": {
+    "message": "กำลังใช้งาน",
+    "description": "Runtime interface message connections.in_use"
+  },
+  "runtime_connections_name_prompt": {
+    "message": "ชื่อการเชื่อมต่อ",
+    "description": "Runtime interface message connections.name_prompt"
+  },
+  "runtime_connections_options": {
+    "message": "ตัวเลือก",
+    "description": "Runtime interface message connections.options"
+  },
+  "runtime_connections_saved_label": {
+    "message": "การเชื่อมต่อที่บันทึกไว้",
+    "description": "Runtime interface message connections.saved_label"
   },
   "runtime_context_consent_share_detail": {
     "message": "ใช้ได้เฉพาะแชทจนกว่าคุณจะอนุมัติการเชื่อมต่อนี้โดยเฉพาะ การยินยอมจะแยกตามปลายทาง บัญชี โปรไฟล์ และตัวควบคุมเบราว์เซอร์",
