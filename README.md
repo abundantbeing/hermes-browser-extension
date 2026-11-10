@@ -216,6 +216,8 @@ See [`SECURITY.md`](SECURITY.md), [`PERMISSIONS.md`](PERMISSIONS.md), [`DATA-FLO
 For Local or Remote API connections, follow the
 [Parallel Search MCP guide](./guides/parallel-search-mcp.md) to add free web search
 and page fetching to the connected Hermes runtime without a Parallel API key.
+The [Keenable Search MCP guide](./guides/keenable-search-mcp.md) does the same
+without a Keenable API key.
 
 ### I loaded the extension but nothing works
 

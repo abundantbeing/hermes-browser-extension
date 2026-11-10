@@ -1,0 +1,9 @@
+# Merge this server into the connected Hermes profile's config.yaml.
+# Keep existing mcp_servers entries and other settings.
+mcp_servers:
+  keenable-search:
+    url: "https://api.keenable.ai/mcp-public"
+    headers:
+      X-Keenable-Title: "hermes-browser-extension"
+    tools:
+      include: [search_web_pages, fetch_page_content]
