@@ -24877,7 +24877,15 @@ async function ensurePageContextGateAndRefresh(tabId, scriptTarget = { tabId }) 
     }
     const [refreshed] = await browserApi.scripting.executeScript({
       target: scriptTarget,
-      func: () => globalThis.hermesRefreshPageScriptPolicy?.(),
+      func: async () => {
+        const refresh = globalThis.hermesRefreshPageScriptPolicy;
+        if (typeof refresh !== 'function') return false;
+        try {
+          return Boolean(await refresh());
+        } catch {
+          return false;
+        }
+      },
     });
     return Boolean(refreshed?.result);
   } catch {
@@ -24917,20 +24925,20 @@ function adoptPageContextPermissionControlsFromStorage(next) {
 }
 
 async function persistPageContextPermissions(field = 'all') {
-  const fresh = await readBrowserSettingsFromStorage();
+  const stored = await readBrowserSettingsFromStorage();
   const pageContextOnPrivateNetworks = field === 'excluded'
-    ? fresh.pageContextOnPrivateNetworks === true
+    ? stored.pageContextOnPrivateNetworks === true
     : els.pageContextOnPrivateNetworksInput?.checked === true;
   const pageContextExcludedOrigins = field === 'private'
-    ? normalizePageContextExcludedOrigins(fresh.pageContextExcludedOrigins)
+    ? normalizePageContextExcludedOrigins(stored.pageContextExcludedOrigins)
     : normalizePageContextExcludedOrigins(els.pageContextExcludedOriginsInput?.value);
-  settings = {
-    ...settings,
-    ...fresh,
+  await mergePackedBrowserSettingsFromStorage((record) => ({
+    ...record,
     pageContextOnPrivateNetworks,
     pageContextExcludedOrigins,
-  };
-  await setPackedBrowserSettings(settings);
+  }));
+  // Only the permission keys: the stored record also holds other panels' session bindings.
+  settings = { ...settings, pageContextOnPrivateNetworks, pageContextExcludedOrigins };
   if (field !== 'excluded' && els.pageContextOnPrivateNetworksInput) {
     adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
   }
@@ -24950,19 +24958,38 @@ async function resolveTabUrlForPageScriptPolicy(tabId, tabUrl = '') {
   }
 }
 
-async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0, tabUrl = '' } = {}) {
-  const url = await resolveTabUrlForPageScriptPolicy(tabId, tabUrl);
-  const injection = pageContextInjectionDecision(url, settings);
-  if (!injection.inject) {
-    const skipError = new Error(t(pageContextSkipMessageKey(injection.reason), { url }));
-    skipError.hermesPageContextSkipped = true;
-    throw skipError;
+async function resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId = 0, tabUrl = '') {
+  const frame = Number(frameId);
+  if (frame > 0) {
+    try {
+      const [probe] = await browserApi.scripting.executeScript({
+        target: { tabId, frameIds: [frame] },
+        func: () => location.href,
+      });
+      const href = String(probe?.result || '').trim();
+      if (href) return href;
+    } catch {
+      /* fall back to the tab URL when the frame cannot be read */
+    }
   }
-  const messageOptions = Number(frameId) > 0 ? { frameId: Number(frameId) } : undefined;
-  const scriptTarget = Number(frameId) > 0
-    ? { tabId, frameIds: [Number(frameId)] }
-    : { tabId };
-  await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+  return resolveTabUrlForPageScriptPolicy(tabId, tabUrl);
+}
+
+function pageContextPolicySkipError(url, injection) {
+  const skipError = new Error(t(pageContextSkipMessageKey(injection.reason), { url }));
+  skipError.hermesPageContextSkipped = true;
+  return skipError;
+}
+
+async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0, tabUrl = '' } = {}) {
+  const frame = Number(frameId);
+  const messageOptions = frame > 0 ? { frameId: frame } : undefined;
+  const scriptTarget = frame > 0 ? { tabId, frameIds: [frame] } : { tabId };
+  const url = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+  const injection = pageContextInjectionDecision(url, settings);
+  if (!injection.inject) throw pageContextPolicySkipError(url, injection);
+  const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+  if (!refreshed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
   try {
     return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
   } catch (originalError) {
@@ -24985,7 +25012,8 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         ? files.filter((file) => file.endsWith('content-extractor.js'))
         : files;
       if (filesToInject.length) {
-        await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+        const allowed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+        if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
         await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
       }
       return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
@@ -25023,7 +25051,8 @@ function collectPageContextWithSharedExtractor(options = {}) {
 
 async function getPageContextViaScripting(tabId, options, originalError, tabUrl = '') {
   try {
-    const url = await resolveTabUrlForPageScriptPolicy(tabId, tabUrl);
+    const frameId = Number(options?.frameId || 0);
+    const url = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
     const injection = pageContextInjectionDecision(url, settings);
     if (!injection.inject) {
       return {
@@ -25036,10 +25065,19 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
-    const scriptTarget = Number(options?.frameId) > 0
-      ? { tabId, frameIds: [Number(options.frameId)] }
-      : { tabId };
-    await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+    const scriptTarget = frameId > 0 ? { tabId, frameIds: [frameId] } : { tabId };
+    const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+    if (!refreshed) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: injection.reason || 'excluded',
+        reason: t(pageContextSkipMessageKey(injection.reason || 'excluded'), { url }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
     await browserApi.scripting.executeScript({
@@ -25342,6 +25380,12 @@ async function startElementPick({ purpose = 'context' } = {}) {
     setStatus('warn', 'Restricted page', purpose === 'comment'
       ? 'Page comments are not available on this URL.'
       : 'Element pick is not available on this URL.');
+    return;
+  }
+  const injection = pageContextInjectionDecision(tab.url, settings);
+  if (!injection.inject) {
+    const detail = t(pageContextSkipMessageKey(injection.reason), { url: tab.url });
+    setStatus('warn', purpose === 'comment' ? 'Page comments unavailable' : 'Element pick unavailable', detail, { translateDetail: false });
     return;
   }
   try {

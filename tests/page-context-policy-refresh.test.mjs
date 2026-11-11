@@ -42,6 +42,36 @@ test('pageScriptPolicyPromise follows latestInject after refresh even when the g
   assert.equal(context.bundleRan, 1);
 });
 
+test('pageScriptPolicyPromise prefers latestInject over a stale guard promise after refresh', async () => {
+  const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
+  const context = {
+    location: { href: 'http://192.168.8.1/' },
+    ran: 0,
+    browser: {
+      runtime: {
+        sendMessage() {
+          return Promise.resolve({ inject: true });
+        },
+      },
+    },
+    __HERMES_PAGE_SCRIPTS_BLOCKED__: true,
+    __HERMES_PAGE_SCRIPT_POLICY__: {
+      decided: true,
+      latestInject: null,
+      promise: Promise.resolve(false),
+    },
+    globalThis: {},
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(gateSource, context);
+  const before = await context.hermesPageScriptPolicyPromise();
+  assert.equal(before, false);
+  await context.hermesRefreshPageScriptPolicy();
+  const after = await context.hermesPageScriptPolicyPromise();
+  assert.equal(after, true);
+});
+
 test('fresh gate install without document_start guard still runs after policy refresh', async () => {
   const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
   const context = {

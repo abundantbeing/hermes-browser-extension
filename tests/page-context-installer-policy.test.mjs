@@ -22,6 +22,9 @@ test('manual installs refresh in-tab page-script policy before messaging', async
     source.indexOf('function collectPageContextWithSharedExtractor'),
   );
   assert.match(block, /ensurePageContextGateAndRefresh\(tabId, scriptTarget\)/);
+  assert.match(block, /resolveScriptTargetUrlForPageScriptPolicy/);
+  assert.match(block, /if \(!refreshed\) throw pageContextPolicySkipError/);
+  assert.match(block, /if \(!allowed\) throw pageContextPolicySkipError/);
 });
 
 test('page context permissions save instantly from data-settings-live controls', async () => {
@@ -38,8 +41,19 @@ test('element pick failures surface in the operation toast', async () => {
     source.indexOf('async function startElementPick'),
     source.indexOf('function applyPickedElementResult'),
   );
+  assert.match(block, /pageContextInjectionDecision\(tab\.url, settings\)/);
   assert.match(block, /showOperationToast\(/);
   assert.match(block, /Element pick failed/);
+});
+
+test('ensurePageContextGateAndRefresh awaits async policy refresh inside the target', async () => {
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const block = source.slice(
+    source.indexOf('async function ensurePageContextGateAndRefresh'),
+    source.indexOf('function pageContextPermissionControlDirty'),
+  );
+  assert.match(block, /func: async \(\) =>/);
+  assert.match(block, /await refresh\(\)/);
 });
 
 test('sidepanel installer enforces pageContextInjectionDecision before scripting fallback', async () => {
@@ -49,7 +63,7 @@ test('sidepanel installer enforces pageContextInjectionDecision before scripting
     source.indexOf('function collectPageContextWithSharedExtractor'),
   );
   assert.match(block, /pageContextInjectionDecision\(url, settings\)/);
-  assert.match(block, /hermesPageContextSkipped/);
+  assert.match(block, /pageContextPolicySkipError/);
 });
 
 test('adoptHermesBrowserSettingsStorageChange tracks page-context settings fields', async () => {
