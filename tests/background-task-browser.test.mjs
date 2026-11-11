@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity, createBackgroundTaskBrowser,
 } from '../extension/lib/background-task-browser.mjs';
-import { SAVED_CONNECTION_SECRETS_STORAGE_KEY } from '../extension/lib/saved-connections.mjs';
+import { packSavedConnectionStorage, SAVED_CONNECTION_SECRETS_STORAGE_KEY } from '../extension/lib/saved-connections.mjs';
 
 function deferred() {
   let resolve;
@@ -121,7 +121,8 @@ test('changing the API key disconnects background control until the new key is a
   const settings = {
     connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', activeProfile: 'default', apiKey: 'key-a',
   };
-  const saved = { hermesBrowserSettings: settings };
+  const saved = await packSavedConnectionStorage(settings);
+  assert.equal(saved.hermesBrowserSettings.apiKey, '');
   const registrations = [];
   let closed = 0;
   const controller = createBackgroundTaskBrowser({
@@ -146,8 +147,14 @@ test('changing the API key disconnects background control until the new key is a
   await controller.sync();
 
   const updated = { ...settings, apiKey: 'key-b' };
-  saved.hermesBrowserSettings = updated;
-  await controller.settingsChanged({ hermesBrowserSettings: { oldValue: settings, newValue: updated } });
+  const previousSecrets = saved[SAVED_CONNECTION_SECRETS_STORAGE_KEY];
+  Object.assign(saved, await packSavedConnectionStorage(updated, previousSecrets));
+  assert.equal(saved.hermesBrowserSettings.apiKey, '');
+  await controller.settingsChanged({
+    [SAVED_CONNECTION_SECRETS_STORAGE_KEY]: {
+      oldValue: previousSecrets, newValue: saved[SAVED_CONNECTION_SECRETS_STORAGE_KEY],
+    },
+  });
   assert.equal(closed, 1);
   assert.deepEqual(registrations, ['key-a']);
 

@@ -48,7 +48,7 @@ try {
     return packed.hermesBrowserSettings.apiKey;
   })()`);
   assert.equal(storedApiKey, '', 'background control must load the key from encrypted storage');
-  const controller = await waitFor(() => fixture.connections[0]);
+  let controller = await waitFor(() => fixture.connections[0]);
   assert.equal(fixture.registrations[0].session_id, 'hermes:background-browser:v1');
   assert.equal(fixture.registrations[0].capabilities.includes('browser_batch'), false);
   assert.equal(await page.evaluate('chrome.tabs.query({}).then(tabs => tabs.length)'), 1);
@@ -98,6 +98,25 @@ try {
   assert.equal((await command('browser_snapshot', { tab_id: foreground })).error.code, 'lease_not_owned');
   assert.equal((await command('browser_tab_activate', { tab_id: tab.id })).error.code, 'background_action_unavailable');
   assert.equal(await page.evaluate('(async () => (await chrome.tabs.query({active:true,currentWindow:true}))[0].id)()'), foreground);
+  const reencrypted = await page.evaluate(`(async () => {
+    const {
+      packedHermesBrowserSettingsWrite, SAVED_CONNECTION_SECRETS_STORAGE_KEY,
+    } = await import(chrome.runtime.getURL('lib/saved-connections.mjs'));
+    const storage = chrome.storage.local;
+    const before = await storage.get(SAVED_CONNECTION_SECRETS_STORAGE_KEY);
+    const packed = await packedHermesBrowserSettingsWrite(${JSON.stringify({
+      ...settings, botModeDisplayDensity: 'compact',
+    })}, storage);
+    await storage.set(packed);
+    return JSON.stringify(before[SAVED_CONNECTION_SECRETS_STORAGE_KEY])
+      !== JSON.stringify(packed[SAVED_CONNECTION_SECRETS_STORAGE_KEY]);
+  })()`);
+  assert.equal(reencrypted, true, 'saving an unrelated setting should exercise the encrypted key rewrite');
+  controller = await waitFor(() => fixture.connections[1]);
+  const afterSave = await command('browser_snapshot', { tab_id: fixtureId });
+  assert.equal(afterSave.ok, true, JSON.stringify(afterSave));
+  assert.match(JSON.stringify(afterSave.result), /Applied/);
+
   await page.evaluate("chrome.storage.local.remove('hermesBackgroundBrowserConsent')");
   await waitFor(() => controller.closedAt);
   console.log('Background browser passed: real Chrome grouped and clicked in the background, isolated sessions, and revoked consent.');
