@@ -81,21 +81,6 @@
   "content_scripts": [
     {
       "matches": [
-        "http://*/*",
-        "https://*/*",
-        "file:///*"
-      ],
-      "js": [
-        "lib/browser-api-global.js",
-        "content-extractor.js",
-        "content.js",
-        "lib/i18n-content.js",
-        "content-inline-helper.js"
-      ],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": [
         "http://127.0.0.1/*",
         "http://localhost/*"
       ],

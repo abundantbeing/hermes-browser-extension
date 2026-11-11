@@ -16,8 +16,8 @@ test('generated content i18n bridge stays classic and precedes Hermes Assist', a
   assert.doesNotMatch(source, /^\s*(?:import|export)\s/m);
   assert.doesNotMatch(source, /MutationObserver/);
 
-  const manifest = JSON.parse(read('extension/manifest.json'));
-  const scripts = manifest.content_scripts.flatMap((entry) => entry.js || []);
+  const { buildRegisteredPageScriptDefinition } = await import('../extension/lib/page-script-host-policy.mjs');
+  const scripts = buildRegisteredPageScriptDefinition({}, { packaged: true }).js;
   assert.ok(scripts.indexOf('lib/browser-api-global.js') >= 0);
   assert.ok(scripts.indexOf('lib/browser-api-global.js') < scripts.indexOf('lib/i18n-content.js'));
   assert.ok(scripts.indexOf('lib/i18n-content.js') >= 0);

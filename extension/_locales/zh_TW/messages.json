@@ -4235,6 +4235,42 @@
     "message": "使用中的模型",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "每行一個來源，例如 https://192.168.8.1:9443 或 https://news.example.com. 適用於公開與私人網站。",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "排除的來源未變更",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "從頁面指令碼排除這些來源",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "在路由器儀表板、Tailscale 主機或其他非公開位址上需要 Assist、擷取與內嵌說明時開啟。",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "在私人與 LAN 網站上執行頁面指令碼",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "私人頁面指令碼設定未變更",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes 預設在家用、辦公與路由器位址上略過頁面指令碼，讓自架儀表板持續渲染。回環 Hermes Web 啟動頁使用各自的輕量交接指令碼。",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "私人與 LAN 頁面",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Hermes 可在你的瀏覽器中操作什麼，以及哪些連線可以查看頁面內容。",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - 內容受限",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — 已略過頁面內容，因為 Hermes 未在此頁面注入指令碼。",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — 此網站在設定 → 權限的排除清單中，Hermes 保持頁面指令碼關閉。",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes 未在此私人或 LAN 位址注入頁面指令碼。請在設定 → 權限中開啟私人頁面指令碼，或從排除清單移除該來源。",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "已選擇 {profile}。如果執行中的設定檔沒有立即變更，請重新啟動 Hermes 閘道器。",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "頁面",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 此網站頁面內容已關閉",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "已略過頁面內容",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

@@ -125,6 +125,13 @@ import {
   interceptChatLinkClick,
 } from './lib/common.mjs';
 import {
+  buildRegisteredPageScriptDefinition,
+  extensionPageContextPackaged,
+  normalizePageContextExcludedOrigins,
+  pageContextInjectionDecision,
+  pageContextSkipMessageKey,
+} from './lib/page-script-host-policy.mjs';
+import {
   BUILD_RELOAD_BOOT_RECHECK_MS,
   BUILD_RELOAD_WATCH_INTERVAL_MS,
   HBE_RELEASES_URL,
@@ -974,6 +981,8 @@ const els = {
   gmailCaptureEnabledInput: $('#gmailCaptureEnabledInput'),
   gmailCaptureToggleTitle: $('#gmailCaptureToggleTitle'),
   gmailCaptureToggleHint: $('#gmailCaptureToggleHint'),
+  pageContextOnPrivateNetworksInput: $('#pageContextOnPrivateNetworksInput'),
+  pageContextExcludedOriginsInput: $('#pageContextExcludedOriginsInput'),
   contextScopeButton: $('#contextScopeButton'),
   contextScopeLabel: $('#contextScopeLabel'),
   contextScopeMenu: $('#contextScopeMenu'),
@@ -21506,8 +21515,13 @@ function dismissLocalDocumentApprovalNotice() {
 function renderLocalDocumentApproval(tab = currentContext?.activeTab) {
   if (!els.localDocumentApprovalNotice) return;
   const url = tab?.url || '';
-  const isLocal = isLocalDocumentUrl(url);
-  if (!isLocal || settings.allowLocalDocuments === true) {
+  let isFileDocument = false;
+  try {
+    isFileDocument = new URL(url).protocol === 'file:';
+  } catch {
+    isFileDocument = false;
+  }
+  if (!isFileDocument || settings.allowLocalDocuments === true) {
     dismissLocalDocumentApprovalNotice();
     return;
   }
@@ -24031,6 +24045,7 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
     'trustedDashboardOrigin', 'trustedDashboardTabId',
     'activeSavedConnectionId', 'savedConnections', 'connectionHeaders', 'connectionTrustSelfSigned',
+    'pageContextOnPrivateNetworks', 'pageContextExcludedOrigins',
     // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
     // panel, they share this record, and adopting another panel's binding would make this one resume
     // (and then write into) the other panel's session on its next reconnect.
@@ -24048,6 +24063,11 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     const differs = Array.isArray(next[key]) ? JSON.stringify(next[key]) !== JSON.stringify(settings[key]) : next[key] !== settings[key];
     if (connectionKeys.has(key) && differs) connectionChanged = true;
   }
+  let pageContextSettingsChanged = false;
+  if (Object.hasOwn(patch, 'pageContextOnPrivateNetworks')
+    || Object.hasOwn(patch, 'pageContextExcludedOrigins')) {
+    pageContextSettingsChanged = true;
+  }
   if (Object.keys(patch).length) {
     settings = { ...settings, ...patch };
     if (connectionChanged) {
@@ -24062,6 +24082,30 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     updateConnectionPrompt();
     renderBrowserControl();
     renderSavedConnections();
+    if (pageContextSettingsChanged) {
+      adoptPageContextPermissionControlsFromStorage(next);
+      const tab = currentContext?.activeTab;
+      if (tab?.url) {
+        const injection = pageContextInjectionDecision(tab.url, settings);
+        if (!injection.inject) {
+          currentContext = {
+            ...currentContext,
+            pageContext: {
+              ok: false,
+              skipped: true,
+              skipReason: injection.reason,
+              reason: t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+              text: '',
+              selectedText: '',
+              meta: {},
+            },
+          };
+        } else if (currentContext?.pageContext?.skipped) {
+          currentContext = { ...currentContext, pageContext: null };
+        }
+        renderContextWindow();
+      }
+    }
   }
   adoptStoredResponsePresentation(next);
   if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
@@ -24479,6 +24523,15 @@ function syncSettingsForm() {
   if (els.wakeWordBrowserFallbackInput) els.wakeWordBrowserFallbackInput.checked = settings.wakeWordBrowserFallback !== false;
   if (els.wakeWordSpeakRepliesInput) els.wakeWordSpeakRepliesInput.checked = settings.wakeWordSpeakReplies !== false;
   if (els.gmailCaptureEnabledInput) els.gmailCaptureEnabledInput.checked = settings.gmailCaptureEnabled === true;
+  if (els.pageContextOnPrivateNetworksInput) {
+    els.pageContextOnPrivateNetworksInput.checked = settings.pageContextOnPrivateNetworks === true;
+  }
+  if (els.pageContextExcludedOriginsInput) {
+    const excluded = Array.isArray(settings.pageContextExcludedOrigins)
+      ? settings.pageContextExcludedOrigins
+      : [];
+    els.pageContextExcludedOriginsInput.value = excluded.join('\n');
+  }
   if (els.gmailCaptureToggleTitle) els.gmailCaptureToggleTitle.textContent = translateUiText('Gmail thread context');
   if (els.gmailCaptureToggleHint) els.gmailCaptureToggleHint.textContent = translateUiText('Share the open Gmail thread with Hermes on every message. Stays on until disabled. Inbox lists, drafts and input values stay excluded.');
   renderWakeState();
@@ -24596,6 +24649,12 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
       els.transcriptProviderInput.value,
     ),
     gmailCaptureEnabled: els.gmailCaptureEnabledInput ? els.gmailCaptureEnabledInput.checked : settings.gmailCaptureEnabled === true,
+    pageContextOnPrivateNetworks: els.pageContextOnPrivateNetworksInput
+      ? els.pageContextOnPrivateNetworksInput.checked
+      : settings.pageContextOnPrivateNetworks === true,
+    pageContextExcludedOrigins: els.pageContextExcludedOriginsInput
+      ? els.pageContextExcludedOriginsInput.value.split(/\n+/).map((line) => line.trim()).filter(Boolean)
+      : (Array.isArray(settings.pageContextExcludedOrigins) ? settings.pageContextExcludedOrigins : []),
     wakeWordEnabled: els.wakeWordEnabledInput ? els.wakeWordEnabledInput.checked : Boolean(settings.wakeWordEnabled),
     wakeWordPhrase: normalizeWakeWordSettings({ wakeWordPhrase: els.wakeWordPhraseInput?.value }).phrase,
     wakeWordPreferNative: settings.wakeWordPreferNative !== false,
@@ -24800,15 +24859,137 @@ async function tabsForCurrentScope() {
 }
 
 function manifestContentScriptFiles() {
-  const scripts = browserApi.runtime.getManifest()?.content_scripts?.flatMap((entry) => entry?.js || []) || [];
-  return scripts.length ? scripts : ['content-extractor.js', 'content.js'];
+  const packaged = extensionPageContextPackaged(() => browserApi.runtime.getManifest());
+  return buildRegisteredPageScriptDefinition(settings, { packaged }).js;
 }
 
-async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0 } = {}) {
-  const messageOptions = Number(frameId) > 0 ? { frameId: Number(frameId) } : undefined;
-  const scriptTarget = Number(frameId) > 0
-    ? { tabId, frameIds: [Number(frameId)] }
-    : { tabId };
+async function ensurePageContextGateAndRefresh(tabId, scriptTarget = { tabId }) {
+  if (!tabId) return false;
+  try {
+    const files = manifestContentScriptFiles();
+    const gateFile = files.find((file) => file.includes('page-context-bundle-gate'));
+    const [hasRefresh] = await browserApi.scripting.executeScript({
+      target: scriptTarget,
+      func: () => typeof globalThis.hermesRefreshPageScriptPolicy === 'function',
+    });
+    if (!hasRefresh?.result && gateFile) {
+      await browserApi.scripting.executeScript({ target: scriptTarget, files: [gateFile] });
+    }
+    const [refreshed] = await browserApi.scripting.executeScript({
+      target: scriptTarget,
+      func: async () => {
+        const refresh = globalThis.hermesRefreshPageScriptPolicy;
+        if (typeof refresh !== 'function') return false;
+        try {
+          return Boolean(await refresh());
+        } catch {
+          return false;
+        }
+      },
+    });
+    return Boolean(refreshed?.result);
+  } catch {
+    return false;
+  }
+}
+
+function pageContextPermissionControlDirty(control) {
+  if (!control || !settingsBaseline) return false;
+  const pane = control.closest('[data-settings-pane]')?.dataset.settingsPane || 'permissions';
+  const key = `${pane}\u0000${control.id}:${control.type === 'radio' ? control.value : ''}`;
+  if (!settingsBaseline.has(key)) return false;
+  const baseline = settingsBaseline.get(key);
+  const current = control.type === 'checkbox' ? String(control.checked) : String(control.value);
+  return current !== baseline;
+}
+
+function adoptPageContextPermissionControlsFromStorage(next) {
+  if (!next) return;
+  if (els.pageContextOnPrivateNetworksInput) {
+    const editing = document.activeElement === els.pageContextOnPrivateNetworksInput;
+    const dirty = pageContextPermissionControlDirty(els.pageContextOnPrivateNetworksInput);
+    if (!editing && !dirty && Object.hasOwn(next, 'pageContextOnPrivateNetworks')) {
+      els.pageContextOnPrivateNetworksInput.checked = next.pageContextOnPrivateNetworks === true;
+      adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
+    }
+  }
+  if (els.pageContextExcludedOriginsInput) {
+    const editing = document.activeElement === els.pageContextExcludedOriginsInput;
+    const dirty = pageContextPermissionControlDirty(els.pageContextExcludedOriginsInput);
+    if (!editing && !dirty && Object.hasOwn(next, 'pageContextExcludedOrigins')) {
+      const excluded = Array.isArray(next.pageContextExcludedOrigins) ? next.pageContextExcludedOrigins : [];
+      els.pageContextExcludedOriginsInput.value = excluded.join('\n');
+      adoptSettingsBaselineValue(els.pageContextExcludedOriginsInput);
+    }
+  }
+}
+
+async function persistPageContextPermissions(field = 'all') {
+  const stored = await readBrowserSettingsFromStorage();
+  const pageContextOnPrivateNetworks = field === 'excluded'
+    ? stored.pageContextOnPrivateNetworks === true
+    : els.pageContextOnPrivateNetworksInput?.checked === true;
+  const pageContextExcludedOrigins = field === 'private'
+    ? normalizePageContextExcludedOrigins(stored.pageContextExcludedOrigins)
+    : normalizePageContextExcludedOrigins(els.pageContextExcludedOriginsInput?.value);
+  await mergePackedBrowserSettingsFromStorage((record) => ({
+    ...record,
+    pageContextOnPrivateNetworks,
+    pageContextExcludedOrigins,
+  }));
+  // Only the permission keys: the stored record also holds other panels' session bindings.
+  settings = { ...settings, pageContextOnPrivateNetworks, pageContextExcludedOrigins };
+  if (field !== 'excluded' && els.pageContextOnPrivateNetworksInput) {
+    adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
+  }
+  if (field !== 'private' && els.pageContextExcludedOriginsInput) {
+    adoptSettingsBaselineValue(els.pageContextExcludedOriginsInput);
+  }
+}
+
+async function resolveTabUrlForPageScriptPolicy(tabId, tabUrl = '') {
+  const direct = String(tabUrl || '').trim();
+  if (direct) return direct;
+  try {
+    const tab = await browserApi.tabs.get(tabId);
+    return String(tab?.url || '');
+  } catch {
+    return '';
+  }
+}
+
+async function resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId = 0, tabUrl = '') {
+  const frame = Number(frameId);
+  if (frame > 0) {
+    try {
+      const [probe] = await browserApi.scripting.executeScript({
+        target: { tabId, frameIds: [frame] },
+        func: () => location.href,
+      });
+      const href = String(probe?.result || '').trim();
+      if (href) return href;
+    } catch {
+      /* fall back to the tab URL when the frame cannot be read */
+    }
+  }
+  return resolveTabUrlForPageScriptPolicy(tabId, tabUrl);
+}
+
+function pageContextPolicySkipError(url, injection) {
+  const skipError = new Error(t(pageContextSkipMessageKey(injection.reason), { url }));
+  skipError.hermesPageContextSkipped = true;
+  return skipError;
+}
+
+async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0, tabUrl = '' } = {}) {
+  const frame = Number(frameId);
+  const messageOptions = frame > 0 ? { frameId: frame } : undefined;
+  const scriptTarget = frame > 0 ? { tabId, frameIds: [frame] } : { tabId };
+  const url = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+  const injection = pageContextInjectionDecision(url, settings);
+  if (!injection.inject) throw pageContextPolicySkipError(url, injection);
+  const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+  if (!refreshed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
   try {
     return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
   } catch (originalError) {
@@ -24831,6 +25012,8 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         ? files.filter((file) => file.endsWith('content-extractor.js'))
         : files;
       if (filesToInject.length) {
+        const allowed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+        if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
         await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
       }
       return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
@@ -24866,13 +25049,37 @@ function collectPageContextWithSharedExtractor(options = {}) {
   return HermesSiteAdapters.applySiteAdapterPolicy(pageContext, siteAdapter);
 }
 
-async function getPageContextViaScripting(tabId, options, originalError) {
+async function getPageContextViaScripting(tabId, options, originalError, tabUrl = '') {
   try {
+    const frameId = Number(options?.frameId || 0);
+    const url = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+    const injection = pageContextInjectionDecision(url, settings);
+    if (!injection.inject) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: injection.reason,
+        reason: t(pageContextSkipMessageKey(injection.reason), { url }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    const scriptTarget = frameId > 0 ? { tabId, frameIds: [frameId] } : { tabId };
+    const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+    if (!refreshed) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: injection.reason || 'excluded',
+        reason: t(pageContextSkipMessageKey(injection.reason || 'excluded'), { url }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
-    const scriptTarget = Number(options?.frameId) > 0
-      ? { tabId, frameIds: [Number(options.frameId)] }
-      : { tabId };
     await browserApi.scripting.executeScript({
       target: scriptTarget,
       files: [extractorPath],
@@ -24933,6 +25140,19 @@ async function getPageContext(tab, options = {}) {
     };
   }
 
+  const injection = pageContextInjectionDecision(tab.url, settings);
+  if (!injection.inject) {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: injection.reason,
+      reason: t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
+
   const requestOptions = {
     depth: settings.contextDepth,
     maxTextChars: usesDashboardWsChatTransport() && settings.includePageText !== false && settings.contextDepth !== 'minimal' ? 200_000 : undefined,
@@ -24953,7 +25173,7 @@ async function getPageContext(tab, options = {}) {
         : { ...response, selectedText: String(options.selectedTextOverride || '') };
     }
     if (response?.ok) {
-      const fallback = await getPageContextViaScripting(tab.id, requestOptions, new Error('Stale content script: empty page context'));
+      const fallback = await getPageContextViaScripting(tab.id, requestOptions, new Error('Stale content script: empty page context'), tab.url);
       if (fallback?.ok) {
         return options.selectedTextOverride === undefined
           ? fallback
@@ -24962,7 +25182,18 @@ async function getPageContext(tab, options = {}) {
     }
     return response || { ok: false, error: 'No page context response', text: '', selectedText: '', meta: {} };
   } catch (error) {
-    const fallback = await getPageContextViaScripting(tab.id, requestOptions, error);
+    if (error?.hermesPageContextSkipped) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: pageContextInjectionDecision(tab.url, settings).reason,
+        reason: error.message,
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    const fallback = await getPageContextViaScripting(tab.id, requestOptions, error, tab.url);
     if (fallback?.ok) {
       return options.selectedTextOverride === undefined
         ? fallback
@@ -25151,6 +25382,12 @@ async function startElementPick({ purpose = 'context' } = {}) {
       : 'Element pick is not available on this URL.');
     return;
   }
+  const injection = pageContextInjectionDecision(tab.url, settings);
+  if (!injection.inject) {
+    const detail = t(pageContextSkipMessageKey(injection.reason), { url: tab.url });
+    setStatus('warn', purpose === 'comment' ? 'Page comments unavailable' : 'Element pick unavailable', detail, { translateDetail: false });
+    return;
+  }
   try {
     if (elementPickActiveForTab(tab)) {
       await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL });
@@ -25177,7 +25414,14 @@ async function startElementPick({ purpose = 'context' } = {}) {
     const wasComment = pageCommentPickActive;
     pageCommentPickActive = false;
     await clearElementPickState({ tabId: tab.id });
-    setStatus('warn', wasComment ? 'Page comments failed' : 'Element pick failed', error?.message || String(error), { translateDetail: false });
+    const detail = error?.message || String(error);
+    setStatus('warn', wasComment ? 'Page comments failed' : 'Element pick failed', detail, { translateDetail: false });
+    showOperationToast({
+      kind: 'warn',
+      title: wasComment ? 'Page comments failed' : 'Element pick failed',
+      detail,
+      duration: 12_000,
+    });
   }
 }
 
@@ -25628,6 +25872,14 @@ async function refreshContext(options = {}) {
     setStatus('warn', 'No active tab detected', 'Open a normal browser tab and try again.');
   } else if (pageContext?.restricted) {
     setStatus('warn', tab.title || translateUiText('Restricted page'), t('status.page_context_restricted', { url: tab.url }), { translateTitle: false, translateDetail: false });
+  } else if (pageContext?.skipped) {
+    const detailKey = pageContextSkipMessageKey(pageContext.skipReason || '');
+    setStatus(
+      'warn',
+      tab.title || t('ui.page_context_skipped'),
+      t(detailKey, { url: tab.url }),
+      { translateTitle: false, translateDetail: false },
+    );
   } else if (pageContext?.ok) {
     setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
   } else {
@@ -25706,7 +25958,27 @@ async function refreshContextPreview() {
     if (isRestrictedUrl(tab.url, { allowLocalDocuments: isLocalDocumentUrl(tab.url) })) {
       setStatus('warn', tab.title || translateUiText('Restricted page'), t('status.page_context_restricted', { url: tab.url }), { translateTitle: false, translateDetail: false });
     } else {
-      setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
+      const injection = pageContextInjectionDecision(tab.url, settings);
+      if (!injection.inject) {
+        const skippedContext = {
+          ok: false,
+          skipped: true,
+          skipReason: injection.reason,
+          reason: t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+          text: '',
+          selectedText: '',
+          meta: {},
+        };
+        currentContext = { ...currentContext, pageContext: skippedContext };
+        setStatus(
+          'warn',
+          tab.title || t('ui.page_context_skipped'),
+          skippedContext.reason,
+          { translateTitle: false, translateDetail: false },
+        );
+      } else {
+        setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
+      }
     }
   }
   renderLocalDocumentApproval(tab);
@@ -30748,6 +31020,16 @@ function bindEvents() {
     trackInstantSave('permissions', setBrowserContextConsent(els.browserContextConsentInput.checked)).catch((error) => {
       renderBrowserContextConsentControl();
       setStatus('warn', 'Context sharing unchanged', error?.message || String(error), { translateDetail: false });
+    });
+  });
+  els.pageContextOnPrivateNetworksInput?.addEventListener('change', () => {
+    trackInstantSave('permissions', persistPageContextPermissions('private')).catch((error) => {
+      setStatus('warn', t('settings.page_context_private.save_unchanged_title'), error?.message || String(error), { translateDetail: false });
+    });
+  });
+  els.pageContextExcludedOriginsInput?.addEventListener('change', () => {
+    trackInstantSave('permissions', persistPageContextPermissions('excluded')).catch((error) => {
+      setStatus('warn', t('settings.page_context_excluded.save_unchanged_title'), error?.message || String(error), { translateDetail: false });
     });
   });
   browserControlDialogUi = createBrowserControlDialog({

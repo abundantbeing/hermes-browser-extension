@@ -85,7 +85,8 @@ export async function renderContentExtractorRuntime({ rootDir = defaultRootDir }
     rendered.push(renderClassicModule(module, source));
   }
   const sources = AUTHORED_MODULES.map((module) => module.path).join(', ');
-  return `/* Generated from ${sources}. Do not edit directly. */\n${rendered.join('\n\n')}\n`;
+  const modules = rendered.join('\n\n');
+  return `/* Generated from ${sources}. Do not edit directly. */\n(function hermesContentExtractorPolicyGate() {\n  const policyReady = typeof globalThis.hermesPageScriptPolicyPromise === 'function'\n    ? globalThis.hermesPageScriptPolicyPromise()\n    : Promise.resolve(!globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__);\n  return policyReady.then(function hermesContentExtractorGate(inject) {\n    if (!inject) return;\n${modules}\n  });\n})();\n`;
 }
 
 export async function writeContentExtractorRuntime({

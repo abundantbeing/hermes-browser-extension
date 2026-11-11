@@ -4235,6 +4235,42 @@
     "message": "Mô hình đang dùng",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Một nguồn mỗi dòng, ví dụ https://192.168.8.1:9443 hoặc https://news.example.com. Áp dụng trên site công khai và riêng.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Nguồn loại trừ không thay đổi",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Loại các nguồn này khỏi script trang",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Bật khi bạn muốn Assist, trích xuất và trợ giúp nội tuyến trên bảng router, host Tailscale hoặc địa chỉ không công khai khác.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Chạy script trang trên site riêng và LAN",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Cài đặt script trang mạng riêng không thay đổi",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes mặc định bỏ qua script trang trên địa chỉ nhà, văn phòng và router để bảng điều khiển tự host vẫn render. Trang khởi chạy Hermes Web loopback dùng script chuyển giao nhẹ riêng.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Trang mạng riêng và LAN",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Hermes được phép điều khiển gì trong trình duyệt của bạn và kết nối nào được xem ngữ cảnh trang.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - ngữ cảnh bị hạn chế",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Đã bỏ qua ngữ cảnh trang vì Hermes không tiêm script trên trang này.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes giữ script trang tắt cho site này vì nó nằm trong danh sách loại trừ ở Cài đặt → Quyền.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes không tiêm script trang trên địa chỉ riêng hoặc LAN này. Bật script trang riêng trong Cài đặt → Quyền, hoặc xóa nguồn khỏi danh sách loại trừ.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "Đã chọn {profile}. Hãy khởi động lại cổng Hermes nếu hồ sơ đang chạy không thay đổi ngay lập tức.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Trang",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Tắt ngữ cảnh trang cho site này",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Đã bỏ qua ngữ cảnh trang",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

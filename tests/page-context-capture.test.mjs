@@ -11,6 +11,7 @@ import {
   packedHermesBrowserSettingsWrite,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
 } from '../extension/lib/saved-connections.mjs';
+import { pageContextInjectionDecision } from '../extension/lib/page-script-host-policy.mjs';
 
 const root = new URL('../', import.meta.url);
 function documentAt(html, url) {
@@ -34,6 +35,9 @@ function panelHarness(stored = {}) {
     usesDashboardWsChatTransport: () => false,
     isLocalDocumentUrl: () => false,
     isRestrictedUrl: () => false,
+    pageContextInjectionDecision,
+    pageContextSkipMessageKey: () => 'status.page_context_skipped',
+    translateUiText: (value) => value,
     sendContentMessageWithInstallFallback: async (_id, message) => {
       calls.push(message.options);
       const adapter = inspectSite(documentAt(gmailHtml, gmailUrl), { url: gmailUrl, explicitCapture: message.options.explicitSiteCapture });

@@ -4235,6 +4235,42 @@
     "message": "当前模型",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "每行一个来源，例如 https://192.168.8.1:9443 或 https://news.example.com. 适用于公开和私有站点。",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "排除的来源未更改",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "从页面脚本中排除这些来源",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "在路由器仪表板、Tailscale 主机或其他非公开地址上需要 Assist、提取和内联帮助时开启。",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "在私有和 LAN 站点上运行页面脚本",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "私有页面脚本设置未更改",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes 默认在家用、办公和路由器地址上跳过页面脚本，以便自托管仪表板继续渲染。回环 Hermes Web 启动页使用各自的轻量交接脚本。",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "私有与 LAN 页面",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Hermes 可在你的浏览器中操作什么，以及哪些连接可以查看页面上下文。",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - 上下文受限",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — 已跳过页面上下文，因为 Hermes 未在此页面注入脚本。",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — 该站点在设置 → 权限的排除列表中，Hermes 保持页面脚本关闭。",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes 未在此私有或 LAN 地址注入页面脚本。请在设置 → 权限中开启私有页面脚本，或从排除列表中移除该来源。",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "已选择 {profile}。如果运行中的配置文件未立即更改，请重启 Hermes gateway。",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "页面",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 此站点页面上下文已关闭",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "已跳过页面上下文",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

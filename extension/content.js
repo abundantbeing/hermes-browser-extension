@@ -15,6 +15,7 @@
  * Do not hoist any declaration out of the IIFE.
  */
 (() => {
+  const boot = () => {
   const browserApi = globalThis.hermesBrowserApi;
   const CONTENT_SCRIPT_VERSION = '2026-07-16-extraction-site-adapters-v1';
   const previousListener = globalThis.__HERMES_BROWSER_CONTENT_LISTENER__;
@@ -644,4 +645,10 @@
 
   browserApi.runtime.onMessage.addListener(messageListener);
   globalThis.__HERMES_BROWSER_CONTENT_LISTENER__ = messageListener;
+  };
+  if (typeof globalThis.hermesAwaitPageScriptPolicy === 'function') {
+    globalThis.hermesAwaitPageScriptPolicy(boot);
+  } else {
+    boot();
+  }
 })();

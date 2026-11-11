@@ -211,6 +211,27 @@ See [`SECURITY.md`](SECURITY.md), [`PERMISSIONS.md`](PERMISSIONS.md), [`DATA-FLO
 
 ## Troubleshooting
 
+### Self-hosted LAN or router dashboards look blank
+
+Some self-hosted dashboards (router admin UIs, Clash or mihomo panels, other Vue or workbox PWAs on private IP addresses) can stop painting when a browser extension injects heavy page scripts at `document_idle`. Hermes now skips its page-context bundle on private and LAN hosts by default. Chat, Hermes Control, and Hermes Web launch still work; only Assist, extraction, and inline page helpers stay off until you opt in.
+
+In **Settings → Permissions → Private and LAN pages**, turn on **Run page scripts on private and LAN sites** when you want page context on those addresses. To block page scripts on a specific origin (public or private), add it under **Exclude these origins from page scripts** (one origin per line, for example `https://192.168.8.1:9443`). The side panel explains when page context is skipped on the active tab.
+
+Private or LAN hosts (the same classifier the extension and guard use):
+
+| Kind | Examples |
+| --- | --- |
+| IPv4 loopback | `127.0.0.0/8` (including `127.0.0.2`) |
+| RFC1918 | `10.0.0.0/8`, `172.16.0.0–172.31.255.0`, `192.168.0.0/16` |
+| Link-local / CGNAT | `169.254.0.0/16`, Tailscale `100.64.0.0/10` (`100.64.x.x–100.127.x.x`) |
+| IPv6 loopback / ULA / link-local | `::1`, `fc00::/7`, `fe80::/10` |
+| Local names | `localhost`, `*.localhost`, `*.local`, `*.lan`, `*.internal`, `*.home.arpa`, `*.ts.net` |
+| Single-label hostnames | names with no dots (for example a machine name on the LAN) |
+
+Port-specific excludes (for example `https://example.com:9443`) are enforced at runtime in the install guard, not via registration match patterns, so other ports on the same host stay eligible for page scripts unless you exclude them too.
+
+### Tools available to the agent
+
 Tools available to the agent come from your Hermes setup. See the [Hermes docs](https://hermes-agent.nousresearch.com/docs).
 
 ### I loaded the extension but nothing works

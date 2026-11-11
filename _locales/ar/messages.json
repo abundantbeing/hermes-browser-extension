@@ -4235,6 +4235,42 @@
     "message": "النموذج النشط",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "أصل واحد في كل سطر، مثل https://192.168.8.1:9443 أو https://news.example.com. ينطبق على المواقع العامة والخاصة.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "أصول الاستبعاد لم تتغير",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "استبعاد هذه الأصول من برامج الصفحة",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "فعّل هذا عندما تريد Assist والاستخراج والمساعدة المضمنة على لوحات الموجه أو مضيفي Tailscale أو عناوين غير عامة أخرى.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "تشغيل برامج الصفحة على المواقع الخاصة وLAN",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "إعداد نص الصفحة الخاص لم يتغير",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "يتخطى Hermes افتراضيًا برامج الصفحة على عناوين المنزل والمكتب والموجه حتى تستمر لوحات التحكم ذاتية الاستضافة في العمل. صفحات إطلاق Hermes Web على الحلقة المحلية تستخدم نصوص تسليم خفيفة خاصة بها.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "صفحات خاصة وشبكة LAN",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "ما يمكن لـ Hermes تشغيله في متصفحك، وأي الاتصالات يمكنها رؤية سياق الصفحة.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - السياق مقيد",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — تم تخطي سياق الصفحة لأن Hermes لم يحقن البرامج على هذه الصفحة.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — أبقى Hermes برامج الصفحة متوقفة لهذا الموقع لأنه في قائمة الاستبعاد في الإعدادات → الأذونات.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — لم يحقن Hermes برامج الصفحة على هذا العنوان الخاص أو LAN. فعّل برامج الصفحة الخاصة في الإعدادات → الأذونات، أو أزل الأصل من قائمة الاستبعاد.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "تم تحديد {profile}. أعد تشغيل بوابة Hermes إذا لم يتغير الملف التعريفي قيد التشغيل فورًا.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "صفحة",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 سياق الصفحة متوقف لهذا الموقع",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "تم تخطي سياق الصفحة",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

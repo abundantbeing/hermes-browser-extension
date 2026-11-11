@@ -1440,6 +1440,28 @@
             <input id="browserContextConsentInput" data-settings-live class="settings-switch-input" type="checkbox" />
             <span class="settings-switch" aria-hidden="true"></span>
           </label>
+
+          <section class="settings-section page-context-skip-settings" aria-labelledby="pageContextSkipTitle">
+            <div class="settings-section-head">
+              <div>
+                <h3 id="pageContextSkipTitle" data-i18n="settings.page_context_private.title">Private and LAN pages</h3>
+                <p data-i18n="settings.page_context_private.summary">Hermes skips its page scripts on home, office, and router addresses by default so self-hosted dashboards keep rendering. Loopback Hermes Web launch pages still use their own lightweight hand-off scripts.</p>
+              </div>
+            </div>
+            <label class="settings-toggle-card">
+              <span class="settings-toggle-copy">
+                <strong data-i18n="settings.page_context_private.enable_label">Run page scripts on private and LAN sites</strong>
+                <small data-i18n="settings.page_context_private.enable_detail">Turn this on when you want Assist, extraction, and inline help on router dashboards, Tailscale hosts, or other non-public addresses.</small>
+              </span>
+              <input id="pageContextOnPrivateNetworksInput" data-settings-live class="settings-switch-input" type="checkbox" role="switch" />
+              <span class="settings-switch" aria-hidden="true"></span>
+            </label>
+            <label class="settings-field">
+              <span class="settings-field-label" data-i18n="settings.page_context_excluded.title">Exclude these origins from page scripts</span>
+              <small class="settings-field-hint" data-i18n="settings.page_context_excluded.detail">One origin per line, such as https://192.168.8.1:9443 or https://news.example.com. Applies on public and private sites.</small>
+              <textarea id="pageContextExcludedOriginsInput" data-settings-live class="settings-textarea" rows="4" spellcheck="false" data-i18n-placeholder="settings.page_context_excluded.placeholder" placeholder="https://192.168.8.1:9443"></textarea>
+            </label>
+          </section>
           </section>
 
         </section>

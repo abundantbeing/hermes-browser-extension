@@ -4235,6 +4235,42 @@
     "message": "Активная модель",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Один источник в строке, например https://192.168.8.1:9443 или https://news.example.com. Действует на публичных и частных сайтах.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Исключённые источники не изменились",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Исключить эти источники из скриптов страниц",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Включите, если нужны Assist, извлечение и встроенная помощь на панелях роутера, хостах Tailscale или других непубличных адресах.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Запускать скрипты страниц на частных сайтах и LAN",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Настройка скриптов на приватных страницах не изменилась",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes по умолчанию пропускает скрипты страниц на домашних, офисных и маршрутизаторных адресах, чтобы самохостируемые панели продолжали отображаться. Страницы запуска Hermes Web на loopback используют собственные лёгкие скрипты передачи.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Частные страницы и LAN",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Чем Hermes может управлять в браузере и какие подключения могут видеть контекст страницы.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - контекст ограничен",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Контекст страницы пропущен, так как Hermes не внедрил скрипты на этой странице.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes оставил скрипты страниц выключенными для этого сайта, так как он в списке исключений в Настройки → Разрешения.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes не внедрил скрипты страниц на этот частный или LAN-адрес. Включите частные скрипты в Настройки → Разрешения или уберите источник из списка исключений.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "Выбран профиль {profile}. Перезапустите шлюз Hermes, если активный профиль не изменится сразу.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Страница",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Контекст страницы выкл. для этого сайта",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Контекст страницы пропущен",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

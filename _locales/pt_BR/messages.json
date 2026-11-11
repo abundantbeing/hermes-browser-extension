@@ -4235,6 +4235,42 @@
     "message": "Modelo ativo",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Uma origem por linha, ex.: https://192.168.8.1:9443 ou https://news.example.com. Vale em sites públicos e privados.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Origens excluídas inalteradas",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Excluir estas origens dos scripts de página",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Ative quando quiser Assist, extração e ajuda inline em painéis do roteador, hosts Tailscale ou outros endereços não públicos.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Executar scripts de página em sites privados e LAN",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Configuração de script em página privada inalterada",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "O Hermes ignora por padrão os scripts de página em endereços de casa, escritório e roteador para que painéis auto-hospedados continuem renderizando. Páginas de lançamento Hermes Web em loopback usam scripts leves próprios.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Páginas privadas e LAN",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "O que o Hermes pode operar no seu navegador e quais conexões podem ver o contexto da página.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - contexto restrito",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Contexto da página ignorado porque o Hermes não injetou scripts nesta página.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — O Hermes manteve os scripts de página desligados neste site porque ele está na sua lista de exclusão em Configurações → Permissões.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — O Hermes não injetou scripts de página neste endereço privado ou LAN. Ative scripts privados em Configurações → Permissões ou remova a origem da lista de exclusão.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "{profile} selecionado. Reinicie o gateway Hermes se o perfil em execução não mudar imediatamente.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Página",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Contexto da página desligado neste site",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Contexto da página ignorado",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

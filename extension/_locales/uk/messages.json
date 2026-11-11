@@ -4235,6 +4235,42 @@
     "message": "Активна модель",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Одне джерело в рядку, напр. https://192.168.8.1:9443 або https://news.example.com. Застосовується на публічних і приватних сайтах.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Виключені джерела не змінилися",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Виключити ці джерела зі скриптів сторінок",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Увімкніть, коли потрібні Assist, витяг і вбудована допомога на панелях маршрутизатора, хостах Tailscale чи інших непублічних адресах.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Запускати скрипти сторінок на приватних сайтах і LAN",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Налаштування скриптів приватних сторінок не змінилося",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes за замовчуванням пропускає скрипти сторінок на домашніх, офісних і маршрутизаторних адресах, щоб самохостингові панелі й надалі відображалися. Сторінки запуску Hermes Web на loopback використовують власні легкі скрипти передачі.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Приватні сторінки та LAN",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Чим Hermes може керувати в браузері та які підключення можуть бачити контекст сторінки.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - контекст обмежено",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Контекст сторінки пропущено, бо Hermes не інжектував скрипти на цій сторінці.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes лишив скрипти сторінок вимкненими для цього сайту, бо він у списку виключень у Налаштування → Дозволи.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes не інжектував скрипти сторінок на цій приватній або LAN-адресі. Увімкніть приватні скрипти в Налаштування → Дозволи або приберіть джерело зі списку виключень.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "Вибрано {profile}. Перезапустіть шлюз Hermes, якщо активний профіль не зміниться відразу.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Сторінка",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Контекст сторінки вимкнено для цього сайту",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Контекст сторінки пропущено",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

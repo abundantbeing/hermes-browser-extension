@@ -4235,6 +4235,42 @@
     "message": "Aktiv model",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Én oprindelse pr. linje, f.eks. https://192.168.8.1:9443 eller https://news.example.com. Gælder på offentlige og private websteder.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Ekskluderede oprindelser er uændrede",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Udeluk disse oprindelser fra side-scripts",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Slå dette til, når du vil have Assist, udtrækning og inline hjælp på router-dashboards, Tailscale-værter eller andre ikke-offentlige adresser.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Kør side-scripts på private og LAN-websteder",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Indstillingen for private sidescripts er uændret",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes springer som standard side-scripts over på hjem-, kontor- og routeradresser, så selvhostede dashboards fortsat kan gengives. Loopback Hermes Web-lancerings sider bruger deres egne lette overleveringsscripts.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Private og LAN-sider",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Hvad Hermes må betjene i din browser, og hvilke forbindelser der må se sidekontekst.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - kontekst begrænset",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Sidekontekst blev sprunget over, fordi Hermes ikke injicerede scripts på denne side.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes lod side-scripts være slukket for dette websted, fordi det står på din udelukkelsesliste under Indstillinger → Tilladelser.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes injicerede ikke side-scripts på denne private eller LAN-adresse. Slå private side-scripts til under Indstillinger → Tilladelser, eller fjern oprindelsen fra udelukkelseslisten.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "{profile} er valgt. Genstart Hermes-gatewayen, hvis den aktive profil ikke ændres med det samme.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Side",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Sidekontekst fra for dette websted",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Sidekontekst sprunget over",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

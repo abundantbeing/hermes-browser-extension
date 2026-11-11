@@ -4235,6 +4235,42 @@
     "message": "Modello attivo",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Un’origine per riga, ad es. https://192.168.8.1:9443 o https://news.example.com. Vale su siti pubblici e privati.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Origini escluse invariate",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Escludi queste origini dagli script di pagina",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Attivalo quando vuoi Assist, estrazione e aiuto inline su dashboard router, host Tailscale o altri indirizzi non pubblici.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Esegui script di pagina su siti privati e LAN",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Impostazione script pagina privata invariata",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes salta per impostazione predefinita gli script di pagina su indirizzi domestici, di ufficio e router così le dashboard self-hosted continuano a essere renderizzate. Le pagine di avvio Hermes Web in loopback usano script di passaggio leggeri propri.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Pagine private e LAN",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Cosa può usare Hermes nel tuo browser e quali connessioni possono vedere il contesto della pagina.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - contesto limitato",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Contesto pagina saltato perché Hermes non ha iniettato script su questa pagina.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes ha lasciato gli script di pagina disattivati per questo sito perché è nell’elenco esclusioni in Impostazioni → Autorizzazioni.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes non ha iniettato script di pagina su questo indirizzo privato o LAN. Attiva gli script privati in Impostazioni → Autorizzazioni o rimuovi l’origine dall’elenco esclusioni.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "{profile} selezionato. Riavvia il gateway Hermes se il profilo in esecuzione non cambia immediatamente.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Pagina",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Contesto pagina disattivato per questo sito",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Contesto pagina saltato",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

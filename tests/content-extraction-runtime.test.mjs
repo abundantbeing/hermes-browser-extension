@@ -34,7 +34,9 @@ test('classic content runtime is generated deterministically from the authored e
 test('generated classic runtime exposes the same schema and version without module imports', async () => {
   const rendered = await renderContentExtractorRuntime({ rootDir });
   const context = vm.createContext({ globalThis: {} });
+  context.globalThis = context;
   new vm.Script(rendered, { filename: 'content-extractor.js' }).runInContext(context);
+  await new Promise((resolve) => setTimeout(resolve, 0));
 
   const api = context.globalThis.HermesContentExtractor;
   assert.equal(api.schema, EXTRACTION_SCHEMA);
@@ -57,12 +59,12 @@ test('runtime writer can materialize an exact artifact outside the repository', 
   assert.equal(await readFile(destination, 'utf8'), expected);
 });
 
-test('Chromium and repository-root manifests load the extractor before the content bridge', async () => {
-  const extensionManifest = await jsonFile('extension/manifest.json');
-  const rootManifest = await jsonFile('manifest.json');
-
-  assert.deepEqual(extensionManifest.content_scripts[0].js.slice(1, 3), ['content-extractor.js', 'content.js']);
-  assert.deepEqual(rootManifest.content_scripts[0].js.slice(1, 3), ['extension/content-extractor.js', 'extension/content.js']);
+test('registered page script bundle loads the extractor before the content bridge', async () => {
+  const { buildRegisteredPageScriptDefinition } = await import('../extension/lib/page-script-host-policy.mjs');
+  const packaged = buildRegisteredPageScriptDefinition({}, { packaged: true });
+  const repository = buildRegisteredPageScriptDefinition({}, { packaged: false });
+  assert.deepEqual(packaged.js.slice(2, 4), ['content-extractor.js', 'content.js']);
+  assert.deepEqual(repository.js.slice(2, 4), ['extension/content-extractor.js', 'extension/content.js']);
 });
 
 test('build scripts generate the classic runtime before copying extension files', async () => {
@@ -93,7 +95,7 @@ test('normal capture never reinjects the content bridge and fallback injects onl
   const sidepanel = await readFile(path.join(rootDir, 'extension', 'sidepanel.js'), 'utf8');
   const getPageContext = sidepanel.match(/async function getPageContext\(tab, options = \{\}\) \{[\s\S]*?\n\}/)?.[0] || '';
   const getYoutubeTranscript = sidepanel.match(/async function getYoutubeTranscriptForTab\(tab\) \{[\s\S]*?\n\}/)?.[0] || '';
-  const scriptingFallback = sidepanel.match(/async function getPageContextViaScripting\(tabId, options, originalError\) \{[\s\S]*?\n\}/)?.[0] || '';
+  const scriptingFallback = sidepanel.match(/async function getPageContextViaScripting\(tabId, options, originalError, tabUrl = ''\) \{[\s\S]*?\n\}/)?.[0] || '';
 
   assert.doesNotMatch(sidepanel, /async function ensureContentScript\s*\(/);
   assert.doesNotMatch(getPageContext, /ensureContentScript/);

@@ -206,7 +206,7 @@ test('controller adapter contract is defined but control remains disabled in Pha
   assert.doesNotMatch(source, /\.debugger\.(?:attach|sendCommand)\s*\(/, 'Phase 3 must not add CDP action code');
 });
 
-test('classic content scripts use a preloaded shared browser API facade', () => {
+test('classic content scripts use a preloaded shared browser API facade', async () => {
   const facadeUrl = new URL('../extension/lib/browser-api-global.js', import.meta.url);
   let facadeSource = '';
   try {
@@ -227,10 +227,13 @@ test('classic content scripts use a preloaded shared browser API facade', () => 
   vm.runInNewContext(facadeSource, chromeContext);
   assert.equal(chromeContext.hermesBrowserApi, chromeApi);
 
-  const packagedManifest = JSON.parse(readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8'));
-  const repositoryManifest = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
-  assert.equal(packagedManifest.content_scripts[0].js[0], 'lib/browser-api-global.js');
-  assert.equal(repositoryManifest.content_scripts[0].js[0], 'extension/lib/browser-api-global.js');
+  const { buildRegisteredPageScriptDefinition } = await import('../extension/lib/page-script-host-policy.mjs');
+  const packagedBundle = buildRegisteredPageScriptDefinition({}, { packaged: true });
+  const repositoryBundle = buildRegisteredPageScriptDefinition({}, { packaged: false });
+  assert.equal(packagedBundle.js[0], 'lib/page-context-bundle-gate.js');
+  assert.equal(packagedBundle.js[1], 'lib/browser-api-global.js');
+  assert.equal(repositoryBundle.js[0], 'extension/lib/page-context-bundle-gate.js');
+  assert.equal(repositoryBundle.js[1], 'extension/lib/browser-api-global.js');
 
   for (const file of ['content.js', 'content-inline-helper.js', 'lib/i18n-content.js']) {
     const source = readFileSync(new URL(`../extension/${file}`, import.meta.url), 'utf8');

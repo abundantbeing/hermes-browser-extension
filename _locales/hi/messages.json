@@ -4235,6 +4235,42 @@
     "message": "सक्रिय मॉडल",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "प्रति पंक्ति एक मूल, जैसे https://192.168.8.1:9443 या https://news.example.com. सार्वजनिक और निजी साइटों पर लागू।",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "बहिष्कृत मूल अपरिवर्तित",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "इन मूलों को पेज स्क्रिप्ट से बाहर रखें",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "राउटर डैशबोर्ड, Tailscale होस्ट या अन्य गैर-सार्वजनिक पते पर Assist, एक्सट्रैक्शन और इनलाइन मदद चाहिए तो इसे चालू करें।",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "निजी और LAN साइटों पर पेज स्क्रिप्ट चलाएँ",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "निजी पेज स्क्रिप्ट सेटिंग अपरिवर्तित",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes डिफ़ॉल्ट रूप से घर, ऑफिस और राउटर पतों पर अपने पेज स्क्रिप्ट छोड़ देता है ताकि सेल्फ-होस्टेड डैशबोर्ड रेंडर होते रहें। लूपबैक Hermes Web लॉन्च पेज अपने हल्के हैंड-ऑफ स्क्रिप्ट उपयोग करते हैं।",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "निजी और LAN पेज",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Hermes आपके ब्राउज़र में क्या संचालित कर सकता है और कौन-से कनेक्शन पेज संदर्भ देख सकते हैं।",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - संदर्भ प्रतिबंधित",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — पेज संदर्भ छोड़ा गया क्योंकि Hermes ने इस पेज पर स्क्रिप्ट इंजेक्ट नहीं किए।",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes ने इस साइट के लिए पेज स्क्रिप्ट बंद रखे क्योंकि यह सेटिंग्स → अनुमतियाँ में आपकी बहिष्करण सूची में है।",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes ने इस निजी या LAN पते पर पेज स्क्रिप्ट इंजेक्ट नहीं किए। सेटिंग्स → अनुमतियाँ में निजी पेज स्क्रिप्ट चालू करें, या मूल को बहिष्करण सूची से हटाएँ।",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "{profile} चयनित। यदि चालू प्रोफ़ाइल तुरंत नहीं बदलती है तो Hermes गेटवे पुनः आरंभ करें।",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "पेज",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 इस साइट के लिए पेज संदर्भ बंद",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "पेज संदर्भ छोड़ा गया",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

@@ -4235,6 +4235,42 @@
     "message": "โมเดลที่ใช้งาน",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "หนึ่งต้นทางต่อบรรทัด เช่น https://192.168.8.1:9443 หรือ https://news.example.com. ใช้ได้ทั้งไซต์สาธารณะและส่วนตัว",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "ต้นทางที่ยกเว้นไม่เปลี่ยนแปลง",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "ยกเว้นต้นทางเหล่านี้จากสคริปต์หน้า",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "เปิดเมื่อต้องการ Assist การดึงข้อมูล และความช่วยเหลือแบบอินไลน์บนแดชบอร์ดเราเตอร์ โฮสต์ Tailscale หรือที่อยู่ที่ไม่ใช่สาธารณะอื่น ๆ",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "รันสคริปต์หน้าบนไซต์ส่วนตัวและ LAN",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "การตั้งค่าสคริปต์หน้าเครือข่ายส่วนตัวไม่เปลี่ยนแปลง",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes ข้ามสคริปต์หน้าโดยค่าเริ่มต้นบนที่อยู่บ้าน สำนักงาน และเราเตอร์ เพื่อให้แดชบอร์ดที่โฮสต์เองยังเรนเดอร์ได้ หน้าเปิด Hermes Web แบบลูปแบ็กใช้สคริปต์ส่งต่อเบาของตนเอง",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "หน้าเครือข่ายส่วนตัวและ LAN",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "สิ่งที่ Hermes ใช้งานได้ในเบราว์เซอร์ของคุณ และการเชื่อมต่อใดที่เห็นบริบทหน้าเว็บได้",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - บริบทถูกจำกัด",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — ข้ามบริบทหน้าเพราะ Hermes ไม่ได้ฉีดสคริปต์ในหน้านี้",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes ปิดสคริปต์หน้าสำหรับไซต์นี้เพราะอยู่ในรายการยกเว้นใน การตั้งค่า → สิทธิ์",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes ไม่ได้ฉีดสคริปต์หน้าบนที่อยู่ส่วนตัวหรือ LAN นี้ เปิดสคริปต์หน้าส่วนตัวใน การตั้งค่า → สิทธิ์ หรือลบต้นทางออกจากรายการยกเว้น",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "เลือก {profile} แล้ว รีสตาร์ทเกตเวย์ Hermes หากโปรไฟล์ที่กำลังทำงานไม่เปลี่ยนทันที",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "หน้า",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 ปิดบริบทหน้าสำหรับไซต์นี้",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "ข้ามบริบทหน้า",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

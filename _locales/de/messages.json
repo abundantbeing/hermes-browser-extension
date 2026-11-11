@@ -4235,6 +4235,42 @@
     "message": "Aktives Modell",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Eine Origin pro Zeile, z. B. https://192.168.8.1:9443 oder https://news.example.com. Gilt für öffentliche und private Websites.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Ausgeschlossene Ursprünge unverändert",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Diese Origins von Seitenskripten ausschließen",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Aktivieren Sie dies, wenn Assist, Extraktion und Inline-Hilfe auf Router-Dashboards, Tailscale-Hosts oder anderen nicht öffentlichen Adressen gewünscht sind.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Seitenskripte auf privaten und LAN-Websites ausführen",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Einstellung für private Seitenskripte unverändert",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes überspringt seine Seitenskripte standardmäßig auf Heim-, Büro- und Router-Adressen, damit selbst gehostete Dashboards weiter rendern. Loopback-Hermes-Web-Startseiten nutzen eigene leichte Übergabeskripte.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Private und LAN-Seiten",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Was Hermes in deinem Browser bedienen darf und welche Verbindungen Seitenkontext sehen dürfen.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - Kontext eingeschränkt",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Seitenkontext wurde übersprungen, weil Hermes auf dieser Seite keine Skripte injiziert hat.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes hat Seitenskripte für diese Website deaktiviert gelassen, weil sie auf Ihrer Ausschlussliste unter Einstellungen → Berechtigungen steht.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes hat auf dieser privaten oder LAN-Adresse keine Seitenskripte injiziert. Aktivieren Sie private Seitenskripte unter Einstellungen → Berechtigungen oder entfernen Sie die Origin aus der Ausschlussliste.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "{profile} ausgewählt. Starten Sie das Hermes-Gateway neu, wenn sich das laufende Profil nicht sofort ändert.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Seite",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Seitenkontext für diese Website aus",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Seitenkontext übersprungen",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

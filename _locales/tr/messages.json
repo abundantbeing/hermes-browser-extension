@@ -4235,6 +4235,42 @@
     "message": "Etkin model",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Satır başına bir köken, örn. https://192.168.8.1:9443 veya https://news.example.com. Kamuya açık ve özel sitelerde geçerlidir.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Hariç tutulan kaynaklar değişmedi",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Bu kökenleri sayfa betiklerinden hariç tut",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Yönlendirici panolarında, Tailscale ana bilgisayarlarında veya diğer kamuya açık olmayan adreslerde Assist, çıkarma ve satır içi yardım istediğinizde açın.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Özel ve LAN sitelerinde sayfa betiklerini çalıştır",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Özel sayfa betiği ayarı değişmedi",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes varsayılan olarak ev, ofis ve yönlendirici adreslerinde sayfa betiklerini atlar; böylece kendi sunucunuzdaki panolar render olmaya devam eder. Loopback Hermes Web başlatma sayfaları kendi hafif devretme betiklerini kullanır.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Özel ve LAN sayfaları",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Hermes'in tarayıcınızda neyi yönetebileceği ve hangi bağlantıların sayfa bağlamını görebileceği.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - bağlam kısıtlı",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Hermes bu sayfaya betik enjekte etmediği için sayfa bağlamı atlandı.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Bu site Ayarlar → İzinler hariç tutma listesinde olduğu için Hermes sayfa betiklerini kapalı bıraktı.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes bu özel veya LAN adresine sayfa betiği enjekte etmedi. Ayarlar → İzinler bölümünde özel sayfa betiklerini açın veya kökeni hariç tutma listesinden kaldırın.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "{profile} seçildi. Çalışan profil hemen değişmezse Hermes ağ geçidini yeniden başlatın.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Sayfa",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Bu site için sayfa bağlamı kapalı",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Sayfa bağlamı atlandı",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",

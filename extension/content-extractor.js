@@ -1,4 +1,10 @@
 /* Generated from extension/lib/content-extraction-core.mjs, extension/lib/appearance-themes.mjs, extension/lib/site-adapters.mjs, extension/lib/inline-draft-policy.mjs, extension/lib/appearance-preferences.mjs, extension/lib/inline-assist-look.mjs, extension/lib/overlay-scrollbar.mjs, extension/lib/page-annotation-content.mjs. Do not edit directly. */
+(function hermesContentExtractorPolicyGate() {
+  const policyReady = typeof globalThis.hermesPageScriptPolicyPromise === 'function'
+    ? globalThis.hermesPageScriptPolicyPromise()
+    : Promise.resolve(!globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__);
+  return policyReady.then(function hermesContentExtractorGate(inject) {
+    if (!inject) return;
 /* extension/lib/content-extraction-core.mjs · SHA-256 62d0b33e7f417d7a */
 (function hermesContentExtractorRuntime(hermesGlobal) {
   'use strict';
@@ -4725,3 +4731,5 @@ const PAGE_ANNOTATION_CONTENT_API = Object.freeze({
 
   hermesGlobal.HermesPageAnnotation = PAGE_ANNOTATION_CONTENT_API;
 })(globalThis);
+  });
+})();

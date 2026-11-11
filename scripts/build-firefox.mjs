@@ -13,6 +13,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { writeContentExtractorRuntime } from './build-content-runtime.mjs';
+import { writePageContextInstallGuard } from './build-page-context-guard.mjs';
 import { MANIFEST_TARGETS, manifestAssumptionsFor } from './manifest-profiles.mjs';
 import { checkReferencedFonts } from './check-referenced-fonts.mjs';
 import { checkSelfContained } from './check-self-contained.mjs';
@@ -26,6 +27,7 @@ const FIREFOX_ADDON_ID = 'hermes-browser-extension@abundantbeing.github.io';
 const firefoxProfile = manifestAssumptionsFor(MANIFEST_TARGETS.FIREFOX);
 
 await writeContentExtractorRuntime({ rootDir: root });
+await writePageContextInstallGuard({ rootDir: root });
 await syncHermesContextWindows({ root });
 checkReferencedFonts({ root });
 checkSelfContained(src);

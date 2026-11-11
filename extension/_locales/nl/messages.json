@@ -4235,6 +4235,42 @@
     "message": "Actief model",
     "description": "Runtime interface message settings.models.title"
   },
+  "runtime_settings_page_context_excluded_detail": {
+    "message": "Eén origin per regel, bijv. https://192.168.8.1:9443 of https://news.example.com. Geldt op openbare en privésites.",
+    "description": "Runtime interface message settings.page_context_excluded.detail"
+  },
+  "runtime_settings_page_context_excluded_placeholder": {
+    "message": "https://192.168.8.1:9443",
+    "description": "Runtime interface message settings.page_context_excluded.placeholder"
+  },
+  "runtime_settings_page_context_excluded_save_unchanged_title": {
+    "message": "Uitgesloten origins ongewijzigd",
+    "description": "Runtime interface message settings.page_context_excluded.save_unchanged_title"
+  },
+  "runtime_settings_page_context_excluded_title": {
+    "message": "Deze origins uitsluiten van paginascripts",
+    "description": "Runtime interface message settings.page_context_excluded.title"
+  },
+  "runtime_settings_page_context_private_enable_detail": {
+    "message": "Schakel dit in wanneer u Assist, extractie en inline hulp wilt op routerdashboards, Tailscale-hosts of andere niet-openbare adressen.",
+    "description": "Runtime interface message settings.page_context_private.enable_detail"
+  },
+  "runtime_settings_page_context_private_enable_label": {
+    "message": "Paginascripts uitvoeren op privé- en LAN-sites",
+    "description": "Runtime interface message settings.page_context_private.enable_label"
+  },
+  "runtime_settings_page_context_private_save_unchanged_title": {
+    "message": "Instelling voor privépagina-scripts ongewijzigd",
+    "description": "Runtime interface message settings.page_context_private.save_unchanged_title"
+  },
+  "runtime_settings_page_context_private_summary": {
+    "message": "Hermes slaat standaard paginascripts over op thuis-, kantoor- en routeradressen zodat zelf gehoste dashboards blijven renderen. Loopback Hermes Web-startpagina’s gebruiken eigen lichte overdrachtsscripts.",
+    "description": "Runtime interface message settings.page_context_private.summary"
+  },
+  "runtime_settings_page_context_private_title": {
+    "message": "Privé- en LAN-pagina’s",
+    "description": "Runtime interface message settings.page_context_private.title"
+  },
   "runtime_settings_permissions_copy": {
     "message": "Wat Hermes in je browser mag bedienen en welke verbindingen paginacontext mogen zien.",
     "description": "Runtime interface message settings.permissions.copy"
@@ -4326,6 +4362,18 @@
   "runtime_status_page_context_restricted": {
     "message": "{url} - context beperkt",
     "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_page_context_skipped": {
+    "message": "{url} — Paginacontext overgeslagen omdat Hermes geen scripts op deze pagina heeft geïnjecteerd.",
+    "description": "Runtime interface message status.page_context_skipped"
+  },
+  "runtime_status_page_context_skipped_excluded": {
+    "message": "{url} — Hermes liet paginascripts uit voor deze site omdat die op uw uitsluitingslijst staat onder Instellingen → Machtigingen.",
+    "description": "Runtime interface message status.page_context_skipped_excluded"
+  },
+  "runtime_status_page_context_skipped_private": {
+    "message": "{url} — Hermes heeft geen paginascripts geïnjecteerd op dit privé- of LAN-adres. Schakel privépaginascripts in via Instellingen → Machtigingen of verwijder de origin van de uitsluitingslijst.",
+    "description": "Runtime interface message status.page_context_skipped_private"
   },
   "runtime_status_profile_selected_restart": {
     "message": "{profile} geselecteerd. Start de Hermes-gateway opnieuw als het actieve profiel niet onmiddellijk verandert.",
@@ -7238,6 +7286,14 @@
   "runtime_ui_page": {
     "message": "Pagina",
     "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context_off_chip": {
+    "message": "📎 Paginacontext uit voor deze site",
+    "description": "Runtime interface message ui.page_context_off_chip"
+  },
+  "runtime_ui_page_context_skipped": {
+    "message": "Paginacontext overgeslagen",
+    "description": "Runtime interface message ui.page_context_skipped"
   },
   "runtime_ui_page_comments": {
     "message": "Page comments",
