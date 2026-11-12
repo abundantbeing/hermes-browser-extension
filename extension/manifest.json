@@ -24,7 +24,8 @@
     "sidePanel",
     "storage",
     "unlimitedStorage",
-    "tabs"
+    "tabs",
+    "tabGroups"
   ],
   "optional_permissions": [
     "webRequest"

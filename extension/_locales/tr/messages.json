@@ -1167,6 +1167,22 @@
     "message": "Denetimi yetkilendir",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "Mesajlaşma uygulamalarından gelenler de dahil olmak üzere bu yerel Hermes profilindeki görevlerin, sekme bağlamadan kendi Chrome sekme gruplarını açmasına ve yönetmesine izin verin.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Arka plan görev sekmeleri",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "Arka plan tarayıcı izni kaydedilemedi.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "Arka plan görevleri, bu ağ geçidinde yardımcı eklentinin sekme araçlarını gerektirir.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "Kontrol hazır",
     "description": "Runtime interface message browser_control.control_ready"

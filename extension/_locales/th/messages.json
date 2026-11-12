@@ -1167,6 +1167,22 @@
     "message": "อนุญาตการควบคุม",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "อนุญาตให้งานในโปรไฟล์ Hermes ภายในเครื่องนี้ รวมถึงงานจากแอปส่งข้อความ เปิดและควบคุมกลุ่มแท็บ Chrome ของตัวเองได้โดยไม่ต้องแนบแท็บ",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "แท็บงานเบื้องหลัง",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "บันทึกสิทธิ์ของเบราว์เซอร์เบื้องหลังไม่ได้",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "งานเบื้องหลังต้องใช้เครื่องมือแท็บของปลั๊กอินเสริมบนเกตเวย์นี้",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "พร้อมควบคุม",
     "description": "Runtime interface message browser_control.control_ready"

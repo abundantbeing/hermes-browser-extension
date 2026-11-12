@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "पृष्ठभूमि कार्य टैब",
+  "browser_control.background_help": "इस स्थानीय Hermes प्रोफ़ाइल के कार्यों को, मैसेजिंग ऐप वाले कार्यों सहित, बिना अटैच किए अपने Chrome टैब समूह खोलने और नियंत्रित करने दें।",
+  "browser_control.background_save_error": "पृष्ठभूमि ब्राउज़र की अनुमति सहेजी नहीं जा सकी।",
+  "browser_control.background_unavailable": "पृष्ठभूमि कार्यों के लिए इस गेटवे पर साथी प्लगइन के टैब टूल ज़रूरी हैं।",
   "connections.saved_label": "सहेजा गया कनेक्शन",
   "connections.help": "बदलने पर मौजूदा सेटिंग सहेजी जाती हैं। हर कनेक्शन अपना पता और क्रेडेंशियल रखता है।",
   "connections.name_prompt": "कनेक्शन का नाम",

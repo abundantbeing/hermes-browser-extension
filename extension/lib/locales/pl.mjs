@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Karty zadań w tle",
+  "browser_control.background_help": "Zezwól zadaniom tego lokalnego profilu Hermes, w tym zadaniom z komunikatorów, otwierać i obsługiwać własne grupy kart Chrome bez dołączania.",
+  "browser_control.background_save_error": "Nie udało się zapisać uprawnienia do pracy przeglądarki w tle.",
+  "browser_control.background_unavailable": "Zadania w tle wymagają narzędzi do kart z wtyczki towarzyszącej na tej bramie.",
   "connections.saved_label": "Zapisane połączenie",
   "connections.help": "Przełączenie zapisuje bieżące ustawienia. Każde połączenie zachowuje własny adres i dane uwierzytelniające.",
   "connections.name_prompt": "Nazwa połączenia",

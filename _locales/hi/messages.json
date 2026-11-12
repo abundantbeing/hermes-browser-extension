@@ -1167,6 +1167,22 @@
     "message": "नियंत्रण अधिकृत करें",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "इस स्थानीय Hermes प्रोफ़ाइल के कार्यों को, मैसेजिंग ऐप वाले कार्यों सहित, बिना अटैच किए अपने Chrome टैब समूह खोलने और नियंत्रित करने दें।",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "पृष्ठभूमि कार्य टैब",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "पृष्ठभूमि ब्राउज़र की अनुमति सहेजी नहीं जा सकी।",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "पृष्ठभूमि कार्यों के लिए इस गेटवे पर साथी प्लगइन के टैब टूल ज़रूरी हैं।",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "नियंत्रण तैयार",
     "description": "Runtime interface message browser_control.control_ready"

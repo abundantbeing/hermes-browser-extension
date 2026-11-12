@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from . import profile_registry, tools
+from . import control_tools, profile_registry, tools
 from .context_store import ContextOwner, owner_from_hook_kwargs
 
 if TYPE_CHECKING:
@@ -109,9 +109,15 @@ def pre_llm_call(**kwargs: Any) -> dict[str, str] | None:
             # A reference turn carries no payload. If the extension uploaded the
             # envelope it names for this very session, bind that to this owner.
             status = store.adopt_upload_for_owner(message, owner)
-        if not status.get("available"):
-            return None
-        return {"context": _context_notice(status)}
+        notices = [_context_notice(status)] if status.get("available") else []
+        if control_tools.background_browser_available(owner.session_id, kwargs):
+            notices.append(
+                "Chrome Background task tabs are available for this session. For interactive browser tasks, "
+                "use tab_create to open the page, followed by tab_snapshot and other tab_* tools. "
+                "The extension creates a background group automatically. Report tool errors directly "
+                "without switching to a different browser."
+            )
+        return {"context": "\n".join(notices)} if notices else None
     except Exception:
         return None
 

@@ -1167,6 +1167,22 @@
     "message": "Bediening autoriseren",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "Sta taken op dit lokale Hermes-profiel, ook vanuit berichtenapps, toe hun eigen Chrome-tabbladgroepen te openen en te bedienen zonder ze te koppelen.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Achtergrondtabbladen voor taken",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "De toestemming voor de achtergrondbrowser kon niet worden opgeslagen.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "Achtergrondtaken vereisen de tabbladhulpmiddelen van de begeleidende plug-in op deze gateway.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "Bediening klaar",
     "description": "Runtime interface message browser_control.control_ready"

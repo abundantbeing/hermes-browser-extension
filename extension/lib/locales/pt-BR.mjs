@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Abas de tarefas em segundo plano",
+  "browser_control.background_help": "Permita que as tarefas deste perfil local do Hermes, inclusive as de apps de mensagens, abram e controlem seus próprios grupos de abas do Chrome sem precisar vinculá-las.",
+  "browser_control.background_save_error": "Não foi possível salvar a autorização do navegador em segundo plano.",
+  "browser_control.background_unavailable": "As tarefas em segundo plano exigem as ferramentas de abas do plugin complementar neste gateway.",
   "connections.saved_label": "Conexão salva",
   "connections.help": "A troca salva as configurações atuais. Cada conexão mantém seu endereço e suas credenciais.",
   "connections.name_prompt": "Nome da conexão",

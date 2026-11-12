@@ -284,17 +284,22 @@ def materialize_listener_profile(profile: str, *, request: Optional[Any] = None)
     from .status_route import plugin_version
 
     try:
-        from . import HOOK_NAMES, TOOL_NAMES
+        from . import HOOK_NAMES, TOOL_NAMES, control_tools
     except Exception:
         return None
 
     broker = get_control_broker(name)
     store = ensure_context_store(name)
+    listed_tools = (
+        tuple(tool for tool in TOOL_NAMES if tool not in control_tools.TOOL_NAMES)
+        if control_tools.core_extension_control_on()
+        else TOOL_NAMES
+    )
     register_listener_profile(
         profile=name,
         store=store,
         broker=broker,
-        tools=TOOL_NAMES,
+        tools=listed_tools,
         hooks=HOOK_NAMES,
         version=plugin_version(),
     )

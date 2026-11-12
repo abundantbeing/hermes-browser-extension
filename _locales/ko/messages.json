@@ -1167,6 +1167,22 @@
     "message": "제어 승인",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "메시지 앱에서 시작한 작업을 포함하여 이 로컬 Hermes 프로필의 작업이 연결 없이 자체 Chrome 탭 그룹을 열고 제어하도록 허용합니다.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "백그라운드 작업 탭",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "백그라운드 브라우저 권한을 저장하지 못했습니다.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "백그라운드 작업에는 이 게이트웨이에서 동반 플러그인의 탭 도구가 필요합니다.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "제어 준비 완료",
     "description": "Runtime interface message browser_control.control_ready"

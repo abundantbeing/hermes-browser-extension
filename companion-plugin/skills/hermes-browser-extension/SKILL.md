@@ -89,6 +89,15 @@ in the turn envelope:
   own browser tools only if the user explicitly asks, and say that is a
   separate browser, not their tab.
 
+## Background task tabs
+
+For a browser task from Feishu or another Hermes gateway chat, try `tab_create`
+first. With Background task tabs authorized in Chrome, it opens the URL in a
+session-owned group in the background. Use `tab_snapshot` and the `tab_*` actions
+with its tab ID. There is no need for Attach in this mode. Keep the browser in the
+background and report any tool error directly instead of switching to CDP.
+If the person explicitly attached a tab for this task, use that tab.
+
 ## Working across tabs
 
 - `tab_list` shows every tab you can act in, with its id and window. Pass

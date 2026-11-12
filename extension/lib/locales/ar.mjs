@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "علامات تبويب المهام في الخلفية",
+  "browser_control.background_help": "اسمح لمهام ملف Hermes المحلي، بما فيها مهام تطبيقات المراسلة، بفتح مجموعات علامات تبويب Chrome الخاصة بها والتحكم فيها دون إرفاق.",
+  "browser_control.background_save_error": "تعذر حفظ إذن المتصفح في الخلفية.",
+  "browser_control.background_unavailable": "تتطلب مهام الخلفية أدوات علامات التبويب الخاصة بالملحق المرافق على هذه البوابة.",
   "connections.saved_label": "الاتصال المحفوظ",
   "connections.help": "يؤدي التبديل إلى حفظ الإعدادات الحالية. يحتفظ كل اتصال بعنوانه وبيانات اعتماده.",
   "connections.name_prompt": "اسم الاتصال",

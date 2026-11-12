@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Onglets de tâches en arrière-plan",
+  "browser_control.background_help": "Autoriser les tâches de ce profil Hermes local, y compris celles des applications de messagerie, à ouvrir et à contrôler leurs propres groupes d’onglets Chrome sans les rattacher.",
+  "browser_control.background_save_error": "Impossible d’enregistrer l’autorisation du navigateur en arrière-plan.",
+  "browser_control.background_unavailable": "Les tâches en arrière-plan nécessitent les outils d’onglets du module compagnon sur cette passerelle.",
   "connections.saved_label": "Connexion enregistrée",
   "connections.help": "Changer de connexion enregistre les paramètres actuels. Chaque connexion conserve son adresse et ses identifiants.",
   "connections.name_prompt": "Nom de la connexion",

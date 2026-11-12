@@ -1,3 +1,4 @@
+import { controllerProfilePath } from './lib/controller-protocol.mjs';
 import {
   INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY,
   INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY,
@@ -436,7 +437,7 @@ import {
 } from './lib/capabilities.mjs';
 import { capabilityIdentity } from './lib/capability-status.mjs';
 import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
-import { COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
+import { COMPANION_STATUS_PATH, parseCompanionStatusPayload, COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
 import { botAvatarRoute } from './lib/bot-roster-source.mjs';
 import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
 import { stageImageViaSessionSocket } from './lib/session-socket-image.mjs';
@@ -821,6 +822,7 @@ import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-
 import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteFromInput, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
+import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
@@ -884,6 +886,87 @@ hbeBootEmit('panel:body-start');
 const $ = (selector) => document.querySelector(selector);
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
+
+function initBackgroundTaskBrowserSetting() {
+  const row = document.getElementById('backgroundTaskBrowserSetting');
+  const input = document.getElementById('backgroundTaskBrowserInput');
+  const status = document.getElementById('backgroundTaskBrowserStatus');
+  const storage = browserApi.storage?.local;
+  if (!row || !input || !storage || !browserApi.tabGroups || !browserApi.debugger) return;
+
+  async function read() {
+    const stored = await storage.get([
+      'hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY, BACKGROUND_BROWSER_CONSENT,
+    ]);
+    const connection = await hydrateHermesBrowserSettingsFromStorage(stored);
+    return {
+      consentIdentity: await backgroundBrowserConsentIdentity(connection),
+      consent: stored[BACKGROUND_BROWSER_CONSENT],
+      connection,
+    };
+  }
+
+  let renderRevision = 0;
+  let displayedConsentIdentity = '';
+  async function render() {
+    const revision = ++renderRevision;
+    displayedConsentIdentity = '';
+    input.disabled = true;
+    const { consentIdentity, consent, connection } = await read();
+    if (revision !== renderRevision) return;
+    row.hidden = !consentIdentity;
+    input.checked = Boolean(consentIdentity && consentIdentity === consent);
+    if (!consentIdentity) return;
+    let available = false;
+    try {
+      const url = new URL(connection.gatewayUrl);
+      url.pathname = url.pathname.replace(/\/+$/, '') + controllerProfilePath(COMPANION_STATUS_PATH, connection.activeProfile);
+      url.search = '';
+      url.hash = '';
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${connection.apiKey}` },
+        redirect: 'error',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      });
+      available = response.ok && parseCompanionStatusPayload(await response.json()).tools?.includes('tab_create');
+    } catch {
+      // No trustworthy plugin response: leave the setting disabled.
+    }
+    if (revision !== renderRevision) return;
+    displayedConsentIdentity = consentIdentity;
+    input.disabled = !available && !input.checked;
+    status.textContent = available ? '' : t('browser_control.background_unavailable');
+  }
+
+  input.addEventListener('change', async () => {
+    const checked = input.checked;
+    input.disabled = true;
+    try {
+      if (checked && displayedConsentIdentity) {
+        await storage.set({ [BACKGROUND_BROWSER_CONSENT]: displayedConsentIdentity });
+      } else {
+        await storage.remove(BACKGROUND_BROWSER_CONSENT);
+      }
+      status.textContent = '';
+    } catch {
+      status.textContent = t('browser_control.background_save_error');
+      input.disabled = false;
+      return;
+    }
+    await render().catch(() => {});
+  });
+  browserApi.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && (
+      changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || changes[BACKGROUND_BROWSER_CONSENT]
+    )) {
+      void render().catch(() => {});
+    }
+  });
+  subscribeLocale(() => { void render().catch(() => {}); });
+  void render().catch(() => {});
+}
+initBackgroundTaskBrowserSetting();
 const dashboardFetch = createBackgroundLoopbackFetch({
   sendMessage: (message) => browserApi.runtime.sendMessage(message),
   fetchFn: globalThis.fetch?.bind(globalThis),

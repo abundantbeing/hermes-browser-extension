@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Pestañas de tareas en segundo plano",
+  "browser_control.background_help": "Permite que las tareas de este perfil local de Hermes, incluidas las de apps de mensajería, abran y controlen sus propios grupos de pestañas de Chrome sin vincularlos.",
+  "browser_control.background_save_error": "No se pudo guardar la autorización del navegador en segundo plano.",
+  "browser_control.background_unavailable": "Las tareas en segundo plano necesitan las herramientas de pestañas del complemento en esta puerta de enlace.",
   "connections.saved_label": "Conexión guardada",
   "connections.help": "Al cambiar se guarda la configuración actual. Cada conexión conserva su dirección y sus credenciales.",
   "connections.name_prompt": "Nombre de la conexión",

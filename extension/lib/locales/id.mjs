@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Tab tugas latar belakang",
+  "browser_control.background_help": "Izinkan tugas pada profil Hermes lokal ini, termasuk dari aplikasi pesan, membuka dan mengontrol grup tab Chrome miliknya tanpa perlu melampirkan tab.",
+  "browser_control.background_save_error": "Izin browser latar belakang tidak dapat disimpan.",
+  "browser_control.background_unavailable": "Tugas latar belakang memerlukan alat tab dari plugin pendamping pada gateway ini.",
   "connections.saved_label": "Koneksi tersimpan",
   "connections.help": "Beralih akan menyimpan pengaturan saat ini. Setiap koneksi menyimpan alamat dan kredensialnya sendiri.",
   "connections.name_prompt": "Nama koneksi",

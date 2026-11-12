@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Hintergrund-Tabs für Aufgaben",
+  "browser_control.background_help": "Aufgaben dieses lokalen Hermes-Profils, auch aus Messenger-Apps, dürfen eigene Chrome-Tabgruppen ohne vorheriges Anhängen öffnen und steuern.",
+  "browser_control.background_save_error": "Die Berechtigung für den Hintergrundbrowser konnte nicht gespeichert werden.",
+  "browser_control.background_unavailable": "Hintergrundaufgaben benötigen die Tab-Werkzeuge des Begleit-Plugins auf diesem Gateway.",
   "connections.saved_label": "Gespeicherte Verbindung",
   "connections.help": "Beim Wechsel werden die aktuellen Einstellungen gespeichert. Jede Verbindung behält ihre Adresse und Zugangsdaten.",
   "connections.name_prompt": "Verbindungsname",

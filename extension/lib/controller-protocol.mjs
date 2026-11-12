@@ -18,6 +18,7 @@
  */
 
 export const CONTROLLER_PROTOCOL_VERSION = 1;
+export const BACKGROUND_BROWSER_SESSION = 'hermes:background-browser:v1';
 
 export const CONTROLLER_METHODS = Object.freeze({
   register: 'browser.controller.register',

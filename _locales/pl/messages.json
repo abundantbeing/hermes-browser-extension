@@ -1167,6 +1167,22 @@
     "message": "Autoryzuj kontrolę",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "Zezwól zadaniom tego lokalnego profilu Hermes, w tym zadaniom z komunikatorów, otwierać i obsługiwać własne grupy kart Chrome bez dołączania.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Karty zadań w tle",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "Nie udało się zapisać uprawnienia do pracy przeglądarki w tle.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "Zadania w tle wymagają narzędzi do kart z wtyczki towarzyszącej na tej bramie.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "Sterowanie gotowe",
     "description": "Runtime interface message browser_control.control_ready"

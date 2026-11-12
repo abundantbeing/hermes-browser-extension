@@ -42,6 +42,7 @@ from typing import Any, Callable, Optional
 from .context_routes import _error, _read_bounded
 from .profile_registry import consume_control_ticket, lookup_listener_profile
 from .control_broker import (
+    BACKGROUND_SESSION,
     CONTROL_PROTOCOL_VERSION,
     ControlBroker,
     ControllerScope,
@@ -178,10 +179,17 @@ def make_register_handler(adapter: Any) -> Callable[..., Any]:
                 "browser_control_invalid_registration",
                 "controller_id, browser_profile_id, and session_id are required.",
             )
-        try:
-            known = await _session_known(adapter, session_id)
-        except LookupError:
-            return _error(503, "session_db_unavailable", "Session database unavailable.")
+        if session_id == BACKGROUND_SESSION:
+            if "tab_create" not in lp.tools:
+                return _error(403, "background_browser_unsupported", "Background browser control requires the companion plugin's tab tools.")
+            if transport_family(request) != "local-api":
+                return _error(403, "background_browser_local_only", "Background browser control requires a loopback gateway.")
+            known = True
+        else:
+            try:
+                known = await _session_known(adapter, session_id)
+            except LookupError:
+                return _error(503, "session_db_unavailable", "Session database unavailable.")
         if not known:
             return _error(
                 403,

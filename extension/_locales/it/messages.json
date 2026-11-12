@@ -1167,6 +1167,22 @@
     "message": "Autorizza controllo",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "Consenti alle attività di questo profilo Hermes locale, anche da app di messaggistica, di aprire e controllare i propri gruppi di schede Chrome senza collegarli.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Schede delle attività in background",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "Impossibile salvare l’autorizzazione del browser in background.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "Le attività in background richiedono gli strumenti per le schede del plugin companion su questo gateway.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "Controllo pronto",
     "description": "Runtime interface message browser_control.control_ready"

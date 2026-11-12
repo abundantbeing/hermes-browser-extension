@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Schede delle attività in background",
+  "browser_control.background_help": "Consenti alle attività di questo profilo Hermes locale, anche da app di messaggistica, di aprire e controllare i propri gruppi di schede Chrome senza collegarli.",
+  "browser_control.background_save_error": "Impossibile salvare l’autorizzazione del browser in background.",
+  "browser_control.background_unavailable": "Le attività in background richiedono gli strumenti per le schede del plugin companion su questo gateway.",
   "connections.saved_label": "Connessione salvata",
   "connections.help": "Il cambio salva le impostazioni attuali. Ogni connessione conserva indirizzo e credenziali.",
   "connections.name_prompt": "Nome della connessione",

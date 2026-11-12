@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Thẻ tác vụ nền",
+  "browser_control.background_help": "Cho phép tác vụ trên hồ sơ Hermes cục bộ này, kể cả từ ứng dụng nhắn tin, mở và điều khiển nhóm thẻ Chrome riêng mà không cần gắn thẻ.",
+  "browser_control.background_save_error": "Không thể lưu quyền điều khiển trình duyệt ở chế độ nền.",
+  "browser_control.background_unavailable": "Tác vụ nền cần công cụ thẻ của plugin đồng hành trên cổng kết nối này.",
   "connections.saved_label": "Kết nối đã lưu",
   "connections.help": "Chuyển kết nối sẽ lưu cài đặt hiện tại. Mỗi kết nối giữ riêng địa chỉ và thông tin xác thực.",
   "connections.name_prompt": "Tên kết nối",

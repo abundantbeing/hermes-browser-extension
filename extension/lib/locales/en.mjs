@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Background task tabs",
+  "browser_control.background_help": "Allow tasks on this local Hermes profile, including messaging apps, to open and control their own Chrome tab groups without Attach.",
+  "browser_control.background_save_error": "Could not save background browser authorization.",
+  "browser_control.background_unavailable": "Background tasks require the companion plugin’s tab tools on this gateway.",
   "connections.saved_label": "Saved connection",
   "connections.help": "Switching saves your current settings. Each connection keeps its address and credentials.",
   "connections.name_prompt": "Connection name",

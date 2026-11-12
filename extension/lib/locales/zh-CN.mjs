@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "后台任务标签页",
+  "browser_control.background_help": "允许此本机 Hermes 配置中的任务（包括飞书等消息应用）创建和控制自己的 Chrome 标签组，无需逐次 Attach。",
+  "browser_control.background_save_error": "无法保存后台浏览器授权。",
+  "browser_control.background_unavailable": "后台任务需要此网关提供配套插件的标签页工具。",
   "connections.saved_label": "已保存的连接",
   "connections.help": "切换时会保存当前设置。每个连接分别保留地址和凭据。",
   "connections.name_prompt": "连接名称",

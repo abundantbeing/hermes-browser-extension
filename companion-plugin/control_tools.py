@@ -37,6 +37,7 @@ from typing import Any, Callable, Optional
 from . import profile_registry
 from .context_store import _trusted_identifier
 from .control_broker import (
+    BACKGROUND_SESSION,
     CONTROL_ACTIONS,
     ControlBroker,
     ControllerCancelled,
@@ -153,6 +154,21 @@ def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
     if configured is not None and configured_profile_name() == resolved_profile:
         return configured
     return get_control_broker(resolved_profile)
+
+
+def background_browser_available(session_id: str, kwargs: dict[str, Any]) -> bool:
+    """Whether this session can use the opted-in background controller."""
+    if core_extension_control_on():
+        return False
+    broker = _broker(kwargs)
+    profile = _profile_for_control(kwargs)
+    if broker.lane_scopes(profile_id=profile, session_id=session_id):
+        return False
+    available = [
+        scope for scope in broker.lane_scopes(profile_id=profile, session_id=BACKGROUND_SESSION)
+        if broker.select(scope, "browser_tab_create") is not None
+    ]
+    return len(available) == 1
 
 
 def _failure(code: str, message: str) -> str:
@@ -345,7 +361,7 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
     """Run one action in this session's browser and return the result or a plain error, as a string."""
     values = args if isinstance(args, dict) else {}
     session_id = _trusted_identifier((kwargs or {}).get("session_id"))
-    if not session_id:
+    if not session_id or session_id == BACKGROUND_SESSION:
         return _failure("no_session", "Hermes did not say which session this call belongs to, so no browser can be chosen.")
     problem = _missing_argument(action, values)
     if problem:
@@ -358,20 +374,24 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
     profile = _profile_for_control(kwargs or {})
     broker = _broker(kwargs)
     scopes = broker.lane_scopes(profile_id=profile, session_id=session_id)
-    if not scopes:
+    background_scopes = [
+        scope for scope in broker.lane_scopes(profile_id=profile, session_id=BACKGROUND_SESSION)
+        if broker.offered_capabilities(scope) is not None
+    ]
+    if not scopes and not background_scopes:
         return _failure(
             "no_browser",
-            "No browser is connected for this session. The person has to turn on Hermes Control in the Hermes Browser "
-            "Extension and attach a tab. Do not look for another browser; answer without acting, or tell them what to switch on.",
+            "No browser is connected for this session. Open Chrome with Background task tabs enabled, or manually "
+            "attach a tab in Hermes Control. Report the error instead of switching browsers.",
         )
-    if len(scopes) > 1:
+    if len(scopes or background_scopes) > 1:
         return _failure(
             "ambiguous_browser",
             "More than one browser is connected for this session, and Hermes will not guess which one to drive. "
             "Ask the person to leave Hermes Control on in only one browser.",
         )
-    scope = scopes[0]
-    if broker.select(scope, action) is None:
+    if scopes and broker.select(scopes[0], action) is None:
+        scope = scopes[0]
         offered = broker.offered_capabilities(scope)
         if offered is not None:
             if action == "browser_screenshot" and "browser_screenshot" not in offered and "browser_navigate" in offered:
@@ -391,8 +411,27 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
             "browser_unavailable",
             f"The browser for this session is offline or cannot run {tool}. Ask the person to check Hermes Control in the extension.",
         )
+    tool_call_id = _tool_call_id((kwargs or {}).get("tool_call_id"))
     try:
-        result = broker.dispatch(scope, action=action, arguments=values, tool_call_id=_tool_call_id((kwargs or {}).get("tool_call_id")))
+        if scopes:
+            try:
+                result = broker.dispatch(scopes[0], action=action, arguments=values, tool_call_id=tool_call_id)
+                return _result_text(action, result)
+            except ControllerRejected as error:
+                # Only a pre-execution refusal permits trying the isolated lane.
+                if (not isinstance(error.detail, dict)
+                        or error.detail.get("code") not in ("target_unavailable", "target_not_attached")
+                        or len(background_scopes) != 1):
+                    raise
+        if broker.select(background_scopes[0], action) is None:
+            return _failure(
+                "background_action_unavailable",
+                f"{tool} is unavailable in background task tabs. Use individual page actions or manually attach a tab.",
+            )
+        result = broker.dispatch(
+            background_scopes[0], action=action, arguments=values, tool_call_id=tool_call_id,
+            background_session=session_id,
+        )
     except ControllerUnavailable:
         return _failure("browser_unavailable", f"The browser for this session went offline before {tool} ran.")
     except ControllerTimeout:

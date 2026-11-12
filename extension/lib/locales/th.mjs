@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "แท็บงานเบื้องหลัง",
+  "browser_control.background_help": "อนุญาตให้งานในโปรไฟล์ Hermes ภายในเครื่องนี้ รวมถึงงานจากแอปส่งข้อความ เปิดและควบคุมกลุ่มแท็บ Chrome ของตัวเองได้โดยไม่ต้องแนบแท็บ",
+  "browser_control.background_save_error": "บันทึกสิทธิ์ของเบราว์เซอร์เบื้องหลังไม่ได้",
+  "browser_control.background_unavailable": "งานเบื้องหลังต้องใช้เครื่องมือแท็บของปลั๊กอินเสริมบนเกตเวย์นี้",
   "connections.saved_label": "การเชื่อมต่อที่บันทึกไว้",
   "connections.help": "การสลับจะบันทึกการตั้งค่าปัจจุบัน แต่ละการเชื่อมต่อเก็บที่อยู่และข้อมูลรับรองของตนเอง",
   "connections.name_prompt": "ชื่อการเชื่อมต่อ",

@@ -1167,6 +1167,22 @@
     "message": "تفويض التحكم",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "اسمح لمهام ملف Hermes المحلي، بما فيها مهام تطبيقات المراسلة، بفتح مجموعات علامات تبويب Chrome الخاصة بها والتحكم فيها دون إرفاق.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "علامات تبويب المهام في الخلفية",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "تعذر حفظ إذن المتصفح في الخلفية.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "تتطلب مهام الخلفية أدوات علامات التبويب الخاصة بالملحق المرافق على هذه البوابة.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "التحكم جاهز",
     "description": "Runtime interface message browser_control.control_ready"

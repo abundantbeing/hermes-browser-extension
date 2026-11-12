@@ -1167,6 +1167,22 @@
     "message": "操作を許可",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "メッセージアプリを含む、このローカル Hermes プロファイルのタスクに、接続操作なしで専用の Chrome タブグループを開いて操作することを許可します。",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "バックグラウンドタスクのタブ",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "バックグラウンドブラウザーの許可を保存できませんでした。",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "バックグラウンドタスクには、このゲートウェイで連携プラグインのタブツールが必要です。",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "操作の準備完了",
     "description": "Runtime interface message browser_control.control_ready"

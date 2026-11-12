@@ -354,7 +354,7 @@ test('arguments.tab_id picks an attached tab and is rejected for tabs the contro
 
   const foreign = await command({ command_id: 'foreign', action: 'browser_scroll', arguments: { direction: 'down', tab_id: 999 } });
   assert.equal(foreign.ok, false);
-  assert.equal(foreign.error.code, 'lease_not_owned');
+  assert.equal(foreign.error.code, 'target_not_attached');
   assert.equal(adapter.calls.filter((call) => call.tabId === 999).length, 0);
 
   const junk = await command({ command_id: 'junk', action: 'browser_scroll', arguments: { direction: 'down', tab_id: 'abc' } });

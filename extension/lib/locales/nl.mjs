@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Achtergrondtabbladen voor taken",
+  "browser_control.background_help": "Sta taken op dit lokale Hermes-profiel, ook vanuit berichtenapps, toe hun eigen Chrome-tabbladgroepen te openen en te bedienen zonder ze te koppelen.",
+  "browser_control.background_save_error": "De toestemming voor de achtergrondbrowser kon niet worden opgeslagen.",
+  "browser_control.background_unavailable": "Achtergrondtaken vereisen de tabbladhulpmiddelen van de begeleidende plug-in op deze gateway.",
   "connections.saved_label": "Opgeslagen verbinding",
   "connections.help": "Wisselen slaat de huidige instellingen op. Elke verbinding bewaart het eigen adres en de inloggegevens.",
   "connections.name_prompt": "Verbindingsnaam",

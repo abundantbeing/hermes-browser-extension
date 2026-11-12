@@ -1167,6 +1167,22 @@
     "message": "Autorizar controle",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "Permita que as tarefas deste perfil local do Hermes, inclusive as de apps de mensagens, abram e controlem seus próprios grupos de abas do Chrome sem precisar vinculá-las.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Abas de tarefas em segundo plano",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "Não foi possível salvar a autorização do navegador em segundo plano.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "As tarefas em segundo plano exigem as ferramentas de abas do plugin complementar neste gateway.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "Controle pronto",
     "description": "Runtime interface message browser_control.control_ready"

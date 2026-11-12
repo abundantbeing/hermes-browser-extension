@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "背景工作分頁",
+  "browser_control.background_help": "允許此本機 Hermes 設定檔的工作（包括通訊應用程式）開啟並控制自己的 Chrome 分頁群組，無需逐次連接。",
+  "browser_control.background_save_error": "無法儲存背景瀏覽器授權。",
+  "browser_control.background_unavailable": "背景工作需要此閘道提供配套外掛的分頁工具。",
   "connections.saved_label": "已儲存的連線",
   "connections.help": "切換時會儲存目前設定。每個連線分別保留位址和憑證。",
   "connections.name_prompt": "連線名稱",

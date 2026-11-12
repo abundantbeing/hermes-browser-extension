@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Arka plan görev sekmeleri",
+  "browser_control.background_help": "Mesajlaşma uygulamalarından gelenler de dahil olmak üzere bu yerel Hermes profilindeki görevlerin, sekme bağlamadan kendi Chrome sekme gruplarını açmasına ve yönetmesine izin verin.",
+  "browser_control.background_save_error": "Arka plan tarayıcı izni kaydedilemedi.",
+  "browser_control.background_unavailable": "Arka plan görevleri, bu ağ geçidinde yardımcı eklentinin sekme araçlarını gerektirir.",
   "connections.saved_label": "Kayıtlı bağlantı",
   "connections.help": "Geçiş sırasında mevcut ayarlar kaydedilir. Her bağlantı kendi adresini ve kimlik bilgilerini saklar.",
   "connections.name_prompt": "Bağlantı adı",

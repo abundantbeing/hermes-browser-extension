@@ -1,3 +1,5 @@
+import { BACKGROUND_BROWSER_ACTIONS } from '../extension/lib/background-task-browser.mjs';
+import { BACKGROUND_BROWSER_SESSION } from '../extension/lib/controller-protocol.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -158,7 +160,7 @@ function decodeClientFrames(connection, chunk, onFrame) {
   }
 }
 
-export async function startControllerFixture() {
+export async function startControllerFixture({ controlPath = "/v1/browser-control", holdPage = null } = {}) {
   const registrations = [];
   const connections = [];
   const results = [];
@@ -173,7 +175,8 @@ export async function startControllerFixture() {
       res.end(FIXTURE_PAGE);
       return;
     }
-    if (req.method === 'GET' && url.pathname === '/second') {
+    if (req.method === 'GET' && (url.pathname === '/second' || (url.pathname === '/held' && holdPage))) {
+      if (url.pathname === '/held') await holdPage();
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(SECOND_PAGE);
       return;
@@ -254,14 +257,17 @@ export async function startControllerFixture() {
       json(res, 200, { object: 'list', data: [] });
       return;
     }
-    if (url.pathname === '/v1/browser-control/register' && req.method === 'POST') {
+    if (url.pathname === `${controlPath}/register` && req.method === 'POST') {
       assert.equal(req.headers.authorization, ['Bearer', TEST_ACCESS_VALUE].join(' '));
       const body = await requestBody(req);
       assert.ok(String(body.session_id || '').trim(), 'Controller registration session_id is required.');
       const advertised = JSON.stringify(body.capabilities);
+      const expected = body.session_id === BACKGROUND_BROWSER_SESSION
+        ? ['controller.noop', ...[...BACKGROUND_BROWSER_ACTIONS].sort()]
+        : REAL_CAPABILITIES;
       assert.ok(
         advertised === JSON.stringify(['controller.noop'])
-        || advertised === JSON.stringify([...REAL_CAPABILITIES]),
+        || advertised === JSON.stringify(expected),
         `Unexpected controller capabilities: ${advertised}`,
       );
       assert.equal(body.protocol_version, 1);
@@ -285,7 +291,7 @@ export async function startControllerFixture() {
   server.on('upgrade', (req, socket) => {
     try {
       const url = new URL(req.url || '/', 'http://127.0.0.1');
-      assert.equal(url.pathname, '/v1/browser-control/ws');
+      assert.equal(url.pathname, `${controlPath}/ws`);
       assert.equal(url.search, '', 'Controller ticket must never appear in the WebSocket URL.');
       const protocols = String(req.headers['sec-websocket-protocol'] || '')
         .split(',')

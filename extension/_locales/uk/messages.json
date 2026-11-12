@@ -1167,6 +1167,22 @@
     "message": "Дозволити керування",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "Дозвольте завданням цього локального профілю Hermes, зокрема з месенджерів, відкривати власні групи вкладок Chrome і керувати ними без приєднання.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Вкладки фонових завдань",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "Не вдалося зберегти дозвіл для фонового браузера.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "Фонові завдання потребують інструментів вкладок супровідного плагіна на цьому шлюзі.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "Керування готове",
     "description": "Runtime interface message browser_control.control_ready"

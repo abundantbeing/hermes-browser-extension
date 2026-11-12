@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Вкладки фонових завдань",
+  "browser_control.background_help": "Дозвольте завданням цього локального профілю Hermes, зокрема з месенджерів, відкривати власні групи вкладок Chrome і керувати ними без приєднання.",
+  "browser_control.background_save_error": "Не вдалося зберегти дозвіл для фонового браузера.",
+  "browser_control.background_unavailable": "Фонові завдання потребують інструментів вкладок супровідного плагіна на цьому шлюзі.",
   "connections.saved_label": "Збережене підключення",
   "connections.help": "Під час перемикання поточні налаштування зберігаються. Кожне підключення має власну адресу та облікові дані.",
   "connections.name_prompt": "Назва підключення",

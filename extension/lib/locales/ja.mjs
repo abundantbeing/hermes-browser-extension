@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "バックグラウンドタスクのタブ",
+  "browser_control.background_help": "メッセージアプリを含む、このローカル Hermes プロファイルのタスクに、接続操作なしで専用の Chrome タブグループを開いて操作することを許可します。",
+  "browser_control.background_save_error": "バックグラウンドブラウザーの許可を保存できませんでした。",
+  "browser_control.background_unavailable": "バックグラウンドタスクには、このゲートウェイで連携プラグインのタブツールが必要です。",
   "connections.saved_label": "保存済みの接続",
   "connections.help": "切り替え時に現在の設定を保存します。接続ごとにアドレスと認証情報を保持します。",
   "connections.name_prompt": "接続名",

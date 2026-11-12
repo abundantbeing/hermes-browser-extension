@@ -1167,6 +1167,22 @@
     "message": "Tillad kontrol",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_background_help": {
+    "message": "Tillad opgaver på denne lokale Hermes-profil, også fra beskedapps, at åbne og styre egne Chrome-fanegrupper uden tilknytning.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Baggrundsfaner til opgaver",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "Tilladelsen til baggrundsbrowseren kunne ikke gemmes.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "Baggrundsopgaver kræver ledsagerpluginnets faneværktøjer på denne gateway.",
+    "description": "Runtime interface message browser_control.background_unavailable"
+  },
   "runtime_browser_control_control_ready": {
     "message": "Styring klar",
     "description": "Runtime interface message browser_control.control_ready"
