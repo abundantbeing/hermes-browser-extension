@@ -52,6 +52,30 @@ test('the Add window takes its yes/no choice from the extension switch, not a na
   assert.match(dialog, /<span class="settings-switch" aria-hidden="true"><\/span>/);
 });
 
+test('every yes/no choice in Settings is the square switch, never a native checkbox', () => {
+  const html = read('extension/sidepanel.html');
+  const start = html.indexOf('<section id="settingsDialog"');
+  assert.ok(start > 0, 'found the Settings window');
+  const tags = /<\/?section\b/g;
+  tags.lastIndex = start;
+  let depth = 0;
+  let end = -1;
+  for (let match = tags.exec(html); match; match = tags.exec(html)) {
+    depth += match[0] === '<section' ? 1 : -1;
+    if (depth === 0) { end = match.index; break; }
+  }
+  const settings = html.slice(start, end);
+  const boxes = [...settings.matchAll(/<input[^>]*type="checkbox"[^>]*>/g)].map((match) => match[0]);
+  assert.ok(boxes.length >= 10, 'found the Settings switches');
+  const native = boxes.filter((box) => !/class="settings-switch-input"/.test(box));
+  assert.deepEqual(native, []);
+  for (const box of boxes) {
+    const at = settings.indexOf(box);
+    const label = settings.slice(settings.lastIndexOf('<label', at), settings.indexOf('</label>', at));
+    assert.match(label, /<span class="settings-switch" aria-hidden="true"><\/span>/, `${box} shows its switch`);
+  }
+});
+
 test('settings choice and toggle cards also style inside the Add window', () => {
   const css = read('extension/sidepanel.css');
   for (const klass of ['settings-toggle-card', 'settings-choice-card', 'conn-mode-card']) {
