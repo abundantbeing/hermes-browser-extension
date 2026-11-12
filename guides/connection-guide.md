@@ -33,8 +33,10 @@ Do this on the machine that runs Hermes.
    ```
 
    ```powershell
-   # Windows PowerShell
-   -join ((48..57) + (97..102) | Get-Random -Count 64 | ForEach-Object { [char]$_ })
+   # Windows PowerShell: 32 random bytes as 64 hex characters
+   $bytes = New-Object byte[] 32
+   [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+   -join ($bytes | ForEach-Object { $_.ToString('x2') })
    ```
 
 2. Save it in Hermes:
@@ -75,13 +77,16 @@ On Windows, `Copy_Hermes_Browser_API_Key.cmd` in this repository copies the key 
    | Hermes is… | Choose | Address |
    | --- | --- | --- |
    | On this computer (including WSL2 and Docker with a published port) | This computer / **Local gateway** | `http://127.0.0.1:8642` |
-   | On another computer you reach through a VPN, Tailscale, an SSH tunnel or your LAN | **Remote gateway** with the key | The address from the matching section below |
+   | On another computer, through an SSH tunnel | **Local gateway** | `http://127.0.0.1:<tunnel port>` |
+   | On another computer, through Tailscale, a VPN or your LAN | **Remote gateway** with the key | The address from the matching section below |
    | Behind your own HTTPS reverse proxy | **Remote gateway** with the key | `https://hermes.example.com` |
    | Hermes Cloud | **Hermes Cloud** | No address. Open your signed-in Cloud agent tab first. |
 
 4. Press **Test connection**, then send a message.
 
 **Settings > Connections** keeps several connections, so you can switch between, say, Hermes on this computer and Hermes on a VPS. Each keeps its own address, key and options in this browser only.
+
+**Planning to use Hermes Control?** It runs only on a gateway at a `127.0.0.1` / `localhost` address (**Local gateway**) or at an `https://` address (**Remote gateway**). Chat works over plain `http://` to another machine, but Hermes Control refuses it, because its control connection must not cross a network unencrypted. The recipes below say which kind of address each one gives you: an SSH tunnel and `tailscale serve` both work with Hermes Control, a plain LAN or tailnet IP address is chat only.
 
 ## Where is your Hermes?
 
@@ -123,14 +128,14 @@ Keep the API server on loopback on the Hermes machine and let Tailscale give it 
 tailscale serve --bg 8642
 ```
 
-Tailscale prints an address like `https://hermes-box.tail1234.ts.net`. Add a **Remote gateway** with that address and the key.
+Tailscale prints an address like `https://hermes-box.tail1234.ts.net`. Add a **Remote gateway** with that address and the key. It is HTTPS, so Hermes Control works over it.
 
 Without `tailscale serve`, you can instead:
 1. Set `API_SERVER_HOST` to the machine's Tailscale IP (`100.x.y.z`).
 2. Restart the gateway.
 3. Connect to `http://100.x.y.z:8642`.
 
-The API server is then reachable only inside your tailnet.
+The API server is then reachable only inside your tailnet. That address is plain HTTP, so it is chat only: use `tailscale serve` for Hermes Control.
 
 ### On a VPS or another computer, over an SSH tunnel
 
@@ -140,7 +145,7 @@ Keep the API server on loopback on the server and forward a local port to it. Us
 ssh -N -L 18642:127.0.0.1:8642 user@your-server
 ```
 
-While that command runs, add a **Remote gateway** at `http://127.0.0.1:18642` with the server's key. The extension cannot open the tunnel itself: start it before you connect, and keep it running. A tool like `autossh` or a system service keeps it up.
+While that command runs, add a **Local gateway** (this computer) at `http://127.0.0.1:18642` with the server's key: to the browser the tunnel is a port on this computer, which is also what lets Hermes Control use it. The extension cannot open the tunnel itself: start it before you connect, and keep it running. A tool like `autossh` or a system service keeps it up.
 
 ### On another computer on your home or office network
 
@@ -148,7 +153,7 @@ While that command runs, add a **Remote gateway** at `http://127.0.0.1:18642` wi
 2. Allow port 8642 through that machine's firewall for your local network only.
 3. Add a **Remote gateway** at `http://<lan-address>:8642`, for example `http://192.168.1.50:8642`.
 
-Plain HTTP is fine on a network you trust. Do not forward port 8642 on your router.
+Plain HTTP is fine for chat on a network you trust, but Hermes Control needs a loopback or HTTPS address: for it, use an SSH tunnel to that computer (and connect to the tunnel as this computer) or put HTTPS in front. Do not forward port 8642 on your router.
 
 ### Behind an HTTPS reverse proxy
 
@@ -162,15 +167,25 @@ hermes.example.com {
 }
 ```
 
-nginx:
+nginx (the `map` goes in the `http` block; the `Upgrade` and `Connection` lines carry Hermes Control's WebSocket):
 
 ```nginx
-location / {
-  proxy_pass http://127.0.0.1:8642;
-  proxy_http_version 1.1;
-  proxy_set_header Host $host;
-  proxy_buffering off;
-  proxy_read_timeout 3600s;
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+server {
+  # listen 443 ssl; server_name hermes.example.com; ssl_certificate ...;
+  location / {
+    proxy_pass http://127.0.0.1:8642;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_buffering off;
+    proxy_read_timeout 3600s;
+  }
 }
 ```
 
@@ -180,11 +195,12 @@ If the proxy uses a certificate your browser does not trust yet, Add connection 
 
 ### Several Hermes bots (named profiles)
 
-One gateway serves every profile at one address:
-- The default profile is at `http://127.0.0.1:8642`.
-- A named profile is at `http://127.0.0.1:8642/p/<profile>`.
+One gateway serves every profile at one address. Hermes answers a named profile under `/p/<profile>/` on that address, and the extension adds that part itself when you pick the profile:
 
-Each named profile needs its own `API_SERVER_KEY` in `~/.hermes/profiles/<profile>/.env`, and the default profile's key does not work for it. The side panel's bot list switches between the profiles your connection can reach.
+- Connect to the gateway's plain address, for example `http://127.0.0.1:8642`. Do not add `/p/<profile>` to the address: the extension would add it a second time.
+- Pick the profile in the side panel's bot list.
+
+Each named profile needs its own `API_SERVER_KEY` in `~/.hermes/profiles/<profile>/.env`, and the default profile's key does not work for it.
 
 ### Hermes Cloud
 

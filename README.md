@@ -140,7 +140,7 @@ npm run build
 3. Click **Load unpacked** and select this repo's `dist/` folder: not the repo root and not `extension/`.
 4. Pin the Hermes icon and click it (or press Alt+H) to open the side panel.
 
-On Windows, `Setup_Hermes_Browser_Extension.cmd` builds the extension, opens your default browser's extensions page and copies your Hermes key to the clipboard.
+On Windows, `Setup_Hermes_Browser_Extension.cmd --clip` builds the extension, opens your default browser's extensions page and copies your Hermes key to the clipboard (without `--clip` it does not touch the clipboard).
 
 After pulling updates, run `npm run build` again and click **Reload** on the Hermes Browser Extension card.
 
@@ -188,9 +188,9 @@ Settings offers the same three connection choices as Hermes Desktop:
 
 | Connection mode | Use it for | Transport and boundary |
 | --- | --- | --- |
-| **Local gateway** | Hermes running on this machine (including WSL2 and Docker with a published port) | Local API server, default `http://127.0.0.1:8642`, with `API_SERVER_KEY`. |
+| **Local gateway** | Hermes running on this machine (including WSL2 and Docker with a published port), or another machine reached through an SSH tunnel | Local API server, default `http://127.0.0.1:8642`, with `API_SERVER_KEY`. |
 | **Hermes Cloud** | A signed-in Hermes Cloud agent open in a normal browser tab | Trusted Dashboard Attach mints a short-lived, single-use WebSocket ticket from the active HTTPS agent tab. Chat-only; no page text, selected text, open-tab context, or attachments are sent. |
-| **Remote gateway** | A self-hosted Hermes on another machine: Tailscale, an SSH tunnel, a LAN or VPN, or an HTTPS reverse proxy | With a key: remote API server. Without a key: signed-in HTTPS dashboard ticket/WebSocket. |
+| **Remote gateway** | A self-hosted Hermes on another machine: Tailscale, a LAN or VPN, or an HTTPS reverse proxy | With a key: remote API server. Without a key: signed-in HTTPS dashboard ticket/WebSocket. Hermes Control needs an `https://` address here; plain `http://` to another machine is chat only. |
 
 [guides/connection-guide.md](./guides/connection-guide.md) has the exact setup for each place Hermes can run:
 - this computer, WSL2 or Docker;
@@ -221,7 +221,7 @@ Existing installations migrate automatically:
 
 Custom headers go with every request the extension makes to that address, streamed replies included, and to nothing else. A browser cannot put headers on the dashboard's live WebSocket connection.
 
-A private network needs nothing special. Start the SSH tunnel, Tailscale or WireGuard first, then add a Remote gateway at the address it gives you, with your API key. An extension cannot open an SSH session itself.
+A private network needs nothing special. Start Tailscale or WireGuard first, then add a Remote gateway at the address it gives you, with your API key. An SSH tunnel is a port on this computer, so add it as a Local gateway at `http://127.0.0.1:<tunnel port>`. An extension cannot open an SSH session itself.
 
 Each entry keeps its own gateway address, API key and dashboard settings in browser-local storage. Your existing setup becomes the first entry. Only one saved connection is active at a time. Switching:
 - saves the current settings and closes the old connection;

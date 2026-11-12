@@ -30,7 +30,7 @@ hermes config set API_SERVER_KEY "$(openssl rand -hex 32)"
 hermes gateway restart
 ```
 
-- On native Windows without `openssl`, generate 64 hex characters another way.
+- On native Windows without `openssl`, use the PowerShell lines in the [connection guide](./connection-guide.md#step-1-give-hermes-an-api-key), which turn 32 random bytes into 64 hex characters.
 - `hermes config env-path` shows the `.env` file.
 - Restarting the gateway briefly interrupts every bot and chat on it. **Ask the person before you restart.**
 
@@ -53,14 +53,16 @@ curl -H "Authorization: Bearer <key>" http://127.0.0.1:8642/v1/models
 | In WSL2, browser on Windows | `http://127.0.0.1:8642` | If that fails, set `API_SERVER_HOST=0.0.0.0` in WSL's Hermes `.env`, restart, and use the WSL IP from `hostname -I`. |
 | In Docker | `http://127.0.0.1:8642` | Run the container with `-e API_SERVER_HOST=0.0.0.0 -p 127.0.0.1:8642:8642`. |
 | On a VPS or another computer with Tailscale | The `https://….ts.net` address `tailscale serve --bg 8642` prints | Run that command on the Hermes machine. |
-| On a VPS reached over SSH | `http://127.0.0.1:18642` | The person runs `ssh -N -L 18642:127.0.0.1:8642 user@server` and keeps it open. |
+| On a VPS reached over SSH | `http://127.0.0.1:18642`, as a **Local gateway** | The person runs `ssh -N -L 18642:127.0.0.1:8642 user@server` and keeps it open. |
 | On another computer on the same LAN | `http://<lan-ip>:8642` | Set `API_SERVER_HOST=0.0.0.0`, allow port 8642 for the LAN only, restart. |
 | Behind an HTTPS reverse proxy | `https://hermes.example.com` | Proxy to `127.0.0.1:8642` with response buffering off. See the [connection guide](./connection-guide.md#behind-an-https-reverse-proxy). |
 
 Never bind the API server to a public interface without HTTPS in front of it.
 
+If they want Hermes Control, the address must be `127.0.0.1` / `localhost` (Local gateway, which includes an SSH tunnel) or `https://` (Remote gateway): Hermes Control refuses a remote `http://` address. A plain LAN or tailnet IP is chat only; offer the SSH tunnel or `tailscale serve` instead.
+
 For a named profile:
-- add `/p/<profile>` to the address;
+- keep the plain gateway address: do not add `/p/<profile>`, because the extension adds it when the person picks the profile in the side panel's bot list;
 - use that profile's own `API_SERVER_KEY`, from `~/.hermes/profiles/<profile>/.env`.
 
 ## 4. In the browser: install and connect (the person does this)
@@ -77,10 +79,10 @@ Then tell the person:
 1. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and choose the repository's `dist/` folder.
 2. Open the side panel with the Hermes icon or Alt+H.
 3. Finish first-time setup, and on its last step choose **Manual setup**. Do not wait on **Connect to Hermes**: stock Hermes has no pairing routes.
-4. Choose **Local gateway** for a `127.0.0.1` address, or **Remote gateway** for anything else. Enter the address from step 3 and paste the key.
+4. Choose **Local gateway** for a `127.0.0.1` address (an SSH tunnel included), or **Remote gateway** for anything else. Enter the address from step 3 and paste the key.
 5. Click **Test connection**, then **Save settings**, then send a message.
 
-On Windows, `Setup_Hermes_Browser_Extension.cmd` builds the extension, opens the extensions page and copies the key.
+On Windows, `Setup_Hermes_Browser_Extension.cmd --clip` builds the extension, opens the extensions page and copies the key to the clipboard; without `--clip` it copies nothing.
 
 **Firefox.** The person installs the add-on from [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/), then follows steps 2 to 5 above with Ctrl+Shift+H instead of Alt+H.
 

@@ -45,7 +45,30 @@ test('the connection guide covers every place Hermes runs, with a command for ea
   assert.match(guide, /tailscale serve --bg 8642/);
   assert.match(guide, /-p 127\.0\.0\.1:8642:8642/, 'Docker publishes on loopback only');
   assert.match(guide, /proxy_buffering off/, 'streamed replies need buffering off');
-  assert.match(guide, /\/p\/<profile>/);
+  assert.match(guide, /proxy_set_header Upgrade \$http_upgrade;\s*proxy_set_header Connection \$connection_upgrade;/, 'Hermes Control needs the WebSocket upgrade through nginx');
+});
+
+test('a named profile keeps the plain address, because the extension adds /p/<profile> itself', () => {
+  for (const [name, text] of [['connection-guide.md', guide], ['agent-setup.md', agent]]) {
+    assert.match(text, /do not add `\/p\/<profile>`/i, name);
+    assert.doesNotMatch(text, /add `\/p\/<profile>` to the address;/, name);
+  }
+});
+
+test('the docs say where Hermes Control works: loopback or HTTPS, and an SSH tunnel is this computer', () => {
+  assert.match(guide, /Hermes Control refuses it/);
+  assert.match(guide, /add a \*\*Local gateway\*\* \(this computer\) at `http:\/\/127\.0\.0\.1:18642`/);
+  assert.doesNotMatch(guide, /add a \*\*Remote gateway\*\* at `http:\/\/127\.0\.0\.1:18642`/);
+  assert.match(agent, /Hermes Control refuses a remote `http:\/\/` address/);
+  assert.match(readme, /An SSH tunnel is a port on this computer, so add it as a Local gateway/);
+});
+
+test('the Windows key line draws 32 random bytes, and the setup helper is shown with --clip', () => {
+  assert.match(guide, /RandomNumberGenerator\]::Create\(\)\.GetBytes\(\$bytes\)/, 'works in Windows PowerShell 5.1 and PowerShell 7');
+  assert.doesNotMatch(guide, /Get-Random -Count/, 'Get-Random -Count over 16 digits is a permutation, about 44 bits');
+  for (const [name, text] of [['README.md', readme], ['agent-setup.md', agent]]) {
+    assert.match(text, /Setup_Hermes_Browser_Extension\.cmd --clip/, name);
+  }
 });
 
 test('the compatibility matrix names the current version', () => {
