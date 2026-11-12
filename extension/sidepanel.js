@@ -722,7 +722,8 @@ import {
 import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForConnect } from './lib/connection-dispatch.mjs';
 import { createAddConnectionDialog } from './lib/add-connection-dialog.mjs';
 import { createDeleteConnectionDialog } from './lib/delete-connection-dialog.mjs';
-import { connectionHeadersAsObject, extensionInitiatorHost, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
+import { connectionHeadersAsObject, extensionInitiatorHost, newProbeMarker, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
+import { SYNC_GATEWAY_RULES_MESSAGE, withDraftOriginRule } from './lib/gateway-origin-rule.mjs';
 import { probeConnection } from './lib/probe-connection.mjs';
 import {
   addSavedConnection,
@@ -24257,6 +24258,18 @@ function openDeleteConnectionWindow() {
   });
 }
 
+// Without the worker's rule Hermes refuses the panel's POST requests unless the person added the
+// extension's origin to API_SERVER_CORS_ORIGINS (gateway-origin-rule.mjs). Only the worker writes it,
+// from stored settings; the panel asks it to sync and waits, so a test right after saving, or a pairing
+// with an address not saved yet, never runs before it. Best effort: a refusal still names the .env line.
+async function syncGatewayOriginRule({ pendingGatewayUrl = '' } = {}) {
+  try {
+    await browserApi.runtime.sendMessage({ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl });
+  } catch (error) {
+    console.warn('[Hermes Browser] Gateway origin rule sync failed:', error);
+  }
+}
+
 let addConnectionDialog = null;
 
 function addConnectionWindow() {
@@ -24264,16 +24277,26 @@ function addConnectionWindow() {
     addConnectionDialog = createAddConnectionDialog({
       root: document,
       translate: t,
-      probe: ({ gatewayUrl, apiKey, headers, signal }) => withProbeHeaderIsolation(
-        {
-          gatewayUrl,
-          headers,
-          active: { gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders },
-          extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
-        },
-        (marker) => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
-        browserApi.declarativeNetRequest,
-      ),
+      // Every request of this test carries one marker, which its header rule and its origin rule match.
+      probe: ({ gatewayUrl, apiKey, headers, signal }) => {
+        const extensionHost = extensionInitiatorHost((path) => browserApi.runtime.getURL(path));
+        const marker = newProbeMarker();
+        return withDraftOriginRule(
+          { gatewayUrl, extensionHost, marker },
+          () => withProbeHeaderIsolation(
+            {
+              gatewayUrl,
+              headers,
+              active: { gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders },
+              extensionHost,
+              marker,
+            },
+            () => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
+            browserApi.declarativeNetRequest,
+          ),
+          browserApi.declarativeNetRequest,
+        );
+      },
       openAddress: (address) => { void browserApi.tabs.create({ url: address }); },
       onAdd: async ({ name, connection }) => {
         if (!(await updateSavedConnection('add', { name, connection }))) throw new Error(t('connections.error'));
@@ -27915,6 +27938,8 @@ async function connectApiWithPairing() {
     offerManualSetup(message);
     return;
   }
+  // The address may be typed but not saved yet: the worker covers it too while this pairing runs.
+  await syncGatewayOriginRule({ pendingGatewayUrl: settings.gatewayUrl });
   const generation = connectionController.begin({
     mode: normalizeConnectionMode(settings.connectionMode),
     transport: settings.connectionTransport,
@@ -29551,6 +29576,7 @@ async function testConnection() {
     flashTestConnectionResult(false);
     throw error;
   }
+  await syncGatewayOriginRule();
   const action = connectionActionForSettings(settings);
   if (action === CONNECTION_ACTIONS.CLOUD_ACTIVE_TAB_ATTACH || action === CONNECTION_ACTIONS.REMOTE_DASHBOARD_ATTACH) {
     let connected = false;

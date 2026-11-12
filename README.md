@@ -74,10 +74,10 @@ Screenshots use the Mono theme in Dark mode.
 
 ## Requirements
 
-- Hermes Agent installed and working.
-- For Local or Remote API mode: Hermes Gateway/API server enabled locally or on a reachable remote machine. Hermes Cloud instead requires a signed-in HTTPS agent tab.
-- Node.js 20+.
-- Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 116+ baseline). Firefox 142+ is supported via [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/), the Mozilla Add-ons listing. `npm run build:firefox` is for local/dev Firefox builds only.
+- Hermes Agent installed and working, with its API server key set (`API_SERVER_KEY`, 16 or more characters). Hermes Cloud instead needs a signed-in HTTPS agent tab.
+- Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 116+), or Firefox 142+ from [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/), the Mozilla Add-ons listing.
+- Node.js 20+ to build the Chromium extension from source. `npm run build:firefox` is for local/dev Firefox builds only.
+- For Hermes Control on current Hermes: the extension's Hermes plugin (one command, below).
 
 ## Firefox scope
 
@@ -100,7 +100,33 @@ Hermes Control lets Hermes operate a tab you attach. It is opt-in and off until 
 
 ## Quick start
 
-### 1. Clone and build
+There are four steps. Step 1 happens on the machine that runs Hermes; the rest happen in your browser. If Hermes runs anywhere other than this computer, follow [guides/connection-guide.md](./guides/connection-guide.md) for the address to use. That covers another machine, WSL, Docker, Tailscale, an SSH tunnel, a reverse proxy and named profiles.
+
+### 1. Give Hermes an API key
+
+Hermes serves the API the extension talks to once `API_SERVER_KEY` is set. It refuses a key shorter than 16 characters, even on `127.0.0.1`.
+
+```bash
+hermes config set API_SERVER_KEY "$(openssl rand -hex 32)"
+hermes gateway restart
+curl http://127.0.0.1:8642/health
+```
+
+- The first line saves a new random key. Instead, you can add `API_SERVER_KEY=<32+ random characters>` to the Hermes `.env` yourself; `hermes config env-path` shows where that file is.
+- The second line restarts the gateway. Use `hermes gateway run` instead if you run it in the foreground.
+- The `curl` line should answer with a small JSON status.
+
+Keep the key: you paste it into the extension in step 3.
+
+On Windows:
+- PowerShell has no `openssl`. The [connection guide](./guides/connection-guide.md#step-1-give-hermes-an-api-key) has a PowerShell line that makes a key.
+- `Copy_Hermes_Browser_API_Key.cmd` in this repository copies the saved key to the clipboard.
+
+You do not need to add the extension to `API_SERVER_CORS_ORIGINS`. Hermes refuses requests that carry an `Origin` header it doesn't list, and the extension removes that header from its own requests to your gateway.
+
+### 2. Install the extension
+
+**Chrome, Edge, Brave, Comet**
 
 ```bash
 git clone https://github.com/abundantbeing/hermes-browser-extension.git
@@ -109,92 +135,101 @@ npm install
 npm run build
 ```
 
-The loadable extension is generated at:
+1. Open `chrome://extensions` (or `edge://extensions`, `brave://extensions`).
+2. Turn on **Developer mode**.
+3. Click **Load unpacked** and select this repo's `dist/` folder: not the repo root and not `extension/`.
+4. Pin the Hermes icon and click it (or press Alt+H) to open the side panel.
 
-```text
-dist/
-```
+On Windows, `Setup_Hermes_Browser_Extension.cmd --clip` builds the extension, opens your default browser's extensions page and copies your Hermes key to the clipboard (without `--clip` it does not touch the clipboard).
 
-### 2. Load unpacked in Chrome/Edge
+After pulling updates, run `npm run build` again and click **Reload** on the Hermes Browser Extension card.
 
-1. Open `chrome://extensions` or `edge://extensions`.
-2. Enable **Developer mode**.
-3. Click **Load unpacked**.
-4. Select this repo's `dist/` folder — not the repo root and not `extension/`.
-5. Pin/click the Hermes extension icon to open the side panel.
-
-After code updates, run `npm run build` again and click **Reload** on the Hermes Browser Extension card in the browser extensions page.
-
-### 3. Install in Firefox
+**Firefox**
 
 1. Open [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/) in Firefox.
 2. Click **Add to Firefox** and confirm the permission prompt.
 3. The extension opens in the Firefox sidebar (Ctrl+Shift+H).
 
-Because this package is Mozilla-hosted on AMO, Firefox receives future signed updates through AMO automatically. No separate update manifest or manual reinstall is required.
+AMO delivers signed updates automatically. Do not sideload the GitHub source zip or tar.gz: those are source archives, not a Firefox add-on.
 
-Do not sideload the GitHub source zip/tar.gz. Those are source archives, not a Firefox add-on.
+The Firefox add-on 0.4.1 still sends the `Origin` header. If its first message is refused with a 403, add the origin the panel names to `API_SERVER_CORS_ORIGINS`; see [If a message is refused with a 403](./guides/connection-guide.md#if-a-message-is-refused-with-a-403).
+
+### 3. Connect
+
+1. In the side panel, finish first-time setup and choose **Manual setup** on its last step. Later, use **Settings > Connections > Add**.
+2. Choose **Local gateway** (this computer), enter `http://127.0.0.1:8642` and paste the key from step 1.
+3. Click **Test connection**, then **Save settings**.
+4. Open a normal `https://` page and ask: `Summarize this page in one sentence.`
+
+The one-click **Connect to Hermes** button uses automatic pairing, which needs pairing routes that stock Hermes does not ship. On stock Hermes it tells you to use Manual setup, which is the path above.
+
+### 4. Optional: let Hermes operate your tabs
+
+Chat, page context, sessions, models and attachments work now. Two features need the extension's Hermes plugin:
+- **Hermes Control**: Hermes clicking, typing and working in tabs you attach.
+- **Background task tabs**.
+
+Install the plugin on the machine that runs Hermes, then restart the gateway. For a named bot, add `-p <profile>` before `plugins`.
+
+```bash
+hermes plugins install hermes-browser-extension --enable
+hermes gateway restart
+```
+
+Then turn Hermes Control on under **Settings > Permissions & Control**. [companion-plugin/README.md](./companion-plugin/README.md) lists what the plugin needs and how to get its newest version.
+
+### Using an AI agent to set this up
+
+Point your agent at this repository and ask it to set the extension up for you. [guides/agent-setup.md](./guides/agent-setup.md) has the exact steps it should follow, including which ones only you can do in the browser.
 
 ## Connect to Hermes
 
-Settings exposes the same three product-level choices as Hermes Desktop:
+Settings offers the same three connection choices as Hermes Desktop:
 
 | Connection mode | Use it for | Transport and boundary |
 | --- | --- | --- |
-| **Local gateway** | Hermes running on this machine | Local API server, default `http://127.0.0.1:8642`, with a scoped browser token or `API_SERVER_KEY`. |
+| **Local gateway** | Hermes running on this machine (including WSL2 and Docker with a published port), or another machine reached through an SSH tunnel | Local API server, default `http://127.0.0.1:8642`, with `API_SERVER_KEY`. |
 | **Hermes Cloud** | A signed-in Hermes Cloud agent open in a normal browser tab | Trusted Dashboard Attach mints a short-lived, single-use WebSocket ticket from the active HTTPS agent tab. Chat-only; no page text, selected text, open-tab context, or attachments are sent. |
-| **Remote gateway** | A self-hosted Hermes backend on another machine or behind a trusted proxy | With a key: remote API server. Without a key: signed-in HTTPS dashboard ticket/WebSocket. |
+| **Remote gateway** | A self-hosted Hermes on another machine: Tailscale, a LAN or VPN, or an HTTPS reverse proxy | With a key: remote API server. Without a key: signed-in HTTPS dashboard ticket/WebSocket. Hermes Control needs an `https://` address here; plain `http://` to another machine is chat only. |
 
-Existing installations migrate automatically: prior `local-api` settings become Local gateway, while prior `remote-api` and `remote-dashboard` settings remain Remote gateway. A legacy remote dashboard is never silently relabeled as Hermes Cloud.
+[guides/connection-guide.md](./guides/connection-guide.md) has the exact setup for each place Hermes can run:
+- this computer, WSL2 or Docker;
+- a VPS over Tailscale or an SSH tunnel;
+- another computer on your network;
+- an HTTPS reverse proxy;
+- named profiles;
+- Hermes Cloud, or a dashboard-only Hermes.
 
-Settings > Connections lists your saved connections as cards that show each one's kind and address; select a card to switch. **Add** opens a window that takes you through a new connection: where it is (this computer, a remote gateway or Hermes Cloud), how you sign in (the browser, or an API key or browser token) and its options (custom headers for a gateway behind an authenticating proxy, and a note for a gateway with its own certificate). The connection is tested before it is added; if the test fails you can try again, open the address in a tab to accept its certificate, or add it untested. A connection added with the browser sign-in starts signing in as soon as it is added. **Options** changes the headers and the certificate note of the connection you are using, **Rename** opens a name field in place, and **Delete** opens a window that lists your connections, so you choose which one to remove, and says what it removes. Custom headers go with every request the extension makes to that address, streamed replies included, and to nothing else; a browser cannot put headers on the dashboard's live WebSocket connection. A private network needs nothing special: start the SSH tunnel, Tailscale or WireGuard first, then add a Remote gateway at the address it gives you, with your API key. An extension cannot open an SSH session itself. Each entry keeps its own gateway address, API key/browser token, and dashboard settings in browser-local storage. Your existing setup becomes the first entry. Switching saves the current settings, closes the old connection, and reloads the panel with a fresh chat on the selected gateway. Earlier conversations remain in that gateway's session list. Only one saved connection is active at a time; enable Hermes Control again when you need it on the selected connection.
+Existing installations migrate automatically:
+- Earlier `local-api` settings become Local gateway.
+- Earlier `remote-api` and `remote-dashboard` settings stay Remote gateway.
+- A legacy remote dashboard is never silently relabeled as Hermes Cloud.
 
-### Local API server
+### Saved connections
 
-Local-only is the safest default. Put this in your Hermes `.env` on the machine running Hermes: `%LOCALAPPDATA%\hermes\.env` on native Windows, `~/.hermes/.env` on Linux/macOS/WSL, or `$HERMES_HOME/.env` if you relocated the data dir or use a named profile:
+**Settings > Connections** lists your saved connections as cards that show each one's kind and address. Select a card to switch.
 
-```bash
-API_SERVER_ENABLED=true
-API_SERVER_HOST=127.0.0.1
-API_SERVER_PORT=8642
-API_SERVER_KEY=<your-api-server-key>
-API_SERVER_CORS_ORIGINS=chrome-extension://<your-extension-id>
-```
+- **Add** walks you through a new connection:
+  - where it is: this computer, a remote gateway or Hermes Cloud;
+  - how you sign in: the browser, or an API key;
+  - its options: custom headers for a gateway behind an authenticating proxy, and a note for a gateway with its own certificate.
 
-On Firefox the extension origin is `moz-extension://<extension-uuid>`, not `chrome-extension://<id>`. Use that form in `API_SERVER_CORS_ORIGINS` instead. Copy the exact value from Settings → Support diagnostics (**Extension origin**). Firefox assigns the UUID when the extension is installed, so copy it again after a reinstall.
+  The connection is tested before it is added. If the test fails, you can try again, open the address in a tab to accept its certificate, or add it untested.
+- **Options** changes the headers and the certificate note of the connection you are using.
+- **Rename** opens a name field in place.
+- **Delete** opens a window that lists your connections, so you choose which one to remove, and says what it removes.
 
-Start or restart the gateway:
+Custom headers go with every request the extension makes to that address, streamed replies included, and to nothing else. A browser cannot put headers on the dashboard's live WebSocket connection.
 
-```bash
-hermes gateway run
-```
+A private network needs nothing special. Start Tailscale or WireGuard first, then add a Remote gateway at the address it gives you, with your API key. An SSH tunnel is a port on this computer, so add it as a Local gateway at `http://127.0.0.1:<tunnel port>`. An extension cannot open an SSH session itself.
 
-Verify the API server:
+Each entry keeps its own gateway address, API key and dashboard settings in browser-local storage. Your existing setup becomes the first entry. Only one saved connection is active at a time. Switching:
+- saves the current settings and closes the old connection;
+- reloads the panel with a fresh chat on the selected gateway.
 
-```bash
-HERMES_GATEWAY_URL=http://127.0.0.1:8642
-HERMES_API_TOKEN='<your-api-server-key-or-browser-token>'
-curl "$HERMES_GATEWAY_URL/health"
-curl -H "Authorization: Bearer $HERMES_API_TOKEN" "$HERMES_GATEWAY_URL/v1/models"
-```
+Earlier conversations stay in that gateway's session list. Turn Hermes Control on again when you need it on the new connection.
 
-Then in the extension side panel:
-
-1. Click **Connect to Hermes**, the last step of first-time setup or the pop-up that opens when the panel is not paired, and approve locally if your Hermes Desktop/gateway supports the approval flow. **Connect later** or the pop-up's X dismisses it.
-2. If approval is not available yet, click **Manual setup**.
-3. Choose **Local gateway**.
-4. Use Gateway URL `http://127.0.0.1:8642`.
-5. Paste your scoped browser token or `API_SERVER_KEY`.
-6. Click **Test connection**, then **Save settings**.
-7. Open a normal `https://` page and ask: `Summarize this page in one sentence.`
-
-### Remote and Cloud
-
-For a remote machine, bind the API server to a reachable trusted interface and keep CORS narrow. Use a private same-LAN/Tailscale/VPN host with HTTP, or put the API server behind a trusted HTTPS reverse proxy. Do **not** expose the Hermes API server naked to the public internet.
-
-Hermes Cloud uses **Trusted Dashboard Attach**: open your Hermes Cloud agent in a normal browser tab, sign in, choose **Hermes Cloud** in Settings, and click **Connect to Hermes**. The ticket stays in memory only and is never persisted or logged. Cloud is **Chat-only** in this release.
-
-Full setup for remote API servers, self-hosted dashboards, and what syncs after connection is in [guides/connection-guide.md](./guides/connection-guide.md).
+Do **not** expose the Hermes API server naked to the public internet: it runs the real Hermes, with its tools. Keep it on `127.0.0.1` and reach it through Tailscale, an SSH tunnel or an HTTPS reverse proxy.
 
 ## Security model
 
@@ -256,17 +291,18 @@ The copied block includes version/build, browser family, gateway origin, connect
 
 ### The side panel says it cannot connect
 
-Check that Hermes Gateway/API server is running and reachable from the browser:
+[guides/troubleshooting.md](./guides/troubleshooting.md#cannot-connect) lists each connection message and its fix. Start with these two checks on the machine that runs Hermes:
 
 ```bash
 curl http://127.0.0.1:8642/health
-# or, for remote mode:
-curl http://<trusted-remote-host>:8642/health
+curl -H "Authorization: Bearer <API_SERVER_KEY>" http://127.0.0.1:8642/v1/models
 ```
 
-If `/v1/models` fails, check `API_SERVER_KEY`, the extension's stored API key/browser token, and `API_SERVER_CORS_ORIGINS`. For remote mode, the browser extension origin (`chrome-extension://<id>`, or `moz-extension://<extension-uuid>` on Firefox) must be allowlisted on the Hermes machine. A session request that fails with HTTP 403 and no error body is the same CORS gate. The side panel then names the exact origin and the `API_SERVER_CORS_ORIGINS=` line to add to the Hermes `.env`, and your draft stays in the composer.
+- **The first command gets no answer:** the gateway or its API server is not running. Set `API_SERVER_KEY` (16 or more characters), restart the gateway, and check the address and port.
+- **The second command returns 401:** the key does not match. Paste the key from the Hermes `.env` into the extension again; `hermes config env-path` shows where that file is. A named profile has its own key.
+- **A message is refused with a 403 and no error body:** your browser sent the `Origin` header Hermes refuses. Add the origin the panel names to `API_SERVER_CORS_ORIGINS` and restart the gateway.
 
-If the browser only reports a failed fetch, it cannot prove whether the gateway refused the connection, blocked the request, or received a turn before the response was lost. The side panel keeps the draft and offers **Check connection**. It never resends automatically. Check the session history before manually sending again, since a dropped response can leave delivery unconfirmed and a second send could duplicate the turn. An answered `/health` probe confirms reachability at probe time, not that the earlier turn failed because of CORS.
+Sometimes the browser only reports a failed fetch. It then cannot tell whether the gateway refused the connection, blocked the request, or received the message before the response was lost. The side panel keeps your draft and offers **Check connection**, and it never resends on its own. Check the session history before you send again: a lost response can hide a message that did arrive, and sending it twice would duplicate the turn.
 
 More troubleshooting, including runtime warnings and native Hermes computer use, is in [guides/troubleshooting.md](./guides/troubleshooting.md).
 
