@@ -57,6 +57,7 @@ import { createThemeMarketplaceController } from './lib/theme-marketplace-contro
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { installLoopbackCorsRules, handleLoopbackFetchMessage, LOOPBACK_FETCH_MESSAGE } from './lib/loopback-cors.mjs';
 import { applyConnectionHeaderRules, createHeaderRuleSync, extensionInitiatorHost } from './lib/connection-headers.mjs';
+import { applyGatewayOriginRule } from './lib/gateway-origin-rule.mjs';
 import {
   CONTROLLER_HEARTBEAT_ALARM,
   CONTROLLER_RECONCILE_ALARM,
@@ -1048,14 +1049,19 @@ void initI18n().catch((error) => {
   console.warn('[Hermes Browser] Localization initialization failed:', error);
 });
 
-// The active connection's custom headers ride on every request to its address, WebSocket handshake included.
+// The active connection's custom headers ride on every request to its address, WebSocket handshake included,
+// and its API requests leave without the Origin header Hermes would refuse (gateway-origin-rule.mjs).
 const syncConnectionHeaders = createHeaderRuleSync({
   read: readStoredSettings,
-  apply: (settings) => applyConnectionHeaderRules({
-    gatewayUrl: settings.gatewayUrl,
-    headers: settings.connectionHeaders,
-    extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
-  }),
+  apply: async (settings) => {
+    const extensionHost = extensionInitiatorHost((path) => browserApi.runtime.getURL(path));
+    await applyGatewayOriginRule({
+      gatewayUrl: settings.gatewayUrl,
+      connectionTransport: settings.connectionTransport,
+      extensionHost,
+    }).catch((error) => console.warn('[Hermes Browser] Gateway origin rule failed:', error));
+    return applyConnectionHeaderRules({ gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders, extensionHost });
+  },
   onError: (error) => console.warn('[Hermes Browser] Connection header rules failed:', error),
 });
 void installLoopbackCorsRules().catch((error) => {

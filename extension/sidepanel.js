@@ -723,6 +723,7 @@ import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForCo
 import { createAddConnectionDialog } from './lib/add-connection-dialog.mjs';
 import { createDeleteConnectionDialog } from './lib/delete-connection-dialog.mjs';
 import { connectionHeadersAsObject, extensionInitiatorHost, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
+import { applyGatewayOriginRule, withDraftOriginRule } from './lib/gateway-origin-rule.mjs';
 import { probeConnection } from './lib/probe-connection.mjs';
 import {
   addSavedConnection,
@@ -23729,6 +23730,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     };
   }
   trustedDashboardTabId = Number(settings.trustedDashboardTabId) || null;
+  void syncGatewayOriginRule();
   contextScope = normalizeContextScope(contextScope);
   await refreshContextConsentPrincipal({ settingsOverride: settings });
   saveContextScopeForInstance();
@@ -24257,6 +24259,21 @@ function openDeleteConnectionWindow() {
   });
 }
 
+// Without this rule Hermes refuses the panel's POST requests unless the person added the extension's
+// origin to API_SERVER_CORS_ORIGINS (gateway-origin-rule.mjs). The worker keeps it in step with stored
+// settings; the panel installs it too so a test right after saving never runs before it.
+async function syncGatewayOriginRule() {
+  try {
+    await applyGatewayOriginRule({
+      gatewayUrl: settings.gatewayUrl,
+      connectionTransport: settings.connectionTransport,
+      extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
+    }, browserApi.declarativeNetRequest);
+  } catch (error) {
+    console.warn('[Hermes Browser] Gateway origin rule failed:', error);
+  }
+}
+
 let addConnectionDialog = null;
 
 function addConnectionWindow() {
@@ -24271,7 +24288,11 @@ function addConnectionWindow() {
           active: { gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders },
           extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
         },
-        (marker) => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
+        (marker) => withDraftOriginRule(
+          { gatewayUrl, extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)) },
+          () => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
+          browserApi.declarativeNetRequest,
+        ),
         browserApi.declarativeNetRequest,
       ),
       openAddress: (address) => { void browserApi.tabs.create({ url: address }); },
@@ -29551,6 +29572,7 @@ async function testConnection() {
     flashTestConnectionResult(false);
     throw error;
   }
+  await syncGatewayOriginRule();
   const action = connectionActionForSettings(settings);
   if (action === CONNECTION_ACTIONS.CLOUD_ACTIVE_TAB_ATTACH || action === CONNECTION_ACTIONS.REMOTE_DASHBOARD_ATTACH) {
     let connected = false;

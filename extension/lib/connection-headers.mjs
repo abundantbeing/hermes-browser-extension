@@ -79,7 +79,7 @@ const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // The exact origin: scheme (and its WebSocket twin), host and port. Another service on the same host
 // but another port is not this connection and gets nothing.
-function originPattern(address) {
+export function originPattern(address) {
   try {
     const parsed = new URL(String(address || ''));
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '';
