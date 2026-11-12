@@ -20,11 +20,11 @@ The plugin gives Hermes two things:
 
 | You need | For |
 |---|---|
-| **Hermes Agent 0.22 or newer**, with its API server on (`API_SERVER_ENABLED=true`) | Everything |
+| **Hermes Agent 0.22 or newer**, with its API server on: `API_SERVER_KEY` set, 16 or more characters | Everything |
 | **The Hermes Browser Extension**, connected to that Hermes | Everything |
 | **This plugin**, installed and enabled for every Hermes profile the extension talks to, then that profile's gateway restarted | Hermes Control on Hermes builds without built-in extension control (canary builds from Oct 24, 2026, and every release after 0.22.5); the browser-context tools on any Hermes |
 | **A Chromium-based browser** (Chrome, Edge, Brave, Comet, Arc, ...) | Hermes Control. Firefox gets a restricted Hermes Control (read, navigate, scroll, screenshots, tabs; no clicks or typing, since it has no debugger API), see [guides/firefox.md](../guides/firefox.md) |
-| **The extension's address in `API_SERVER_CORS_ORIGINS`** (`chrome-extension://<id>`) | A Hermes that does not pair with the extension by itself. The extension's **Test connection** button shows the exact line to add |
+| **The extension's address in `API_SERVER_CORS_ORIGINS`** (`chrome-extension://<id>`) | Only the Firefox add-on 0.4.1 and browsers that ignore extension network rules. Current builds remove the `Origin` header Hermes refuses. When it is needed, the panel names the exact line to add |
 
 Hermes 0.22.5 and earlier still carry Hermes Control in Hermes itself; where it is
 switched on, the extension uses that, this plugin registers no `tab_*` tools, and it
@@ -47,15 +47,24 @@ Things to know:
 ## Install
 
 ```bash
-# from this repository (the Hermes plugin catalog has no entry for it yet)
+# from the Hermes plugin catalog: the version the catalog has reviewed and pinned
+hermes plugins install hermes-browser-extension --enable
+
+# or the newest version, straight from this repository
 hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable
 
 # then restart the gateway, and check
+hermes gateway restart
 hermes plugins list
 ```
 
-The plugin installs only from that repository URL. Add `--profile <name>` to
-install it for a named profile, and restart each gateway once. Already on 0.4.0?
+Both commands install the same plugin. The catalog name installs the commit the
+Hermes plugin catalog pinned, which can lag a release by a few days. The
+repository URL installs the newest commit.
+
+For a named profile, put `-p <name>` before `plugins` (`--profile <name>` after the
+command also works). Install it for each profile you chat with, then restart the
+gateway once. Already on 0.4.0?
 Update it the same way (`hermes plugins update hermes-browser-extension --profile <name>`,
 or the install command with `--force`), because Background task tabs need the
 0.4.1 plugin. Then, in the extension,

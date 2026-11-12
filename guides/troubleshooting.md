@@ -1,5 +1,28 @@
 # Troubleshooting
 
+## Cannot connect
+
+Check the machine that runs Hermes first. These two commands tell you most of what is wrong:
+
+```bash
+curl http://127.0.0.1:8642/health
+curl -H "Authorization: Bearer <API_SERVER_KEY>" http://127.0.0.1:8642/v1/models
+```
+
+| You see | What it means | What to do |
+| --- | --- | --- |
+| `curl /health` gets no answer, or the panel says *"The extension could not open a connection to the Hermes API"* or *"Nothing answered at this address."* | Nothing is listening at that address. | Check that `API_SERVER_KEY` is set and is 16 or more characters: without it Hermes does not start the API server, even on `127.0.0.1`. Restart the gateway (`hermes gateway restart`), then check the address and port. For a remote gateway, start the tunnel or VPN first. See the [connection guide](./connection-guide.md#where-is-your-hermes). |
+| *"Hermes API token was rejected"* or *"The gateway did not accept this key."* with a key you believe is right | Either the key differs from the gateway's, or, on a release before the `Origin` fix, the request was refused for its `Origin` header (the same bare 403). | Paste the key again from the Hermes `.env` (`hermes config env-path` shows where it is). A named profile has its own key in `profiles/<name>/.env`. If the key is right and models load but the first message fails, see the next row. |
+| Models load, but sending a message fails with a 403, or *"Browser blocked this request at the origin layer"* | Hermes refused the request because of its `Origin` header. Current builds remove that header. The Firefox add-on 0.4.1 and browsers that ignore extension network rules still send it. | Add the origin the panel names to `API_SERVER_CORS_ORIGINS` in the Hermes `.env` and restart the gateway. [Connection guide: 403](./connection-guide.md#if-a-message-is-refused-with-a-403). |
+| *"Automatic pairing isn't available on this Hermes installation yet"* | **Connect to Hermes** needs pairing routes that stock Hermes does not ship. | Use **Manual setup** (or **Settings > Connections > Add**) with the address and key. |
+| *"This address answered, but not as Hermes."* | The address is something else: often the dashboard (port 9119) or the Webapp (port 9120) instead of the API server (port 8642). | Use the API server's address, `http://<host>:8642` by default. |
+| *"This Hermes runtime does not expose the requested extension route yet."* | The gateway is running but lacks a route this feature uses. | Update Hermes. For Hermes Control, install the extension's Hermes plugin for that profile and restart the gateway (see below). |
+| The test passes over HTTPS in a tab but not in the panel | The gateway uses a certificate the browser has not accepted. | In Add connection, choose **Open address**, accept the certificate in that tab, then test again. |
+| Replies stop after a few seconds behind nginx or another proxy | The proxy buffers or cuts the streamed reply. | Turn buffering off and raise the read timeout. The [connection guide](./connection-guide.md#behind-an-https-reverse-proxy) has the lines. |
+| Hermes Control is missing, or says it is not available | Current Hermes gets Hermes Control from the extension's plugin. | `hermes plugins install hermes-browser-extension --enable` for that profile, restart the gateway, press **Test connection**. See [Hermes Control says it is not available](#hermes-control-says-it-is-not-available-on-this-hermes). |
+
+**Settings > Support diagnostics > Copy Diagnostics** collects your version, connection and each capability's state. Paste it into a GitHub issue if none of this helps. It leaves out keys, tokens and page text.
+
 ### The side panel shows a runtime warning but still says connected
 
 v0.3.0 introduced separate connection and runtime warnings. When a gateway answers a request with a runtime error, the Browser stays connected and shows a warning instead of labeling the gateway unreachable. Check the Hermes Agent logs for the failing dependency or component.
@@ -46,7 +69,7 @@ A frame on the attached page is on a restricted address, has moved to one since 
 
 ### Hermes Control says it is not available on this Hermes
 
-Hermes builds from October 24, 2026 on (canary, and every release after 0.22.5) no longer carry extension control themselves; the extension's Hermes plugin brings it back. Install it for the profile you chat with, `hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable` (add `--profile <name>` for a named bot), restart that profile's gateway, then press **Test connection** and turn Hermes Control on again. Settings > About & Diagnostics shows whether the plugin is loaded. On a gateway that serves several bots at one address, install the plugin for each bot and restart once; its status and Hermes Control routes are on `/p/<bot>/api/plugins/...` as well as the plain paths (the default bot keeps the plain address). See [companion-plugin/README.md](../companion-plugin/README.md).
+Hermes builds from October 24, 2026 on (canary, and every release after 0.22.5) no longer carry extension control themselves; the extension's Hermes plugin brings it back. Install it for the profile you chat with, `hermes plugins install hermes-browser-extension --enable` (for a named bot, `hermes -p <name> plugins install hermes-browser-extension --enable`), restart the gateway, then press **Test connection** and turn Hermes Control on again. Settings > About & Diagnostics shows whether the plugin is loaded. On a gateway that serves several bots at one address, install the plugin for each bot and restart once; its status and Hermes Control routes are on `/p/<bot>/api/plugins/...` as well as the plain paths (the default bot keeps the plain address). See [companion-plugin/README.md](../companion-plugin/README.md).
 
 ### The plugin is reported as an older copy under its old name
 

@@ -6,6 +6,10 @@
 
 - **Connecting no longer needs `API_SERVER_CORS_ORIGINS`.** Hermes refuses any request whose `Origin` header it does not list, and the browser adds one to the extension's chat, run and session requests, so a first message on a correct key and address failed with "Hermes API rejected the request. Check the API token". The extension now removes `Origin` from its own API requests to the gateway you connected (and to an address you are testing in Add connection), through a session network rule that matches nothing else: not web pages, not other addresses, not WebSocket handshakes. The API key still guards every route. A Hermes that already lists the extension is unaffected. Browsers that ignore extension network rules still need the `.env` line, which the panel names when it sees the refusal.
 
+### Documentation
+
+- **Setup that matches current Hermes.** The README Quick start now runs in the order it has to happen. First give Hermes an `API_SERVER_KEY`: Hermes turns the API server on from the key and refuses one shorter than 16 characters, even on loopback. Then install the extension, connect with Manual setup, and add the plugin last. It says plainly that the one-click **Connect to Hermes** pairing needs routes stock Hermes does not ship. [guides/connection-guide.md](guides/connection-guide.md) has exact steps for each place Hermes runs: this computer, WSL2, Docker, a VPS over Tailscale or an SSH tunnel, another computer on the LAN, an HTTPS reverse proxy (with the streaming settings), named profiles, Hermes Cloud and a dashboard-only Hermes. [guides/troubleshooting.md](guides/troubleshooting.md#cannot-connect) maps each connection message to its fix. New [guides/agent-setup.md](guides/agent-setup.md) gives an AI agent pointed at this repository the steps to set the extension up for a person, including which ones only the person can do. The plugin docs offer `hermes plugins install hermes-browser-extension` from the Hermes plugin catalog, and the Windows helpers are documented.
+
 ## [0.4.1] - 2026-11-12
 
 ### Added
