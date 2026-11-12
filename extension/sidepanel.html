@@ -1417,9 +1417,13 @@
               </label>
             </div>
             <div class="browser-control-config" id="backgroundTaskBrowserSetting" hidden>
-              <label class="browser-control-field">
-                <span><input id="backgroundTaskBrowserInput" type="checkbox" data-settings-live> <span id="backgroundTaskBrowserLabel" data-i18n="browser_control.background_label"></span></span>
-                <small id="backgroundTaskBrowserHelp" data-i18n="browser_control.background_help"></small>
+              <label class="settings-toggle-card">
+                <span class="settings-toggle-copy">
+                  <strong id="backgroundTaskBrowserLabel" data-i18n="browser_control.background_label"></strong>
+                  <small id="backgroundTaskBrowserHelp" data-i18n="browser_control.background_help"></small>
+                </span>
+                <input id="backgroundTaskBrowserInput" data-settings-live class="settings-switch-input" type="checkbox" />
+                <span class="settings-switch" aria-hidden="true"></span>
               </label>
               <small id="backgroundTaskBrowserStatus" role="status" data-i18n-runtime></small>
             </div>

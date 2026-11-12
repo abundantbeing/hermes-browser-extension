@@ -25,6 +25,7 @@ The extension stores settings in `chrome.storage.local`, including:
 - which sessions-drawer tab (Recents or Projects) you last used
 - Hermes Web appearance, session rail, and canonical session handoff settings
 - per-tab local message caches and per-tab Hermes session bindings when the panel is tab-attached or you pin a browser tab
+- your Background task tabs consent, if you turned it on, kept as the gateway address, profile and a hash of the API key
 - bounded controller identity, tab attachment metadata, paused state, document-generation counters, and redacted terminal receipts required to recover safely across MV3 service-worker suspension
 
 Saved tokens are masked in the UI after save. The settings panel includes **Clear stored token** to remove the API key/browser token from extension storage.
@@ -47,6 +48,10 @@ The extension can also attach the side panel to a specific tab or pin context to
 ## Live Hermes Control
 
 Hermes Control is opt-in and limited to tabs you explicitly attach. The extension may use Chromium debugger APIs to inspect accessibility metadata and perform approved browser actions on those tabs. It does not persist raw DOM, page text, typed values, command arguments, credentials, screenshots, or response bodies in controller durability or companion diagnostics. Consequential actions pause for explicit approval, and developer-only evaluate/raw-CDP actions require both developer mode and approval.
+
+### Background task tabs
+
+Background task tabs are a separate opt-in, off until you turn them on in Settings > Permissions & Control. They work only on Chromium and only with a Hermes gateway on this computer that has the companion plugin's tab tools; a remote gateway is refused. When on, a chat on that gateway, including one started from a messaging app, can open pages in its own Chrome tab group and use the same page actions and redacted page views as Hermes Control on those tabs. Each Hermes session gets its own tabs: it cannot act in your other tabs or in another session's tabs. Nothing from those tabs goes anywhere but your local gateway, the same safety rules apply (restricted pages and sensitive fields are blocked, and tab titles and addresses are redacted), and the extension stores only the consent, as the gateway address, profile and a hash of the API key, never the key itself. You can revoke it at any time: turning the option off stops control (Chrome may leave the open tabs in place), and cancelling Chrome's debugging banner on a tab removes that tab from the session.
 
 Local HTML, browser-rendered PDF, and localhost pages use the same model. A local file is not exposed until the browser permits file URL access and the user approves local-document access inside the extension.
 

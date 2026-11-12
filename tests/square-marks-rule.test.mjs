@@ -52,6 +52,50 @@ test('the Add window takes its yes/no choice from the extension switch, not a na
   assert.match(dialog, /<span class="settings-switch" aria-hidden="true"><\/span>/);
 });
 
+// Each checkbox in `html` that is not a square switch: a native box, or an input whose own
+// enclosing <label> (still open where the input sits) has no square switch in it.
+function brokenSwitches(html) {
+  const broken = [];
+  for (const match of html.matchAll(/<input[^>]*type="checkbox"[^>]*>/g)) {
+    const box = match[0];
+    const at = match.index;
+    if (!/class="settings-switch-input"/.test(box)) { broken.push(box); continue; }
+    const open = html.lastIndexOf('<label', at);
+    const closedBefore = html.lastIndexOf('</label>', at);
+    const close = html.indexOf('</label>', at);
+    if (open < 0 || closedBefore > open || close < 0
+      || !/<span class="settings-switch" aria-hidden="true"><\/span>/.test(html.slice(open, close))) broken.push(box);
+  }
+  return broken;
+}
+
+test('the switch guard catches a native box and an input moved out of its switch label', () => {
+  const card = (inner) => `<label class="settings-toggle-card"><span>Copy</span>${inner}</label>`;
+  const input = '<input id="x" class="settings-switch-input" type="checkbox" />';
+  const sw = '<span class="settings-switch" aria-hidden="true"></span>';
+  assert.deepEqual(brokenSwitches(card(input + sw)), []);
+  assert.equal(brokenSwitches(card('<input id="x" type="checkbox">')).length, 1);
+  assert.equal(brokenSwitches(card(sw) + input).length, 1, 'an input right after a closed label has no switch');
+  assert.equal(brokenSwitches(card(sw) + `<div>${input}</div><label>${sw}</label>`).length, 1, 'outside any label');
+});
+
+test('every yes/no choice in Settings is the square switch, never a native checkbox', () => {
+  const html = read('extension/sidepanel.html');
+  const start = html.indexOf('<section id="settingsDialog"');
+  assert.ok(start > 0, 'found the Settings window');
+  const tags = /<\/?section\b/g;
+  tags.lastIndex = start;
+  let depth = 0;
+  let end = -1;
+  for (let match = tags.exec(html); match; match = tags.exec(html)) {
+    depth += match[0] === '<section' ? 1 : -1;
+    if (depth === 0) { end = match.index; break; }
+  }
+  const settings = html.slice(start, end);
+  assert.ok([...settings.matchAll(/type="checkbox"/g)].length >= 10, 'found the Settings switches');
+  assert.deepEqual(brokenSwitches(settings), []);
+});
+
 test('settings choice and toggle cards also style inside the Add window', () => {
   const css = read('extension/sidepanel.css');
   for (const klass of ['settings-toggle-card', 'settings-choice-card', 'conn-mode-card']) {
