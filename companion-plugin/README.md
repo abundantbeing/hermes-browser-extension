@@ -54,7 +54,11 @@ hermes plugins install https://github.com/abundantbeing/hermes-browser-extension
 hermes plugins list
 ```
 
-Add `--profile <name>` to install it for a named profile. Then, in the extension,
+The plugin installs only from that repository URL. Add `--profile <name>` to
+install it for a named profile, and restart each gateway once. Already on 0.4.0?
+Update it the same way (`hermes plugins update hermes-browser-extension --profile <name>`,
+or the install command with `--force`), because Background task tabs need the
+0.4.1 plugin. Then, in the extension,
 open **Settings › About & Diagnostics**: the plugin's row says whether it is
 loaded, its version and its tools. To use Hermes Control, turn it on in the
 **Hermes Control** panel and attach a tab.
@@ -87,8 +91,8 @@ the full tool reference.
 
 ## Background task tabs
 
-For a paired local Chromium gateway with the companion plugin’s tab tools, enable **Background task tabs** under
-**Hermes Control** in the side panel once. With the browser open, gateway chats
+For a paired local Chromium gateway with the companion plugin’s tab tools, enable **Background task tabs** once,
+in the Hermes Control card under **Settings > Permissions & Control**. With the browser open, gateway chats
 such as Feishu can use `tab_create` to open a page without Attach. The first page
 opens an independent background group, and later pages from the same Hermes
 session join it. Existing tabs and tabs from other sessions are outside its

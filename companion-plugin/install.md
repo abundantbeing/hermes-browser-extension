@@ -33,7 +33,8 @@ through a few tools. The plugin version is the `version` in `plugin.yaml`.
 - The Hermes API server on (`API_SERVER_ENABLED=true`) for the profile, with its
   own `API_SERVER_KEY` (Hermes refuses a named profile without one).
 - The Hermes Browser Extension 0.3.0 or newer (BCP v2 turn envelopes); 0.4.0 or
-  newer for Hermes Control through this plugin. Hermes Control runs in
+  newer for Hermes Control through this plugin, and 0.4.1 or newer (extension and
+  plugin both) for Background task tabs. Hermes Control runs in
   Chromium-based browsers only.
 - The extension's origin (`chrome-extension://<id>`) in `API_SERVER_CORS_ORIGINS`
   on a Hermes that does not pair with the extension itself; the extension's
@@ -102,12 +103,18 @@ capabilities. Those may still require a Dashboard and separate authorization.
 ```bash
 hermes plugins update hermes-browser-extension --profile <profile>
 # or, for a copy that has no install record, or to move to another commit:
-hermes plugins install <the same source> --enable --force [--ref <sha>] --profile <profile>
+hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable --force [--ref <sha>] --profile <profile>
 ```
 
-Then restart that profile's gateway. A stale copy keeps its old tools and
+Then restart that profile's gateway once. A stale copy keeps its old tools and
 hooks until then; `hermes plugins list` and `--list` above show the installed
-version next to this repository's.
+version next to this repository's. The plugin installs only from that
+repository URL.
+
+Update each profile from 0.4.0 to 0.4.1 to use Background task tabs: the
+extension's option needs the 0.4.1 plugin, which also keeps the `tab_*` tools
+in Hermes' tool list for the whole chat and serves its routes for named
+profiles on a multiplexed gateway.
 
 ### From the old name, `hermes-browser-companion`
 
@@ -159,7 +166,7 @@ the API server (the listener the extension already pairs with, normally
 ```text
 GET /api/plugins/hermes-browser-extension/status
 { "object": "hermes.browser_companion.status", "plugin": "hermes-browser-extension",
-  "version": "0.4.0", "profile": "default", "tools": [...], "hooks": [...],
+  "version": "0.4.1", "profile": "default", "tools": [...], "hooks": [...],
   "routes": ["/api/plugins/hermes-browser-extension/actions",
              "/api/plugins/hermes-browser-extension/context",
              "/api/plugins/hermes-browser-extension/context/status",
