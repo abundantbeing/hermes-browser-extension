@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Connecting no longer needs `API_SERVER_CORS_ORIGINS`.** Hermes refuses any request whose `Origin` header it does not list, and the browser adds one to the extension's chat, run and session requests, so a first message on a correct key and address failed with "Hermes API rejected the request. Check the API token". The extension now removes `Origin` from its own API requests to the gateway you connected (and to an address you are testing in Add connection), through a session network rule that matches nothing else: not web pages, not other addresses, not WebSocket handshakes. The API key still guards every route. A Hermes that already lists the extension is unaffected. Browsers that ignore extension network rules still need the `.env` line, which the panel names when it sees the refusal.
+
 ## [0.4.1] - 2026-11-12
 
 ### Added
