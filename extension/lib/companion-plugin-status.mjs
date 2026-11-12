@@ -47,7 +47,7 @@ export const COMPANION_CONTROL_REGISTER_PATH = `/api/plugins/${COMPANION_PLUGIN_
 
 // The plugin version this extension build expects. companion-plugin/plugin.yaml
 // carries the same value and a test keeps the two equal: bump them together.
-export const COMPANION_EXPECTED_VERSION = '0.4.0';
+export const COMPANION_EXPECTED_VERSION = '0.4.1';
 export const COMPANION_EXPECTED_TOOLS = Object.freeze([
   'browser_clear_context',
   'browser_context_journal',

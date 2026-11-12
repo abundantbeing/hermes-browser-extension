@@ -77,7 +77,7 @@ test('the Settings reason line is localized, with the companion reasons and para
     ['companion-network', { detail: '' }],
     ['companion-auth-refused', { status: 401 }],
     ['companion-gateway-error', { status: 502 }],
-    ['companion-route', { version: '0.4.0', route: '/api/plugins/hermes-browser-extension/context' }],
+    ['companion-route', { version: '0.4.1', route: '/api/plugins/hermes-browser-extension/context' }],
     ['companion-renamed', { version: '0.3.4' }],
   ];
   for (const [code, params] of cases) {

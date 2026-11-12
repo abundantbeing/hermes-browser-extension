@@ -75,7 +75,7 @@ test('the support report asks the plugin for its context counts and action names
 });
 
 test('the diagnostics prints the plugin lines only when given, and they carry no page data', () => {
-  const base = { extensionVersion: '0.4.0', settings: {}, connection: {}, health: {}, capabilities: {} };
+  const base = { extensionVersion: '0.4.1', settings: {}, connection: {}, health: {}, capabilities: {} };
   const without = buildSupportDiagnostics(base).markdown;
   assert.doesNotMatch(without, /Companion plugin context|Companion plugin actions/);
   const given = buildSupportDiagnostics({
@@ -151,7 +151,7 @@ const ROUTES = [
 ];
 
 function readyProbe(checkedAt = Date.now(), routes = ROUTES) {
-  return { state: 'ready', via: 'route', version: '0.4.0', routes, checkedAt };
+  return { state: 'ready', via: 'route', version: '0.4.1', routes, checkedAt };
 }
 
 test('with a proven route the helper uploads the same full envelope once, with the session, and returns true', async () => {
