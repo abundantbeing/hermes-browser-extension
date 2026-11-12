@@ -722,8 +722,8 @@ import {
 import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForConnect } from './lib/connection-dispatch.mjs';
 import { createAddConnectionDialog } from './lib/add-connection-dialog.mjs';
 import { createDeleteConnectionDialog } from './lib/delete-connection-dialog.mjs';
-import { connectionHeadersAsObject, extensionInitiatorHost, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
-import { applyGatewayOriginRule, withDraftOriginRule } from './lib/gateway-origin-rule.mjs';
+import { connectionHeadersAsObject, extensionInitiatorHost, newProbeMarker, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
+import { SYNC_GATEWAY_RULES_MESSAGE, withDraftOriginRule } from './lib/gateway-origin-rule.mjs';
 import { probeConnection } from './lib/probe-connection.mjs';
 import {
   addSavedConnection,
@@ -23730,7 +23730,6 @@ async function loadSettings({ restoreMessages = false } = {}) {
     };
   }
   trustedDashboardTabId = Number(settings.trustedDashboardTabId) || null;
-  void syncGatewayOriginRule();
   contextScope = normalizeContextScope(contextScope);
   await refreshContextConsentPrincipal({ settingsOverride: settings });
   saveContextScopeForInstance();
@@ -24259,18 +24258,15 @@ function openDeleteConnectionWindow() {
   });
 }
 
-// Without this rule Hermes refuses the panel's POST requests unless the person added the extension's
-// origin to API_SERVER_CORS_ORIGINS (gateway-origin-rule.mjs). The worker keeps it in step with stored
-// settings; the panel installs it too so a test right after saving never runs before it.
-async function syncGatewayOriginRule() {
+// Without the worker's rule Hermes refuses the panel's POST requests unless the person added the
+// extension's origin to API_SERVER_CORS_ORIGINS (gateway-origin-rule.mjs). Only the worker writes it,
+// from stored settings; the panel asks it to sync and waits, so a test right after saving, or a pairing
+// with an address not saved yet, never runs before it. Best effort: a refusal still names the .env line.
+async function syncGatewayOriginRule({ pendingGatewayUrl = '' } = {}) {
   try {
-    await applyGatewayOriginRule({
-      gatewayUrl: settings.gatewayUrl,
-      connectionTransport: settings.connectionTransport,
-      extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
-    }, browserApi.declarativeNetRequest);
+    await browserApi.runtime.sendMessage({ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl });
   } catch (error) {
-    console.warn('[Hermes Browser] Gateway origin rule failed:', error);
+    console.warn('[Hermes Browser] Gateway origin rule sync failed:', error);
   }
 }
 
@@ -24281,20 +24277,26 @@ function addConnectionWindow() {
     addConnectionDialog = createAddConnectionDialog({
       root: document,
       translate: t,
-      probe: ({ gatewayUrl, apiKey, headers, signal }) => withProbeHeaderIsolation(
-        {
-          gatewayUrl,
-          headers,
-          active: { gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders },
-          extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
-        },
-        (marker) => withDraftOriginRule(
-          { gatewayUrl, extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)) },
-          () => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
+      // Every request of this test carries one marker, which its header rule and its origin rule match.
+      probe: ({ gatewayUrl, apiKey, headers, signal }) => {
+        const extensionHost = extensionInitiatorHost((path) => browserApi.runtime.getURL(path));
+        const marker = newProbeMarker();
+        return withDraftOriginRule(
+          { gatewayUrl, extensionHost, marker },
+          () => withProbeHeaderIsolation(
+            {
+              gatewayUrl,
+              headers,
+              active: { gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders },
+              extensionHost,
+              marker,
+            },
+            () => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
+            browserApi.declarativeNetRequest,
+          ),
           browserApi.declarativeNetRequest,
-        ),
-        browserApi.declarativeNetRequest,
-      ),
+        );
+      },
       openAddress: (address) => { void browserApi.tabs.create({ url: address }); },
       onAdd: async ({ name, connection }) => {
         if (!(await updateSavedConnection('add', { name, connection }))) throw new Error(t('connections.error'));
@@ -27936,6 +27938,8 @@ async function connectApiWithPairing() {
     offerManualSetup(message);
     return;
   }
+  // The address may be typed but not saved yet: the worker covers it too while this pairing runs.
+  await syncGatewayOriginRule({ pendingGatewayUrl: settings.gatewayUrl });
   const generation = connectionController.begin({
     mode: normalizeConnectionMode(settings.connectionMode),
     transport: settings.connectionTransport,

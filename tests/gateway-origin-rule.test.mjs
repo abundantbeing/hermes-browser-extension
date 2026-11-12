@@ -3,9 +3,9 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
-  DRAFT_ORIGIN_RULE_ID,
   GATEWAY_ORIGIN_RULE_ID,
   applyGatewayOriginRule,
+  draftOriginRule,
   gatewayOriginRules,
   withDraftOriginRule,
 } from '../extension/lib/gateway-origin-rule.mjs';
@@ -88,37 +88,113 @@ test('applying replaces the previous rule, and a dashboard connection removes it
   assert.equal(await applyGatewayOriginRule({ gatewayUrl: 'http://127.0.0.1:8642', extensionHost: HOST }, null), false);
 });
 
-test('a test of an address that is not saved yet gets its own rule while it runs, and only then', async () => {
+test('a loopback address being paired before it is saved is covered beside the active one, and only loopback', () => {
+  const [rule] = gatewayOriginRules({
+    gatewayUrl: 'http://127.0.0.1:8642', connectionTransport: 'local-api', extensionHost: HOST, pendingGatewayUrl: 'http://127.0.0.1:8650',
+  });
+  assert.ok(matches(rule, 'http://127.0.0.1:8642/v1/runs'));
+  assert.ok(matches(rule, 'http://127.0.0.1:8650/api/browser-extension/pair/start'));
+  assert.ok(!matches(rule, 'http://127.0.0.1:9119/api/status'));
+  const [remote] = gatewayOriginRules({
+    gatewayUrl: 'http://127.0.0.1:8642', connectionTransport: 'local-api', extensionHost: HOST, pendingGatewayUrl: 'http://192.168.1.50:8642',
+  });
+  assert.ok(!matches(remote, 'http://192.168.1.50:8642/v1/runs'), 'pairing only runs on loopback, so nothing else is added');
+  const [dashboard] = gatewayOriginRules({
+    gatewayUrl: 'https://hermes.example.com', connectionTransport: 'remote-dashboard', extensionHost: HOST, pendingGatewayUrl: 'http://localhost:8642',
+  });
+  assert.ok(matches(dashboard, 'http://localhost:8642/api/browser-extension/pair/start'));
+  assert.ok(!matches(dashboard, 'https://hermes.example.com/api/ws'));
+});
+
+test('a test of an unsaved address gets a rule for its own marked requests only', () => {
+  const rule = draftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST, marker: 'abc123def456', id: 1_200_000_001 });
+  assert.ok(matches(rule, 'http://192.168.1.50:8642/v1/models?hermes_probe=abc123def456'));
+  assert.ok(matches(rule, 'http://192.168.1.50:8642/v1/models?limit=1&hermes_probe=abc123def456&x=2'));
+  assert.ok(!matches(rule, 'http://192.168.1.50:8642/v1/models'), 'an unmarked request, such as one after the panel closed');
+  assert.ok(!matches(rule, 'http://192.168.1.50:8642/v1/models?hermes_probe=abc123def4567'), 'another marker');
+  assert.equal(draftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST, marker: '' }), null);
+  assert.equal(draftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST, marker: 'a.b' }), null);
+});
+
+test('the test of an unsaved address has its rule while it runs, and only then', async () => {
   const dnr = fakeDnr();
   let during = null;
-  const result = await withDraftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST }, async () => {
-    during = dnr.rules.get(DRAFT_ORIGIN_RULE_ID);
+  const result = await withDraftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST, marker: 'feedface01' }, async () => {
+    during = [...dnr.rules.values()][0];
     return 'probed';
   }, dnr);
   assert.equal(result, 'probed');
-  assert.ok(matches(during, 'http://192.168.1.50:8642/v1/models'));
+  assert.ok(matches(during, 'http://192.168.1.50:8642/v1/models?hermes_probe=feedface01'));
+  assert.ok(during.id >= 1_200_000_000 && during.id < 1_200_000_000 + 2 ** 29);
   assert.equal(dnr.rules.size, 0);
-  await assert.rejects(withDraftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST }, async () => {
+  await assert.rejects(withDraftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST, marker: 'feedface02' }, async () => {
     throw new Error('nothing answered');
   }, dnr), /nothing answered/);
   assert.equal(dnr.rules.size, 0, 'removed after a failed test too');
-  assert.equal(await withDraftOriginRule({ gatewayUrl: '', extensionHost: HOST }, async () => 'no rule', dnr), 'no rule');
-  assert.equal(await withDraftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST }, async () => 'no dnr', null), 'no dnr');
+  assert.equal(await withDraftOriginRule({ gatewayUrl: '', extensionHost: HOST, marker: 'feedface03' }, async () => 'no rule', dnr), 'no rule');
+  assert.equal(await withDraftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST, marker: 'feedface04' }, async () => 'no dnr', null), 'no dnr');
+});
+
+test('a browser that refuses the rule still runs the test', async () => {
+  const refusing = { calls: 0, async updateSessionRules() { this.calls += 1; throw new Error('rule refused'); } };
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    let ran = false;
+    const result = await withDraftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST, marker: 'feedface05' }, async () => {
+      ran = true;
+      return 'answered';
+    }, refusing);
+    assert.equal(ran, true);
+    assert.equal(result, 'answered');
+    assert.equal(refusing.calls, 1, 'nothing to remove afterwards');
+  } finally {
+    console.warn = warn;
+  }
+});
+
+test('two tests at once keep their own rules', async () => {
+  const dnr = fakeDnr();
+  let releaseFirst;
+  const firstHeld = new Promise((resolve) => { releaseFirst = resolve; });
+  let firstRule = null;
+  const first = withDraftOriginRule({ gatewayUrl: 'http://192.168.1.50:8642', extensionHost: HOST, marker: 'aaaaaa01' }, async () => {
+    firstRule = [...dnr.rules.values()].find((rule) => rule.condition.regexFilter.includes('aaaaaa01'));
+    await firstHeld;
+    return 'first';
+  }, dnr);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const second = await withDraftOriginRule({ gatewayUrl: 'http://192.168.1.51:8642', extensionHost: HOST, marker: 'bbbbbb02' }, async () => {
+    assert.equal(dnr.rules.size, 2, 'both rules are installed together');
+    return 'second';
+  }, dnr);
+  assert.equal(second, 'second');
+  assert.ok(dnr.rules.has(firstRule.id), 'finishing the second test leaves the rule of the first');
+  releaseFirst();
+  assert.equal(await first, 'first');
+  assert.equal(dnr.rules.size, 0);
 });
 
 test('the rule ids do not collide with the other session rules', () => {
-  const ids = new Set([GATEWAY_ORIGIN_RULE_ID, DRAFT_ORIGIN_RULE_ID, HEADER_RULE_ID, 7745]);
-  assert.equal(ids.size, 4);
-  assert.ok(GATEWAY_ORIGIN_RULE_ID < 1_000_000 && DRAFT_ORIGIN_RULE_ID < 1_000_000, 'below the random probe rule range');
+  const ids = new Set([GATEWAY_ORIGIN_RULE_ID, HEADER_RULE_ID, 7745]);
+  assert.equal(ids.size, 3);
+  assert.ok(GATEWAY_ORIGIN_RULE_ID < 1_000_000, 'below the probe rule ranges');
+  assert.ok(1_000_000 + 2 ** 30 <= 1_200_000_000, 'the header probe range ends before the test origin range');
+  assert.ok(1_200_000_000 + 2 ** 29 < 2 ** 31, 'rule ids stay 32-bit');
 });
 
-test('the worker keeps the rule in step with the active connection, and the panel applies it before it tests', async () => {
+test('only the worker writes the active rule; a panel asks it and waits', async () => {
   const background = await readFile(new URL('../extension/background.js', import.meta.url), 'utf8');
-  assert.match(background, /applyGatewayOriginRule\(/);
-  assert.match(background, /changes\.hermesBrowserSettings[^\n]*syncConnectionHeaders\(\)/);
+  assert.match(background, /applyGatewayOriginRule\(\{[\s\S]{0,200}pendingGatewayUrl: pendingPairingGatewayUrl/);
+  assert.match(background, /message\?\.type === SYNC_GATEWAY_RULES_MESSAGE\s*\?\s*syncGatewayRulesForPanel\(message\)/);
+  assert.match(background, /LOOPBACK_FETCH_MESSAGE,\s*SYNC_GATEWAY_RULES_MESSAGE,/, 'only extension pages may ask');
+  assert.match(background, /if \(changes\.hermesBrowserSettings\) pendingPairingGatewayUrl = '';\s*void syncConnectionHeaders\(\);/, 'a settings change drops a pending pairing address');
   const panel = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(panel, /withDraftOriginRule\(/, 'the Add connection test of a new address');
+  assert.doesNotMatch(panel, /applyGatewayOriginRule\(/, 'the panel never writes the active rule');
+  assert.match(panel, /sendMessage\(\{ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl \}\)/);
   assert.match(panel, /async function testConnection\(\) \{[\s\S]{0,600}await syncGatewayOriginRule\(\)/, 'Test connection waits for the rule');
+  assert.match(panel, /async function connectApiWithPairing\(\) \{[\s\S]{0,1200}await syncGatewayOriginRule\(\{ pendingGatewayUrl: settings\.gatewayUrl \}\);\s*const generation/, 'pairing covers an unsaved address first');
+  assert.match(panel, /const marker = newProbeMarker\(\);[\s\S]{0,200}withDraftOriginRule\(\s*\{ gatewayUrl, extensionHost, marker \}[\s\S]{0,500}extensionHost,\s*marker,\s*\}[\s\S]{0,100}probeConnection\(\{ gatewayUrl, apiKey, headers, marker, signal \}\)/, 'one marker for the requests of the test and both its rules');
 });
 
 test('the extension manifest grants what the rule needs, and the Firefox build keeps it', async () => {

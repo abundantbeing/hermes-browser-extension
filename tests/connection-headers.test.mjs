@@ -167,6 +167,6 @@ test('the background keeps the network rule in step with the active connection',
   assert.match(background, /applyConnectionHeaderRules\(\{\s*gatewayUrl: settings\.gatewayUrl,\s*headers: settings\.connectionHeaders,\s*extensionHost\s*\}\)/);
   assert.doesNotMatch(background, /extensionHost: browserApi\.runtime/, 'the initiator is the host of the extension pages, not the runtime id');
   assert.match(background, /const syncConnectionHeaders = createHeaderRuleSync\(/, 'updates run one after another');
-  assert.match(background, /changes\.hermesBrowserSettings \|\| changes\[SAVED_CONNECTION_SECRETS_STORAGE_KEY\]\) void syncConnectionHeaders\(\)/);
+  assert.match(background, /changes\.hermesBrowserSettings \|\| changes\[SAVED_CONNECTION_SECRETS_STORAGE_KEY\]\) \{[^}]*void syncConnectionHeaders\(\);\s*\}/);
   assert.match(background, /onStartup\.addListener\(async \(\) => \{[\s\S]*await syncConnectionHeaders\(\)/);
 });
