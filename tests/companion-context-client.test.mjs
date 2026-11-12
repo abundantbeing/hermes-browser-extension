@@ -33,7 +33,7 @@ const ALL_TOOLS = [
 ];
 const ALL_ROUTES = [COMPANION_ACTIONS_PATH, COMPANION_CONTEXT_UPLOAD_PATH, COMPANION_CONTEXT_STATUS_PATH, COMPANION_STATUS_PATH];
 
-function probe({ routes = ALL_ROUTES, version = '0.4.1', state = 'ready' } = {}) {
+function probe({ routes = ALL_ROUTES, version = '0.4.0', state = 'ready' } = {}) {
   const parsed = parseCompanionStatusPayload({
     object: 'hermes.browser_companion.status', plugin: 'hermes-browser-extension', version, profile: 'default',
     tools: ALL_TOOLS, hooks: [], routes, live: false,
@@ -63,7 +63,7 @@ test('each of the three rows is "available via the companion plugin" only when t
     assert.equal(fields.state, 'available', id);
     assert.equal(fields.reasonCode, 'companion-route');
     assert.equal(fields.params.route, COMPANION_ROUTE_CAPABILITIES[id]);
-    assert.match(fields.reason, /Available through the hermes-browser-extension plugin \(version 0\.4\.1\)/);
+    assert.match(fields.reason, /Available through the hermes-browser-extension plugin \(version 0\.4\.0\)/);
     assert.equal(fields.checkedAt, NOW);
     assert.ok(isCompanionReasonCode(fields.reasonCode));
     // Not listed (an older copy), or the plugin is not ready: nothing to claim.

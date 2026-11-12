@@ -437,7 +437,7 @@ import {
 } from './lib/capabilities.mjs';
 import { capabilityIdentity } from './lib/capability-status.mjs';
 import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
-import { COMPANION_STATUS_PATH, parseCompanionStatusPayload, COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
+import { COMPANION_STATUS_PATH, companionSupportsBackgroundTasks, parseCompanionStatusPayload, COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
 import { botAvatarRoute } from './lib/bot-roster-source.mjs';
 import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
 import { stageImageViaSessionSocket } from './lib/session-socket-image.mjs';
@@ -929,7 +929,7 @@ function initBackgroundTaskBrowserSetting() {
         cache: 'no-store',
         signal: AbortSignal.timeout(5000),
       });
-      available = response.ok && parseCompanionStatusPayload(await response.json()).tools?.includes('tab_create');
+      available = response.ok && companionSupportsBackgroundTasks(parseCompanionStatusPayload(await response.json()));
     } catch {
       // No trustworthy plugin response: leave the setting disabled.
     }

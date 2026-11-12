@@ -11,7 +11,7 @@ function chromeWith(settings) {
   const values = { hermesBrowserSettings: settings };
   return {
     runtime: {
-      getManifest: () => ({ version: '0.4.1' }),
+      getManifest: () => ({ version: '0.4.0' }),
       getURL: (path) => `chrome-extension://test/${path}`,
       getContexts: async () => [],
       sendMessage: async () => ({ ok: true }),
