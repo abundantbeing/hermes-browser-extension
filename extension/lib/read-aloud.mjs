@@ -563,15 +563,107 @@ export function createGatewayAudioPlayback({
 
 const QUIET_SPEECH_ERRORS = new Set(['canceled', 'cancelled', 'interrupted']);
 
+// The browser picks a voice from utterance.lang, so a Portuguese reply read with the panel's
+// English locale comes out as an English voice mangling Portuguese. Guess the reply's own
+// language: writing systems first, then common short words for Latin-script languages.
+const SCRIPT_LANGUAGES = [
+  [/[぀-ヿ]/u, 'ja'],
+  [/[가-힯]/u, 'ko'],
+  [/[一-鿿]/u, 'zh'],
+  [/[Ѐ-ӿ]/u, 'ru'],
+  [/[؀-ۿ]/u, 'ar'],
+  [/[ऀ-ॿ]/u, 'hi'],
+  [/[฀-๿]/u, 'th'],
+];
+const SCRIPT_SIBLINGS = { zh: ['zh'], ru: ['ru', 'uk'] };
+const LATIN_WORDS = {
+  pt: 'de que não é os as um uma para com em do da dos das no na você está também são mais isso pelo pela muito ao foi seu sua quando',
+  es: 'el la los las que de y en es un una por para con no está pero muy también lo del al su sus como más hay este esta',
+  en: 'the and is are of to you that it with for this not be on have was what your can will an or by from',
+  fr: 'le la les et est une des du pas vous que pour avec ce dans sur qui il elle nous au aux sont mais',
+  de: 'der die das und ist nicht ein eine ich sie mit zu den auch es auf für wir dem sich von',
+  it: 'il di che è non una per con sono gli della anche questo nel alla lo le si come più',
+};
+const LATIN_WORD_SETS = Object.fromEntries(Object.entries(LATIN_WORDS).map(([code, words]) => [code, new Set(words.split(' '))]));
+const LATIN_MARKS = { pt: /[ãõç]/giu, es: /[ñ¿¡]/giu };
+const DEFAULT_REGIONS = {
+  pt: 'pt-BR', es: 'es-ES', en: 'en-US', fr: 'fr-FR', de: 'de-DE', it: 'it-IT',
+  ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', ru: 'ru-RU', uk: 'uk-UA', ar: 'ar-SA', hi: 'hi-IN', th: 'th-TH',
+};
+
+function normalizeLangTag(tag) {
+  return String(tag || '').trim().replace(/_/g, '-').toLowerCase();
+}
+
+function primaryOf(tag) {
+  return normalizeLangTag(tag).split('-')[0];
+}
+
+/** The fallback tag when it is the same language with a region, else the language's usual region. */
+function withRegion(code, fallbackLang) {
+  const fallback = String(fallbackLang || '').trim().replace(/_/g, '-');
+  if (primaryOf(fallback) === code && fallback.includes('-')) return fallback;
+  return DEFAULT_REGIONS[code] || code;
+}
+
+/**
+ * A BCP 47 tag for the language `text` is written in, or `fallbackLang` when the text
+ * is too short or too mixed to tell.
+ */
+export function guessSpeechLanguage(text, fallbackLang = '') {
+  const sample = String(text || '').slice(0, 4000);
+  const fallbackPrimary = primaryOf(fallbackLang);
+  for (const [pattern, code] of SCRIPT_LANGUAGES) {
+    if (!pattern.test(sample)) continue;
+    const siblings = SCRIPT_SIBLINGS[code] || [code];
+    return withRegion(siblings.includes(fallbackPrimary) ? fallbackPrimary : code, fallbackLang);
+  }
+  const words = sample.toLowerCase().match(/\p{L}+/gu) || [];
+  const scores = Object.fromEntries(Object.keys(LATIN_WORD_SETS).map((code) => [code, 0]));
+  for (const word of words) {
+    for (const [code, set] of Object.entries(LATIN_WORD_SETS)) if (set.has(word)) scores[code] += 1;
+  }
+  for (const [code, pattern] of Object.entries(LATIN_MARKS)) scores[code] += 2 * (sample.match(pattern) || []).length;
+  const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const [[best, top], [, runnerUp]] = ranked;
+  if (top >= 2 && top > runnerUp) return withRegion(best, fallbackLang);
+  return fallbackLang ? String(fallbackLang).replace(/_/g, '-') : '';
+}
+
+/** The installed voice for `lang`: same region first, then the same language; null when none. */
+export function pickSpeechVoice(voices, lang) {
+  const wanted = normalizeLangTag(lang);
+  if (!wanted || !Array.isArray(voices) || !voices.length) return null;
+  const exact = voices.filter((voice) => normalizeLangTag(voice?.lang) === wanted);
+  const primary = primaryOf(wanted);
+  const related = voices.filter((voice) => primaryOf(voice?.lang) === primary);
+  const pool = exact.length ? exact : related;
+  return pool.find((voice) => voice?.default) || pool[0] || null;
+}
+
+/**
+ * The browser's own voice. `lang` forces a language; otherwise each read guesses it from
+ * the text, falling back to `fallbackLang` (the panel's locale).
+ */
 export function createBrowserSpeech({
   synth = globalThis.speechSynthesis || null,
   Utterance = globalThis.SpeechSynthesisUtterance || null,
   lang = '',
+  fallbackLang = '',
 } = {}) {
+  // Chrome loads its voice list lazily; asking once starts that load before the first read.
+  try { synth?.getVoices?.(); } catch { /* the list is optional */ }
   return {
     available: Boolean(synth && Utterance),
     speak(chunks) {
       if (!synth || !Utterance) throw new Error('Browser speech is not available.');
+      const spokenLang = lang || guessSpeechLanguage(chunks.join(' '), fallbackLang);
+      let voices = [];
+      try { voices = synth.getVoices?.() || []; } catch { voices = []; }
+      const voice = pickSpeechVoice(voices, spokenLang);
+      if (spokenLang && voices.length && !voice) {
+        throw new Error(`This browser has no voice for ${spokenLang}; install one in your system's speech settings.`);
+      }
       let at = 0;
       let stopped = false;
       let settle;
@@ -581,7 +673,8 @@ export function createBrowserSpeech({
         if (stopped) return;
         if (at >= chunks.length) { settle(); return; }
         const utterance = new Utterance(chunks[at]);
-        if (lang) utterance.lang = lang;
+        if (spokenLang) utterance.lang = spokenLang;
+        if (voice) utterance.voice = voice;
         utterance.onend = () => {
           if (stopped) return;
           at += 1;
