@@ -4669,7 +4669,7 @@ function hermesAccount() {
       store: hermesAccountStore(),
       fetchImpl: (...args) => globalThis.fetch(...args),
       openWindow: (url) => openSignInWindow(url, { windowsApi: browserApi.windows, tabsApi: browserApi.tabs }),
-      webRequestApi: browserApi.webRequest,
+      webRequestApi: () => browserApi.webRequest,
       tabsApi: browserApi.tabs,
       onChange: (event) => handleAccountChange(event),
     });

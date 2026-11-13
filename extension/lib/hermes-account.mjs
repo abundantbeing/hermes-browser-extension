@@ -185,6 +185,42 @@ export function buildAuthorizeUrl({ baseUrl, provider = '', challenge, redirectU
   return url.toString();
 }
 
+const GATEWAY_CALLBACK_SUFFIX = '/auth/callback';
+
+/**
+ * A gateway with `webapp.public_url` sends its provider back to <public_url>/auth/callback, and the sign-in
+ * cookie it set lives only on the address the sign-in started on. Read from a page the sign-in window shows
+ * (the provider page naming that callback in `redirect_uri`, or the callback itself), the gateway base the
+ * sign-in has to start on instead; '' when it is the address already in use. A remote sign-in never moves to
+ * this machine.
+ */
+export function publicSignInBase(rawUrl, base) {
+  let seen;
+  let start;
+  try {
+    seen = new URL(String(rawUrl || ''));
+    start = new URL(String(base || ''));
+  } catch {
+    return '';
+  }
+  const named = seen.searchParams.get('redirect_uri');
+  for (const candidate of [seen.href, named]) {
+    if (!candidate) continue;
+    let url;
+    try {
+      url = new URL(candidate);
+    } catch {
+      continue;
+    }
+    if (!url.pathname.endsWith(GATEWAY_CALLBACK_SUFFIX)) continue;
+    const origin = accountOriginOf(url.origin);
+    if (!origin || origin === start.origin) continue;
+    if (isLoopbackOrigin(origin) && !isLoopbackOrigin(start.origin)) continue;
+    return `${origin}${url.pathname.slice(0, -GATEWAY_CALLBACK_SUFFIX.length)}`;
+  }
+  return '';
+}
+
 function constantTimeEquals(a, b) {
   const left = String(a);
   const right = String(b);
@@ -334,12 +370,17 @@ export async function openSignInWindow(url, { windowsApi = null, tabsApi = null 
   if (typeof windowsApi?.create === 'function') {
     const created = await windowsApi.create({ url, type: 'popup', width: 520, height: 760, focused: true });
     const windowId = created?.id;
+    const tabId = created?.tabs?.[0]?.id;
     let notify = () => {};
     const closed = new Promise((resolve) => { notify = resolve; });
     const onRemoved = (id) => { if (id === windowId) notify(true); };
     windowsApi.onRemoved?.addListener?.(onRemoved);
     return {
       closed,
+      tabId,
+      async navigate(next) {
+        if (tabId !== undefined) await tabsApi?.update?.(tabId, { url: next });
+      },
       async close() {
         windowsApi.onRemoved?.removeListener?.(onRemoved);
         if (windowId === undefined) return;
@@ -356,6 +397,10 @@ export async function openSignInWindow(url, { windowsApi = null, tabsApi = null 
     tabsApi.onRemoved?.addListener?.(onRemoved);
     return {
       closed,
+      tabId,
+      async navigate(next) {
+        if (tabId !== undefined) await tabsApi.update?.(tabId, { url: next });
+      },
       async close() {
         tabsApi.onRemoved?.removeListener?.(onRemoved);
         if (tabId === undefined) return;
@@ -608,7 +653,8 @@ export async function probeAccountSupport(origin, { fetchImpl = globalThis.fetch
  * @param {Crypto} [options.cryptoImpl]
  * @param {() => number} [options.random]
  * @param {(url: string) => Promise<{ close(): Promise<void>, closed?: Promise<boolean> }>} [options.openWindow]
- * @param {object} [options.webRequestApi] [options.tabsApi]
+ * @param {object|(() => object)} [options.webRequestApi]  or a getter: the API appears once its permission is granted
+ * @param {object} [options.tabsApi]
  * @param {(event: object) => void} [options.onChange]  a sign-in was saved, replaced or cleared (no tokens)
  */
 export function createHermesAccount({
@@ -755,6 +801,45 @@ export function createHermesAccount({
 
   // GET /api/auth/providers: which interactive providers the gateway offers. One provider is named in the
   // authorize URL; several (or none known) leave it to the gateway, which renders its own chooser.
+  // The webRequest API appears only once its optional permission is granted, after this client was made.
+  function currentWebRequestApi() {
+    return (typeof webRequestApi === 'function' ? webRequestApi() : webRequestApi) || null;
+  }
+
+  // Once per sign-in: when the sign-in window shows the gateway's callback on another address (its public_url),
+  // start the same sign-in again there, so the gateway's sign-in cookie is on the address the provider returns to.
+  // Pages seen before the window's tab is known are kept and judged once it is.
+  function moveToPublicAddress({ base, authorize }) {
+    let opened = null;
+    let moved = false;
+    const early = [];
+    const judge = (tabId, urls) => {
+      if (moved || !opened || tabId !== opened.tabId || typeof opened.navigate !== 'function') return;
+      for (const url of urls) {
+        const next = url ? publicSignInBase(url, base) : '';
+        if (!next) continue;
+        moved = true;
+        Promise.resolve(opened.navigate(buildAuthorizeUrl({ baseUrl: next, ...authorize }))).catch(() => undefined);
+        return;
+      }
+    };
+    const listener = (tabId, changeInfo, tab) => {
+      const urls = [changeInfo?.url, tab?.pendingUrl, tab?.url];
+      if (opened) judge(tabId, urls);
+      else early.push([tabId, urls]);
+    };
+    tabsApi?.onUpdated?.addListener?.(listener);
+    return {
+      attach(window) {
+        opened = window;
+        for (const [tabId, urls] of early.splice(0)) judge(tabId, urls);
+      },
+      stop() {
+        try { tabsApi?.onUpdated?.removeListener?.(listener); } catch { /* already gone */ }
+      },
+    };
+  }
+
   async function chooseProvider(origin) {
     const result = await send(origin, '/api/auth/providers');
     const list = Array.isArray(result.payload?.providers) ? result.payload.providers : [];
@@ -789,17 +874,21 @@ export function createHermesAccount({
       const provider = await chooseProvider(base).catch(() => '');
       const authorizeUrl = buildAuthorizeUrl({ baseUrl: base, provider, challenge: pkce.challenge, redirectUri, state: pkce.state });
       // Watch before the window opens, so a fast redirect cannot be missed.
-      const watcher = watchForCallback({ redirectUri, expectedState: pkce.state, webRequestApi, tabsApi, timeoutMs: signInTimeoutMs });
+      const watcher = watchForCallback({ redirectUri, expectedState: pkce.state, webRequestApi: currentWebRequestApi(), tabsApi, timeoutMs: signInTimeoutMs });
+      const mover = moveToPublicAddress({ base, authorize: { provider, challenge: pkce.challenge, redirectUri, state: pkce.state } });
       let opened = null;
       try {
         opened = await openWindow(authorizeUrl);
       } catch (error) {
+        mover.stop();
         watcher.cancel(ACCOUNT_REASONS.NO_WINDOW);
         await watcher.done;
         return { ok: false, reason: error?.reason || ACCOUNT_REASONS.NO_WINDOW };
       }
+      mover.attach(opened);
       opened?.closed?.then?.(() => watcher.cancel(ACCOUNT_REASONS.CANCELLED), () => undefined);
       const captured = await watcher.done;
+      mover.stop();
       try { await opened?.close?.(); } catch { /* the window is already gone */ }
       if (!captured.ok) return { ok: false, reason: captured.reason };
       const exchanged = await send(base, '/auth/native/token', { method: 'POST', body: { code: captured.code, code_verifier: pkce.verifier } });
