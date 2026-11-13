@@ -1,0 +1,10 @@
+# The test suite reads files with readFileSync and matches them against patterns
+# containing `\n`: 197 tests do it, 166 of them on sidepanel.js alone. With no
+# attribute file, a Windows clone sitting on the Git for Windows default
+# (`core.autocrlf=true`) checks those files out as CRLF, every one of those
+# assertions fails, and a contributor cannot tell their own breakage from an
+# end-of-line artefact: `npm test` is red before any change is made.
+#
+# `text=auto` leaves binary files alone (images, zips, the vendored bundles);
+# `eol=lf` fixes the checkout no matter what `core.autocrlf` says.
+* text=auto eol=lf
