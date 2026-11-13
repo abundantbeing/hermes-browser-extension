@@ -1568,7 +1568,8 @@ const readAloudPlayer = createReadAloudPlayer({
     },
     play: (bytes) => readAloudAudio.play(bytes),
   },
-  browser: { speak: (chunks) => createBrowserSpeech({ lang: getLocale() }).speak(chunks) },
+  // The reply's own language picks the voice; the panel's locale only breaks a tie.
+  browser: { speak: (chunks) => createBrowserSpeech({ fallbackLang: getLocale() }).speak(chunks) },
   onChange: () => {
     panelMessageThread?.refreshReadAloud();
     renderCompatibilityPanel();

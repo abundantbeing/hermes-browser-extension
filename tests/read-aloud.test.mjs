@@ -6,6 +6,8 @@ import {
   READ_ALOUD_STATUS,
   chooseReadAloudRoute,
   createBrowserSpeech,
+  guessSpeechLanguage,
+  pickSpeechVoice,
   createGatewayAudioPlayback,
   createReadAloudPlayer,
   dataUrlToBytes,
@@ -413,6 +415,48 @@ test('a speech error rejects the clip; "canceled" and "interrupted" are not erro
   const second = speech.speak(['b.']);
   synth.spoken[1].onerror({ error: 'interrupted' });
   await second.finished;
+});
+
+test('the spoken language comes from the reply, not the panel locale', () => {
+  assert.equal(guessSpeechLanguage('Olá Diego, este é um teste de leitura em voz alta da extensão.', 'en'), 'pt-BR');
+  assert.equal(guessSpeechLanguage('Este texto não tem nada de especial, mas é português.', 'pt-PT'), 'pt-PT');
+  assert.equal(guessSpeechLanguage('This is a short reply that you can read aloud.', 'pt-BR'), 'en-US');
+  assert.equal(guessSpeechLanguage('¿Dónde está el baño? Por favor, dime cómo llegar.', 'en'), 'es-ES');
+  assert.equal(guessSpeechLanguage('これは日本語のテキストです。', 'en'), 'ja-JP');
+  assert.equal(guessSpeechLanguage('这是中文文本。', 'zh-TW'), 'zh-TW');
+  assert.equal(guessSpeechLanguage('Привіт, як справи?', 'uk'), 'uk-UA');
+  assert.equal(guessSpeechLanguage('OK', 'pt-BR'), 'pt-BR', 'too little to tell keeps the locale');
+  assert.equal(guessSpeechLanguage('OK', ''), '');
+});
+
+test('a voice is picked for the spoken language, region first', () => {
+  const voices = [
+    { name: 'Samantha', lang: 'en-US', default: true },
+    { name: 'Joana', lang: 'pt-PT' },
+    { name: 'Luciana', lang: 'pt_BR' },
+  ];
+  assert.equal(pickSpeechVoice(voices, 'pt-BR').name, 'Luciana');
+  assert.equal(pickSpeechVoice(voices, 'pt-AO').name, 'Joana');
+  assert.equal(pickSpeechVoice(voices, 'de-DE'), null);
+  assert.equal(pickSpeechVoice([], 'pt-BR'), null);
+});
+
+test('browser speech reads a Portuguese reply with a Portuguese voice even in an English panel', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  const luciana = { name: 'Luciana', lang: 'pt-BR' };
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }, luciana];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'en' });
+  speech.speak(['Olá, este é um teste da leitura em voz alta.']);
+  assert.equal(synth.spoken[0].lang, 'pt-BR');
+  assert.equal(synth.spoken[0].voice, luciana);
+});
+
+test('browser speech refuses to read with a voice of another language', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'en' });
+  assert.throws(() => speech.speak(['Olá, este é um teste da leitura em voz alta.']), /no voice for pt-BR/);
+  assert.equal(synth.spoken.length, 0);
 });
 
 test('no speech engine means no browser route', () => {
