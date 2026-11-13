@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes 계정",
   "account.hint": "Hermes 모바일 앱과 같은 로그인입니다. 로그인을 요구하는 게이트웨이에서 아무것도 실행하지 않고도 프로젝트, 세션 권한, 컨텍스트 압축, 전체 봇 목록을 열 수 있습니다. 로그아웃하면 이 브라우저에서 삭제됩니다.",
   "account.sign_in": "Hermes 계정으로 로그인",
+  "account.sign_in_nous": "Nous Portal로 로그인",
   "account.sign_out": "로그아웃",
   "account.status_checking": "이 게이트웨이가 Hermes 계정 로그인을 받는지 확인하는 중입니다.",
   "account.status_waiting": "열린 창에서 로그인을 마칠 때까지 기다리는 중입니다.",

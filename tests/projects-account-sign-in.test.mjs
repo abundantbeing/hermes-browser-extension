@@ -16,7 +16,7 @@ const t = (key, params) => {
   return formatMessage(english[key], params, 'en');
 };
 
-function setup({ blockedReason = 'account-sign-in', signInWithAccount } = {}) {
+function setup({ blockedReason = 'account-sign-in', signInWithAccount, accountSignInLabelKey } = {}) {
   const { document } = parseHTML('<!doctype html><html><body><div id="host"></div></body></html>');
   const container = document.getElementById('host');
   const prepared = [];
@@ -33,6 +33,7 @@ function setup({ blockedReason = 'account-sign-in', signInWithAccount } = {}) {
     openSession: () => {},
     createSessionInFolder: async () => {},
     signInWithAccount,
+    ...(accountSignInLabelKey ? { accountSignInLabelKey } : {}),
     onChange: () => renderProjectsPanel({ container, controller, t, locale: 'en' }),
   });
   return { container, controller, prepared };
@@ -78,4 +79,11 @@ test('a failed sign-in still reads Projects again, and the button is not offered
   const other = setup({ blockedReason: 'webapp-sign-in', signInWithAccount: async () => {} });
   await other.controller.activate();
   assert.equal(other.container.querySelector('[data-testid="projects-account-sign-in"]'), null, 'only the account reason offers it');
+});
+
+test("on a gateway that signs in only through Nous, the card's button says Sign in with Nous Portal", async () => {
+  const { container, controller } = setup({ signInWithAccount: async () => {}, accountSignInLabelKey: () => 'account.sign_in_nous' });
+  await controller.activate();
+  const button = container.querySelector('[data-testid="projects-account-sign-in"]');
+  assert.equal(button.textContent, 'Sign in with Nous Portal');
 });

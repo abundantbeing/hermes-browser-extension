@@ -74,6 +74,7 @@ export function createProjectsController({
   onSessionMoved = () => {},
   onReturnToRecents = () => {},
   signInWithAccount = null,
+  accountSignInLabelKey = () => 'account.sign_in',
   onChange = () => {},
 } = {}) {
   let state = freshState();
@@ -821,6 +822,7 @@ export function createProjectsController({
     refresh,
     accountSignIn,
     canAccountSignIn: () => typeof signInWithAccount === 'function',
+    accountSignInLabelKey,
     setQuery,
     openProject,
     back,

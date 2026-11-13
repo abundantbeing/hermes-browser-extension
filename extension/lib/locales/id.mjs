@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Akun Hermes",
   "account.hint": "Masuk yang sama dengan yang dipakai aplikasi ponsel Hermes. Ini membuka Proyek, otoritas sesi, pemadatan konteks, dan daftar bot lengkap pada gateway yang meminta masuk, tanpa menjalankan apa pun. Keluar menghapusnya dari browser ini.",
   "account.sign_in": "Masuk dengan akun Hermes Anda",
+  "account.sign_in_nous": "Masuk dengan Nous Portal",
   "account.sign_out": "Keluar",
   "account.status_checking": "Memeriksa apakah gateway ini menerima masuk dengan akun Hermes.",
   "account.status_waiting": "Menunggu Anda menyelesaikan proses masuk di jendela yang terbuka.",

@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Account Hermes",
   "account.hint": "Lo stesso accesso usato dall'app mobile di Hermes. Apre Progetti, autorità di sessione, compattazione del contesto e l'elenco completo dei bot su un gateway che richiede l'accesso, senza eseguire nulla. Esci lo dimentica su questo browser.",
   "account.sign_in": "Accedi con il tuo account Hermes",
+  "account.sign_in_nous": "Accedi con Nous Portal",
   "account.sign_out": "Esci",
   "account.status_checking": "Verifica se questo gateway accetta l'accesso con un account Hermes.",
   "account.status_waiting": "In attesa che tu completi l'accesso nella finestra aperta.",

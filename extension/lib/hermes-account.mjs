@@ -185,6 +185,12 @@ export function buildAuthorizeUrl({ baseUrl, provider = '', challenge, redirectU
   return url.toString();
 }
 
+/** The sign-in button's label key: Sign in with Nous Portal where Nous is the gateway's only sign-in. */
+export function accountSignInLabelKey(providers = []) {
+  const names = Array.isArray(providers) ? providers.map((name) => String(name || '').trim().toLowerCase()) : [];
+  return names.length === 1 && names[0] === 'nous' ? 'account.sign_in_nous' : 'account.sign_in';
+}
+
 const GATEWAY_CALLBACK_SUFFIX = '/auth/callback';
 
 /**

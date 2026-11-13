@@ -758,6 +758,7 @@ import {
   accountConnectionKey,
   accountOriginOf,
   accountOriginsFor,
+  accountSignInLabelKey,
   createAccountStore,
   createHermesAccount,
   dialWithAccountTicket,
@@ -4649,7 +4650,7 @@ let hermesAccountStoreInstance = null;
 let hermesAccountClient = null;
 // What the panel last learned about signing in for this connection. `available`: the gateway is gated and
 // advertises the native flow; `signedIn`: a sign-in is held for `origin`. Read synchronously by the capability rows.
-let accountOffer = { origin: '', available: false, signedIn: false, session: null, reason: '', checkedAt: 0 };
+let accountOffer = { origin: '', available: false, signedIn: false, session: null, reason: '', providers: [], checkedAt: 0 };
 let accountSigningIn = false;
 let accountNotice = ''; // 'session-expired' after a refresh 401, else a sign-in failure reason; '' when none
 const accountProbeCache = new Map(); // origin -> { at, result }
@@ -4730,7 +4731,7 @@ async function refreshAccountOffer({ force = false } = {}) {
       for (const origin of origins) {
         const support = await accountSupportFor(origin, { force });
         if (support.available) {
-          next = { origin, available: true, signedIn: false, session: null, reason: '', checkedAt: Date.now() };
+          next = { origin, available: true, signedIn: false, session: null, reason: '', providers: support.providers || [], checkedAt: Date.now() };
           break;
         }
         next.origin = next.origin || origin;
@@ -4894,6 +4895,9 @@ function renderHermesAccountRow() {
   row.hidden = false;
   if (status) status.textContent = text;
   if (signIn) {
+    const labelKey = accountSignInLabelKey(accountOffer.providers);
+    signIn.dataset.i18n = labelKey;
+    signIn.textContent = t(labelKey);
     signIn.hidden = !canSignIn && !accountSigningIn;
     signIn.disabled = accountSigningIn;
   }
@@ -19309,6 +19313,7 @@ function getProjectsController() {
       onSessionMoved: () => { void loadSessions({ quiet: true }); },
       onReturnToRecents: () => setSessionMenuTab(SESSION_MENU_TABS.recents),
       signInWithAccount: () => signInWithHermesAccount(),
+      accountSignInLabelKey: () => accountSignInLabelKey(accountOffer.providers),
       onChange: () => {
         if (!els.sessionMenu.hidden && projectsTabActive()) renderProjectsTab();
       },

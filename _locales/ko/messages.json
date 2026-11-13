@@ -87,6 +87,10 @@
     "message": "이 게이트웨이는 Hermes 계정 로그인이 필요합니다. 설정 > 연결을 열고 “Hermes 계정으로 로그인”을 선택하세요.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Nous Portal로 로그인",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "로그아웃",
     "description": "Runtime interface message account.sign_out"

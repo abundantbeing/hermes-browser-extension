@@ -87,6 +87,10 @@
     "message": "此网关需要你使用 Hermes 账号登录。请打开“设置”>“连接”，选择“使用你的 Hermes 账号登录”。",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "使用 Nous Portal 登录",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "退出登录",
     "description": "Runtime interface message account.sign_out"

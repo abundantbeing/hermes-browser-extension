@@ -87,6 +87,10 @@
     "message": "Этому шлюзу нужен вход с вашей учётной записью Hermes. Откройте «Настройки» > «Подключения» и выберите «Войти с учётной записью Hermes».",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Войти через Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Выйти",
     "description": "Runtime interface message account.sign_out"

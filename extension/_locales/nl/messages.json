@@ -87,6 +87,10 @@
     "message": "Deze gateway heeft je aanmelding met een Hermes-account nodig. Open Instellingen > Verbindingen en kies ‘Meld je aan met je Hermes-account’.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Inloggen met Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Afmelden",
     "description": "Runtime interface message account.sign_out"
