@@ -52,7 +52,7 @@ from .control_broker import (
     get_control_broker,
     protocol_supported,
 )
-from .multiplex_routes import add_get_listener_routes, add_post_listener_routes, multiplex_path
+from .listener_routes import add_get_route, add_post_route
 from .status_route import BASE_PATH, authorize
 
 logger = logging.getLogger(__name__)
@@ -148,14 +148,16 @@ async def _session_known(adapter: Any, session_id: str) -> bool:
         raise LookupError("session store unavailable") from exc
 
 
-def make_register_handler(adapter: Any) -> Callable[..., Any]:
+def make_register_handler(adapter: Any, *, profile: str = "default") -> Callable[..., Any]:
+    route_profile = profile
+
     async def handler(request):
         from aiohttp import web
 
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
-        lp, profile = lookup_listener_profile(request)
+        lp, profile = lookup_listener_profile(route_profile)
         if lp is None:
             return _unavailable_profile(profile)
         broker = get_control_broker(profile)
@@ -352,11 +354,11 @@ def make_ws_handler() -> Callable[..., Any]:
     return handler
 
 
-def make_wire_extra() -> Callable[[Any, Any], None]:
-    """The ``wire_extra`` hook for status_route.register_status_route()."""
+def make_wire_extra(profile: str = "default") -> Callable[[Any, Any], None]:
+    """The ``wire_extra`` hook for status_route.register_status_route(), bound to the registering profile."""
 
     def wire_extra(router: Any, adapter: Any) -> None:
-        add_post_listener_routes(router, CONTROL_REGISTER_PATH, make_register_handler(adapter))
-        add_get_listener_routes(router, CONTROL_WS_PATH, make_ws_handler())
+        add_post_route(router, CONTROL_REGISTER_PATH, make_register_handler(adapter, profile=profile))
+        add_get_route(router, CONTROL_WS_PATH, make_ws_handler())
 
     return wire_extra

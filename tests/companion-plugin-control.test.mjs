@@ -34,8 +34,6 @@ module.__package__ = "probe_plugin"
 sys.modules["probe_plugin"] = module
 spec.loader.exec_module(module)
 registry = sys.modules["probe_plugin.profile_registry"]
-registry.set_multiplex_test_profiles(["default", "luxord"])
-registry.set_listener_test_profile("luxord")
 broker_module = sys.modules["probe_plugin.control_broker"]
 routes = sys.modules["probe_plugin.control_routes"]
 tools = sys.modules["probe_plugin.control_tools"]
@@ -86,8 +84,6 @@ async def make(adapter=None, listed_tools=(), **broker_kwargs):
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
     registry = sys.modules["probe_plugin.profile_registry"]
-    registry.set_multiplex_test_profiles(["default", "luxord"])
-    registry.set_listener_test_profile("luxord")
     if broker_kwargs:
         broker = broker_module.ControlBroker(**broker_kwargs)
         with broker_module._BROKER_LOCK:
@@ -100,7 +96,7 @@ async def make(adapter=None, listed_tools=(), **broker_kwargs):
         profile="luxord", store=store, broker=broker, tools=listed_tools, hooks=(), version="test"
     )
     app = web.Application()
-    routes.make_wire_extra()(app.router, adapter or Adapter())
+    routes.make_wire_extra("luxord")(app.router, adapter or Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
     tools.configure(broker=broker, profile="luxord", screenshot_dir=shots)
     client = TestClient(TestServer(app))
@@ -329,8 +325,6 @@ async def main():
 
     module_first = load_plugin(PLUGIN)
     registry = sys.modules[PLUGIN + ".profile_registry"]
-    registry.set_multiplex_test_profiles(["default", "luxord"])
-    registry.set_listener_test_profile("luxord")
     module_first.register(Ctx())
     routes = sys.modules[PLUGIN + ".control_routes"]
     tools_first = sys.modules[PLUGIN + ".control_tools"]
@@ -338,7 +332,7 @@ async def main():
     route_broker = broker_first.get_control_broker("luxord")
 
     app = web.Application()
-    routes.make_wire_extra()(app.router, Adapter())
+    routes.make_wire_extra("luxord")(app.router, Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
     tools_first.configure(broker=route_broker, profile="luxord", screenshot_dir=shots)
     client = TestClient(TestServer(app))
@@ -504,21 +498,34 @@ print(json.dumps(asyncio.run(main())))
   assert.ok(!JSON.stringify(data.ok.scope).includes('paired-token'));
 });
 
-test('multiplex register returns a materialized ws_path, not the {profile} template', () => {
+test('the plugin adds no /p/<profile> route, and a registration Hermes forwards under /p/<profile>/ gets its socket path there', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 async def main():
-    client, _, _ = await make()
+    from aiohttp import web
+    from aiohttp.test_utils import TestClient, TestServer
+    first, _, _ = await make()
+    async with first:
+        own = await first.post("/p/work" + REGISTER, headers={"Authorization": TOKEN},
+                               json=body(session="sess-B", profile="bp-w", caps=CAPS))
+        own_status = own.status
+    # Hermes core (NousResearch/hermes-agent#147703) hands /p/<profile>/api/plugins/... to that
+    # profile's own handlers; stand in for it with the same handler at the prefixed path.
+    app = web.Application()
+    app.router.add_post("/p/work" + REGISTER, routes.make_register_handler(Adapter(), profile="luxord"))
+    client = TestClient(TestServer(app))
+    await client.start_server()
     async with client:
         ok = await client.post(
             "/p/work" + REGISTER,
             headers={"Authorization": TOKEN},
             json=body(session="sess-B", profile="bp-w", caps=CAPS),
         )
-        return {"status": ok.status, "ws_path": (await ok.json()).get("ws_path")}
+        return {"own": own_status, "status": ok.status, "ws_path": (await ok.json()).get("ws_path")}
 print(json.dumps(asyncio.run(main())))
 `);
   const data = JSON.parse(out);
   if (skipped(data)) return;
+  assert.equal(data.own, 404, 'the plugin serves plain paths only');
   assert.equal(data.status, 201);
   assert.equal(
     data.ws_path,

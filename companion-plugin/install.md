@@ -113,8 +113,7 @@ repository URL.
 
 Update each profile from 0.4.0 to 0.4.1 to use Background task tabs: the
 extension's option needs the 0.4.1 plugin, which also keeps the `tab_*` tools
-in Hermes' tool list for the whole chat and serves its routes for named
-profiles on a multiplexed gateway.
+in Hermes' tool list for the whole chat.
 
 ### From the old name, `hermes-browser-companion`
 
@@ -190,11 +189,13 @@ GET /api/plugins/hermes-browser-extension/status
   loads without the route (tools and hooks are unaffected) and the extension
   falls back to the gateway's `/v1/toolsets` list to tell "loaded" from "not
   loaded".
-- On a gateway that serves several profiles at one address, this plugin registers
-  the status, browser-context and Hermes Control paths on the listener twice:
-  the plain path (default profile) and `/p/<profile>/…` (named profiles), matching
-  how Hermes mirrors its own API routes. The listener-scoped bot roster and avatar
-  routes stay on the plain path only.
+- The plugin adds its routes at their plain paths only, through the router's public
+  API, and never adds `/p/<profile>/…` routes or reorders Hermes' own. Each
+  profile's `register()` binds its routes to that profile (`ctx.profile_name`).
+  On a gateway that serves several profiles at one address, a named profile reaches
+  its own plugin routes once Hermes serves them under `/p/<profile>/api/plugins/…`
+  (NousResearch/hermes-agent#147703); until then, Hermes Control there works for
+  the default profile. The bot roster and avatar routes are plain-path only.
 - Dashboard plugin routes (`/api/plugins/<name>/...` on the dashboard port) need
   the Webapp credential and a dashboard manifest, so the plugin does not use them.
 
