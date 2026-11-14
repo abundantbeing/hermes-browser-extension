@@ -24268,7 +24268,11 @@ async function syncGatewayOriginRule({ pendingGatewayUrl = '', releasePendingGat
       type: SYNC_GATEWAY_RULES_MESSAGE,
       pendingGatewayUrl,
       releasePendingGatewayUrl,
-      ...(releasePendingGatewayUrl ? { pendingGatewayUrlAction: 'release' } : {}),
+      ...(releasePendingGatewayUrl
+        ? { pendingGatewayUrlAction: 'release' }
+        : pendingGatewayUrl
+          ? { pendingGatewayUrlAction: 'register' }
+          : {}),
     });
   } catch (error) {
     console.warn('[Hermes Browser] Gateway origin rule sync failed:', error);

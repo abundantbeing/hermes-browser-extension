@@ -10,6 +10,7 @@ import {
   withDraftOriginRule,
 } from '../extension/lib/gateway-origin-rule.mjs';
 import { HEADER_RULE_ID } from '../extension/lib/connection-headers.mjs';
+import { createPendingPairingGatewayUrlRegistry } from '../extension/lib/pending-pairing-gateway-urls.mjs';
 
 const HOST = 'abcdefghijklmnopabcdefghijklmnop';
 
@@ -86,6 +87,50 @@ test('applying replaces the previous rule, and a dashboard connection removes it
   await applyGatewayOriginRule({ gatewayUrl: 'https://hermes.example.com', connectionTransport: 'remote-dashboard', extensionHost: HOST }, dnr);
   assert.equal(dnr.rules.size, 0);
   assert.equal(await applyGatewayOriginRule({ gatewayUrl: 'http://127.0.0.1:8642', extensionHost: HOST }, null), false);
+});
+
+test('concurrent pairing attempts keep every pending loopback address in rule 7747', () => {
+  const registry = createPendingPairingGatewayUrlRegistry();
+  const addressA = 'http://127.0.0.1:8650';
+  const addressB = 'http://127.0.0.1:8651';
+  registry.applySyncMessage({ pendingGatewayUrl: addressA, pendingGatewayUrlAction: 'register' });
+  let [rule] = gatewayOriginRules({
+    gatewayUrl: 'http://127.0.0.1:8642',
+    connectionTransport: 'local-api',
+    extensionHost: HOST,
+    pendingGatewayUrls: registry.list(),
+  });
+  assert.ok(matches(rule, `${addressA}/api/browser-extension/pair/start`));
+  registry.applySyncMessage({ pendingGatewayUrl: addressB, pendingGatewayUrlAction: 'register' });
+  [rule] = gatewayOriginRules({
+    gatewayUrl: 'http://127.0.0.1:8642',
+    connectionTransport: 'local-api',
+    extensionHost: HOST,
+    pendingGatewayUrls: registry.list(),
+  });
+  assert.ok(matches(rule, `${addressA}/api/browser-extension/pair/start`));
+  assert.ok(matches(rule, `${addressB}/api/browser-extension/pair/start`));
+  registry.applySyncMessage({ releasePendingGatewayUrl: addressA });
+  assert.deepEqual(registry.list(), [addressB]);
+  [rule] = gatewayOriginRules({
+    gatewayUrl: 'http://127.0.0.1:8642',
+    connectionTransport: 'local-api',
+    extensionHost: HOST,
+    pendingGatewayUrls: registry.list(),
+  });
+  assert.ok(!matches(rule, `${addressA}/api/browser-extension/pair/start`));
+  assert.ok(matches(rule, `${addressB}/api/browser-extension/pair/start`));
+});
+
+test('two pairing attempts on the same loopback address need two releases', () => {
+  const registry = createPendingPairingGatewayUrlRegistry();
+  const url = 'http://127.0.0.1:8650';
+  registry.applySyncMessage({ pendingGatewayUrl: url, pendingGatewayUrlAction: 'register' });
+  registry.applySyncMessage({ pendingGatewayUrl: url, pendingGatewayUrlAction: 'register' });
+  registry.applySyncMessage({ releasePendingGatewayUrl: url });
+  assert.deepEqual(registry.list(), [url]);
+  registry.applySyncMessage({ releasePendingGatewayUrl: url });
+  assert.deepEqual(registry.list(), []);
 });
 
 test('several loopback pairing attempts stay covered beside the active connection', () => {
@@ -197,16 +242,18 @@ test('the rule ids do not collide with the other session rules', () => {
 
 test('only the worker writes the active rule; a panel asks it and waits', async () => {
   const background = await readFile(new URL('../extension/background.js', import.meta.url), 'utf8');
-  assert.match(background, /pendingGatewayUrls: \[\.\.\.pendingPairingGatewayUrls\]/);
-  assert.match(background, /const pendingPairingGatewayUrls = new Set\(\)/);
+  assert.match(background, /pendingGatewayUrls: pendingPairingGatewayUrls\.list\(\)/);
+  assert.match(background, /createPendingPairingGatewayUrlRegistry\(\)/);
+  assert.match(background, /pendingPairingGatewayUrls\.applySyncMessage\(message\)/);
   assert.match(background, /message\?\.type === SYNC_GATEWAY_RULES_MESSAGE\s*\?\s*syncGatewayRulesForPanel\(message\)/);
   assert.match(background, /LOOPBACK_FETCH_MESSAGE,\s*SYNC_GATEWAY_RULES_MESSAGE,/, 'only extension pages may ask');
-  assert.match(background, /if \(changes\.hermesBrowserSettings\) pendingPairingGatewayUrls\.clear\(\);\s*void syncConnectionHeaders\(\);/, 'a settings change drops pending pairing addresses');
+  assert.doesNotMatch(background, /pendingPairingGatewayUrls\.clear\(\)/, 'saving settings must not drop another panel pairing hold');
   const panel = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.doesNotMatch(panel, /applyGatewayOriginRule\(/, 'the panel never writes the active rule');
   assert.match(panel, /type: SYNC_GATEWAY_RULES_MESSAGE,\s*pendingGatewayUrl,/);
   assert.match(panel, /async function testConnection\(\) \{[\s\S]{0,600}await syncGatewayOriginRule\(\)/, 'Test connection waits for the rule');
   assert.match(panel, /const pairingGatewayUrl = settings\.gatewayUrl;/, 'pairing remembers the loopback address for release');
+  assert.match(panel, /pendingGatewayUrlAction: 'register'/, 'pairing registers its loopback address explicitly');
   assert.match(panel, /releasePendingGatewayUrl: pairingGatewayUrl/, 'pairing releases its loopback address when it finishes');
   assert.match(panel, /const marker = newProbeMarker\(\);[\s\S]{0,200}withDraftOriginRule\(\s*\{ gatewayUrl, extensionHost, marker \}[\s\S]{0,500}extensionHost,\s*marker,\s*\}[\s\S]{0,100}probeConnection\(\{ gatewayUrl, apiKey, headers, marker, signal \}\)/, 'one marker for the requests of the test and both its rules');
 });
