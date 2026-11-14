@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes ने इस निजी या LAN पते पर पेज स्क्रिप्ट इंजेक्ट नहीं किए। सेटिंग्स → अनुमतियाँ में निजी पेज स्क्रिप्ट चालू करें, या मूल को बहिष्करण सूची से हटाएँ।",
   "status.page_context_skipped_excluded": "{url} — Hermes ने इस साइट के लिए पेज स्क्रिप्ट बंद रखे क्योंकि यह सेटिंग्स → अनुमतियाँ में आपकी बहिष्करण सूची में है।",
   "status.page_context_skipped": "{url} — पेज संदर्भ छोड़ा गया क्योंकि Hermes ने इस पेज पर स्क्रिप्ट इंजेक्ट नहीं किए।",
+  "status.element_pick_unavailable": "तत्व चयन उपलब्ध नहीं",
+  "status.page_comments_unavailable": "पृष्ठ टिप्पणियाँ उपलब्ध नहीं",
   "ui.page_context_skipped": "पेज संदर्भ छोड़ा गया",
   "ui.page_context_off_chip": "📎 इस साइट के लिए पेज संदर्भ बंद",
   "settings.back_to_top": "ऊपर जाएँ",

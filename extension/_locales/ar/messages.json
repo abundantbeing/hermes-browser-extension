@@ -4343,6 +4343,10 @@
     "message": "{summary} لا يستجيب. ابدأ Hermes Desktop/Gateway، ثم أعد الاتصال.",
     "description": "Runtime interface message status.connection_not_responding"
   },
+  "runtime_status_element_pick_unavailable": {
+    "message": "اختيار العنصر غير متاح",
+    "description": "Runtime interface message status.element_pick_unavailable"
+  },
   "runtime_status_gmail_no_rendered": {
     "message": "لم تتوفر أي نصوص رسائل معروضة.",
     "description": "Runtime interface message status.gmail_no_rendered"
@@ -4358,6 +4362,10 @@
   "runtime_status_model_registry_fallback": {
     "message": "الرجوع إلى /v1/models ({error}).",
     "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_comments_unavailable": {
+    "message": "تعليقات الصفحة غير متاحة",
+    "description": "Runtime interface message status.page_comments_unavailable"
   },
   "runtime_status_page_context_restricted": {
     "message": "{url} - السياق مقيد",

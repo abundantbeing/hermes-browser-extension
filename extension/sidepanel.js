@@ -25382,18 +25382,21 @@ async function startElementPick({ purpose = 'context' } = {}) {
       : 'Element pick is not available on this URL.');
     return;
   }
-  const injection = pageContextInjectionDecision(tab.url, settings);
-  if (!injection.inject) {
-    const detail = t(pageContextSkipMessageKey(injection.reason), { url: tab.url });
-    setStatus('warn', purpose === 'comment' ? 'Page comments unavailable' : 'Element pick unavailable', detail, { translateDetail: false });
-    return;
-  }
   try {
     if (elementPickActiveForTab(tab)) {
       await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL });
       await clearElementPickState({ tabId: tab.id });
       pageCommentPickActive = false;
       setStatus('ok', purpose === 'comment' ? 'Page comments cancelled' : 'Element pick cancelled', '');
+      return;
+    }
+    const injection = pageContextInjectionDecision(tab.url, settings);
+    if (!injection.inject) {
+      const detail = t(pageContextSkipMessageKey(injection.reason), { url: tab.url });
+      const titleKey = purpose === 'comment'
+        ? 'status.page_comments_unavailable'
+        : 'status.element_pick_unavailable';
+      setStatus('warn', t(titleKey), detail, { translateDetail: false });
       return;
     }
     pageCommentPickActive = purpose === 'comment';

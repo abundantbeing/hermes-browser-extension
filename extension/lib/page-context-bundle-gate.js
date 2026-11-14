@@ -1,11 +1,16 @@
 (() => {
   'use strict';
 
-  const deferredRuns = [];
+  const DEFERRED_RUNS_KEY = '__HERMES_PAGE_SCRIPT_DEFERRED_RUNS__';
+
+  function deferredRuns() {
+    if (!globalThis[DEFERRED_RUNS_KEY]) globalThis[DEFERRED_RUNS_KEY] = [];
+    return globalThis[DEFERRED_RUNS_KEY];
+  }
 
   function notifyPolicyDecision(inject) {
     if (!inject) return;
-    const pending = deferredRuns.splice(0);
+    const pending = deferredRuns().splice(0);
     for (const run of pending) {
       try {
         run();
@@ -38,7 +43,7 @@
   globalThis.hermesAwaitPageScriptPolicy = function hermesAwaitPageScriptPolicy(continueFn) {
     pageScriptPolicyPromise().then((inject) => {
       if (inject) continueFn();
-      else if (typeof continueFn === 'function') deferredRuns.push(continueFn);
+      else if (typeof continueFn === 'function') deferredRuns().push(continueFn);
     });
   };
 
@@ -52,6 +57,7 @@
       globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
       gate.latestInject = inject;
       gate.decided = true;
+      gate.promise = Promise.resolve(inject);
       if (gate._resolvePolicy) gate._resolvePolicy(inject);
       if (inject) notifyPolicyDecision(true);
       return inject;

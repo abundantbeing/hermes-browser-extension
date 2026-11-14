@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes ไม่ได้ฉีดสคริปต์หน้าบนที่อยู่ส่วนตัวหรือ LAN นี้ เปิดสคริปต์หน้าส่วนตัวใน การตั้งค่า → สิทธิ์ หรือลบต้นทางออกจากรายการยกเว้น",
   "status.page_context_skipped_excluded": "{url} — Hermes ปิดสคริปต์หน้าสำหรับไซต์นี้เพราะอยู่ในรายการยกเว้นใน การตั้งค่า → สิทธิ์",
   "status.page_context_skipped": "{url} — ข้ามบริบทหน้าเพราะ Hermes ไม่ได้ฉีดสคริปต์ในหน้านี้",
+  "status.element_pick_unavailable": "ไม่สามารถเลือกองค์ประกอบได้",
+  "status.page_comments_unavailable": "ความคิดเห็นบนหน้าไม่พร้อมใช้งาน",
   "ui.page_context_skipped": "ข้ามบริบทหน้า",
   "ui.page_context_off_chip": "📎 ปิดบริบทหน้าสำหรับไซต์นี้",
   "settings.back_to_top": "กลับด้านบน",

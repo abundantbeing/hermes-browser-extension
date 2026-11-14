@@ -4343,6 +4343,10 @@
     "message": "{summary} は応答していません。Hermes Desktop/Gateway を開始してから、再接続してください。",
     "description": "Runtime interface message status.connection_not_responding"
   },
+  "runtime_status_element_pick_unavailable": {
+    "message": "要素の選択は利用できません",
+    "description": "Runtime interface message status.element_pick_unavailable"
+  },
   "runtime_status_gmail_no_rendered": {
     "message": "レンダリングされたメッセージ本文は利用できませんでした。",
     "description": "Runtime interface message status.gmail_no_rendered"
@@ -4358,6 +4362,10 @@
   "runtime_status_model_registry_fallback": {
     "message": "/v1/models にフォールバックしています（{error}）。",
     "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_comments_unavailable": {
+    "message": "ページコメントは利用できません",
+    "description": "Runtime interface message status.page_comments_unavailable"
   },
   "runtime_status_page_context_restricted": {
     "message": "{url} - コンテキストが制限されています",

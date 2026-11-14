@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes hat auf dieser privaten oder LAN-Adresse keine Seitenskripte injiziert. Aktivieren Sie private Seitenskripte unter Einstellungen → Berechtigungen oder entfernen Sie die Origin aus der Ausschlussliste.",
   "status.page_context_skipped_excluded": "{url} — Hermes hat Seitenskripte für diese Website deaktiviert gelassen, weil sie auf Ihrer Ausschlussliste unter Einstellungen → Berechtigungen steht.",
   "status.page_context_skipped": "{url} — Seitenkontext wurde übersprungen, weil Hermes auf dieser Seite keine Skripte injiziert hat.",
+  "status.element_pick_unavailable": "Elementauswahl nicht verfügbar",
+  "status.page_comments_unavailable": "Seitenkommentare nicht verfügbar",
   "ui.page_context_skipped": "Seitenkontext übersprungen",
   "ui.page_context_off_chip": "📎 Seitenkontext für diese Website aus",
   "settings.back_to_top": "Nach oben",

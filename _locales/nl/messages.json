@@ -4343,6 +4343,10 @@
     "message": "{summary} reageert niet. Start Hermes Desktop/Gateway en maak daarna opnieuw verbinding.",
     "description": "Runtime interface message status.connection_not_responding"
   },
+  "runtime_status_element_pick_unavailable": {
+    "message": "Elementkeuze niet beschikbaar",
+    "description": "Runtime interface message status.element_pick_unavailable"
+  },
   "runtime_status_gmail_no_rendered": {
     "message": "Er waren geen gerenderde berichtteksten beschikbaar.",
     "description": "Runtime interface message status.gmail_no_rendered"
@@ -4358,6 +4362,10 @@
   "runtime_status_model_registry_fallback": {
     "message": "Terugvallen op /v1/models ({error}).",
     "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_comments_unavailable": {
+    "message": "Paginacommentaren niet beschikbaar",
+    "description": "Runtime interface message status.page_comments_unavailable"
   },
   "runtime_status_page_context_restricted": {
     "message": "{url} - context beperkt",

@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes 未在此私人或 LAN 位址注入頁面指令碼。請在設定 → 權限中開啟私人頁面指令碼，或從排除清單移除該來源。",
   "status.page_context_skipped_excluded": "{url} — 此網站在設定 → 權限的排除清單中，Hermes 保持頁面指令碼關閉。",
   "status.page_context_skipped": "{url} — 已略過頁面內容，因為 Hermes 未在此頁面注入指令碼。",
+  "status.element_pick_unavailable": "無法選取元素",
+  "status.page_comments_unavailable": "頁面註解不可用",
   "ui.page_context_skipped": "已略過頁面內容",
   "ui.page_context_off_chip": "📎 此網站頁面內容已關閉",
   "settings.back_to_top": "回到頂端",

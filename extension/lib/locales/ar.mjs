@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — لم يحقن Hermes برامج الصفحة على هذا العنوان الخاص أو LAN. فعّل برامج الصفحة الخاصة في الإعدادات → الأذونات، أو أزل الأصل من قائمة الاستبعاد.",
   "status.page_context_skipped_excluded": "{url} — أبقى Hermes برامج الصفحة متوقفة لهذا الموقع لأنه في قائمة الاستبعاد في الإعدادات → الأذونات.",
   "status.page_context_skipped": "{url} — تم تخطي سياق الصفحة لأن Hermes لم يحقن البرامج على هذه الصفحة.",
+  "status.element_pick_unavailable": "اختيار العنصر غير متاح",
+  "status.page_comments_unavailable": "تعليقات الصفحة غير متاحة",
   "ui.page_context_skipped": "تم تخطي سياق الصفحة",
   "ui.page_context_off_chip": "📎 سياق الصفحة متوقف لهذا الموقع",
   "settings.back_to_top": "العودة إلى الأعلى",

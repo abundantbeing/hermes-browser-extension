@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes n’a pas injecté de scripts de page sur cette adresse privée ou LAN. Activez les scripts privés dans Paramètres → Autorisations, ou retirez l’origine de la liste d’exclusion.",
   "status.page_context_skipped_excluded": "{url} — Hermes a laissé les scripts de page désactivés pour ce site car il figure sur votre liste d’exclusion dans Paramètres → Autorisations.",
   "status.page_context_skipped": "{url} — Le contexte de page a été ignoré car Hermes n’a pas injecté de scripts sur cette page.",
+  "status.element_pick_unavailable": "Sélection d’élément indisponible",
+  "status.page_comments_unavailable": "Commentaires de page indisponibles",
   "ui.page_context_skipped": "Contexte de page ignoré",
   "ui.page_context_off_chip": "📎 Contexte de page désactivé pour ce site",
   "settings.back_to_top": "Haut de page",

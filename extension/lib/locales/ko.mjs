@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — 이 프라이빗 또는 LAN 주소에는 Hermes가 페이지 스크립트를 주입하지 않았습니다. 설정 → 권한에서 프라이빗 페이지 스크립트를 켜거나 제외 목록에서 오리진을 제거하세요.",
   "status.page_context_skipped_excluded": "{url} — Hermes는 설정 → 권한의 제외 목록에 있어 이 사이트에서 페이지 스크립트를 꺼진 상태로 두었습니다.",
   "status.page_context_skipped": "{url} — Hermes가 이 페이지에 스크립트를 주입하지 않아 페이지 컨텍스트를 건너뛰었습니다.",
+  "status.element_pick_unavailable": "요소 선택을 사용할 수 없음",
+  "status.page_comments_unavailable": "페이지 댓글을 사용할 수 없음",
   "ui.page_context_skipped": "페이지 컨텍스트 건너뜀",
   "ui.page_context_off_chip": "📎 이 사이트에서는 페이지 컨텍스트 꺼짐",
   "settings.back_to_top": "맨 위로",

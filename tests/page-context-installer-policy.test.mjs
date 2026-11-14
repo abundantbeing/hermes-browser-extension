@@ -41,7 +41,11 @@ test('element pick failures surface in the operation toast', async () => {
     source.indexOf('async function startElementPick'),
     source.indexOf('function applyPickedElementResult'),
   );
-  assert.match(block, /pageContextInjectionDecision\(tab\.url, settings\)/);
+  assert.match(block, /if \(elementPickActiveForTab\(tab\)\)/);
+  const cancelAt = block.indexOf('ELEMENT_PICK_MESSAGES.CANCEL');
+  const policyAt = block.indexOf('pageContextInjectionDecision(tab.url, settings)');
+  assert.ok(cancelAt >= 0 && policyAt > cancelAt, 'cancel active pick before policy refusal');
+  assert.match(block, /status\.element_pick_unavailable/);
   assert.match(block, /showOperationToast\(/);
   assert.match(block, /Element pick failed/);
 });

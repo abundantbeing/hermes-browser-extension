@@ -4343,6 +4343,10 @@
     "message": "{summary} ne répond pas. Démarrez Hermes Desktop/Gateway, puis reconnectez-vous.",
     "description": "Runtime interface message status.connection_not_responding"
   },
+  "runtime_status_element_pick_unavailable": {
+    "message": "Sélection d’élément indisponible",
+    "description": "Runtime interface message status.element_pick_unavailable"
+  },
   "runtime_status_gmail_no_rendered": {
     "message": "Aucun corps de message rendu n’était disponible.",
     "description": "Runtime interface message status.gmail_no_rendered"
@@ -4358,6 +4362,10 @@
   "runtime_status_model_registry_fallback": {
     "message": "Repli vers /v1/models ({error}).",
     "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_comments_unavailable": {
+    "message": "Commentaires de page indisponibles",
+    "description": "Runtime interface message status.page_comments_unavailable"
   },
   "runtime_status_page_context_restricted": {
     "message": "{url} - contexte restreint",

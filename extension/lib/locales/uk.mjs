@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes не інжектував скрипти сторінок на цій приватній або LAN-адресі. Увімкніть приватні скрипти в Налаштування → Дозволи або приберіть джерело зі списку виключень.",
   "status.page_context_skipped_excluded": "{url} — Hermes лишив скрипти сторінок вимкненими для цього сайту, бо він у списку виключень у Налаштування → Дозволи.",
   "status.page_context_skipped": "{url} — Контекст сторінки пропущено, бо Hermes не інжектував скрипти на цій сторінці.",
+  "status.element_pick_unavailable": "Вибір елемента недоступний",
+  "status.page_comments_unavailable": "Коментарі сторінки недоступні",
   "ui.page_context_skipped": "Контекст сторінки пропущено",
   "ui.page_context_off_chip": "📎 Контекст сторінки вимкнено для цього сайту",
   "settings.back_to_top": "Нагору",

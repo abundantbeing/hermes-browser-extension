@@ -72,6 +72,54 @@ test('pageScriptPolicyPromise prefers latestInject over a stale guard promise af
   assert.equal(after, true);
 });
 
+test('manual install after saved opt-in runs listener without reload', async () => {
+  const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
+  const guardStub = `
+    globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
+    globalThis.__HERMES_PAGE_SCRIPT_POLICY__ = {
+      likelyPrivate: true,
+      decided: true,
+      latestInject: false,
+      promise: Promise.resolve(false),
+      _resolvePolicy(inject) {
+        const allow = Boolean(inject);
+        globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !allow;
+        globalThis.__HERMES_PAGE_SCRIPT_POLICY__.latestInject = allow;
+      },
+    };
+  `;
+  const context = {
+    location: { href: 'http://192.168.8.1/' },
+    listenerStarted: 0,
+    extractorStarted: 0,
+    browser: {
+      runtime: {
+        sendMessage() {
+          return Promise.resolve({ inject: true });
+        },
+      },
+    },
+    globalThis: {},
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(guardStub, context);
+  vm.runInContext(gateSource, context);
+  const bootListener = () => { context.listenerStarted += 1; };
+  const bootExtractor = () => { context.extractorStarted += 1; };
+  context.hermesAwaitPageScriptPolicy(bootListener);
+  context.hermesAwaitPageScriptPolicy(bootExtractor);
+  assert.equal(context.listenerStarted, 0);
+  assert.equal(context.extractorStarted, 0);
+  const refreshed = await context.hermesRefreshPageScriptPolicy();
+  assert.equal(refreshed, true);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(context.listenerStarted, 1);
+  assert.equal(context.extractorStarted, 1);
+  const inject = await context.hermesPageScriptPolicyPromise();
+  assert.equal(inject, true);
+});
+
 test('fresh gate install without document_start guard still runs after policy refresh', async () => {
   const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
   const context = {

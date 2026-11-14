@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — このプライベートまたは LAN アドレスでは Hermes はページスクリプトを注入しませんでした。設定 → 権限でプライベートページスクリプトをオンにするか、除外リストからオリジンを削除してください。",
   "status.page_context_skipped_excluded": "{url} — Hermesは設定 → 権限の除外リストに含まれるため、このサイトではページスクリプトはオフのままです。",
   "status.page_context_skipped": "{url} — このページに Hermes がスクリプトを注入しなかったため、ページコンテキストをスキップしました。",
+  "status.element_pick_unavailable": "要素の選択は利用できません",
+  "status.page_comments_unavailable": "ページコメントは利用できません",
   "ui.page_context_skipped": "ページコンテキストをスキップ",
   "ui.page_context_off_chip": "📎 このサイトではページコンテキストオフ",
   "settings.back_to_top": "トップへ戻る",

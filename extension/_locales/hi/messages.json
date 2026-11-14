@@ -4343,6 +4343,10 @@
     "message": "{summary} प्रतिक्रिया नहीं दे रहा है। Hermes Desktop/Gateway प्रारंभ करें, फिर पुनः कनेक्ट करें।",
     "description": "Runtime interface message status.connection_not_responding"
   },
+  "runtime_status_element_pick_unavailable": {
+    "message": "तत्व चयन उपलब्ध नहीं",
+    "description": "Runtime interface message status.element_pick_unavailable"
+  },
   "runtime_status_gmail_no_rendered": {
     "message": "कोई रेंडर की गई संदेश बॉडी उपलब्ध नहीं थी।",
     "description": "Runtime interface message status.gmail_no_rendered"
@@ -4358,6 +4362,10 @@
   "runtime_status_model_registry_fallback": {
     "message": "/v1/models पर वापस जा रहे हैं ({error})।",
     "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_comments_unavailable": {
+    "message": "पृष्ठ टिप्पणियाँ उपलब्ध नहीं",
+    "description": "Runtime interface message status.page_comments_unavailable"
   },
   "runtime_status_page_context_restricted": {
     "message": "{url} - संदर्भ प्रतिबंधित",

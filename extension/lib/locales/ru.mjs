@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes не внедрил скрипты страниц на этот частный или LAN-адрес. Включите частные скрипты в Настройки → Разрешения или уберите источник из списка исключений.",
   "status.page_context_skipped_excluded": "{url} — Hermes оставил скрипты страниц выключенными для этого сайта, так как он в списке исключений в Настройки → Разрешения.",
   "status.page_context_skipped": "{url} — Контекст страницы пропущен, так как Hermes не внедрил скрипты на этой странице.",
+  "status.element_pick_unavailable": "Выбор элемента недоступен",
+  "status.page_comments_unavailable": "Комментарии к странице недоступны",
   "ui.page_context_skipped": "Контекст страницы пропущен",
   "ui.page_context_off_chip": "📎 Контекст страницы выкл. для этого сайта",
   "settings.back_to_top": "Наверх",

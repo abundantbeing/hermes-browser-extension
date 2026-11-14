@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes no inyectó scripts de página en esta dirección privada o LAN. Activa los scripts privados en Ajustes → Permisos o quita el origen de la lista de exclusión.",
   "status.page_context_skipped_excluded": "{url} — Hermes dejó los scripts de página desactivados en este sitio porque está en tu lista de exclusión en Ajustes → Permisos.",
   "status.page_context_skipped": "{url} — Se omitió el contexto de página porque Hermes no inyectó scripts en esta página.",
+  "status.element_pick_unavailable": "Selección de elementos no disponible",
+  "status.page_comments_unavailable": "Comentarios en la página no disponibles",
   "ui.page_context_skipped": "Contexto de página omitido",
   "ui.page_context_off_chip": "📎 Contexto de página desactivado para este sitio",
   "settings.back_to_top": "Volver arriba",

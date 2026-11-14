@@ -1842,6 +1842,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes 未在此私有或 LAN 地址注入页面脚本。请在设置 → 权限中开启私有页面脚本，或从排除列表中移除该来源。",
   "status.page_context_skipped_excluded": "{url} — 该站点在设置 → 权限的排除列表中，Hermes 保持页面脚本关闭。",
   "status.page_context_skipped": "{url} — 已跳过页面上下文，因为 Hermes 未在此页面注入脚本。",
+  "status.element_pick_unavailable": "无法选择元素",
+  "status.page_comments_unavailable": "页面评论不可用",
   "ui.page_context_skipped": "已跳过页面上下文",
   "ui.page_context_off_chip": "📎 此站点页面上下文已关闭",
   "settings.back_to_top": "返回顶部",

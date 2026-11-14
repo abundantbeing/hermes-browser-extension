@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes did not inject page scripts on this private or LAN address. Turn on private page scripts in Settings → Permissions, or remove the origin from the exclude list.",
   "status.page_context_skipped_excluded": "{url} — Hermes left page scripts off for this site because it is on your exclude list in Settings → Permissions.",
   "status.page_context_skipped": "{url} — Page context was skipped because Hermes did not inject scripts on this page.",
+  "status.element_pick_unavailable": "Element pick unavailable",
+  "status.page_comments_unavailable": "Page comments unavailable",
   "ui.page_context_skipped": "Page context skipped",
   "ui.page_context_off_chip": "📎 Page context off for this site",
   "settings.back_to_top": "Back to top",

@@ -1843,6 +1843,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes nie wstrzyknął skryptów strony na tym prywatnym lub LAN adresie. Włącz prywatne skrypty strony w Ustawienia → Uprawnienia lub usuń pochodzenie z listy wykluczeń.",
   "status.page_context_skipped_excluded": "{url} — Hermes pozostawił skrypty strony wyłączone dla tej witryny, bo jest na liście wykluczeń w Ustawienia → Uprawnienia.",
   "status.page_context_skipped": "{url} — Kontekst strony pominięty, bo Hermes nie wstrzyknął skryptów na tej stronie.",
+  "status.element_pick_unavailable": "Wybór elementu niedostępny",
+  "status.page_comments_unavailable": "Komentarze strony niedostępne",
   "ui.page_context_skipped": "Kontekst strony pominięty",
   "ui.page_context_off_chip": "📎 Kontekst strony wyłączony dla tej witryny",
   "settings.back_to_top": "Do góry",

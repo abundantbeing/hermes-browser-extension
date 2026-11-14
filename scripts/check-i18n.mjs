@@ -112,6 +112,8 @@ const PAGE_CONTEXT_TRANSLATION_KEYS = [
   'status.page_context_skipped_private',
   'status.page_context_skipped_excluded',
   'status.page_context_skipped',
+  'status.element_pick_unavailable',
+  'status.page_comments_unavailable',
   'ui.page_context_skipped',
   'ui.page_context_off_chip',
 ];
