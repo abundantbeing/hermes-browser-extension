@@ -6,6 +6,10 @@
 
 - **The Hermes plugin uses only public Hermes APIs for profiles.** It no longer adds its own `/p/<profile>/api/plugins/...` routes or moves them ahead of Hermes' profile catch-all in the API server's route table, and it no longer reads Hermes' plugin manager, the API server's request-profile variable or runs plugin discovery from a request. Each profile's `register()` binds its routes to that profile (`ctx.profile_name`). On a gateway that serves several profiles at one address, Hermes Control for a named profile needs Hermes to serve that profile's own plugin routes (NousResearch/hermes-agent#147703); until then use the default profile for Hermes Control there. A named profile on its own gateway address is unaffected. A guard test keeps those internals out of the plugin.
 
+### Fixed
+
+- Removed stale models stay cleared from the model picker after a provider list changes. Refreshing `/api/model/options` now replaces each returned provider's entries in the cross-profile cache instead of keeping removed models from other profiles, allows manual refreshes more time before falling back to cache, resolves `provider::`-prefixed and OpenAI OSS (`128k`) context windows accurately, and keeps model context badges unclipped in the picker menu.
+
 ## [0.4.1] - 2026-11-12
 
 ### Added

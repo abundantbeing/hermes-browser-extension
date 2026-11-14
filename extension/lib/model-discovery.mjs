@@ -35,22 +35,102 @@ export function globalModelCatalogCacheKey({ gatewayMode = 'local-api', gatewayU
  * Rows dedupe by rawModelId (preferred) then id; the freshest entry wins so
  * metadata (context tokens, provider labels) stays current.
  */
-export function unionCachedModelCatalogs(cache = {}) {
+function providersReferencedByCatalogModels(models = []) {
+  const providers = new Set();
+  for (const model of Array.isArray(models) ? models : []) {
+    if (!model || typeof model !== 'object') continue;
+    const provider = String(model.provider || '').trim().toLowerCase();
+    if (provider) providers.add(provider);
+  }
+  return providers;
+}
+
+export function unionCachedModelCatalogs(cache = {}, { gatewayPrefix = '', excludeProviders = null } = {}) {
   if (!cache || typeof cache !== 'object') return [];
+  const prefix = String(gatewayPrefix || '');
+  const excluded = new Set(
+    Array.from(excludeProviders || [], (value) => String(value || '').trim().toLowerCase()).filter(Boolean),
+  );
   const byKey = new Map();
-  const entries = Object.values(cache)
-    .filter((entry) => entry && typeof entry === 'object')
-    .sort((a, b) => (Number(a?.savedAt) || 0) - (Number(b?.savedAt) || 0));
+  const entries = Object.entries(cache)
+    .filter(([cacheKey, entry]) => (!prefix || String(cacheKey || '').startsWith(prefix)) && entry && typeof entry === 'object')
+    .sort(([, a], [, b]) => (Number(a?.savedAt) || 0) - (Number(b?.savedAt) || 0))
+    .map(([, entry]) => entry);
+  const providerFreshness = new Map();
   for (const entry of entries) {
+    const savedAt = Number(entry?.savedAt) || 0;
+    for (const provider of providersReferencedByCatalogModels(entry?.models)) {
+      providerFreshness.set(provider, Math.max(providerFreshness.get(provider) || 0, savedAt));
+    }
+  }
+  for (const entry of entries) {
+    const savedAt = Number(entry?.savedAt) || 0;
     const rows = Array.isArray(entry?.models) ? entry.models : [];
     for (const model of rows) {
       if (!model || typeof model !== 'object') continue;
-      const id = String(model.rawModelId || model.id || '').trim();
-      if (!id) continue;
-      byKey.set(id, model);
+      const provider = String(model.provider || '').trim().toLowerCase();
+      if (provider && excluded.has(provider)) continue;
+      if (provider && savedAt < (providerFreshness.get(provider) || 0)) continue;
+      const rawCandidate = String(model.rawModelId || model.id || '').trim();
+      if (!rawCandidate) continue;
+      const lowerRaw = rawCandidate.toLowerCase();
+      const bareRaw = provider && lowerRaw.startsWith(`${provider}::`)
+        ? lowerRaw.slice(provider.length + 2)
+        : lowerRaw;
+      const key = provider ? `${provider}::${bareRaw}` : bareRaw;
+      byKey.set(key, model);
     }
   }
   return [...byKey.values()];
+}
+
+export function providerSlugsFromModelOptionsPayload(payload = {}) {
+  const providers = Array.isArray(payload?.providers) ? payload.providers : [];
+  return new Set(
+    providers
+      .map((provider) => String(provider?.slug || provider?.id || provider?.provider || '').trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+export function mergeSharedModelCatalog({ sharedModels = [], freshModels = [], freshProviders = null } = {}) {
+  const fresh = Array.isArray(freshModels) ? freshModels.filter((model) => model && typeof model === 'object') : [];
+  const shared = Array.isArray(sharedModels) ? sharedModels.filter((model) => model && typeof model === 'object') : [];
+  const replacedProviders = new Set();
+  if (freshProviders instanceof Set) {
+    for (const provider of freshProviders) replacedProviders.add(provider);
+  }
+  for (const model of fresh) {
+    const provider = String(model.provider || '').trim().toLowerCase();
+    if (provider) replacedProviders.add(provider);
+  }
+  if (!replacedProviders.size) return fresh.length ? fresh : shared;
+  const keptShared = shared.filter((model) => {
+    const provider = String(model.provider || '').trim().toLowerCase();
+    return !provider || !replacedProviders.has(provider);
+  });
+  return unionCachedModelCatalogs({
+    kept: { savedAt: 0, models: keptShared },
+    fresh: { savedAt: 1, models: fresh },
+  });
+}
+
+export function shouldPreferCachedCatalogOverSparseLiveDiscovery({
+  registryModels = [],
+  registrySource = '',
+  cachedCatalogModels = [],
+} = {}) {
+  const cached = Array.isArray(cachedCatalogModels) ? cachedCatalogModels : [];
+  const live = Array.isArray(registryModels) ? registryModels : [];
+  if (!cached.length || cached.length <= live.length || live.length > 1) return false;
+  if (!live.length) return true;
+  const source = String(registrySource || '');
+  if (source === 'gateway') return true;
+  if (live[0]?.gatewayAlias === true) return true;
+  const authoritativeLiveCatalog = ['registry', 'dashboard'].some(
+    (prefix) => source === prefix || source.startsWith(`${prefix}+`),
+  );
+  return !authoritativeLiveCatalog;
 }
 
 export function normalizeCachedModelCatalog(payload = []) {
@@ -337,7 +417,12 @@ export async function discoverModelsFromRegistry({
         models: [],
       };
     }
-    return { ok: true, models: modelsFromModelOptionsPayload(payload), error: '' };
+    return {
+      ok: true,
+      models: modelsFromModelOptionsPayload(payload),
+      providerSlugs: providerSlugsFromModelOptionsPayload(payload),
+      error: '',
+    };
   } catch (error) {
     return { ok: false, error: error?.message || 'error', models: [] };
   }
@@ -910,7 +995,13 @@ export async function discoverModelsFromDashboard({
         models: [],
       };
     }
-    return { ok: true, models: modelsFromModelOptionsPayload(payload), error: '', source: 'dashboard' };
+    return {
+      ok: true,
+      models: modelsFromModelOptionsPayload(payload),
+      providerSlugs: providerSlugsFromModelOptionsPayload(payload),
+      error: '',
+      source: 'dashboard',
+    };
   } catch (error) {
     return { ok: false, error: error?.name === 'AbortError' ? 'dashboard-timeout' : (error?.message || 'error'), models: [] };
   }

@@ -534,7 +534,9 @@ import {
   discoverModelsFromSessions,
   mergeModelsByRawId,
   mergeModelsWithRegistry,
+  mergeSharedModelCatalog,
   mergeVirtualModelRows,
+  providerSlugsFromModelOptionsPayload,
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   MODEL_CATALOG_SHARED_CACHE_PROFILE,
   globalModelCatalogCacheKey,
@@ -546,6 +548,7 @@ import {
   selectModelCatalogFallback,
   resolveProfileSessionModel,
   shouldEnrichCanonicalProviderCatalog,
+  shouldPreferCachedCatalogOverSparseLiveDiscovery,
   shouldTrySessionModelFallback,
   unionCachedModelCatalogs,
   } from './lib/model-discovery.mjs';
@@ -11999,34 +12002,58 @@ async function readCachedModelCatalog() {
       gatewayUrl: settings.gatewayUrl,
       profile: settings.activeProfile,
     });
-    const scoped = normalizeCachedModelCatalog(cache?.[key]?.models);
-    if (scoped.length) return scoped;
-    // No verified catalog for this profile yet (fresh agent switch): fall back
-    // to the gateway-wide shared entry so the selector keeps the full catalog
-    // instead of collapsing to a single alias row.
-    return normalizeCachedModelCatalog(cache?.[globalModelCatalogCacheKey({
+    const sharedKey = globalModelCatalogCacheKey({
       gatewayMode: settings.gatewayMode,
       gatewayUrl: settings.gatewayUrl,
-    })]?.models);
+    });
+    const scopedEntry = cache?.[key];
+    const sharedEntry = cache?.[sharedKey];
+    const scoped = normalizeCachedModelCatalog(scopedEntry?.models);
+    const shared = normalizeCachedModelCatalog(sharedEntry?.models);
+    if (!scoped.length) return shared;
+    // Reconcile against a newer shared catalog snapshot so a profile with an
+    // older cache never overrides models refreshed or pruned on another profile.
+    if (shared.length && (Number(sharedEntry?.savedAt) || 0) > (Number(scopedEntry?.savedAt) || 0)) {
+      return normalizeCachedModelCatalog(mergeSharedModelCatalog({
+        sharedModels: scoped,
+        freshModels: shared,
+      }));
+    }
+    return scoped;
   } catch {
     return [];
   }
 }
 
 // Union of every profile's cached catalog for this gateway — the resilience
-// pool that keeps all verified models selectable across agent switches.
-async function readCachedModelCatalogUnion() {
+// pool that keeps all verified models selectable across agent switches, without
+// resurrecting stale/removed models into providers returned by the live gateway.
+async function readCachedModelCatalogUnion({ liveModels = [], excludeLiveProviders = false } = {}) {
   try {
     const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
-    return unionCachedModelCatalogs(stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY]);
+    const gatewayPrefix = globalModelCatalogCacheKey({
+      gatewayMode: settings.gatewayMode,
+      gatewayUrl: settings.gatewayUrl,
+    }).slice(0, -MODEL_CATALOG_SHARED_CACHE_PROFILE.length);
+    const excludeProviders = excludeLiveProviders
+      ? new Set(
+          (Array.isArray(liveModels) ? liveModels : [])
+            .map((model) => String(model?.provider || '').trim().toLowerCase())
+            .filter(Boolean),
+        )
+      : null;
+    return unionCachedModelCatalogs(stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY], {
+      gatewayPrefix,
+      excludeProviders,
+    });
   } catch {
     return [];
   }
 }
 
-async function writeCachedModelCatalog(models) {
+async function writeCachedModelCatalog(models, { freshProviders = null } = {}) {
   const canonicalModels = normalizeCachedModelCatalog(models);
-  if (!canonicalModels.length) return;
+  if (!canonicalModels.length && !(freshProviders instanceof Set) && !freshProviders?.size) return;
   try {
     const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
     const cache = stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY] && typeof stored[MODEL_CATALOG_CACHE_STORAGE_KEY] === 'object'
@@ -12037,19 +12064,21 @@ async function writeCachedModelCatalog(models) {
       gatewayUrl: settings.gatewayUrl,
     });
     const sharedModels = normalizeCachedModelCatalog(cache?.[sharedKey]?.models);
-    // Shared slot grows monotonically (union): a profile with a narrower
-    // catalog must never erase models another profile verified.
-    const unionModels = normalizeCachedModelCatalog(unionCachedModelCatalogs({
-      [sharedKey]: { savedAt: 0, models: sharedModels },
-      [MODEL_CATALOG_SHARED_CACHE_PROFILE]: { savedAt: Date.now(), models: canonicalModels },
+    // Replace any provider present in the fresh live catalog while keeping
+    // providers absent from this profile so agent switches never lose them.
+    const unionModels = normalizeCachedModelCatalog(mergeSharedModelCatalog({
+      sharedModels,
+      freshModels: canonicalModels,
+      freshProviders: freshProviders instanceof Set ? freshProviders : null,
     }));
     const key = modelCatalogCacheKey({
       gatewayMode: settings.gatewayMode,
       gatewayUrl: settings.gatewayUrl,
       profile: settings.activeProfile,
     });
-    cache[key] = { savedAt: Date.now(), models: canonicalModels };
-    cache[sharedKey] = { savedAt: Date.now(), models: unionModels };
+    const savedAt = Date.now();
+    cache[key] = { savedAt, models: canonicalModels };
+    cache[sharedKey] = { savedAt, models: unionModels };
     await browserApi.storage.local.set({ [MODEL_CATALOG_CACHE_STORAGE_KEY]: cache });
   } catch {
     // Catalog caching is resilience-only; storage failures must not block sync.
@@ -12159,6 +12188,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     let data = payload;
     let registryModels = [];
     let registrySource = '';
+    let discoveredProviderSlugs = null;
     const cachedCatalogModels = await readCachedModelCatalog();
     if (startup && !refresh) {
       const initialModels = cachedCatalogModels.length
@@ -12185,23 +12215,32 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         renderModelOptions(availableModels);
         return { ok: false, count: availableModels.length, error: 'Hermes dashboard is not connected.' };
       }
-      data = isRemoteWsMode()
-        ? modelRowsFromGatewayOptions(await remoteWsConnection.client.request(WS_METHODS.modelOptions))
-        : modelRowsFromGatewayOptions(await activeDashboardWsConnection.client.request(WS_METHODS.modelOptions));
+      const optionsPayload = isRemoteWsMode()
+        ? await remoteWsConnection.client.request(WS_METHODS.modelOptions)
+        : await activeDashboardWsConnection.client.request(WS_METHODS.modelOptions);
+      discoveredProviderSlugs = providerSlugsFromModelOptionsPayload(optionsPayload);
+      data = modelRowsFromGatewayOptions(optionsPayload);
       registrySource = 'dashboard';
     }
 
     if (data) {
       registryModels = normalizeHermesModels(data, settings.model);
+      if (!registrySource) registrySource = 'dashboard';
+      if (!discoveredProviderSlugs) discoveredProviderSlugs = providerSlugsFromModelOptionsPayload(data);
     } else {
+      const registryTimeoutMs = refresh ? 20_000 : 5_000;
       const registryResult = await Promise.race([
         discoverModelsFromRegistry({ apiFetch, readJsonResponse, refresh }),
-        new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout' }), 2_500)),
+        new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout' }), registryTimeoutMs)),
       ]);
       if (registryResult.ok && registryResult.models.length) {
         registryModels = normalizeHermesModels(registryResult.models, settings.model);
         registrySource = 'registry';
-      } else if (!registryResult.ok && localDashboardUrl() && settings.activeProfile) {
+        discoveredProviderSlugs = registryResult.providerSlugs || discoveredProviderSlugs;
+      } else if (registryResult.ok) {
+        discoveredProviderSlugs = registryResult.providerSlugs || discoveredProviderSlugs;
+      }
+      if (!registryModels.length && !registryResult.ok && localDashboardUrl() && settings.activeProfile) {
         // Gateway /p/<profile>/ needs that profile's own API_SERVER_KEY; the
         // desktop dashboard honors ?profile= with the session token, so a
         // profile key gap never blocks model discovery for named profiles.
@@ -12212,11 +12251,14 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
             profile: settings.activeProfile,
             dashboardToken: await dashboardTokenFor(localDashboardUrl(), ''),
           }),
-          new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout' }), 2_500)),
+          new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout' }), registryTimeoutMs)),
         ]);
         if (dashRetry.ok && dashRetry.models.length) {
           registryModels = normalizeHermesModels(dashRetry.models, settings.model);
           registrySource = 'dashboard';
+          discoveredProviderSlugs = dashRetry.providerSlugs || discoveredProviderSlugs;
+        } else if (dashRetry.ok) {
+          discoveredProviderSlugs = dashRetry.providerSlugs || discoveredProviderSlugs;
         }
       }
       if (!registryModels.length) {
@@ -12233,6 +12275,9 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         if (dashboardResult.ok && dashboardResult.models.length) {
           registryModels = normalizeHermesModels(dashboardResult.models, settings.model);
           registrySource = 'dashboard';
+          discoveredProviderSlugs = dashboardResult.providerSlugs || discoveredProviderSlugs;
+        } else if (dashboardResult.ok) {
+          discoveredProviderSlugs = dashboardResult.providerSlugs || discoveredProviderSlugs;
         } else {
           const cachedFallback = selectModelCatalogFallback({ cachedModels: cachedCatalogModels });
           if (cachedFallback.models.length) {
@@ -12256,8 +12301,13 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       }
     }
 
-    if (cachedCatalogModels.length > registryModels.length && registryModels.length <= 1) {
+    if (shouldPreferCachedCatalogOverSparseLiveDiscovery({
+      registryModels,
+      registrySource,
+      cachedCatalogModels,
+    })) {
       registryModels = normalizeHermesModels(cachedCatalogModels, settings.model);
+      registrySource = 'cache';
     }
 
     if (!isRemoteWsMode() && registrySource !== 'gateway') {
@@ -12276,7 +12326,11 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         fetchFn: globalThis.fetch?.bind(globalThis),
       });
       registryModels = normalizeHermesModels(canonicalResult.models, settings.model);
-      await writeCachedModelCatalog(registryModels);
+      if (registrySource !== 'cache') {
+        await writeCachedModelCatalog(registryModels, {
+          freshProviders: discoveredProviderSlugs instanceof Set ? discoveredProviderSlugs : null,
+        });
+      }
     }
 
     // If the gateway only exposes a single OpenAI-compatible row, keep a
@@ -12324,10 +12378,16 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     }
 
     // Cross-profile catalog preservation: switching agents must never shrink
-    // the model selector. Union every previously verified model (any profile
-    // on this gateway) back into the list; fresh discovery rows win conflicts,
-    // cached rows only add models this profile's response omitted.
-    const cachedUnionModels = await readCachedModelCatalogUnion();
+    // the model selector, while any provider returned by the live gateway (or
+    // the active profile's own cached catalog) remains authoritative instead of
+    // resurrecting deleted models from another profile's stale cache.
+    const hasAuthoritativeProviderCatalog = ['registry', 'dashboard', 'cache'].some(
+      (prefix) => registrySource === prefix || registrySource.startsWith(`${prefix}+`),
+    );
+    const cachedUnionModels = await readCachedModelCatalogUnion({
+      liveModels: registryModels,
+      excludeLiveProviders: hasAuthoritativeProviderCatalog,
+    });
     if (cachedUnionModels.length) {
       const unionMerged = normalizeHermesModels(mergeModelsByRawId([registryModels, cachedUnionModels]), settings.model);
       if (unionMerged.length > registryModels.length) registryModels = unionMerged;
