@@ -34,7 +34,14 @@
     if (typeof gate.latestInject === 'boolean') {
       return Promise.resolve(gate.latestInject);
     }
-    if (gate.promise) return gate.promise;
+    if (gate.decided) {
+      return Promise.resolve(!globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__);
+    }
+    if (gate.promise) {
+      return gate.promise.then((initial) => (
+        typeof gate.latestInject === 'boolean' ? gate.latestInject : initial
+      ));
+    }
     if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__) return Promise.resolve(false);
     return Promise.resolve(true);
   }
