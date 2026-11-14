@@ -6102,7 +6102,7 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
 }
 .model-option-name,
 .session-option-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.model-option-meta,
+.model-option-meta { color: rgba(var(--hermes-fg-rgb),0.58); font-size: calc(10px * var(--hermes-text-zoom, 1)); max-width: none; min-width: 0; white-space: nowrap; flex-shrink: 0; }
 .session-option-meta { color: rgba(var(--hermes-fg-rgb),0.58); font-size: calc(10px * var(--hermes-text-zoom, 1)); max-width: 42%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; }
 .model-options-list {
   min-height: 0;
