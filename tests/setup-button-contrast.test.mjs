@@ -62,13 +62,13 @@ test('the quiet secondary setup button holds 4.5:1 in every built-in theme', () 
 
 const SETUP_BUTTONS = '.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip';
 
-test('every setup button shares one recipe: 18px capitals in the display face, weight 500, 0.02em, 44px tall', () => {
+test('every setup button shares one recipe: 18px capitals in the display face, weight 500, display tracking token, 44px tall', () => {
   const block = rules(sidepanelCss).find((rule) => rule.selector === `.onboarding :is(${SETUP_BUTTONS})` && /font-size: var\(--setup-button-size\)/.test(rule.body));
   assert.ok(block, 'one shared rule for primary and secondary');
   assert.match(block.body, /min-height: 44px;/);
   assert.match(block.body, /font-family: var\(--hermes-font-display\);/);
   assert.match(block.body, /font-weight: 500;/);
-  assert.match(block.body, /letter-spacing: 0\.02em;/);
+  assert.match(block.body, /letter-spacing: var\(--hermes-display-tracking\);/);
   assert.match(block.body, /text-transform: uppercase;/);
   assert.match(block.body, /padding: calc\(6px \+ 0\.05em\) 14px calc\(6px - 0\.05em\);/, 'the measured optical nudge, not a per-button hack');
   assert.match(sidepanelCss, /--setup-button-size: calc\(18px \* var\(--hermes-text-zoom, 1\)\);/, '18px scaled by the text-zoom setting');

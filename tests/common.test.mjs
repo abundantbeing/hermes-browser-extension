@@ -4189,7 +4189,7 @@ test('side-panel Marketplace browser is localized, revision guarded, debounced, 
   assert.match(css, /\.settings-dialog \.marketplace-theme-search\s*\{[^}]*gap:\s*12px/s, 'search input and action need professional separation');
   assert.match(css, /\.settings-dialog \.marketplace-theme-search input,[\s\S]*?margin-top:\s*0/s, 'search input and action must share one visual baseline');
   assert.match(css, /\.marketplace-theme-search button\s*\{[^}]*background:\s*#f4f2eb[^}]*color:\s*#111/s, 'Search Themes must use the approved white action treatment');
-  assert.match(css, /\.marketplace-theme-head div > strong\s*\{[^}]*font:[^;}]*calc\(13px \* var\(--hermes-text-zoom, 1\)\)\/1\.15/s, 'Marketplace heading must retain the readable example scale');
+  assert.match(css, /\.marketplace-theme-head div > strong\s*\{[^}]*font:[^;}]*calc\(13px \* var\(--hermes-text-zoom, 1\)\)\/1\.25/s, 'Marketplace heading must retain the readable example scale');
   assert.match(css, /\.marketplace-theme-loading\s*\{[^}]*grid-template-columns:\s*repeat\(5/s, 'loading state must retain the example progress bars');
   assert.match(source, /marketplace-theme-loading/);
   assert.doesNotMatch(source, /marketplaceThemeResults\.innerHTML/);

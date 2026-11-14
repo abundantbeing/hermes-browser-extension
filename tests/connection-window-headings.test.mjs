@@ -31,7 +31,10 @@ test('window titles use the display font only in capitals, with the same spacing
   assert.equal(declared(rule.body, 'font-family'), 'var(--hermes-font-display)');
   assert.equal(declared(rule.body, 'text-transform'), 'uppercase');
   assert.equal(declared(rule.body, 'font-synthesis'), 'none');
-  assert.ok(parseFloat(declared(rule.body, 'letter-spacing')) >= 0.03);
+  assert.ok(
+    declared(rule.body, 'letter-spacing') === 'var(--hermes-display-tracking)'
+      || parseFloat(declared(rule.body, 'letter-spacing')) >= 0.03,
+  );
   const settings = rules(/^\.settings-pane-title$/)[0];
   assert.equal(declared(rule.body, 'font-size'), declared(settings.body, 'font-size'), 'same size as a Settings title');
 });

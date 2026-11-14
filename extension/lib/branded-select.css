@@ -105,11 +105,11 @@ html[data-hermes-font-profile] .settings-dialog .bot-mode-density-row > span {
   font-family: var(--hermes-font-ui);
   font-synthesis: none;
 }
-html[data-hermes-font-profile] .settings-dialog .browser-control-kicker {
-  font-family: var(--hermes-font-display);
+html[data-hermes-font-profile] .settings-dialog .browser-control-kicker {font-family: var(--hermes-font-display);
   font-synthesis: none;
   text-transform: uppercase;
-}
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 html[data-hermes-font-profile] .settings-dialog .browser-control-action {
   text-transform: uppercase;
   letter-spacing: 0.03em;

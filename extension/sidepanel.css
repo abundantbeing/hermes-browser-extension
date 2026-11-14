@@ -124,6 +124,8 @@
   --hermes-font-mono: "Aeonik Fono", "Aeonik Fono Pro", "Aeonik Fono Pro TRIAL", "HermesMono", "Courier Prime", "Cascadia Code", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
   --hermes-font-brand: "Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif;
   --hermes-font-display: "Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif;
+  --hermes-display-tracking: 0.04em;
+  --hermes-display-line-height: 1.25;
   --hermes-text-zoom: 1;
   /* Glass bubble tokens: the light default is fully opaque, zero blur. */
   --hermes-bubble-user-alpha: 100%;
@@ -535,9 +537,10 @@ button { text-transform: uppercase; letter-spacing: 0.14em; }
   min-width: 52px;
   max-width: 52px;
   font-family: var(--hermes-font-display);
-  line-height: 0.82;
-  letter-spacing: -0.04em;
+  line-height: var(--hermes-display-line-height, 1.25);
+  letter-spacing: var(--hermes-display-tracking);
   overflow: hidden;
+  padding-block-end: 0.1em;
 }
 .brand-mini strong { font-size: calc(14px * var(--hermes-text-zoom, 1)); font-weight: 300; text-align: left; }
 /* The Hermes wing, turned 45 degrees as on hermes-agent.nousresearch.com. Its
@@ -702,29 +705,28 @@ textarea::-webkit-scrollbar-thumb,
   font-weight: 700;
 }
 .eyebrow { margin: 0 0 7px; color: currentColor; }
-h1, h2, h3, h4 { margin: 0; font-family: var(--hermes-font-display); font-weight: 300; }
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--hermes-font-display);
+  font-weight: 300;
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);
+}
 h1 {
   color: var(--hermes-fg);
   font-size: calc(clamp(38px, 13vw, 64px) * var(--hermes-text-zoom, 1));
-  line-height: 0.82;
-  letter-spacing: 0.02em;
 }
 h2 {
   color: var(--hermes-ink);
   font-size: calc(34px * var(--hermes-text-zoom, 1));
-  line-height: 0.92;
-  letter-spacing: 0.01em;
 }
 .settings-dialog #settingsTitle,
 .web-settings-dialog #settingsTitle {
   font-family: var(--hermes-font-display);
   font-weight: 500;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: uppercase;
-}
-
-.brand-mini {
-  font-family: var(--hermes-font-display);
+  line-height: var(--hermes-display-line-height, 1.25);
 }
 
 html[data-hermes-theme="cyberpunk"] h2,
@@ -786,7 +788,7 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
 .new-group-foot .new-group-primary { width: 100%; min-height: 42px; }
 .new-group-modal[hidden] { display: none; }
 .new-group-head { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
-.new-group-head h2 { margin: 0; font: 500 calc(26px * var(--hermes-text-zoom, 1))/0.95 var(--hermes-font-display); letter-spacing: 0.04em; text-transform: uppercase; }
+.new-group-head h2 { margin: 0; font: 500 calc(26px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-display); letter-spacing: 0.04em; text-transform: uppercase; }
 .new-group-head p { margin: 0; font: calc(9px * var(--hermes-text-zoom, 1))/1.5 var(--hermes-font-mono); opacity: .65; }
 .new-group-head button {
   width: 32px; height: 32px; border: 1px solid var(--hermes-panel-border);
@@ -962,13 +964,12 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
 }
-.bot-chat-intro-title {
-  margin: 0 0 10px;
-  font: 500 calc(64px * var(--hermes-text-zoom, 1))/0.95 var(--hermes-font-display);
-  letter-spacing: 0.02em;
+.bot-chat-intro-title {margin: 0 0 10px;
+  font: 500 calc(64px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-display);
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: uppercase;
   color: var(--hermes-fg);
-}
+  line-height: var(--hermes-display-line-height, 1.25);}
 .bot-chat-intro-subtitle {
   margin: 0;
   font: 500 calc(14px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-ui);
@@ -1493,7 +1494,7 @@ body.startup-active .topbar {
   white-space: nowrap;
   background: var(--startup-fg);
   color: var(--startup-bg);
-  font: 14px/1 var(--hermes-font-display);
+  font: 14px/1.25 var(--hermes-font-display);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   opacity: 0;
@@ -1562,8 +1563,7 @@ body.startup-active .startup-actions #startupTestConnectionButton:not([hidden]):
 }
 body:not(.startup-active) #startupTestConnectionButton { display: none; }
 body:not(.startup-active) #startupConnectButton { display: none; }
-body.startup-active .startup-actions #startupConnectButton:not([hidden]) {
-  display: inline-flex;
+body.startup-active .startup-actions #startupConnectButton:not([hidden]) {display: inline-flex;
   align-items: center;
   gap: 8px;
   visibility: visible;
@@ -1574,10 +1574,10 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]) {
   background: var(--hermes-primary-bg);
   color: var(--hermes-primary-fg);
   border-color: var(--hermes-primary-border);
-  font: 15px/1 var(--hermes-font-display);
-  letter-spacing: 0.07em;
+  font: 15px/1.25 var(--hermes-font-display);
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: uppercase;
-}
+  line-height: var(--hermes-display-line-height, 1.25);}
 body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover,
 body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-visible {
   background: var(--hermes-primary-fg, var(--hermes-paper));
@@ -1740,6 +1740,7 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-block-end: 0.12em;
 }
 .status-copy span {
   overflow: hidden;
@@ -1750,8 +1751,8 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   font-family: var(--hermes-font-display);
   font-size: calc(clamp(19px, 6vw, 24px) * var(--hermes-text-zoom, 1));
   font-weight: 300;
-  line-height: 1.3;
-  letter-spacing: 0.015em;
+  line-height: var(--hermes-display-line-height, 1.25);
+  letter-spacing: var(--hermes-display-tracking);
 }
 .status-copy span { margin-top: 6px; color: var(--hermes-muted); font-size: calc(11px * var(--hermes-text-zoom, 1)); line-height: 1.25; }
 /* Error diagnoses must remain readable without relying on a hover tooltip. */
@@ -1916,9 +1917,11 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
     linear-gradient(135deg, rgba(var(--hermes-accent-rgb),0.08), transparent 46%),
     var(--hermes-paper);
 }
-.settings-active-tab .status-copy strong {
-  font-size: calc(clamp(17px, 5vw, 21px) * var(--hermes-text-zoom, 1));
-}
+.settings-active-tab .status-copy strong {font-family: var(--hermes-font-display);
+  font-size: calc(clamp(19px, 6vw, 24px) * var(--hermes-text-zoom, 1));
+  font-weight: 300;
+  line-height: 1.3;
+  letter-spacing: var(--hermes-display-tracking);}
 
 .browser-control-card {
   display: grid;
@@ -1943,13 +1946,12 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   align-items: center;
   gap: 12px;
 }
-.browser-control-kicker {
-  color: var(--hermes-accent);
-  font: 500 calc(16px * var(--hermes-text-zoom, 1))/1.15 var(--hermes-font-display);
+.browser-control-kicker {color: var(--hermes-accent);
+  font: 500 calc(16px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-display);
   font-synthesis: none;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: uppercase;
-}
+  line-height: var(--hermes-display-line-height, 1.25);}
 .browser-control-state {
   display: inline-flex;
   align-items: center;
@@ -2340,17 +2342,16 @@ html[data-hermes-mode="light"] .browser-control-dialog { --control-accent: color
 
 /* Title: the Settings Hermes Control heading (.browser-control-kicker). It wraps only between words.
    The display scale makes the narrow signature face read at the size of the other profiles. */
-.browser-control-dialog .browser-control-dialog-title {
-  margin: 0;
+.browser-control-dialog .browser-control-dialog-title {margin: 0;
   min-width: 0;
-  /* --control-accent darkens the accent in light modes, where some themes' accent is too pale for a heading. */
+  
   color: var(--control-accent);
-  font: 500 calc(16px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1))/1.15 var(--hermes-font-display);
+  font: 500 calc(16px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1))/1.25 var(--hermes-font-display);
   font-synthesis: none;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: uppercase;
   outline: none;
-}
+  line-height: var(--hermes-display-line-height, 1.25);}
 .browser-control-dialog .browser-control-strip {
   position: static;
   grid-template-columns: minmax(0, 1fr);
@@ -2709,14 +2710,13 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.session-history-loading strong {
-  overflow-wrap: anywhere;
+.session-history-loading strong {overflow-wrap: anywhere;
   font-family: var(--hermes-font-display);
   font-size: calc(24px * var(--hermes-text-zoom, 1));
   font-weight: 300;
-  line-height: 0.98;
+  line-height: var(--hermes-display-line-height, 1.25);
   text-transform: uppercase;
-}
+  letter-spacing: var(--hermes-display-tracking);}
 @keyframes sessionHistoryScan {
   0% { transform: translate3d(-110%, 0, 0); opacity: 0.42; }
   42% { opacity: 1; }
@@ -3669,16 +3669,14 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
 .message-content h3,
 .message-content h4,
 .message-content h5,
-.message-content h6 {
-  margin: 0.95em 0 0.45em;
+.message-content h6 {margin: 0.95em 0 0.45em;
   font-family: var(--hermes-font-display);
   font-weight: 500;
   font-synthesis: none;
   line-height: 1.2;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: none;
-  color: currentColor;
-}
+  color: currentColor;}
 .message-content h1:first-child,
 .message-content h2:first-child,
 .message-content h3:first-child,
@@ -3691,18 +3689,14 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
 .message-content h4,
 .message-content h5 { font-size: calc(18px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
 .message-content h6 { font-size: calc(15px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); letter-spacing: 0.04em; text-transform: none; }
-html[data-hermes-font-profile="signature"] .message-content :is(h1, h2, h3, h4, h5, h6) {
-  font-family: var(--hermes-font-display);
+html[data-hermes-font-profile="signature"] .message-content :is(h1, h2, h3, h4, h5, h6) {font-family: var(--hermes-font-display);
   font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 0.92;
-  text-transform: none;
-}
-html[data-hermes-font-profile="cinzel"] .message-content :is(h1, h2, h3, h4, h5, h6) {
-  font-family: var(--hermes-font-display);
-  letter-spacing: 0.01em;
-  line-height: 1.15;
-}
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);
+  text-transform: none;}
+html[data-hermes-font-profile="cinzel"] .message-content :is(h1, h2, h3, h4, h5, h6) {font-family: var(--hermes-font-display);
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 .message-content ul,
 .message-content ol { margin: 0 0 0.86em; padding-left: 1.7em; display: grid; gap: 0.28em; }
 .message-content li { padding-left: 0.2em; }
@@ -4353,10 +4347,10 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
   color: var(--hermes-ink);
   box-shadow: 0 18px 56px rgba(var(--hermes-fg-rgb),0.24);
 }
-.profile-switch-card h2 {
-  margin: 0;
-  font: 500 calc(20px * var(--hermes-text-zoom, 1))/1.15 var(--hermes-font-display);
-}
+.profile-switch-card h2 {margin: 0;
+  font: 500 calc(20px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-display);
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 .profile-switch-card p {
   margin: 0;
   color: var(--hermes-muted);
@@ -7615,17 +7609,15 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   text-transform: uppercase;
   letter-spacing: 0.14em;
 }
-.add-connection-card .add-connection-heading h2 {
-  margin: 0;
+.add-connection-card .add-connection-heading h2 {margin: 0;
   font-family: var(--hermes-font-display);
   font-weight: 500;
   font-synthesis: none;
   font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
-  line-height: 1;
+  line-height: var(--hermes-display-line-height, 1.25);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  overflow-wrap: anywhere;
-}
+  letter-spacing: var(--hermes-display-tracking);
+  overflow-wrap: anywhere;}
 .add-connection-headers { display: grid; gap: 8px; }
 .add-connection-headers:empty { display: none; }
 .add-connection-header-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: start; }
@@ -7854,7 +7846,8 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
 .custom-theme-manager-body { display: grid; gap: 14px; padding: 16px 14px; border-top: 1px solid var(--hermes-line); }
 .marketplace-theme-browser { display: grid; gap: 10px; min-width: 0; }
 .marketplace-theme-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
-.marketplace-theme-head div > strong { display: block; color: var(--hermes-ink); font: 700 calc(13px * var(--hermes-text-zoom, 1))/1.15 var(--hermes-font-display); letter-spacing: 0.01em; }
+.marketplace-theme-head div > strong {display: block; color: var(--hermes-ink); font: 700 calc(13px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-display); letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 .marketplace-theme-head div > span { display: block; margin-top: 5px; color: var(--hermes-muted); font: calc(9.5px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-mono); }
 .marketplace-theme-head > span { margin-top: 2px; color: var(--hermes-muted); font: calc(8.5px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-mono); text-transform: uppercase; }
 .settings-dialog .marketplace-theme-search { display: grid; grid-template-columns: minmax(0,1fr) 112px; gap: 12px; }
@@ -7981,9 +7974,10 @@ html[data-hermes-theme="mono"][data-hermes-mode="light"] .agent-theme-status { c
   display: block;
   font-family: var(--hermes-font-display);
   font-size: calc(28px * var(--hermes-text-zoom, 1));
-  line-height: 0.96;
+  line-height: var(--hermes-display-line-height, 1.25);
   font-weight: 300;
   margin-bottom: 8px;
+  letter-spacing: var(--hermes-display-tracking);
 }
 .empty-state span { position: relative; display: block; color: var(--hermes-muted); font-size: calc(11px * var(--hermes-text-zoom, 1)); line-height: 1.4; text-transform: uppercase; letter-spacing: 0.08em; }
 
@@ -8032,15 +8026,16 @@ select,
   font-size: calc(10px * var(--hermes-text-zoom, 1));
 }
 
-h2,
-.empty-state strong {
-  font-size: calc(28px * var(--hermes-text-zoom, 1));
-}
-
 .message-content h1,
 .message-content h2,
 .message-content h3,
-.message-content h4 { font-family: var(--hermes-font-display); font-weight: 500; line-height: 1.2; letter-spacing: 0.03em; text-transform: none; }
+.message-content h4 {
+  font-family: var(--hermes-font-display);
+  font-weight: 500;
+  line-height: var(--hermes-display-line-height, 1.25);
+  letter-spacing: var(--hermes-display-tracking);
+  text-transform: none;
+}
 .message-content h1 { font-size: calc(32px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
 .message-content h2 { font-size: calc(26px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
 .message-content h3 { font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
@@ -8084,13 +8079,12 @@ h2,
   border-color: var(--hermes-accent, #4f8cff);
   background: var(--hermes-accent-soft, rgba(79, 140, 255, 0.08));
 }
-.agent-card-name {
-  grid-area: name;
+.agent-card-name {grid-area: name;
   font-family: var(--hermes-font-display, sans-serif);
   font-size: calc(14px * var(--hermes-text-zoom, 1));
   font-weight: 600;
-  letter-spacing: 0.02em;
-}
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 .agent-card-meta {
   grid-area: meta;
   font-size: calc(11px * var(--hermes-text-zoom, 1));
@@ -8175,7 +8169,8 @@ h2,
   text-align: left;
 }
 .task-stack-toggle:hover { background: rgba(var(--hermes-accent-rgb),0.08); }
-.task-stack-title { font-family: var(--hermes-font-display); font-size: calc(11px * var(--hermes-text-zoom, 1)); letter-spacing: .08em; }
+.task-stack-title {font-family: var(--hermes-font-display); font-size: calc(11px * var(--hermes-text-zoom, 1)); letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 .task-stack-summary { overflow: hidden; color: var(--hermes-muted); font-size: calc(8px * var(--hermes-text-zoom, 1)); letter-spacing: .08em; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; }
 .task-stack-progress { display: block; height: 3px; overflow: hidden; background: rgba(var(--hermes-ink-rgb),0.14); }
 .task-stack-progress i { display: block; width: 0; height: 100%; background: var(--hermes-accent); transition: width 180ms ease; }
@@ -8513,13 +8508,12 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   text-transform: none;
   color: rgba(var(--hermes-fg-rgb), .66);
 }
-.bot-mode-head h2 {
-  margin: 0 0 4px;
-  font: 500 calc(36px * var(--hermes-text-zoom, 1))/0.95 var(--hermes-font-display);
-  letter-spacing: 0.02em;
+.bot-mode-head h2 {margin: 0 0 4px;
+  font: 500 calc(36px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-display);
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: uppercase;
   color: var(--hermes-fg);
-}
+  line-height: var(--hermes-display-line-height, 1.25);}
 .bot-mode-head-controls {
   display: flex;
   align-items: center;
@@ -9178,14 +9172,13 @@ html[dir="rtl"] .bot-mode-row { text-align: right; }
   width: min(100%, 180px);
   margin-bottom: 2px;
 }
-.bot-mode-loading-card strong {
-  font-size: calc(13px * var(--hermes-text-zoom, 1));
+.bot-mode-loading-card strong {font-size: calc(13px * var(--hermes-text-zoom, 1));
   font-family: var(--hermes-font-display);
-  letter-spacing: .06em;
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: uppercase;
   color: var(--hermes-ink);
   margin: 0;
-}
+  line-height: var(--hermes-display-line-height, 1.25);}
 .bot-mode-loading-card .hint {
   font: calc(9px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-mono);
   opacity: .75;
@@ -9238,7 +9231,8 @@ html[dir="rtl"] .bot-mode-row { text-align: right; }
 .bot-mode-sheet, .bot-mode-sheet *, .bot-mode-sheet *::before, .bot-mode-sheet *::after { box-sizing: border-box; min-width: 0; }
 .bot-mode-sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 18px 18px 10px; }
 .bot-mode-sheet-head p { margin: 0; font: 500 calc(12px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-ui); letter-spacing: 0.02em; text-transform: none; color: rgba(var(--hermes-fg-rgb), .72); }
-.bot-mode-sheet-head h2 { margin: 0; font: 500 calc(26px * var(--hermes-text-zoom, 1))/0.95 var(--hermes-font-display); letter-spacing: 0.02em; text-transform: uppercase; }
+.bot-mode-sheet-head h2 {margin: 0; font: 500 calc(26px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-display); letter-spacing: var(--hermes-display-tracking); text-transform: uppercase;
+  line-height: var(--hermes-display-line-height, 1.25);}
 .bot-mode-sheet-head button { width: 38px; height: 38px; border: 1px solid var(--hermes-panel-border); background: transparent; color: inherit; font-size: calc(18px * var(--hermes-text-zoom, 1)); cursor: pointer; }
 .bot-mode-sheet-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 18px 12px; border-bottom: 1px solid var(--hermes-panel-border); }
 .bot-mode-sheet-tab { min-height: 40px; padding: 0 12px; border: 1px solid var(--hermes-panel-border); background: transparent; color: rgba(var(--hermes-fg-rgb), .75); font: 650 calc(14px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-ui); letter-spacing: .02em; text-transform: uppercase; cursor: pointer; }
@@ -9353,18 +9347,13 @@ html[dir="rtl"] .bot-mode-row { text-align: right; }
   gap: 12px;
   width: 100%;
 }
-.group-settings-title {
-  margin: 0;
+.group-settings-title {margin: 0;
   font: 700 calc(22px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-display);
-  letter-spacing: .02em;
+  letter-spacing: var(--hermes-display-tracking);
   color: var(--hermes-ink);
-}
-.new-group-head h2 {
-  margin: 0;
-  font: 700 calc(22px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-display);
-  letter-spacing: .02em;
-  color: var(--hermes-fg);
-}
+  line-height: var(--hermes-display-line-height, 1.25);}
+.new-group-head h2 {margin: 0; font: 500 calc(26px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-display); letter-spacing: var(--hermes-display-tracking); text-transform: uppercase;
+  line-height: var(--hermes-display-line-height, 1.25);}
 .group-settings-subtitle {
   margin: 0;
   font: calc(9.5px * var(--hermes-text-zoom, 1))/1.45 var(--hermes-font-mono);
@@ -9593,9 +9582,9 @@ html[data-hermes-font-profile] .bot-mode-sheet .branded-select-option {
   font-synthesis: none;
 }
 html[data-hermes-font-profile] .bot-mode-sheet-head h2,
-html[data-hermes-font-profile] .bot-mode-sheet-tab {
-  font-family: var(--hermes-font-display);
-}
+html[data-hermes-font-profile] .bot-mode-sheet-tab {font-family: var(--hermes-font-display);
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 html[data-hermes-font-profile="signature"] .bot-mode-sheet .bot-mode-sheet-label,
 html[data-hermes-font-profile="signature"] .bot-mode-sheet .hint,
 html[data-hermes-font-profile="signature"] .bot-mode-sheet input,
@@ -10338,19 +10327,17 @@ html[dir="rtl"] .settings-pane-back svg { transform: scaleX(-1); }
   text-transform: uppercase;
 }
 .settings-pane-crumb::after { content: " /"; }
-.settings-pane-title {
-  min-width: 0;
+.settings-pane-title {min-width: 0;
   margin: 0;
   color: var(--hermes-ink);
   font-family: var(--hermes-font-display);
   font-weight: 500;
   font-synthesis: none;
   font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
-  line-height: 1;
+  line-height: var(--hermes-display-line-height, 1.25);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  overflow-wrap: anywhere;
-}
+  letter-spacing: var(--hermes-display-tracking);
+  overflow-wrap: anywhere;}
 .settings-pane-title:focus-visible { outline: 1px solid var(--hermes-accent); outline-offset: 3px; }
 
 .connection-flow-note { margin: 0; font-weight: 400; font-size: calc(10px * var(--hermes-text-zoom, 1)); line-height: 1.45; color: var(--hermes-muted); overflow-wrap: anywhere; }
@@ -11031,7 +11018,8 @@ html[data-hermes-mode="light"] .onboarding-logo {
   font-family: var(--hermes-font-display);
   font-size: calc(30px * var(--hermes-text-zoom, 1));
   font-weight: 300;
-  line-height: 0.95;
+  line-height: var(--hermes-display-line-height, 1.25);
+  letter-spacing: var(--hermes-display-tracking);
   text-transform: uppercase;
   outline: none;
 }
@@ -11071,7 +11059,6 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
   width: min(100%, 340px);
   text-align: center;
 }
-.onboarding-welcome .onboarding-title { font-size: calc(34px * var(--hermes-text-zoom, 1)); }
 .onboarding-welcome .onboarding-title-english { margin: -4px 0 0; text-align: center; }
 .onboarding-welcome .onboarding-body { max-width: 30ch; }
 .onboarding-welcome .onboarding-body-english { margin-top: -6px; color: rgba(var(--startup-fg-rgb), 0.6); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); }
@@ -11132,8 +11119,8 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
   font-family: var(--hermes-font-display);
   font-size: var(--setup-button-size);
   font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: 0.02em;
+  line-height: var(--hermes-display-line-height, 1.25);
+  letter-spacing: var(--hermes-display-tracking);
   text-wrap: balance;
   text-transform: uppercase;
 }
@@ -11192,7 +11179,7 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
 .onboarding [data-dither="run"] { color: transparent !important; background: transparent !important; border-color: transparent !important; transition: none !important; }
 .onboarding [data-dither="run"] svg { color: var(--dither-icon); }
 @media (forced-colors: active) {
-  .onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip) { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
+  .onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip) { min-height: 44px; }
   .onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip):is(:focus-visible, :hover) { background: Highlight; color: HighlightText; border-color: HighlightText; }
   .dither-hover-canvas { display: none; }
   .onboarding [data-dither="run"] { color: ButtonText !important; background: ButtonFace !important; border-color: ButtonText !important; }
@@ -11406,7 +11393,7 @@ html[dir="rtl"] .onboarding .onboarding-nav-button[data-onboarding-next]:not(.is
   white-space: nowrap;
   background: var(--startup-fg);
   color: var(--startup-bg);
-  font: 14px/1 var(--hermes-font-display);
+  font: 14px/1.25 var(--hermes-font-display);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   opacity: 0;
@@ -12167,6 +12154,7 @@ html[dir="rtl"] .custom-theme-summary,
 html[dir="rtl"] .drop-overlay,
 html[dir="rtl"] .effort-control-title,
 html[dir="rtl"] .empty-state span,
+html[dir="rtl"] .empty-state strong,
 html[dir="rtl"] .eyebrow,
 html[dir="rtl"] .first-prompt-chip,
 html[dir="rtl"] .gateway-queue-notice strong,
@@ -12242,6 +12230,7 @@ html[dir="rtl"] .operation-toast strong,
 html[dir="rtl"] .page-annotation-heading,
 html[dir="rtl"] .page-comment-tray-button,
 html[dir="rtl"] .profile-switch-actions button,
+html[dir="rtl"] .profile-switch-card h2,
 html[dir="rtl"] .profile-switch-mode,
 html[dir="rtl"] .profile-verified-count,
 html[dir="rtl"] .projects-back,
@@ -12273,6 +12262,7 @@ html[dir="rtl"] .session-option-row[data-live-state="running"] .session-option-m
 html[dir="rtl"] .session-ownership-actions button,
 html[dir="rtl"] .session-ownership-kicker,
 html[dir="rtl"] .session-recovery-actions .tiny,
+html[dir="rtl"] .settings-active-tab .status-copy strong,
 html[dir="rtl"] .settings-back-to-top,
 html[dir="rtl"] .settings-category-edited,
 html[dir="rtl"] .settings-choice-copy small,
@@ -12346,6 +12336,8 @@ html[dir="rtl"] body.startup-active .startup-actions #startupConnectButton:not([
 html[dir="rtl"] button,
 html[dir="rtl"] h1,
 html[dir="rtl"] h2,
+html[dir="rtl"] h3,
+html[dir="rtl"] h4,
 html[dir="rtl"][data-hermes-font-profile="cinzel"] .message-content :is(h1, h2, h3, h4, h5, h6),
 html[dir="rtl"][data-hermes-font-profile="signature"] .bot-mode-sheet .bot-mode-advanced > summary,
 html[dir="rtl"][data-hermes-font-profile="signature"] .bot-mode-sheet .bot-mode-sheet-label,
@@ -12372,6 +12364,8 @@ html[dir="rtl"][data-hermes-font-profile="signature"] .web-settings-dialog butto
 html[dir="rtl"][data-hermes-font-profile="signature"] .web-settings-dialog input,
 html[dir="rtl"][data-hermes-font-profile="signature"] .web-settings-dialog label,
 html[dir="rtl"][data-hermes-font-profile="signature"] .web-settings-dialog textarea,
+html[dir="rtl"][data-hermes-font-profile] .bot-mode-sheet-head h2,
+html[dir="rtl"][data-hermes-font-profile] .bot-mode-sheet-tab,
 html[dir="rtl"][data-hermes-font-profile] .browser-control-dialog .browser-control-action,
 html[dir="rtl"][data-hermes-font-profile] .settings-dialog .browser-control-action,
 html[dir="rtl"][data-hermes-font-profile] .settings-dialog .browser-control-kicker,

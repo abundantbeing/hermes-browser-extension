@@ -67,6 +67,8 @@
   --hermes-danger: #d51f4e;
   --hermes-font-ui: "Rules Variable", "Space Grotesk", "Segoe UI", system-ui, sans-serif;
   --hermes-font-display: "Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif;
+  --hermes-display-tracking: 0.04em;
+  --hermes-display-line-height: 1.25;
   --hermes-font-mono: "Aeonik Fono", "Aeonik Fono Pro", "Aeonik Fono Pro TRIAL", "HermesMono", "Courier Prime", "Cascadia Code", monospace;
   font-family: var(--hermes-font-ui);
   font-synthesis: none;

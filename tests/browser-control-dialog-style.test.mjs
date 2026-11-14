@@ -63,7 +63,7 @@ test('Hermes Control title is the Settings heading: display face, accent colour,
   assert.doesNotMatch(css, /font-profile="signature"\]\s+\.browser-control-dialog-title\s*\{[^}]*font-size/);
   const titleBody = titleRules.map((rule) => rule.body).join('\n');
   // The display scale is the one the app gives display headlines under the signature profile (1.3), unset elsewhere.
-  assert.match(titleBody, /font:\s*500 calc\(16px \* var\(--hermes-text-zoom,\s*1\) \* var\(--hermes-display-scale,\s*1\)\)\/1\.15 var\(--hermes-font-display\)/);
+  assert.match(titleBody, /font:\s*500 calc\(16px \* var\(--hermes-text-zoom,\s*1\) \* var\(--hermes-display-scale,\s*1\)\)\/1\.25 var\(--hermes-font-display\)/);
   assert.match(titleBody, /color:\s*var\(--control-accent\)/);
   // Headings wrap only between words: no forced break inside a word.
   assert.doesNotMatch(titleBody, /overflow-wrap:\s*anywhere|word-break:\s*break-all/);
@@ -185,8 +185,8 @@ test('the Hermes Control window uses the Settings card fonts in every profile', 
   // it takes the display scale that the app gives display headlines there, since that face is narrow.
   const kicker = rules.find((rule) => rule.selector === '.browser-control-kicker');
   const title = rules.find((rule) => rule.selector === '.browser-control-dialog .browser-control-dialog-title');
-  assert.match(kicker?.body || '', /font:\s*500 calc\(16px \* var\(--hermes-text-zoom,\s*1\)\)\/1\.15 var\(--hermes-font-display\)/);
-  assert.match(title?.body || '', /font:\s*500 calc\(16px \* var\(--hermes-text-zoom,\s*1\) \* var\(--hermes-display-scale,\s*1\)\)\/1\.15 var\(--hermes-font-display\)/);
+  assert.match(kicker?.body || '', /font:\s*500 calc\(16px \* var\(--hermes-text-zoom,\s*1\)\)\/1\.25 var\(--hermes-font-display\)/);
+  assert.match(title?.body || '', /font:\s*500 calc\(16px \* var\(--hermes-text-zoom,\s*1\) \* var\(--hermes-display-scale,\s*1\)\)\/1\.25 var\(--hermes-font-display\)/);
 });
 
 test('the composer launcher stays square', () => {
