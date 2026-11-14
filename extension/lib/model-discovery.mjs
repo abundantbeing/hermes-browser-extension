@@ -35,22 +35,51 @@ export function globalModelCatalogCacheKey({ gatewayMode = 'local-api', gatewayU
  * Rows dedupe by rawModelId (preferred) then id; the freshest entry wins so
  * metadata (context tokens, provider labels) stays current.
  */
-export function unionCachedModelCatalogs(cache = {}) {
+export function unionCachedModelCatalogs(cache = {}, { gatewayPrefix = '', excludeProviders = null } = {}) {
   if (!cache || typeof cache !== 'object') return [];
+  const prefix = String(gatewayPrefix || '');
+  const excluded = new Set(
+    Array.from(excludeProviders || [], (value) => String(value || '').trim().toLowerCase()).filter(Boolean),
+  );
   const byKey = new Map();
-  const entries = Object.values(cache)
-    .filter((entry) => entry && typeof entry === 'object')
-    .sort((a, b) => (Number(a?.savedAt) || 0) - (Number(b?.savedAt) || 0));
+  const entries = Object.entries(cache)
+    .filter(([cacheKey, entry]) => (!prefix || String(cacheKey || '').startsWith(prefix)) && entry && typeof entry === 'object')
+    .sort(([, a], [, b]) => (Number(a?.savedAt) || 0) - (Number(b?.savedAt) || 0))
+    .map(([, entry]) => entry);
   for (const entry of entries) {
     const rows = Array.isArray(entry?.models) ? entry.models : [];
     for (const model of rows) {
       if (!model || typeof model !== 'object') continue;
-      const id = String(model.rawModelId || model.id || '').trim();
-      if (!id) continue;
-      byKey.set(id, model);
+      const provider = String(model.provider || '').trim().toLowerCase();
+      if (provider && excluded.has(provider)) continue;
+      const rawCandidate = String(model.rawModelId || model.id || '').trim();
+      if (!rawCandidate) continue;
+      const lowerRaw = rawCandidate.toLowerCase();
+      const bareRaw = provider && lowerRaw.startsWith(`${provider}::`)
+        ? lowerRaw.slice(provider.length + 2)
+        : lowerRaw;
+      const key = provider ? `${provider}::${bareRaw}` : bareRaw;
+      byKey.set(key, model);
     }
   }
   return [...byKey.values()];
+}
+
+export function mergeSharedModelCatalog({ sharedModels = [], freshModels = [] } = {}) {
+  const fresh = Array.isArray(freshModels) ? freshModels.filter((model) => model && typeof model === 'object') : [];
+  const shared = Array.isArray(sharedModels) ? sharedModels.filter((model) => model && typeof model === 'object') : [];
+  if (!fresh.length) return shared;
+  const freshProviders = new Set(
+    fresh.map((model) => String(model.provider || '').trim().toLowerCase()).filter(Boolean),
+  );
+  const keptShared = shared.filter((model) => {
+    const provider = String(model.provider || '').trim().toLowerCase();
+    return !provider || !freshProviders.has(provider);
+  });
+  return unionCachedModelCatalogs({
+    kept: { savedAt: 0, models: keptShared },
+    fresh: { savedAt: 1, models: fresh },
+  });
 }
 
 export function normalizeCachedModelCatalog(payload = []) {
