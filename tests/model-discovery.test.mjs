@@ -22,6 +22,8 @@ import {
   MODEL_CATALOG_SHARED_CACHE_PROFILE,
   globalModelCatalogCacheKey,
   mergeSharedModelCatalog,
+  providerSlugsFromModelOptionsPayload,
+  shouldPreferCachedCatalogOverSparseLiveDiscovery,
   unionCachedModelCatalogs,
   profileDefaultModelFromOptions,
   resolveProfileSessionModel,
@@ -61,9 +63,11 @@ test('unionCachedModelCatalogs merges every profile cache into one deduped catal
     },
   };
   const union = unionCachedModelCatalogs(cache);
-  assert.equal(union.length, 3);
+  assert.equal(union.length, 2, 'an older profile slot must not resurrect retired provider models');
   const qwen = union.find((model) => model.rawModelId === 'qwen-max');
   assert.equal(qwen.contextTokens, 32768, 'freshest entry wins on conflicts');
+  assert.ok(union.some((model) => model.rawModelId === 'minimax/minimax-m3'));
+  assert.ok(!union.some((model) => model.rawModelId === 'z-ai/glm-5.3-flash'));
   // Empty/garbage entries degrade to an empty union, never a throw.
   assert.deepEqual(unionCachedModelCatalogs(null), []);
   assert.deepEqual(unionCachedModelCatalogs({ a: { savedAt: 1, models: [] }, b: {} }), []);
@@ -350,6 +354,78 @@ test('resolveProfileSessionModel prefers the live /api/model/options default ove
   assert.equal(resolveProfileSessionModel({ rosterModel: '', optionsPayload: {} }), null);
 });
 
+test('unionCachedModelCatalogs drops stale profile provider rows even when the live catalog omits that provider', () => {
+  const cache = {
+    'local-api|gw|secondary': {
+      savedAt: 100,
+      models: [
+        { id: 'custom::legacy-a', rawModelId: 'legacy-a', provider: 'custom' },
+        { id: 'custom::legacy-b', rawModelId: 'legacy-b', provider: 'custom' },
+      ],
+    },
+    'local-api|gw|default': {
+      savedAt: 200,
+      models: [
+        { id: 'custom::live-only', rawModelId: 'live-only', provider: 'custom' },
+      ],
+    },
+    'local-api|gw|__shared__': {
+      savedAt: 200,
+      models: [
+        { id: 'custom::live-only', rawModelId: 'live-only', provider: 'custom' },
+      ],
+    },
+  };
+  const union = unionCachedModelCatalogs(cache, {
+    gatewayPrefix: 'local-api|gw|',
+  });
+  assert.deepEqual(union.map((model) => model.id), ['custom::live-only']);
+});
+
+test('mergeSharedModelCatalog clears providers explicitly returned with an empty model list', () => {
+  const sharedModels = [
+    { id: 'retired::gone-model', rawModelId: 'gone-model', provider: 'retired' },
+    { id: 'other::still-here', rawModelId: 'still-here', provider: 'other' },
+  ];
+  const freshModels = [
+    { id: 'custom::live-only', rawModelId: 'live-only', provider: 'custom' },
+  ];
+  const merged = mergeSharedModelCatalog({
+    sharedModels,
+    freshModels,
+    freshProviders: new Set(['custom', 'retired']),
+  });
+  assert.deepEqual(merged.map((model) => model.id), [
+    'other::still-here',
+    'custom::live-only',
+  ]);
+});
+
+test('shouldPreferCachedCatalogOverSparseLiveDiscovery keeps an authoritative one-model registry reply', () => {
+  const cached = [{ id: 'nous::old-a', rawModelId: 'old-a', provider: 'nous' }, { id: 'nous::old-b', rawModelId: 'old-b', provider: 'nous' }];
+  const singleLive = [{ id: 'custom::only-one', rawModelId: 'only-one', provider: 'custom', source: 'registry' }];
+  assert.equal(shouldPreferCachedCatalogOverSparseLiveDiscovery({
+    registryModels: singleLive,
+    registrySource: 'registry',
+    cachedCatalogModels: cached,
+  }), false);
+  assert.equal(shouldPreferCachedCatalogOverSparseLiveDiscovery({
+    registryModels: [{ id: 'hermes-agent', gatewayAlias: true }],
+    registrySource: 'gateway',
+    cachedCatalogModels: cached,
+  }), true);
+});
+
+test('providerSlugsFromModelOptionsPayload keeps empty provider slots authoritative', () => {
+  const slugs = providerSlugsFromModelOptionsPayload({
+    providers: [
+      { slug: 'custom', models: [{ id: 'only-one' }] },
+      { slug: 'retired', models: [] },
+    ],
+  });
+  assert.deepEqual([...slugs].sort(), ['custom', 'retired']);
+});
+
 test('mergeSharedModelCatalog prunes removed models from live providers while preserving absent providers', () => {
   const sharedModels = [
     { id: 'custom::legacy-flash', rawModelId: 'legacy-flash', provider: 'custom' },
@@ -529,6 +605,8 @@ test('sidepanel loadModels prunes stale provider models across cache slots, pres
     mergeSharedModelCatalog,
     mergeModelsByRawId,
     mergeModelsWithRegistry,
+    providerSlugsFromModelOptionsPayload,
+    shouldPreferCachedCatalogOverSparseLiveDiscovery,
     unionCachedModelCatalogs,
     modelCatalogCacheKey,
     globalModelCatalogCacheKey,

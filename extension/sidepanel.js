@@ -536,6 +536,7 @@ import {
   mergeModelsWithRegistry,
   mergeSharedModelCatalog,
   mergeVirtualModelRows,
+  providerSlugsFromModelOptionsPayload,
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   MODEL_CATALOG_SHARED_CACHE_PROFILE,
   globalModelCatalogCacheKey,
@@ -547,6 +548,7 @@ import {
   selectModelCatalogFallback,
   resolveProfileSessionModel,
   shouldEnrichCanonicalProviderCatalog,
+  shouldPreferCachedCatalogOverSparseLiveDiscovery,
   shouldTrySessionModelFallback,
   unionCachedModelCatalogs,
   } from './lib/model-discovery.mjs';
@@ -12049,9 +12051,9 @@ async function readCachedModelCatalogUnion({ liveModels = [], excludeLiveProvide
   }
 }
 
-async function writeCachedModelCatalog(models) {
+async function writeCachedModelCatalog(models, { freshProviders = null } = {}) {
   const canonicalModels = normalizeCachedModelCatalog(models);
-  if (!canonicalModels.length) return;
+  if (!canonicalModels.length && !(freshProviders instanceof Set) && !freshProviders?.size) return;
   try {
     const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
     const cache = stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY] && typeof stored[MODEL_CATALOG_CACHE_STORAGE_KEY] === 'object'
@@ -12067,14 +12069,16 @@ async function writeCachedModelCatalog(models) {
     const unionModels = normalizeCachedModelCatalog(mergeSharedModelCatalog({
       sharedModels,
       freshModels: canonicalModels,
+      freshProviders: freshProviders instanceof Set ? freshProviders : null,
     }));
     const key = modelCatalogCacheKey({
       gatewayMode: settings.gatewayMode,
       gatewayUrl: settings.gatewayUrl,
       profile: settings.activeProfile,
     });
-    cache[key] = { savedAt: Date.now(), models: canonicalModels };
-    cache[sharedKey] = { savedAt: Date.now(), models: unionModels };
+    const savedAt = Date.now();
+    cache[key] = { savedAt, models: canonicalModels };
+    cache[sharedKey] = { savedAt, models: unionModels };
     await browserApi.storage.local.set({ [MODEL_CATALOG_CACHE_STORAGE_KEY]: cache });
   } catch {
     // Catalog caching is resilience-only; storage failures must not block sync.
@@ -12184,6 +12188,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     let data = payload;
     let registryModels = [];
     let registrySource = '';
+    let discoveredProviderSlugs = null;
     const cachedCatalogModels = await readCachedModelCatalog();
     if (startup && !refresh) {
       const initialModels = cachedCatalogModels.length
@@ -12210,15 +12215,18 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         renderModelOptions(availableModels);
         return { ok: false, count: availableModels.length, error: 'Hermes dashboard is not connected.' };
       }
-      data = isRemoteWsMode()
-        ? modelRowsFromGatewayOptions(await remoteWsConnection.client.request(WS_METHODS.modelOptions))
-        : modelRowsFromGatewayOptions(await activeDashboardWsConnection.client.request(WS_METHODS.modelOptions));
+      const optionsPayload = isRemoteWsMode()
+        ? await remoteWsConnection.client.request(WS_METHODS.modelOptions)
+        : await activeDashboardWsConnection.client.request(WS_METHODS.modelOptions);
+      discoveredProviderSlugs = providerSlugsFromModelOptionsPayload(optionsPayload);
+      data = modelRowsFromGatewayOptions(optionsPayload);
       registrySource = 'dashboard';
     }
 
     if (data) {
       registryModels = normalizeHermesModels(data, settings.model);
       if (!registrySource) registrySource = 'dashboard';
+      if (!discoveredProviderSlugs) discoveredProviderSlugs = providerSlugsFromModelOptionsPayload(data);
     } else {
       const registryTimeoutMs = refresh ? 20_000 : 5_000;
       const registryResult = await Promise.race([
@@ -12228,7 +12236,11 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       if (registryResult.ok && registryResult.models.length) {
         registryModels = normalizeHermesModels(registryResult.models, settings.model);
         registrySource = 'registry';
-      } else if (!registryResult.ok && localDashboardUrl() && settings.activeProfile) {
+        discoveredProviderSlugs = registryResult.providerSlugs || discoveredProviderSlugs;
+      } else if (registryResult.ok) {
+        discoveredProviderSlugs = registryResult.providerSlugs || discoveredProviderSlugs;
+      }
+      if (!registryModels.length && !registryResult.ok && localDashboardUrl() && settings.activeProfile) {
         // Gateway /p/<profile>/ needs that profile's own API_SERVER_KEY; the
         // desktop dashboard honors ?profile= with the session token, so a
         // profile key gap never blocks model discovery for named profiles.
@@ -12244,6 +12256,9 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         if (dashRetry.ok && dashRetry.models.length) {
           registryModels = normalizeHermesModels(dashRetry.models, settings.model);
           registrySource = 'dashboard';
+          discoveredProviderSlugs = dashRetry.providerSlugs || discoveredProviderSlugs;
+        } else if (dashRetry.ok) {
+          discoveredProviderSlugs = dashRetry.providerSlugs || discoveredProviderSlugs;
         }
       }
       if (!registryModels.length) {
@@ -12260,6 +12275,9 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         if (dashboardResult.ok && dashboardResult.models.length) {
           registryModels = normalizeHermesModels(dashboardResult.models, settings.model);
           registrySource = 'dashboard';
+          discoveredProviderSlugs = dashboardResult.providerSlugs || discoveredProviderSlugs;
+        } else if (dashboardResult.ok) {
+          discoveredProviderSlugs = dashboardResult.providerSlugs || discoveredProviderSlugs;
         } else {
           const cachedFallback = selectModelCatalogFallback({ cachedModels: cachedCatalogModels });
           if (cachedFallback.models.length) {
@@ -12283,7 +12301,11 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       }
     }
 
-    if (cachedCatalogModels.length > registryModels.length && registryModels.length <= 1) {
+    if (shouldPreferCachedCatalogOverSparseLiveDiscovery({
+      registryModels,
+      registrySource,
+      cachedCatalogModels,
+    })) {
       registryModels = normalizeHermesModels(cachedCatalogModels, settings.model);
       registrySource = 'cache';
     }
@@ -12304,7 +12326,11 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         fetchFn: globalThis.fetch?.bind(globalThis),
       });
       registryModels = normalizeHermesModels(canonicalResult.models, settings.model);
-      if (registrySource !== 'cache') await writeCachedModelCatalog(registryModels);
+      if (registrySource !== 'cache') {
+        await writeCachedModelCatalog(registryModels, {
+          freshProviders: discoveredProviderSlugs instanceof Set ? discoveredProviderSlugs : null,
+        });
+      }
     }
 
     // If the gateway only exposes a single OpenAI-compatible row, keep a
