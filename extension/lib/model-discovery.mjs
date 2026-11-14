@@ -45,6 +45,28 @@ function providersReferencedByCatalogModels(models = []) {
   return providers;
 }
 
+function providersReferencedByCatalogEntry(entry) {
+  const providers = providersReferencedByCatalogModels(entry?.models);
+  for (const slug of Array.isArray(entry?.replacedProviders) ? entry.replacedProviders : []) {
+    const provider = String(slug || '').trim().toLowerCase();
+    if (provider) providers.add(provider);
+  }
+  return providers;
+}
+
+export function catalogProvidersTouchedByDiscovery({ models = [], providerSlugs = null } = {}) {
+  const touched = new Set();
+  if (providerSlugs instanceof Set) {
+    for (const provider of providerSlugs) touched.add(provider);
+  }
+  for (const model of Array.isArray(models) ? models : []) {
+    if (!model || typeof model !== 'object') continue;
+    const provider = String(model.provider || '').trim().toLowerCase();
+    if (provider) touched.add(provider);
+  }
+  return touched;
+}
+
 export function unionCachedModelCatalogs(cache = {}, { gatewayPrefix = '', excludeProviders = null } = {}) {
   if (!cache || typeof cache !== 'object') return [];
   const prefix = String(gatewayPrefix || '');
@@ -59,7 +81,7 @@ export function unionCachedModelCatalogs(cache = {}, { gatewayPrefix = '', exclu
   const providerFreshness = new Map();
   for (const entry of entries) {
     const savedAt = Number(entry?.savedAt) || 0;
-    for (const provider of providersReferencedByCatalogModels(entry?.models)) {
+    for (const provider of providersReferencedByCatalogEntry(entry)) {
       providerFreshness.set(provider, Math.max(providerFreshness.get(provider) || 0, savedAt));
     }
   }

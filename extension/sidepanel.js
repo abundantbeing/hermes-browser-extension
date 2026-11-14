@@ -536,6 +536,7 @@ import {
   mergeModelsWithRegistry,
   mergeSharedModelCatalog,
   mergeVirtualModelRows,
+  catalogProvidersTouchedByDiscovery,
   providerSlugsFromModelOptionsPayload,
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   MODEL_CATALOG_SHARED_CACHE_PROFILE,
@@ -2821,6 +2822,7 @@ function hermesGatewayKey() {
   return settings[String.fromCharCode(97, 112, 105) + String.fromCharCode(75, 101, 121)] || "";
 }
 let modelsRefreshing = false;
+let modelCatalogRefreshDeferred = false;
 let contextRefreshingFromUser = false;
 const contextPreviewScheduler = createContextPreviewScheduler({
   run: runContextPreviewEvents,
@@ -12028,7 +12030,11 @@ async function readCachedModelCatalog() {
 // Union of every profile's cached catalog for this gateway — the resilience
 // pool that keeps all verified models selectable across agent switches, without
 // resurrecting stale/removed models into providers returned by the live gateway.
-async function readCachedModelCatalogUnion({ liveModels = [], excludeLiveProviders = false } = {}) {
+async function readCachedModelCatalogUnion({
+  liveModels = [],
+  excludeLiveProviders = false,
+  authoritativeProviderSlugs = null,
+} = {}) {
   try {
     const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
     const gatewayPrefix = globalModelCatalogCacheKey({
@@ -12036,11 +12042,12 @@ async function readCachedModelCatalogUnion({ liveModels = [], excludeLiveProvide
       gatewayUrl: settings.gatewayUrl,
     }).slice(0, -MODEL_CATALOG_SHARED_CACHE_PROFILE.length);
     const excludeProviders = excludeLiveProviders
-      ? new Set(
-          (Array.isArray(liveModels) ? liveModels : [])
+      ? new Set([
+          ...(Array.isArray(liveModels) ? liveModels : [])
             .map((model) => String(model?.provider || '').trim().toLowerCase())
             .filter(Boolean),
-        )
+          ...(authoritativeProviderSlugs instanceof Set ? authoritativeProviderSlugs : []),
+        ])
       : null;
     return unionCachedModelCatalogs(stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY], {
       gatewayPrefix,
@@ -12051,17 +12058,38 @@ async function readCachedModelCatalogUnion({ liveModels = [], excludeLiveProvide
   }
 }
 
-async function writeCachedModelCatalog(models, { freshProviders = null } = {}) {
+function captureModelCatalogLoadContext() {
+  return {
+    gatewayMode: settings.gatewayMode,
+    gatewayUrl: settings.gatewayUrl,
+    activeProfile: settings.activeProfile,
+  };
+}
+
+function modelCatalogLoadContextMatches(context) {
+  if (!context || typeof context !== 'object') return true;
+  return settings.gatewayMode === context.gatewayMode
+    && settings.gatewayUrl === context.gatewayUrl
+    && settings.activeProfile === context.activeProfile;
+}
+
+async function writeCachedModelCatalog(models, {
+  freshProviders = null,
+  cacheContext = null,
+} = {}) {
+  const context = cacheContext && typeof cacheContext === 'object'
+    ? cacheContext
+    : captureModelCatalogLoadContext();
   const canonicalModels = normalizeCachedModelCatalog(models);
-  if (!canonicalModels.length && !(freshProviders instanceof Set) && !freshProviders?.size) return;
+  if (!canonicalModels.length && !(freshProviders instanceof Set && freshProviders.size)) return;
   try {
     const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
     const cache = stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY] && typeof stored[MODEL_CATALOG_CACHE_STORAGE_KEY] === 'object'
       ? stored[MODEL_CATALOG_CACHE_STORAGE_KEY]
       : {};
     const sharedKey = globalModelCatalogCacheKey({
-      gatewayMode: settings.gatewayMode,
-      gatewayUrl: settings.gatewayUrl,
+      gatewayMode: context.gatewayMode,
+      gatewayUrl: context.gatewayUrl,
     });
     const sharedModels = normalizeCachedModelCatalog(cache?.[sharedKey]?.models);
     // Replace any provider present in the fresh live catalog while keeping
@@ -12071,14 +12099,18 @@ async function writeCachedModelCatalog(models, { freshProviders = null } = {}) {
       freshModels: canonicalModels,
       freshProviders: freshProviders instanceof Set ? freshProviders : null,
     }));
+    const replacedProviders = [...catalogProvidersTouchedByDiscovery({
+      models: canonicalModels,
+      providerSlugs: freshProviders instanceof Set ? freshProviders : null,
+    })];
     const key = modelCatalogCacheKey({
-      gatewayMode: settings.gatewayMode,
-      gatewayUrl: settings.gatewayUrl,
-      profile: settings.activeProfile,
+      gatewayMode: context.gatewayMode,
+      gatewayUrl: context.gatewayUrl,
+      profile: context.activeProfile,
     });
     const savedAt = Date.now();
-    cache[key] = { savedAt, models: canonicalModels };
-    cache[sharedKey] = { savedAt, models: unionModels };
+    cache[key] = { savedAt, models: canonicalModels, replacedProviders };
+    cache[sharedKey] = { savedAt, models: unionModels, replacedProviders };
     await browserApi.storage.local.set({ [MODEL_CATALOG_CACHE_STORAGE_KEY]: cache });
   } catch {
     // Catalog caching is resilience-only; storage failures must not block sync.
@@ -12175,11 +12207,15 @@ async function syncProfileModelSelection(profileName = '', { row = null } = {}) 
 
 async function loadModels({ quiet = false, payload = null, refresh = false, startup = false } = {}) {
   if (!startup) await refreshHermesContextRegistry({ storage: browserApi.storage.local, refresh });
+  const catalogLoadContext = startup ? null : captureModelCatalogLoadContext();
   const previousSelectedModel = settings.model;
   const previousAvailableModels = availableModels;
   const trackRefresh = Boolean(refresh && !payload);
   if (trackRefresh) {
-    if (modelsRefreshing) return { ok: false, skipped: true, error: 'Model refresh is already running.' };
+    if (modelsRefreshing) {
+      modelCatalogRefreshDeferred = true;
+      return { ok: false, skipped: true, error: 'Model refresh is already running.' };
+    }
     modelsRefreshing = true;
     renderModelRefreshState();
     if (!quiet) setStatus('ok', 'Refreshing models', 'Syncing Hermes model catalog… this can take 20–30 seconds.');
@@ -12320,6 +12356,10 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       }
     }
 
+    if (!modelCatalogLoadContextMatches(catalogLoadContext)) {
+      return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
+    }
+
     if (registryModels.length && shouldEnrichCanonicalProviderCatalog(registrySource)) {
       const canonicalResult = await discoverCanonicalProviderCatalog({
         registryModels,
@@ -12329,6 +12369,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       if (registrySource !== 'cache') {
         await writeCachedModelCatalog(registryModels, {
           freshProviders: discoveredProviderSlugs instanceof Set ? discoveredProviderSlugs : null,
+          cacheContext: catalogLoadContext,
         });
       }
     }
@@ -12384,9 +12425,13 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     const hasAuthoritativeProviderCatalog = ['registry', 'dashboard', 'cache'].some(
       (prefix) => registrySource === prefix || registrySource.startsWith(`${prefix}+`),
     );
+    const authoritativeProviderSlugs = hasAuthoritativeProviderCatalog && discoveredProviderSlugs instanceof Set
+      ? discoveredProviderSlugs
+      : null;
     const cachedUnionModels = await readCachedModelCatalogUnion({
       liveModels: registryModels,
       excludeLiveProviders: hasAuthoritativeProviderCatalog,
+      authoritativeProviderSlugs,
     });
     if (cachedUnionModels.length) {
       const unionMerged = normalizeHermesModels(mergeModelsByRawId([registryModels, cachedUnionModels]), settings.model);
@@ -12404,6 +12449,10 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       if (!quiet) {
         setStatus('warn', 'Model refresh limited', 'Hermes returned only fallback model data. Keeping your selected model until a real catalog is available.');
       }
+    }
+
+    if (!modelCatalogLoadContextMatches(catalogLoadContext)) {
+      return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
     }
 
     availableModels = registryModels;
@@ -12448,6 +12497,10 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     if (trackRefresh) {
       modelsRefreshing = false;
       renderModelRefreshState();
+      if (modelCatalogRefreshDeferred) {
+        modelCatalogRefreshDeferred = false;
+        void loadModels({ quiet: true, refresh: true });
+      }
     }
   }
 }
