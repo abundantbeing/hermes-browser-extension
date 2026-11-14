@@ -193,7 +193,7 @@ test('only the worker writes the active rule; a panel asks it and waits', async 
   assert.doesNotMatch(panel, /applyGatewayOriginRule\(/, 'the panel never writes the active rule');
   assert.match(panel, /sendMessage\(\{ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl \}\)/);
   assert.match(panel, /async function testConnection\(\) \{[\s\S]{0,600}await syncGatewayOriginRule\(\)/, 'Test connection waits for the rule');
-  assert.match(panel, /async function connectApiWithPairing\(\) \{[\s\S]{0,1200}await syncGatewayOriginRule\(\{ pendingGatewayUrl: settings\.gatewayUrl \}\);\s*const generation/, 'pairing covers an unsaved address first');
+  assert.match(panel, /async function connectApiWithPairing\(\) \{[\s\S]{0,1200}const generation = connectionController\.begin\([\s\S]{0,400}await syncGatewayOriginRule\(\{ pendingGatewayUrl: settings\.gatewayUrl \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/, 'pairing begins before rule sync and honors cancellation');
   assert.match(panel, /const marker = newProbeMarker\(\);[\s\S]{0,200}withDraftOriginRule\(\s*\{ gatewayUrl, extensionHost, marker \}[\s\S]{0,500}extensionHost,\s*marker,\s*\}[\s\S]{0,100}probeConnection\(\{ gatewayUrl, apiKey, headers, marker, signal \}\)/, 'one marker for the requests of the test and both its rules');
 });
 

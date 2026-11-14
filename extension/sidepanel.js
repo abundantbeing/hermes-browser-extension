@@ -27938,12 +27938,13 @@ async function connectApiWithPairing() {
     offerManualSetup(message);
     return;
   }
-  // The address may be typed but not saved yet: the worker covers it too while this pairing runs.
-  await syncGatewayOriginRule({ pendingGatewayUrl: settings.gatewayUrl });
   const generation = connectionController.begin({
     mode: normalizeConnectionMode(settings.connectionMode),
     transport: settings.connectionTransport,
   });
+  // The address may be typed but not saved yet: the worker covers it too while this pairing runs.
+  await syncGatewayOriginRule({ pendingGatewayUrl: settings.gatewayUrl });
+  if (!connectionController.isCurrent(generation)) return;
   const summary = currentGatewaySummary();
   markConnectionProbe('connecting', summary.normalizedUrl);
   els.connectButton.disabled = true;

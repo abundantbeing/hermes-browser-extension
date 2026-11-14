@@ -175,6 +175,18 @@ test('automatic API pairing is loopback-only and enforced by the side-panel conn
   assert.match(english, /"connect\.status\.loopback_only": "Automatic pairing is available only for a loopback Local gateway\./);
 });
 
+test('connectApiWithPairing does not resume after cancellation during gateway rule sync', () => {
+  const pairingBody = sidepanelSource.match(/async function connectApiWithPairing\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  const beginIdx = pairingBody.indexOf('connectionController.begin');
+  const syncIdx = pairingBody.indexOf('await syncGatewayOriginRule({ pendingGatewayUrl: settings.gatewayUrl })');
+  assert.ok(beginIdx >= 0 && syncIdx > beginIdx, 'the pairing generation must begin before the worker rule sync');
+  assert.match(
+    pairingBody,
+    /await syncGatewayOriginRule\(\{ pendingGatewayUrl: settings\.gatewayUrl \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/,
+    'changing connection mode during sync must not let pairing continue',
+  );
+});
+
 test('a completed pairing rebinds the controller instead of leaving it on stale settings', () => {
   const pairingBody = sidepanelSource.match(/async function connectApiWithPairing\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
   assert.match(pairingBody, /tokenSource = 'pairing'/, 'the pairing success path must persist the token');
