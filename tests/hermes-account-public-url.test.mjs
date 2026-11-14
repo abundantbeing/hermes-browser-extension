@@ -117,8 +117,10 @@ test('the move happens once, and only for the sign-in window', async () => {
     tabsApi,
     signInTimeoutMs: 50,
     openWindow: async () => {
-      queueMicrotask(() => {
+      queueMicrotask(async () => {
         tabsApi.onUpdated.fire(7, { url: `${PUBLIC}/auth/callback?code=x` }, { id: 7 });
+        await Promise.resolve();
+        assert.equal(moves.length, 0, 'another tab must not restart sign-in');
         tabsApi.onUpdated.fire(41, { url: `${PUBLIC}/auth/callback?code=x` }, { id: 41 });
         tabsApi.onUpdated.fire(41, { url: `${PUBLIC}/auth/callback?code=y` }, { id: 41 });
       });
