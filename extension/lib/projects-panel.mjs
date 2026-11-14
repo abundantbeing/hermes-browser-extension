@@ -162,7 +162,7 @@ function failureBlock({ doc, failure, t, controller, retry = true }) {
         class: 'session-action-button',
         'data-testid': 'projects-account-sign-in',
         onClick: () => { void controller.accountSignIn(); },
-        text: t('account.sign_in'),
+        text: t(controller.accountSignInLabelKey?.() || 'account.sign_in'),
       }),
       retry && h(doc, 'button', {
         type: 'button',

@@ -87,6 +87,10 @@
     "message": "इस गेटवे को आपके Hermes खाते से साइन-इन चाहिए। सेटिंग > कनेक्शन खोलें और “अपने Hermes खाते से साइन इन करें” चुनें।",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Nous Portal से साइन इन करें",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "साइन आउट करें",
     "description": "Runtime interface message account.sign_out"

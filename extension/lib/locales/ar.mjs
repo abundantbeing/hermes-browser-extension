@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "حساب Hermes",
   "account.hint": "تسجيل الدخول نفسه الذي يستخدمه تطبيق Hermes للهاتف. يفتح المشاريع وسلطة الجلسة وضغط السياق وقائمة الروبوتات الكاملة على بوابة تطلب تسجيل الدخول، دون تشغيل أي شيء. تسجيل الخروج يزيله من هذا المتصفح.",
   "account.sign_in": "سجّل الدخول بحساب Hermes الخاص بك",
+  "account.sign_in_nous": "تسجيل الدخول باستخدام Nous Portal",
   "account.sign_out": "تسجيل الخروج",
   "account.status_checking": "جارٍ التحقق مما إذا كانت هذه البوابة تقبل تسجيل الدخول بحساب Hermes.",
   "account.status_waiting": "في انتظار إنهائك تسجيل الدخول في النافذة التي فُتحت.",

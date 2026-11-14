@@ -43,7 +43,7 @@ function memoryArea(data = {}) {
 }
 
 function fakeEl() {
-  return { hidden: true, disabled: false, textContent: '' };
+  return { hidden: true, disabled: false, textContent: '', dataset: {} };
 }
 
 // listeners: which origins answer /api/status as gated and with the native flow. signedIn: tokens to start with.
@@ -416,6 +416,8 @@ test('a gated listener offers the button; signed in it reads Signed in as <user>
   const offer = await p.run('refreshAccountOffer({ force: true })');
   assert.equal(offer.available, true);
   assert.equal(p.els.hermesAccountSignIn.hidden, false);
+  assert.equal(p.els.hermesAccountSignIn.textContent, 'Sign in with Nous Portal', 'a Nous-only gateway names Nous Portal');
+  assert.equal(p.els.hermesAccountSignIn.dataset.i18n, 'account.sign_in_nous');
   assert.equal(p.els.hermesAccountStatus.textContent, english['account.status_signed_out']);
   assert.equal(p.run('accountSignInOffered()'), true);
   await p.run('hermesAccountStore()').save(new hermesAccountLib.AccountSession({

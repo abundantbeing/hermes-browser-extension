@@ -87,6 +87,10 @@
     "message": "Este gateway necesita que inicies sesión con tu cuenta de Hermes. Abre Ajustes > Conexiones y elige «Inicia sesión con tu cuenta de Hermes».",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Iniciar sesión con Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Cerrar sesión",
     "description": "Runtime interface message account.sign_out"

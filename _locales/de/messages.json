@@ -87,6 +87,10 @@
     "message": "Dieses Gateway braucht Ihre Anmeldung mit dem Hermes-Konto. Öffnen Sie Einstellungen > Verbindungen und wählen Sie „Mit Ihrem Hermes-Konto anmelden“.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Mit Nous Portal anmelden",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Abmelden",
     "description": "Runtime interface message account.sign_out"

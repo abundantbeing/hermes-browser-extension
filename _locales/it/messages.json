@@ -87,6 +87,10 @@
     "message": "Questo gateway richiede l'accesso con il tuo account Hermes. Apri Impostazioni > Connessioni e scegli «Accedi con il tuo account Hermes».",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Accedi con Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Esci",
     "description": "Runtime interface message account.sign_out"

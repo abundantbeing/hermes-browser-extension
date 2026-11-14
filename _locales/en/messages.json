@@ -87,6 +87,10 @@
     "message": "This gateway needs your Hermes account sign-in. Open Settings > Connections and choose Sign in with your Hermes account.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Sign in with Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Sign out",
     "description": "Runtime interface message account.sign_out"

@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes-account",
   "account.hint": "Dezelfde aanmelding als in de Hermes-app voor je telefoon. Ze opent Projecten, sessie-autoriteit, contextcompactie en de volledige botlijst op een gateway die om aanmelding vraagt, zonder dat je iets hoeft uit te voeren. Afmelden vergeet haar in deze browser.",
   "account.sign_in": "Meld je aan met je Hermes-account",
+  "account.sign_in_nous": "Inloggen met Nous Portal",
   "account.sign_out": "Afmelden",
   "account.status_checking": "Controleren of deze gateway aanmelden met een Hermes-account accepteert.",
   "account.status_waiting": "Wachten tot je de aanmelding hebt afgerond in het geopende venster.",

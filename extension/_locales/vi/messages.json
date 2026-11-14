@@ -87,6 +87,10 @@
     "message": "Cổng này cần bạn đăng nhập bằng tài khoản Hermes. Mở Cài đặt > Kết nối rồi chọn “Đăng nhập bằng tài khoản Hermes của bạn”.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Đăng nhập bằng Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Đăng xuất",
     "description": "Runtime interface message account.sign_out"

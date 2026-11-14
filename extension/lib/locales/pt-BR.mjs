@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Conta Hermes",
   "account.hint": "O mesmo login usado pelo app Hermes para celular. Ele abre Projetos, autoridade de sessão, compactação de contexto e a lista completa de bots em um gateway que pede login, sem executar nada. Sair o esquece neste navegador.",
   "account.sign_in": "Entre com a sua conta Hermes",
+  "account.sign_in_nous": "Entrar com o Nous Portal",
   "account.sign_out": "Sair",
   "account.status_checking": "Verificando se este gateway aceita login com uma conta Hermes.",
   "account.status_waiting": "Aguardando você terminar o login na janela que foi aberta.",
