@@ -411,6 +411,18 @@ test('the user\'s own gateway (ungated loopback Webapp, Nous configured) offers 
   assert.equal(p.els.hermesAccountRow.hidden, false);
 });
 
+test('when providers shrink to Nous-only the sign-in button label updates on the next status reply', async () => {
+  const status = { auth_required: true, auth_providers: ['nous', 'github'], auth_flows: ['cookie', 'native_pkce'] };
+  const p = panel({ gatewayMode: 'remote-dashboard', gatewayUrl: REMOTE, statuses: { [REMOTE]: status } });
+  await p.run('refreshAccountOffer({ force: true })');
+  assert.equal(p.els.hermesAccountSignIn.dataset.i18n, 'account.sign_in');
+  assert.equal(p.els.hermesAccountSignIn.textContent, english['account.sign_in']);
+  status.auth_providers = ['nous'];
+  await p.run('refreshAccountOffer({ force: true })');
+  assert.equal(p.els.hermesAccountSignIn.dataset.i18n, 'account.sign_in_nous');
+  assert.equal(p.els.hermesAccountSignIn.textContent, english['account.sign_in_nous']);
+});
+
 test('a gated listener offers the button; signed in it reads Signed in as <user> (provider) with Sign out', async () => {
   const p = panel({ gatewayMode: 'remote-dashboard', gatewayUrl: REMOTE, statuses: { [REMOTE]: GATED } });
   const offer = await p.run('refreshAccountOffer({ force: true })');

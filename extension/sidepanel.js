@@ -4717,7 +4717,7 @@ async function accountSupportFor(origin, { force = false } = {}) {
 // /api/status. Updates the snapshot the capability rows and Settings read, and redraws them when it changed.
 async function refreshAccountOffer({ force = false } = {}) {
   const origins = accountOriginsNow();
-  const previous = JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice]);
+  const previous = JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice, accountSignInLabelKey(accountOffer.providers)]);
   let next = { origin: origins[0] || '', available: false, signedIn: false, session: null, reason: origins.length ? 'unreachable' : 'no-origin', checkedAt: Date.now() };
   try {
     for (const origin of origins) {
@@ -4742,7 +4742,7 @@ async function refreshAccountOffer({ force = false } = {}) {
     /* the snapshot stays as the failed read left it */
   }
   accountOffer = next;
-  if (previous !== JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice])) {
+  if (previous !== JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice, accountSignInLabelKey(accountOffer.providers)])) {
     renderHermesAccountRow();
     refreshCapabilityViews();
   }
