@@ -53,6 +53,11 @@ export const DISPLAY_CONTEXT_ALIASES = Object.freeze({
   'qwen3.7-max': 1_000_000,
   'qwen3.7-plus': 1_000_000,
   'qwen3.6-flash': 1_000_000,
+  // OpenAI OSS open-weight models (128k / 131,072)
+  'gpt-oss-120b': 131_072,
+  'gpt-oss-20b': 131_072,
+  'gpt-oss-safeguard-20b': 131_072,
+  'gpt-oss': 131_072,
 });
 
 const CONTEXT_TABLE = Object.freeze({
@@ -97,15 +102,20 @@ export function hermesContextForText(value = '') {
 }
 
 export function hermesContextForModel(model = {}) {
+  const stripProviderPrefix = (value) => {
+    const raw = String(value || '').trim();
+    const sep = raw.indexOf('::');
+    return sep >= 0 ? raw.slice(sep + 2).trim() : raw;
+  };
   const fields = [
-    model.id,
     model.rawModelId,
     model.raw_model_id,
     model.model,
     model.name,
     model.label,
     model.root,
-  ].filter(Boolean);
+    model.id,
+  ].map(stripProviderPrefix).filter(Boolean);
   if (!fields.length) return 0;
   let bestLength = -1;
   let bestTokens = 0;
