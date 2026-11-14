@@ -24262,9 +24262,14 @@ function openDeleteConnectionWindow() {
 // extension's origin to API_SERVER_CORS_ORIGINS (gateway-origin-rule.mjs). Only the worker writes it,
 // from stored settings; the panel asks it to sync and waits, so a test right after saving, or a pairing
 // with an address not saved yet, never runs before it. Best effort: a refusal still names the .env line.
-async function syncGatewayOriginRule({ pendingGatewayUrl = '' } = {}) {
+async function syncGatewayOriginRule({ pendingGatewayUrl = '', releasePendingGatewayUrl = '' } = {}) {
   try {
-    await browserApi.runtime.sendMessage({ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl });
+    await browserApi.runtime.sendMessage({
+      type: SYNC_GATEWAY_RULES_MESSAGE,
+      pendingGatewayUrl,
+      releasePendingGatewayUrl,
+      ...(releasePendingGatewayUrl ? { pendingGatewayUrlAction: 'release' } : {}),
+    });
   } catch (error) {
     console.warn('[Hermes Browser] Gateway origin rule sync failed:', error);
   }
@@ -27939,7 +27944,8 @@ async function connectApiWithPairing() {
     return;
   }
   // The address may be typed but not saved yet: the worker covers it too while this pairing runs.
-  await syncGatewayOriginRule({ pendingGatewayUrl: settings.gatewayUrl });
+  const pairingGatewayUrl = settings.gatewayUrl;
+  await syncGatewayOriginRule({ pendingGatewayUrl: pairingGatewayUrl });
   const generation = connectionController.begin({
     mode: normalizeConnectionMode(settings.connectionMode),
     transport: settings.connectionTransport,
@@ -28037,6 +28043,7 @@ async function connectApiWithPairing() {
     els.connectStatus.textContent = t('connect.status.failed', { reason: currentConnectionTroubleshooting() || diagnostic.detail });
     offerManualSetup(currentConnectionTroubleshooting() || diagnostic.detail);
   } finally {
+    await syncGatewayOriginRule({ releasePendingGatewayUrl: pairingGatewayUrl });
     if (connectionController.isCurrent(generation)) {
       els.connectButton.disabled = false;
       els.connectButton.textContent = translateUiText('Connect to Hermes');

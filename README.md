@@ -221,7 +221,7 @@ Existing installations migrate automatically:
 
 Custom headers go with every request the extension makes to that address, streamed replies included, and to nothing else. A browser cannot put headers on the dashboard's live WebSocket connection.
 
-A private network needs nothing special. Start Tailscale or WireGuard first, then add a Remote gateway at the address it gives you, with your API key. An SSH tunnel is a port on this computer, so add it as a Local gateway at `http://127.0.0.1:<tunnel port>`. An extension cannot open an SSH session itself.
+A private network needs nothing special. Start Tailscale or WireGuard first, then add a Remote gateway at the address it gives you, with your API key. An SSH tunnel is a port on this computer, so add it as a Local gateway at `http://127.0.0.1:<tunnel port>`. An extension cannot open an SSH session itself. **Local gateway** also discovers Hermes dashboards on this computer: stop the local Hermes gateway before you connect through a tunnel to a remote machine, or bots from both can mix.
 
 Each entry keeps its own gateway address, API key and dashboard settings in browser-local storage. Your existing setup becomes the first entry. Only one saved connection is active at a time. Switching:
 - saves the current settings and closes the old connection;
@@ -299,7 +299,7 @@ curl -H "Authorization: Bearer <API_SERVER_KEY>" http://127.0.0.1:8642/v1/models
 ```
 
 - **The first command gets no answer:** the gateway or its API server is not running. Set `API_SERVER_KEY` (16 or more characters), restart the gateway, and check the address and port.
-- **The second command returns 401:** the key does not match. Paste the key from the Hermes `.env` into the extension again; `hermes config env-path` shows where that file is. A named profile has its own key.
+- **The second command returns 401:** the key does not match. Paste the key from the Hermes `.env` into the extension again; `hermes config env-path` shows where that file is. For a named profile, use the listener key from the default `.env` and keep every profile's key aligned with it (see [named profiles](./guides/connection-guide.md#several-hermes-bots-named-profiles)).
 - **A message is refused with a 403 and no error body:** your browser sent the `Origin` header Hermes refuses. Add the origin the panel names to `API_SERVER_CORS_ORIGINS` and restart the gateway.
 
 Sometimes the browser only reports a failed fetch. It then cannot tell whether the gateway refused the connection, blocked the request, or received the message before the response was lost. The side panel keeps your draft and offers **Check connection**, and it never resends on its own. Check the session history before you send again: a lost response can hide a message that did arrive, and sending it twice would duplicate the turn.

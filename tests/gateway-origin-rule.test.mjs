@@ -88,6 +88,18 @@ test('applying replaces the previous rule, and a dashboard connection removes it
   assert.equal(await applyGatewayOriginRule({ gatewayUrl: 'http://127.0.0.1:8642', extensionHost: HOST }, null), false);
 });
 
+test('several loopback pairing attempts stay covered beside the active connection', () => {
+  const [rule] = gatewayOriginRules({
+    gatewayUrl: 'http://127.0.0.1:8642',
+    connectionTransport: 'local-api',
+    extensionHost: HOST,
+    pendingGatewayUrls: ['http://127.0.0.1:8650', 'http://localhost:8651'],
+  });
+  assert.ok(matches(rule, 'http://127.0.0.1:8650/api/browser-extension/pair/start'));
+  assert.ok(matches(rule, 'http://localhost:8651/v1/models'));
+  assert.ok(!matches(rule, 'http://127.0.0.1:9119/api/status'));
+});
+
 test('a loopback address being paired before it is saved is covered beside the active one, and only loopback', () => {
   const [rule] = gatewayOriginRules({
     gatewayUrl: 'http://127.0.0.1:8642', connectionTransport: 'local-api', extensionHost: HOST, pendingGatewayUrl: 'http://127.0.0.1:8650',
@@ -185,15 +197,17 @@ test('the rule ids do not collide with the other session rules', () => {
 
 test('only the worker writes the active rule; a panel asks it and waits', async () => {
   const background = await readFile(new URL('../extension/background.js', import.meta.url), 'utf8');
-  assert.match(background, /applyGatewayOriginRule\(\{[\s\S]{0,200}pendingGatewayUrl: pendingPairingGatewayUrl/);
+  assert.match(background, /pendingGatewayUrls: \[\.\.\.pendingPairingGatewayUrls\]/);
+  assert.match(background, /const pendingPairingGatewayUrls = new Set\(\)/);
   assert.match(background, /message\?\.type === SYNC_GATEWAY_RULES_MESSAGE\s*\?\s*syncGatewayRulesForPanel\(message\)/);
   assert.match(background, /LOOPBACK_FETCH_MESSAGE,\s*SYNC_GATEWAY_RULES_MESSAGE,/, 'only extension pages may ask');
-  assert.match(background, /if \(changes\.hermesBrowserSettings\) pendingPairingGatewayUrl = '';\s*void syncConnectionHeaders\(\);/, 'a settings change drops a pending pairing address');
+  assert.match(background, /if \(changes\.hermesBrowserSettings\) pendingPairingGatewayUrls\.clear\(\);\s*void syncConnectionHeaders\(\);/, 'a settings change drops pending pairing addresses');
   const panel = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.doesNotMatch(panel, /applyGatewayOriginRule\(/, 'the panel never writes the active rule');
-  assert.match(panel, /sendMessage\(\{ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl \}\)/);
+  assert.match(panel, /type: SYNC_GATEWAY_RULES_MESSAGE,\s*pendingGatewayUrl,/);
   assert.match(panel, /async function testConnection\(\) \{[\s\S]{0,600}await syncGatewayOriginRule\(\)/, 'Test connection waits for the rule');
-  assert.match(panel, /async function connectApiWithPairing\(\) \{[\s\S]{0,1200}await syncGatewayOriginRule\(\{ pendingGatewayUrl: settings\.gatewayUrl \}\);\s*const generation/, 'pairing covers an unsaved address first');
+  assert.match(panel, /const pairingGatewayUrl = settings\.gatewayUrl;/, 'pairing remembers the loopback address for release');
+  assert.match(panel, /releasePendingGatewayUrl: pairingGatewayUrl/, 'pairing releases its loopback address when it finishes');
   assert.match(panel, /const marker = newProbeMarker\(\);[\s\S]{0,200}withDraftOriginRule\(\s*\{ gatewayUrl, extensionHost, marker \}[\s\S]{0,500}extensionHost,\s*marker,\s*\}[\s\S]{0,100}probeConnection\(\{ gatewayUrl, apiKey, headers, marker, signal \}\)/, 'one marker for the requests of the test and both its rules');
 });
 

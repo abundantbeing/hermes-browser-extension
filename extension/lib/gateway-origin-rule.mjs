@@ -38,11 +38,17 @@ function removeOrigin(id, condition) {
  * before it is saved (loopback only, since automatic pairing only runs there). None for a
  * connection that signs in through a tab.
  */
-export function gatewayOriginRules({ gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl = '' } = {}) {
+export function gatewayOriginRules({ gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl = '', pendingGatewayUrls = [] } = {}) {
   if (!extensionHost) return [];
   const patterns = [];
   if (!TAB_SIGN_IN_TRANSPORTS.has(String(connectionTransport || ''))) patterns.push(originPattern(gatewayUrl));
-  if (pendingGatewayUrl && isLoopbackGatewayUrl(pendingGatewayUrl)) patterns.push(originPattern(pendingGatewayUrl));
+  const pending = [...new Set([
+    pendingGatewayUrl,
+  ...(Array.isArray(pendingGatewayUrls) ? pendingGatewayUrls : []),
+  ].map((url) => String(url || '').trim()).filter(Boolean))];
+  for (const url of pending) {
+    if (isLoopbackGatewayUrl(url)) patterns.push(originPattern(url));
+  }
   const unique = [...new Set(patterns.filter(Boolean))];
   if (!unique.length) return [];
   const regexFilter = unique.length === 1 ? unique[0] : `^(?:${unique.map((pattern) => pattern.slice(1)).join('|')})`;
@@ -50,13 +56,13 @@ export function gatewayOriginRules({ gatewayUrl, connectionTransport, extensionH
 }
 
 export async function applyGatewayOriginRule(
-  { gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl } = {},
+  { gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl, pendingGatewayUrls } = {},
   dnr = globalThis.chrome?.declarativeNetRequest || globalThis.browser?.declarativeNetRequest,
 ) {
   if (!dnr?.updateSessionRules) return false;
   await dnr.updateSessionRules({
     removeRuleIds: [GATEWAY_ORIGIN_RULE_ID],
-    addRules: gatewayOriginRules({ gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl }),
+    addRules: gatewayOriginRules({ gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl, pendingGatewayUrls }),
   });
   return true;
 }

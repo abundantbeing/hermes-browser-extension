@@ -55,6 +55,21 @@ test('a named profile keeps the plain address, because the extension adds /p/<pr
   }
 });
 
+test('named profiles document the one saved key must match the listener key', () => {
+  for (const [name, text] of [['connection-guide.md', guide], ['agent-setup.md', agent]]) {
+    assert.match(text, /one.*key|stores \*\*one\*\* key/i, name);
+    assert.match(text, /listener.*API_SERVER_KEY|listener key/i, name);
+  }
+  assert.match(guide, /\/api\/sessions/);
+});
+
+test('the SSH tunnel recipe warns that Local gateway discovers dashboards on this computer', () => {
+  assert.match(guide, /Local gateway.*scans.*dashboard|discovers Hermes dashboards on this computer|scans this computer for a Hermes Desktop dashboard/i);
+  assert.match(guide, /Stop the Hermes gateway on this computer|stop the local Hermes gateway/i);
+  assert.match(readme, /discovers Hermes dashboards on this computer|stop the local Hermes gateway/i);
+  assert.match(agent, /scans for a Hermes dashboard on this computer|stop the local Hermes gateway/i);
+});
+
 test('the docs say where Hermes Control works: loopback or HTTPS, and an SSH tunnel is this computer', () => {
   assert.match(guide, /Hermes Control refuses it/);
   assert.match(guide, /add a \*\*Local gateway\*\* \(this computer\) at `http:\/\/127\.0\.0\.1:18642`/);

@@ -53,7 +53,7 @@ curl -H "Authorization: Bearer <key>" http://127.0.0.1:8642/v1/models
 | In WSL2, browser on Windows | `http://127.0.0.1:8642` | If that fails, set `API_SERVER_HOST=0.0.0.0` in WSL's Hermes `.env`, restart, and use the WSL IP from `hostname -I`. |
 | In Docker | `http://127.0.0.1:8642` | Run the container with `-e API_SERVER_HOST=0.0.0.0 -p 127.0.0.1:8642:8642`. |
 | On a VPS or another computer with Tailscale | The `https://….ts.net` address `tailscale serve --bg 8642` prints | Run that command on the Hermes machine. |
-| On a VPS reached over SSH | `http://127.0.0.1:18642`, as a **Local gateway** | The person runs `ssh -N -L 18642:127.0.0.1:8642 user@server` and keeps it open. |
+| On a VPS reached over SSH | `http://127.0.0.1:18642`, as a **Local gateway** | The person runs `ssh -N -L 18642:127.0.0.1:8642 user@server` and keeps it open. **Local gateway** scans for a Hermes dashboard on this computer: stop the local Hermes gateway first, or use a machine with no local Hermes. |
 | On another computer on the same LAN | `http://<lan-ip>:8642` | Set `API_SERVER_HOST=0.0.0.0`, allow port 8642 for the LAN only, restart. |
 | Behind an HTTPS reverse proxy | `https://hermes.example.com` | Proxy to `127.0.0.1:8642` with response buffering off. See the [connection guide](./connection-guide.md#behind-an-https-reverse-proxy). |
 
@@ -63,7 +63,7 @@ If they want Hermes Control, the address must be `127.0.0.1` / `localhost` (Loca
 
 For a named profile:
 - keep the plain gateway address: do not add `/p/<profile>`, because the extension adds it when the person picks the profile in the side panel's bot list;
-- use that profile's own `API_SERVER_KEY`, from `~/.hermes/profiles/<profile>/.env`.
+- paste the **listener** `API_SERVER_KEY` from `~/.hermes/.env` into the extension. The saved connection holds one key; test and the bot list use the listener's plain routes with it. Every profile's `API_SERVER_KEY` must match that listener key (set the same value in each `profiles/<profile>/.env`) until the extension can store per-profile credentials.
 
 ## 4. In the browser: install and connect (the person does this)
 

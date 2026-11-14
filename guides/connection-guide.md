@@ -147,6 +147,8 @@ ssh -N -L 18642:127.0.0.1:8642 user@your-server
 
 While that command runs, add a **Local gateway** (this computer) at `http://127.0.0.1:18642` with the server's key: to the browser the tunnel is a port on this computer, which is also what lets Hermes Control use it. The extension cannot open the tunnel itself: start it before you connect, and keep it running. A tool like `autossh` or a system service keeps it up.
 
+**Local gateway** also scans this computer for a Hermes Desktop dashboard. If Hermes is still running here while you use the tunnel, that local dashboard's bots can appear beside the remote one, and chat can fall back to the local gateway when the tunnel drops. **Stop the Hermes gateway on this computer** before you connect through the tunnel, or use a browser machine with no local Hermes. Prefer `tailscale serve` on the server when you need Hermes Control without that constraint.
+
 ### On another computer on your home or office network
 
 1. On the Hermes machine, set `API_SERVER_HOST=0.0.0.0` (or that machine's LAN address) and restart the gateway.
@@ -200,7 +202,7 @@ One gateway serves every profile at one address. Hermes answers a named profile 
 - Connect to the gateway's plain address, for example `http://127.0.0.1:8642`. Do not add `/p/<profile>` to the address: the extension would add it a second time.
 - Pick the profile in the side panel's bot list.
 
-Each named profile needs its own `API_SERVER_KEY` in `~/.hermes/profiles/<profile>/.env`, and the default profile's key does not work for it.
+Each named profile has its own `API_SERVER_KEY` in `~/.hermes/profiles/<profile>/.env`, but the extension stores **one** key per saved connection. **Test connection** and the bot list call the listener's plain routes (`/api/sessions`, and the like) with that key; choosing a profile only changes `activeProfile`, not the key. Paste the **listener** `API_SERVER_KEY` (from the default `~/.hermes/.env`) into the extension, and keep every profile's key the same as that listener key until the extension supports separate profile credentials.
 
 ### Hermes Cloud
 

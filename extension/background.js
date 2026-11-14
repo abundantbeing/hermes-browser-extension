@@ -1052,9 +1052,9 @@ void initI18n().catch((error) => {
 // The active connection's custom headers ride on every request to its address, WebSocket handshake included,
 // and its API requests leave without the Origin header Hermes would refuse (gateway-origin-rule.mjs). This
 // worker is the only writer of both rules: every update reads stored settings when it runs, one at a time.
-// A panel pairing with a loopback address it has not saved yet asks for that address too; the next
-// settings change, or a worker restart, drops it.
-let pendingPairingGatewayUrl = '';
+// Loopback addresses panels pair with before they are saved. Each attempt registers its own; the next
+// settings change, or a worker restart, drops them all.
+const pendingPairingGatewayUrls = new Set();
 const syncConnectionHeaders = createHeaderRuleSync({
   read: readStoredSettings,
   apply: async (settings) => {
@@ -1063,7 +1063,7 @@ const syncConnectionHeaders = createHeaderRuleSync({
       gatewayUrl: settings.gatewayUrl,
       connectionTransport: settings.connectionTransport,
       extensionHost,
-      pendingGatewayUrl: pendingPairingGatewayUrl,
+      pendingGatewayUrls: [...pendingPairingGatewayUrls],
     }).catch((error) => console.warn('[Hermes Browser] Gateway origin rule failed:', error));
     return applyConnectionHeaderRules({ gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders, extensionHost });
   },
@@ -1171,7 +1171,7 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
     })();
   }
   if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]) {
-    if (changes.hermesBrowserSettings) pendingPairingGatewayUrl = '';
+    if (changes.hermesBrowserSettings) pendingPairingGatewayUrls.clear();
     void syncConnectionHeaders();
   }
   if (changes.hermesBrowserSettings?.newValue
@@ -1205,8 +1205,15 @@ const EXTENSION_PAGE_ONLY_MESSAGE_TYPES = new Set([
   ...Object.values(HERMES_WEB_OPENING_MESSAGES),
 ]);
 // A panel asks before it tests or pairs, and waits, so its first request never runs ahead of the rule.
+function trimPendingGatewayUrl(value) {
+  return typeof value === 'string' ? value.slice(0, 2048) : '';
+}
 async function syncGatewayRulesForPanel(message) {
-  pendingPairingGatewayUrl = typeof message?.pendingGatewayUrl === 'string' ? message.pendingGatewayUrl.slice(0, 2048) : '';
+  const releaseUrl = trimPendingGatewayUrl(message?.releasePendingGatewayUrl);
+  if (releaseUrl) pendingPairingGatewayUrls.delete(releaseUrl);
+  const pendingUrl = trimPendingGatewayUrl(message?.pendingGatewayUrl);
+  if (pendingUrl && message?.pendingGatewayUrlAction !== 'release') pendingPairingGatewayUrls.add(pendingUrl);
+  if (pendingUrl && message?.pendingGatewayUrlAction === 'release') pendingPairingGatewayUrls.delete(pendingUrl);
   await syncConnectionHeaders();
   return { ok: true };
 }
