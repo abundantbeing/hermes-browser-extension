@@ -38,6 +38,16 @@ test('privateNetworkHost classifies RFC1918, loopback, and local names with edge
   assert.equal(privateNetworkHost('::ffff:8.8.8.8'), false);
 });
 
+test('pageContextInjectionDecision skips full fe80::/10 link-local range', () => {
+  for (const host of ['http://[fe80::1]/', 'http://[fe90::1]/', 'http://[febf::ffff]/']) {
+    assert.deepEqual(pageContextInjectionDecision(host, {}), {
+      inject: false,
+      reason: 'private-network',
+    }, host);
+  }
+  assert.equal(pageContextInjectionDecision('http://[fec0::1]/', {}).inject, true);
+});
+
 test('pageContextInjectionDecision treats 0.0.0.0 and IPv4-mapped loopback as private', () => {
   assert.deepEqual(pageContextInjectionDecision('http://0.0.0.0:8000/', {}), {
     inject: false,

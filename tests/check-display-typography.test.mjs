@@ -5,6 +5,7 @@ import {
   auditCss,
   auditFiles,
   effectiveLineHeight,
+  lineHeightFromFontShorthand,
   parseRules,
 } from '../scripts/check-display-typography.mjs';
 
@@ -91,6 +92,16 @@ test('display typography lint honors later line-height and letter-spacing overri
   letter-spacing: 0;
 }`;
   assert.ok(auditCss(cramped, 'override-bad.css').length >= 2);
+});
+
+test('display typography lint accepts px line-height in font shorthand', () => {
+  const rule = `
+.headline {
+  font: 500 20px/26px var(--hermes-font-display);
+  letter-spacing: 0.04em;
+}`;
+  assert.deepEqual(auditCss(rule, 'font-px-lh.css'), []);
+  assert.equal(lineHeightFromFontShorthand('500 20px/26px var(--hermes-font-display)'), 1.3);
 });
 
 test('display typography lint rejects pixel line-height tighter than font size', () => {

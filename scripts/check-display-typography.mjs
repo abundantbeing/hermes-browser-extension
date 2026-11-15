@@ -78,8 +78,20 @@ export function lastDeclaration(body, property) {
 }
 
 export function lineHeightFromFontShorthand(fontDecl = '') {
-  const m = String(fontDecl).match(/\/\s*([\d.]+)(?:\s|$)/);
-  return m ? Number(m[1]) : null;
+  const font = String(fontDecl).trim();
+  const slash = font.indexOf('/');
+  if (slash < 0) return null;
+  const lhRaw = font.slice(slash + 1).trim().split(/\s+/)[0] || '';
+  const before = font.slice(0, slash);
+  const unitless = Number(lhRaw);
+  if (Number.isFinite(unitless) && lhRaw !== '' && !/px|em|rem|%/i.test(lhRaw)) return unitless;
+  const lhPx = lhRaw.match(/^([\d.]+)px$/i);
+  if (lhPx) {
+    const sizes = [...before.matchAll(/([\d.]+)px/gi)];
+    const fsPx = sizes.length ? Number(sizes[sizes.length - 1][1]) : null;
+    if (fsPx) return Number(lhPx[1]) / fsPx;
+  }
+  return null;
 }
 
 export function effectiveFontSizePx(body) {

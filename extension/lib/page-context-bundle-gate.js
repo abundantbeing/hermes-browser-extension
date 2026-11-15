@@ -87,20 +87,21 @@
     const gate = ensurePageScriptPolicyRecord();
     const requestSeq = nextPageScriptPolicySeq(gate);
     const message = { type: 'HERMES_PAGE_SCRIPT_POLICY', url: location.href, seq: requestSeq };
-    const apply = (response) => {
+    const settleRefresh = (response) => {
       const inject = applyPageScriptPolicyResponse(gate, response);
-      return inject == null ? false : inject;
+      if (inject == null) return pageScriptPolicyPromise();
+      return inject;
     };
     return new Promise((resolve) => {
       try {
         if (typeof globalThis.browser?.runtime?.sendMessage === 'function') {
           Promise.resolve(globalThis.browser.runtime.sendMessage(message))
-            .then((response) => resolve(apply(response)))
+            .then((response) => Promise.resolve(settleRefresh(response)).then(resolve))
             .catch(() => resolve(false));
         } else {
           browserApi.runtime.sendMessage(message, (response) => {
             if (browserApi.runtime.lastError) resolve(false);
-            else resolve(apply(response));
+            else Promise.resolve(settleRefresh(response)).then(resolve);
           });
         }
       } catch {
