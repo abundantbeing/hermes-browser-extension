@@ -25,7 +25,15 @@ Two things that are **not** needed on stock Hermes:
 
 Do this on the machine that runs Hermes.
 
-1. Make a key of 32 or more random characters:
+1. Check for an existing key:
+
+   ```bash
+   hermes config get API_SERVER_KEY
+   ```
+
+   Reuse a key that is already set and at least 16 characters long. `hermes config set` **replaces** the key: other clients, scripts and extensions that still use the old value lose access after you restart the gateway. Generate a new key only when you intend that rotation.
+
+2. If you need a new key, make one of 32 or more random characters:
 
    ```bash
    # macOS, Linux, WSL
@@ -39,7 +47,7 @@ Do this on the machine that runs Hermes.
    -join ($bytes | ForEach-Object { $_.ToString('x2') })
    ```
 
-2. Save it in Hermes:
+3. Save it in Hermes when it is new or too short:
 
    ```bash
    hermes config set API_SERVER_KEY <the-key>
@@ -50,14 +58,14 @@ Do this on the machine that runs Hermes.
    - `%LOCALAPPDATA%\hermes\.env` on a new native Windows install (older installs use `%USERPROFILE%\.hermes\.env`);
    - `$HERMES_HOME/.env` if you moved the data folder.
 
-3. Restart the gateway so it picks the key up:
+4. Restart the gateway so it picks the key up:
 
    ```bash
    hermes gateway restart      # Hermes runs as a service
    hermes gateway run          # or run it in the foreground
    ```
 
-4. Check it from the same machine:
+5. Check it from the same machine:
 
    ```bash
    curl http://127.0.0.1:8642/health
@@ -65,6 +73,8 @@ Do this on the machine that runs Hermes.
    ```
 
    The first command should print a small JSON status. The second should list at least one model.
+
+Read the key with `hermes config get API_SERVER_KEY --raw` when you need to paste it into the extension.
 
 On Windows, `Copy_Hermes_Browser_API_Key.cmd` in this repository copies the key from your Hermes `.env` to the clipboard.
 
@@ -148,6 +158,8 @@ ssh -N -L 18642:127.0.0.1:8642 user@your-server
 While that command runs, add a **Local gateway** (this computer) at `http://127.0.0.1:18642` with the server's key: to the browser the tunnel is a port on this computer, which is also what lets Hermes Control use it. The extension cannot open the tunnel itself: start it before you connect, and keep it running. A tool like `autossh` or a system service keeps it up.
 
 **Local gateway** also scans this computer for a Hermes Desktop dashboard. If Hermes is still running here while you use the tunnel, that local dashboard's bots can appear beside the remote one, and chat can fall back to the local gateway when the tunnel drops. **Stop the Hermes gateway on this computer** before you connect through the tunnel, or use a browser machine with no local Hermes. Prefer `tailscale serve` on the server when you need Hermes Control without that constraint.
+
+**Browser-context consent:** The tunnel address is loopback on this computer, but chat, Hermes Assist and page context reach Hermes on the **remote** machine. The extension treats a forwarded loopback port (any tunnel port other than `8642`) like a remote gateway for consent: grant **Share page context** in Settings before page text, URLs or field labels leave the browser.
 
 ### On another computer on your home or office network
 

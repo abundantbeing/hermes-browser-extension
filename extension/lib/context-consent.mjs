@@ -168,7 +168,23 @@ export async function persistContextConsentDecision({
   return update();
 }
 
+const LOCAL_HERMES_API_PORT = '8642';
+
+/** Loopback URL on a non-default port (for example an SSH tunnel) forwards to a remote Hermes. */
+export function isForwardedLoopbackGateway(gatewayUrl = '') {
+  if (!isLoopbackGatewayUrl(gatewayUrl)) return false;
+  try {
+    const url = new URL(String(gatewayUrl || '').trim());
+    const port = url.port;
+    if (!port) return false;
+    return port !== LOCAL_HERMES_API_PORT;
+  } catch {
+    return false;
+  }
+}
+
 export function consentRequiredForConnection({ gatewayUrl = '' } = {}) {
+  if (isForwardedLoopbackGateway(gatewayUrl)) return true;
   const origin = normalizeContextConsentOrigin(gatewayUrl);
   return Boolean(origin) && !isLoopbackGatewayUrl(origin);
 }

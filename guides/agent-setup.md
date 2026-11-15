@@ -23,6 +23,8 @@ For Hermes Cloud, skip to the [connection guide's Hermes Cloud section](./connec
 hermes config get API_SERVER_KEY
 ```
 
+Reuse the key when `hermes config get API_SERVER_KEY` already returns 16 or more characters. Only set a new one when the key is missing, too short, or the person asked to rotate it; warn them that rotation invalidates every other client still on the old key.
+
 If it is unset or shorter than 16 characters, set one and restart the gateway:
 
 ```bash
@@ -53,7 +55,7 @@ curl -H "Authorization: Bearer <key>" http://127.0.0.1:8642/v1/models
 | In WSL2, browser on Windows | `http://127.0.0.1:8642` | If that fails, set `API_SERVER_HOST=0.0.0.0` in WSL's Hermes `.env`, restart, and use the WSL IP from `hostname -I`. |
 | In Docker | `http://127.0.0.1:8642` | Run the container with `-e API_SERVER_HOST=0.0.0.0 -p 127.0.0.1:8642:8642`. |
 | On a VPS or another computer with Tailscale | The `https://….ts.net` address `tailscale serve --bg 8642` prints | Run that command on the Hermes machine. |
-| On a VPS reached over SSH | `http://127.0.0.1:18642`, as a **Local gateway** | The person runs `ssh -N -L 18642:127.0.0.1:8642 user@server` and keeps it open. **Local gateway** scans for a Hermes dashboard on this computer: stop the local Hermes gateway first, or use a machine with no local Hermes. |
+| On a VPS reached over SSH | `http://127.0.0.1:18642`, as a **Local gateway** | The person runs `ssh -N -L 18642:127.0.0.1:8642 user@server` and keeps it open. **Local gateway** scans for a Hermes dashboard on this computer: stop the local Hermes gateway first, or use a machine with no local Hermes. Page context needs remote-gateway consent even though the address is loopback. |
 | On another computer on the same LAN | `http://<lan-ip>:8642` | Set `API_SERVER_HOST=0.0.0.0`, allow port 8642 for the LAN only, restart. |
 | Behind an HTTPS reverse proxy | `https://hermes.example.com` | Proxy to `127.0.0.1:8642` with response buffering off. See the [connection guide](./connection-guide.md#behind-an-https-reverse-proxy). |
 

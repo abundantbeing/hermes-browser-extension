@@ -106,17 +106,32 @@ There are four steps. Step 1 happens on the machine that runs Hermes; the rest h
 
 Hermes serves the API the extension talks to once `API_SERVER_KEY` is set. It refuses a key shorter than 16 characters, even on `127.0.0.1`.
 
-```bash
-hermes config set API_SERVER_KEY "$(openssl rand -hex 32)"
-hermes gateway restart
-curl http://127.0.0.1:8642/health
-```
+1. Check whether a key is already set:
 
-- The first line saves a new random key. Instead, you can add `API_SERVER_KEY=<32+ random characters>` to the Hermes `.env` yourself; `hermes config env-path` shows where that file is.
-- The second line restarts the gateway. Use `hermes gateway run` instead if you run it in the foreground.
-- The `curl` line should answer with a small JSON status.
+   ```bash
+   hermes config get API_SERVER_KEY
+   ```
 
-Keep the key: you paste it into the extension in step 3.
+2. If the value is missing or shorter than 16 characters, set one:
+
+   ```bash
+   hermes config set API_SERVER_KEY "$(openssl rand -hex 32)"
+   ```
+
+   If a usable key is already there, **reuse it**. `config set` replaces the key: every other client still using the old key stops working. Only generate a new one when you mean to rotate.
+
+   Instead of `config set`, you can add `API_SERVER_KEY=<32+ random characters>` to the Hermes `.env` yourself; `hermes config env-path` shows where that file is.
+
+3. Restart the gateway and check it answers:
+
+   ```bash
+   hermes gateway restart
+   curl http://127.0.0.1:8642/health
+   ```
+
+   Use `hermes gateway run` instead of `restart` if you run Hermes in the foreground. The `curl` line should answer with a small JSON status.
+
+To read the saved key, run `hermes config get API_SERVER_KEY --raw` in your own terminal. Keep it private; paste it into the extension in step 3.
 
 On Windows:
 - PowerShell has no `openssl`. The [connection guide](./guides/connection-guide.md#step-1-give-hermes-an-api-key) has a PowerShell line that makes a key.
@@ -221,7 +236,7 @@ Existing installations migrate automatically:
 
 Custom headers go with every request the extension makes to that address, streamed replies included, and to nothing else. A browser cannot put headers on the dashboard's live WebSocket connection.
 
-A private network needs nothing special. Start Tailscale or WireGuard first, then add a Remote gateway at the address it gives you, with your API key. An SSH tunnel is a port on this computer, so add it as a Local gateway at `http://127.0.0.1:<tunnel port>`. An extension cannot open an SSH session itself. **Local gateway** also discovers Hermes dashboards on this computer: stop the local Hermes gateway before you connect through a tunnel to a remote machine, or bots from both can mix.
+A private network needs nothing special. Start Tailscale or WireGuard first, then add a Remote gateway at the address it gives you, with your API key. An SSH tunnel is a port on this computer, so add it as a Local gateway at `http://127.0.0.1:<tunnel port>`. An extension cannot open an SSH session itself. **Local gateway** also discovers Hermes dashboards on this computer: stop the local Hermes gateway before you connect through a tunnel to a remote machine, or bots from both can mix. Page context over a tunnel reaches a **remote** Hermes even though the address is loopback; the extension applies the same browser-context consent as for a remote gateway (see the [SSH tunnel section](./guides/connection-guide.md#on-a-vps-or-another-computer-over-an-ssh-tunnel)).
 
 Each entry keeps its own gateway address, API key and dashboard settings in browser-local storage. Your existing setup becomes the first entry. Only one saved connection is active at a time. Switching:
 - saves the current settings and closes the old connection;

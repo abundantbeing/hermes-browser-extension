@@ -9,6 +9,7 @@ import {
   contextScopeWithConsent,
   consentGrantedForIdentity,
   consentRequiredForConnection,
+  isForwardedLoopbackGateway,
   dashboardPrincipalFromMe,
   fingerprintContextCredential,
   mergeContextConsentLedgers,
@@ -50,6 +51,19 @@ test('every non-loopback connection requires explicit browser-context consent', 
   ]) {
     assert.equal(consentRequiredForConnection({ gatewayUrl }), false);
   }
+});
+
+test('a forwarded loopback port (SSH tunnel) requires consent like a remote gateway', () => {
+  assert.equal(isForwardedLoopbackGateway('http://127.0.0.1:18642'), true);
+  assert.equal(consentRequiredForConnection({ gatewayUrl: 'http://127.0.0.1:18642' }), true);
+  assert.equal(isForwardedLoopbackGateway('http://127.0.0.1:8642'), false);
+  const denied = contextScopeWithConsent(pinned, {
+    gatewayUrl: 'http://127.0.0.1:18642',
+    identity: identity({ gatewayUrl: 'http://127.0.0.1:18642', transport: 'local-api' }),
+    ledger: {},
+  });
+  assert.equal(denied.allowed, false);
+  assert.equal(denied.scope.mode, CONTEXT_SCOPE_MODES.CHAT_ONLY);
 });
 
 test('consent identity is scoped to origin, principal, profile, controller, and transport', () => {

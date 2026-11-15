@@ -104,6 +104,24 @@ test('the plugin docs offer the catalog name and do not say the catalog has no e
   assert.doesNotMatch(pluginDocs, /does not pair with the extension/);
 });
 
+test('setup docs reuse an existing API key and show how to read it back', () => {
+  const quick = readme.slice(readme.indexOf('## Quick start'), readme.indexOf('## Connect to Hermes'));
+  assert.match(quick, /hermes config get API_SERVER_KEY/);
+  assert.match(quick, /reuse it|Reuse a key/i);
+  assert.match(quick, /hermes config get API_SERVER_KEY --raw/);
+  assert.match(quick, /rotate|replaces the key/i);
+  assert.match(guide, /hermes config get API_SERVER_KEY/);
+  assert.match(guide, /hermes config get API_SERVER_KEY --raw/);
+  assert.match(agent, /hermes config get API_SERVER_KEY/);
+});
+
+test('the SSH tunnel docs state remote browser-context consent', () => {
+  assert.match(guide, /Browser-context consent|browser-context consent/i);
+  assert.match(guide, /forwarded loopback|tunnel port other than `8642`/i);
+  assert.match(readme, /browser-context consent|page context over a tunnel/i);
+  assert.match(agent, /remote-gateway consent|remote.*consent/i);
+});
+
 test('an agent pointed at the repository finds its setup steps', () => {
   assert.match(readme, /\]\(\.\/guides\/agent-setup\.md\)/);
   assert.match(agent, /Only the person can do these/);

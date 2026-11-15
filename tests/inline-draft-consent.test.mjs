@@ -107,6 +107,51 @@ test('service-worker dashboard paths fail closed without a freshly verified prin
   assert.equal(result.request.pageContext, '');
 });
 
+const TUNNEL_SETTINGS = Object.freeze({
+  gatewayUrl: 'http://127.0.0.1:18642',
+  connectionTransport: 'local-api',
+  activeProfile: 'default',
+  ['api' + 'Key']: 'fixture-credential-tunnel',
+});
+
+test('service-worker SSH-tunnel loopback withholds page context until consent is granted', async () => {
+  const denied = await gateInlineDraftRequestContext({
+    request: REQUEST,
+    settings: TUNNEL_SETTINGS,
+    ledger: null,
+    controller: CONTROLLER,
+  });
+  assert.equal(denied.allowed, false);
+  assert.equal(denied.request.pageContext, '');
+  assert.equal(denied.request.pageUrl, '');
+  assert.equal(denied.request.fieldLabel, '');
+
+  const gated = await gateInlineDraftRequestContext({
+    request: REQUEST,
+    settings: TUNNEL_SETTINGS,
+    ledger: null,
+    controller: CONTROLLER,
+  });
+  const consentIdentity = contextConsentIdentity({
+    gatewayUrl: TUNNEL_SETTINGS.gatewayUrl,
+    principal: gated.principal,
+    profile: TUNNEL_SETTINGS.activeProfile,
+    controller: CONTROLLER,
+    transport: TUNNEL_SETTINGS.connectionTransport,
+  });
+  const ledger = withContextConsent(null, consentIdentity, true, 1);
+  const granted = await gateInlineDraftRequestContext({
+    request: REQUEST,
+    settings: TUNNEL_SETTINGS,
+    ledger,
+    controller: CONTROLLER,
+  });
+  assert.equal(granted.allowed, true);
+  assert.equal(granted.request.pageContext, REQUEST.pageContext);
+  assert.equal(granted.request.pageUrl, REQUEST.pageUrl);
+  assert.equal(granted.request.fieldLabel, REQUEST.fieldLabel);
+});
+
 test('service-worker loopback inline drafts preserve page context without a ledger grant', async () => {
   const result = await gateInlineDraftRequestContext({
     request: REQUEST,
