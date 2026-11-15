@@ -4,6 +4,8 @@ import test from 'node:test';
 
 import {
   GATEWAY_ORIGIN_RULE_ID,
+  PendingPairingGatewayUrls,
+  SYNC_GATEWAY_RULES_MESSAGE,
   applyGatewayOriginRule,
   draftOriginRule,
   gatewayOriginRules,
@@ -86,6 +88,26 @@ test('applying replaces the previous rule, and a dashboard connection removes it
   await applyGatewayOriginRule({ gatewayUrl: 'https://hermes.example.com', connectionTransport: 'remote-dashboard', extensionHost: HOST }, dnr);
   assert.equal(dnr.rules.size, 0);
   assert.equal(await applyGatewayOriginRule({ gatewayUrl: 'http://127.0.0.1:8642', extensionHost: HOST }, null), false);
+});
+
+test('several loopback pairing addresses can be covered at once', () => {
+  const [rule] = gatewayOriginRules({
+    gatewayUrl: 'http://127.0.0.1:8642',
+    connectionTransport: 'local-api',
+    extensionHost: HOST,
+    pendingGatewayUrls: ['http://127.0.0.1:8650', 'http://127.0.0.1:8651'],
+  });
+  assert.ok(matches(rule, 'http://127.0.0.1:8650/api/browser-extension/pair/start'));
+  assert.ok(matches(rule, 'http://127.0.0.1:8651/api/browser-extension/pair/start'));
+});
+
+test('an ordinary panel sync must not clear another panel\'s pending pairing address', () => {
+  const pending = new PendingPairingGatewayUrls();
+  pending.applySyncMessage({ pendingGatewayUrl: 'http://127.0.0.1:8650' });
+  pending.applySyncMessage({ pendingGatewayUrl: '' });
+  assert.deepEqual(pending.values(), ['http://127.0.0.1:8650']);
+  pending.applySyncMessage({ releasePendingGatewayUrl: 'http://127.0.0.1:8650' });
+  assert.deepEqual(pending.values(), []);
 });
 
 test('a loopback address being paired before it is saved is covered beside the active one, and only loopback', () => {
@@ -185,15 +207,16 @@ test('the rule ids do not collide with the other session rules', () => {
 
 test('only the worker writes the active rule; a panel asks it and waits', async () => {
   const background = await readFile(new URL('../extension/background.js', import.meta.url), 'utf8');
-  assert.match(background, /applyGatewayOriginRule\(\{[\s\S]{0,200}pendingGatewayUrl: pendingPairingGatewayUrl/);
+  assert.match(background, /applyGatewayOriginRule\(\{[\s\S]{0,280}pendingGatewayUrls: pendingPairingGatewayUrls\.values\(\)/);
   assert.match(background, /message\?\.type === SYNC_GATEWAY_RULES_MESSAGE\s*\?\s*syncGatewayRulesForPanel\(message\)/);
   assert.match(background, /LOOPBACK_FETCH_MESSAGE,\s*SYNC_GATEWAY_RULES_MESSAGE,/, 'only extension pages may ask');
-  assert.match(background, /if \(changes\.hermesBrowserSettings\) pendingPairingGatewayUrl = '';\s*void syncConnectionHeaders\(\);/, 'a settings change drops a pending pairing address');
+  assert.match(background, /if \(changes\.hermesBrowserSettings\) pendingPairingGatewayUrls\.clear\(\);\s*void syncConnectionHeaders\(\);/, 'a settings change drops pending pairing addresses');
   const panel = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.doesNotMatch(panel, /applyGatewayOriginRule\(/, 'the panel never writes the active rule');
-  assert.match(panel, /sendMessage\(\{ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl \}\)/);
-  assert.match(panel, /async function testConnection\(\) \{[\s\S]{0,600}await syncGatewayOriginRule\(\)/, 'Test connection waits for the rule');
-  assert.match(panel, /async function connectApiWithPairing\(\) \{[\s\S]{0,1200}const generation = connectionController\.begin\([\s\S]{0,400}await syncGatewayOriginRule\(\{ pendingGatewayUrl: settings\.gatewayUrl \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/, 'pairing begins before rule sync and honors cancellation');
+  assert.match(panel, /sendMessage\(\{ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl, releasePendingGatewayUrl \}\)/);
+  assert.match(panel, /async function testConnection\(\) \{[\s\S]{0,900}connectionController\.begin\([\s\S]{0,400}await syncGatewayOriginRule\(\);\s*if \(!connectionController\.isCurrent\(generation\)\)/, 'Test connection begins before rule sync and honors cancellation');
+  assert.match(panel, /releasePendingGatewayUrl: pairingPendingUrl/, 'pairing releases its pending rule when the attempt ends');
+  assert.match(panel, /async function connectApiWithPairing\(\) \{[\s\S]{0,1200}const generation = connectionController\.begin\([\s\S]{0,400}await syncGatewayOriginRule\(\{ pendingGatewayUrl: pairingPendingUrl \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/, 'pairing begins before rule sync and honors cancellation');
   assert.match(panel, /const marker = newProbeMarker\(\);[\s\S]{0,200}withDraftOriginRule\(\s*\{ gatewayUrl, extensionHost, marker \}[\s\S]{0,500}extensionHost,\s*marker,\s*\}[\s\S]{0,100}probeConnection\(\{ gatewayUrl, apiKey, headers, marker, signal \}\)/, 'one marker for the requests of the test and both its rules');
 });
 

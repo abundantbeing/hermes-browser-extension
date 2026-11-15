@@ -16,6 +16,34 @@ import { isLoopbackGatewayUrl } from './connection-modes.mjs';
 export const GATEWAY_ORIGIN_RULE_ID = 7747;
 export const SYNC_GATEWAY_RULES_MESSAGE = 'HERMES_SYNC_GATEWAY_RULES';
 
+/** Pending loopback addresses panels are pairing with before save; ordinary syncs must not clear each other. */
+export class PendingPairingGatewayUrls {
+  #urls = new Set();
+
+  add(url) {
+    const trimmed = typeof url === 'string' ? url.trim().slice(0, 2048) : '';
+    if (trimmed) this.#urls.add(trimmed);
+  }
+
+  remove(url) {
+    const trimmed = typeof url === 'string' ? url.trim().slice(0, 2048) : '';
+    if (trimmed) this.#urls.delete(trimmed);
+  }
+
+  clear() {
+    this.#urls.clear();
+  }
+
+  values() {
+    return [...this.#urls];
+  }
+
+  applySyncMessage(message) {
+    this.add(message?.pendingGatewayUrl);
+    if (typeof message?.releasePendingGatewayUrl === 'string') this.remove(message.releasePendingGatewayUrl);
+  }
+}
+
 // A test of an unsaved address gets its own rule id, from a range no other rule uses (the header
 // probe rules start at 1,000,000 and span 2^30), so two tests never replace or remove each other's.
 const DRAFT_RULE_ID_BASE = 1_200_000_000;
@@ -38,11 +66,21 @@ function removeOrigin(id, condition) {
  * before it is saved (loopback only, since automatic pairing only runs there). None for a
  * connection that signs in through a tab.
  */
-export function gatewayOriginRules({ gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl = '' } = {}) {
+export function gatewayOriginRules({
+  gatewayUrl,
+  connectionTransport,
+  extensionHost,
+  pendingGatewayUrl = '',
+  pendingGatewayUrls = [],
+} = {}) {
   if (!extensionHost) return [];
   const patterns = [];
   if (!TAB_SIGN_IN_TRANSPORTS.has(String(connectionTransport || ''))) patterns.push(originPattern(gatewayUrl));
-  if (pendingGatewayUrl && isLoopbackGatewayUrl(pendingGatewayUrl)) patterns.push(originPattern(pendingGatewayUrl));
+  const pendingList = [...pendingGatewayUrls];
+  if (pendingGatewayUrl) pendingList.push(pendingGatewayUrl);
+  for (const pending of new Set(pendingList.map((entry) => String(entry || '').trim()).filter(Boolean))) {
+    if (isLoopbackGatewayUrl(pending)) patterns.push(originPattern(pending));
+  }
   const unique = [...new Set(patterns.filter(Boolean))];
   if (!unique.length) return [];
   const regexFilter = unique.length === 1 ? unique[0] : `^(?:${unique.map((pattern) => pattern.slice(1)).join('|')})`;
@@ -50,13 +88,13 @@ export function gatewayOriginRules({ gatewayUrl, connectionTransport, extensionH
 }
 
 export async function applyGatewayOriginRule(
-  { gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl } = {},
+  { gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl, pendingGatewayUrls } = {},
   dnr = globalThis.chrome?.declarativeNetRequest || globalThis.browser?.declarativeNetRequest,
 ) {
   if (!dnr?.updateSessionRules) return false;
   await dnr.updateSessionRules({
     removeRuleIds: [GATEWAY_ORIGIN_RULE_ID],
-    addRules: gatewayOriginRules({ gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl }),
+    addRules: gatewayOriginRules({ gatewayUrl, connectionTransport, extensionHost, pendingGatewayUrl, pendingGatewayUrls }),
   });
   return true;
 }
