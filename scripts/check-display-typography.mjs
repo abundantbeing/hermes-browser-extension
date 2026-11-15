@@ -19,30 +19,34 @@ const CSS_GLOBS = [
   'extension/lib/surface-text-zoom.css',
 ];
 
-const SKIP_SELECTOR = /@font-face|@keyframes|@media|^\s*@|--hermes-display-tracking|startup-backtype text/i;
+const SKIP_SELECTOR = /@font-face|@keyframes|^\s*@|--hermes-display-tracking|startup-backtype text/i;
 
 export function parseRules(css, fileLabel = '') {
   const rules = [];
   const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
   let depth = 0;
-  let start = 0;
-  let selector = '';
+  let chunkStart = 0;
+  let bodyStart = 0;
+  const selectorStack = [];
+
   for (let i = 0; i < stripped.length; i += 1) {
     const ch = stripped[i];
     if (ch === '{') {
-      if (depth === 0) {
-        selector = stripped.slice(start, i).trim();
-        start = i + 1;
-      }
+      const selector = stripped.slice(chunkStart, i).trim();
+      if (depth === 0) chunkStart = i + 1;
+      selectorStack.push(selector);
+      bodyStart = i + 1;
       depth += 1;
     } else if (ch === '}') {
+      const body = stripped.slice(bodyStart, i).trim();
+      const selector = selectorStack.pop() || '';
       depth -= 1;
-      if (depth === 0) {
-        const body = stripped.slice(start, i).trim();
-        const line = (stripped.slice(0, start).match(/\n/g) || []).length + 1;
+      if (selector && !SKIP_SELECTOR.test(selector)) {
+        const line = (stripped.slice(0, bodyStart).match(/\n/g) || []).length + 1;
         rules.push({ selector, body, line, file: fileLabel });
-        start = i + 1;
       }
+      if (depth === 0) chunkStart = i + 1;
+      else bodyStart = i + 1;
     }
   }
   return rules;
@@ -53,9 +57,58 @@ export function emValue(raw = '') {
   return match ? Number(match[1]) : null;
 }
 
-export function lineHeightFromFontShorthand(body) {
-  const m = body.match(/font\s*:\s*[^;]*\/\s*([\d.]+)/i);
+function declarations(body) {
+  return String(body)
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export function lastDeclaration(body, property) {
+  const key = String(property).toLowerCase();
+  for (let i = declarations(body).length - 1; i >= 0; i -= 1) {
+    const decl = declarations(body)[i];
+    const colon = decl.indexOf(':');
+    if (colon < 0) continue;
+    if (decl.slice(0, colon).trim().toLowerCase() === key) {
+      return decl.slice(colon + 1).trim();
+    }
+  }
+  return '';
+}
+
+export function lineHeightFromFontShorthand(fontDecl = '') {
+  const m = String(fontDecl).match(/\/\s*([\d.]+)(?:\s|$)/);
   return m ? Number(m[1]) : null;
+}
+
+export function effectiveFontSizePx(body) {
+  const fs = lastDeclaration(body, 'font-size');
+  const pxFromFs = fs.match(/([\d.]+)px/i);
+  if (pxFromFs) return Number(pxFromFs[1]);
+  const font = lastDeclaration(body, 'font');
+  const pxFromFont = font.match(/([\d.]+)px/i);
+  if (pxFromFont) return Number(pxFromFont[1]);
+  return null;
+}
+
+export function effectiveLineHeight(body) {
+  const lhRaw = lastDeclaration(body, 'line-height');
+  if (lhRaw) {
+    if (TRACKING_TOKEN.test(lhRaw) || /var\(\s*--hermes-display-line-height/i.test(lhRaw)) {
+      return LINE_HEIGHT_MIN;
+    }
+    const unitless = Number(lhRaw);
+    if (Number.isFinite(unitless) && !lhRaw.includes('px') && !lhRaw.includes('%')) return unitless;
+    const pxMatch = lhRaw.match(/^([\d.]+)px$/i);
+    if (pxMatch) {
+      const fsPx = effectiveFontSizePx(body);
+      if (fsPx) return Number(pxMatch[1]) / fsPx;
+    }
+  }
+  const font = lastDeclaration(body, 'font');
+  if (font) return lineHeightFromFontShorthand(font);
+  return null;
 }
 
 function displayFontDecls(body) {
@@ -76,30 +129,15 @@ export function auditRule(rule) {
   const body = rule.body;
   if (!usesDisplayFont(rule)) return errors;
 
-  const fontLh = lineHeightFromFontShorthand(body);
-  const lhMatch = body.match(/(?:^|;)\s*line-height\s*:\s*([^;]+)/i);
-  const lhRaw = lhMatch?.[1]?.trim() || '';
-  let lh = fontLh;
-  if (lh == null && lhRaw) {
-    const unitless = Number(lhRaw);
-    if (Number.isFinite(unitless) && !lhRaw.includes('px')) lh = unitless;
-    else if (lhRaw.endsWith('px')) {
-      const fsMatch = body.match(/font-size\s*:\s*([^;]+)/i)
-        || body.match(/font\s*:\s*[^/]*\/\s*[^;]*\s+[^;]*/i);
-      const fsPx = body.match(/([\d.]+)px/);
-      if (fsPx) lh = Number(lhRaw) / Number(fsPx[1]);
-    }
-  }
-
-  const trackingMatch = body.match(/(?:^|;)\s*letter-spacing\s*:\s*([^;]+)/i);
-  const tracking = trackingMatch?.[1]?.trim() || '';
+  const lh = effectiveLineHeight(body);
+  const tracking = lastDeclaration(body, 'letter-spacing');
   const trackingEm = emValue(tracking);
   const usesToken = TRACKING_TOKEN.test(tracking);
   const trackingOk = usesToken || (trackingEm != null && trackingEm >= TRACKING_MIN_EM);
 
   if (lh != null && lh < LINE_HEIGHT_MIN) {
     errors.push(`line-height ${lh} < ${LINE_HEIGHT_MIN}`);
-  } else if (lh == null && !/line-height\s*:/i.test(body) && /font\s*:/i.test(body) && fontLh == null) {
+  } else if (lh == null && /font\s*:/i.test(body) && !lastDeclaration(body, 'line-height')) {
     errors.push('missing line-height on display-font font shorthand');
   }
 
@@ -110,7 +148,7 @@ export function auditRule(rule) {
   const overflowHidden = /overflow\s*:\s*hidden/i.test(body);
   const nowrap = /white-space\s*:\s*nowrap/i.test(body);
   const ellipsis = /text-overflow\s*:\s*ellipsis/i.test(body);
-  const padEnd = body.match(/padding-block-end\s*:\s*([^;]+)/i)?.[1];
+  const padEnd = lastDeclaration(body, 'padding-block-end');
   const padEndEm = emValue(padEnd) ?? (padEnd && Number(padEnd) ? Number(padEnd) / 16 : null);
   if (overflowHidden && (nowrap || ellipsis)) {
     const padOk = padEndEm != null && padEndEm >= 0.1;

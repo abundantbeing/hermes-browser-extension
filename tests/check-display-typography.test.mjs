@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { auditCss, auditFiles } from '../scripts/check-display-typography.mjs';
+import {
+  auditCss,
+  auditFiles,
+  effectiveLineHeight,
+  parseRules,
+} from '../scripts/check-display-typography.mjs';
 
 const BAD_LEGACY = `
 .status-copy strong {
@@ -55,4 +60,54 @@ test('sidepanel defines display tracking tokens', async () => {
   const css = await readFile(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
   assert.match(css, /--hermes-display-tracking:\s*0\.04em/);
   assert.match(css, /--hermes-display-line-height:\s*1\.25/);
+});
+
+test('display typography lint audits rules inside @media blocks', () => {
+  const nested = `
+@media (max-width: 340px) {
+  .onboarding-title {
+    font-family: var(--hermes-font-display);
+    line-height: 0.95;
+    letter-spacing: 0;
+  }
+}`;
+  assert.ok(auditCss(nested, 'nested.css').length > 0);
+});
+
+test('display typography lint honors later line-height and letter-spacing overrides', () => {
+  const overrides = `
+.headline {
+  font: 500 20px/1 var(--hermes-font-display);
+  line-height: 1.25;
+  letter-spacing: var(--hermes-display-tracking);
+}`;
+  assert.deepEqual(auditCss(overrides, 'override-ok.css'), []);
+  const cramped = `
+.headline {
+  font-family: var(--hermes-font-display);
+  line-height: 1.25;
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: 0.8;
+  letter-spacing: 0;
+}`;
+  assert.ok(auditCss(cramped, 'override-bad.css').length >= 2);
+});
+
+test('display typography lint rejects pixel line-height tighter than font size', () => {
+  const pxLh = `
+.headline {
+  font-family: var(--hermes-font-display);
+  font-size: 20px;
+  line-height: 10px;
+  letter-spacing: 0.04em;
+}`;
+  assert.ok(auditCss(pxLh, 'px-lh.css').some((v) => /line-height/.test(v.detail)));
+  assert.equal(effectiveLineHeight('font-size: 20px; line-height: 10px'), 0.5);
+});
+
+test('new-group dialog title keeps fg color on custom themes', async () => {
+  const css = await readFile(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const rule = parseRules(css, 'sidepanel.css').find((entry) => entry.selector.trim() === '.new-group-head h2');
+  assert.ok(rule, '.new-group-head h2 rule exists');
+  assert.match(rule.body, /color:\s*var\(--hermes-fg\)/);
 });

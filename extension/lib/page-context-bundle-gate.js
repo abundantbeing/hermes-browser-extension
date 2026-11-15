@@ -24,9 +24,36 @@
 
   function ensurePageScriptPolicyRecord() {
     if (!globalThis.__HERMES_PAGE_SCRIPT_POLICY__) {
-      globalThis.__HERMES_PAGE_SCRIPT_POLICY__ = { likelyPrivate: false, decided: false, latestInject: null };
+      globalThis.__HERMES_PAGE_SCRIPT_POLICY__ = {
+        likelyPrivate: false,
+        decided: false,
+        latestInject: null,
+        policySeq: 0,
+      };
+    }
+    if (typeof globalThis.__HERMES_PAGE_SCRIPT_POLICY__.policySeq !== 'number') {
+      globalThis.__HERMES_PAGE_SCRIPT_POLICY__.policySeq = 0;
     }
     return globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
+  }
+
+  function nextPageScriptPolicySeq(gate) {
+    gate.policySeq = (gate.policySeq || 0) + 1;
+    return gate.policySeq;
+  }
+
+  function applyPageScriptPolicyResponse(gate, response) {
+    if (response && response.seq != null && response.seq !== gate.policySeq) {
+      return null;
+    }
+    const inject = response && typeof response.inject === 'boolean' ? response.inject : false;
+    globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
+    gate.latestInject = inject;
+    gate.decided = true;
+    gate.promise = Promise.resolve(inject);
+    if (gate._resolvePolicy) gate._resolvePolicy(inject);
+    if (inject) notifyPolicyDecision(true);
+    return inject;
   }
 
   function pageScriptPolicyPromise() {
@@ -57,17 +84,12 @@
   globalThis.hermesRefreshPageScriptPolicy = function hermesRefreshPageScriptPolicy() {
     const browserApi = globalThis.browser || globalThis.chrome;
     if (!browserApi?.runtime?.sendMessage) return Promise.resolve(false);
-    const message = { type: 'HERMES_PAGE_SCRIPT_POLICY', url: location.href };
+    const gate = ensurePageScriptPolicyRecord();
+    const requestSeq = nextPageScriptPolicySeq(gate);
+    const message = { type: 'HERMES_PAGE_SCRIPT_POLICY', url: location.href, seq: requestSeq };
     const apply = (response) => {
-      const inject = response && typeof response.inject === 'boolean' ? response.inject : false;
-      const gate = ensurePageScriptPolicyRecord();
-      globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
-      gate.latestInject = inject;
-      gate.decided = true;
-      gate.promise = Promise.resolve(inject);
-      if (gate._resolvePolicy) gate._resolvePolicy(inject);
-      if (inject) notifyPolicyDecision(true);
-      return inject;
+      const inject = applyPageScriptPolicyResponse(gate, response);
+      return inject == null ? false : inject;
     };
     return new Promise((resolve) => {
       try {

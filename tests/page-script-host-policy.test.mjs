@@ -32,6 +32,21 @@ test('privateNetworkHost classifies RFC1918, loopback, and local names with edge
   assert.equal(privateNetworkHost('fe90::1'), true);
   assert.equal(privateNetworkHost('febf::1'), true);
   assert.equal(privateNetworkHost('fec0::1'), false);
+  assert.equal(privateNetworkHost('0.0.0.0'), true);
+  assert.equal(privateNetworkHost('::ffff:127.0.0.1'), true);
+  assert.equal(privateNetworkHost('::ffff:7f00:1'), true);
+  assert.equal(privateNetworkHost('::ffff:8.8.8.8'), false);
+});
+
+test('pageContextInjectionDecision treats 0.0.0.0 and IPv4-mapped loopback as private', () => {
+  assert.deepEqual(pageContextInjectionDecision('http://0.0.0.0:8000/', {}), {
+    inject: false,
+    reason: 'private-network',
+  });
+  assert.deepEqual(pageContextInjectionDecision('http://[::ffff:127.0.0.1]:8000/', {}), {
+    inject: false,
+    reason: 'private-network',
+  });
 });
 
 test('isPrivateNetworkPageUrl ignores public sites and file URLs', () => {

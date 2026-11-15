@@ -1267,7 +1267,11 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
             : message?.type === 'HERMES_PAGE_SCRIPT_POLICY'
               ? readStoredSettings().then((settings) => {
                 const decision = pageContextInjectionDecision(message?.url || sender?.tab?.url || sender?.url || '', settings);
-                return { inject: decision.inject, reason: decision.reason };
+                return {
+                  inject: decision.inject,
+                  reason: decision.reason,
+                  seq: message?.seq,
+                };
               })
             : null;
   if (!action) return false;
