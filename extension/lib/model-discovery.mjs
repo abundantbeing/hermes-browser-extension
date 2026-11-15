@@ -137,6 +137,38 @@ export function mergeSharedModelCatalog({ sharedModels = [], freshModels = [], f
   });
 }
 
+export function filterModelsForAuthoritativeProviderInventory(
+  models = [],
+  providerSlugs = null,
+  authoritativeModels = null,
+) {
+  if (!(providerSlugs instanceof Set) || !providerSlugs.size) {
+    return Array.isArray(models) ? models : [];
+  }
+  const inventory = Array.isArray(authoritativeModels) ? authoritativeModels : models;
+  const liveProviders = new Set();
+  for (const model of inventory) {
+    if (!model || typeof model !== 'object') continue;
+    const provider = String(model.provider || '').trim().toLowerCase();
+    if (provider && providerSlugs.has(provider)) liveProviders.add(provider);
+  }
+  const emptyAuthoritativeProviders = new Set(
+    [...providerSlugs].filter((provider) => !liveProviders.has(provider)),
+  );
+  if (!emptyAuthoritativeProviders.size) return models;
+  return models.filter((model) => {
+    const provider = String(model?.provider || '').trim().toLowerCase();
+    return !provider || !emptyAuthoritativeProviders.has(provider);
+  });
+}
+
+export function shouldPersistAuthoritativeModelCatalog(registrySource = '') {
+  const source = String(registrySource || '');
+  return ['registry', 'dashboard'].some(
+    (prefix) => source === prefix || source.startsWith(`${prefix}+`),
+  );
+}
+
 export function shouldPreferCachedCatalogOverSparseLiveDiscovery({
   registryModels = [],
   registrySource = '',
@@ -443,11 +475,23 @@ export async function discoverModelsFromRegistry({
       ok: true,
       models: modelsFromModelOptionsPayload(payload),
       providerSlugs: providerSlugsFromModelOptionsPayload(payload),
+      optionsPayload: payload,
       error: '',
     };
   } catch (error) {
     return { ok: false, error: error?.message || 'error', models: [] };
   }
+}
+
+export function resolveDiscoveredProviderSlugs({
+  optionsPayload = null,
+  providerSlugs = null,
+  models = [],
+} = {}) {
+  const fromPayload = providerSlugsFromModelOptionsPayload(optionsPayload || {});
+  if (fromPayload.size) return fromPayload;
+  if (providerSlugs instanceof Set && providerSlugs.size) return providerSlugs;
+  return catalogProvidersTouchedByDiscovery({ models });
 }
 
 async function fetchWithTimeout(fetchFn, url, options = {}, timeoutMs = 5000) {
@@ -1021,6 +1065,7 @@ export async function discoverModelsFromDashboard({
       ok: true,
       models: modelsFromModelOptionsPayload(payload),
       providerSlugs: providerSlugsFromModelOptionsPayload(payload),
+      optionsPayload: payload,
       error: '',
       source: 'dashboard',
     };
