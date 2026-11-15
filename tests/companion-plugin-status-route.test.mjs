@@ -114,8 +114,6 @@ class NoCheckAdapter:
 
 async def exercise(adapter):
     registry = sys.modules["probe_plugin.profile_registry"]
-    registry.set_multiplex_test_profiles(["default", "luxord"])
-    registry.set_listener_test_profile("luxord")
     ctx = Ctx()
     module.register(ctx)
     app = web.Application()
@@ -157,8 +155,7 @@ print(json.dumps({"good": good, "raising": [raising["ok"], raising["anonymous"]]
     .filter(([, resource]) => resource.includes('hermes-browser-extension'))
     .map((pair) => pair.join(' '))
     .sort();
-  const mirror = (path) => `/p/{profile}${path}`;
-  const expectGetHead = (path) => [`GET ${path}`, `HEAD ${path}`, `GET ${mirror(path)}`, `HEAD ${mirror(path)}`];
+  const expectGetHead = (path) => [`GET ${path}`, `HEAD ${path}`];
   const expected = [
     ...expectGetHead('/api/plugins/hermes-browser-extension/actions'),
     ...expectGetHead('/api/plugins/hermes-browser-extension/context/status'),
@@ -169,12 +166,11 @@ print(json.dumps({"good": good, "raising": [raising["ok"], raising["anonymous"]]
     'GET /api/plugins/hermes-browser-extension/profiles/{name}/avatar',
     'HEAD /api/plugins/hermes-browser-extension/profiles/{name}/avatar',
     'POST /api/plugins/hermes-browser-extension/context',
-    `POST ${mirror('/api/plugins/hermes-browser-extension/context')}`,
     'POST /api/plugins/hermes-browser-extension/control/register',
-    `POST ${mirror('/api/plugins/hermes-browser-extension/control/register')}`,
   ].sort();
   assert.deepEqual(companionRoutes, expected);
-  assert.doesNotMatch(companionRoutes.join('\n'), /profiles.*\/p\/\{profile\}/);
+  // The plugin adds no /p/{profile} routes; Hermes core serves a named profile's own plugin routes.
+  assert.doesNotMatch(companionRoutes.join('\n'), /\/p\//);
   assert.equal(data.good.body.profile, 'luxord');
   assert.equal(data.good.body.live, false);
   assert.deepEqual(Object.keys(data.good.body).sort(), ['hooks', 'live', 'object', 'plugin', 'profile', 'routes', 'tools', 'version']);

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **The Hermes plugin uses only public Hermes APIs for profiles.** It no longer adds its own `/p/<profile>/api/plugins/...` routes or moves them ahead of Hermes' profile catch-all in the API server's route table, and it no longer reads Hermes' plugin manager, the API server's request-profile variable or runs plugin discovery from a request. Each profile's `register()` binds its routes to that profile (`ctx.profile_name`). On a gateway that serves several profiles at one address, Hermes Control for a named profile needs Hermes to serve that profile's own plugin routes (NousResearch/hermes-agent#147703); until then use the default profile for Hermes Control there. A named profile on its own gateway address is unaffected. A guard test keeps those internals out of the plugin.
+
 ### Fixed
 
 - **Connecting no longer needs `API_SERVER_CORS_ORIGINS`.** Hermes refuses any request whose `Origin` header it does not list, and the browser adds one to the extension's chat, run and session requests, so a first message on a correct key and address failed with "Hermes API rejected the request. Check the API token". The extension now removes `Origin` from its own API requests to the gateway you connected (and to an address you are testing in Add connection), through a session network rule that matches nothing else: not web pages, not other addresses, not WebSocket handshakes. The API key still guards every route. A Hermes that already lists the extension is unaffected. Browsers that ignore extension network rules still need the `.env` line, which the panel names when it sees the refusal.

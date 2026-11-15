@@ -186,8 +186,8 @@ def register(ctx) -> None:
         hooks=HOOK_NAMES,
         version=version,
         wire_extra=_chain(
-            context_routes.make_wire_extra(),
-            control_routes.make_wire_extra(),
+            context_routes.make_wire_extra(name),
+            control_routes.make_wire_extra(name),
             profile_routes.make_wire_extra(),
         ),
         routes=(*status_route.ROUTE_PATHS, *control_routes.ROUTE_PATHS, *profile_routes.ROUTE_PATHS),

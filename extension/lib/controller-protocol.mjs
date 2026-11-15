@@ -126,10 +126,9 @@ const KNOWN_SOCKET_PATHS = new Set(Object.values(ROUTE_PATHS).map((paths) => pat
  * Address a path at a named Hermes profile: `/p/<profile>` in front of it, as the
  * rest of the extension does (hermes-client's profileScopedPath). The gateway
  * ignores the X-Hermes-Profile header for routing, so without the prefix a
- * request lands on the default profile. Core mirrors its routes under the prefix.
- * The companion plugin mirrors its status, context and control routes under
- * `/p/{profile}/…` on the listener (the bot roster stays plain-only). Other
- * unmatched `/p/{profile}/{tail}` still goes to shared-listener ingress. The
+ * request lands on the default profile. Core mirrors its routes under the prefix,
+ * and serves a named profile's own plugin routes there once it has
+ * NousResearch/hermes-agent#147703; the companion plugin adds plain paths only. The
  * default profile keeps the plain address; `default` and empty profile skip the prefix.
  */
 export function controllerProfilePath(path = '', profile = '') {

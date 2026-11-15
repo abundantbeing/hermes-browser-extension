@@ -34,7 +34,7 @@ from typing import Any, Callable, Iterable
 
 from . import actions as action_catalog
 from .protocol import BrowserContextEnvelope
-from .multiplex_routes import add_get_listener_routes, add_post_listener_routes
+from .listener_routes import add_get_route, add_post_route
 from .profile_registry import lookup_listener_profile
 from .status_route import (
     ACTIONS_PATH,
@@ -95,14 +95,14 @@ def _ms(seconds: float) -> int:
     return max(0, int(seconds * 1000))
 
 
-def make_status_handler(adapter: Any) -> Callable[..., Any]:
+def make_status_handler(adapter: Any, *, profile: str = "default") -> Callable[..., Any]:
     async def handler(request):
         from aiohttp import web
 
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
-        lp, name = lookup_listener_profile(request)
+        lp, name = lookup_listener_profile(profile)
         if lp is None:
             return _unavailable_profile_error(name)
         session = _session_id(request)
@@ -129,14 +129,14 @@ async def _read_bounded(request: Any, limit: int) -> bytes | None:
     return b"".join(chunks)
 
 
-def make_upload_handler(adapter: Any) -> Callable[..., Any]:
+def make_upload_handler(adapter: Any, *, profile: str = "default") -> Callable[..., Any]:
     async def handler(request):
         from aiohttp import web
 
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
-        lp, name = lookup_listener_profile(request)
+        lp, name = lookup_listener_profile(profile)
         if lp is None:
             return _unavailable_profile_error(name)
         session = _session_id(request)
@@ -180,14 +180,14 @@ def make_upload_handler(adapter: Any) -> Callable[..., Any]:
     return handler
 
 
-def make_actions_handler(adapter: Any) -> Callable[..., Any]:
+def make_actions_handler(adapter: Any, *, profile: str = "default") -> Callable[..., Any]:
     async def handler(request):
         from aiohttp import web
 
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
-        lp, name = lookup_listener_profile(request)
+        lp, name = lookup_listener_profile(profile)
         if lp is None:
             return _unavailable_profile_error(name)
         return web.json_response(build_actions_payload(version=lp.version), headers=_NO_STORE)
@@ -207,13 +207,13 @@ def build_actions_payload(*, version: str) -> dict[str, Any]:
     }
 
 
-def make_wire_extra() -> Callable[[Any, Any], None]:
-    """The ``wire_extra`` hook for status_route.register_status_route()."""
+def make_wire_extra(profile: str = "default") -> Callable[[Any, Any], None]:
+    """The ``wire_extra`` hook for status_route.register_status_route(), bound to the registering profile."""
 
     def wire_extra(router: Any, adapter: Any) -> None:
-        add_get_listener_routes(router, CONTEXT_STATUS_PATH, make_status_handler(adapter))
-        add_get_listener_routes(router, ACTIONS_PATH, make_actions_handler(adapter))
-        add_post_listener_routes(router, CONTEXT_UPLOAD_PATH, make_upload_handler(adapter))
+        add_get_route(router, CONTEXT_STATUS_PATH, make_status_handler(adapter, profile=profile))
+        add_get_route(router, ACTIONS_PATH, make_actions_handler(adapter, profile=profile))
+        add_post_route(router, CONTEXT_UPLOAD_PATH, make_upload_handler(adapter, profile=profile))
 
     return wire_extra
 
