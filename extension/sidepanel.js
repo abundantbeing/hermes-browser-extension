@@ -28062,10 +28062,6 @@ async function connectApiWithPairing() {
     }
   } finally {
     if (pairingRegistrationId) void syncGatewayOriginRule({ releasePendingGatewayRegistrationId: pairingRegistrationId });
-    if (!connectionController.isCurrent(generation)) {
-      els.connectButton.disabled = false;
-      els.connectButton.textContent = translateUiText('Connect to Hermes');
-    }
   }
 }
 

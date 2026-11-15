@@ -187,6 +187,25 @@ test('testConnection does not resume after cancellation during gateway rule sync
   );
 });
 
+test('a canceled Connect attempt must not unlock connectButton while a newer attempt runs', () => {
+  const connectFn = sidepanelSource.match(/async function connectApiWithPairing\(\) \{[\s\S]*?\n\}\n\nasync function fallbackSessionChat/)?.[0] || '';
+  assert.match(
+    connectFn,
+    /} finally \{[\s\S]*?if \(connectionController\.isCurrent\(generation\)\) \{[\s\S]*?els\.connectButton\.disabled = false/,
+    'completion cleanup must touch connectButton only for the current attempt',
+  );
+  assert.doesNotMatch(
+    connectFn,
+    /if \(!connectionController\.isCurrent\(generation\)\) \{[\s\S]{0,120}els\.connectButton\.disabled = false/,
+    'a stale attempt must not re-enable connectButton',
+  );
+  assert.match(
+    sidepanelSource,
+    /function applyConnectionMode\([\s\S]{0,900}connectionController\.cancel\('connection settings changed'\)[\s\S]{0,400}els\.connectButton\.disabled = false/,
+    'canceled Connect UI resets where connection mode changes',
+  );
+});
+
 test('connectApiWithPairing does not resume after cancellation during gateway rule sync', () => {
   assert.match(
     sidepanelSource,
