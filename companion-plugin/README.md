@@ -33,12 +33,13 @@ adds the browser-context tools.
 Things to know:
 
 - **Named profiles (bots).** Each profile needs the plugin enabled and its own
-  `API_SERVER_KEY`. On a gateway that serves several profiles at one address,
-  the plugin registers its status, browser-context and Hermes Control routes on
-  the listener under `/p/<profile>/api/plugins/...` as well as the plain paths
-  (Hermes mirrors its own API routes that way; the plugin does the same for its
-  routes). The listener-scoped bot roster stays on the plain path only. The
-  default profile keeps the plain addresses.
+  `API_SERVER_KEY`. The plugin adds its routes at their plain paths only, for the
+  profile whose `register()` added them. A named profile with its own gateway
+  address gets them there. On a gateway that serves several profiles at one
+  address, a named profile's Hermes Control and plugin status need Hermes to serve
+  that profile's own plugin routes under `/p/<profile>/api/plugins/...`
+  (NousResearch/hermes-agent#147703); until your Hermes has that, use the default
+  profile for Hermes Control there. Chat with named profiles is unaffected.
 - **Hermes Cloud and dashboard connections** are chat-only in the extension, so
   they do not use this plugin.
 - **One browser per chat.** Hermes Control drives the browser that attached the

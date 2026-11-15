@@ -37,8 +37,8 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
-from .multiplex_routes import add_get_listener_routes, documented_listener_paths, promote_multiplex_plugin_routes
-from .profile_registry import lookup_listener_profile
+from .listener_routes import add_get_route
+from .profile_registry import lookup_listener_profile, normalize_profile
 
 logger = logging.getLogger(__name__)
 
@@ -103,10 +103,11 @@ def make_dynamic_status_handler(
     hooks: Iterable[str],
     routes: Iterable[str],
     version: str,
+    profile: str = "default",
 ) -> Callable[..., Any]:
-    """Status payload reflects the profile that serves this HTTP request (multiplex)."""
+    """Status payload for the profile whose ``register()`` wired this route."""
 
-    route_list = sorted({str(path) for path in documented_listener_paths(routes)})
+    route_list = sorted({str(path) for path in routes})
 
     async def handler(request):
         from aiohttp import web
@@ -114,14 +115,14 @@ def make_dynamic_status_handler(
         denied = authorize(adapter, request)
         if denied is not None:
             return denied
-        lp, name = lookup_listener_profile(request)
+        lp, name = lookup_listener_profile(profile)
         if lp is None:
             return web.json_response(
                 {
                     "error": {
                         "message": (
                             f"The companion is not loaded for Hermes profile '{name}'. "
-                            "Open the gateway URL without /p/…/ or use the profile name where this plugin is enabled."
+                            "Enable the plugin for that profile and restart the gateway."
                         ),
                         "type": "companion_error",
                         "code": "companion_profile_unavailable",
@@ -188,12 +189,17 @@ def register_status_route(
     if not callable(register):
         return False
     version_str = version or plugin_version()
+    # register() runs once per profile; its handlers serve that profile only.
+    try:
+        profile = normalize_profile(getattr(ctx, "profile_name", "default"))
+    except Exception:
+        profile = "default"
 
     def wire(native, adapter) -> None:
         router = getattr(native, "router", None)
         if router is None:
             return
-        add_get_listener_routes(
+        add_get_route(
             router,
             ROUTE_PATH,
             make_dynamic_status_handler(
@@ -202,13 +208,13 @@ def register_status_route(
                 hooks=hooks,
                 routes=routes,
                 version=version_str,
+                profile=profile,
             ),
         )
         # One factory wires every route: Hermes keys factories by plugin and
         # qualified name, so a second closure of this shape would be skipped.
         if callable(wire_extra):
             wire_extra(router, adapter)
-        promote_multiplex_plugin_routes(router)
 
     try:
         register(PLATFORM, wire)

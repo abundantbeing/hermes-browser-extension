@@ -56,10 +56,6 @@ mod_other, broker_other, _, _ = load_package(OTHER_HOME)
 
 registry_def = reg_def
 registry_work = reg_work
-registry_def.set_multiplex_test_profiles(["default", "work"])
-registry_work.set_multiplex_test_profiles(["default", "work"])
-registry_def.set_listener_test_profile("work")
-registry_work.set_listener_test_profile("work")
 
 route_broker = broker_def.get_control_broker("work")
 scope = broker_def.ControllerScope(
@@ -114,7 +110,6 @@ registry = sys.modules["probe_plugin.profile_registry"]
 broker_mod = sys.modules["probe_plugin.control_broker"]
 tools = sys.modules["probe_plugin.control_tools"]
 
-registry.set_multiplex_test_profiles(["default", "work"])
 
 default_broker = broker_mod.get_control_broker("default")
 work_broker = broker_mod.get_control_broker("work")
