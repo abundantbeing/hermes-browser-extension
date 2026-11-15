@@ -24,6 +24,7 @@ import {
   catalogProvidersTouchedByDiscovery,
   filterModelsForAuthoritativeProviderInventory,
   mergeSharedModelCatalog,
+  reconcileScopedAndSharedCachedCatalog,
   providerSlugsFromModelOptionsPayload,
   shouldPersistAuthoritativeModelCatalog,
   shouldPreferCachedCatalogOverSparseLiveDiscovery,
@@ -32,6 +33,7 @@ import {
   resolveDiscoveredProviderSlugs,
   resolveProfileSessionModel,
   normalizeExternalModelSourceList,
+  discoverModelsFromExternalSources,
 } from '../extension/lib/model-discovery.mjs';
 import {
   DEFAULT_SETTINGS,
@@ -536,6 +538,36 @@ test('providerSlugsFromModelOptionsPayload keeps empty provider slots authoritat
   assert.deepEqual([...slugs].sort(), ['custom', 'retired']);
 });
 
+test('reconcileScopedAndSharedCachedCatalog honors per-provider freshness from shared replacedProviders', () => {
+  const liveIds = ['gemini-4-hydrogen', 'gpt-oss-120b'];
+  const staleIds = ['legacy-flash', 'retired-preview'];
+  const scopedEntry = {
+    savedAt: 300,
+    models: [...liveIds, ...staleIds].map((id) => ({
+      id: `custom::${id}`,
+      rawModelId: id,
+      provider: 'custom',
+      source: 'cache',
+    })),
+  };
+  const sharedEntry = {
+    savedAt: 200,
+    replacedProviders: ['custom'],
+    models: liveIds.map((id) => ({
+      id: `custom::${id}`,
+      rawModelId: id,
+      provider: 'custom',
+      source: 'cache',
+    })),
+  };
+  const reconciled = reconcileScopedAndSharedCachedCatalog(scopedEntry, sharedEntry);
+  assert.deepEqual(
+    reconciled.map((m) => m.rawModelId).sort(),
+    [...liveIds].sort(),
+    'newer shared provider snapshot must override an older scoped slot without resurrecting removed models',
+  );
+});
+
 test('mergeSharedModelCatalog prunes removed models from live providers while preserving absent providers', () => {
   const sharedModels = [
     { id: 'custom::legacy-flash', rawModelId: 'legacy-flash', provider: 'custom' },
@@ -702,6 +734,7 @@ test('sidepanel loadModels prunes stale provider models across cache slots, pres
     },
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
     discoverCanonicalProviderCatalog,
@@ -714,6 +747,7 @@ test('sidepanel loadModels prunes stale provider models across cache slots, pres
     selectModelCatalogFallback,
     mergeVirtualModelRows,
     mergeSharedModelCatalog,
+    reconcileScopedAndSharedCachedCatalog,
     mergeModelsByRawId,
     mergeModelsWithRegistry,
     catalogProvidersTouchedByDiscovery,
@@ -748,6 +782,7 @@ test('sidepanel loadModels prunes stale provider models across cache slots, pres
   });
 
   vm.runInContext([
+    'let modelCatalogLoadSerial = 0;',
     between('async function readCachedModelCatalog()', '// Union of every profile\'s cached catalog'),
     between('async function readCachedModelCatalogUnion(', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
@@ -862,6 +897,7 @@ test('loadModels stale replies do not overwrite cache after profile switch', asy
     },
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
     discoverCanonicalProviderCatalog: async ({ registryModels }) => ({ models: registryModels }),
@@ -874,6 +910,7 @@ test('loadModels stale replies do not overwrite cache after profile switch', asy
     selectModelCatalogFallback,
     mergeVirtualModelRows,
     mergeSharedModelCatalog,
+    reconcileScopedAndSharedCachedCatalog,
     mergeModelsByRawId,
     mergeModelsWithRegistry,
     catalogProvidersTouchedByDiscovery,
@@ -908,6 +945,7 @@ test('loadModels stale replies do not overwrite cache after profile switch', asy
   });
 
   vm.runInContext([
+    'let modelCatalogLoadSerial = 0;',
     between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
   ].join('\n'), context);
@@ -979,6 +1017,7 @@ test('loadModels removes emptied provider models from availableModels after auth
     }),
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
     discoverCanonicalProviderCatalog: async ({ registryModels }) => ({ models: registryModels }),
@@ -991,6 +1030,7 @@ test('loadModels removes emptied provider models from availableModels after auth
     selectModelCatalogFallback,
     mergeVirtualModelRows,
     mergeSharedModelCatalog,
+    reconcileScopedAndSharedCachedCatalog,
     mergeModelsByRawId,
     mergeModelsWithRegistry,
     catalogProvidersTouchedByDiscovery,
@@ -1025,6 +1065,7 @@ test('loadModels removes emptied provider models from availableModels after auth
   });
 
   vm.runInContext([
+    'let modelCatalogLoadSerial = 0;',
     between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
   ].join('\n'), context);
@@ -1084,6 +1125,7 @@ test('loadModels reruns a deferred profile refresh after an in-flight refresh fi
     },
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
     discoverCanonicalProviderCatalog: async ({ registryModels }) => ({ models: registryModels }),
@@ -1096,6 +1138,7 @@ test('loadModels reruns a deferred profile refresh after an in-flight refresh fi
     selectModelCatalogFallback,
     mergeVirtualModelRows,
     mergeSharedModelCatalog,
+    reconcileScopedAndSharedCachedCatalog,
     mergeModelsByRawId,
     mergeModelsWithRegistry,
     catalogProvidersTouchedByDiscovery,
@@ -1130,6 +1173,7 @@ test('loadModels reruns a deferred profile refresh after an in-flight refresh fi
   });
 
   vm.runInContext([
+    'let modelCatalogLoadSerial = 0;',
     between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
   ].join('\n'), context);
@@ -1145,4 +1189,378 @@ test('loadModels reruns a deferred profile refresh after an in-flight refresh fi
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
   assert.ok(context.availableModels.some((model) => model.rawModelId === 'call-2'), 'deferred refresh must run for the superseded profile');
+});
+
+test('loadModels cache fallback uses newer shared provider rows when scoped cache is older', async () => {
+  const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const between = (start, end) => {
+    const from = sidepanelSource.indexOf(start);
+    assert.ok(from >= 0, `sidepanel.js defines ${start}`);
+    const to = sidepanelSource.indexOf(end, from);
+    assert.ok(to > from, `sidepanel.js has ${end} after ${start}`);
+    return sidepanelSource.slice(from, to);
+  };
+
+  const liveIds = ['gemini-4-hydrogen', 'gpt-oss-120b'];
+  const staleIds = ['legacy-flash', 'retired-preview'];
+  const storageState = {
+    [MODEL_CATALOG_CACHE_STORAGE_KEY]: {
+      'local-api|http://127.0.0.1:8642|default': {
+        savedAt: 300,
+        models: [...liveIds, ...staleIds].map((id) => ({
+          id: `custom::${id}`,
+          rawModelId: id,
+          provider: 'custom',
+          source: 'cache',
+          runtimeSelectable: true,
+        })),
+      },
+      'local-api|http://127.0.0.1:8642|__shared__': {
+        savedAt: 200,
+        replacedProviders: ['custom'],
+        models: liveIds.map((id) => ({
+          id: `custom::${id}`,
+          rawModelId: id,
+          provider: 'custom',
+          source: 'cache',
+          runtimeSelectable: true,
+        })),
+      },
+    },
+  };
+
+  const context = vm.createContext({
+    DEFAULT_SETTINGS,
+    MODEL_CATALOG_CACHE_STORAGE_KEY,
+    MODEL_CATALOG_SHARED_CACHE_PROFILE,
+    settings: { ...DEFAULT_SETTINGS, gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', activeProfile: 'default', model: 'custom::gemini-4-hydrogen' },
+    availableModels: [],
+    modelsRefreshing: false,
+    modelCatalogRefreshDeferred: false,
+    browserApi: {
+      storage: {
+        local: {
+          get: async (keys) => Object.fromEntries(keys.map((k) => [k, storageState[k]])),
+          set: async (patch) => { Object.assign(storageState, patch); },
+        },
+      },
+    },
+    apiFetch: async () => ({ ok: false, status: 503, text: async () => '{}' }),
+    readJsonResponse: async (res) => JSON.parse(await res.text()),
+    discoverModelsFromRegistry,
+    discoverModelsFromExternalSources,
+    discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
+    discoverGatewayVirtualModels,
+    discoverCanonicalProviderCatalog: async ({ registryModels }) => ({ models: registryModels }),
+    shouldEnrichCanonicalProviderCatalog,
+    shouldTrySessionModelFallback,
+    modelCatalogRefreshDecision,
+    normalizeCachedModelCatalog,
+    normalizeExternalModelSourceList,
+    normalizeHermesModels,
+    selectModelCatalogFallback,
+    mergeVirtualModelRows,
+    mergeSharedModelCatalog,
+    reconcileScopedAndSharedCachedCatalog,
+    mergeModelsByRawId,
+    mergeModelsWithRegistry,
+    catalogProvidersTouchedByDiscovery,
+    filterModelsForAuthoritativeProviderInventory,
+    resolveDiscoveredProviderSlugs,
+    providerSlugsFromModelOptionsPayload,
+    shouldPersistAuthoritativeModelCatalog,
+    shouldPreferCachedCatalogOverSparseLiveDiscovery,
+    unionCachedModelCatalogs,
+    modelCatalogCacheKey,
+    globalModelCatalogCacheKey,
+    isRemoteWsMode: () => false,
+    usesDashboardWsChatTransport: () => false,
+    localDashboardUrl: () => '',
+    dashboardModelDiscoveryBaseUrl: () => '',
+    dashboardTokenFor: async () => '',
+    refreshHermesContextRegistry: async () => ({ ok: true }),
+    noteModelCatalogForGatewayContext() {},
+    reconcileInlineAssistModelBinding: async () => {},
+    renderModelOptions() {},
+    renderModelRefreshState() {},
+    renderContextWindow() {},
+    applySelectedModel() {},
+    setStatus() {},
+    translateUiText: (text) => text,
+    t: (key) => key,
+    classifyGatewayError: () => ({ kind: 'unknown', title: 'err', detail: 'err' }),
+    markGatewayDegraded() {},
+    sanitizeGatewayDiagnosticText: (msg) => msg,
+    setTimeout,
+    setImmediate,
+  });
+
+  vm.runInContext([
+    'let modelCatalogLoadSerial = 0;',
+    between('async function readCachedModelCatalog()', '// Union of every profile\'s cached catalog'),
+    between('async function readCachedModelCatalogUnion(', 'let modelCatalogSyncPromise = null;'),
+    between('async function loadModels(', 'async function refreshModelsFromMenu()'),
+  ].join('\n'), context);
+
+  const outcome = await context.loadModels({ quiet: true, refresh: false });
+  assert.equal(outcome.ok, true);
+  assert.equal(outcome.source, 'cache');
+  const customModels = context.availableModels.filter((m) => m.provider === 'custom');
+  assert.deepEqual(
+    customModels.map((m) => m.rawModelId).sort(),
+    [...liveIds].sort(),
+    'cache-only load must not treat stale scoped rows as authoritative over a fresher shared provider snapshot',
+  );
+});
+
+test('loadModels superseded quiet loads do not overwrite a newer refresh cache write', async () => {
+  const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const between = (start, end) => {
+    const from = sidepanelSource.indexOf(start);
+    assert.ok(from >= 0, `sidepanel.js defines ${start}`);
+    const to = sidepanelSource.indexOf(end, from);
+    assert.ok(to > from, `sidepanel.js has ${end} after ${start}`);
+    return sidepanelSource.slice(from, to);
+  };
+
+  let releaseQuiet;
+  const quietGate = new Promise((resolve) => { releaseQuiet = resolve; });
+  let registryCalls = 0;
+
+  const storageState = {
+    [MODEL_CATALOG_CACHE_STORAGE_KEY]: {
+      'local-api|http://127.0.0.1:8642|default': { savedAt: 1, models: [] },
+      'local-api|http://127.0.0.1:8642|__shared__': { savedAt: 1, models: [] },
+    },
+  };
+
+  const context = vm.createContext({
+    DEFAULT_SETTINGS,
+    MODEL_CATALOG_CACHE_STORAGE_KEY,
+    MODEL_CATALOG_SHARED_CACHE_PROFILE,
+    settings: { ...DEFAULT_SETTINGS, gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', activeProfile: 'default', model: 'custom::after-refresh' },
+    availableModels: [],
+    modelsRefreshing: false,
+    modelCatalogRefreshDeferred: false,
+    browserApi: {
+      storage: {
+        local: {
+          get: async (keys) => Object.fromEntries(keys.map((k) => [k, storageState[k]])),
+          set: async (patch) => { Object.assign(storageState, patch); },
+        },
+      },
+    },
+    apiFetch: async (endpoint) => {
+      if (!String(endpoint).startsWith('/api/model/options')) {
+        return { ok: false, status: 404, text: async () => '{}' };
+      }
+      registryCalls += 1;
+      if (registryCalls === 1) {
+        await quietGate;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            providers: [{ slug: 'custom', models: ['stale-quiet'] }],
+          }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({
+          providers: [{ slug: 'custom', models: ['after-refresh'] }],
+        }),
+      };
+    },
+    readJsonResponse: async (res) => JSON.parse(await res.text()),
+    discoverModelsFromRegistry,
+    discoverModelsFromExternalSources,
+    discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
+    discoverGatewayVirtualModels,
+    discoverCanonicalProviderCatalog: async ({ registryModels }) => ({ models: registryModels }),
+    shouldEnrichCanonicalProviderCatalog,
+    shouldTrySessionModelFallback,
+    modelCatalogRefreshDecision,
+    normalizeCachedModelCatalog,
+    normalizeExternalModelSourceList,
+    normalizeHermesModels,
+    selectModelCatalogFallback,
+    mergeVirtualModelRows,
+    mergeSharedModelCatalog,
+    reconcileScopedAndSharedCachedCatalog,
+    mergeModelsByRawId,
+    mergeModelsWithRegistry,
+    catalogProvidersTouchedByDiscovery,
+    filterModelsForAuthoritativeProviderInventory,
+    resolveDiscoveredProviderSlugs,
+    providerSlugsFromModelOptionsPayload,
+    shouldPersistAuthoritativeModelCatalog,
+    shouldPreferCachedCatalogOverSparseLiveDiscovery,
+    unionCachedModelCatalogs,
+    modelCatalogCacheKey,
+    globalModelCatalogCacheKey,
+    isRemoteWsMode: () => false,
+    usesDashboardWsChatTransport: () => false,
+    localDashboardUrl: () => '',
+    dashboardModelDiscoveryBaseUrl: () => '',
+    dashboardTokenFor: async () => '',
+    refreshHermesContextRegistry: async () => ({ ok: true }),
+    noteModelCatalogForGatewayContext() {},
+    reconcileInlineAssistModelBinding: async () => {},
+    renderModelOptions() {},
+    renderModelRefreshState() {},
+    renderContextWindow() {},
+    applySelectedModel() {},
+    setStatus() {},
+    translateUiText: (text) => text,
+    t: (key) => key,
+    classifyGatewayError: () => ({ kind: 'unknown', title: 'err', detail: 'err' }),
+    markGatewayDegraded() {},
+    sanitizeGatewayDiagnosticText: (msg) => msg,
+    setTimeout,
+    setImmediate,
+  });
+
+  vm.runInContext([
+    'let modelCatalogLoadSerial = 0;',
+    between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
+    between('async function loadModels(', 'async function refreshModelsFromMenu()'),
+  ].join('\n'), context);
+
+  const quietPending = context.loadModels({ quiet: true, refresh: false });
+  await new Promise((resolve) => setImmediate(resolve));
+  const refreshOutcome = await context.loadModels({ quiet: true, refresh: true });
+  assert.equal(refreshOutcome.ok, true);
+  releaseQuiet();
+  const quietOutcome = await quietPending;
+  assert.equal(quietOutcome.stale, true, 'superseded quiet loads must abandon before mutating catalog state');
+  const cachedDefault = storageState[MODEL_CATALOG_CACHE_STORAGE_KEY]['local-api|http://127.0.0.1:8642|default'];
+  assert.ok(cachedDefault?.models?.some((model) => model.rawModelId === 'after-refresh'));
+  assert.ok(!cachedDefault?.models?.some((model) => model.rawModelId === 'stale-quiet'));
+});
+
+test('loadModels persists gateway catalog without custom external discovery rows', async () => {
+  const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const between = (start, end) => {
+    const from = sidepanelSource.indexOf(start);
+    assert.ok(from >= 0, `sidepanel.js defines ${start}`);
+    const to = sidepanelSource.indexOf(end, from);
+    assert.ok(to > from, `sidepanel.js has ${end} after ${start}`);
+    return sidepanelSource.slice(from, to);
+  };
+
+  const storageState = {
+    [MODEL_CATALOG_CACHE_STORAGE_KEY]: {
+      'local-api|http://127.0.0.1:8642|default': { savedAt: 1, models: [] },
+      'local-api|http://127.0.0.1:8642|__shared__': { savedAt: 1, models: [] },
+    },
+  };
+
+  const context = vm.createContext({
+    DEFAULT_SETTINGS,
+    MODEL_CATALOG_CACHE_STORAGE_KEY,
+    MODEL_CATALOG_SHARED_CACHE_PROFILE,
+    settings: {
+      ...DEFAULT_SETTINGS,
+      gatewayMode: 'local-api',
+      gatewayUrl: 'http://127.0.0.1:8642',
+      activeProfile: 'default',
+      model: 'custom::gateway-only',
+      customModelSources: ['https://models.example/openapi.json'],
+    },
+    availableModels: [],
+    modelsRefreshing: false,
+    modelCatalogRefreshDeferred: false,
+    browserApi: {
+      storage: {
+        local: {
+          get: async (keys) => Object.fromEntries(keys.map((k) => [k, storageState[k]])),
+          set: async (patch) => { Object.assign(storageState, patch); },
+        },
+      },
+    },
+    apiFetch: async (endpoint) => ({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify(
+        String(endpoint).startsWith('/api/model/options')
+          ? { providers: [{ slug: 'custom', models: ['gateway-only'] }] }
+          : {},
+      ),
+    }),
+    readJsonResponse: async (res) => JSON.parse(await res.text()),
+    discoverModelsFromRegistry,
+    discoverModelsFromExternalSources: async () => ({
+      ok: true,
+      models: [{
+        id: 'custom:evil::ghost-model',
+        rawModelId: 'ghost-model',
+        provider: 'custom:evil',
+        source: 'external',
+        runtimeSelectable: true,
+      }],
+      results: [{ ok: true }],
+    }),
+    discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
+    discoverGatewayVirtualModels,
+    discoverCanonicalProviderCatalog: async ({ registryModels }) => ({ models: registryModels }),
+    shouldEnrichCanonicalProviderCatalog,
+    shouldTrySessionModelFallback,
+    modelCatalogRefreshDecision,
+    normalizeCachedModelCatalog,
+    normalizeExternalModelSourceList,
+    normalizeHermesModels,
+    selectModelCatalogFallback,
+    mergeVirtualModelRows,
+    mergeSharedModelCatalog,
+    reconcileScopedAndSharedCachedCatalog,
+    mergeModelsByRawId,
+    mergeModelsWithRegistry,
+    catalogProvidersTouchedByDiscovery,
+    filterModelsForAuthoritativeProviderInventory,
+    resolveDiscoveredProviderSlugs,
+    providerSlugsFromModelOptionsPayload,
+    shouldPersistAuthoritativeModelCatalog,
+    shouldPreferCachedCatalogOverSparseLiveDiscovery,
+    unionCachedModelCatalogs,
+    modelCatalogCacheKey,
+    globalModelCatalogCacheKey,
+    isRemoteWsMode: () => false,
+    usesDashboardWsChatTransport: () => false,
+    localDashboardUrl: () => '',
+    dashboardModelDiscoveryBaseUrl: () => '',
+    dashboardTokenFor: async () => '',
+    refreshHermesContextRegistry: async () => ({ ok: true }),
+    noteModelCatalogForGatewayContext() {},
+    reconcileInlineAssistModelBinding: async () => {},
+    renderModelOptions() {},
+    renderModelRefreshState() {},
+    renderContextWindow() {},
+    applySelectedModel() {},
+    setStatus() {},
+    translateUiText: (text) => text,
+    t: (key) => key,
+    classifyGatewayError: () => ({ kind: 'unknown', title: 'err', detail: 'err' }),
+    markGatewayDegraded() {},
+    sanitizeGatewayDiagnosticText: (msg) => msg,
+    setTimeout,
+    setImmediate,
+  });
+
+  vm.runInContext([
+    'let modelCatalogLoadSerial = 0;',
+    between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
+    between('async function loadModels(', 'async function refreshModelsFromMenu()'),
+  ].join('\n'), context);
+
+  const outcome = await context.loadModels({ quiet: true, refresh: true });
+  assert.equal(outcome.ok, true);
+  assert.ok(context.availableModels.some((model) => model.rawModelId === 'ghost-model'), 'external discovery stays in the live picker');
+  const cached = storageState[MODEL_CATALOG_CACHE_STORAGE_KEY];
+  const profileModels = cached['local-api|http://127.0.0.1:8642|default']?.models || [];
+  const sharedModels = cached['local-api|http://127.0.0.1:8642|__shared__']?.models || [];
+  assert.ok(profileModels.some((model) => model.rawModelId === 'gateway-only'));
+  assert.ok(!profileModels.some((model) => model.rawModelId === 'ghost-model'));
+  assert.ok(!sharedModels.some((model) => model.rawModelId === 'ghost-model'));
 });

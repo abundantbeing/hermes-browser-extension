@@ -547,6 +547,7 @@ import {
   modelCatalogRefreshDecision,
   normalizeCachedModelCatalog,
   normalizeExternalModelSourceList,
+  reconcileScopedAndSharedCachedCatalog,
   selectModelCatalogFallback,
   resolveDiscoveredProviderSlugs,
   resolveProfileSessionModel,
@@ -2827,6 +2828,7 @@ function hermesGatewayKey() {
 }
 let modelsRefreshing = false;
 let modelCatalogRefreshDeferred = false;
+let modelCatalogLoadSerial = 0;
 let contextRefreshingFromUser = false;
 const contextPreviewScheduler = createContextPreviewScheduler({
   run: runContextPreviewEvents,
@@ -12017,18 +12019,7 @@ async function readCachedModelCatalog() {
     });
     const scopedEntry = cache?.[key];
     const sharedEntry = cache?.[sharedKey];
-    const scoped = normalizeCachedModelCatalog(scopedEntry?.models);
-    const shared = normalizeCachedModelCatalog(sharedEntry?.models);
-    if (!scoped.length) return shared;
-    // Reconcile against a newer shared catalog snapshot so a profile with an
-    // older cache never overrides models refreshed or pruned on another profile.
-    if (shared.length && (Number(sharedEntry?.savedAt) || 0) > (Number(scopedEntry?.savedAt) || 0)) {
-      return normalizeCachedModelCatalog(mergeSharedModelCatalog({
-        sharedModels: scoped,
-        freshModels: shared,
-      }));
-    }
-    return scoped;
+    return reconcileScopedAndSharedCachedCatalog(scopedEntry, sharedEntry);
   } catch {
     return [];
   }
@@ -12084,7 +12075,9 @@ async function writeCachedModelCatalog(models, {
   freshProviders = null,
   optionsPayload = null,
   cacheContext = null,
+  loadSerial = null,
 } = {}) {
+  if (loadSerial != null && loadSerial !== modelCatalogLoadSerial) return;
   if (cacheContext && !modelCatalogLoadContextMatches(cacheContext)) return;
   const context = cacheContext && typeof cacheContext === 'object'
     ? cacheContext
@@ -12235,6 +12228,8 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     renderModelRefreshState();
     if (!quiet) setStatus('ok', 'Refreshing models', 'Syncing Hermes model catalog… this can take 20–30 seconds.');
   }
+  const loadSerial = startup ? null : ++modelCatalogLoadSerial;
+  const isCurrentModelCatalogLoad = () => startup || loadSerial === modelCatalogLoadSerial;
   try {
     let data = payload;
     let registryModels = [];
@@ -12438,6 +12433,13 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       }
     }
 
+    const gatewayRegistryModels = registryModels;
+    const gatewayDiscoveryProviderSlugs = resolveDiscoveredProviderSlugs({
+      optionsPayload: discoveryOptionsPayload,
+      providerSlugs: discoveredProviderSlugs,
+      models: gatewayRegistryModels,
+    });
+
     const customSources = normalizeExternalModelSourceList(settings.customModelSources || []);
     if (customSources.length) {
       const externalResult = await discoverModelsFromExternalSources({
@@ -12454,29 +12456,23 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       }
     }
 
-    if (!modelCatalogLoadContextMatches(catalogLoadContext)) {
+    if (!modelCatalogLoadContextMatches(catalogLoadContext) || !isCurrentModelCatalogLoad()) {
       return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
     }
-
-    const authoritativeRegistryModels = registryModels;
-    const authoritativeDiscoveryProviderSlugs = resolveDiscoveredProviderSlugs({
-      optionsPayload: discoveryOptionsPayload,
-      providerSlugs: discoveredProviderSlugs,
-      models: authoritativeRegistryModels,
-    });
 
     if (
       registrySource !== 'cache'
       && shouldPersistAuthoritativeModelCatalog(registrySource)
       && (
-        authoritativeRegistryModels.length > 0
-        || authoritativeDiscoveryProviderSlugs.size > 0
+        gatewayRegistryModels.length > 0
+        || gatewayDiscoveryProviderSlugs.size > 0
       )
     ) {
-      await writeCachedModelCatalog(authoritativeRegistryModels, {
-        freshProviders: authoritativeDiscoveryProviderSlugs,
+      await writeCachedModelCatalog(gatewayRegistryModels, {
+        freshProviders: gatewayDiscoveryProviderSlugs,
         optionsPayload: discoveryOptionsPayload,
         cacheContext: catalogLoadContext,
+        loadSerial,
       });
     }
 
@@ -12484,15 +12480,16 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     // the model selector, while any provider returned by the live gateway (or
     // the active profile's own cached catalog) remains authoritative instead of
     // resurrecting deleted models from another profile's stale cache.
-    const hasAuthoritativeProviderCatalog = ['registry', 'dashboard', 'cache'].some(
+    const hasAuthoritativeProviderCatalog = ['registry', 'dashboard'].some(
       (prefix) => registrySource === prefix || registrySource.startsWith(`${prefix}+`),
     );
-    const authoritativeProviderSlugs = hasAuthoritativeProviderCatalog && authoritativeDiscoveryProviderSlugs.size
-      ? authoritativeDiscoveryProviderSlugs
+    const cacheBackedLiveCatalog = registrySource === 'cache' || registrySource.startsWith('cache+');
+    const authoritativeProviderSlugs = hasAuthoritativeProviderCatalog && gatewayDiscoveryProviderSlugs.size
+      ? gatewayDiscoveryProviderSlugs
       : null;
     const cachedUnionModels = await readCachedModelCatalogUnion({
       liveModels: registryModels,
-      excludeLiveProviders: hasAuthoritativeProviderCatalog,
+      excludeLiveProviders: hasAuthoritativeProviderCatalog || cacheBackedLiveCatalog,
       authoritativeProviderSlugs,
     });
     if (cachedUnionModels.length) {
@@ -12501,13 +12498,13 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     }
     if (
       hasAuthoritativeProviderCatalog
-      && authoritativeDiscoveryProviderSlugs.size
+      && gatewayDiscoveryProviderSlugs.size
     ) {
       registryModels = normalizeHermesModels(
         filterModelsForAuthoritativeProviderInventory(
           registryModels,
-          authoritativeDiscoveryProviderSlugs,
-          authoritativeRegistryModels,
+          gatewayDiscoveryProviderSlugs,
+          gatewayRegistryModels,
         ),
         settings.model,
       );
@@ -12526,7 +12523,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       }
     }
 
-    if (!modelCatalogLoadContextMatches(catalogLoadContext)) {
+    if (!modelCatalogLoadContextMatches(catalogLoadContext) || !isCurrentModelCatalogLoad()) {
       return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
     }
 

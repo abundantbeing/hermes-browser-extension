@@ -187,6 +187,41 @@ export function shouldPreferCachedCatalogOverSparseLiveDiscovery({
   return !authoritativeLiveCatalog;
 }
 
+export function reconcileScopedAndSharedCachedCatalog(scopedEntry, sharedEntry) {
+  const scoped = normalizeCachedModelCatalog(scopedEntry?.models);
+  const shared = normalizeCachedModelCatalog(sharedEntry?.models);
+  if (!scoped.length) return shared;
+  if (!shared.length) return scoped;
+  const sharedFresh = Number(sharedEntry?.savedAt) || 0;
+  const scopedFresh = Number(scopedEntry?.savedAt) || 0;
+  const sharedReplacementProviders = new Set(
+    (Array.isArray(sharedEntry?.replacedProviders) ? sharedEntry.replacedProviders : [])
+      .map((provider) => String(provider || '').trim().toLowerCase())
+      .filter(Boolean),
+  );
+  if (sharedFresh > scopedFresh) {
+    return normalizeCachedModelCatalog(mergeSharedModelCatalog({
+      sharedModels: scoped,
+      freshModels: shared,
+      freshProviders: sharedReplacementProviders.size
+        ? sharedReplacementProviders
+        : catalogProvidersTouchedByDiscovery({ models: shared }),
+    }));
+  }
+  if (sharedReplacementProviders.size) {
+    const sharedProviderModels = shared.filter((model) => {
+      const provider = String(model?.provider || '').trim().toLowerCase();
+      return provider && sharedReplacementProviders.has(provider);
+    });
+    return normalizeCachedModelCatalog(mergeSharedModelCatalog({
+      sharedModels: scoped,
+      freshModels: sharedProviderModels,
+      freshProviders: sharedReplacementProviders,
+    }));
+  }
+  return scoped;
+}
+
 export function normalizeCachedModelCatalog(payload = []) {
   const rows = Array.isArray(payload) ? payload : [];
   return rows
