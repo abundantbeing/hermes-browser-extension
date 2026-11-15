@@ -16,31 +16,40 @@ import { isLoopbackGatewayUrl } from './connection-modes.mjs';
 export const GATEWAY_ORIGIN_RULE_ID = 7747;
 export const SYNC_GATEWAY_RULES_MESSAGE = 'HERMES_SYNC_GATEWAY_RULES';
 
-/** Pending loopback addresses panels are pairing with before save; ordinary syncs must not clear each other. */
-export class PendingPairingGatewayUrls {
-  #urls = new Set();
+export function newPendingPairingRegistrationId() {
+  const bytes = globalThis.crypto?.getRandomValues?.(new Uint8Array(16));
+  if (bytes) return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`.slice(0, 32);
+}
 
-  add(url) {
+/** Pending loopback addresses panels are pairing with before save; each attempt has its own registration. */
+export class PendingPairingGatewayUrls {
+  #registrations = new Map();
+
+  register(registrationId, url) {
+    const id = typeof registrationId === 'string' ? registrationId.trim().slice(0, 128) : '';
     const trimmed = typeof url === 'string' ? url.trim().slice(0, 2048) : '';
-    if (trimmed) this.#urls.add(trimmed);
+    if (id && trimmed) this.#registrations.set(id, trimmed);
   }
 
-  remove(url) {
-    const trimmed = typeof url === 'string' ? url.trim().slice(0, 2048) : '';
-    if (trimmed) this.#urls.delete(trimmed);
+  release(registrationId) {
+    const id = typeof registrationId === 'string' ? registrationId.trim().slice(0, 128) : '';
+    if (id) this.#registrations.delete(id);
   }
 
   clear() {
-    this.#urls.clear();
+    this.#registrations.clear();
   }
 
   values() {
-    return [...this.#urls];
+    return [...new Set(this.#registrations.values())];
   }
 
   applySyncMessage(message) {
-    this.add(message?.pendingGatewayUrl);
-    if (typeof message?.releasePendingGatewayUrl === 'string') this.remove(message.releasePendingGatewayUrl);
+    const registrationId = message?.pendingGatewayRegistrationId;
+    const pendingUrl = message?.pendingGatewayUrl;
+    if (registrationId && pendingUrl) this.register(registrationId, pendingUrl);
+    this.release(message?.releasePendingGatewayRegistrationId);
   }
 }
 

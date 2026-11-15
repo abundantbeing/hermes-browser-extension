@@ -723,7 +723,7 @@ import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForCo
 import { createAddConnectionDialog } from './lib/add-connection-dialog.mjs';
 import { createDeleteConnectionDialog } from './lib/delete-connection-dialog.mjs';
 import { connectionHeadersAsObject, extensionInitiatorHost, newProbeMarker, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
-import { SYNC_GATEWAY_RULES_MESSAGE, withDraftOriginRule } from './lib/gateway-origin-rule.mjs';
+import { SYNC_GATEWAY_RULES_MESSAGE, newPendingPairingRegistrationId, withDraftOriginRule } from './lib/gateway-origin-rule.mjs';
 import { probeConnection } from './lib/probe-connection.mjs';
 import {
   addSavedConnection,
@@ -24267,9 +24267,18 @@ function openDeleteConnectionWindow() {
 // extension's origin to API_SERVER_CORS_ORIGINS (gateway-origin-rule.mjs). Only the worker writes it,
 // from stored settings; the panel asks it to sync and waits, so a test right after saving, or a pairing
 // with an address not saved yet, never runs before it. Best effort: a refusal still names the .env line.
-async function syncGatewayOriginRule({ pendingGatewayUrl = '', releasePendingGatewayUrl = '' } = {}) {
+async function syncGatewayOriginRule({
+  pendingGatewayUrl = '',
+  pendingGatewayRegistrationId = '',
+  releasePendingGatewayRegistrationId = '',
+} = {}) {
   try {
-    await browserApi.runtime.sendMessage({ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl, releasePendingGatewayUrl });
+    await browserApi.runtime.sendMessage({
+      type: SYNC_GATEWAY_RULES_MESSAGE,
+      pendingGatewayUrl,
+      pendingGatewayRegistrationId,
+      releasePendingGatewayRegistrationId,
+    });
   } catch (error) {
     console.warn('[Hermes Browser] Gateway origin rule sync failed:', error);
   }
@@ -27948,14 +27957,15 @@ async function connectApiWithPairing() {
     transport: settings.connectionTransport,
   });
   const pairingPendingUrl = settings.gatewayUrl;
+  const pairingRegistrationId = newPendingPairingRegistrationId();
+  els.connectButton.disabled = true;
+  els.connectButton.textContent = translateUiText('Connecting...');
   // The address may be typed but not saved yet: the worker covers it too while this pairing runs.
   try {
-    await syncGatewayOriginRule({ pendingGatewayUrl: pairingPendingUrl });
+    await syncGatewayOriginRule({ pendingGatewayUrl: pairingPendingUrl, pendingGatewayRegistrationId: pairingRegistrationId });
     if (!connectionController.isCurrent(generation)) return;
     const summary = currentGatewaySummary();
     markConnectionProbe('connecting', summary.normalizedUrl);
-    els.connectButton.disabled = true;
-    els.connectButton.textContent = translateUiText('Connecting...');
     els.connectStatus.textContent = t('connect.status.looking', { title: gatewayTitleText(summary), url: summary.normalizedUrl });
     // A failing request can only be blamed on the origin/CORS layer when the
     // health probe already answered from this extension origin.
@@ -28051,7 +28061,11 @@ async function connectApiWithPairing() {
       }
     }
   } finally {
-    if (pairingPendingUrl) void syncGatewayOriginRule({ releasePendingGatewayUrl: pairingPendingUrl });
+    if (pairingRegistrationId) void syncGatewayOriginRule({ releasePendingGatewayRegistrationId: pairingRegistrationId });
+    if (!connectionController.isCurrent(generation)) {
+      els.connectButton.disabled = false;
+      els.connectButton.textContent = translateUiText('Connect to Hermes');
+    }
   }
 }
 

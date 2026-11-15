@@ -9,6 +9,7 @@ import {
   applyGatewayOriginRule,
   draftOriginRule,
   gatewayOriginRules,
+  newPendingPairingRegistrationId,
   withDraftOriginRule,
 } from '../extension/lib/gateway-origin-rule.mjs';
 import { HEADER_RULE_ID } from '../extension/lib/connection-headers.mjs';
@@ -103,10 +104,25 @@ test('several loopback pairing addresses can be covered at once', () => {
 
 test('an ordinary panel sync must not clear another panel\'s pending pairing address', () => {
   const pending = new PendingPairingGatewayUrls();
-  pending.applySyncMessage({ pendingGatewayUrl: 'http://127.0.0.1:8650' });
+  const first = newPendingPairingRegistrationId();
+  pending.applySyncMessage({ pendingGatewayUrl: 'http://127.0.0.1:8650', pendingGatewayRegistrationId: first });
   pending.applySyncMessage({ pendingGatewayUrl: '' });
   assert.deepEqual(pending.values(), ['http://127.0.0.1:8650']);
-  pending.applySyncMessage({ releasePendingGatewayUrl: 'http://127.0.0.1:8650' });
+  pending.applySyncMessage({ releasePendingGatewayRegistrationId: first });
+  assert.deepEqual(pending.values(), []);
+});
+
+test('releasing one Connect attempt does not drop another attempt on the same address', () => {
+  const pending = new PendingPairingGatewayUrls();
+  const stale = 'stale-registration';
+  const current = 'current-registration';
+  const url = 'http://127.0.0.1:8650';
+  pending.applySyncMessage({ pendingGatewayUrl: url, pendingGatewayRegistrationId: stale });
+  pending.applySyncMessage({ pendingGatewayUrl: url, pendingGatewayRegistrationId: current });
+  assert.deepEqual(pending.values(), [url]);
+  pending.applySyncMessage({ releasePendingGatewayRegistrationId: stale });
+  assert.deepEqual(pending.values(), [url], 'the newer attempt keeps the address covered');
+  pending.applySyncMessage({ releasePendingGatewayRegistrationId: current });
   assert.deepEqual(pending.values(), []);
 });
 
@@ -213,10 +229,10 @@ test('only the worker writes the active rule; a panel asks it and waits', async 
   assert.match(background, /if \(changes\.hermesBrowserSettings\) pendingPairingGatewayUrls\.clear\(\);\s*void syncConnectionHeaders\(\);/, 'a settings change drops pending pairing addresses');
   const panel = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.doesNotMatch(panel, /applyGatewayOriginRule\(/, 'the panel never writes the active rule');
-  assert.match(panel, /sendMessage\(\{ type: SYNC_GATEWAY_RULES_MESSAGE, pendingGatewayUrl, releasePendingGatewayUrl \}\)/);
+  assert.match(panel, /sendMessage\(\{[\s\S]{0,200}pendingGatewayRegistrationId,[\s\S]{0,120}releasePendingGatewayRegistrationId/);
   assert.match(panel, /async function testConnection\(\) \{[\s\S]{0,900}connectionController\.begin\([\s\S]{0,400}await syncGatewayOriginRule\(\);\s*if \(!connectionController\.isCurrent\(generation\)\)/, 'Test connection begins before rule sync and honors cancellation');
-  assert.match(panel, /releasePendingGatewayUrl: pairingPendingUrl/, 'pairing releases its pending rule when the attempt ends');
-  assert.match(panel, /async function connectApiWithPairing\(\) \{[\s\S]{0,1200}const generation = connectionController\.begin\([\s\S]{0,400}await syncGatewayOriginRule\(\{ pendingGatewayUrl: pairingPendingUrl \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/, 'pairing begins before rule sync and honors cancellation');
+  assert.match(panel, /releasePendingGatewayRegistrationId: pairingRegistrationId/, 'pairing releases only its own registration when the attempt ends');
+  assert.match(panel, /async function connectApiWithPairing\(\) \{[\s\S]{0,1400}const pairingRegistrationId = newPendingPairingRegistrationId\(\);[\s\S]{0,200}els\.connectButton\.disabled = true;[\s\S]{0,400}await syncGatewayOriginRule\(\{ pendingGatewayUrl: pairingPendingUrl, pendingGatewayRegistrationId: pairingRegistrationId \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/, 'pairing registers before rule sync and disables Connect during the wait');
   assert.match(panel, /const marker = newProbeMarker\(\);[\s\S]{0,200}withDraftOriginRule\(\s*\{ gatewayUrl, extensionHost, marker \}[\s\S]{0,500}extensionHost,\s*marker,\s*\}[\s\S]{0,100}probeConnection\(\{ gatewayUrl, apiKey, headers, marker, signal \}\)/, 'one marker for the requests of the test and both its rules');
 });
 

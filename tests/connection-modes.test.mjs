@@ -190,10 +190,10 @@ test('testConnection does not resume after cancellation during gateway rule sync
 test('connectApiWithPairing does not resume after cancellation during gateway rule sync', () => {
   assert.match(
     sidepanelSource,
-    /async function connectApiWithPairing\(\) \{[\s\S]{0,1200}const generation = connectionController\.begin\([\s\S]{0,600}await syncGatewayOriginRule\(\{ pendingGatewayUrl: pairingPendingUrl \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/,
+    /async function connectApiWithPairing\(\) \{[\s\S]{0,1600}await syncGatewayOriginRule\(\{ pendingGatewayUrl: pairingPendingUrl, pendingGatewayRegistrationId: pairingRegistrationId \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/,
     'changing connection mode during sync must not let pairing continue',
   );
-  assert.match(sidepanelSource, /releasePendingGatewayUrl: pairingPendingUrl/, 'pairing releases its pending address when the attempt ends');
+  assert.match(sidepanelSource, /releasePendingGatewayRegistrationId: pairingRegistrationId/, 'pairing releases only its own registration when the attempt ends');
 });
 
 test('a completed pairing rebinds the controller instead of leaving it on stale settings', () => {
