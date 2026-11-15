@@ -87,6 +87,10 @@
     "message": "Cette passerelle demande votre connexion par compte Hermes. Ouvrez Paramètres > Connexions et choisissez « Se connecter avec votre compte Hermes ».",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Se connecter avec Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Se déconnecter",
     "description": "Runtime interface message account.sign_out"

@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes-Konto",
   "account.hint": "Dieselbe Anmeldung wie in der Hermes-Handy-App. Sie öffnet Projekte, Sitzungsautorität, Kontextverdichtung und die vollständige Bot-Liste bei einem Gateway, das eine Anmeldung verlangt, ohne dass etwas ausgeführt werden muss. Abmelden entfernt sie aus diesem Browser.",
   "account.sign_in": "Mit Ihrem Hermes-Konto anmelden",
+  "account.sign_in_nous": "Mit Nous Portal anmelden",
   "account.sign_out": "Abmelden",
   "account.status_checking": "Es wird geprüft, ob dieses Gateway eine Anmeldung mit dem Hermes-Konto annimmt.",
   "account.status_waiting": "Warten, bis Sie die Anmeldung im geöffneten Fenster abgeschlossen haben.",
