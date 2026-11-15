@@ -87,6 +87,10 @@
     "message": "เกตเวย์นี้ต้องการให้คุณลงชื่อเข้าใช้ด้วยบัญชี Hermes เปิดการตั้งค่า > การเชื่อมต่อ แล้วเลือก “ลงชื่อเข้าใช้ด้วยบัญชี Hermes ของคุณ”",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "ลงชื่อเข้าใช้ด้วย Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "ออกจากระบบ",
     "description": "Runtime interface message account.sign_out"

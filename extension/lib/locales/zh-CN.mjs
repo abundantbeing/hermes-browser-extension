@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes 账号",
   "account.hint": "与 Hermes 手机应用相同的登录方式。在要求登录的网关上，无需运行任何命令，即可使用项目、会话授权、上下文压缩和完整的机器人列表。退出登录会将其从此浏览器中清除。",
   "account.sign_in": "使用你的 Hermes 账号登录",
+  "account.sign_in_nous": "使用 Nous Portal 登录",
   "account.sign_out": "退出登录",
   "account.status_checking": "正在检查此网关是否支持使用 Hermes 账号登录。",
   "account.status_waiting": "正在等待你在打开的窗口中完成登录。",

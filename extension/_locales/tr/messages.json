@@ -87,6 +87,10 @@
     "message": "Bu ağ geçidi Hermes hesabınızla oturum açmanızı istiyor. Ayarlar > Bağlantılar'ı açın ve “Hermes hesabınızla oturum açın” seçeneğini seçin.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Nous Portal ile oturum aç",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Oturumu kapat",
     "description": "Runtime interface message account.sign_out"

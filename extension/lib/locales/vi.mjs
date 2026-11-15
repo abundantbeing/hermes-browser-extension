@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Tài khoản Hermes",
   "account.hint": "Cùng cách đăng nhập mà ứng dụng Hermes trên điện thoại dùng. Nó mở Dự án, thẩm quyền phiên, nén ngữ cảnh và danh sách bot đầy đủ trên cổng yêu cầu đăng nhập mà không cần chạy gì. Đăng xuất sẽ xóa nó khỏi trình duyệt này.",
   "account.sign_in": "Đăng nhập bằng tài khoản Hermes của bạn",
+  "account.sign_in_nous": "Đăng nhập bằng Nous Portal",
   "account.sign_out": "Đăng xuất",
   "account.status_checking": "Đang kiểm tra xem cổng này có nhận đăng nhập bằng tài khoản Hermes không.",
   "account.status_waiting": "Đang chờ bạn hoàn tất đăng nhập trong cửa sổ vừa mở.",
