@@ -2,7 +2,20 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **The Hermes plugin uses only public Hermes APIs for profiles.** It no longer adds its own `/p/<profile>/api/plugins/...` routes or moves them ahead of Hermes' profile catch-all in the API server's route table, and it no longer reads Hermes' plugin manager, the API server's request-profile variable or runs plugin discovery from a request. Each profile's `register()` binds its routes to that profile (`ctx.profile_name`). On a gateway that serves several profiles at one address, Hermes Control for a named profile needs Hermes to serve that profile's own plugin routes (NousResearch/hermes-agent#147703); until then use the default profile for Hermes Control there. A named profile on its own gateway address is unaffected. A guard test keeps those internals out of the plugin.
+
+### Fixed
+
+- **The account sign-in names Nous Portal, and finishes on a gateway with a public address.** On a gateway whose only sign-in is Nous, the button in Settings > Connections and on the Projects card now reads **Sign in with Nous Portal**, in every language; other gateways keep Sign in with your Hermes account. When Hermes Web has `webapp.public_url` set (a Tailscale or reverse-proxy address), its sign-in provider returns to that address, but the panel started the sign-in on `127.0.0.1`, so the gateway lost its sign-in cookie on the way back, answered "Missing PKCE state cookie" in the sign-in window, and the panel kept waiting. The panel now sees the gateway's callback address in the sign-in window and starts the same sign-in there once, so it completes. The sign-in also notices the end of the flow through the web request permission the moment it is granted, not only after the panel reopens.
+- **The Hermes account card in Settings reads normally.** Its long Sign in button sat in the narrow side column and squeezed the text into a strip a few words wide. A Settings card with buttons now puts them under its text at full width; the side column holds only the square switch, and a guard test keeps it that way.
+
+## [0.4.1] - 2026-11-12
+
 ### Added
+
+- **Background task tabs.** Opt in under Settings → Permissions & Control on Chromium with a local Hermes gateway that exposes the companion plugin's tab tools. Gateway chats, including messaging apps, can open and operate their own background tab group without attaching an existing tab. Turning the option off stops control and leaves open task tabs in Chrome. Cancelling Chrome's debugging banner removes access to that task tab. The setting is the same square switch as the rest of Settings, and the Hermes plugin must be 0.4.1 or later. Thanks to @yorha59 (#162).
 
 - **Read a reply aloud.** Every finished Hermes reply has a speaker button beside Copy. It reads the answer only, never the tools Hermes used, its thinking notes or code blocks, and only when you press it, never when a reply arrives. Press it again to stop, or press another reply's button to switch. A new message, switching chats or closing the panel also stops it. The reply being read is outlined while it plays. With the Hermes dashboard reachable on this computer, the reply is spoken in the voice your Hermes profile is set up with (for example a Portuguese Edge or MiniMax voice), made by Hermes through `POST /api/audio/speak` and played here, so Stop works at once; if Hermes cannot make the audio, this browser's own speech voice reads it instead, and a Hermes without that route uses the browser voice from the start. Settings > About & Diagnostics has a new **Voice (read aloud)** row saying which of Gateway TTS, Browser speech or None is in use, and the copied diagnostics report says the same. A remote gateway that is not on this computer uses the browser voice for now (#153).
 

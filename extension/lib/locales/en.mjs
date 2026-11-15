@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Background task tabs",
+  "browser_control.background_help": "Allow tasks on this local Hermes profile, including messaging apps, to open and control their own Chrome tab groups without Attach.",
+  "browser_control.background_save_error": "Could not save background browser authorization.",
+  "browser_control.background_unavailable": "Background tasks require the companion plugin’s tab tools on this gateway.",
   "connections.saved_label": "Saved connection",
   "connections.help": "Switching saves your current settings. Each connection keeps its address and credentials.",
   "connections.name_prompt": "Connection name",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes account",
   "account.hint": "The same sign-in the Hermes phone app uses. It opens Projects, Session authority, Context compaction and the full bot roster on a gateway that asks for sign-in, with nothing to run. Sign out forgets it on this browser.",
   "account.sign_in": "Sign in with your Hermes account",
+  "account.sign_in_nous": "Sign in with Nous Portal",
   "account.sign_out": "Sign out",
   "account.status_checking": "Checking whether this gateway takes a Hermes account sign-in.",
   "account.status_waiting": "Waiting for you to finish signing in, in the window that opened.",

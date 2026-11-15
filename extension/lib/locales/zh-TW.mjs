@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "背景工作分頁",
+  "browser_control.background_help": "允許此本機 Hermes 設定檔的工作（包括通訊應用程式）開啟並控制自己的 Chrome 分頁群組，無需逐次連接。",
+  "browser_control.background_save_error": "無法儲存背景瀏覽器授權。",
+  "browser_control.background_unavailable": "背景工作需要此閘道提供配套外掛的分頁工具。",
   "connections.saved_label": "已儲存的連線",
   "connections.help": "切換時會儲存目前設定。每個連線分別保留位址和憑證。",
   "connections.name_prompt": "連線名稱",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes 帳號",
   "account.hint": "與 Hermes 手機應用程式相同的登入方式。在要求登入的閘道上，不必執行任何指令，就能使用專案、工作階段授權、上下文壓縮和完整的機器人清單。登出會將其從此瀏覽器中清除。",
   "account.sign_in": "使用你的 Hermes 帳號登入",
+  "account.sign_in_nous": "使用 Nous Portal 登入",
   "account.sign_out": "登出",
   "account.status_checking": "正在檢查此閘道是否支援使用 Hermes 帳號登入。",
   "account.status_waiting": "正在等待你在開啟的視窗中完成登入。",

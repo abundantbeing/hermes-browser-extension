@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Karty zadań w tle",
+  "browser_control.background_help": "Zezwól zadaniom tego lokalnego profilu Hermes, w tym zadaniom z komunikatorów, otwierać i obsługiwać własne grupy kart Chrome bez dołączania.",
+  "browser_control.background_save_error": "Nie udało się zapisać uprawnienia do pracy przeglądarki w tle.",
+  "browser_control.background_unavailable": "Zadania w tle wymagają narzędzi do kart z wtyczki towarzyszącej na tej bramie.",
   "connections.saved_label": "Zapisane połączenie",
   "connections.help": "Przełączenie zapisuje bieżące ustawienia. Każde połączenie zachowuje własny adres i dane uwierzytelniające.",
   "connections.name_prompt": "Nazwa połączenia",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Konto Hermes",
   "account.hint": "To samo logowanie, którego używa aplikacja Hermes na telefon. Otwiera Projekty, autorytet sesji, kompaktowanie kontekstu i pełną listę botów na bramie, która wymaga logowania, bez uruchamiania czegokolwiek. Wylogowanie usuwa je z tej przeglądarki.",
   "account.sign_in": "Zaloguj się kontem Hermes",
+  "account.sign_in_nous": "Zaloguj się przez Nous Portal",
   "account.sign_out": "Wyloguj",
   "account.status_checking": "Sprawdzanie, czy ta brama przyjmuje logowanie kontem Hermes.",
   "account.status_waiting": "Czekam, aż skończysz logowanie w otwartym oknie.",

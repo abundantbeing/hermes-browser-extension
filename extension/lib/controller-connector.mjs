@@ -12,6 +12,7 @@
  */
 
 import {
+  BACKGROUND_BROWSER_SESSION,
   CONTROLLER_HEARTBEAT_METHOD,
   CONTROLLER_METHODS,
   CONTROLLER_ROUTES,
@@ -291,7 +292,9 @@ export function createControllerConnector({
     let registered;
     try {
       registered = await Promise.race([
-        registerOnAnyRoute({ family, baseUrl, identity, settings, signal: controller.signal }),
+        identity.hermesSessionId === BACKGROUND_BROWSER_SESSION
+          ? registerOnRoute({ family, baseUrl, identity, settings, signal: controller.signal, route: CONTROLLER_ROUTES.plugin })
+          : registerOnAnyRoute({ family, baseUrl, identity, settings, signal: controller.signal }),
         timeout,
       ]);
     } finally {

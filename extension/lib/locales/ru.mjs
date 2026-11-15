@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Вкладки фоновых задач",
+  "browser_control.background_help": "Разрешить задачам этого локального профиля Hermes, в том числе из мессенджеров, открывать собственные группы вкладок Chrome и управлять ими без подключения вкладок.",
+  "browser_control.background_save_error": "Не удалось сохранить разрешение для фонового браузера.",
+  "browser_control.background_unavailable": "Для фоновых задач на этом шлюзе нужны инструменты вкладок сопутствующего плагина.",
   "connections.saved_label": "Сохранённое подключение",
   "connections.help": "При переключении текущие настройки сохраняются. У каждого подключения свой адрес и учётные данные.",
   "connections.name_prompt": "Название подключения",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Учётная запись Hermes",
   "account.hint": "Тот же вход, что и в мобильном приложении Hermes. Он открывает «Проекты», авторитет сессий, сжатие контекста и полный список ботов на шлюзе, который требует вход, без запуска чего-либо. «Выйти» удаляет его в этом браузере.",
   "account.sign_in": "Войти с учётной записью Hermes",
+  "account.sign_in_nous": "Войти через Nous Portal",
   "account.sign_out": "Выйти",
   "account.status_checking": "Проверяем, принимает ли этот шлюз вход с учётной записью Hermes.",
   "account.status_waiting": "Ждём, пока вы завершите вход в открывшемся окне.",

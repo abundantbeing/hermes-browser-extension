@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "后台任务标签页",
+  "browser_control.background_help": "允许此本机 Hermes 配置中的任务（包括飞书等消息应用）创建和控制自己的 Chrome 标签组，无需逐次 Attach。",
+  "browser_control.background_save_error": "无法保存后台浏览器授权。",
+  "browser_control.background_unavailable": "后台任务需要此网关提供配套插件的标签页工具。",
   "connections.saved_label": "已保存的连接",
   "connections.help": "切换时会保存当前设置。每个连接分别保留地址和凭据。",
   "connections.name_prompt": "连接名称",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes 账号",
   "account.hint": "与 Hermes 手机应用相同的登录方式。在要求登录的网关上，无需运行任何命令，即可使用项目、会话授权、上下文压缩和完整的机器人列表。退出登录会将其从此浏览器中清除。",
   "account.sign_in": "使用你的 Hermes 账号登录",
+  "account.sign_in_nous": "使用 Nous Portal 登录",
   "account.sign_out": "退出登录",
   "account.status_checking": "正在检查此网关是否支持使用 Hermes 账号登录。",
   "account.status_waiting": "正在等待你在打开的窗口中完成登录。",

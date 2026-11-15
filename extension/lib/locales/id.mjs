@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Tab tugas latar belakang",
+  "browser_control.background_help": "Izinkan tugas pada profil Hermes lokal ini, termasuk dari aplikasi pesan, membuka dan mengontrol grup tab Chrome miliknya tanpa perlu melampirkan tab.",
+  "browser_control.background_save_error": "Izin browser latar belakang tidak dapat disimpan.",
+  "browser_control.background_unavailable": "Tugas latar belakang memerlukan alat tab dari plugin pendamping pada gateway ini.",
   "connections.saved_label": "Koneksi tersimpan",
   "connections.help": "Beralih akan menyimpan pengaturan saat ini. Setiap koneksi menyimpan alamat dan kredensialnya sendiri.",
   "connections.name_prompt": "Nama koneksi",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Akun Hermes",
   "account.hint": "Masuk yang sama dengan yang dipakai aplikasi ponsel Hermes. Ini membuka Proyek, otoritas sesi, pemadatan konteks, dan daftar bot lengkap pada gateway yang meminta masuk, tanpa menjalankan apa pun. Keluar menghapusnya dari browser ini.",
   "account.sign_in": "Masuk dengan akun Hermes Anda",
+  "account.sign_in_nous": "Masuk dengan Nous Portal",
   "account.sign_out": "Keluar",
   "account.status_checking": "Memeriksa apakah gateway ini menerima masuk dengan akun Hermes.",
   "account.status_waiting": "Menunggu Anda menyelesaikan proses masuk di jendela yang terbuka.",

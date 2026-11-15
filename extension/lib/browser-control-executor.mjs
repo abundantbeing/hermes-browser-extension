@@ -864,6 +864,9 @@ export function createBrowserControlExecutor({
         );
       }
       if (policy.risk === BROWSER_CONTROL_RISKS.APPROVAL) {
+        if (context.backgroundTask === true) {
+          return errorOutcome('approval_required', 'This action requires a person in a manually attached tab.');
+        }
         const approval = {
           approvalId: stepApprovalId || compact(frame.approval_id || frame.command_id, 160),
           approvalNonce: stepApprovalNonce || compact(frame.approval_nonce || frame.approval_id || frame.command_id, 160),

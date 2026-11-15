@@ -45,9 +45,13 @@ export const COMPANION_ACTIONS_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/act
 // without a built-in broker offers: stock Hermes since it removed its own.
 export const COMPANION_CONTROL_REGISTER_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/control/register`;
 
-// The plugin version this extension build expects. companion-plugin/plugin.yaml
-// carries the same value and a test keeps the two equal: bump them together.
+// The oldest plugin this extension build works with; an older one is reported as one to
+// update. Raise it only when the extension stops working with that plugin, never just
+// because companion-plugin/plugin.yaml moved: that would switch off Hermes Control for
+// everyone who updates the extension first. A newer feature gets its own gate below.
 export const COMPANION_EXPECTED_VERSION = '0.4.0';
+// Background task tabs need the plugin's background registration routes (0.4.1).
+export const COMPANION_BACKGROUND_TASKS_VERSION = '0.4.1';
 export const COMPANION_EXPECTED_TOOLS = Object.freeze([
   'browser_clear_context',
   'browser_context_journal',
@@ -99,6 +103,13 @@ export const COMPANION_REASONS = Object.freeze({
 export function companionReasonText(code, params = {}) {
   const make = COMPANION_REASONS[clean(code)];
   return make ? make(params || {}) : '';
+}
+
+/** Whether a parsed status answer comes from a plugin that can serve Background task tabs. */
+export function companionSupportsBackgroundTasks(parsed) {
+  if (!parsed?.ok || !Array.isArray(parsed.tools) || !parsed.tools.includes('tab_create')) return false;
+  const order = compareVersions(parsed.version, COMPANION_BACKGROUND_TASKS_VERSION);
+  return order !== null && order >= 0;
 }
 
 /** Compare dotted numeric versions: -1, 0 or 1; null when either is not a plain version. */

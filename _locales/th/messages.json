@@ -87,6 +87,10 @@
     "message": "เกตเวย์นี้ต้องการให้คุณลงชื่อเข้าใช้ด้วยบัญชี Hermes เปิดการตั้งค่า > การเชื่อมต่อ แล้วเลือก “ลงชื่อเข้าใช้ด้วยบัญชี Hermes ของคุณ”",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "ลงชื่อเข้าใช้ด้วย Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "ออกจากระบบ",
     "description": "Runtime interface message account.sign_out"
@@ -1166,6 +1170,22 @@
   "runtime_browser_control_authorize": {
     "message": "อนุญาตการควบคุม",
     "description": "Runtime interface message browser_control.authorize"
+  },
+  "runtime_browser_control_background_help": {
+    "message": "อนุญาตให้งานในโปรไฟล์ Hermes ภายในเครื่องนี้ รวมถึงงานจากแอปส่งข้อความ เปิดและควบคุมกลุ่มแท็บ Chrome ของตัวเองได้โดยไม่ต้องแนบแท็บ",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "แท็บงานเบื้องหลัง",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "บันทึกสิทธิ์ของเบราว์เซอร์เบื้องหลังไม่ได้",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "งานเบื้องหลังต้องใช้เครื่องมือแท็บของปลั๊กอินเสริมบนเกตเวย์นี้",
+    "description": "Runtime interface message browser_control.background_unavailable"
   },
   "runtime_browser_control_control_ready": {
     "message": "พร้อมควบคุม",

@@ -87,6 +87,10 @@
     "message": "Gateway ini memerlukan masuk dengan akun Hermes Anda. Buka Pengaturan > Koneksi dan pilih “Masuk dengan akun Hermes Anda”.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Masuk dengan Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Keluar",
     "description": "Runtime interface message account.sign_out"
@@ -1166,6 +1170,22 @@
   "runtime_browser_control_authorize": {
     "message": "Izinkan kontrol",
     "description": "Runtime interface message browser_control.authorize"
+  },
+  "runtime_browser_control_background_help": {
+    "message": "Izinkan tugas pada profil Hermes lokal ini, termasuk dari aplikasi pesan, membuka dan mengontrol grup tab Chrome miliknya tanpa perlu melampirkan tab.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Tab tugas latar belakang",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "Izin browser latar belakang tidak dapat disimpan.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "Tugas latar belakang memerlukan alat tab dari plugin pendamping pada gateway ini.",
+    "description": "Runtime interface message browser_control.background_unavailable"
   },
   "runtime_browser_control_control_ready": {
     "message": "Kontrol siap",

@@ -374,7 +374,7 @@ function boundedMs(value, fallback, max = 30_000) {
 // Resolves once a tab finishes loading. CDP lifecycle events (when a session
 // feeds `subscribe`) end the wait early; polling tabs.get is the backstop and
 // the only path for adapters without a debugger.
-function createLoadWaiter({
+export function createLoadWaiter({
   browserApi, now = Date.now, sleep = defaultSleep, subscribe = () => () => {},
 } = {}) {
   function watchLoad(tabId) {

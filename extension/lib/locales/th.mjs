@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "แท็บงานเบื้องหลัง",
+  "browser_control.background_help": "อนุญาตให้งานในโปรไฟล์ Hermes ภายในเครื่องนี้ รวมถึงงานจากแอปส่งข้อความ เปิดและควบคุมกลุ่มแท็บ Chrome ของตัวเองได้โดยไม่ต้องแนบแท็บ",
+  "browser_control.background_save_error": "บันทึกสิทธิ์ของเบราว์เซอร์เบื้องหลังไม่ได้",
+  "browser_control.background_unavailable": "งานเบื้องหลังต้องใช้เครื่องมือแท็บของปลั๊กอินเสริมบนเกตเวย์นี้",
   "connections.saved_label": "การเชื่อมต่อที่บันทึกไว้",
   "connections.help": "การสลับจะบันทึกการตั้งค่าปัจจุบัน แต่ละการเชื่อมต่อเก็บที่อยู่และข้อมูลรับรองของตนเอง",
   "connections.name_prompt": "ชื่อการเชื่อมต่อ",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "บัญชี Hermes",
   "account.hint": "การลงชื่อเข้าใช้แบบเดียวกับที่แอป Hermes บนมือถือใช้ ช่วยเปิดโปรเจกต์ สิทธิ์เซสชัน การบีบอัดบริบท และรายชื่อบอตทั้งหมดบนเกตเวย์ที่ต้องลงชื่อเข้าใช้ โดยไม่ต้องรันอะไร การออกจากระบบจะลบข้อมูลนี้ออกจากเบราว์เซอร์นี้",
   "account.sign_in": "ลงชื่อเข้าใช้ด้วยบัญชี Hermes ของคุณ",
+  "account.sign_in_nous": "ลงชื่อเข้าใช้ด้วย Nous Portal",
   "account.sign_out": "ออกจากระบบ",
   "account.status_checking": "กำลังตรวจสอบว่าเกตเวย์นี้รับการลงชื่อเข้าใช้ด้วยบัญชี Hermes หรือไม่",
   "account.status_waiting": "กำลังรอให้คุณลงชื่อเข้าใช้ให้เสร็จในหน้าต่างที่เปิดขึ้น",

@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Baggrundsfaner til opgaver",
+  "browser_control.background_help": "Tillad opgaver på denne lokale Hermes-profil, også fra beskedapps, at åbne og styre egne Chrome-fanegrupper uden tilknytning.",
+  "browser_control.background_save_error": "Tilladelsen til baggrundsbrowseren kunne ikke gemmes.",
+  "browser_control.background_unavailable": "Baggrundsopgaver kræver ledsagerpluginnets faneværktøjer på denne gateway.",
   "connections.saved_label": "Gemt forbindelse",
   "connections.help": "Skift gemmer de aktuelle indstillinger. Hver forbindelse beholder sin adresse og sine legitimationsoplysninger.",
   "connections.name_prompt": "Forbindelsesnavn",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes-konto",
   "account.hint": "Den samme login som Hermes-appen til telefonen bruger. Den åbner Projekter, sessionsautoritet, kontekstkomprimering og den fulde botliste på en gateway, der kræver login, uden at du behøver køre noget. Log ud glemmer den i denne browser.",
   "account.sign_in": "Log ind med din Hermes-konto",
+  "account.sign_in_nous": "Log ind med Nous Portal",
   "account.sign_out": "Log ud",
   "account.status_checking": "Kontrollerer, om denne gateway tager imod login med en Hermes-konto.",
   "account.status_waiting": "Venter på, at du afslutter login i det vindue, der åbnede.",

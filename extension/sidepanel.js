@@ -1,3 +1,4 @@
+import { controllerProfilePath } from './lib/controller-protocol.mjs';
 import {
   INLINE_ASSIST_AUTO_REPLACE_STORAGE_KEY,
   INLINE_ASSIST_HIDDEN_SITES_STORAGE_KEY,
@@ -443,7 +444,7 @@ import {
 } from './lib/capabilities.mjs';
 import { capabilityIdentity } from './lib/capability-status.mjs';
 import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
-import { COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
+import { COMPANION_STATUS_PATH, companionSupportsBackgroundTasks, parseCompanionStatusPayload, COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
 import { botAvatarRoute } from './lib/bot-roster-source.mjs';
 import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
 import { stageImageViaSessionSocket } from './lib/session-socket-image.mjs';
@@ -764,6 +765,7 @@ import {
   accountConnectionKey,
   accountOriginOf,
   accountOriginsFor,
+  accountSignInLabelKey,
   createAccountStore,
   createHermesAccount,
   dialWithAccountTicket,
@@ -828,6 +830,7 @@ import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-
 import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteFromInput, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
+import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
@@ -891,6 +894,87 @@ hbeBootEmit('panel:body-start');
 const $ = (selector) => document.querySelector(selector);
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
+
+function initBackgroundTaskBrowserSetting() {
+  const row = document.getElementById('backgroundTaskBrowserSetting');
+  const input = document.getElementById('backgroundTaskBrowserInput');
+  const status = document.getElementById('backgroundTaskBrowserStatus');
+  const storage = browserApi.storage?.local;
+  if (!row || !input || !storage || !browserApi.tabGroups || !browserApi.debugger) return;
+
+  async function read() {
+    const stored = await storage.get([
+      'hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY, BACKGROUND_BROWSER_CONSENT,
+    ]);
+    const connection = await hydrateHermesBrowserSettingsFromStorage(stored);
+    return {
+      consentIdentity: await backgroundBrowserConsentIdentity(connection),
+      consent: stored[BACKGROUND_BROWSER_CONSENT],
+      connection,
+    };
+  }
+
+  let renderRevision = 0;
+  let displayedConsentIdentity = '';
+  async function render() {
+    const revision = ++renderRevision;
+    displayedConsentIdentity = '';
+    input.disabled = true;
+    const { consentIdentity, consent, connection } = await read();
+    if (revision !== renderRevision) return;
+    row.hidden = !consentIdentity;
+    input.checked = Boolean(consentIdentity && consentIdentity === consent);
+    if (!consentIdentity) return;
+    let available = false;
+    try {
+      const url = new URL(connection.gatewayUrl);
+      url.pathname = url.pathname.replace(/\/+$/, '') + controllerProfilePath(COMPANION_STATUS_PATH, connection.activeProfile);
+      url.search = '';
+      url.hash = '';
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${connection.apiKey}` },
+        redirect: 'error',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      });
+      available = response.ok && companionSupportsBackgroundTasks(parseCompanionStatusPayload(await response.json()));
+    } catch {
+      // No trustworthy plugin response: leave the setting disabled.
+    }
+    if (revision !== renderRevision) return;
+    displayedConsentIdentity = consentIdentity;
+    input.disabled = !available && !input.checked;
+    status.textContent = available ? '' : t('browser_control.background_unavailable');
+  }
+
+  input.addEventListener('change', async () => {
+    const checked = input.checked;
+    input.disabled = true;
+    try {
+      if (checked && displayedConsentIdentity) {
+        await storage.set({ [BACKGROUND_BROWSER_CONSENT]: displayedConsentIdentity });
+      } else {
+        await storage.remove(BACKGROUND_BROWSER_CONSENT);
+      }
+      status.textContent = '';
+    } catch {
+      status.textContent = t('browser_control.background_save_error');
+      input.disabled = false;
+      return;
+    }
+    await render().catch(() => {});
+  });
+  browserApi.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && (
+      changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || changes[BACKGROUND_BROWSER_CONSENT]
+    )) {
+      void render().catch(() => {});
+    }
+  });
+  subscribeLocale(() => { void render().catch(() => {}); });
+  void render().catch(() => {});
+}
+initBackgroundTaskBrowserSetting();
 const dashboardFetch = createBackgroundLoopbackFetch({
   sendMessage: (message) => browserApi.runtime.sendMessage(message),
   fetchFn: globalThis.fetch?.bind(globalThis),
@@ -4575,7 +4659,7 @@ let hermesAccountStoreInstance = null;
 let hermesAccountClient = null;
 // What the panel last learned about signing in for this connection. `available`: the gateway is gated and
 // advertises the native flow; `signedIn`: a sign-in is held for `origin`. Read synchronously by the capability rows.
-let accountOffer = { origin: '', available: false, signedIn: false, session: null, reason: '', checkedAt: 0 };
+let accountOffer = { origin: '', available: false, signedIn: false, session: null, reason: '', providers: [], checkedAt: 0 };
 let accountSigningIn = false;
 let accountNotice = ''; // 'session-expired' after a refresh 401, else a sign-in failure reason; '' when none
 const accountProbeCache = new Map(); // origin -> { at, result }
@@ -4595,7 +4679,7 @@ function hermesAccount() {
       store: hermesAccountStore(),
       fetchImpl: (...args) => globalThis.fetch(...args),
       openWindow: (url) => openSignInWindow(url, { windowsApi: browserApi.windows, tabsApi: browserApi.tabs }),
-      webRequestApi: browserApi.webRequest,
+      webRequestApi: () => browserApi.webRequest,
       tabsApi: browserApi.tabs,
       onChange: (event) => handleAccountChange(event),
     });
@@ -4642,7 +4726,7 @@ async function accountSupportFor(origin, { force = false } = {}) {
 // /api/status. Updates the snapshot the capability rows and Settings read, and redraws them when it changed.
 async function refreshAccountOffer({ force = false } = {}) {
   const origins = accountOriginsNow();
-  const previous = JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice]);
+  const previous = JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice, accountSignInLabelKey(accountOffer.providers)]);
   let next = { origin: origins[0] || '', available: false, signedIn: false, session: null, reason: origins.length ? 'unreachable' : 'no-origin', checkedAt: Date.now() };
   try {
     for (const origin of origins) {
@@ -4656,7 +4740,7 @@ async function refreshAccountOffer({ force = false } = {}) {
       for (const origin of origins) {
         const support = await accountSupportFor(origin, { force });
         if (support.available) {
-          next = { origin, available: true, signedIn: false, session: null, reason: '', checkedAt: Date.now() };
+          next = { origin, available: true, signedIn: false, session: null, reason: '', providers: support.providers || [], checkedAt: Date.now() };
           break;
         }
         next.origin = next.origin || origin;
@@ -4667,7 +4751,7 @@ async function refreshAccountOffer({ force = false } = {}) {
     /* the snapshot stays as the failed read left it */
   }
   accountOffer = next;
-  if (previous !== JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice])) {
+  if (previous !== JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice, accountSignInLabelKey(accountOffer.providers)])) {
     renderHermesAccountRow();
     refreshCapabilityViews();
   }
@@ -4820,6 +4904,9 @@ function renderHermesAccountRow() {
   row.hidden = false;
   if (status) status.textContent = text;
   if (signIn) {
+    const labelKey = accountSignInLabelKey(accountOffer.providers);
+    signIn.dataset.i18n = labelKey;
+    signIn.textContent = t(labelKey);
     signIn.hidden = !canSignIn && !accountSigningIn;
     signIn.disabled = accountSigningIn;
   }
@@ -19235,6 +19322,7 @@ function getProjectsController() {
       onSessionMoved: () => { void loadSessions({ quiet: true }); },
       onReturnToRecents: () => setSessionMenuTab(SESSION_MENU_TABS.recents),
       signInWithAccount: () => signInWithHermesAccount(),
+      accountSignInLabelKey: () => accountSignInLabelKey(accountOffer.providers),
       onChange: () => {
         if (!els.sessionMenu.hidden && projectsTabActive()) renderProjectsTab();
       },

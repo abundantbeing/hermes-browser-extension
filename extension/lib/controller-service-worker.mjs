@@ -896,7 +896,7 @@ export function createControllerServiceWorker({
       if (!Number.isInteger(argTabId) || !ownedTabIds.has(argTabId)) {
         return {
           ok: false,
-          code: 'lease_not_owned',
+          code: Number.isInteger(argTabId) && argTabId > 0 ? 'target_not_attached' : 'lease_not_owned',
           message: `tab_id is not a browser tab attached to Hermes Control. ${controlToolName('browser_tabs')} lists the ones it can use.`,
         };
       }

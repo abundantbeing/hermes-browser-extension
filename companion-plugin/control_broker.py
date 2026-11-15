@@ -58,6 +58,7 @@ MAX_DEFERRED_CANCELS = 512
 #: The wire protocol version; registration must carry exactly this int (bools are refused).
 CONTROL_PROTOCOL_VERSION = 1
 
+BACKGROUND_SESSION = "hermes:background-browser:v1"
 NOOP_CAPABILITY = "controller.noop"
 #: Every browser action the plugin exposes as a tool. It equals the extension's
 #: CONTROLLER_BROWSER_CAPABILITIES; a test keeps the two lists identical.
@@ -486,6 +487,7 @@ class ControlBroker:
         action: str,
         arguments: Optional[dict] = None,
         tool_call_id: Optional[str] = None,
+        background_session: Optional[str] = None,
     ) -> Any:
         """Send one command and block for its completion.
 
@@ -506,6 +508,7 @@ class ControlBroker:
                 "controller_id": scope.controller_id,
                 "browser_profile_id": scope.browser_profile_id,
                 "tool_call_id": tool_call_id,
+                **({"background_session": background_session} if background_session else {}),
             },
         }
         pending = _PendingCommand(scope=controller.scope, command_id=command_id, tool_call_id=tool_call_id)

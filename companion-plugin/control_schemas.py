@@ -271,7 +271,8 @@ CONTROL_SCHEMAS: dict[str, dict[str, Any]] = {
         _schema(
             "browser_tab_create",
             "Open a URL in a new tab, in the background and in the window of the tab you are working in, and wait for "
-            "it to load. Returns the new tab's id: pass it as tab_id to act in that tab (tab_snapshot reads it). "
+            "it to load. In authorized Background task mode, it opens in the session's own Hermes group without Attach. "
+            "Returns the new tab's id: pass it as tab_id to act in that tab (tab_snapshot reads it). "
             "loading: true means the wait ran out and the page may not be ready yet. The person's view never moves; "
             "tab_activate brings the tab forward after they approve.",
             {"url": {"type": "string", "description": "The page to load in the new tab (e.g., 'https://example.com')"}},

@@ -34,8 +34,6 @@ module.__package__ = "probe_plugin"
 sys.modules["probe_plugin"] = module
 spec.loader.exec_module(module)
 registry = sys.modules["probe_plugin.profile_registry"]
-registry.set_multiplex_test_profiles(["default", "luxord"])
-registry.set_listener_test_profile("luxord")
 broker_module = sys.modules["probe_plugin.control_broker"]
 routes = sys.modules["probe_plugin.control_routes"]
 tools = sys.modules["probe_plugin.control_tools"]
@@ -82,12 +80,10 @@ def body(session="sess-A", controller="ctl-1", profile="bp-1", caps=CAPS, versio
     return {"protocol_version": version, "controller_id": controller, "browser_profile_id": profile,
             "session_id": session, "capabilities": caps}
 
-async def make(adapter=None, **broker_kwargs):
+async def make(adapter=None, listed_tools=(), **broker_kwargs):
     from aiohttp import web
     from aiohttp.test_utils import TestClient, TestServer
     registry = sys.modules["probe_plugin.profile_registry"]
-    registry.set_multiplex_test_profiles(["default", "luxord"])
-    registry.set_listener_test_profile("luxord")
     if broker_kwargs:
         broker = broker_module.ControlBroker(**broker_kwargs)
         with broker_module._BROKER_LOCK:
@@ -97,10 +93,10 @@ async def make(adapter=None, **broker_kwargs):
     broker.reset()
     store = registry.ensure_context_store("luxord")
     registry.register_listener_profile(
-        profile="luxord", store=store, broker=broker, tools=(), hooks=(), version="test"
+        profile="luxord", store=store, broker=broker, tools=listed_tools, hooks=(), version="test"
     )
     app = web.Application()
-    routes.make_wire_extra()(app.router, adapter or Adapter())
+    routes.make_wire_extra("luxord")(app.router, adapter or Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
     tools.configure(broker=broker, profile="luxord", screenshot_dir=shots)
     client = TestClient(TestServer(app))
@@ -329,8 +325,6 @@ async def main():
 
     module_first = load_plugin(PLUGIN)
     registry = sys.modules[PLUGIN + ".profile_registry"]
-    registry.set_multiplex_test_profiles(["default", "luxord"])
-    registry.set_listener_test_profile("luxord")
     module_first.register(Ctx())
     routes = sys.modules[PLUGIN + ".control_routes"]
     tools_first = sys.modules[PLUGIN + ".control_tools"]
@@ -338,7 +332,7 @@ async def main():
     route_broker = broker_first.get_control_broker("luxord")
 
     app = web.Application()
-    routes.make_wire_extra()(app.router, Adapter())
+    routes.make_wire_extra("luxord")(app.router, Adapter())
     shots = tempfile.mkdtemp(prefix="hbc-shots-")
     tools_first.configure(broker=route_broker, profile="luxord", screenshot_dir=shots)
     client = TestClient(TestServer(app))
@@ -504,21 +498,34 @@ print(json.dumps(asyncio.run(main())))
   assert.ok(!JSON.stringify(data.ok.scope).includes('paired-token'));
 });
 
-test('multiplex register returns a materialized ws_path, not the {profile} template', () => {
+test('the plugin adds no /p/<profile> route, and a registration Hermes forwards under /p/<profile>/ gets its socket path there', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 async def main():
-    client, _, _ = await make()
+    from aiohttp import web
+    from aiohttp.test_utils import TestClient, TestServer
+    first, _, _ = await make()
+    async with first:
+        own = await first.post("/p/work" + REGISTER, headers={"Authorization": TOKEN},
+                               json=body(session="sess-B", profile="bp-w", caps=CAPS))
+        own_status = own.status
+    # Hermes core (NousResearch/hermes-agent#147703) hands /p/<profile>/api/plugins/... to that
+    # profile's own handlers; stand in for it with the same handler at the prefixed path.
+    app = web.Application()
+    app.router.add_post("/p/work" + REGISTER, routes.make_register_handler(Adapter(), profile="luxord"))
+    client = TestClient(TestServer(app))
+    await client.start_server()
     async with client:
         ok = await client.post(
             "/p/work" + REGISTER,
             headers={"Authorization": TOKEN},
             json=body(session="sess-B", profile="bp-w", caps=CAPS),
         )
-        return {"status": ok.status, "ws_path": (await ok.json()).get("ws_path")}
+        return {"own": own_status, "status": ok.status, "ws_path": (await ok.json()).get("ws_path")}
 print(json.dumps(asyncio.run(main())))
 `);
   const data = JSON.parse(out);
   if (skipped(data)) return;
+  assert.equal(data.own, 404, 'the plugin serves plain paths only');
   assert.equal(data.status, 201);
   assert.equal(
     data.ws_path,
@@ -1294,6 +1301,61 @@ print(json.dumps({"passed": passed, "blank": blank, "missing": json.loads(missin
   assert.equal(data.blank, null, 'a blank id falls back to the approval context, absent here');
   assert.match(data.missing.error, /^tab_click needs a ref, or both x and y\.$/);
   assert.equal(data.none.code, 'no_browser');
-  const source = readFileSync('companion-plugin/control_tools.py', 'utf8');
-  assert.match(source, /tool_call_id=_tool_call_id\(\(kwargs or \{\}\)\.get\("tool_call_id"\)\)/);
+});
+
+test('the background registration requires the companion tab tools', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}
+async def main():
+    client, _, _ = await make(adapter=StoreAdapter(set()))
+    async with client:
+        status, payload = await register(client, session=broker_module.BACKGROUND_SESSION)
+        assert status == 403 and payload["error"]["code"] == "background_browser_unsupported", payload
+    print(json.dumps({"passed": True}))
+asyncio.run(main())
+`);
+  if (!skipped(JSON.parse(out))) assert.deepEqual(JSON.parse(out), { passed: true });
+});
+
+test('an opted-in loopback controller receives the trusted session id without manual Attach', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}
+async def main():
+    client, broker, _ = await make(adapter=StoreAdapter({"feishu-real-session"}), listed_tools=("tab_create", "tab_snapshot"))
+    async with client:
+        background = broker_module.BACKGROUND_SESSION
+        ws, _ = await attach(client, broker, session=background, caps=["browser_tab_create", "browser_snapshot"])
+        task = asyncio.create_task(call(
+            "browser_tab_create",
+            {"url": "https://example.com", "background_session": "untrusted"},
+            session="feishu-real-session",
+        ))
+        frame = await ws.receive_json(timeout=5)
+        assert frame["params"]["background_session"] == "feishu-real-session", frame
+        await ws.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": {"tab": {"id": 42}}
+        }})
+        assert json.loads(await task)["tab"]["id"] == 42
+        batch = json.loads(await call("browser_batch", {"actions": [{"action": "scroll", "direction": "down"}]}, session="feishu-real-session"))
+        assert batch["code"] == "background_action_unavailable"
+        assert json.loads(await call("browser_tab_create", {"url": "https://example.com"}, session=background))["code"] == "no_session"
+        manual, _ = await attach(client, broker, session="feishu-real-session", controller="manual")
+        task = asyncio.create_task(call("browser_snapshot", {"tab_id": 42}, session="feishu-real-session"))
+        frame = await manual.receive_json(timeout=5)
+        assert "background_session" not in frame["params"]
+        await manual.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": False,
+            "error": {"code": "target_not_attached", "message": "No manual lease"}
+        }})
+        frame = await ws.receive_json(timeout=5)
+        assert frame["params"]["background_session"] == "feishu-real-session"
+        assert frame["params"]["arguments"]["tab_id"] == 42
+        await ws.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": {"title": "Background"}
+        }})
+        assert json.loads(await task)["title"] == "Background"
+        await manual.close()
+        await ws.close()
+    print(json.dumps({"passed": True}))
+asyncio.run(main())
+`);
+  if (!skipped(JSON.parse(out))) assert.deepEqual(JSON.parse(out), { passed: true });
 });

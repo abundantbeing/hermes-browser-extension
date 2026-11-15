@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "백그라운드 작업 탭",
+  "browser_control.background_help": "메시지 앱에서 시작한 작업을 포함하여 이 로컬 Hermes 프로필의 작업이 연결 없이 자체 Chrome 탭 그룹을 열고 제어하도록 허용합니다.",
+  "browser_control.background_save_error": "백그라운드 브라우저 권한을 저장하지 못했습니다.",
+  "browser_control.background_unavailable": "백그라운드 작업에는 이 게이트웨이에서 동반 플러그인의 탭 도구가 필요합니다.",
   "connections.saved_label": "저장된 연결",
   "connections.help": "전환 시 현재 설정이 저장됩니다. 각 연결은 주소와 인증 정보를 따로 보관합니다.",
   "connections.name_prompt": "연결 이름",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes 계정",
   "account.hint": "Hermes 모바일 앱과 같은 로그인입니다. 로그인을 요구하는 게이트웨이에서 아무것도 실행하지 않고도 프로젝트, 세션 권한, 컨텍스트 압축, 전체 봇 목록을 열 수 있습니다. 로그아웃하면 이 브라우저에서 삭제됩니다.",
   "account.sign_in": "Hermes 계정으로 로그인",
+  "account.sign_in_nous": "Nous Portal로 로그인",
   "account.sign_out": "로그아웃",
   "account.status_checking": "이 게이트웨이가 Hermes 계정 로그인을 받는지 확인하는 중입니다.",
   "account.status_waiting": "열린 창에서 로그인을 마칠 때까지 기다리는 중입니다.",

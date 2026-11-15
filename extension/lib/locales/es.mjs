@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Pestañas de tareas en segundo plano",
+  "browser_control.background_help": "Permite que las tareas de este perfil local de Hermes, incluidas las de apps de mensajería, abran y controlen sus propios grupos de pestañas de Chrome sin vincularlos.",
+  "browser_control.background_save_error": "No se pudo guardar la autorización del navegador en segundo plano.",
+  "browser_control.background_unavailable": "Las tareas en segundo plano necesitan las herramientas de pestañas del complemento en esta puerta de enlace.",
   "connections.saved_label": "Conexión guardada",
   "connections.help": "Al cambiar se guarda la configuración actual. Cada conexión conserva su dirección y sus credenciales.",
   "connections.name_prompt": "Nombre de la conexión",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Cuenta de Hermes",
   "account.hint": "El mismo inicio de sesión que usa la app móvil de Hermes. Abre Proyectos, la autoridad de sesión, la compactación de contexto y la lista completa de bots en un gateway que pide iniciar sesión, sin ejecutar nada. Cerrar sesión lo olvida en este navegador.",
   "account.sign_in": "Inicia sesión con tu cuenta de Hermes",
+  "account.sign_in_nous": "Iniciar sesión con Nous Portal",
   "account.sign_out": "Cerrar sesión",
   "account.status_checking": "Comprobando si este gateway acepta el inicio de sesión con una cuenta de Hermes.",
   "account.status_waiting": "Esperando a que termines de iniciar sesión en la ventana que se abrió.",

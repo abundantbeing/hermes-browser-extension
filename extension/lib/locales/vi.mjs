@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Thẻ tác vụ nền",
+  "browser_control.background_help": "Cho phép tác vụ trên hồ sơ Hermes cục bộ này, kể cả từ ứng dụng nhắn tin, mở và điều khiển nhóm thẻ Chrome riêng mà không cần gắn thẻ.",
+  "browser_control.background_save_error": "Không thể lưu quyền điều khiển trình duyệt ở chế độ nền.",
+  "browser_control.background_unavailable": "Tác vụ nền cần công cụ thẻ của plugin đồng hành trên cổng kết nối này.",
   "connections.saved_label": "Kết nối đã lưu",
   "connections.help": "Chuyển kết nối sẽ lưu cài đặt hiện tại. Mỗi kết nối giữ riêng địa chỉ và thông tin xác thực.",
   "connections.name_prompt": "Tên kết nối",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Tài khoản Hermes",
   "account.hint": "Cùng cách đăng nhập mà ứng dụng Hermes trên điện thoại dùng. Nó mở Dự án, thẩm quyền phiên, nén ngữ cảnh và danh sách bot đầy đủ trên cổng yêu cầu đăng nhập mà không cần chạy gì. Đăng xuất sẽ xóa nó khỏi trình duyệt này.",
   "account.sign_in": "Đăng nhập bằng tài khoản Hermes của bạn",
+  "account.sign_in_nous": "Đăng nhập bằng Nous Portal",
   "account.sign_out": "Đăng xuất",
   "account.status_checking": "Đang kiểm tra xem cổng này có nhận đăng nhập bằng tài khoản Hermes không.",
   "account.status_waiting": "Đang chờ bạn hoàn tất đăng nhập trong cửa sổ vừa mở.",

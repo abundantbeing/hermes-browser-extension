@@ -87,6 +87,10 @@
     "message": "Cette passerelle demande votre connexion par compte Hermes. Ouvrez Paramètres > Connexions et choisissez « Se connecter avec votre compte Hermes ».",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Se connecter avec Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Se déconnecter",
     "description": "Runtime interface message account.sign_out"
@@ -1166,6 +1170,22 @@
   "runtime_browser_control_authorize": {
     "message": "Autoriser le contrôle",
     "description": "Runtime interface message browser_control.authorize"
+  },
+  "runtime_browser_control_background_help": {
+    "message": "Autoriser les tâches de ce profil Hermes local, y compris celles des applications de messagerie, à ouvrir et à contrôler leurs propres groupes d’onglets Chrome sans les rattacher.",
+    "description": "Runtime interface message browser_control.background_help"
+  },
+  "runtime_browser_control_background_label": {
+    "message": "Onglets de tâches en arrière-plan",
+    "description": "Runtime interface message browser_control.background_label"
+  },
+  "runtime_browser_control_background_save_error": {
+    "message": "Impossible d’enregistrer l’autorisation du navigateur en arrière-plan.",
+    "description": "Runtime interface message browser_control.background_save_error"
+  },
+  "runtime_browser_control_background_unavailable": {
+    "message": "Les tâches en arrière-plan nécessitent les outils d’onglets du module compagnon sur cette passerelle.",
+    "description": "Runtime interface message browser_control.background_unavailable"
   },
   "runtime_browser_control_control_ready": {
     "message": "Contrôle prêt",

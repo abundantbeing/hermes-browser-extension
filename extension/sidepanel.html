@@ -1416,6 +1416,17 @@
                 <small id="browserControlScopeLock" data-i18n-runtime data-i18n="browser_control.scope_help_locked" hidden>Turn off Hermes Control to change the tabs it can use.</small>
               </label>
             </div>
+            <div class="browser-control-config" id="backgroundTaskBrowserSetting" hidden>
+              <label class="settings-toggle-card">
+                <span class="settings-toggle-copy">
+                  <strong id="backgroundTaskBrowserLabel" data-i18n="browser_control.background_label"></strong>
+                  <small id="backgroundTaskBrowserHelp" data-i18n="browser_control.background_help"></small>
+                </span>
+                <input id="backgroundTaskBrowserInput" data-settings-live class="settings-switch-input" type="checkbox" />
+                <span class="settings-switch" aria-hidden="true"></span>
+              </label>
+              <small id="backgroundTaskBrowserStatus" role="status" data-i18n-runtime></small>
+            </div>
             <div id="firefoxScreenshotSetting" class="browser-control-config firefox-screenshot-setting" hidden>
               <div class="browser-control-field">
                 <span id="firefoxScreenshotTitle" data-i18n="firefox_screenshots.title">Model screenshots on Firefox</span>

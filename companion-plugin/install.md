@@ -33,7 +33,8 @@ through a few tools. The plugin version is the `version` in `plugin.yaml`.
 - The Hermes API server on (`API_SERVER_ENABLED=true`) for the profile, with its
   own `API_SERVER_KEY` (Hermes refuses a named profile without one).
 - The Hermes Browser Extension 0.3.0 or newer (BCP v2 turn envelopes); 0.4.0 or
-  newer for Hermes Control through this plugin. Hermes Control runs in
+  newer for Hermes Control through this plugin, and 0.4.1 or newer (extension and
+  plugin both) for Background task tabs. Hermes Control runs in
   Chromium-based browsers only.
 - The extension's origin (`chrome-extension://<id>`) in `API_SERVER_CORS_ORIGINS`
   on a Hermes that does not pair with the extension itself; the extension's
@@ -102,12 +103,17 @@ capabilities. Those may still require a Dashboard and separate authorization.
 ```bash
 hermes plugins update hermes-browser-extension --profile <profile>
 # or, for a copy that has no install record, or to move to another commit:
-hermes plugins install <the same source> --enable --force [--ref <sha>] --profile <profile>
+hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable --force [--ref <sha>] --profile <profile>
 ```
 
-Then restart that profile's gateway. A stale copy keeps its old tools and
+Then restart that profile's gateway once. A stale copy keeps its old tools and
 hooks until then; `hermes plugins list` and `--list` above show the installed
-version next to this repository's.
+version next to this repository's. The plugin installs only from that
+repository URL.
+
+Update each profile from 0.4.0 to 0.4.1 to use Background task tabs: the
+extension's option needs the 0.4.1 plugin, which also keeps the `tab_*` tools
+in Hermes' tool list for the whole chat.
 
 ### From the old name, `hermes-browser-companion`
 
@@ -159,7 +165,7 @@ the API server (the listener the extension already pairs with, normally
 ```text
 GET /api/plugins/hermes-browser-extension/status
 { "object": "hermes.browser_companion.status", "plugin": "hermes-browser-extension",
-  "version": "0.4.0", "profile": "default", "tools": [...], "hooks": [...],
+  "version": "0.4.1", "profile": "default", "tools": [...], "hooks": [...],
   "routes": ["/api/plugins/hermes-browser-extension/actions",
              "/api/plugins/hermes-browser-extension/context",
              "/api/plugins/hermes-browser-extension/context/status",
@@ -183,11 +189,13 @@ GET /api/plugins/hermes-browser-extension/status
   loads without the route (tools and hooks are unaffected) and the extension
   falls back to the gateway's `/v1/toolsets` list to tell "loaded" from "not
   loaded".
-- On a gateway that serves several profiles at one address, this plugin registers
-  the status, browser-context and Hermes Control paths on the listener twice:
-  the plain path (default profile) and `/p/<profile>/…` (named profiles), matching
-  how Hermes mirrors its own API routes. The listener-scoped bot roster and avatar
-  routes stay on the plain path only.
+- The plugin adds its routes at their plain paths only, through the router's public
+  API, and never adds `/p/<profile>/…` routes or reorders Hermes' own. Each
+  profile's `register()` binds its routes to that profile (`ctx.profile_name`).
+  On a gateway that serves several profiles at one address, a named profile reaches
+  its own plugin routes once Hermes serves them under `/p/<profile>/api/plugins/…`
+  (NousResearch/hermes-agent#147703); until then, Hermes Control there works for
+  the default profile. The bot roster and avatar routes are plain-path only.
 - Dashboard plugin routes (`/api/plugins/<name>/...` on the dashboard port) need
   the Webapp credential and a dashboard manifest, so the plugin does not use them.
 

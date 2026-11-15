@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "पृष्ठभूमि कार्य टैब",
+  "browser_control.background_help": "इस स्थानीय Hermes प्रोफ़ाइल के कार्यों को, मैसेजिंग ऐप वाले कार्यों सहित, बिना अटैच किए अपने Chrome टैब समूह खोलने और नियंत्रित करने दें।",
+  "browser_control.background_save_error": "पृष्ठभूमि ब्राउज़र की अनुमति सहेजी नहीं जा सकी।",
+  "browser_control.background_unavailable": "पृष्ठभूमि कार्यों के लिए इस गेटवे पर साथी प्लगइन के टैब टूल ज़रूरी हैं।",
   "connections.saved_label": "सहेजा गया कनेक्शन",
   "connections.help": "बदलने पर मौजूदा सेटिंग सहेजी जाती हैं। हर कनेक्शन अपना पता और क्रेडेंशियल रखता है।",
   "connections.name_prompt": "कनेक्शन का नाम",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes खाता",
   "account.hint": "वही साइन-इन जो Hermes फ़ोन ऐप इस्तेमाल करता है। यह साइन-इन माँगने वाले गेटवे पर, कुछ भी चलाए बिना, प्रोजेक्ट, सेशन अथॉरिटी, कॉन्टेक्स्ट कॉम्पैक्शन और पूरी बॉट सूची खोल देता है। साइन आउट करने पर यह इस ब्राउज़र से हट जाता है।",
   "account.sign_in": "अपने Hermes खाते से साइन इन करें",
+  "account.sign_in_nous": "Nous Portal से साइन इन करें",
   "account.sign_out": "साइन आउट करें",
   "account.status_checking": "जाँच रहे हैं कि यह गेटवे Hermes खाते से साइन-इन स्वीकार करता है या नहीं।",
   "account.status_waiting": "खुली विंडो में आपके साइन-इन पूरा करने की प्रतीक्षा है।",

@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Arka plan görev sekmeleri",
+  "browser_control.background_help": "Mesajlaşma uygulamalarından gelenler de dahil olmak üzere bu yerel Hermes profilindeki görevlerin, sekme bağlamadan kendi Chrome sekme gruplarını açmasına ve yönetmesine izin verin.",
+  "browser_control.background_save_error": "Arka plan tarayıcı izni kaydedilemedi.",
+  "browser_control.background_unavailable": "Arka plan görevleri, bu ağ geçidinde yardımcı eklentinin sekme araçlarını gerektirir.",
   "connections.saved_label": "Kayıtlı bağlantı",
   "connections.help": "Geçiş sırasında mevcut ayarlar kaydedilir. Her bağlantı kendi adresini ve kimlik bilgilerini saklar.",
   "connections.name_prompt": "Bağlantı adı",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes hesabı",
   "account.hint": "Hermes telefon uygulamasının kullandığı aynı oturum açma. Oturum açmayı isteyen bir ağ geçidinde, hiçbir şey çalıştırmadan Projeler'i, oturum yetkisini, bağlam sıkıştırmayı ve tam bot listesini açar. Oturumu kapat, bunu bu tarayıcıdan siler.",
   "account.sign_in": "Hermes hesabınızla oturum açın",
+  "account.sign_in_nous": "Nous Portal ile oturum aç",
   "account.sign_out": "Oturumu kapat",
   "account.status_checking": "Bu ağ geçidinin Hermes hesabıyla oturum açmayı kabul edip etmediği denetleniyor.",
   "account.status_waiting": "Açılan pencerede oturum açmayı bitirmeniz bekleniyor.",

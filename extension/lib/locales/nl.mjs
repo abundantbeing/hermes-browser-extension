@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Achtergrondtabbladen voor taken",
+  "browser_control.background_help": "Sta taken op dit lokale Hermes-profiel, ook vanuit berichtenapps, toe hun eigen Chrome-tabbladgroepen te openen en te bedienen zonder ze te koppelen.",
+  "browser_control.background_save_error": "De toestemming voor de achtergrondbrowser kon niet worden opgeslagen.",
+  "browser_control.background_unavailable": "Achtergrondtaken vereisen de tabbladhulpmiddelen van de begeleidende plug-in op deze gateway.",
   "connections.saved_label": "Opgeslagen verbinding",
   "connections.help": "Wisselen slaat de huidige instellingen op. Elke verbinding bewaart het eigen adres en de inloggegevens.",
   "connections.name_prompt": "Verbindingsnaam",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes-account",
   "account.hint": "Dezelfde aanmelding als in de Hermes-app voor je telefoon. Ze opent Projecten, sessie-autoriteit, contextcompactie en de volledige botlijst op een gateway die om aanmelding vraagt, zonder dat je iets hoeft uit te voeren. Afmelden vergeet haar in deze browser.",
   "account.sign_in": "Meld je aan met je Hermes-account",
+  "account.sign_in_nous": "Inloggen met Nous Portal",
   "account.sign_out": "Afmelden",
   "account.status_checking": "Controleren of deze gateway aanmelden met een Hermes-account accepteert.",
   "account.status_waiting": "Wachten tot je de aanmelding hebt afgerond in het geopende venster.",

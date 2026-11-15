@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Hintergrund-Tabs für Aufgaben",
+  "browser_control.background_help": "Aufgaben dieses lokalen Hermes-Profils, auch aus Messenger-Apps, dürfen eigene Chrome-Tabgruppen ohne vorheriges Anhängen öffnen und steuern.",
+  "browser_control.background_save_error": "Die Berechtigung für den Hintergrundbrowser konnte nicht gespeichert werden.",
+  "browser_control.background_unavailable": "Hintergrundaufgaben benötigen die Tab-Werkzeuge des Begleit-Plugins auf diesem Gateway.",
   "connections.saved_label": "Gespeicherte Verbindung",
   "connections.help": "Beim Wechsel werden die aktuellen Einstellungen gespeichert. Jede Verbindung behält ihre Adresse und Zugangsdaten.",
   "connections.name_prompt": "Verbindungsname",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes-Konto",
   "account.hint": "Dieselbe Anmeldung wie in der Hermes-Handy-App. Sie öffnet Projekte, Sitzungsautorität, Kontextverdichtung und die vollständige Bot-Liste bei einem Gateway, das eine Anmeldung verlangt, ohne dass etwas ausgeführt werden muss. Abmelden entfernt sie aus diesem Browser.",
   "account.sign_in": "Mit Ihrem Hermes-Konto anmelden",
+  "account.sign_in_nous": "Mit Nous Portal anmelden",
   "account.sign_out": "Abmelden",
   "account.status_checking": "Es wird geprüft, ob dieses Gateway eine Anmeldung mit dem Hermes-Konto annimmt.",
   "account.status_waiting": "Warten, bis Sie die Anmeldung im geöffneten Fenster abgeschlossen haben.",

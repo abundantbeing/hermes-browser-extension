@@ -1,4 +1,8 @@
 export default Object.freeze({
+  "browser_control.background_label": "Abas de tarefas em segundo plano",
+  "browser_control.background_help": "Permita que as tarefas deste perfil local do Hermes, inclusive as de apps de mensagens, abram e controlem seus próprios grupos de abas do Chrome sem precisar vinculá-las.",
+  "browser_control.background_save_error": "Não foi possível salvar a autorização do navegador em segundo plano.",
+  "browser_control.background_unavailable": "As tarefas em segundo plano exigem as ferramentas de abas do plugin complementar neste gateway.",
   "connections.saved_label": "Conexão salva",
   "connections.help": "A troca salva as configurações atuais. Cada conexão mantém seu endereço e suas credenciais.",
   "connections.name_prompt": "Nome da conexão",
@@ -120,6 +124,7 @@ export default Object.freeze({
   "account.label": "Conta Hermes",
   "account.hint": "O mesmo login usado pelo app Hermes para celular. Ele abre Projetos, autoridade de sessão, compactação de contexto e a lista completa de bots em um gateway que pede login, sem executar nada. Sair o esquece neste navegador.",
   "account.sign_in": "Entre com a sua conta Hermes",
+  "account.sign_in_nous": "Entrar com o Nous Portal",
   "account.sign_out": "Sair",
   "account.status_checking": "Verificando se este gateway aceita login com uma conta Hermes.",
   "account.status_waiting": "Aguardando você terminar o login na janela que foi aberta.",

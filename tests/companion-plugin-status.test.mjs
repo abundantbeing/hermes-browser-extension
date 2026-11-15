@@ -14,6 +14,8 @@ import {
   companionReasonText,
   companionRouteRecordFields,
   compareVersions,
+  companionSupportsBackgroundTasks,
+  COMPANION_BACKGROUND_TASKS_VERSION,
   parseCompanionStatusPayload,
   parseCompanionToolsets,
   probeCompanionPlugin,
@@ -72,7 +74,12 @@ const probe = (routes, extra = {}) => {
 };
 
 test('the extension expects exactly what companion-plugin/plugin.yaml ships', () => {
-  assert.equal(manifest.match(/^version:\s*(\S+)/m)[1], COMPANION_EXPECTED_VERSION);
+  // The shipped plugin is never older than the minimum the extension accepts, nor than any
+  // feature gate, so updating both together never reports the bundled plugin as outdated.
+  const shipped = manifest.match(/^version:\s*(\S+)/m)[1];
+  for (const needed of [COMPANION_EXPECTED_VERSION, COMPANION_BACKGROUND_TASKS_VERSION]) {
+    assert.ok(compareVersions(shipped, needed) >= 0, `plugin.yaml ${shipped} is at least ${needed}`);
+  }
   const tools = [...manifest.matchAll(/^ {2}- ((?:browser|tab)_\w+)$/gm)].map((match) => match[1]);
   // The Hermes Control tools are not expected: they are offered only while a browser is
   // attached, and the extension's readiness does not need them. They are all tab_*.
@@ -381,4 +388,28 @@ test('the ledger keeps a probe like any observation: negative outranks, positive
   ledger.observeProbe('browserCompanionPlugin', companionRecordFields(await readyProbe()));
   ledger.rebind(capabilityIdentity({ endpoint: BASE, principal: 'me', profile: 'other' }));
   assert.equal(ledger.get('browserCompanionPlugin'), null, 'another profile does not inherit it');
+});
+
+test('a 0.4.0 plugin stays ready: 0.4.1 is needed only for Background task tabs', () => {
+  assert.equal(COMPANION_EXPECTED_VERSION, '0.4.0');
+  assert.equal(COMPANION_BACKGROUND_TASKS_VERSION, '0.4.1');
+  const parsed = (version, tools = [...COMPANION_EXPECTED_TOOLS, 'tab_create']) => parseCompanionStatusPayload({
+    object: 'hermes.browser_companion.status', plugin: 'hermes-browser-extension', version, profile: 'default', tools,
+  });
+  const ready = classifyCompanionPlugin({ route: { kind: 'ok', parsed: parsed('0.4.0') } });
+  assert.equal(ready.state, COMPANION_STATES.ready);
+  assert.equal(companionSupportsBackgroundTasks(parsed('0.4.0')), false);
+  assert.equal(companionSupportsBackgroundTasks(parsed('0.4.1')), true);
+  assert.equal(companionSupportsBackgroundTasks(parsed('0.5.0')), true);
+  assert.equal(companionSupportsBackgroundTasks(parsed('0.4.1', ['tab_list'])), false);
+  assert.equal(companionSupportsBackgroundTasks(parsed('')), false);
+  assert.equal(companionSupportsBackgroundTasks({ ok: false }), false);
+  assert.equal(companionSupportsBackgroundTasks(null), false);
+});
+
+test('the Background task tabs setting asks the plugin version check, not only for tab_create', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const start = source.indexOf('function initBackgroundTaskBrowserSetting(');
+  const body = source.slice(start, source.indexOf('input.addEventListener', start));
+  assert.match(body, /companionSupportsBackgroundTasks\(parseCompanionStatusPayload\(/);
 });
