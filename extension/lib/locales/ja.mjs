@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes アカウント",
   "account.hint": "Hermes のスマートフォンアプリと同じサインインです。サインインを求めるゲートウェイで、何も実行せずに、プロジェクト、セッション権限、コンテキスト圧縮、すべてのボットの一覧が使えるようになります。サインアウトすると、このブラウザーから消去されます。",
   "account.sign_in": "Hermes アカウントでサインイン",
+  "account.sign_in_nous": "Nous Portal でサインイン",
   "account.sign_out": "サインアウト",
   "account.status_checking": "このゲートウェイが Hermes アカウントでのサインインに対応しているか確認しています。",
   "account.status_waiting": "開いたウィンドウでサインインを完了するのをお待ちしています。",

@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Cuenta de Hermes",
   "account.hint": "El mismo inicio de sesión que usa la app móvil de Hermes. Abre Proyectos, la autoridad de sesión, la compactación de contexto y la lista completa de bots en un gateway que pide iniciar sesión, sin ejecutar nada. Cerrar sesión lo olvida en este navegador.",
   "account.sign_in": "Inicia sesión con tu cuenta de Hermes",
+  "account.sign_in_nous": "Iniciar sesión con Nous Portal",
   "account.sign_out": "Cerrar sesión",
   "account.status_checking": "Comprobando si este gateway acepta el inicio de sesión con una cuenta de Hermes.",
   "account.status_waiting": "Esperando a que termines de iniciar sesión en la ventana que se abrió.",
