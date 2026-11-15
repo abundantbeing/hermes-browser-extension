@@ -782,7 +782,7 @@ test('sidepanel loadModels prunes stale provider models across cache slots, pres
   });
 
   vm.runInContext([
-    'let modelCatalogLoadSerial = 0;',
+    'let modelCatalogLoadSerial = 0;\nlet modelCatalogSerializedLoads = Promise.resolve();',
     between('async function readCachedModelCatalog()', '// Union of every profile\'s cached catalog'),
     between('async function readCachedModelCatalogUnion(', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
@@ -945,7 +945,7 @@ test('loadModels stale replies do not overwrite cache after profile switch', asy
   });
 
   vm.runInContext([
-    'let modelCatalogLoadSerial = 0;',
+    'let modelCatalogLoadSerial = 0;\nlet modelCatalogSerializedLoads = Promise.resolve();',
     between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
   ].join('\n'), context);
@@ -1065,7 +1065,7 @@ test('loadModels removes emptied provider models from availableModels after auth
   });
 
   vm.runInContext([
-    'let modelCatalogLoadSerial = 0;',
+    'let modelCatalogLoadSerial = 0;\nlet modelCatalogSerializedLoads = Promise.resolve();',
     between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
   ].join('\n'), context);
@@ -1173,7 +1173,7 @@ test('loadModels reruns a deferred profile refresh after an in-flight refresh fi
   });
 
   vm.runInContext([
-    'let modelCatalogLoadSerial = 0;',
+    'let modelCatalogLoadSerial = 0;\nlet modelCatalogSerializedLoads = Promise.resolve();',
     between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
   ].join('\n'), context);
@@ -1296,7 +1296,7 @@ test('loadModels cache fallback uses newer shared provider rows when scoped cach
   });
 
   vm.runInContext([
-    'let modelCatalogLoadSerial = 0;',
+    'let modelCatalogLoadSerial = 0;\nlet modelCatalogSerializedLoads = Promise.resolve();',
     between('async function readCachedModelCatalog()', '// Union of every profile\'s cached catalog'),
     between('async function readCachedModelCatalogUnion(', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
@@ -1313,7 +1313,7 @@ test('loadModels cache fallback uses newer shared provider rows when scoped cach
   );
 });
 
-test('loadModels superseded quiet loads do not overwrite a newer refresh cache write', async () => {
+test('loadModels queues quiet loads behind an in-flight manual refresh', async () => {
   const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const between = (start, end) => {
     const from = sidepanelSource.indexOf(start);
@@ -1323,9 +1323,10 @@ test('loadModels superseded quiet loads do not overwrite a newer refresh cache w
     return sidepanelSource.slice(from, to);
   };
 
-  let releaseQuiet;
-  const quietGate = new Promise((resolve) => { releaseQuiet = resolve; });
+  let releaseRefresh;
+  const refreshGate = new Promise((resolve) => { releaseRefresh = resolve; });
   let registryCalls = 0;
+  let refreshFinished = false;
 
   const storageState = {
     [MODEL_CATALOG_CACHE_STORAGE_KEY]: {
@@ -1356,12 +1357,12 @@ test('loadModels superseded quiet loads do not overwrite a newer refresh cache w
       }
       registryCalls += 1;
       if (registryCalls === 1) {
-        await quietGate;
+        await refreshGate;
         return {
           ok: true,
           status: 200,
           text: async () => JSON.stringify({
-            providers: [{ slug: 'custom', models: ['stale-quiet'] }],
+            providers: [{ slug: 'custom', models: ['after-refresh'] }],
           }),
         };
       }
@@ -1423,21 +1424,30 @@ test('loadModels superseded quiet loads do not overwrite a newer refresh cache w
   });
 
   vm.runInContext([
-    'let modelCatalogLoadSerial = 0;',
+    'let modelCatalogLoadSerial = 0;\nlet modelCatalogSerializedLoads = Promise.resolve();',
     between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
   ].join('\n'), context);
 
-  const quietPending = context.loadModels({ quiet: true, refresh: false });
+  const refreshPending = context.loadModels({ quiet: true, refresh: true });
   await new Promise((resolve) => setImmediate(resolve));
-  const refreshOutcome = await context.loadModels({ quiet: true, refresh: true });
+  let quietFinishedBeforeRefresh = false;
+  const quietPending = context.loadModels({ quiet: true, refresh: false }).then((outcome) => {
+    quietFinishedBeforeRefresh = !refreshFinished;
+    return outcome;
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(registryCalls, 1, 'quiet loads must wait behind an in-flight refresh');
+  releaseRefresh();
+  const refreshOutcome = await refreshPending;
   assert.equal(refreshOutcome.ok, true);
-  releaseQuiet();
+  refreshFinished = true;
   const quietOutcome = await quietPending;
-  assert.equal(quietOutcome.stale, true, 'superseded quiet loads must abandon before mutating catalog state');
+  assert.equal(quietFinishedBeforeRefresh, false);
+  assert.equal(quietOutcome.ok, true);
   const cachedDefault = storageState[MODEL_CATALOG_CACHE_STORAGE_KEY]['local-api|http://127.0.0.1:8642|default'];
   assert.ok(cachedDefault?.models?.some((model) => model.rawModelId === 'after-refresh'));
-  assert.ok(!cachedDefault?.models?.some((model) => model.rawModelId === 'stale-quiet'));
+  assert.ok(!cachedDefault?.models?.some((model) => model.rawModelId === 'stale-quiet'), 'queued quiet loads must not overwrite a completed refresh cache write');
 });
 
 test('loadModels persists gateway catalog without custom external discovery rows', async () => {
@@ -1549,7 +1559,7 @@ test('loadModels persists gateway catalog without custom external discovery rows
   });
 
   vm.runInContext([
-    'let modelCatalogLoadSerial = 0;',
+    'let modelCatalogLoadSerial = 0;\nlet modelCatalogSerializedLoads = Promise.resolve();',
     between('async function readCachedModelCatalog()', 'let modelCatalogSyncPromise = null;'),
     between('async function loadModels(', 'async function refreshModelsFromMenu()'),
   ].join('\n'), context);

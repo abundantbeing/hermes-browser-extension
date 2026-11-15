@@ -2829,6 +2829,7 @@ function hermesGatewayKey() {
 let modelsRefreshing = false;
 let modelCatalogRefreshDeferred = false;
 let modelCatalogLoadSerial = 0;
+let modelCatalogSerializedLoads = Promise.resolve();
 let contextRefreshingFromUser = false;
 const contextPreviewScheduler = createContextPreviewScheduler({
   run: runContextPreviewEvents,
@@ -12210,6 +12211,20 @@ async function syncProfileModelSelection(profileName = '', { row = null } = {}) 
 }
 
 async function loadModels({ quiet = false, payload = null, refresh = false, startup = false } = {}) {
+  const trackRefresh = Boolean(refresh && !payload);
+  if (trackRefresh && modelsRefreshing) {
+    modelCatalogRefreshDeferred = true;
+    return { ok: false, skipped: true, error: 'Model refresh is already running.' };
+  }
+  const waitForPriorCatalogLoad = startup ? null : modelCatalogSerializedLoads;
+  let completeCatalogLoad;
+  if (waitForPriorCatalogLoad) {
+    modelCatalogSerializedLoads = waitForPriorCatalogLoad.then(
+      () => new Promise((resolve) => { completeCatalogLoad = resolve; }),
+    );
+    await waitForPriorCatalogLoad;
+  }
+  try {
   const catalogLoadContext = startup ? null : captureModelCatalogLoadContext();
   if (!startup) await refreshHermesContextRegistry({ storage: browserApi.storage.local, refresh });
   if (!startup && !modelCatalogLoadContextMatches(catalogLoadContext)) {
@@ -12218,12 +12233,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
   }
   const previousSelectedModel = settings.model;
   const previousAvailableModels = availableModels;
-  const trackRefresh = Boolean(refresh && !payload);
   if (trackRefresh) {
-    if (modelsRefreshing) {
-      modelCatalogRefreshDeferred = true;
-      return { ok: false, skipped: true, error: 'Model refresh is already running.' };
-    }
     modelsRefreshing = true;
     renderModelRefreshState();
     if (!quiet) setStatus('ok', 'Refreshing models', 'Syncing Hermes model catalog… this can take 20–30 seconds.');
@@ -12574,6 +12584,9 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         void loadModels({ quiet: true, refresh: true });
       }
     }
+  }
+  } finally {
+    completeCatalogLoad?.();
   }
 }
 
