@@ -75,7 +75,7 @@ test('the docs say where Hermes Control works: loopback or HTTPS, and an SSH tun
   assert.match(guide, /add a \*\*Local gateway\*\* \(this computer\) at `http:\/\/127\.0\.0\.1:18642`/);
   assert.doesNotMatch(guide, /add a \*\*Remote gateway\*\* at `http:\/\/127\.0\.0\.1:18642`/);
   assert.match(agent, /Hermes Control refuses a remote `http:\/\/` address/);
-  assert.match(readme, /An SSH tunnel is a port on this computer, so add it as a Local gateway/);
+  assert.match(readme, /An SSH tunnel is a port on this computer[\s\S]{0,120}Local gateway/);
 });
 
 test('the Windows key line draws 32 random bytes, and the setup helper is shown with --clip', () => {
@@ -115,11 +115,18 @@ test('setup docs reuse an existing API key and show how to read it back', () => 
   assert.match(agent, /hermes config get API_SERVER_KEY/);
 });
 
-test('the SSH tunnel docs state remote browser-context consent', () => {
-  assert.match(guide, /Browser-context consent|browser-context consent/i);
-  assert.match(guide, /forwarded loopback|tunnel port other than `8642`/i);
-  assert.match(readme, /browser-context consent|page context over a tunnel/i);
-  assert.match(agent, /remote-gateway consent|remote.*consent/i);
+test('the SSH tunnel docs state the page-context boundary, not local-gateway equivalence', () => {
+  assert.match(guide, /Page context boundary|page context.*leaves this computer/i);
+  assert.match(guide, /does not.*show the remote.*Share page context|does not\*\* show the remote/i);
+  assert.doesNotMatch(guide, /tunnel port other than `8642`/);
+  assert.match(readme, /leaves this computer/i);
+  assert.match(readme, /does not.*show the remote/i);
+  assert.match(agent, /leaves this computer/i);
+  assert.match(agent, /does not.*show remote/i);
+  assert.doesNotMatch(
+    guide + readme + agent,
+    /treats a forwarded loopback port|like a remote gateway for consent/i,
+  );
 });
 
 test('an agent pointed at the repository finds its setup steps', () => {

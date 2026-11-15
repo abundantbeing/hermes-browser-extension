@@ -155,11 +155,11 @@ Keep the API server on loopback on the server and forward a local port to it. Us
 ssh -N -L 18642:127.0.0.1:8642 user@your-server
 ```
 
-While that command runs, add a **Local gateway** (this computer) at `http://127.0.0.1:18642` with the server's key: to the browser the tunnel is a port on this computer, which is also what lets Hermes Control use it. The extension cannot open the tunnel itself: start it before you connect, and keep it running. A tool like `autossh` or a system service keeps it up.
+While that command runs, add a **Local gateway** (this computer) at `http://127.0.0.1:18642` with the server's key. Hermes Control needs a loopback address, so this recipe uses **Local gateway** for transport even though Hermes runs on the remote machine. The extension cannot open the tunnel itself: start it before you connect, and keep it running. A tool like `autossh` or a system service keeps it up.
 
 **Local gateway** also scans this computer for a Hermes Desktop dashboard. If Hermes is still running here while you use the tunnel, that local dashboard's bots can appear beside the remote one, and chat can fall back to the local gateway when the tunnel drops. **Stop the Hermes gateway on this computer** before you connect through the tunnel, or use a browser machine with no local Hermes. Prefer `tailscale serve` on the server when you need Hermes Control without that constraint.
 
-**Browser-context consent:** The tunnel address is loopback on this computer, but chat, Hermes Assist and page context reach Hermes on the **remote** machine. The extension treats a forwarded loopback port (any tunnel port other than `8642`) like a remote gateway for consent: grant **Share page context** in Settings before page text, URLs or field labels leave the browser.
+**Page context boundary:** Chat and page context sent through the tunnel **leave this computer** and are handled by the **remote** Hermes. That is not the same as Hermes running locally on this machine. The extension decides **Share page context** from the gateway URL only: a loopback address is treated as local and **does not** show the remote consent gate. Understand that boundary before you share page context over a tunnel. For the remote consent gate, connect as **Remote gateway** (for example with `tailscale serve`) instead of a loopback tunnel.
 
 ### On another computer on your home or office network
 
