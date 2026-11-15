@@ -8,6 +8,8 @@
 
 ### Fixed
 
+- **The account sign-in names Nous Portal, and finishes on a gateway with a public address.** On a gateway whose only sign-in is Nous, the button in Settings > Connections and on the Projects card now reads **Sign in with Nous Portal**, in every language; other gateways keep Sign in with your Hermes account. When Hermes Web has `webapp.public_url` set (a Tailscale or reverse-proxy address), its sign-in provider returns to that address, but the panel started the sign-in on `127.0.0.1`, so the gateway lost its sign-in cookie on the way back, answered "Missing PKCE state cookie" in the sign-in window, and the panel kept waiting. The panel now sees the gateway's callback address in the sign-in window and starts the same sign-in there once, so it completes. The sign-in also notices the end of the flow through the web request permission the moment it is granted, not only after the panel reopens.
+- **The Hermes account card in Settings reads normally.** Its long Sign in button sat in the narrow side column and squeezed the text into a strip a few words wide. A Settings card with buttons now puts them under its text at full width; the side column holds only the square switch, and a guard test keeps it that way.
 - Removed stale models stay cleared from the model picker after a provider list changes. Refreshing `/api/model/options` now replaces each returned provider's entries in the cross-profile cache instead of keeping removed models from other profiles, allows manual refreshes more time before falling back to cache, resolves `provider::`-prefixed and OpenAI OSS (`128k`) context windows accurately, and keeps model context badges unclipped in the picker menu.
 
 ## [0.4.1] - 2026-11-12

@@ -6655,11 +6655,21 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
 .settings-toggle-card:active,
 .settings-choice-card:active { transform: translateY(1px); }
 .hermes-account-row:active { transform: none; }
+/* The side column is for the square switch only: a card with buttons stacks them under its text. */
+:is(.settings-dialog, .add-connection-card) .settings-toggle-card:has(button) {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+  cursor: default;
+}
 .hermes-account-row .hermes-account-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 6px;
-  justify-content: flex-end;
+}
+.settings-toggle-card:has(button) button {
+  inline-size: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .hermes-account-row .hermes-account-actions button[hidden] { display: none; }
 .settings-choice-group {
