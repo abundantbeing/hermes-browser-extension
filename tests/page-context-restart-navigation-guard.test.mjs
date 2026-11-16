@@ -72,15 +72,16 @@ function createDocumentBoundHarness({
       if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
         return [{ result: true }];
       }
-      if (source.includes('hermesRefreshPageScriptPolicy')) {
+      if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
+        if (typeof request.func === 'function') {
+          await request.func().catch(() => ({ allowed: false, restart: false }));
+        }
         if (navigateOnRefresh) {
           currentHref = 'http://localhost/dashboard';
           liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
+          documentById.set('doc-localhost-002', currentHref);
           refreshNavigationObserved = true;
-        }
-        if (typeof request.func === 'function' && navigateOnRefresh) {
-          const pageResult = await request.func().catch(() => ({ allowed: false, restart: false }));
-          if (pageResult && typeof pageResult === 'object') return [{ result: pageResult }];
+          return [{ result: { allowed: false, restart: false } }];
         }
         const decision = pageContextHostPolicyDecision(currentHref, settingsWithLocal);
         return [{ result: { allowed: decision.inject, restart: !bundleComplete && decision.inject } }];
@@ -107,15 +108,16 @@ function createDocumentBoundHarness({
       if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
         return [{ result: true }];
       }
-      if (source.includes('hermesRefreshPageScriptPolicy')) {
+      if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
+        if (typeof request.func === 'function') {
+          await request.func().catch(() => ({ allowed: false, restart: false }));
+        }
         if (navigateOnRefresh) {
           currentHref = 'http://localhost/dashboard';
           liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
+          documentById.set('doc-localhost-002', currentHref);
           refreshNavigationObserved = true;
-        }
-        if (typeof request.func === 'function' && navigateOnRefresh) {
-          const pageResult = await request.func().catch(() => ({ allowed: false, restart: false }));
-          if (pageResult && typeof pageResult === 'object') return [{ result: pageResult }];
+          return [{ result: { allowed: false, restart: false } }];
         }
         const decision = pageContextHostPolicyDecision(currentHref, settingsWithLocal);
         return [{ result: { allowed: decision.inject, restart: !bundleComplete && decision.inject } }];

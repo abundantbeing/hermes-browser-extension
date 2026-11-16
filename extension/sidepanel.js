@@ -25826,13 +25826,23 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
       },
     );
     if (!extractorInjected || !(await verifyPageContextInstallBinding(installBinding))) {
-      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
-      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      const liveUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const livePolicy = pageContextInjectionDecision(liveUrl, settings);
+      if (!livePolicy.inject) {
+        return {
+          ok: false,
+          skipped: true,
+          skipReason: livePolicy.reason,
+          reason: t(pageContextSkipMessageKey(livePolicy.reason), { url: liveUrl }),
+          text: '',
+          selectedText: '',
+          meta: {},
+        };
+      }
       return {
         ok: false,
-        skipped: true,
-        skipReason: blocked.reason,
-        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        error: originalError?.message || String(originalError || 'Page context scripting fallback failed'),
+        reason: originalError?.message || String(originalError || 'Page context scripting fallback failed'),
         text: '',
         selectedText: '',
         meta: {},
@@ -25970,8 +25980,7 @@ async function getPageContext(tab, options = {}) {
     }
     return {
       ok: false,
-      skipped: true,
-      skipReason: pageContextInjectionDecision(tab.url, settings).reason,
+      error: fallback?.error || fallback?.reason || error?.message || String(error),
       reason: fallback?.reason || error?.message || String(error),
       text: '',
       selectedText: '',

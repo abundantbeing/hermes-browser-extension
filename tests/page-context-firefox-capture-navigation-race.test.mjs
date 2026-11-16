@@ -27,6 +27,130 @@ const captureGuardUrl = new URL('../extension/lib/page-context-capture-guard.js'
 const browserApiUrl = new URL('../extension/lib/browser-api-global.js', import.meta.url);
 const contentUrl = new URL('../extension/content.js', import.meta.url);
 
+test('Firefox capture race: navigate after allow reply during refresh blocks bundle restart', async () => {
+  const settings = {
+    pageContextOnPrivateNetworks: false,
+    pageContextExcludedOrigins: [],
+  };
+  const policyForUrl = (url) => pageContextHostPolicyDecision(url, settings);
+  let href = 'https://example.com/capture';
+  const fileInjections = [];
+  const startToken = `${new URL(href).origin}\u0000${href}`;
+  const installBinding = {
+    tabId: 41,
+    frameId: 0,
+    documentId: null,
+    allowFrameFallback: true,
+    href,
+    anchorToken: startToken,
+    captureRequestAnchorToken: startToken,
+  };
+  const pageVm = await loadCaptureVm(href, policyForUrl);
+  pageVm.loadContent();
+  const baseRefresh = pageVm.globalThis.hermesRefreshPageScriptPolicy;
+  pageVm.globalThis.hermesRefreshPageScriptPolicy = async function navigateAfterAllow() {
+    const inject = await baseRefresh.call(pageVm.globalThis);
+    href = 'http://localhost/capture';
+    pageVm.globalThis.location = { href, origin: 'http://localhost' };
+    return inject;
+  };
+
+  const executeScript = async (request) => {
+    const liveHref = pageVm.globalThis.location.href;
+    if (request.files) {
+      fileInjections.push({ href: liveHref, files: [...request.files] });
+      return [{ result: undefined }];
+    }
+    const source = request.func.toString();
+    if (source.includes('location.href') && !source.includes('collectPageContext')) {
+      return [{
+        result: { href: liveHref, origin: new URL(liveHref).origin, token: `${new URL(liveHref).origin}\u0000${liveHref}` },
+      }];
+    }
+    if (source.includes('HermesContentExtractor')) {
+      return [{ result: { restart: true, extractorReady: false, bridgeLoaded: true } }];
+    }
+    if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
+      return [{ result: true }];
+    }
+    if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
+      await pageVm.run(request.func);
+      pageVm.globalThis.location = { href: 'http://localhost/capture', origin: 'http://localhost' };
+      return [{ result: { allowed: false, restart: false } }];
+    }
+    return [{ result: typeof request.func === 'function' ? await pageVm.run(request.func) : undefined }];
+  };
+
+  const verifyInstallBinding = async (binding) => {
+    const target = pageContextScriptInjectionTarget(binding);
+    const [row] = await executeScript({
+      target,
+      func: () => ({
+        href: location.href,
+        origin: location.origin,
+        token: `${location.origin}\u0000${location.href}`,
+      }),
+    });
+    const anchor = row?.result;
+    if (!anchor) return false;
+    const allowLocal = pageContextAllowLocalDocumentsForUrl(anchor.href, settings);
+    return pageContextVerifyInstallAnchor(
+      anchor,
+      binding,
+      policyForUrl,
+      (url) => isPageContextCaptureUrlBlocked(url, { allowLocalDocuments: allowLocal }),
+    );
+  };
+
+  const bundleRestart = createPageContextBundleRestartCoalescer({
+    probeRestartNeeded: (b) => probePageContextBundleRestartNeeded(executeScript, b),
+    runBundleRestart: async (b) => {
+      await runPageContextBundleRestart(
+        executeScript,
+        b,
+        pageContextBundleRestartFilesFromManifest(MANIFEST_FILES),
+        {
+          verifyBinding: () => verifyInstallBinding(b),
+          beforeInject: () => verifyInstallBinding(b),
+          afterInject: () => verifyInstallBinding(b),
+        },
+      );
+    },
+  });
+
+  let observedNav = false;
+  const executeScriptWithNav = executeScript;
+  const wrappedExecute = async (request) => {
+    const source = request.func?.toString?.() || '';
+    if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
+      observedNav = true;
+    }
+    return executeScriptWithNav(request);
+  };
+
+  const runGateEnsureWrapped = createPageContextGateEnsureRunner({
+    executeScript: wrappedExecute,
+    manifestContentScriptFiles: () => [...MANIFEST_FILES],
+    pageContextBundleRestartFiles: () => pageContextBundleRestartFilesFromManifest(MANIFEST_FILES),
+    pageContextInjectionDecision: policyForUrl,
+    acquireInstallBinding: async () => installBinding,
+    verifyInstallBinding,
+    awaitPageContextBundleRestart: bundleRestart.awaitPageContextBundleRestart,
+    reinstallPageContextBundleEntries: bundleRestart.reinstallPageContextBundleEntries,
+    probePageContextBundleRestartNeeded: (b) => probePageContextBundleRestartNeeded(wrappedExecute, b),
+  });
+
+  const allowed = await runGateEnsureWrapped(41, installBinding);
+  assert.equal(allowed, false);
+  assert.equal(observedNav, true, 'navigation after allow must run injected refresh');
+  const injectedBundle = fileInjections.some((row) =>
+    row.files.some((file) => file.endsWith('content.js') || file.endsWith('content-extractor.js')));
+  assert.equal(injectedBundle, false);
+  const capture = await pageVm.getPageContext();
+  assert.equal(capture?.ok, false);
+  assert.notEqual(capture?.text, 'LOCALHOST_SECRET');
+});
+
 test('Firefox capture race: allow reply then localhost navigation blocks restart and capture', async () => {
   const settings = {
     pageContextOnPrivateNetworks: false,

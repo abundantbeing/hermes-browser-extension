@@ -135,6 +135,8 @@ export async function runPageContextBundleRestart(executeScript, binding, restar
   const target = pageContextScriptInjectionTarget(binding);
   if (!target) return false;
   if (hooks.verifyBinding && !(await hooks.verifyBinding(binding))) return false;
+  const anchorAtStart = await readPageScriptDocumentAnchor(executeScript, binding);
+  if (!anchorAtStart || !liveAnchorMatchesCaptureRequest(binding, anchorAtStart)) return false;
   if (hooks.beforeInject && (await hooks.beforeInject()) === false) return false;
   if (!restartFiles.length) return true;
   if (hooks.verifyBinding && !(await hooks.verifyBinding(binding))) return false;
