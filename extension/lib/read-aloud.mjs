@@ -566,14 +566,12 @@ const QUIET_SPEECH_ERRORS = new Set(['canceled', 'cancelled', 'interrupted']);
 // The browser picks a voice from utterance.lang, so a Portuguese reply read with the panel's
 // English locale comes out as an English voice mangling Portuguese. Guess the reply's own
 // language: writing systems first, then common short words for Latin-script languages.
-const SCRIPT_LANGUAGES = [
-  [/[぀-ヿ]/u, 'ja'],
-  [/[가-힯]/u, 'ko'],
-  [/[一-鿿]/u, 'zh'],
-  [/[؀-ۿ]/u, 'ar'],
-  [/[ऀ-ॿ]/u, 'hi'],
-  [/[฀-๿]/u, 'th'],
-];
+const KANA_LETTERS = /[぀-ヿ]/gu;
+const HAN_LETTERS = /[一-鿿]/gu;
+const KOREAN_LETTERS = /[가-힯]/gu;
+const ARABIC_LETTERS = /[؀-ۿ]/gu;
+const DEVANAGARI_LETTERS = /[ऀ-ॿ]/gu;
+const THAI_LETTERS = /[฀-๿]/gu;
 const SCRIPT_SIBLINGS = { zh: ['zh'] };
 const UKRAINIAN_LETTERS = /[іїєґ]/giu;
 const CYRILLIC_LETTERS = /[Ѐ-ӿ]/gu;
@@ -617,22 +615,46 @@ function latinLetterCount(text) {
   return (text.match(/\p{Script=Latin}/gu) || []).length;
 }
 
+function letterCount(pattern, text) {
+  return (text.match(pattern) || []).length;
+}
+
+/** Pick a non-Latin script only when it beats Latin and every other script in the sample. */
+function dominantScriptLanguage(sample, fallbackPrimary, fallbackLang) {
+  const latinCount = latinLetterCount(sample);
+  const kanaCount = letterCount(KANA_LETTERS, sample);
+  const hanCount = letterCount(HAN_LETTERS, sample);
+  const japaneseCount = kanaCount > 0 ? kanaCount + hanCount : 0;
+  const chineseCount = kanaCount > 0 ? 0 : hanCount;
+  const competitors = [
+    ['ja', japaneseCount],
+    ['zh', chineseCount],
+    ['ko', letterCount(KOREAN_LETTERS, sample)],
+    ['ar', letterCount(ARABIC_LETTERS, sample)],
+    ['hi', letterCount(DEVANAGARI_LETTERS, sample)],
+    ['th', letterCount(THAI_LETTERS, sample)],
+  ];
+  const cyrillicCount = letterCount(CYRILLIC_LETTERS, sample);
+  if (cyrillicCount > 0) {
+    const ukrainianMarks = letterCount(UKRAINIAN_LETTERS, sample);
+    const code = ukrainianMarks > 0 || fallbackPrimary === 'uk' ? 'uk' : 'ru';
+    competitors.push([code, cyrillicCount]);
+  }
+  const ranked = competitors.filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);
+  if (!ranked.length) return '';
+  const [bestCode, bestCount] = ranked[0];
+  const runnerUpCount = ranked[1]?.[1] ?? 0;
+  if (bestCount <= latinCount || bestCount <= runnerUpCount) return '';
+  const siblings = SCRIPT_SIBLINGS[bestCode] || [bestCode];
+  const code = siblings.includes(fallbackPrimary) ? fallbackPrimary : bestCode;
+  return withRegion(code, fallbackLang);
+}
+
 export function guessSpeechLanguage(text, fallbackLang = '') {
   const sample = String(text || '').slice(0, 4000);
   const fallbackPrimary = primaryOf(fallbackLang);
-  const latinCount = latinLetterCount(sample);
-  const cyrillicCount = (sample.match(CYRILLIC_LETTERS) || []).length;
-  if (cyrillicCount > 0 && cyrillicCount > latinCount) {
-    const ukrainianMarks = (sample.match(UKRAINIAN_LETTERS) || []).length;
-    if (ukrainianMarks > 0 || fallbackPrimary === 'uk') return withRegion('uk', fallbackLang);
-    return withRegion('ru', fallbackLang);
-  }
-  for (const [pattern, code] of SCRIPT_LANGUAGES) {
-    const scriptCount = (sample.match(new RegExp(pattern.source, 'gu')) || []).length;
-    if (!scriptCount || scriptCount <= latinCount) continue;
-    const siblings = SCRIPT_SIBLINGS[code] || [code];
-    return withRegion(siblings.includes(fallbackPrimary) ? fallbackPrimary : code, fallbackLang);
-  }
+  const fromScript = dominantScriptLanguage(sample, fallbackPrimary, fallbackLang);
+  if (fromScript) return fromScript;
   const words = sample.toLowerCase().match(/\p{L}+/gu) || [];
   const scores = Object.fromEntries(Object.keys(LATIN_WORD_SETS).map((code) => [code, 0]));
   for (const word of words) {

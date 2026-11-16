@@ -432,6 +432,8 @@ test('the spoken language comes from the reply, not the panel locale', () => {
   assert.equal(guessSpeechLanguage('Ça fonctionne correctement.', 'fr'), 'fr-FR');
   assert.equal(guessSpeechLanguage('The Chinese character 中 means middle.', 'en'), 'en-US', 'one Han character keeps the panel language');
   assert.equal(guessSpeechLanguage('The word こんにちは is a greeting.', 'en'), 'en-US', 'embedded Japanese yields to English words');
+  assert.equal(guessSpeechLanguage('JavaScript開発環境の初期設定手順を説明します。', 'en'), 'ja-JP', 'kana and kanji beat embedded Latin');
+  assert.equal(guessSpeechLanguage('ロシア語で「Привет」は「こんにちは」という意味です。', 'ja'), 'ja-JP', 'Japanese beats a short Cyrillic quote');
   assert.equal(guessSpeechLanguage('OK', 'pt-BR'), 'pt-BR', 'too little to tell keeps the locale');
   assert.equal(guessSpeechLanguage('OK', ''), '');
 });
