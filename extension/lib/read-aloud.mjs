@@ -628,8 +628,12 @@ function stripQuotedSpans(text) {
 /** Kana fully inside quote marks, with mostly Han outside — a foreign snippet, not Japanese prose. */
 function kanaQuotedInsidePredominantHan(sample, kanaCount, hanCount) {
   if (!kanaCount || !hanCount) return false;
-  const kanaOutsideQuotes = letterCount(KANA_LETTERS, stripQuotedSpans(sample));
-  return kanaOutsideQuotes === 0 && hanCount > kanaCount;
+  const outside = stripQuotedSpans(sample);
+  const kanaOutsideQuotes = letterCount(KANA_LETTERS, outside);
+  const hanOutsideQuotes = letterCount(HAN_LETTERS, outside);
+  if (kanaOutsideQuotes > 0) return false;
+  if (hanOutsideQuotes === 0) return false;
+  return hanOutsideQuotes > kanaCount;
 }
 
 /** True when kana looks like Japanese prose, not a short quote inside mostly Han text. */
@@ -650,6 +654,14 @@ function cyrillicLanguageCode(body, fallbackPrimary) {
     return fallbackPrimary === 'uk' || fallbackPrimary === 'ru' ? fallbackPrimary : 'ru';
   }
   return fallbackPrimary === 'uk' ? 'uk' : 'ru';
+}
+
+/** Discount quoted Cyrillic only when unquoted body text establishes ru vs uk. */
+function cyrillicLanguageFromSample(sample, fallbackPrimary) {
+  const outside = stripQuotedSpans(sample);
+  const cyrillicOutside = letterCount(CYRILLIC_LETTERS, outside);
+  const body = cyrillicOutside > 0 ? outside : sample;
+  return cyrillicLanguageCode(body, fallbackPrimary);
 }
 
 /** Pick a non-Latin script only when it beats Latin and every other script in the sample. */
@@ -676,7 +688,7 @@ function dominantScriptLanguage(sample, fallbackPrimary, fallbackLang) {
   ];
   const cyrillicCount = letterCount(CYRILLIC_LETTERS, sample);
   if (cyrillicCount > 0) {
-    const code = cyrillicLanguageCode(stripQuotedSpans(sample), fallbackPrimary);
+    const code = cyrillicLanguageFromSample(sample, fallbackPrimary);
     competitors.push([code, cyrillicCount]);
   }
   const ranked = competitors.filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);

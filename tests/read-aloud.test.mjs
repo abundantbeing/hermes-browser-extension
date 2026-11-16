@@ -450,6 +450,16 @@ test('the spoken language comes from the reply, not the panel locale', () => {
     'ru-RU',
     'a Ukrainian quote does not outweigh Russian body text',
   );
+  assert.equal(
+    guessSpeechLanguage('「明日の予定を書く」', 'ja'),
+    'ja-JP',
+    'a fully quoted Japanese reply keeps Japanese',
+  );
+  assert.equal(
+    guessSpeechLanguage('«Привіт, як справи?»', 'en'),
+    'uk-UA',
+    'a fully quoted Ukrainian reply keeps Ukrainian',
+  );
   assert.equal(guessSpeechLanguage('OK', 'pt-BR'), 'pt-BR', 'too little to tell keeps the locale');
   assert.equal(guessSpeechLanguage('OK', ''), '');
 });
