@@ -25003,14 +25003,40 @@ function contentMessageDeliveryOptions(frameId = 0) {
   return { frameId: frame };
 }
 
+const pageContextBundleRestartByTarget = new Map();
+
+function pageContextBundleRestartKey(tabId, scriptTarget) {
+  const frame = Math.max(0, Number(scriptTarget?.frameIds?.[0]) || 0);
+  return `${tabId}\u0000${frame}`;
+}
+
+async function awaitPageContextBundleRestart(tabId, scriptTarget) {
+  const pending = pageContextBundleRestartByTarget.get(pageContextBundleRestartKey(tabId, scriptTarget));
+  if (pending) await pending;
+}
+
 async function reinstallPageContextBundleEntries(tabId, scriptTarget) {
-  const restartFiles = pageContextBundleRestartFiles();
-  if (!restartFiles.length) return;
-  await browserApi.scripting.executeScript({ target: scriptTarget, files: restartFiles });
-  await browserApi.scripting.executeScript({
-    target: scriptTarget,
-    func: () => new Promise((resolve) => setTimeout(resolve, 0)),
-  });
+  const key = pageContextBundleRestartKey(tabId, scriptTarget);
+  const existing = pageContextBundleRestartByTarget.get(key);
+  if (existing) {
+    await existing;
+    return;
+  }
+  const run = (async () => {
+    const restartFiles = pageContextBundleRestartFiles();
+    if (!restartFiles.length) return;
+    await browserApi.scripting.executeScript({ target: scriptTarget, files: restartFiles });
+    await browserApi.scripting.executeScript({
+      target: scriptTarget,
+      func: () => new Promise((resolve) => setTimeout(resolve, 0)),
+    });
+  })();
+  pageContextBundleRestartByTarget.set(key, run);
+  try {
+    await run;
+  } finally {
+    if (pageContextBundleRestartByTarget.get(key) === run) pageContextBundleRestartByTarget.delete(key);
+  }
 }
 
 async function ensurePageContextGateAndRefresh(tabId, scriptTarget = null) {
@@ -25018,6 +25044,7 @@ async function ensurePageContextGateAndRefresh(tabId, scriptTarget = null) {
   const target = scriptTarget && scriptTarget.frameIds
     ? scriptTarget
     : pageContextScriptTarget(tabId, scriptTarget?.frameIds?.[0] ?? 0);
+  await awaitPageContextBundleRestart(tabId, target);
   try {
     const files = manifestContentScriptFiles();
     const gateFile = files.find((file) => file.includes('page-context-bundle-gate'));
@@ -25159,6 +25186,7 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
   const frame = Math.max(0, Number(frameId) || 0);
   const messageOptions = contentMessageDeliveryOptions(frame);
   const scriptTarget = pageContextScriptTarget(tabId, frame);
+  await awaitPageContextBundleRestart(tabId, scriptTarget);
   const url = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
   const injection = pageContextInjectionDecision(url, settings);
   if (!injection.inject) throw pageContextPolicySkipError(url, injection);
@@ -25195,8 +25223,13 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
       if (filesToInject.length) {
         const allowed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
         if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
-        await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
+        if (bridgeAlreadyLoaded && !runtimeState.extractorReady) {
+          await reinstallPageContextBundleEntries(tabId, scriptTarget);
+        } else {
+          await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
+        }
       }
+      await awaitPageContextBundleRestart(tabId, scriptTarget);
       return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
     } catch (fallbackError) {
       if (fallbackError && typeof fallbackError === 'object' && !fallbackError.cause) fallbackError.cause = originalError;
@@ -25247,6 +25280,7 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
       };
     }
     const scriptTarget = pageContextScriptTarget(tabId, frameId);
+    await awaitPageContextBundleRestart(tabId, scriptTarget);
     const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
     if (!refreshed) {
       return {
@@ -25259,6 +25293,7 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
+    await awaitPageContextBundleRestart(tabId, scriptTarget);
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
     await browserApi.scripting.executeScript({

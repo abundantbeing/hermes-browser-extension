@@ -74,6 +74,26 @@ test('sidepanel installer enforces pageContextInjectionDecision before scripting
   assert.match(block, /pageContextBundleRestartFiles\(\)/);
 });
 
+test('overlapping page-context actions share one bundle restart per tab frame', async () => {
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const block = source.slice(
+    source.indexOf('const pageContextBundleRestartByTarget'),
+    source.indexOf('async function ensurePageContextGateAndRefresh'),
+  );
+  assert.match(block, /pageContextBundleRestartByTarget/);
+  assert.match(block, /await existing/);
+  const sendBlock = source.slice(
+    source.indexOf('async function sendContentMessageWithInstallFallback'),
+    source.indexOf('function collectPageContextWithSharedExtractor'),
+  );
+  assert.match(sendBlock, /await awaitPageContextBundleRestart\(tabId, scriptTarget\)/);
+  const extractorBlock = source.slice(
+    source.indexOf('async function getPageContextViaScripting'),
+    source.indexOf('async function getPageContext('),
+  );
+  assert.match(extractorBlock, /await awaitPageContextBundleRestart\(tabId, scriptTarget\)/);
+});
+
 test('opt-in bundle reinstall runs bundle entries after gate in dependency order', async () => {
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const block = source.slice(

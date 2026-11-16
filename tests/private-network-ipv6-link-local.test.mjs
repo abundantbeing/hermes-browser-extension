@@ -28,9 +28,12 @@ test('generated install guard embeds the same fe80::/10 classifier', async () =>
   }
 });
 
-test('pageContextInjectionDecision applies the classifier at fe90::1', () => {
-  assert.deepEqual(pageContextInjectionDecision('http://[fe90::1]/', {}), {
-    inject: false,
-    reason: 'private-network',
-  });
+test('pageContextInjectionDecision applies fe80::/10 link-local policy with fec0::/10 boundary', () => {
+  for (const host of ['fe80::1', 'fe90::1', 'febf::1']) {
+    assert.deepEqual(pageContextInjectionDecision(`http://[${host}]/`, {}), {
+      inject: false,
+      reason: 'private-network',
+    }, host);
+  }
+  assert.equal(pageContextInjectionDecision('http://[fec0::1]/', {}).inject, true);
 });

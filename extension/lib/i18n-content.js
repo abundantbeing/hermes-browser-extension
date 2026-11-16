@@ -38,8 +38,11 @@
   }
 
   async function initialize() {
+    const priorListener = globalThis.__HERMES_I18N_CONTENT_STORAGE_LISTENER__;
+    if (priorListener) browserApi.storage.onChanged.removeListener(priorListener);
     const startingRevision = storageRevision;
     browserApi.storage.onChanged.addListener(storageChanged);
+    globalThis.__HERMES_I18N_CONTENT_STORAGE_LISTENER__ = storageChanged;
     const stored = await browserApi.storage.local.get(STORAGE_KEY).catch(() => ({}));
     if (storageRevision === startingRevision) locale = normalize(stored?.[STORAGE_KEY]);
     return locale;

@@ -59,6 +59,32 @@ test('Hermes Assist bridge excludes settings-only copy and remains bounded acros
   assert.ok(source.length < 500_000, `content i18n bridge grew to ${source.length} bytes`);
 });
 
+test('content i18n bridge removes the prior storage listener before re-initializing', async () => {
+  const source = read('extension/lib/i18n-content.js');
+  const facade = read('extension/lib/browser-api-global.js');
+  const listeners = new Set();
+  const sandbox = {
+    console,
+    chrome: {
+      storage: {
+        local: { get: async () => ({}) },
+        onChanged: {
+          addListener: (listener) => listeners.add(listener),
+          removeListener: (listener) => listeners.delete(listener),
+        },
+      },
+    },
+  };
+  sandbox.globalThis = sandbox;
+  vm.runInNewContext(facade, sandbox);
+  vm.runInNewContext(source, sandbox);
+  await sandbox.HermesI18nContent.ready;
+  assert.equal(listeners.size, 1);
+  vm.runInNewContext(source, sandbox);
+  await sandbox.HermesI18nContent.ready;
+  assert.equal(listeners.size, 1, 'bundle restart must not stack storage listeners');
+});
+
 test('Hermes Assist canonicalizes locale aliases and cannot miss an initialization race', async () => {
   const source = read('extension/lib/i18n-content.js');
   const facade = read('extension/lib/browser-api-global.js');
