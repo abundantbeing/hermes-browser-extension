@@ -11,6 +11,7 @@
  *   - cross-run coordination happens exclusively through globalThis sentinels
  *     (__HERMES_BROWSER_CONTENT_LISTENER__, __HERMES_BROWSER_CONTENT_LOADED__),
  *   - the previous run's message listener is removed before a fresh one binds,
+ *     stale element-pick capture handlers are detached via __HERMES_ELEMENT_PICK_HANDLERS__,
  *     and element-pick styles are added only when absent.
  * Do not hoist any declaration out of the IIFE.
  */
@@ -74,6 +75,19 @@
   let pickPurpose = 'context';
   let pickTheme = null;
   let highlightedElement = null;
+
+  function detachGlobalPickHandlers() {
+    const handlers = globalThis.__HERMES_ELEMENT_PICK_HANDLERS__;
+    if (!handlers) return;
+    document.removeEventListener('mousemove', handlers.onPickMouseMove, true);
+    document.removeEventListener('click', handlers.onPickClick, true);
+    document.removeEventListener('keydown', handlers.onPickKeydown, true);
+    globalThis.__HERMES_ELEMENT_PICK_HANDLERS__ = null;
+    document.documentElement.classList.remove('hermes-element-pick-mode');
+    document.documentElement.removeAttribute('data-hermes-pick-purpose');
+  }
+
+  detachGlobalPickHandlers();
   let browserControlIndicatorHost = null;
   let browserControlIndicatorSuspended = false;
   let browserControlIndicatorShownAt = 0;
@@ -388,15 +402,11 @@
   }
 
   function teardownPickMode({ cancelled = false, pickedElement = null } = {}) {
-    if (!pickModeActive) return;
+    if (!pickModeActive && !globalThis.__HERMES_ELEMENT_PICK_HANDLERS__) return;
     pickModeActive = false;
     pickPurpose = 'context';
     clearHighlight();
-    document.documentElement.classList.remove('hermes-element-pick-mode');
-    document.documentElement.removeAttribute('data-hermes-pick-purpose');
-    document.removeEventListener('mousemove', onPickMouseMove, true);
-    document.removeEventListener('click', onPickClick, true);
-    document.removeEventListener('keydown', onPickKeydown, true);
+    detachGlobalPickHandlers();
     if (cancelled) {
       browserApi.runtime.sendMessage({
         type: ELEMENT_PICK_MESSAGES.CANCELLED,
@@ -499,6 +509,7 @@
     if (pickModeActive) return { ok: true, alreadyActive: true };
     annotationController?.cancel?.();
     HermesPageAnnotation?.hidePageCommentCard?.(document);
+    detachGlobalPickHandlers();
     pickModeActive = true;
     pickPurpose = message.purpose === 'comment' ? 'comment' : 'context';
     pickTheme = message.theme && typeof message.theme === 'object' ? message.theme : null;
@@ -508,6 +519,7 @@
     document.addEventListener('mousemove', onPickMouseMove, true);
     document.addEventListener('click', onPickClick, true);
     document.addEventListener('keydown', onPickKeydown, true);
+    globalThis.__HERMES_ELEMENT_PICK_HANDLERS__ = { onPickMouseMove, onPickClick, onPickKeydown };
     browserApi.runtime.sendMessage({ type: ELEMENT_PICK_MESSAGES.PICKING, url: location.href }).catch(() => {});
     return { ok: true };
   }

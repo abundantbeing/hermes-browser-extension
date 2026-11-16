@@ -25004,6 +25004,7 @@ function contentMessageDeliveryOptions(frameId = 0) {
 }
 
 const pageContextBundleRestartByTarget = new Map();
+const pageContextGateEnsureByTarget = new Map();
 
 function pageContextBundleRestartKey(tabId, scriptTarget) {
   const frame = Math.max(0, Number(scriptTarget?.frameIds?.[0]) || 0);
@@ -25015,35 +25016,52 @@ async function awaitPageContextBundleRestart(tabId, scriptTarget) {
   if (pending) await pending;
 }
 
+async function probePageContextBundleRestartNeeded(scriptTarget) {
+  const [bundleState] = await browserApi.scripting.executeScript({
+    target: scriptTarget,
+    func: () => {
+      const restart = globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ === true;
+      if (restart) globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
+      return {
+        restart,
+        extractorReady: Boolean(globalThis.HermesContentExtractor?.collectPageContext),
+        bridgeLoaded: Boolean(globalThis.__HERMES_BROWSER_CONTENT_LOADED__),
+      };
+    },
+  });
+  const state = bundleState?.result || {};
+  return Boolean(state.restart || (state.bridgeLoaded && !state.extractorReady));
+}
+
 async function reinstallPageContextBundleEntries(tabId, scriptTarget) {
   const key = pageContextBundleRestartKey(tabId, scriptTarget);
-  const existing = pageContextBundleRestartByTarget.get(key);
-  if (existing) {
-    await existing;
+  while (true) {
+    const existing = pageContextBundleRestartByTarget.get(key);
+    if (existing) {
+      await existing;
+      if (!(await probePageContextBundleRestartNeeded(scriptTarget))) return;
+      continue;
+    }
+    const run = (async () => {
+      const restartFiles = pageContextBundleRestartFiles();
+      if (!restartFiles.length) return;
+      await browserApi.scripting.executeScript({ target: scriptTarget, files: restartFiles });
+      await browserApi.scripting.executeScript({
+        target: scriptTarget,
+        func: () => new Promise((resolve) => setTimeout(resolve, 0)),
+      });
+    })();
+    pageContextBundleRestartByTarget.set(key, run);
+    try {
+      await run;
+    } finally {
+      if (pageContextBundleRestartByTarget.get(key) === run) pageContextBundleRestartByTarget.delete(key);
+    }
     return;
-  }
-  const run = (async () => {
-    const restartFiles = pageContextBundleRestartFiles();
-    if (!restartFiles.length) return;
-    await browserApi.scripting.executeScript({ target: scriptTarget, files: restartFiles });
-    await browserApi.scripting.executeScript({
-      target: scriptTarget,
-      func: () => new Promise((resolve) => setTimeout(resolve, 0)),
-    });
-  })();
-  pageContextBundleRestartByTarget.set(key, run);
-  try {
-    await run;
-  } finally {
-    if (pageContextBundleRestartByTarget.get(key) === run) pageContextBundleRestartByTarget.delete(key);
   }
 }
 
-async function ensurePageContextGateAndRefresh(tabId, scriptTarget = null) {
-  if (!tabId) return false;
-  const target = scriptTarget && scriptTarget.frameIds
-    ? scriptTarget
-    : pageContextScriptTarget(tabId, scriptTarget?.frameIds?.[0] ?? 0);
+async function runPageContextGateEnsureForTarget(tabId, target) {
   await awaitPageContextBundleRestart(tabId, target);
   try {
     const files = manifestContentScriptFiles();
@@ -25072,25 +25090,33 @@ async function ensurePageContextGateAndRefresh(tabId, scriptTarget = null) {
     });
     const outcome = refreshed?.result || {};
     if (!outcome.allowed) return false;
-    const [bundleState] = await browserApi.scripting.executeScript({
-      target,
-      func: () => {
-        const restart = globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ === true;
-        if (restart) globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
-        return {
-          restart,
-          extractorReady: Boolean(globalThis.HermesContentExtractor?.collectPageContext),
-          bridgeLoaded: Boolean(globalThis.__HERMES_BROWSER_CONTENT_LOADED__),
-        };
-      },
-    });
-    const state = bundleState?.result || {};
-    const needsRestart = outcome.restart || state.restart
-      || (state.bridgeLoaded && !state.extractorReady);
-    if (needsRestart) await reinstallPageContextBundleEntries(tabId, target);
+    let needsRestart = outcome.restart || (await probePageContextBundleRestartNeeded(target));
+    if (needsRestart) {
+      await reinstallPageContextBundleEntries(tabId, target);
+      await awaitPageContextBundleRestart(tabId, target);
+      needsRestart = await probePageContextBundleRestartNeeded(target);
+      if (needsRestart) await reinstallPageContextBundleEntries(tabId, target);
+    }
     return true;
   } catch {
     return false;
+  }
+}
+
+async function ensurePageContextGateAndRefresh(tabId, scriptTarget = null) {
+  if (!tabId) return false;
+  const target = scriptTarget && scriptTarget.frameIds
+    ? scriptTarget
+    : pageContextScriptTarget(tabId, scriptTarget?.frameIds?.[0] ?? 0);
+  const key = pageContextBundleRestartKey(tabId, target);
+  const inflight = pageContextGateEnsureByTarget.get(key);
+  if (inflight) return inflight;
+  const run = runPageContextGateEnsureForTarget(tabId, target);
+  pageContextGateEnsureByTarget.set(key, run);
+  try {
+    return await run;
+  } finally {
+    if (pageContextGateEnsureByTarget.get(key) === run) pageContextGateEnsureByTarget.delete(key);
   }
 }
 
@@ -25223,10 +25249,22 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
       if (filesToInject.length) {
         const allowed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
         if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
-        if (bridgeAlreadyLoaded && !runtimeState.extractorReady) {
-          await reinstallPageContextBundleEntries(tabId, scriptTarget);
-        } else {
+        await awaitPageContextBundleRestart(tabId, scriptTarget);
+        const [sentinelAfterEnsure] = await browserApi.scripting.executeScript({
+          target: scriptTarget,
+          func: () => ({
+            bridgeLoaded: Boolean(globalThis.__HERMES_BROWSER_CONTENT_LOADED__),
+            extractorReady: Boolean(globalThis.HermesContentExtractor?.collectPageContext),
+          }),
+        });
+        const afterEnsure = sentinelAfterEnsure?.result || {};
+        if (!afterEnsure.bridgeLoaded) {
           await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
+        } else if (!afterEnsure.extractorReady && !(await probePageContextBundleRestartNeeded(scriptTarget))) {
+          const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
+          if (extractorPath) {
+            await browserApi.scripting.executeScript({ target: scriptTarget, files: [extractorPath] });
+          }
         }
       }
       await awaitPageContextBundleRestart(tabId, scriptTarget);

@@ -53,11 +53,16 @@ test('element pick failures surface in the operation toast', async () => {
 test('ensurePageContextGateAndRefresh awaits async policy refresh inside the target', async () => {
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const block = source.slice(
+    source.indexOf('async function runPageContextGateEnsureForTarget'),
     source.indexOf('async function ensurePageContextGateAndRefresh'),
-    source.indexOf('function pageContextPermissionControlDirty'),
   );
   assert.match(block, /func: async \(\) =>/);
   assert.match(block, /await refresh\(\)/);
+  const gate = source.slice(
+    source.indexOf('async function ensurePageContextGateAndRefresh'),
+    source.indexOf('function pageContextPermissionControlDirty'),
+  );
+  assert.match(gate, /pageContextGateEnsureByTarget/);
 });
 
 test('sidepanel installer enforces pageContextInjectionDecision before scripting fallback', async () => {
@@ -78,9 +83,11 @@ test('overlapping page-context actions share one bundle restart per tab frame', 
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const block = source.slice(
     source.indexOf('const pageContextBundleRestartByTarget'),
-    source.indexOf('async function ensurePageContextGateAndRefresh'),
+    source.indexOf('async function runPageContextGateEnsureForTarget'),
   );
   assert.match(block, /pageContextBundleRestartByTarget/);
+  assert.match(block, /pageContextGateEnsureByTarget/);
+  assert.match(block, /probePageContextBundleRestartNeeded/);
   assert.match(block, /await existing/);
   const sendBlock = source.slice(
     source.indexOf('async function sendContentMessageWithInstallFallback'),
@@ -103,11 +110,11 @@ test('opt-in bundle reinstall runs bundle entries after gate in dependency order
   assert.match(block, /page-context-bundle-gate/);
   assert.match(block, /\.slice\(gateIdx \+ 1\)/);
   const refreshBlock = source.slice(
+    source.indexOf('async function runPageContextGateEnsureForTarget'),
     source.indexOf('async function ensurePageContextGateAndRefresh'),
-    source.indexOf('function pageContextPermissionControlDirty'),
   );
   assert.match(refreshBlock, /reinstallPageContextBundleEntries/);
-  assert.match(refreshBlock, /bridgeLoaded && !state\.extractorReady/);
+  assert.match(refreshBlock, /probePageContextBundleRestartNeeded/);
 });
 
 test('adoptHermesBrowserSettingsStorageChange tracks page-context settings fields', async () => {
