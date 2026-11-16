@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { setImmediate } from 'node:timers';
 import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
