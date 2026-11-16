@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "読み上げを停止",
   "read_aloud.failed": "この返信を読み上げられませんでした",
   "read_aloud.nothing": "この返信には読み上げるテキストがありません。",
+  "read_aloud.no_voice": "このブラウザには {lang} 用の音声がありません。システムの音声設定で音声を追加してください。",
   "read_aloud.label": "音声（読み上げ）",
   "read_aloud.route.gateway": "ゲートウェイ TTS",
   "read_aloud.route.browser": "ブラウザーの音声",

@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Dejar de leer en voz alta",
   "read_aloud.failed": "No se pudo leer esta respuesta en voz alta",
   "read_aloud.nothing": "Esta respuesta no tiene texto que leer.",
+  "read_aloud.no_voice": "Este navegador no tiene voz para {lang}; instala una en los ajustes de voz del sistema.",
   "read_aloud.label": "Voz (lectura en voz alta)",
   "read_aloud.route.gateway": "TTS de la pasarela",
   "read_aloud.route.browser": "Voz del navegador",

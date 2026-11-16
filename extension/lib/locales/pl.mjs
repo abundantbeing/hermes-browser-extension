@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Przestań czytać na głos",
   "read_aloud.failed": "Nie udało się przeczytać tej odpowiedzi na głos",
   "read_aloud.nothing": "W tej odpowiedzi nie ma tekstu do przeczytania.",
+  "read_aloud.no_voice": "Ta przeglądarka nie ma głosu dla {lang}; zainstaluj go w ustawieniach mowy systemu.",
   "read_aloud.label": "Głos (czytanie na głos)",
   "read_aloud.route.gateway": "TTS bramy",
   "read_aloud.route.browser": "Mowa przeglądarki",

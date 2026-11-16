@@ -563,15 +563,213 @@ export function createGatewayAudioPlayback({
 
 const QUIET_SPEECH_ERRORS = new Set(['canceled', 'cancelled', 'interrupted']);
 
+// The browser picks a voice from utterance.lang, so a Portuguese reply read with the panel's
+// English locale comes out as an English voice mangling Portuguese. Guess the reply's own
+// language: writing systems first, then common short words for Latin-script languages.
+const KANA_LETTERS = /[぀-ヿ]/gu;
+const HAN_LETTERS = /[一-鿿]/gu;
+const KOREAN_LETTERS = /[가-힯]/gu;
+const ARABIC_LETTERS = /[؀-ۿ]/gu;
+const DEVANAGARI_LETTERS = /[ऀ-ॿ]/gu;
+const THAI_LETTERS = /[฀-๿]/gu;
+const SCRIPT_SIBLINGS = { zh: ['zh'] };
+const UKRAINIAN_LETTERS = /[іїєґ]/giu;
+const RUSSIAN_LETTERS = /[ыэъё]/giu;
+const CYRILLIC_LETTERS = /[Ѐ-ӿ]/gu;
+const QUOTED_SPAN = /「[^」]*」|『[^』]*』|“[^”]*”|"[^"]*"|«[^»]*»/gu;
+const LATIN_WORDS = {
+  pt: 'de que não é os as um uma para com em do da dos das no na você está também são mais isso pelo pela muito ao foi seu sua quando',
+  es: 'el la los las que de y en es un una por para con no está pero muy también lo del al su sus como más hay este esta',
+  en: 'the and is are of to you that it with for this not be on have was what your can will an or by from',
+  fr: 'le la les et est une des du pas vous que pour avec ce dans sur qui il elle nous au aux sont mais ça garçon français',
+  de: 'der die das und ist nicht ein eine ich sie mit zu den auch es auf für wir dem sich von',
+  it: 'il di che è non una per con sono gli della anche questo nel alla lo le si come più',
+};
+const LATIN_WORD_SETS = Object.fromEntries(Object.entries(LATIN_WORDS).map(([code, words]) => [code, new Set(words.split(' '))]));
+const LATIN_MARKS = { pt: /[ãõ]/giu, es: /[ñ¿¡]/giu };
+
+export const READ_ALOUD_ERROR = Object.freeze({ noVoiceForLang: 'no-voice-for-lang' });
+const DEFAULT_REGIONS = {
+  pt: 'pt-BR', es: 'es-ES', en: 'en-US', fr: 'fr-FR', de: 'de-DE', it: 'it-IT',
+  ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', ru: 'ru-RU', uk: 'uk-UA', ar: 'ar-SA', hi: 'hi-IN', th: 'th-TH',
+};
+
+function normalizeLangTag(tag) {
+  return String(tag || '').trim().replace(/_/g, '-').toLowerCase();
+}
+
+function primaryOf(tag) {
+  return normalizeLangTag(tag).split('-')[0];
+}
+
+/** The fallback tag when it is the same language with a region, else the language's usual region. */
+function withRegion(code, fallbackLang) {
+  const fallback = String(fallbackLang || '').trim().replace(/_/g, '-');
+  if (primaryOf(fallback) === code && fallback.includes('-')) return fallback;
+  return DEFAULT_REGIONS[code] || code;
+}
+
+/**
+ * A BCP 47 tag for the language `text` is written in, or `fallbackLang` when the text
+ * is too short or too mixed to tell.
+ */
+function latinLetterCount(text) {
+  return (text.match(/\p{Script=Latin}/gu) || []).length;
+}
+
+function letterCount(pattern, text) {
+  return (text.match(pattern) || []).length;
+}
+
+function stripQuotedSpans(text) {
+  return String(text || '').replace(QUOTED_SPAN, ' ');
+}
+
+/** Kana fully inside quote marks, with mostly Han outside — a foreign snippet, not Japanese prose. */
+function kanaQuotedInsidePredominantHan(sample, kanaCount, hanCount) {
+  if (!kanaCount || !hanCount) return false;
+  const outside = stripQuotedSpans(sample);
+  const kanaOutsideQuotes = letterCount(KANA_LETTERS, outside);
+  const hanOutsideQuotes = letterCount(HAN_LETTERS, outside);
+  if (kanaOutsideQuotes > 0) return false;
+  if (hanOutsideQuotes === 0) return false;
+  return hanOutsideQuotes > kanaCount;
+}
+
+/** True when kana looks like Japanese prose, not a short quote inside mostly Han text. */
+function substantialJapaneseEvidence(kanaCount, hanCount) {
+  if (!kanaCount) return false;
+  if (!hanCount) return kanaCount >= 3;
+  const cjk = kanaCount + hanCount;
+  if (kanaCount >= hanCount) return true;
+  return kanaCount >= 4 && kanaCount / cjk >= 0.3;
+}
+
+function cyrillicLanguageCode(body, fallbackPrimary) {
+  const ukrainianMarks = letterCount(UKRAINIAN_LETTERS, body);
+  const russianMarks = letterCount(RUSSIAN_LETTERS, body);
+  if (ukrainianMarks > russianMarks) return 'uk';
+  if (russianMarks > ukrainianMarks) return 'ru';
+  if (ukrainianMarks > 0 || russianMarks > 0) {
+    return fallbackPrimary === 'uk' || fallbackPrimary === 'ru' ? fallbackPrimary : 'ru';
+  }
+  return fallbackPrimary === 'uk' ? 'uk' : 'ru';
+}
+
+/** Discount quoted Cyrillic only when unquoted body text establishes ru vs uk. */
+function cyrillicLanguageFromSample(sample, fallbackPrimary) {
+  const outside = stripQuotedSpans(sample);
+  const cyrillicOutside = letterCount(CYRILLIC_LETTERS, outside);
+  const body = cyrillicOutside > 0 ? outside : sample;
+  return cyrillicLanguageCode(body, fallbackPrimary);
+}
+
+/** Pick a non-Latin script only when it beats Latin and every other script in the sample. */
+function dominantScriptLanguage(sample, fallbackPrimary, fallbackLang) {
+  const latinCount = latinLetterCount(sample);
+  const kanaCount = letterCount(KANA_LETTERS, sample);
+  const hanCount = letterCount(HAN_LETTERS, sample);
+  const kanaOutsideQuotes = letterCount(KANA_LETTERS, stripQuotedSpans(sample));
+  const hanQuote = kanaQuotedInsidePredominantHan(sample, kanaCount, hanCount);
+  const japaneseDominant = kanaCount > 0 && !hanQuote && (
+    kanaOutsideQuotes > 0
+    || substantialJapaneseEvidence(kanaCount, hanCount)
+    || kanaCount + hanCount > latinCount
+  );
+  const japaneseCount = kanaCount + (japaneseDominant ? hanCount : 0);
+  const chineseCount = japaneseDominant ? 0 : hanCount;
+  const competitors = [
+    ['ja', japaneseCount],
+    ['zh', chineseCount],
+    ['ko', letterCount(KOREAN_LETTERS, sample)],
+    ['ar', letterCount(ARABIC_LETTERS, sample)],
+    ['hi', letterCount(DEVANAGARI_LETTERS, sample)],
+    ['th', letterCount(THAI_LETTERS, sample)],
+  ];
+  const cyrillicCount = letterCount(CYRILLIC_LETTERS, sample);
+  if (cyrillicCount > 0) {
+    const code = cyrillicLanguageFromSample(sample, fallbackPrimary);
+    competitors.push([code, cyrillicCount]);
+  }
+  const ranked = competitors.filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);
+  if (!ranked.length) return '';
+  const [bestCode, bestCount] = ranked[0];
+  const runnerUpCount = ranked[1]?.[1] ?? 0;
+  if (bestCount <= latinCount || bestCount <= runnerUpCount) return '';
+  const siblings = SCRIPT_SIBLINGS[bestCode] || [bestCode];
+  const code = siblings.includes(fallbackPrimary) ? fallbackPrimary : bestCode;
+  return withRegion(code, fallbackLang);
+}
+
+export function guessSpeechLanguage(text, fallbackLang = '') {
+  const sample = String(text || '').slice(0, 4000);
+  const fallbackPrimary = primaryOf(fallbackLang);
+  const fromScript = dominantScriptLanguage(sample, fallbackPrimary, fallbackLang);
+  if (fromScript) return fromScript;
+  const words = sample.toLowerCase().match(/\p{L}+/gu) || [];
+  const scores = Object.fromEntries(Object.keys(LATIN_WORD_SETS).map((code) => [code, 0]));
+  for (const word of words) {
+    for (const [code, set] of Object.entries(LATIN_WORD_SETS)) if (set.has(word)) scores[code] += 1;
+  }
+  for (const [code, pattern] of Object.entries(LATIN_MARKS)) scores[code] += 2 * (sample.match(pattern) || []).length;
+  const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const [[best, top], [, runnerUp]] = ranked;
+  if (top >= 2 && top > runnerUp) return withRegion(best, fallbackLang);
+  return fallbackPrimary ? withRegion(fallbackPrimary, fallbackLang) : '';
+}
+
+/** User-facing detail for a failed read-aloud toggle; `translate` is the panel's `t()`. */
+export function readAloudFailureDetail(error, translate = (key) => key) {
+  if (error && typeof error === 'object' && error.code === READ_ALOUD_ERROR.noVoiceForLang) {
+    return translate('read_aloud.no_voice', { lang: error.lang || '' });
+  }
+  return typeof error === 'string' ? error : messageOf(error);
+}
+
+function formatReadAloudFailure(error) {
+  if (error?.code === READ_ALOUD_ERROR.noVoiceForLang) {
+    return { code: error.code, lang: String(error.lang || '') };
+  }
+  return messageOf(error);
+}
+
+/** The installed voice for `lang`: same region first, then the same language; null when none. */
+export function pickSpeechVoice(voices, lang) {
+  const wanted = normalizeLangTag(lang);
+  if (!wanted || !Array.isArray(voices) || !voices.length) return null;
+  const exact = voices.filter((voice) => normalizeLangTag(voice?.lang) === wanted);
+  const primary = primaryOf(wanted);
+  const related = voices.filter((voice) => primaryOf(voice?.lang) === primary);
+  const pool = exact.length ? exact : related;
+  return pool.find((voice) => voice?.default) || pool[0] || null;
+}
+
+/**
+ * The browser's own voice. `lang` forces a language; otherwise each read guesses it from
+ * the text, falling back to `fallbackLang` (the panel's locale).
+ */
 export function createBrowserSpeech({
   synth = globalThis.speechSynthesis || null,
   Utterance = globalThis.SpeechSynthesisUtterance || null,
   lang = '',
+  fallbackLang = '',
 } = {}) {
+  // Chrome loads its voice list lazily; asking once starts that load before the first read.
+  try { synth?.getVoices?.(); } catch { /* the list is optional */ }
   return {
     available: Boolean(synth && Utterance),
     speak(chunks) {
       if (!synth || !Utterance) throw new Error('Browser speech is not available.');
+      const spokenLang = lang || guessSpeechLanguage(chunks.join(' '), fallbackLang);
+      let voices = [];
+      try { voices = synth.getVoices?.() || []; } catch { voices = []; }
+      const voice = pickSpeechVoice(voices, spokenLang);
+      if (spokenLang && voices.length && !voice) {
+        const error = new Error(READ_ALOUD_ERROR.noVoiceForLang);
+        error.code = READ_ALOUD_ERROR.noVoiceForLang;
+        error.lang = spokenLang;
+        throw error;
+      }
       let at = 0;
       let stopped = false;
       let settle;
@@ -581,7 +779,8 @@ export function createBrowserSpeech({
         if (stopped) return;
         if (at >= chunks.length) { settle(); return; }
         const utterance = new Utterance(chunks[at]);
-        if (lang) utterance.lang = lang;
+        if (spokenLang) utterance.lang = spokenLang;
+        if (voice) utterance.voice = voice;
         utterance.onend = () => {
           if (stopped) return;
           at += 1;
@@ -732,7 +931,7 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
     if (token !== generation) return { ok: true, stopped: true };
     current = null;
     set({ status: READ_ALOUD_STATUS.idle, target: null, route: null });
-    return { ok: false, error: lastError ? messageOf(lastError) : 'No voice is available.' };
+    return { ok: false, error: lastError ? formatReadAloudFailure(lastError) : 'No voice is available.' };
   }
 
   async function toggle(target, text, {

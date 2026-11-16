@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Dừng đọc to",
   "read_aloud.failed": "Không thể đọc to phản hồi này",
   "read_aloud.nothing": "Phản hồi này không có văn bản để đọc.",
+  "read_aloud.no_voice": "Trình duyệt này không có giọng cho {lang}; hãy cài một giọng trong cài đặt giọng nói của hệ thống.",
   "read_aloud.label": "Giọng nói (đọc to)",
   "read_aloud.route.gateway": "TTS của cổng",
   "read_aloud.route.browser": "Giọng nói của trình duyệt",

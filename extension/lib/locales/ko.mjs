@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "소리 내어 읽기 중지",
   "read_aloud.failed": "이 답변을 소리 내어 읽을 수 없습니다",
   "read_aloud.nothing": "이 답변에는 읽을 텍스트가 없습니다.",
+  "read_aloud.no_voice": "이 브라우저에는 {lang}용 음성이 없습니다. 시스템 음성 설정에서 음성을 설치하세요.",
   "read_aloud.label": "음성(소리 내어 읽기)",
   "read_aloud.route.gateway": "게이트웨이 TTS",
   "read_aloud.route.browser": "브라우저 음성",

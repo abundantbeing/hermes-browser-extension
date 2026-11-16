@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Stop oplæsning",
   "read_aloud.failed": "Dette svar kunne ikke læses højt",
   "read_aloud.nothing": "Der er ingen tekst at læse i dette svar.",
+  "read_aloud.no_voice": "Denne browser har ingen stemme til {lang}; installér en i systemets taleindstillinger.",
   "read_aloud.label": "Stemme (læs højt)",
   "read_aloud.route.gateway": "Gateway-TTS",
   "read_aloud.route.browser": "Browsertale",

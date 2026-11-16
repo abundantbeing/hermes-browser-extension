@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Vorlesen beenden",
   "read_aloud.failed": "Diese Antwort konnte nicht vorgelesen werden",
   "read_aloud.nothing": "In dieser Antwort gibt es keinen Text zum Vorlesen.",
+  "read_aloud.no_voice": "Dieser Browser hat keine Stimme für {lang}; installieren Sie eine in den Spracheinstellungen Ihres Systems.",
   "read_aloud.label": "Stimme (Vorlesen)",
   "read_aloud.route.gateway": "Gateway-TTS",
   "read_aloud.route.browser": "Browser-Sprachausgabe",

@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Зупинити читання вголос",
   "read_aloud.failed": "Не вдалося прочитати цю відповідь вголос",
   "read_aloud.nothing": "У цій відповіді немає тексту для читання.",
+  "read_aloud.no_voice": "У цьому браузері немає голосу для {lang}; установіть його в налаштуваннях мовлення системи.",
   "read_aloud.label": "Голос (читання вголос)",
   "read_aloud.route.gateway": "TTS шлюзу",
   "read_aloud.route.browser": "Мовлення браузера",

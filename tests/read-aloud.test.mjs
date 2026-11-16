@@ -6,6 +6,10 @@ import {
   READ_ALOUD_STATUS,
   chooseReadAloudRoute,
   createBrowserSpeech,
+  READ_ALOUD_ERROR,
+  guessSpeechLanguage,
+  pickSpeechVoice,
+  readAloudFailureDetail,
   createGatewayAudioPlayback,
   createReadAloudPlayer,
   dataUrlToBytes,
@@ -413,6 +417,139 @@ test('a speech error rejects the clip; "canceled" and "interrupted" are not erro
   const second = speech.speak(['b.']);
   synth.spoken[1].onerror({ error: 'interrupted' });
   await second.finished;
+});
+
+test('the spoken language comes from the reply, not the panel locale', () => {
+  assert.equal(guessSpeechLanguage('Olá Diego, este é um teste de leitura em voz alta da extensão.', 'en'), 'pt-BR');
+  assert.equal(guessSpeechLanguage('Este texto não tem nada de especial, mas é português.', 'pt-PT'), 'pt-PT');
+  assert.equal(guessSpeechLanguage('This is a short reply that you can read aloud.', 'pt-BR'), 'en-US');
+  assert.equal(guessSpeechLanguage('¿Dónde está el baño? Por favor, dime cómo llegar.', 'en'), 'es-ES');
+  assert.equal(guessSpeechLanguage('これは日本語のテキストです。', 'en'), 'ja-JP');
+  assert.equal(guessSpeechLanguage('这是中文文本。', 'zh-TW'), 'zh-TW');
+  assert.equal(guessSpeechLanguage('Привіт, як справи?', 'uk'), 'uk-UA');
+  assert.equal(guessSpeechLanguage('Привіт, як справи?', 'en'), 'uk-UA', 'Ukrainian letters win over an English panel');
+  assert.equal(guessSpeechLanguage('Ce garçon est français.', 'fr'), 'fr-FR', 'a French cedilla does not select Portuguese');
+  assert.equal(guessSpeechLanguage('Ça fonctionne correctement.', 'fr'), 'fr-FR');
+  assert.equal(guessSpeechLanguage('The Chinese character 中 means middle.', 'en'), 'en-US', 'one Han character keeps the panel language');
+  assert.equal(guessSpeechLanguage('The word こんにちは is a greeting.', 'en'), 'en-US', 'embedded Japanese yields to English words');
+  assert.equal(guessSpeechLanguage('JavaScript開発環境の初期設定手順を説明します。', 'en'), 'ja-JP', 'kana and kanji beat embedded Latin');
+  assert.equal(guessSpeechLanguage('ロシア語で「Привет」は「こんにちは」という意味です。', 'ja'), 'ja-JP', 'Japanese beats a short Cyrillic quote');
+  assert.equal(
+    guessSpeechLanguage('JavaScript 配置已经完成，请重启浏览器。日语「こんにちは」表示问候。', 'zh-CN'),
+    'zh-CN',
+    'a short Japanese quote does not flip predominantly Chinese prose to Japanese',
+  );
+  assert.equal(guessSpeechLanguage('これは日本語のテキストです。', 'zh-CN'), 'ja-JP', 'substantial kana still selects Japanese');
+  assert.equal(
+    guessSpeechLanguage('管理者権限設定画面を開く。', 'ja'),
+    'ja-JP',
+    'kana outside quotes selects Japanese over Han even with few kana',
+  );
+  assert.equal(
+    guessSpeechLanguage('Это русский текст. Украинское слово «Привіт» означает привет.', 'ru'),
+    'ru-RU',
+    'a Ukrainian quote does not outweigh Russian body text',
+  );
+  assert.equal(
+    guessSpeechLanguage('「明日の予定を書く」', 'ja'),
+    'ja-JP',
+    'a fully quoted Japanese reply keeps Japanese',
+  );
+  assert.equal(
+    guessSpeechLanguage('«Привіт, як справи?»', 'en'),
+    'uk-UA',
+    'a fully quoted Ukrainian reply keeps Ukrainian',
+  );
+  assert.equal(guessSpeechLanguage('OK', 'pt-BR'), 'pt-BR', 'too little to tell keeps the locale');
+  assert.equal(guessSpeechLanguage('OK', ''), '');
+});
+
+test('a missing voice error carries a code and language for translation', () => {
+  const detail = readAloudFailureDetail(
+    { code: READ_ALOUD_ERROR.noVoiceForLang, lang: 'pt-BR' },
+  (key, params) => `${key}:${params.lang}`,
+  );
+  assert.equal(detail, 'read_aloud.no_voice:pt-BR');
+});
+
+test('a voice is picked for the spoken language, region first', () => {
+  const voices = [
+    { name: 'Samantha', lang: 'en-US', default: true },
+    { name: 'Joana', lang: 'pt-PT' },
+    { name: 'Luciana', lang: 'pt_BR' },
+  ];
+  assert.equal(pickSpeechVoice(voices, 'pt-BR').name, 'Luciana');
+  assert.equal(pickSpeechVoice(voices, 'pt-AO').name, 'Joana');
+  assert.equal(pickSpeechVoice(voices, 'de-DE'), null);
+  assert.equal(pickSpeechVoice([], 'pt-BR'), null);
+});
+
+test('browser speech reads a Portuguese reply with a Portuguese voice even in an English panel', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  const luciana = { name: 'Luciana', lang: 'pt-BR' };
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }, luciana];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'en' });
+  speech.speak(['Olá, este é um teste da leitura em voz alta.']);
+  assert.equal(synth.spoken[0].lang, 'pt-BR');
+  assert.equal(synth.spoken[0].voice, luciana);
+});
+
+test('browser speech refuses to read with a voice of another language', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'en' });
+  assert.throws(() => speech.speak(['Olá, este é um teste da leitura em voz alta.']), (error) => error.code === READ_ALOUD_ERROR.noVoiceForLang && error.lang === 'pt-BR');
+  assert.equal(synth.spoken.length, 0);
+});
+
+test('browser speech reads an English reply with one Han character when only English is installed', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'en' });
+  speech.speak(['The Chinese character 中 means middle.']);
+  assert.equal(synth.spoken[0].lang, 'en-US');
+  assert.equal(synth.spoken[0].voice?.name, 'Samantha');
+});
+
+test('browser speech reads French with a French voice and no Portuguese voice', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  const thomas = { name: 'Thomas', lang: 'fr-FR' };
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }, thomas];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'fr' });
+  speech.speak(['Ça fonctionne correctement.']);
+  assert.equal(synth.spoken[0].lang, 'fr-FR');
+  assert.equal(synth.spoken[0].voice, thomas);
+});
+
+test('browser speech reads Chinese prose with a short Japanese quote in a Chinese panel', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  const chinese = { name: 'Ting-Ting', lang: 'zh-CN' };
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }, chinese];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'zh-CN' });
+  const line = 'JavaScript 配置已经完成，请重启浏览器。日语「こんにちは」表示问候。';
+  speech.speak([line]);
+  assert.equal(synth.spoken[0].lang, 'zh-CN');
+  assert.equal(synth.spoken[0].voice, chinese);
+});
+
+test('browser speech still reads real Japanese in a Chinese panel when a Japanese voice is installed', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  const japanese = { name: 'Kyoko', lang: 'ja-JP' };
+  synth.getVoices = () => [{ name: 'Ting-Ting', lang: 'zh-CN' }, japanese];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'zh-CN' });
+  speech.speak(['これは日本語のテキストです。']);
+  assert.equal(synth.spoken[0].lang, 'ja-JP');
+  assert.equal(synth.spoken[0].voice, japanese);
+});
+
+test('browser speech reads Ukrainian in an English panel when a Ukrainian voice is installed', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  const ukrainian = { name: 'Lesya', lang: 'uk-UA' };
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }, ukrainian];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'en' });
+  speech.speak(['Привіт, як справи?']);
+  assert.equal(synth.spoken[0].lang, 'uk-UA');
+  assert.equal(synth.spoken[0].voice, ukrainian);
 });
 
 test('no speech engine means no browser route', () => {

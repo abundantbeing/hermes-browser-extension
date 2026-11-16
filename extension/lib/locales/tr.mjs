@@ -2294,6 +2294,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Sesli okumayı durdur",
   "read_aloud.failed": "Bu yanıt sesli okunamadı",
   "read_aloud.nothing": "Bu yanıtta okunacak metin yok.",
+  "read_aloud.no_voice": "Bu tarayıcıda {lang} için ses yok; sistem konuşma ayarlarından bir ses yükleyin.",
   "read_aloud.label": "Ses (sesli okuma)",
   "read_aloud.route.gateway": "Ağ geçidi TTS",
   "read_aloud.route.browser": "Tarayıcı konuşması",
