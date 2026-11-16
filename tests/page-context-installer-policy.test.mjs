@@ -58,11 +58,8 @@ test('ensurePageContextGateAndRefresh awaits async policy refresh inside the tar
   );
   assert.match(block, /func: async \(\) =>/);
   assert.match(block, /await refresh\(\)/);
-  const gate = source.slice(
-    source.indexOf('async function ensurePageContextGateAndRefresh'),
-    source.indexOf('function pageContextPermissionControlDirty'),
-  );
-  assert.match(gate, /pageContextGateEnsureByTarget/);
+  assert.match(source, /createPageContextGateEnsureCoalescer/);
+  assert.match(source, /ensurePageContextGateAndRefresh/);
 });
 
 test('sidepanel installer enforces pageContextInjectionDecision before scripting fallback', async () => {
@@ -81,14 +78,9 @@ test('sidepanel installer enforces pageContextInjectionDecision before scripting
 
 test('overlapping page-context actions share one bundle restart per tab frame', async () => {
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const block = source.slice(
-    source.indexOf('const pageContextBundleRestartByTarget'),
-    source.indexOf('async function runPageContextGateEnsureForTarget'),
-  );
-  assert.match(block, /pageContextBundleRestartByTarget/);
-  assert.match(block, /pageContextGateEnsureByTarget/);
-  assert.match(block, /probePageContextBundleRestartNeeded/);
-  assert.match(block, /await existing/);
+  assert.match(source, /createPageContextBundleRestartCoalescer/);
+  assert.match(source, /reinstallPageContextBundleEntries/);
+  assert.match(source, /awaitPageContextBundleRestart/);
   const sendBlock = source.slice(
     source.indexOf('async function sendContentMessageWithInstallFallback'),
     source.indexOf('function collectPageContextWithSharedExtractor'),

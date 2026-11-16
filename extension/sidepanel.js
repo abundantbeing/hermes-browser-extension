@@ -133,6 +133,12 @@ import {
   pageContextSkipMessageKey,
 } from './lib/page-script-host-policy.mjs';
 import {
+  createPageContextBundleRestartCoalescer,
+  createPageContextGateEnsureCoalescer,
+  probePageContextBundleRestartNeeded as probePageContextBundleRestartNeededInTab,
+  runPageContextBundleRestart,
+} from './lib/page-context-bundle-restart.mjs';
+import {
   BUILD_RELOAD_BOOT_RECHECK_MS,
   BUILD_RELOAD_WATCH_INTERVAL_MS,
   HBE_RELEASES_URL,
@@ -25003,63 +25009,21 @@ function contentMessageDeliveryOptions(frameId = 0) {
   return { frameId: frame };
 }
 
-const pageContextBundleRestartByTarget = new Map();
-const pageContextGateEnsureByTarget = new Map();
-
-function pageContextBundleRestartKey(tabId, scriptTarget) {
-  const frame = Math.max(0, Number(scriptTarget?.frameIds?.[0]) || 0);
-  return `${tabId}\u0000${frame}`;
-}
-
-async function awaitPageContextBundleRestart(tabId, scriptTarget) {
-  const pending = pageContextBundleRestartByTarget.get(pageContextBundleRestartKey(tabId, scriptTarget));
-  if (pending) await pending;
-}
-
-async function probePageContextBundleRestartNeeded(scriptTarget) {
-  const [bundleState] = await browserApi.scripting.executeScript({
-    target: scriptTarget,
-    func: () => {
-      const restart = globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ === true;
-      if (restart) globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
-      return {
-        restart,
-        extractorReady: Boolean(globalThis.HermesContentExtractor?.collectPageContext),
-        bridgeLoaded: Boolean(globalThis.__HERMES_BROWSER_CONTENT_LOADED__),
-      };
-    },
-  });
-  const state = bundleState?.result || {};
-  return Boolean(state.restart || (state.bridgeLoaded && !state.extractorReady));
-}
-
-async function reinstallPageContextBundleEntries(tabId, scriptTarget) {
-  const key = pageContextBundleRestartKey(tabId, scriptTarget);
-  while (true) {
-    const existing = pageContextBundleRestartByTarget.get(key);
-    if (existing) {
-      await existing;
-      if (!(await probePageContextBundleRestartNeeded(scriptTarget))) return;
-      continue;
-    }
-    const run = (async () => {
-      const restartFiles = pageContextBundleRestartFiles();
-      if (!restartFiles.length) return;
-      await browserApi.scripting.executeScript({ target: scriptTarget, files: restartFiles });
-      await browserApi.scripting.executeScript({
-        target: scriptTarget,
-        func: () => new Promise((resolve) => setTimeout(resolve, 0)),
-      });
-    })();
-    pageContextBundleRestartByTarget.set(key, run);
-    try {
-      await run;
-    } finally {
-      if (pageContextBundleRestartByTarget.get(key) === run) pageContextBundleRestartByTarget.delete(key);
-    }
-    return;
-  }
-}
+const pageContextBundleRestart = createPageContextBundleRestartCoalescer({
+  probeRestartNeeded: (scriptTarget) => probePageContextBundleRestartNeededInTab(
+    (request) => browserApi.scripting.executeScript(request),
+    scriptTarget,
+  ),
+  runBundleRestart: (scriptTarget) => runPageContextBundleRestart(
+    (request) => browserApi.scripting.executeScript(request),
+    scriptTarget,
+    pageContextBundleRestartFiles(),
+  ),
+});
+const {
+  awaitPageContextBundleRestart,
+  reinstallPageContextBundleEntries,
+} = pageContextBundleRestart;
 
 async function runPageContextGateEnsureForTarget(tabId, target) {
   await awaitPageContextBundleRestart(tabId, target);
@@ -25103,21 +25067,21 @@ async function runPageContextGateEnsureForTarget(tabId, target) {
   }
 }
 
-async function ensurePageContextGateAndRefresh(tabId, scriptTarget = null) {
-  if (!tabId) return false;
-  const target = scriptTarget && scriptTarget.frameIds
-    ? scriptTarget
-    : pageContextScriptTarget(tabId, scriptTarget?.frameIds?.[0] ?? 0);
-  const key = pageContextBundleRestartKey(tabId, target);
-  const inflight = pageContextGateEnsureByTarget.get(key);
-  if (inflight) return inflight;
-  const run = runPageContextGateEnsureForTarget(tabId, target);
-  pageContextGateEnsureByTarget.set(key, run);
-  try {
-    return await run;
-  } finally {
-    if (pageContextGateEnsureByTarget.get(key) === run) pageContextGateEnsureByTarget.delete(key);
-  }
+const pageContextGateEnsure = createPageContextGateEnsureCoalescer({
+  resolveTarget(tabId, scriptTarget) {
+    return scriptTarget && scriptTarget.frameIds
+      ? scriptTarget
+      : pageContextScriptTarget(tabId, scriptTarget?.frameIds?.[0] ?? 0);
+  },
+  runPageContextGateEnsureForTarget,
+});
+const { ensurePageContextGateAndRefresh } = pageContextGateEnsure;
+
+async function probePageContextBundleRestartNeeded(scriptTarget) {
+  return probePageContextBundleRestartNeededInTab(
+    (request) => browserApi.scripting.executeScript(request),
+    scriptTarget,
+  );
 }
 
 function pageContextPermissionControlDirty(control) {
