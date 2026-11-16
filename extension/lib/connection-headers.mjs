@@ -79,7 +79,7 @@ const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // The exact origin: scheme (and its WebSocket twin), host and port. Another service on the same host
 // but another port is not this connection and gets nothing.
-function originPattern(address) {
+export function originPattern(address) {
   try {
     const parsed = new URL(String(address || ''));
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return '';
@@ -184,7 +184,8 @@ export function probeHeaderRule({ gatewayUrl, headers, active, extensionHost, ma
   };
 }
 
-function probeMarker() {
+/** A random marker for one test's requests (the PROBE_PARAM query value a rule for that test matches). */
+export function newProbeMarker() {
   const bytes = globalThis.crypto?.getRandomValues?.(new Uint8Array(8)) || Array.from({ length: 8 }, () => Math.floor(Math.random() * 256));
   return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
@@ -194,11 +195,11 @@ function probeMarker() {
  * in each request's query (empty when no rule was needed) and is always cleaned up after.
  */
 export async function withProbeHeaderIsolation(
-  { gatewayUrl, headers, active, extensionHost },
+  { gatewayUrl, headers, active, extensionHost, marker: givenMarker = '' },
   probe,
   dnr = globalThis.chrome?.declarativeNetRequest || globalThis.browser?.declarativeNetRequest,
 ) {
-  const marker = probeMarker();
+  const marker = givenMarker || newProbeMarker();
   let rule = dnr?.updateSessionRules ? probeHeaderRule({ gatewayUrl, headers, active, extensionHost, marker, id: newProbeRuleId() }) : null;
   for (let attempt = 0; rule; attempt += 1) {
     try {

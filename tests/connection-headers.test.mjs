@@ -163,9 +163,10 @@ test('the panel\'s own public requests carry the headers directly, so a browser 
 
 test('the background keeps the network rule in step with the active connection', async () => {
   const background = await readFile(new URL('../extension/background.js', import.meta.url), 'utf8');
-  assert.match(background, /applyConnectionHeaderRules\(\{\s*gatewayUrl: settings\.gatewayUrl,\s*headers: settings\.connectionHeaders,\s*extensionHost: extensionInitiatorHost\(/);
+  assert.match(background, /const extensionHost = extensionInitiatorHost\(\(path\) => browserApi\.runtime\.getURL\(path\)\);/);
+  assert.match(background, /applyConnectionHeaderRules\(\{\s*gatewayUrl: settings\.gatewayUrl,\s*headers: settings\.connectionHeaders,\s*extensionHost\s*\}\)/);
   assert.doesNotMatch(background, /extensionHost: browserApi\.runtime/, 'the initiator is the host of the extension pages, not the runtime id');
   assert.match(background, /const syncConnectionHeaders = createHeaderRuleSync\(/, 'updates run one after another');
-  assert.match(background, /changes\.hermesBrowserSettings \|\| changes\[SAVED_CONNECTION_SECRETS_STORAGE_KEY\]\) void syncConnectionHeaders\(\)/);
+  assert.match(background, /changes\.hermesBrowserSettings \|\| changes\[SAVED_CONNECTION_SECRETS_STORAGE_KEY\]\) \{[^}]*void syncConnectionHeaders\(\);\s*\}/);
   assert.match(background, /onStartup\.addListener\(async \(\) => \{[\s\S]*await syncConnectionHeaders\(\)/);
 });
