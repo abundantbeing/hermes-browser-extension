@@ -76,6 +76,50 @@ test('display typography lint audits rules inside @media blocks', () => {
   assert.ok(auditCss(nested, 'nested.css').length > 0);
 });
 
+test('display typography lint audits sibling rules after tracking token in @media', () => {
+  const repro = `
+@media (max-width: 340px) {
+  .ok { font-family: var(--hermes-font-display); letter-spacing: var(--hermes-display-tracking); line-height: 1.3; }
+  .bad { font-family: var(--hermes-font-display); line-height: 0.9; letter-spacing: 0; }
+}`;
+  const rules = parseRules(repro, 'sibling-tracking.css');
+  assert.deepEqual(
+    rules.map((r) => r.selector.trim()),
+    ['.ok', '.bad'],
+    rules.map((r) => JSON.stringify(r.selector)).join('; '),
+  );
+  const violations = auditCss(repro, 'sibling-tracking.css');
+  assert.equal(violations.length, 2, violations.map((v) => `${v.selector}: ${v.detail}`).join('; '));
+  assert.ok(violations.every((v) => v.selector.trim() === '.bad'));
+  assert.equal(rules.find((r) => r.selector.trim() === '.bad').line, 4);
+});
+
+test('display typography lint keeps clean sibling selectors inside @media', () => {
+  const mediaSiblings = `
+@media (a) {
+  .ok { color: red; }
+  .bad { font-family: var(--hermes-font-display); line-height: 0.9; letter-spacing: 0; }
+}`;
+  const rules = parseRules(mediaSiblings, 'siblings.css');
+  assert.deepEqual(rules.map((r) => r.selector.trim()), ['.ok', '.bad']);
+  assert.ok(auditCss(mediaSiblings, 'siblings.css').length >= 2);
+});
+
+test('display typography lint keeps clean sibling selectors in nested @media/@supports', () => {
+  const nestedSiblings = `
+@media (max-width: 340px) {
+  @supports (display: grid) {
+    .ok { font-family: var(--hermes-font-display); line-height: 1.3; letter-spacing: 0.04em; }
+    .bad { font-family: var(--hermes-font-display); line-height: 0.9; letter-spacing: 0; }
+  }
+}`;
+  const rules = parseRules(nestedSiblings, 'nested-siblings.css');
+  assert.deepEqual(rules.map((r) => r.selector.trim()), ['.ok', '.bad']);
+  const badLine = rules.find((r) => r.selector.trim() === '.bad').line;
+  assert.equal(badLine, 5);
+  assert.ok(auditCss(nestedSiblings, 'nested-siblings.css').some((v) => v.selector.trim() === '.bad'));
+});
+
 test('display typography lint audits rules nested in @media and @supports', () => {
   const nested = `
 @media (max-width: 340px) {

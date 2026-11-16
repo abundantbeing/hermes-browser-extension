@@ -45,8 +45,8 @@ export function parseRules(css, fileLabel = '') {
         const line = (stripped.slice(0, bodyStart).match(/\n/g) || []).length + 1;
         rules.push({ selector, body, line, file: fileLabel });
       }
-      if (depth === 0) chunkStart = i + 1;
-      else bodyStart = i + 1;
+      chunkStart = i + 1;
+      if (depth > 0) bodyStart = i + 1;
     }
   }
   return rules;
