@@ -1850,6 +1850,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes tidak menyuntikkan skrip halaman di alamat privat atau LAN ini. Nyalakan skrip halaman privat di Pengaturan → Izin, atau hapus asal dari daftar pengecualian.",
   "status.page_context_skipped_excluded": "{url} — Hermes membiarkan skrip halaman mati untuk situs ini karena ada di daftar pengecualian di Pengaturan → Izin.",
   "status.page_context_skipped": "{url} — Konteks halaman dilewati karena Hermes tidak menyuntikkan skrip di halaman ini.",
+  "status.page_context_capture_off": "Konteks halaman mati untuk situs ini.",
+  "status.page_context_capture_blocked": "Halaman ini tidak dapat ditangkap.",
   "status.element_pick_unavailable": "Pemilihan elemen tidak tersedia",
   "status.page_comments_unavailable": "Komentar halaman tidak tersedia",
   "ui.page_context_skipped": "Konteks halaman dilewati",

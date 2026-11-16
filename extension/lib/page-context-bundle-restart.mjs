@@ -76,7 +76,7 @@ export function captureRequestAnchorToken(binding) {
 export function liveAnchorMatchesCaptureRequest(binding, anchor) {
   const requestToken = captureRequestAnchorToken(binding);
   if (!anchor?.token) return false;
-  if (!requestToken) return true;
+  if (!requestToken) return false;
   return requestToken === anchor.token;
 }
 
@@ -137,6 +137,7 @@ export async function runPageContextBundleRestart(executeScript, binding, restar
   if (hooks.verifyBinding && !(await hooks.verifyBinding(binding))) return false;
   if (hooks.beforeInject && (await hooks.beforeInject()) === false) return false;
   if (!restartFiles.length) return true;
+  if (hooks.verifyBinding && !(await hooks.verifyBinding(binding))) return false;
   await executeScript({ target, files: restartFiles });
   if (hooks.afterInject && (await hooks.afterInject()) === false) return false;
   await executeScript({
@@ -221,6 +222,17 @@ export function createPageContextGateEnsureRunner(deps) {
     if (!binding) return false;
     const firstAnchor = await readPageScriptDocumentAnchor(executeScript, binding);
     if (!firstAnchor || !liveAnchorMatchesCaptureRequest(request, firstAnchor)) return false;
+    const frozenRequestToken = captureRequestAnchorToken(request) || captureRequestAnchorToken(binding);
+    if (frozenRequestToken) {
+      request.captureRequestAnchorToken = frozenRequestToken;
+      binding.captureRequestAnchorToken = frozenRequestToken;
+      binding.anchorToken = binding.anchorToken || frozenRequestToken;
+    } else {
+      binding.captureRequestAnchorToken = firstAnchor.token;
+      binding.anchorToken = firstAnchor.token;
+      request.captureRequestAnchorToken = firstAnchor.token;
+      request.anchorToken = request.anchorToken || firstAnchor.token;
+    }
     binding = { ...binding, href: firstAnchor.href };
     await awaitPageContextBundleRestart(tabId, binding);
     try {

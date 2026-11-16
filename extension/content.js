@@ -235,12 +235,13 @@
     };
   }
 
-  function pageContextCaptureRefusedResponse(reason = 'Page context is off for this site.') {
+  function pageContextCaptureRefusedResponse(reasonKey = 'status.page_context_capture_off') {
     return {
       ok: false,
       skipped: true,
       skipReason: 'blocked',
-      reason,
+      reasonKey,
+      reason: '',
       text: '',
       selectedText: '',
       meta: {},
@@ -284,7 +285,7 @@
 
   function collectContext(options = {}) {
     if (pageContextCaptureUrlBlocked()) {
-      return pageContextCaptureRefusedResponse('This page cannot be captured.');
+      return pageContextCaptureRefusedResponse('status.page_context_capture_blocked');
     }
     if (pageContextCaptureBlockedByGate()) {
       return pageContextCaptureRefusedResponse();
@@ -663,7 +664,7 @@
               return;
             }
             if (pageContextCaptureUrlBlocked()) {
-              sendResponse(pageContextCaptureRefusedResponse('This page cannot be captured.'));
+              sendResponse(pageContextCaptureRefusedResponse('status.page_context_capture_blocked'));
               return;
             }
             try {

@@ -1850,6 +1850,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes injicerede ikke side-scripts på denne private eller LAN-adresse. Slå private side-scripts til under Indstillinger → Tilladelser, eller fjern oprindelsen fra udelukkelseslisten.",
   "status.page_context_skipped_excluded": "{url} — Hermes lod side-scripts være slukket for dette websted, fordi det står på din udelukkelsesliste under Indstillinger → Tilladelser.",
   "status.page_context_skipped": "{url} — Sidekontekst blev sprunget over, fordi Hermes ikke injicerede scripts på denne side.",
+  "status.page_context_capture_off": "Sidekontekst er slået fra for dette websted.",
+  "status.page_context_capture_blocked": "Denne side kan ikke indfanges.",
   "status.element_pick_unavailable": "Elementvalg er ikke tilgængeligt",
   "status.page_comments_unavailable": "Sidekommentarer er ikke tilgængelige",
   "ui.page_context_skipped": "Sidekontekst sprunget over",

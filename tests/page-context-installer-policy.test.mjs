@@ -75,6 +75,8 @@ test('sidepanel installer enforces pageContextInjectionDecision before scripting
   assert.match(block, /contentMessageDeliveryOptions\(installBinding/);
   assert.match(block, /pageContextBundleRestartFiles\(\)/);
   assert.match(block, /verifyPageContextInstallBinding/);
+  assert.match(block, /return await browserApi\.tabs\.sendMessage\(tabId, outboundMessage, messageOptions\)/);
+  assert.match(block, /captureRequestAnchorToken = installBinding\.captureRequestAnchorToken \|\| installBinding\.anchorToken/);
 });
 
 test('overlapping page-context actions share one bundle restart per tab frame', async () => {

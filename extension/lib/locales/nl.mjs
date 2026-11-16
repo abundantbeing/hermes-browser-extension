@@ -1850,6 +1850,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes heeft geen paginascripts geïnjecteerd op dit privé- of LAN-adres. Schakel privépaginascripts in via Instellingen → Machtigingen of verwijder de origin van de uitsluitingslijst.",
   "status.page_context_skipped_excluded": "{url} — Hermes liet paginascripts uit voor deze site omdat die op uw uitsluitingslijst staat onder Instellingen → Machtigingen.",
   "status.page_context_skipped": "{url} — Paginacontext overgeslagen omdat Hermes geen scripts op deze pagina heeft geïnjecteerd.",
+  "status.page_context_capture_off": "Paginacontext staat uit voor deze site.",
+  "status.page_context_capture_blocked": "Deze pagina kan niet worden vastgelegd.",
   "status.element_pick_unavailable": "Elementkeuze niet beschikbaar",
   "status.page_comments_unavailable": "Paginacommentaren niet beschikbaar",
   "ui.page_context_skipped": "Paginacontext overgeslagen",

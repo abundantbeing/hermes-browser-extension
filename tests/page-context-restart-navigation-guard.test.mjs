@@ -107,6 +107,7 @@ function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {})
       allowFrameFallback: !enableDocumentIds,
       href: currentHref,
       anchorToken: hrefAnchor(currentHref).token,
+      captureRequestAnchorToken: hrefAnchor(currentHref).token,
     };
     if (!pageContextScriptInjectionTarget(binding)) return null;
     return binding;
@@ -167,7 +168,16 @@ test('navigation to blocked origin between allow and restart does not inject bun
   const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
   const { runGateEnsure, fileInjections, getLiveDocumentId } = createDocumentBoundHarness({ settings, enableDocumentIds: true });
 
-  const allowed = await runGateEnsure(7, { tabId: 7, frameId: 0, documentId: 'doc-example-001', allowFrameFallback: false });
+  const start = hrefAnchor('https://example.com/dashboard');
+  const allowed = await runGateEnsure(7, {
+    tabId: 7,
+    frameId: 0,
+    documentId: 'doc-example-001',
+    allowFrameFallback: false,
+    href: start.href,
+    anchorToken: start.token,
+    captureRequestAnchorToken: start.token,
+  });
 
   assert.equal(allowed, false);
   assert.equal(fileInjections.length, 0, 'must not inject bundle after navigation to blocked origin');
@@ -177,7 +187,16 @@ test('frame-only fallback aborts when navigation reaches a blocked origin', asyn
   const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
   const { runGateEnsure, fileInjections } = createDocumentBoundHarness({ settings, enableDocumentIds: false });
 
-  const allowed = await runGateEnsure(8, { tabId: 8, frameId: 0, documentId: null, allowFrameFallback: true });
+  const start = hrefAnchor('https://example.com/dashboard');
+  const allowed = await runGateEnsure(8, {
+    tabId: 8,
+    frameId: 0,
+    documentId: null,
+    allowFrameFallback: true,
+    href: start.href,
+    anchorToken: start.token,
+    captureRequestAnchorToken: start.token,
+  });
 
   assert.equal(allowed, false);
   const injectedBundle = fileInjections.some((row) =>
@@ -198,6 +217,7 @@ test('frame fallback direct restart after navigation to localhost does not injec
     documentId: null,
     allowFrameFallback: true,
     anchorToken: `${new URL(currentHref).origin}\u0000${currentHref}`,
+    captureRequestAnchorToken: `${new URL(currentHref).origin}\u0000${currentHref}`,
   };
   const executeScript = async (request) => {
     if (request.files) {

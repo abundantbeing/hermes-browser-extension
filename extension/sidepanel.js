@@ -25313,12 +25313,22 @@ async function resolvePageContextGateBinding(tabId, scriptTarget) {
     const frameId = 0;
     return acquirePageContextInstallBinding(tabId, frameId);
   }
-  if (scriptTarget.href && scriptTarget.anchorToken) return scriptTarget;
+  if (scriptTarget.href && scriptTarget.anchorToken) {
+    const frozenToken = scriptTarget.captureRequestAnchorToken || scriptTarget.anchorToken;
+    return { ...scriptTarget, captureRequestAnchorToken: frozenToken };
+  }
   const frameId = scriptTarget?.frameIds?.[0] ?? scriptTarget?.frameId ?? 0;
   const acquired = await acquirePageContextInstallBinding(tabId, frameId);
   if (!acquired) return null;
   if (scriptTarget.documentId) {
-    return { ...acquired, ...scriptTarget, href: acquired.href, anchorToken: acquired.anchorToken };
+    const frozenToken = scriptTarget.captureRequestAnchorToken || scriptTarget.anchorToken;
+    return {
+      ...acquired,
+      ...scriptTarget,
+      href: acquired.href,
+      anchorToken: acquired.anchorToken,
+      captureRequestAnchorToken: frozenToken || acquired.captureRequestAnchorToken,
+    };
   }
   return acquired;
 }
@@ -25455,16 +25465,17 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
     const blockedUrl = grantAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
     throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
   }
-  let outboundMessage = message;
-  if (message?.type === 'HERMES_GET_PAGE_CONTEXT' && installBinding.captureRequestAnchorToken) {
-    outboundMessage = {
+  const captureRequestAnchorToken = installBinding.captureRequestAnchorToken || installBinding.anchorToken;
+  if (captureRequestAnchorToken) installBinding.captureRequestAnchorToken = captureRequestAnchorToken;
+  const outboundMessage = message?.type === 'HERMES_GET_PAGE_CONTEXT' && captureRequestAnchorToken
+    ? {
       ...message,
       options: {
         ...(message.options || {}),
-        captureRequestAnchorToken: installBinding.captureRequestAnchorToken,
+        captureRequestAnchorToken,
       },
-    };
-  }
+    }
+    : message;
   try {
     return await browserApi.tabs.sendMessage(tabId, outboundMessage, messageOptions);
   } catch (originalError) {
@@ -25478,10 +25489,9 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
       });
       const runtimeState = sentinel?.[0]?.result || {};
       const bridgeAlreadyLoaded = Boolean(runtimeState.bridgeLoaded);
-      const files = manifestContentScriptFiles();
       let filesToInject = [];
       if (!bridgeAlreadyLoaded) {
-        filesToInject = files;
+        filesToInject = pageContextBundleRestartFiles();
       } else if (!runtimeState.extractorReady) {
         filesToInject = pageContextBundleRestartFiles();
       }
@@ -25490,6 +25500,11 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
         if (!(await verifyPageContextInstallBinding(installBinding))) {
           const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+          throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+        }
+        const retryGrantAnchor = await readPageScriptDocumentAnchor(executePageContextScript, installBinding);
+        if (!retryGrantAnchor || !pageContextPolicyGrantMatchesAnchor(installBinding, retryGrantAnchor)) {
+          const blockedUrl = retryGrantAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
           throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
         }
         await awaitPageContextBundleRestart(tabId, installBinding);
@@ -25502,7 +25517,20 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         });
         const afterEnsure = sentinelAfterEnsure?.result || {};
         if (!afterEnsure.bridgeLoaded) {
-          await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
+          if (!(await verifyPageContextInstallBinding(installBinding))) {
+            const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+            throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+          }
+          await runPageContextBundleRestart(
+            executePageContextScript,
+            installBinding,
+            filesToInject,
+            {
+              verifyBinding: verifyPageContextInstallBinding,
+              beforeInject: async () => verifyPageContextInstallBinding(installBinding),
+              afterInject: async () => verifyPageContextInstallBinding(installBinding),
+            },
+          );
         } else if (!afterEnsure.extractorReady && !(await probePageContextBundleRestartNeeded(installBinding))) {
           if (!(await verifyPageContextInstallBinding(installBinding))) {
             const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
@@ -25511,7 +25539,16 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
           const restartFiles = pageContextBundleRestartFiles();
           const gateFile = restartFiles[0];
           if (gateFile) {
-            await browserApi.scripting.executeScript({ target: scriptTarget, files: [gateFile] });
+            await runPageContextBundleRestart(
+              executePageContextScript,
+              installBinding,
+              [gateFile],
+              {
+                verifyBinding: verifyPageContextInstallBinding,
+                beforeInject: async () => verifyPageContextInstallBinding(installBinding),
+                afterInject: async () => verifyPageContextInstallBinding(installBinding),
+              },
+            );
           }
           const allowedAfterGate = await ensurePageContextGateAndRefresh(tabId, installBinding);
           if (!allowedAfterGate) {
@@ -25519,7 +25556,20 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
           }
           const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
           if (extractorPath) {
-            await browserApi.scripting.executeScript({ target: scriptTarget, files: [extractorPath] });
+            if (!(await verifyPageContextInstallBinding(installBinding))) {
+              const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+              throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+            }
+            await runPageContextBundleRestart(
+              executePageContextScript,
+              installBinding,
+              [extractorPath],
+              {
+                verifyBinding: verifyPageContextInstallBinding,
+                beforeInject: async () => verifyPageContextInstallBinding(installBinding),
+                afterInject: async () => verifyPageContextInstallBinding(installBinding),
+              },
+            );
           }
         }
       }
@@ -25528,7 +25578,12 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
         throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
       }
-      return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
+      const retryAnchor = await readPageScriptDocumentAnchor(executePageContextScript, installBinding);
+      if (!retryAnchor || !pageContextPolicyGrantMatchesAnchor(installBinding, retryAnchor)) {
+        const blockedUrl = retryAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+        throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+      }
+      return await browserApi.tabs.sendMessage(tabId, outboundMessage, messageOptions);
     } catch (fallbackError) {
       if (fallbackError && typeof fallbackError === 'object' && !fallbackError.cause) fallbackError.cause = originalError;
       throw fallbackError;
@@ -25727,11 +25782,14 @@ async function getPageContext(tab, options = {}) {
     frameId: Number(options.frameId || 0),
   };
   try {
-    const response = await sendContentMessageWithInstallFallback(
+    let response = await sendContentMessageWithInstallFallback(
       tab.id,
       { type: 'HERMES_GET_PAGE_CONTEXT', options: requestOptions },
       { frameId: requestOptions.frameId },
     );
+    if (response?.reasonKey) {
+      response = { ...response, reason: t(response.reasonKey, { url: tab.url }) };
+    }
     if (response?.ok && (requestOptions.explicitSiteCapture && isGmailThreadUrl(tab.url)
       ? Boolean(response.text)
       : (response.text || response.selectedText || response.meta?.headings?.length))) {

@@ -1850,6 +1850,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes non ha iniettato script di pagina su questo indirizzo privato o LAN. Attiva gli script privati in Impostazioni → Autorizzazioni o rimuovi l’origine dall’elenco esclusioni.",
   "status.page_context_skipped_excluded": "{url} — Hermes ha lasciato gli script di pagina disattivati per questo sito perché è nell’elenco esclusioni in Impostazioni → Autorizzazioni.",
   "status.page_context_skipped": "{url} — Contesto pagina saltato perché Hermes non ha iniettato script su questa pagina.",
+  "status.page_context_capture_off": "Il contesto pagina è disattivato per questo sito.",
+  "status.page_context_capture_blocked": "Questa pagina non può essere acquisita.",
   "status.element_pick_unavailable": "Selezione elemento non disponibile",
   "status.page_comments_unavailable": "Commenti sulla pagina non disponibili",
   "ui.page_context_skipped": "Contesto pagina saltato",

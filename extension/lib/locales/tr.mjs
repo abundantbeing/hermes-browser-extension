@@ -1850,6 +1850,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes bu özel veya LAN adresine sayfa betiği enjekte etmedi. Ayarlar → İzinler bölümünde özel sayfa betiklerini açın veya kökeni hariç tutma listesinden kaldırın.",
   "status.page_context_skipped_excluded": "{url} — Bu site Ayarlar → İzinler hariç tutma listesinde olduğu için Hermes sayfa betiklerini kapalı bıraktı.",
   "status.page_context_skipped": "{url} — Hermes bu sayfaya betik enjekte etmediği için sayfa bağlamı atlandı.",
+  "status.page_context_capture_off": "Sayfa bağlamı bu site için kapalı.",
+  "status.page_context_capture_blocked": "Bu sayfa yakalanamıyor.",
   "status.element_pick_unavailable": "Öğe seçimi kullanılamıyor",
   "status.page_comments_unavailable": "Sayfa yorumları kullanılamıyor",
   "ui.page_context_skipped": "Sayfa bağlamı atlandı",

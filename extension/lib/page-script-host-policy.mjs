@@ -259,3 +259,6 @@ export function pageContextSkipMessageKey(reason = '') {
   if (reason === 'private-network') return 'status.page_context_skipped_private';
   return 'status.page_context_skipped';
 }
+
+export const PAGE_CONTEXT_CAPTURE_REFUSAL_OFF_KEY = 'status.page_context_capture_off';
+export const PAGE_CONTEXT_CAPTURE_REFUSAL_BLOCKED_KEY = 'status.page_context_capture_blocked';

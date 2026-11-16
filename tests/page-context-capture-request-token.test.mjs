@@ -103,18 +103,26 @@ test('capture token invariant refuses navigation at each Firefox restart step', 
     const pageVm = await loadPageVm(PAGE_A, policyForUrl);
     pageVm.loadContent(PAGE_A);
 
+    const expectHrefAtStep = (stepHref) => {
+      assert.equal(href, stepHref, `${scenario.name} navigation at step`);
+    };
     const executeScript = createExecuteScript({
       getHref: () => href,
       pageVm,
       onRefresh: async () => {
-        if (phase === 'before-grant') href = scenario.nextHref;
+        if (scenario.phase === 'before-grant') href = scenario.nextHref;
         return pageVm.runRefresh();
       },
+      onRefreshObserveHref: () => {
+        if (scenario.phase === 'before-grant') expectHrefAtStep(scenario.nextHref);
+      },
       onBeforeRestart: () => {
-        if (phase === 'after-grant') href = scenario.nextHref;
+        if (scenario.phase === 'after-grant') href = scenario.nextHref;
+        if (scenario.phase === 'after-grant') expectHrefAtStep(scenario.nextHref);
       },
       onAfterRestart: () => {
-        if (phase === 'before-message') href = scenario.nextHref;
+        if (scenario.phase === 'before-message') href = scenario.nextHref;
+        if (scenario.phase === 'before-message') expectHrefAtStep(scenario.nextHref);
       },
       phaseHook: () => {
         if (phase === 'during-capture') href = scenario.nextHref;
@@ -159,6 +167,53 @@ test('capture token invariant refuses navigation at each Firefox restart step', 
     assert.equal(bundleBootedOnWrongPage, false, `${scenario.name} must not boot bundle off-request page`);
     assert.equal(captureRequestAnchorToken(installBinding), tokenFor(PAGE_A), `${scenario.name} keeps request token`);
   }
+});
+
+test('unchanged page completes gate ensure and capture with original request token', async () => {
+  const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
+  const policyForUrl = (url) => pageContextHostPolicyDecision(url, settings);
+  const installBinding = {
+    tabId: 54,
+    frameId: 0,
+    documentId: null,
+    allowFrameFallback: true,
+    href: PAGE_A,
+    anchorToken: tokenFor(PAGE_A),
+    captureRequestAnchorToken: tokenFor(PAGE_A),
+  };
+  const pageVm = await loadPageVm(PAGE_A, policyForUrl);
+  pageVm.loadContent(PAGE_A);
+
+  const executeScript = async (request) => {
+    if (request.files) return [{ result: undefined }];
+    const source = request.func.toString();
+    if (source.includes('location.href')) {
+      return [{ result: { href: PAGE_A, origin: new URL(PAGE_A).origin, token: tokenFor(PAGE_A) } }];
+    }
+    if (source.includes('HermesContentExtractor')) {
+      return [{ result: { restart: false, extractorReady: true, bridgeLoaded: true } }];
+    }
+    if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
+      return [{ result: true }];
+    }
+    if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
+      return [{ result: { allowed: true, restart: false } }];
+    }
+    return [{ result: typeof request.func === 'function' ? await pageVm.run(request.func) : undefined }];
+  };
+
+  const runGateEnsure = buildGateEnsureRunner({
+    executeScript,
+    installBinding,
+    policyForUrl,
+    verifyInstallBinding: () => verifyBinding(installBinding, executeScript, policyForUrl, settings),
+  });
+
+  const allowed = await runGateEnsure(54, installBinding);
+  assert.equal(allowed, true);
+  const capture = await pageVm.getPageContext({ captureRequestAnchorToken: tokenFor(PAGE_A) });
+  assert.equal(capture?.ok, true);
+  assert.equal(capture?.text, 'PAGE_A_SECRET');
 });
 
 for (const nextHref of [LOCALHOST, PAGE_B]) {
@@ -242,6 +297,7 @@ function createExecuteScript({
   fileInjections,
   phase,
   setPhase,
+  onRefreshObserveHref,
 }) {
   let firstAnchorRead = false;
   const executeScript = async (request) => {
@@ -272,9 +328,17 @@ function createExecuteScript({
     }
     if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
       setPhase?.('refreshed');
-      const outcome = onRefresh ? await onRefresh() : await pageVm.runRefresh();
+      onRefreshObserveHref?.(getHref());
+      const raw = onRefresh ? await onRefresh() : await pageVm.runRefresh();
+      const allowed = typeof raw === 'object' && raw !== null ? Boolean(raw.allowed) : Boolean(raw);
+      const restart = typeof raw === 'object' && raw !== null
+        ? Boolean(raw.restart)
+        : Boolean(pageVm.globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__);
+      if (typeof raw !== 'object' || raw === null) {
+        pageVm.globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
+      }
       setPhase?.('after-grant');
-      return [{ result: outcome }];
+      return [{ result: { allowed, restart } }];
     }
     phaseHook?.();
     return [{ result: typeof request.func === 'function' ? await pageVm.run(request.func) : undefined }];

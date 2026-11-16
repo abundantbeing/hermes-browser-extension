@@ -1850,6 +1850,8 @@ export default Object.freeze({
   "status.page_context_skipped_private": "{url} — Hermes không tiêm script trang trên địa chỉ riêng hoặc LAN này. Bật script trang riêng trong Cài đặt → Quyền, hoặc xóa nguồn khỏi danh sách loại trừ.",
   "status.page_context_skipped_excluded": "{url} — Hermes giữ script trang tắt cho site này vì nó nằm trong danh sách loại trừ ở Cài đặt → Quyền.",
   "status.page_context_skipped": "{url} — Đã bỏ qua ngữ cảnh trang vì Hermes không tiêm script trên trang này.",
+  "status.page_context_capture_off": "Ngữ cảnh trang đã tắt cho trang web này.",
+  "status.page_context_capture_blocked": "Không thể chụp trang này.",
   "status.element_pick_unavailable": "Không thể chọn phần tử",
   "status.page_comments_unavailable": "Bình luận trang không khả dụng",
   "ui.page_context_skipped": "Đã bỏ qua ngữ cảnh trang",

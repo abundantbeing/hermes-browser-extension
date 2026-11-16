@@ -8,6 +8,8 @@ import { SUPPORTED_LOCALES, loadLocaleMessages } from '../extension/lib/i18n-reg
 const SIDE_PANEL_SKIP_KEYS = [
   'ui.page_context_skipped',
   'ui.page_context_off_chip',
+  'status.page_context_capture_off',
+  'status.page_context_capture_blocked',
   ...new Set(['private-network', 'excluded-origin', ''].map(pageContextSkipMessageKey)),
 ];
 
