@@ -729,7 +729,8 @@ import {
 import { CONNECTION_ACTIONS, connectionActionForSettings, unsavedGatewayUrlForConnect } from './lib/connection-dispatch.mjs';
 import { createAddConnectionDialog } from './lib/add-connection-dialog.mjs';
 import { createDeleteConnectionDialog } from './lib/delete-connection-dialog.mjs';
-import { connectionHeadersAsObject, extensionInitiatorHost, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
+import { connectionHeadersAsObject, extensionInitiatorHost, newProbeMarker, withProbeHeaderIsolation } from './lib/connection-headers.mjs';
+import { SYNC_GATEWAY_RULES_MESSAGE, newPendingPairingRegistrationId, withDraftOriginRule } from './lib/gateway-origin-rule.mjs';
 import { probeConnection } from './lib/probe-connection.mjs';
 import {
   addSavedConnection,
@@ -6331,6 +6332,12 @@ function renderConnectionModePanel() {
   renderGatewayHelp();
 }
 
+function resetConnectButtonIdle() {
+  if (!els.connectButton) return;
+  els.connectButton.disabled = false;
+  els.connectButton.textContent = translateUiText('Connect to Hermes');
+}
+
 function applyConnectionMode(value) {
   if (!els.connectionModeInput || !els.gatewayModeInput) return;
   const previousMode = normalizeConnectionMode(els.connectionModeInput.value || settings.connectionMode);
@@ -6355,10 +6362,7 @@ function applyConnectionMode(value) {
     }
     remoteWsConnection = null;
     trustedDashboardTabId = null;
-    if (els.connectButton) {
-      els.connectButton.disabled = false;
-      els.connectButton.textContent = translateUiText('Connect to Hermes');
-    }
+    resetConnectButtonIdle();
     if (els.testConnectionButton) {
       setTestConnectionBusy(false);
       setTestConnectionButtonLabel('TEST');
@@ -24306,6 +24310,27 @@ function openDeleteConnectionWindow() {
   });
 }
 
+// Without the worker's rule Hermes refuses the panel's POST requests unless the person added the
+// extension's origin to API_SERVER_CORS_ORIGINS (gateway-origin-rule.mjs). Only the worker writes it,
+// from stored settings; the panel asks it to sync and waits, so a test right after saving, or a pairing
+// with an address not saved yet, never runs before it. Best effort: a refusal still names the .env line.
+async function syncGatewayOriginRule({
+  pendingGatewayUrl = '',
+  pendingGatewayRegistrationId = '',
+  releasePendingGatewayRegistrationId = '',
+} = {}) {
+  try {
+    await browserApi.runtime.sendMessage({
+      type: SYNC_GATEWAY_RULES_MESSAGE,
+      pendingGatewayUrl,
+      pendingGatewayRegistrationId,
+      releasePendingGatewayRegistrationId,
+    });
+  } catch (error) {
+    console.warn('[Hermes Browser] Gateway origin rule sync failed:', error);
+  }
+}
+
 let addConnectionDialog = null;
 
 function addConnectionWindow() {
@@ -24313,16 +24338,26 @@ function addConnectionWindow() {
     addConnectionDialog = createAddConnectionDialog({
       root: document,
       translate: t,
-      probe: ({ gatewayUrl, apiKey, headers, signal }) => withProbeHeaderIsolation(
-        {
-          gatewayUrl,
-          headers,
-          active: { gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders },
-          extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
-        },
-        (marker) => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
-        browserApi.declarativeNetRequest,
-      ),
+      // Every request of this test carries one marker, which its header rule and its origin rule match.
+      probe: ({ gatewayUrl, apiKey, headers, signal }) => {
+        const extensionHost = extensionInitiatorHost((path) => browserApi.runtime.getURL(path));
+        const marker = newProbeMarker();
+        return withDraftOriginRule(
+          { gatewayUrl, extensionHost, marker },
+          () => withProbeHeaderIsolation(
+            {
+              gatewayUrl,
+              headers,
+              active: { gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders },
+              extensionHost,
+              marker,
+            },
+            () => probeConnection({ gatewayUrl, apiKey, headers, marker, signal }),
+            browserApi.declarativeNetRequest,
+          ),
+          browserApi.declarativeNetRequest,
+        );
+      },
       openAddress: (address) => { void browserApi.tabs.create({ url: address }); },
       onAdd: async ({ name, connection }) => {
         if (!(await updateSavedConnection('add', { name, connection }))) throw new Error(t('connections.error'));
@@ -24786,6 +24821,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     remoteWsConnection = null;
     profileWsConnection?.client?.close?.();
     profileWsConnection = null;
+    resetConnectButtonIdle();
   }
   resetLocalDashboardState();
   if (previousSettings.botModeEnabled === true && settings.botModeEnabled !== true) {
@@ -28199,17 +28235,23 @@ async function connectApiWithPairing() {
     mode: normalizeConnectionMode(settings.connectionMode),
     transport: settings.connectionTransport,
   });
-  const summary = currentGatewaySummary();
-  markConnectionProbe('connecting', summary.normalizedUrl);
+  const pairingPendingUrl = settings.gatewayUrl;
+  const pairingRegistrationId = newPendingPairingRegistrationId();
   els.connectButton.disabled = true;
   els.connectButton.textContent = translateUiText('Connecting...');
-  els.connectStatus.textContent = t('connect.status.looking', { title: gatewayTitleText(summary), url: summary.normalizedUrl });
-  // A failing request can only be blamed on the origin/CORS layer when the
-  // health probe already answered from this extension origin.
-  let healthProbeAnswered = false;
+  // The address may be typed but not saved yet: the worker covers it too while this pairing runs.
   try {
-    const health = await publicApiFetch('/health', { method: 'GET' });
+    await syncGatewayOriginRule({ pendingGatewayUrl: pairingPendingUrl, pendingGatewayRegistrationId: pairingRegistrationId });
     if (!connectionController.isCurrent(generation)) return;
+    const summary = currentGatewaySummary();
+    markConnectionProbe('connecting', summary.normalizedUrl);
+    els.connectStatus.textContent = t('connect.status.looking', { title: gatewayTitleText(summary), url: summary.normalizedUrl });
+    // A failing request can only be blamed on the origin/CORS layer when the
+    // health probe already answered from this extension origin.
+    let healthProbeAnswered = false;
+    try {
+      const health = await publicApiFetch('/health', { method: 'GET' });
+      if (!connectionController.isCurrent(generation)) return;
     if (!health.ok) {
       const healthError = new Error(`Hermes API server is not reachable (${health.status}).`);
       healthError.httpStatus = health.status;
@@ -28281,21 +28323,24 @@ async function connectApiWithPairing() {
     els.connectStatus.textContent = translateUiText('Connected to Hermes. You can start chatting with page context.');
     markGatewayReachable(normalizeGatewayUrl(settings.gatewayUrl));
     setStatus('ok', 'Hermes Browser Extension connected', normalizeGatewayUrl(settings.gatewayUrl));
-    renderEmptyState();
-  } catch (error) {
-    const diagnostic = classifyGatewayError(error, {
-      url: normalizeGatewayUrl(settings.gatewayUrl),
-      healthOk: healthProbeAnswered,
-    });
-    if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
-    markGatewayUnreachable(error, diagnostic);
-    els.connectStatus.textContent = t('connect.status.failed', { reason: currentConnectionTroubleshooting() || diagnostic.detail });
-    offerManualSetup(currentConnectionTroubleshooting() || diagnostic.detail);
-  } finally {
-    if (connectionController.isCurrent(generation)) {
-      els.connectButton.disabled = false;
-      els.connectButton.textContent = translateUiText('Connect to Hermes');
+      renderEmptyState();
+    } catch (error) {
+      const diagnostic = classifyGatewayError(error, {
+        url: normalizeGatewayUrl(settings.gatewayUrl),
+        healthOk: healthProbeAnswered,
+      });
+      if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
+      markGatewayUnreachable(error, diagnostic);
+      els.connectStatus.textContent = t('connect.status.failed', { reason: currentConnectionTroubleshooting() || diagnostic.detail });
+      offerManualSetup(currentConnectionTroubleshooting() || diagnostic.detail);
+    } finally {
+      if (connectionController.isCurrent(generation)) {
+        els.connectButton.disabled = false;
+        els.connectButton.textContent = translateUiText('Connect to Hermes');
+      }
     }
+  } finally {
+    if (pairingRegistrationId) void syncGatewayOriginRule({ releasePendingGatewayRegistrationId: pairingRegistrationId });
   }
 }
 
@@ -29831,6 +29876,15 @@ async function testConnection() {
     flashTestConnectionResult(false);
     throw error;
   }
+  const generation = connectionController.begin({
+    mode: normalizeConnectionMode(settings.connectionMode),
+    transport: settings.connectionTransport,
+  });
+  await syncGatewayOriginRule();
+  if (!connectionController.isCurrent(generation)) {
+    setTestConnectionBusy(false);
+    return;
+  }
   const action = connectionActionForSettings(settings);
   if (action === CONNECTION_ACTIONS.CLOUD_ACTIVE_TAB_ATTACH || action === CONNECTION_ACTIONS.REMOTE_DASHBOARD_ATTACH) {
     let connected = false;
@@ -29843,10 +29897,6 @@ async function testConnection() {
     }
     return;
   }
-  const generation = connectionController.begin({
-    mode: normalizeConnectionMode(settings.connectionMode),
-    transport: settings.connectionTransport,
-  });
   markConnectionProbe('connecting', normalizeGatewayUrl(settings.gatewayUrl));
   let ok = false;
   try {

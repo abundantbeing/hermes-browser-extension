@@ -57,6 +57,7 @@ import { createThemeMarketplaceController } from './lib/theme-marketplace-contro
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { installLoopbackCorsRules, handleLoopbackFetchMessage, LOOPBACK_FETCH_MESSAGE } from './lib/loopback-cors.mjs';
 import { applyConnectionHeaderRules, createHeaderRuleSync, extensionInitiatorHost } from './lib/connection-headers.mjs';
+import { SYNC_GATEWAY_RULES_MESSAGE, PendingPairingGatewayUrls, applyGatewayOriginRule } from './lib/gateway-origin-rule.mjs';
 import {
   CONTROLLER_HEARTBEAT_ALARM,
   CONTROLLER_RECONCILE_ALARM,
@@ -1068,14 +1069,24 @@ void initI18n().catch((error) => {
   console.warn('[Hermes Browser] Localization initialization failed:', error);
 });
 
-// The active connection's custom headers ride on every request to its address, WebSocket handshake included.
+// The active connection's custom headers ride on every request to its address, WebSocket handshake included,
+// and its API requests leave without the Origin header Hermes would refuse (gateway-origin-rule.mjs). This
+// worker is the only writer of both rules: every update reads stored settings when it runs, one at a time.
+// A panel pairing with a loopback address it has not saved yet registers that address until the
+// attempt ends; another panel's ordinary sync must not clear it. The next settings change drops all.
+const pendingPairingGatewayUrls = new PendingPairingGatewayUrls();
 const syncConnectionHeaders = createHeaderRuleSync({
   read: readStoredSettings,
-  apply: (settings) => applyConnectionHeaderRules({
-    gatewayUrl: settings.gatewayUrl,
-    headers: settings.connectionHeaders,
-    extensionHost: extensionInitiatorHost((path) => browserApi.runtime.getURL(path)),
-  }),
+  apply: async (settings) => {
+    const extensionHost = extensionInitiatorHost((path) => browserApi.runtime.getURL(path));
+    await applyGatewayOriginRule({
+      gatewayUrl: settings.gatewayUrl,
+      connectionTransport: settings.connectionTransport,
+      extensionHost,
+      pendingGatewayUrls: pendingPairingGatewayUrls.values(),
+    }).catch((error) => console.warn('[Hermes Browser] Gateway origin rule failed:', error));
+    return applyConnectionHeaderRules({ gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders, extensionHost });
+  },
   onError: (error) => console.warn('[Hermes Browser] Connection header rules failed:', error),
 });
 void installLoopbackCorsRules().catch((error) => {
@@ -1182,7 +1193,10 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
       }
     })();
   }
-  if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]) void syncConnectionHeaders();
+  if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]) {
+    if (changes.hermesBrowserSettings) pendingPairingGatewayUrls.clear();
+    void syncConnectionHeaders();
+  }
   if (changes.hermesBrowserSettings?.newValue) {
     const previous = changes.hermesBrowserSettings.oldValue || {};
     const next = changes.hermesBrowserSettings.newValue || {};
@@ -1217,8 +1231,15 @@ const EXTENSION_PAGE_ONLY_MESSAGE_TYPES = new Set([
   CONTEXT_MENU_REQUEST_CLAIM,
   'HERMES_GET_YOUTUBE_TRANSCRIPT',
   LOOPBACK_FETCH_MESSAGE,
+  SYNC_GATEWAY_RULES_MESSAGE,
   ...Object.values(HERMES_WEB_OPENING_MESSAGES),
 ]);
+// A panel asks before it tests or pairs, and waits, so its first request never runs ahead of the rule.
+async function syncGatewayRulesForPanel(message) {
+  pendingPairingGatewayUrls.applySyncMessage(message);
+  await syncConnectionHeaders();
+  return { ok: true };
+}
 function isExtensionPageOnlyMessageType(type) {
   return EXTENSION_PAGE_ONLY_MESSAGE_TYPES.has(type) || themeMarketplaceController.handles(type);
 }
@@ -1273,7 +1294,9 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   seq: message?.seq,
                 };
               })
-            : null;
+            : message?.type === SYNC_GATEWAY_RULES_MESSAGE
+              ? syncGatewayRulesForPanel(message)
+              : null;
   if (!action) return false;
   action
     .then(sendResponse)

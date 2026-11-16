@@ -18,7 +18,7 @@ The extension requests:
 - `http://*/*`, `https://*/*`, loopback hosts, and `file:///*` for normal pages, configured Hermes endpoints, localhost, and explicitly approved local documents.
 
 - `unlimitedStorage` so original file attachments and page-comment data can stay in local extension storage instead of hitting the default quota. It uploads nothing.
-- `declarativeNetRequestWithHostAccess` to manage session network rules for loopback Hermes servers. The extension currently installs no active rules.
+- `declarativeNetRequestWithHostAccess` for session network rules on the extension's own requests to the connected Hermes gateway: removing the `Origin` header Hermes would refuse, and adding custom headers you set for a gateway behind an authenticating proxy. They match no page traffic and no other address.
 
 The extension does not request `nativeMessaging`, `webNavigation`, cookies, history, bookmarks or password-manager access. Firefox builds omit `debugger`, `offscreen` and `sidePanel`, and use `sidebar_action` for the sidebar.
 
