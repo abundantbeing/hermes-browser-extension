@@ -574,7 +574,9 @@ const DEVANAGARI_LETTERS = /[ऀ-ॿ]/gu;
 const THAI_LETTERS = /[฀-๿]/gu;
 const SCRIPT_SIBLINGS = { zh: ['zh'] };
 const UKRAINIAN_LETTERS = /[іїєґ]/giu;
+const RUSSIAN_LETTERS = /[ыэъё]/giu;
 const CYRILLIC_LETTERS = /[Ѐ-ӿ]/gu;
+const QUOTED_SPAN = /「[^」]*」|『[^』]*』|“[^”]*”|"[^"]*"|«[^»]*»/gu;
 const LATIN_WORDS = {
   pt: 'de que não é os as um uma para com em do da dos das no na você está também são mais isso pelo pela muito ao foi seu sua quando',
   es: 'el la los las que de y en es un una por para con no está pero muy también lo del al su sus como más hay este esta',
@@ -619,6 +621,17 @@ function letterCount(pattern, text) {
   return (text.match(pattern) || []).length;
 }
 
+function stripQuotedSpans(text) {
+  return String(text || '').replace(QUOTED_SPAN, ' ');
+}
+
+/** Kana fully inside quote marks, with mostly Han outside — a foreign snippet, not Japanese prose. */
+function kanaQuotedInsidePredominantHan(sample, kanaCount, hanCount) {
+  if (!kanaCount || !hanCount) return false;
+  const kanaOutsideQuotes = letterCount(KANA_LETTERS, stripQuotedSpans(sample));
+  return kanaOutsideQuotes === 0 && hanCount > kanaCount;
+}
+
 /** True when kana looks like Japanese prose, not a short quote inside mostly Han text. */
 function substantialJapaneseEvidence(kanaCount, hanCount) {
   if (!kanaCount) return false;
@@ -628,9 +641,15 @@ function substantialJapaneseEvidence(kanaCount, hanCount) {
   return kanaCount >= 4 && kanaCount / cjk >= 0.3;
 }
 
-function embeddedKanaInPredominantHan(kanaCount, hanCount) {
-  if (!kanaCount || !hanCount) return false;
-  return hanCount > kanaCount * 3 && kanaCount <= 8;
+function cyrillicLanguageCode(body, fallbackPrimary) {
+  const ukrainianMarks = letterCount(UKRAINIAN_LETTERS, body);
+  const russianMarks = letterCount(RUSSIAN_LETTERS, body);
+  if (ukrainianMarks > russianMarks) return 'uk';
+  if (russianMarks > ukrainianMarks) return 'ru';
+  if (ukrainianMarks > 0 || russianMarks > 0) {
+    return fallbackPrimary === 'uk' || fallbackPrimary === 'ru' ? fallbackPrimary : 'ru';
+  }
+  return fallbackPrimary === 'uk' ? 'uk' : 'ru';
 }
 
 /** Pick a non-Latin script only when it beats Latin and every other script in the sample. */
@@ -638,9 +657,12 @@ function dominantScriptLanguage(sample, fallbackPrimary, fallbackLang) {
   const latinCount = latinLetterCount(sample);
   const kanaCount = letterCount(KANA_LETTERS, sample);
   const hanCount = letterCount(HAN_LETTERS, sample);
-  const hanQuote = embeddedKanaInPredominantHan(kanaCount, hanCount);
+  const kanaOutsideQuotes = letterCount(KANA_LETTERS, stripQuotedSpans(sample));
+  const hanQuote = kanaQuotedInsidePredominantHan(sample, kanaCount, hanCount);
   const japaneseDominant = kanaCount > 0 && !hanQuote && (
-    substantialJapaneseEvidence(kanaCount, hanCount) || kanaCount + hanCount > latinCount
+    kanaOutsideQuotes > 0
+    || substantialJapaneseEvidence(kanaCount, hanCount)
+    || kanaCount + hanCount > latinCount
   );
   const japaneseCount = kanaCount + (japaneseDominant ? hanCount : 0);
   const chineseCount = japaneseDominant ? 0 : hanCount;
@@ -654,8 +676,7 @@ function dominantScriptLanguage(sample, fallbackPrimary, fallbackLang) {
   ];
   const cyrillicCount = letterCount(CYRILLIC_LETTERS, sample);
   if (cyrillicCount > 0) {
-    const ukrainianMarks = letterCount(UKRAINIAN_LETTERS, sample);
-    const code = ukrainianMarks > 0 || fallbackPrimary === 'uk' ? 'uk' : 'ru';
+    const code = cyrillicLanguageCode(stripQuotedSpans(sample), fallbackPrimary);
     competitors.push([code, cyrillicCount]);
   }
   const ranked = competitors.filter(([, count]) => count > 0).sort((a, b) => b[1] - a[1]);

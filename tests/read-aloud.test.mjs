@@ -440,6 +440,16 @@ test('the spoken language comes from the reply, not the panel locale', () => {
     'a short Japanese quote does not flip predominantly Chinese prose to Japanese',
   );
   assert.equal(guessSpeechLanguage('これは日本語のテキストです。', 'zh-CN'), 'ja-JP', 'substantial kana still selects Japanese');
+  assert.equal(
+    guessSpeechLanguage('管理者権限設定画面を開く。', 'ja'),
+    'ja-JP',
+    'kana outside quotes selects Japanese over Han even with few kana',
+  );
+  assert.equal(
+    guessSpeechLanguage('Это русский текст. Украинское слово «Привіт» означает привет.', 'ru'),
+    'ru-RU',
+    'a Ukrainian quote does not outweigh Russian body text',
+  );
   assert.equal(guessSpeechLanguage('OK', 'pt-BR'), 'pt-BR', 'too little to tell keeps the locale');
   assert.equal(guessSpeechLanguage('OK', ''), '');
 });
