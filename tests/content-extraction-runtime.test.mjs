@@ -86,7 +86,7 @@ test('live and scripting-fallback capture delegate to the shared runtime', async
   assert.match(content, /HermesSiteAdapters\.inspectSite/);
   assert.match(content, /HermesSiteAdapters\.applySiteAdapterPolicy/);
   assert.doesNotMatch(content, /function collectReadablePageText\s*\(/);
-  assert.match(sidepanel, /files:\s*\[extractorPath\]/);
+  assert.match(sidepanel, /runPageContextBundleRestart\([\s\S]*\[extractorPath\]/);
   assert.match(sidepanel, /HermesContentExtractor\.collectPageContext/);
   assert.doesNotMatch(sidepanel, /function collectPageContextFallback\s*\(/);
 });
@@ -101,7 +101,7 @@ test('normal capture never reinjects the full bridge and restarts bundle entries
   assert.doesNotMatch(sidepanel, /async function ensureContentScript\s*\(/);
   assert.doesNotMatch(getPageContext, /ensureContentScript/);
   assert.doesNotMatch(getYoutubeTranscript, /ensureContentScript/);
-  assert.match(scriptingFallback, /files:\s*\[extractorPath\]/);
+  assert.match(scriptingFallback, /runPageContextBundleRestart\([\s\S]*\[extractorPath\]/);
   assert.doesNotMatch(scriptingFallback, /files:\s*manifestContentScriptFiles\(\)/);
   assert.match(installFallback, /pageContextBundleRestartFiles\(\)/);
   assert.match(installFallback, /!runtimeState\.extractorReady/);

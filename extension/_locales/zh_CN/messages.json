@@ -4391,6 +4391,14 @@
     "message": "页面评论不可用",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "无法捕获此页面。",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "此网站的页面上下文已关闭。",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - 上下文受限",
     "description": "Runtime interface message status.page_context_restricted"

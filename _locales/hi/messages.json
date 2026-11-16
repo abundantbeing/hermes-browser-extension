@@ -4391,6 +4391,14 @@
     "message": "पृष्ठ टिप्पणियाँ उपलब्ध नहीं",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "यह पृष्ठ कैप्चर नहीं किया जा सकता।",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "इस साइट के लिए पेज संदर्भ बंद है।",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - संदर्भ प्रतिबंधित",
     "description": "Runtime interface message status.page_context_restricted"

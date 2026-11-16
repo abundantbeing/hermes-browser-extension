@@ -4391,6 +4391,14 @@
     "message": "ページコメントは利用できません",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "このページはキャプチャできません。",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "このサイトではページコンテキストがオフです。",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - コンテキストが制限されています",
     "description": "Runtime interface message status.page_context_restricted"

@@ -51,6 +51,12 @@ test('element pick failures surface in the operation toast', async () => {
   assert.match(block, /Element pick failed/);
 });
 
+test('Firefox gate ensure never injects gate scripts without runPageContextBundleRestart', async () => {
+  const runner = await readFile(new URL('../extension/lib/page-context-bundle-restart.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /await runPageContextBundleRestart\(executeScript, binding, \[gateFile\]/);
+  assert.doesNotMatch(runner, /await executeScript\(\{ target, files: \[gateFile\] \}\)/);
+});
+
 test('ensurePageContextGateAndRefresh awaits async policy refresh inside the target', async () => {
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const runner = await readFile(new URL('../extension/lib/page-context-bundle-restart.mjs', import.meta.url), 'utf8');

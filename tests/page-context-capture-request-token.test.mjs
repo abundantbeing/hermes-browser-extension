@@ -32,6 +32,28 @@ const PAGE_B = 'https://example.com/page-b';
 const LOCALHOST = 'http://localhost/private';
 const tokenFor = (href) => `${new URL(href).origin}\u0000${href}`;
 
+test('legacy permissive anchor match would accept a mismatched live page (guard regression)', () => {
+  const legacyWithoutTokenGate = (binding, anchor) => {
+    const requestToken = binding?.captureRequestAnchorToken || binding?.anchorToken || null;
+    if (!anchor?.token) return false;
+    if (!requestToken) return true;
+    return requestToken === anchor.token;
+  };
+  assert.equal(
+    legacyWithoutTokenGate({}, { token: tokenFor(PAGE_B) }),
+    true,
+    'missing-token guard allows any live page',
+  );
+  assert.equal(liveAnchorMatchesCaptureRequest({}, { token: tokenFor(PAGE_B) }), false);
+  assert.equal(
+    liveAnchorMatchesCaptureRequest(
+      { captureRequestAnchorToken: tokenFor(PAGE_A) },
+      { token: tokenFor(PAGE_B) },
+    ),
+    false,
+  );
+});
+
 test('Firefox capture request token is immutable when live frame navigates A to B before ensure', async () => {
   const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
   const policyForUrl = (url) => pageContextHostPolicyDecision(url, settings);
@@ -51,7 +73,10 @@ test('Firefox capture request token is immutable when live frame navigates A to 
   const executeScript = createExecuteScript({
     getHref: () => href,
     pageVm,
-    onPreFirstAnchor: () => { href = PAGE_B; },
+    onPreFirstAnchor: () => {
+      href = PAGE_B;
+      pageVm.navigate(PAGE_B);
+    },
     firstAnchorOnly: true,
   });
 
@@ -102,6 +127,9 @@ test('capture token invariant refuses navigation at each Firefox restart step', 
     const fileInjections = [];
     const pageVm = await loadPageVm(PAGE_A, policyForUrl);
     pageVm.loadContent(PAGE_A);
+    pageVm.globalThis.HermesContentExtractor = {};
+    pageVm.globalThis.__HERMES_BROWSER_CONTENT_LOADED__ = 'vm';
+    pageVm.globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = scenario.phase === 'after-grant';
 
     const expectHrefAtStep = (stepHref) => {
       assert.equal(href, stepHref, `${scenario.name} navigation at step`);
@@ -110,19 +138,27 @@ test('capture token invariant refuses navigation at each Firefox restart step', 
       getHref: () => href,
       pageVm,
       onRefresh: async () => {
-        if (scenario.phase === 'before-grant') href = scenario.nextHref;
-        return pageVm.runRefresh();
+        if (scenario.phase === 'before-grant') {
+          href = scenario.nextHref;
+          pageVm.navigate(scenario.nextHref);
+        }
       },
       onRefreshObserveHref: () => {
         if (scenario.phase === 'before-grant') expectHrefAtStep(scenario.nextHref);
       },
       onBeforeRestart: () => {
-        if (scenario.phase === 'after-grant') href = scenario.nextHref;
-        if (scenario.phase === 'after-grant') expectHrefAtStep(scenario.nextHref);
+        if (scenario.phase === 'after-grant') {
+          href = scenario.nextHref;
+          pageVm.navigate(scenario.nextHref);
+          expectHrefAtStep(scenario.nextHref);
+        }
       },
       onAfterRestart: () => {
-        if (scenario.phase === 'before-message') href = scenario.nextHref;
-        if (scenario.phase === 'before-message') expectHrefAtStep(scenario.nextHref);
+        if (scenario.phase === 'before-message') {
+          href = scenario.nextHref;
+          pageVm.navigate(scenario.nextHref);
+          expectHrefAtStep(scenario.nextHref);
+        }
       },
       phaseHook: () => {
         if (phase === 'during-capture') href = scenario.nextHref;
@@ -183,24 +219,20 @@ test('unchanged page completes gate ensure and capture with original request tok
   };
   const pageVm = await loadPageVm(PAGE_A, policyForUrl);
   pageVm.loadContent(PAGE_A);
+  pageVm.globalThis.HermesContentExtractor = pageVm.globalThis.HermesContentExtractor || {};
+  pageVm.globalThis.HermesContentExtractor.collectPageContext = () => ({
+    ok: true,
+    text: 'PAGE_A_SECRET',
+    selectedText: '',
+    meta: {},
+  });
+  pageVm.globalThis.__HERMES_BROWSER_CONTENT_LOADED__ = 'vm';
 
-  const executeScript = async (request) => {
-    if (request.files) return [{ result: undefined }];
-    const source = request.func.toString();
-    if (source.includes('location.href')) {
-      return [{ result: { href: PAGE_A, origin: new URL(PAGE_A).origin, token: tokenFor(PAGE_A) } }];
-    }
-    if (source.includes('HermesContentExtractor')) {
-      return [{ result: { restart: false, extractorReady: true, bridgeLoaded: true } }];
-    }
-    if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
-      return [{ result: true }];
-    }
-    if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
-      return [{ result: { allowed: true, restart: false } }];
-    }
-    return [{ result: typeof request.func === 'function' ? await pageVm.run(request.func) : undefined }];
-  };
+  const executeScript = createExecuteScript({
+    getHref: () => PAGE_A,
+    pageVm,
+    fileInjections: [],
+  });
 
   const runGateEnsure = buildGateEnsureRunner({
     executeScript,
@@ -305,31 +337,22 @@ function createExecuteScript({
       fileInjections?.push({ href: getHref(), files: [...request.files] });
       return [{ result: undefined }];
     }
+    if (typeof request.func !== 'function') return [{ result: undefined }];
     const source = request.func.toString();
-    if (source.includes('location.href') && !source.includes('collectPageContext')) {
+    if (source.includes('location.href') && source.includes('token:') && !source.includes('collectPageContext')) {
       if (onPreFirstAnchor && !firstAnchorRead) {
         firstAnchorRead = true;
         onPreFirstAnchor();
       }
-      const href = getHref();
-      return [{ result: { href, origin: new URL(href).origin, token: tokenFor(href) } }];
     }
-    if (source.includes('HermesContentExtractor')) {
-      return [{
-        result: {
-          restart: phase?.() === 'after-grant',
-          extractorReady: phase?.() !== 'after-grant',
-          bridgeLoaded: true,
-        },
-      }];
-    }
-    if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
-      return [{ result: true }];
-    }
-    if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
+  if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
       setPhase?.('refreshed');
       onRefreshObserveHref?.(getHref());
-      const raw = onRefresh ? await onRefresh() : await pageVm.runRefresh();
+      if (onRefresh) await onRefresh();
+    }
+    phaseHook?.();
+    const raw = await pageVm.executeFunc(request.func);
+    if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
       const allowed = typeof raw === 'object' && raw !== null ? Boolean(raw.allowed) : Boolean(raw);
       const restart = typeof raw === 'object' && raw !== null
         ? Boolean(raw.restart)
@@ -338,10 +361,9 @@ function createExecuteScript({
         pageVm.globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
       }
       setPhase?.('after-grant');
-      return [{ result: { allowed, restart } }];
+      return [{ result: typeof raw === 'object' && raw !== null ? raw : { allowed, restart } }];
     }
-    phaseHook?.();
-    return [{ result: typeof request.func === 'function' ? await pageVm.run(request.func) : undefined }];
+    return [{ result: raw }];
   };
   executeScript.onBeforeRestart = onBeforeRestart;
   executeScript.onAfterRestart = onAfterRestart;
@@ -414,8 +436,13 @@ async function loadPageVm(href, policyForUrl) {
 
   return {
     globalThis: context,
+    async executeFunc(fn) {
+      const script = new vm.Script(`(async () => { const runner = ${fn.toString()}; return await runner(); })()`);
+      return script.runInContext(context);
+    },
     navigate(nextHref) {
       context.location = { href: nextHref, origin: new URL(nextHref).origin };
+      context.__HERMES_PAGE_SCRIPT_POLICY__.policyLocationToken = tokenFor(nextHref);
     },
     loadContent(initialHref) {
       if (context.__contentLoaded) return;

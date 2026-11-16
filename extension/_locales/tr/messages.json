@@ -4391,6 +4391,14 @@
     "message": "Sayfa yorumları kullanılamıyor",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Bu sayfa yakalanamıyor.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Sayfa bağlamı bu site için kapalı.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - bağlam kısıtlı",
     "description": "Runtime interface message status.page_context_restricted"

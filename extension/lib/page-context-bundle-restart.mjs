@@ -251,8 +251,15 @@ export function createPageContextGateEnsureRunner(deps) {
       });
       if (!hasRefresh?.result && gateFile) {
         if (!(await verifyInstallBinding(binding))) return false;
-        await executeScript({ target, files: [gateFile] });
-        if (!(await verifyInstallBinding(binding))) return false;
+        if (!liveAnchorMatchesCaptureRequest(request, await readPageScriptDocumentAnchor(executeScript, binding))) {
+          return false;
+        }
+        const gateInjected = await runPageContextBundleRestart(executeScript, binding, [gateFile], {
+          verifyBinding: verifyInstallBinding,
+          beforeInject: async () => verifyInstallBinding(binding),
+          afterInject: async () => verifyInstallBinding(binding),
+        });
+        if (!gateInjected) return false;
       }
       if (!(await verifyInstallBinding(binding))) return false;
       const [refreshed] = await executeScript({

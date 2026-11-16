@@ -4391,6 +4391,14 @@
     "message": "Komentarze strony niedostępne",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Nie można przechwycić tej strony.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Kontekst strony jest wyłączony dla tej witryny.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - kontekst ograniczony",
     "description": "Runtime interface message status.page_context_restricted"

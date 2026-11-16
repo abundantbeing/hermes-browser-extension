@@ -4391,6 +4391,14 @@
     "message": "Paginacommentaren niet beschikbaar",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Deze pagina kan niet worden vastgelegd.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Paginacontext staat uit voor deze site.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - context beperkt",
     "description": "Runtime interface message status.page_context_restricted"

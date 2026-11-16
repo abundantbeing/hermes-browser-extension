@@ -25702,10 +25702,29 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
     }
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
-    await browserApi.scripting.executeScript({
-      target: scriptTarget,
-      files: [extractorPath],
-    });
+    if (!(await verifyPageContextInstallBinding(installBinding))) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    await runPageContextBundleRestart(
+      executePageContextScript,
+      installBinding,
+      [extractorPath],
+      {
+        verifyBinding: verifyPageContextInstallBinding,
+        beforeInject: async () => verifyPageContextInstallBinding(installBinding),
+        afterInject: async () => verifyPageContextInstallBinding(installBinding),
+      },
+    );
     const [injected] = await browserApi.scripting.executeScript({
       target: scriptTarget,
       func: collectPageContextWithSharedExtractor,

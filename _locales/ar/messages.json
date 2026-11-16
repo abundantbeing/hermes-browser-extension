@@ -4391,6 +4391,14 @@
     "message": "تعليقات الصفحة غير متاحة",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "لا يمكن التقاط هذه الصفحة.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "سياق الصفحة متوقف لهذا الموقع.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - السياق مقيد",
     "description": "Runtime interface message status.page_context_restricted"

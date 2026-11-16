@@ -4391,6 +4391,14 @@
     "message": "Commentaires de page indisponibles",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Cette page ne peut pas être capturée.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Le contexte de page est désactivé pour ce site.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - contexte restreint",
     "description": "Runtime interface message status.page_context_restricted"

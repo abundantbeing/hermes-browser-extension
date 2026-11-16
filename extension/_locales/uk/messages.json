@@ -4391,6 +4391,14 @@
     "message": "Коментарі сторінки недоступні",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Цю сторінку не можна захопити.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Контекст сторінки вимкнено для цього сайту.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - контекст обмежено",
     "description": "Runtime interface message status.page_context_restricted"

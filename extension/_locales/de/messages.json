@@ -4391,6 +4391,14 @@
     "message": "Seitenkommentare nicht verfügbar",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Diese Seite kann nicht erfasst werden.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Seitenkontext ist für diese Website deaktiviert.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - Kontext eingeschränkt",
     "description": "Runtime interface message status.page_context_restricted"

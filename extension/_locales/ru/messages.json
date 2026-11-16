@@ -4391,6 +4391,14 @@
     "message": "Комментарии к странице недоступны",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Эту страницу нельзя захватить.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Контекст страницы отключён для этого сайта.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - контекст ограничен",
     "description": "Runtime interface message status.page_context_restricted"

@@ -4391,6 +4391,14 @@
     "message": "Komentar halaman tidak tersedia",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Halaman ini tidak dapat ditangkap.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Konteks halaman mati untuk situs ini.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - konteks dibatasi",
     "description": "Runtime interface message status.page_context_restricted"

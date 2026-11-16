@@ -4391,6 +4391,14 @@
     "message": "ความคิดเห็นบนหน้าไม่พร้อมใช้งาน",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "ไม่สามารถจับภาพหน้านี้ได้",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "บริบทหน้านี้ปิดอยู่สำหรับไซต์นี้",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - บริบทถูกจำกัด",
     "description": "Runtime interface message status.page_context_restricted"

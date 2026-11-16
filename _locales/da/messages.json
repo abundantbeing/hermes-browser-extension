@@ -4391,6 +4391,14 @@
     "message": "Sidekommentarer er ikke tilgængelige",
     "description": "Runtime interface message status.page_comments_unavailable"
   },
+  "runtime_status_page_context_capture_blocked": {
+    "message": "Denne side kan ikke indfanges.",
+    "description": "Runtime interface message status.page_context_capture_blocked"
+  },
+  "runtime_status_page_context_capture_off": {
+    "message": "Sidekontekst er slået fra for dette websted.",
+    "description": "Runtime interface message status.page_context_capture_off"
+  },
   "runtime_status_page_context_restricted": {
     "message": "{url} - kontekst begrænset",
     "description": "Runtime interface message status.page_context_restricted"
