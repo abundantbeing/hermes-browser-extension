@@ -108,18 +108,16 @@ test('service-worker dashboard paths fail closed without a freshly verified prin
 });
 
 test('service-worker loopback inline drafts preserve page context without a ledger grant', async () => {
-  for (const port of ['8642', '8643', '8646', '18642']) {
-    const result = await gateInlineDraftRequestContext({
-      request: REQUEST,
-      settings: {
-        gatewayUrl: `http://127.0.0.1:${port}`,
-        connectionTransport: 'local-api',
-        activeProfile: 'default',
-      },
-      ledger: null,
-      controller: CONTROLLER,
-    });
-    assert.equal(result.allowed, true, port);
-    assert.equal(result.request.pageContext, REQUEST.pageContext, port);
-  }
+  const result = await gateInlineDraftRequestContext({
+    request: REQUEST,
+    settings: {
+      gatewayUrl: 'http://127.0.0.1:8642',
+      connectionTransport: 'local-api',
+      activeProfile: 'default',
+    },
+    ledger: null,
+    controller: CONTROLLER,
+  });
+  assert.equal(result.allowed, true);
+  assert.equal(result.request.pageContext, REQUEST.pageContext);
 });

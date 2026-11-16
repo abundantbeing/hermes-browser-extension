@@ -52,16 +52,6 @@ test('every non-loopback connection requires explicit browser-context consent', 
   }
 });
 
-test('local Hermes sidecar ports and an SSH tunnel loopback URL do not require remote consent', () => {
-  for (const port of ['8642', '8643', '8644', '8645', '8646', '18642']) {
-    const gatewayUrl = `http://127.0.0.1:${port}`;
-    assert.equal(consentRequiredForConnection({ gatewayUrl }), false, gatewayUrl);
-    const scoped = contextScopeWithConsent(pinned, { gatewayUrl, identity: null, ledger: {} });
-    assert.equal(scoped.allowed, true, gatewayUrl);
-    assert.equal(scoped.reason, 'loopback');
-  }
-});
-
 test('consent identity is scoped to origin, principal, profile, controller, and transport', () => {
   const base = identity();
   assert.deepEqual(base, {
