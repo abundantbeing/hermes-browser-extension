@@ -68,6 +68,26 @@ test('sidepanel installer enforces pageContextInjectionDecision before scripting
   );
   assert.match(block, /pageContextInjectionDecision\(url, settings\)/);
   assert.match(block, /pageContextPolicySkipError/);
+  assert.match(block, /contentMessageDeliveryOptions\(frame\)/);
+  assert.doesNotMatch(block, /frame > 0 \? \{ frameId: frame \} : undefined/);
+  assert.match(block, /pageContextScriptTarget\(tabId, frame\)/);
+  assert.match(block, /pageContextBundleRestartFiles\(\)/);
+});
+
+test('opt-in bundle reinstall runs bundle entries after gate in dependency order', async () => {
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const block = source.slice(
+    source.indexOf('function pageContextBundleRestartFiles'),
+    source.indexOf('function pageContextScriptTarget'),
+  );
+  assert.match(block, /page-context-bundle-gate/);
+  assert.match(block, /\.slice\(gateIdx \+ 1\)/);
+  const refreshBlock = source.slice(
+    source.indexOf('async function ensurePageContextGateAndRefresh'),
+    source.indexOf('function pageContextPermissionControlDirty'),
+  );
+  assert.match(refreshBlock, /reinstallPageContextBundleEntries/);
+  assert.match(refreshBlock, /bridgeLoaded && !state\.extractorReady/);
 });
 
 test('adoptHermesBrowserSettingsStorageChange tracks page-context settings fields', async () => {

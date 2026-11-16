@@ -91,15 +91,18 @@ test('live and scripting-fallback capture delegate to the shared runtime', async
   assert.doesNotMatch(sidepanel, /function collectPageContextFallback\s*\(/);
 });
 
-test('normal capture never reinjects the content bridge and fallback injects only the extractor runtime', async () => {
+test('normal capture never reinjects the full bridge and restarts bundle entries when extractor is missing', async () => {
   const sidepanel = await readFile(path.join(rootDir, 'extension', 'sidepanel.js'), 'utf8');
   const getPageContext = sidepanel.match(/async function getPageContext\(tab, options = \{\}\) \{[\s\S]*?\n\}/)?.[0] || '';
   const getYoutubeTranscript = sidepanel.match(/async function getYoutubeTranscriptForTab\(tab\) \{[\s\S]*?\n\}/)?.[0] || '';
   const scriptingFallback = sidepanel.match(/async function getPageContextViaScripting\(tabId, options, originalError, tabUrl = ''\) \{[\s\S]*?\n\}/)?.[0] || '';
+  const installFallback = sidepanel.match(/async function sendContentMessageWithInstallFallback\([\s\S]*?\n\}/)?.[0] || '';
 
   assert.doesNotMatch(sidepanel, /async function ensureContentScript\s*\(/);
   assert.doesNotMatch(getPageContext, /ensureContentScript/);
   assert.doesNotMatch(getYoutubeTranscript, /ensureContentScript/);
   assert.match(scriptingFallback, /files:\s*\[extractorPath\]/);
   assert.doesNotMatch(scriptingFallback, /files:\s*manifestContentScriptFiles\(\)/);
+  assert.match(installFallback, /pageContextBundleRestartFiles\(\)/);
+  assert.match(installFallback, /!runtimeState\.extractorReady/);
 });

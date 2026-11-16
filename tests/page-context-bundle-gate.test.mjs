@@ -98,6 +98,27 @@ test('deny first, refresh allow, then newly injected bundle gate runs deferred s
   assert.equal(allowed.bundleRan, 1);
 });
 
+test('policy allow flip sets bundle restart sentinel for full dependency-ordered reinstall', async () => {
+  const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
+  const context = {
+    location: { href: 'http://192.168.8.1/' },
+    browser: {
+      runtime: {
+        sendMessage(message) {
+          return Promise.resolve({ inject: true, seq: message?.seq });
+        },
+      },
+    },
+    __HERMES_PAGE_SCRIPTS_BLOCKED__: true,
+    __HERMES_PAGE_SCRIPT_POLICY__: { policySeq: 0 },
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(gateSource, context);
+  await context.hermesRefreshPageScriptPolicy();
+  assert.equal(context.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__, true);
+});
+
 test('hermesRefreshPageScriptPolicy replays deferred bundle steps after opt-in', async () => {
   const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
   const context = {

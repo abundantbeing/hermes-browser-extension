@@ -24987,31 +24987,81 @@ function manifestContentScriptFiles() {
   return buildRegisteredPageScriptDefinition(settings, { packaged }).js;
 }
 
-async function ensurePageContextGateAndRefresh(tabId, scriptTarget = { tabId }) {
+function pageContextBundleRestartFiles() {
+  const files = manifestContentScriptFiles();
+  const gateIdx = files.findIndex((file) => file.includes('page-context-bundle-gate'));
+  return gateIdx >= 0 ? files.slice(gateIdx + 1) : [...files];
+}
+
+function pageContextScriptTarget(tabId, frameId = 0) {
+  const frame = Math.max(0, Number(frameId) || 0);
+  return { tabId, frameIds: [frame] };
+}
+
+function contentMessageDeliveryOptions(frameId = 0) {
+  const frame = Math.max(0, Number(frameId) || 0);
+  return { frameId: frame };
+}
+
+async function reinstallPageContextBundleEntries(tabId, scriptTarget) {
+  const restartFiles = pageContextBundleRestartFiles();
+  if (!restartFiles.length) return;
+  await browserApi.scripting.executeScript({ target: scriptTarget, files: restartFiles });
+  await browserApi.scripting.executeScript({
+    target: scriptTarget,
+    func: () => new Promise((resolve) => setTimeout(resolve, 0)),
+  });
+}
+
+async function ensurePageContextGateAndRefresh(tabId, scriptTarget = null) {
   if (!tabId) return false;
+  const target = scriptTarget && scriptTarget.frameIds
+    ? scriptTarget
+    : pageContextScriptTarget(tabId, scriptTarget?.frameIds?.[0] ?? 0);
   try {
     const files = manifestContentScriptFiles();
     const gateFile = files.find((file) => file.includes('page-context-bundle-gate'));
     const [hasRefresh] = await browserApi.scripting.executeScript({
-      target: scriptTarget,
+      target,
       func: () => typeof globalThis.hermesRefreshPageScriptPolicy === 'function',
     });
     if (!hasRefresh?.result && gateFile) {
-      await browserApi.scripting.executeScript({ target: scriptTarget, files: [gateFile] });
+      await browserApi.scripting.executeScript({ target, files: [gateFile] });
     }
     const [refreshed] = await browserApi.scripting.executeScript({
-      target: scriptTarget,
+      target,
       func: async () => {
         const refresh = globalThis.hermesRefreshPageScriptPolicy;
-        if (typeof refresh !== 'function') return false;
+        if (typeof refresh !== 'function') return { allowed: false, restart: false };
         try {
-          return Boolean(await refresh());
+          const allowed = Boolean(await refresh());
+          const restart = globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ === true;
+          if (restart) globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
+          return { allowed, restart };
         } catch {
-          return false;
+          return { allowed: false, restart: false };
         }
       },
     });
-    return Boolean(refreshed?.result);
+    const outcome = refreshed?.result || {};
+    if (!outcome.allowed) return false;
+    const [bundleState] = await browserApi.scripting.executeScript({
+      target,
+      func: () => {
+        const restart = globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ === true;
+        if (restart) globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
+        return {
+          restart,
+          extractorReady: Boolean(globalThis.HermesContentExtractor?.collectPageContext),
+          bridgeLoaded: Boolean(globalThis.__HERMES_BROWSER_CONTENT_LOADED__),
+        };
+      },
+    });
+    const state = bundleState?.result || {};
+    const needsRestart = outcome.restart || state.restart
+      || (state.bridgeLoaded && !state.extractorReady);
+    if (needsRestart) await reinstallPageContextBundleEntries(tabId, target);
+    return true;
   } catch {
     return false;
   }
@@ -25106,9 +25156,9 @@ function pageContextPolicySkipError(url, injection) {
 }
 
 async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0, tabUrl = '' } = {}) {
-  const frame = Number(frameId);
-  const messageOptions = frame > 0 ? { frameId: frame } : undefined;
-  const scriptTarget = frame > 0 ? { tabId, frameIds: [frame] } : { tabId };
+  const frame = Math.max(0, Number(frameId) || 0);
+  const messageOptions = contentMessageDeliveryOptions(frame);
+  const scriptTarget = pageContextScriptTarget(tabId, frame);
   const url = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
   const injection = pageContextInjectionDecision(url, settings);
   if (!injection.inject) throw pageContextPolicySkipError(url, injection);
@@ -25128,13 +25178,20 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
       // state inside an IIFE with listener-cleanup-first semantics.
       const sentinel = await browserApi.scripting.executeScript({
         target: scriptTarget,
-        func: () => globalThis.__HERMES_BROWSER_CONTENT_LOADED__ || null,
+        func: () => ({
+          bridgeLoaded: Boolean(globalThis.__HERMES_BROWSER_CONTENT_LOADED__),
+          extractorReady: Boolean(globalThis.HermesContentExtractor?.collectPageContext),
+        }),
       });
-      const bridgeAlreadyLoaded = Boolean(sentinel?.[0]?.result);
+      const runtimeState = sentinel?.[0]?.result || {};
+      const bridgeAlreadyLoaded = Boolean(runtimeState.bridgeLoaded);
       const files = manifestContentScriptFiles();
-      const filesToInject = bridgeAlreadyLoaded
-        ? files.filter((file) => file.endsWith('content-extractor.js'))
-        : files;
+      let filesToInject = [];
+      if (!bridgeAlreadyLoaded) {
+        filesToInject = files;
+      } else if (!runtimeState.extractorReady) {
+        filesToInject = pageContextBundleRestartFiles();
+      }
       if (filesToInject.length) {
         const allowed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
         if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
@@ -25189,7 +25246,7 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
-    const scriptTarget = frameId > 0 ? { tabId, frameIds: [frameId] } : { tabId };
+    const scriptTarget = pageContextScriptTarget(tabId, frameId);
     const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
     if (!refreshed) {
       return {
@@ -25508,7 +25565,11 @@ async function startElementPick({ purpose = 'context' } = {}) {
   }
   try {
     if (elementPickActiveForTab(tab)) {
-      await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL });
+      await browserApi.tabs.sendMessage(
+        tab.id,
+        { type: ELEMENT_PICK_MESSAGES.CANCEL },
+        contentMessageDeliveryOptions(0),
+      );
       await clearElementPickState({ tabId: tab.id });
       pageCommentPickActive = false;
       setStatus('ok', purpose === 'comment' ? 'Page comments cancelled' : 'Element pick cancelled', '');
@@ -25815,7 +25876,11 @@ async function startPageAnnotation(mode = pageAnnotationMode) {
     return;
   }
   if (elementPickActiveForTab(tab)) {
-    await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL }).catch(() => {});
+    await browserApi.tabs.sendMessage(
+      tab.id,
+      { type: ELEMENT_PICK_MESSAGES.CANCEL },
+      contentMessageDeliveryOptions(0),
+    ).catch(() => {});
     await clearElementPickState({ tabId: tab.id });
   }
   pageAnnotationMode = mode === PAGE_ANNOTATION_MODES.AREA ? PAGE_ANNOTATION_MODES.AREA : PAGE_ANNOTATION_MODES.ELEMENT;

@@ -47,11 +47,16 @@
       return null;
     }
     const inject = response && typeof response.inject === 'boolean' ? response.inject : false;
+    const wasBlocked = globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ === true;
+    const priorInject = typeof gate.latestInject === 'boolean' ? gate.latestInject : null;
     globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
     gate.latestInject = inject;
     gate.decided = true;
     gate.promise = Promise.resolve(inject);
     if (gate._resolvePolicy) gate._resolvePolicy(inject);
+    if (inject && (priorInject === false || (priorInject === null && wasBlocked))) {
+      globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = true;
+    }
     if (inject) notifyPolicyDecision(true);
     return inject;
   }

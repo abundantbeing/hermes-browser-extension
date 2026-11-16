@@ -53,6 +53,13 @@ test('Greptile scenario: manual bundle install without refresh stays blocked on 
   assert.equal(context.extractorStarted, 0);
 });
 
+test('Greptile scenario: allow flip marks bundle restart before deferred bridge boots', async () => {
+  const { context } = await loadGateContext();
+  context.hermesAwaitPageScriptPolicy(() => { context.listenerStarted += 1; });
+  assert.equal(await context.hermesRefreshPageScriptPolicy(), true);
+  assert.equal(context.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__, true);
+});
+
 test('Greptile scenario: saved opt-in, refresh, manual bundle install without reload starts listener and extractor', async () => {
   const { context, gateSource } = await loadGateContext();
   context.hermesAwaitPageScriptPolicy(() => { context.listenerStarted += 1; });
