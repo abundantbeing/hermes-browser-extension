@@ -2278,6 +2278,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "หยุดอ่านออกเสียง",
   "read_aloud.failed": "ไม่สามารถอ่านคำตอบนี้ออกเสียงได้",
   "read_aloud.nothing": "คำตอบนี้ไม่มีข้อความให้อ่าน",
+  "read_aloud.no_voice": "เบราว์เซอร์นี้ไม่มีเสียงสำหรับ {lang}; ติดตั้งในการตั้งค่าการพูดของระบบ",
   "read_aloud.label": "เสียง (อ่านออกเสียง)",
   "read_aloud.route.gateway": "TTS ของเกตเวย์",
   "read_aloud.route.browser": "เสียงพูดของเบราว์เซอร์",

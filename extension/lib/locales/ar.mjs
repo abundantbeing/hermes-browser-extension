@@ -2278,6 +2278,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "إيقاف القراءة بصوت عالٍ",
   "read_aloud.failed": "تعذّرت قراءة هذا الرد بصوت عالٍ",
   "read_aloud.nothing": "لا يوجد نص للقراءة في هذا الرد.",
+  "read_aloud.no_voice": "لا يتوفر في هذا المتصفح صوت لـ {lang}; ثبّت صوتًا في إعدادات النطق على نظامك.",
   "read_aloud.label": "الصوت (القراءة بصوت عالٍ)",
   "read_aloud.route.gateway": "TTS البوابة",
   "read_aloud.route.browser": "كلام المتصفح",

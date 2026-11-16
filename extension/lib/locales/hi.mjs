@@ -2278,6 +2278,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "ज़ोर से पढ़ना रोकें",
   "read_aloud.failed": "इस उत्तर को ज़ोर से नहीं पढ़ा जा सका",
   "read_aloud.nothing": "इस उत्तर में पढ़ने के लिए कोई टेक्स्ट नहीं है।",
+  "read_aloud.no_voice": "इस ब्राउज़र में {lang} के लिए कोई आवाज़ नहीं है; अपनी सिस्टम सेटिंग में एक आवाज़ स्थापित करें।",
   "read_aloud.label": "आवाज़ (ज़ोर से पढ़ना)",
   "read_aloud.route.gateway": "गेटवे TTS",
   "read_aloud.route.browser": "ब्राउज़र की आवाज़",

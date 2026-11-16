@@ -799,6 +799,7 @@ import {
   describeVoiceRoute,
   ensureReadAloudReplyId,
   preserveReadAloudReplyIds,
+  readAloudFailureDetail,
   readAloudKey,
   readAloudKeysMatch,
   readAloudRouteOrder,
@@ -1579,7 +1580,8 @@ const readAloudPlayer = createReadAloudPlayer({
     },
     play: (bytes) => readAloudAudio.play(bytes),
   },
-  browser: { speak: (chunks) => createBrowserSpeech({ lang: getLocale() }).speak(chunks) },
+  // The reply's own language picks the voice; the panel's locale only breaks a tie.
+  browser: { speak: (chunks) => createBrowserSpeech({ fallbackLang: getLocale() }).speak(chunks) },
   onChange: () => {
     panelMessageThread?.refreshReadAloud();
     renderCompatibilityPanel();
@@ -1617,7 +1619,9 @@ async function toggleReadAloud(record, node) {
   }
   void refreshDashboardRoutes().catch(() => undefined);
   const result = await readAloudPlayer.toggle(key, text, { order: readAloudRouteOrder(readAloudAvailability()) });
-  if (result?.ok === false) showOperationToast({ kind: 'warn', title: t('read_aloud.failed'), detail: result.error });
+  if (result?.ok === false) {
+    showOperationToast({ kind: 'warn', title: t('read_aloud.failed'), detail: readAloudFailureDetail(result.error, t) });
+  }
 }
 
 window.addEventListener('pagehide', () => readAloudPlayer.stop());

@@ -2278,6 +2278,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Hentikan pembacaan suara",
   "read_aloud.failed": "Balasan ini tidak dapat dibacakan",
   "read_aloud.nothing": "Tidak ada teks untuk dibacakan di balasan ini.",
+  "read_aloud.no_voice": "Browser ini tidak memiliki suara untuk {lang}; instal satu di pengaturan ucapan sistem Anda.",
   "read_aloud.label": "Suara (bacakan)",
   "read_aloud.route.gateway": "TTS gateway",
   "read_aloud.route.browser": "Suara browser",
