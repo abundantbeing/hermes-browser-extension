@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Hermes hesabı",
   "account.hint": "Hermes telefon uygulamasının kullandığı aynı oturum açma. Oturum açmayı isteyen bir ağ geçidinde, hiçbir şey çalıştırmadan Projeler'i, oturum yetkisini, bağlam sıkıştırmayı ve tam bot listesini açar. Oturumu kapat, bunu bu tarayıcıdan siler.",
   "account.sign_in": "Hermes hesabınızla oturum açın",
+  "account.sign_in_nous": "Nous Portal ile oturum aç",
   "account.sign_out": "Oturumu kapat",
   "account.status_checking": "Bu ağ geçidinin Hermes hesabıyla oturum açmayı kabul edip etmediği denetleniyor.",
   "account.status_waiting": "Açılan pencerede oturum açmayı bitirmeniz bekleniyor.",

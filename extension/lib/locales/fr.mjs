@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Compte Hermes",
   "account.hint": "La même connexion que celle de l'application mobile Hermes. Elle ouvre les projets, l'autorité de session, le compactage du contexte et la liste complète des bots sur une passerelle qui demande une connexion, sans rien exécuter. Se déconnecter l'oublie sur ce navigateur.",
   "account.sign_in": "Se connecter avec votre compte Hermes",
+  "account.sign_in_nous": "Se connecter avec Nous Portal",
   "account.sign_out": "Se déconnecter",
   "account.status_checking": "Vérification : cette passerelle accepte-t-elle une connexion par compte Hermes ?",
   "account.status_waiting": "En attente de la fin de votre connexion dans la fenêtre qui s'est ouverte.",

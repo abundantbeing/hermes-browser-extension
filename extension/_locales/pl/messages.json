@@ -87,6 +87,10 @@
     "message": "Ta brama wymaga logowania kontem Hermes. Otwórz Ustawienia > Połączenia i wybierz „Zaloguj się kontem Hermes”.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Zaloguj się przez Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Wyloguj",
     "description": "Runtime interface message account.sign_out"

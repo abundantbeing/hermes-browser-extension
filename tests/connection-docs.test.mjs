@@ -1,0 +1,137 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+
+const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const readme = read('README.md');
+const guide = read('guides/connection-guide.md');
+const agent = read('guides/agent-setup.md');
+const troubleshooting = read('guides/troubleshooting.md');
+const pluginDocs = read('companion-plugin/README.md') + read('companion-plugin/install.md');
+const { version } = JSON.parse(read('package.json'));
+
+test('the README Quick start sets up Hermes first, then installs, then connects, then adds the plugin', () => {
+  const quick = readme.slice(readme.indexOf('## Quick start'), readme.indexOf('## Connect to Hermes'));
+  const order = ['### 1. Give Hermes an API key', '### 2. Install the extension', '### 3. Connect', '### 4. Optional: let Hermes operate your tabs'];
+  const positions = order.map((heading) => quick.indexOf(heading));
+  assert.ok(positions.every((position) => position >= 0), `every step is there: ${positions}`);
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'in this order');
+  assert.match(quick, /Manual setup/);
+  assert.match(quick, /stock Hermes does not ship/, 'it says plainly that one-click pairing is not on stock Hermes');
+});
+
+test('the docs state the key rule Hermes enforces, and do not present API_SERVER_ENABLED as the switch', () => {
+  for (const [name, text] of [['README.md', readme], ['connection-guide.md', guide], ['agent-setup.md', agent]]) {
+    assert.match(text, /16 (?:or more )?characters|shorter than 16/, `${name} says the key needs 16+ characters`);
+    assert.doesNotMatch(text, /API_SERVER_ENABLED/, `${name}: Hermes turns the API server on from the key`);
+  }
+});
+
+test('the connection guide covers every place Hermes runs, with a command for each', () => {
+  for (const heading of [
+    '### On this computer',
+    '### In WSL2, with the browser on Windows',
+    '### In Docker',
+    '### On a VPS or another computer, over Tailscale',
+    '### On a VPS or another computer, over an SSH tunnel',
+    '### On another computer on your home or office network',
+    '### Behind an HTTPS reverse proxy',
+    '### Several Hermes bots (named profiles)',
+    '### Hermes Cloud',
+  ]) {
+    assert.ok(guide.includes(heading), heading);
+  }
+  assert.match(guide, /ssh -N -L 18642:127\.0\.0\.1:8642/);
+  assert.match(guide, /tailscale serve --bg 8642/);
+  assert.match(guide, /-p 127\.0\.0\.1:8642:8642/, 'Docker publishes on loopback only');
+  assert.match(guide, /proxy_buffering off/, 'streamed replies need buffering off');
+  assert.match(guide, /proxy_set_header Upgrade \$http_upgrade;\s*proxy_set_header Connection \$connection_upgrade;/, 'Hermes Control needs the WebSocket upgrade through nginx');
+});
+
+test('a named profile keeps the plain address, because the extension adds /p/<profile> itself', () => {
+  for (const [name, text] of [['connection-guide.md', guide], ['agent-setup.md', agent]]) {
+    assert.match(text, /do not add `\/p\/<profile>`/i, name);
+    assert.doesNotMatch(text, /add `\/p\/<profile>` to the address;/, name);
+  }
+});
+
+test('named profiles document the one saved key must match the listener key', () => {
+  for (const [name, text] of [['connection-guide.md', guide], ['agent-setup.md', agent]]) {
+    assert.match(text, /one.*key|stores \*\*one\*\* key/i, name);
+    assert.match(text, /listener.*API_SERVER_KEY|listener key/i, name);
+  }
+  assert.match(guide, /\/api\/sessions/);
+});
+
+test('the SSH tunnel recipe warns that Local gateway discovers dashboards on this computer', () => {
+  assert.match(guide, /Local gateway.*scans.*dashboard|discovers Hermes dashboards on this computer|scans this computer for a Hermes Desktop dashboard/i);
+  assert.match(guide, /Stop the Hermes gateway on this computer|stop the local Hermes gateway/i);
+  assert.match(readme, /discovers Hermes dashboards on this computer|stop the local Hermes gateway/i);
+  assert.match(agent, /scans for a Hermes dashboard on this computer|stop the local Hermes gateway/i);
+});
+
+test('the docs say where Hermes Control works: loopback or HTTPS, and an SSH tunnel is this computer', () => {
+  assert.match(guide, /Hermes Control refuses it/);
+  assert.match(guide, /add a \*\*Local gateway\*\* \(this computer\) at `http:\/\/127\.0\.0\.1:18642`/);
+  assert.doesNotMatch(guide, /add a \*\*Remote gateway\*\* at `http:\/\/127\.0\.0\.1:18642`/);
+  assert.match(agent, /Hermes Control refuses a remote `http:\/\/` address/);
+  assert.match(readme, /An SSH tunnel is a port on this computer[\s\S]{0,120}Local gateway/);
+});
+
+test('the Windows key line draws 32 random bytes, and the setup helper is shown with --clip', () => {
+  assert.match(guide, /RandomNumberGenerator\]::Create\(\)\.GetBytes\(\$bytes\)/, 'works in Windows PowerShell 5.1 and PowerShell 7');
+  assert.doesNotMatch(guide, /Get-Random -Count/, 'Get-Random -Count over 16 digits is a permutation, about 44 bits');
+  for (const [name, text] of [['README.md', readme], ['agent-setup.md', agent]]) {
+    assert.match(text, /Setup_Hermes_Browser_Extension\.cmd --clip/, name);
+  }
+});
+
+test('the compatibility matrix names the current version', () => {
+  assert.match(guide, new RegExp(`\\| Surface \\| Supported in v${version.replace(/\./g, '\\.')} \\|`));
+});
+
+test('CORS is the fallback, not a setup step, and every doc that mentions it says when it is needed', () => {
+  const quick = readme.slice(readme.indexOf('## Quick start'), readme.indexOf('## Connect to Hermes'));
+  assert.doesNotMatch(quick, /^API_SERVER_CORS_ORIGINS=/m, 'no CORS line in the Quick start .env');
+  assert.match(guide, /## If a message is refused with a 403/);
+  assert.match(troubleshooting, /## Cannot connect/);
+  assert.match(troubleshooting, /Automatic pairing isn't available on this Hermes installation yet/);
+});
+
+test('the plugin docs offer the catalog name and do not say the catalog has no entry', () => {
+  assert.doesNotMatch(pluginDocs, /catalog has no entry/);
+  assert.match(pluginDocs, /hermes plugins install hermes-browser-extension --enable/);
+  assert.doesNotMatch(pluginDocs, /does not pair with the extension/);
+});
+
+test('setup docs reuse an existing API key and show how to read it back', () => {
+  const quick = readme.slice(readme.indexOf('## Quick start'), readme.indexOf('## Connect to Hermes'));
+  assert.match(quick, /hermes config get API_SERVER_KEY/);
+  assert.match(quick, /reuse it|Reuse a key/i);
+  assert.match(quick, /hermes config get API_SERVER_KEY --raw/);
+  assert.match(quick, /rotate|replaces the key/i);
+  assert.match(guide, /hermes config get API_SERVER_KEY/);
+  assert.match(guide, /hermes config get API_SERVER_KEY --raw/);
+  assert.match(agent, /hermes config get API_SERVER_KEY/);
+});
+
+test('the SSH tunnel docs state the page-context boundary, not local-gateway equivalence', () => {
+  assert.match(guide, /Page context boundary|page context.*leaves this computer/i);
+  assert.match(guide, /does not.*show the remote.*Share page context|does not\*\* show the remote/i);
+  assert.doesNotMatch(guide, /tunnel port other than `8642`/);
+  assert.match(readme, /leaves this computer/i);
+  assert.match(readme, /does not.*show the remote/i);
+  assert.match(agent, /leaves this computer/i);
+  assert.match(agent, /does not.*show remote/i);
+  assert.doesNotMatch(
+    guide + readme + agent,
+    /treats a forwarded loopback port|like a remote gateway for consent/i,
+  );
+});
+
+test('an agent pointed at the repository finds its setup steps', () => {
+  assert.match(readme, /\]\(\.\/guides\/agent-setup\.md\)/);
+  assert.match(agent, /Only the person can do these/);
+  assert.match(agent, /Ask the person before you restart/, 'a gateway restart interrupts every bot');
+  assert.match(agent, /Never paste the key into a chat log/);
+});

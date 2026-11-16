@@ -30,15 +30,17 @@ through a few tools. The plugin version is the `version` in `plugin.yaml`.
 - Hermes Agent 0.22 or newer (`requires_hermes: ">=0.22"`): plugin manifest v2,
   the `pre_llm_call`, `pre_tool_call` and `post_tool_call` hooks and
   `register_platform_handler("api_server", ...)`. 0.22.x is the tested runtime.
-- The Hermes API server on (`API_SERVER_ENABLED=true`) for the profile, with its
-  own `API_SERVER_KEY` (Hermes refuses a named profile without one).
+- The Hermes API server on for the profile: `API_SERVER_KEY` set, 16 or more
+  characters, which is what turns it on. Hermes refuses a shorter key even on
+  loopback, and a named profile needs its own key.
 - The Hermes Browser Extension 0.3.0 or newer (BCP v2 turn envelopes); 0.4.0 or
   newer for Hermes Control through this plugin, and 0.4.1 or newer (extension and
   plugin both) for Background task tabs. Hermes Control runs in
   Chromium-based browsers only.
-- The extension's origin (`chrome-extension://<id>`) in `API_SERVER_CORS_ORIGINS`
-  on a Hermes that does not pair with the extension itself; the extension's
-  **Test connection** names the exact line.
+- Nothing in `API_SERVER_CORS_ORIGINS` for current extension builds: they remove
+  the `Origin` header Hermes refuses from what they send to the gateway. The
+  Firefox add-on 0.4.1 and browsers that ignore extension network rules still need
+  the extension's origin listed there; the panel names the exact line.
 - Nothing to install beyond the plugin: it declares no Python dependencies.
 
 ## Install (per profile)
@@ -47,8 +49,10 @@ Hermes installs plugins per profile, with its own installer: it clones, runs its
 security scan, installs atomically and records where the copy came from.
 
 ```bash
-# default profile, from this repository (the plugin is its companion-plugin/ subdirectory;
-# the Hermes plugin catalog has no entry for it yet)
+# default profile, from the Hermes plugin catalog (the commit the catalog pinned)
+hermes plugins install hermes-browser-extension --enable
+
+# default profile, the newest commit from this repository (the plugin is its companion-plugin/ subdirectory)
 hermes plugins install https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin --enable
 
 # a named profile (repeat per profile that should have it)

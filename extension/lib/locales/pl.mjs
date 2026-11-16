@@ -124,6 +124,7 @@ export default Object.freeze({
   "account.label": "Konto Hermes",
   "account.hint": "To samo logowanie, którego używa aplikacja Hermes na telefon. Otwiera Projekty, autorytet sesji, kompaktowanie kontekstu i pełną listę botów na bramie, która wymaga logowania, bez uruchamiania czegokolwiek. Wylogowanie usuwa je z tej przeglądarki.",
   "account.sign_in": "Zaloguj się kontem Hermes",
+  "account.sign_in_nous": "Zaloguj się przez Nous Portal",
   "account.sign_out": "Wyloguj",
   "account.status_checking": "Sprawdzanie, czy ta brama przyjmuje logowanie kontem Hermes.",
   "account.status_waiting": "Czekam, aż skończysz logowanie w otwartym oknie.",

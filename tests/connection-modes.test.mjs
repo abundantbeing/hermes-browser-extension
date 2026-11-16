@@ -175,6 +175,55 @@ test('automatic API pairing is loopback-only and enforced by the side-panel conn
   assert.match(english, /"connect\.status\.loopback_only": "Automatic pairing is available only for a loopback Local gateway\./);
 });
 
+test('testConnection does not resume after cancellation during gateway rule sync', () => {
+  const testBody = sidepanelSource.match(/async function testConnection\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  const beginIdx = testBody.indexOf('connectionController.begin');
+  const syncIdx = testBody.indexOf('await syncGatewayOriginRule()');
+  assert.ok(beginIdx >= 0 && syncIdx > beginIdx, 'the test attempt must begin before the worker rule sync');
+  assert.match(
+    testBody,
+    /await syncGatewayOriginRule\(\);\s*if \(!connectionController\.isCurrent\(generation\)\)/,
+    'changing connection mode during sync must not let Test connection continue',
+  );
+});
+
+test('a canceled Connect attempt must not unlock connectButton while a newer attempt runs', () => {
+  const connectFn = sidepanelSource.match(/async function connectApiWithPairing\(\) \{[\s\S]*?\n\}\n\nasync function fallbackSessionChat/)?.[0] || '';
+  assert.match(
+    connectFn,
+    /} finally \{[\s\S]*?if \(connectionController\.isCurrent\(generation\)\) \{[\s\S]*?els\.connectButton\.disabled = false/,
+    'completion cleanup must touch connectButton only for the current attempt',
+  );
+  assert.doesNotMatch(
+    connectFn,
+    /if \(!connectionController\.isCurrent\(generation\)\) \{[\s\S]{0,120}els\.connectButton\.disabled = false/,
+    'a stale attempt must not re-enable connectButton',
+  );
+  assert.match(
+    sidepanelSource,
+    /function applyConnectionMode\([\s\S]{0,900}connectionController\.cancel\('connection settings changed'\)[\s\S]{0,400}resetConnectButtonIdle\(\)/,
+    'canceled Connect UI resets where connection mode changes',
+  );
+});
+
+test('saveSettingsFromForm resets Connect when Save cancels a pairing attempt', () => {
+  const save = sidepanelSource.match(/async function saveSettingsFromForm\([\s\S]*?const writeSettingsRecord = async/)?.[0] || '';
+  assert.match(
+    save,
+    /if \(connectionChanged\) \{[\s\S]*?connectionController\.cancel\('connection settings changed'\)[\s\S]*?resetConnectButtonIdle\(\)/,
+    'saving a different gateway address must unlock Connect after cancel',
+  );
+});
+
+test('connectApiWithPairing does not resume after cancellation during gateway rule sync', () => {
+  assert.match(
+    sidepanelSource,
+    /async function connectApiWithPairing\(\) \{[\s\S]{0,1600}await syncGatewayOriginRule\(\{ pendingGatewayUrl: pairingPendingUrl, pendingGatewayRegistrationId: pairingRegistrationId \}\);\s*if \(!connectionController\.isCurrent\(generation\)\) return;/,
+    'changing connection mode during sync must not let pairing continue',
+  );
+  assert.match(sidepanelSource, /releasePendingGatewayRegistrationId: pairingRegistrationId/, 'pairing releases only its own registration when the attempt ends');
+});
+
 test('a completed pairing rebinds the controller instead of leaving it on stale settings', () => {
   const pairingBody = sidepanelSource.match(/async function connectApiWithPairing\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
   assert.match(pairingBody, /tokenSource = 'pairing'/, 'the pairing success path must persist the token');

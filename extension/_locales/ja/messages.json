@@ -87,6 +87,10 @@
     "message": "このゲートウェイでは Hermes アカウントでのサインインが必要です。設定 > 接続 を開き、「Hermes アカウントでサインイン」を選んでください。",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Nous Portal でサインイン",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "サインアウト",
     "description": "Runtime interface message account.sign_out"

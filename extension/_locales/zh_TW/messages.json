@@ -87,6 +87,10 @@
     "message": "此閘道需要你使用 Hermes 帳號登入。請開啟「設定」>「連線」，選擇「使用你的 Hermes 帳號登入」。",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "使用 Nous Portal 登入",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "登出",
     "description": "Runtime interface message account.sign_out"

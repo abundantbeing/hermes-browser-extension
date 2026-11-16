@@ -87,6 +87,10 @@
     "message": "Gateway ini memerlukan masuk dengan akun Hermes Anda. Buka Pengaturan > Koneksi dan pilih “Masuk dengan akun Hermes Anda”.",
     "description": "Runtime interface message account.sign_in_needed"
   },
+  "runtime_account_sign_in_nous": {
+    "message": "Masuk dengan Nous Portal",
+    "description": "Runtime interface message account.sign_in_nous"
+  },
   "runtime_account_sign_out": {
     "message": "Keluar",
     "description": "Runtime interface message account.sign_out"
