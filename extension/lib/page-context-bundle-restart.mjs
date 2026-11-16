@@ -295,13 +295,24 @@ export function createPageContextGateEnsureRunner(deps) {
         if (!pageScriptDocumentAnchorsMatch(anchorAfterAllow, anchorBeforeRestart)) return false;
         if (!pageContextPolicyGrantMatchesAnchor(binding, anchorBeforeRestart)) return false;
         if (!(await verifyInstallBinding(binding))) return false;
-        await reinstallPageContextBundleEntries(tabId, binding);
+        try {
+          await reinstallPageContextBundleEntries(tabId, binding);
+        } catch {
+          return false;
+        }
         await awaitPageContextBundleRestart(tabId, binding);
         if (!(await verifyInstallBinding(binding))) return false;
+        if (!liveAnchorMatchesCaptureRequest(request, await readPageScriptDocumentAnchor(executeScript, binding))) {
+          return false;
+        }
         needsRestart = await probePageContextBundleRestartNeeded(binding);
         if (needsRestart) {
           if (!(await verifyInstallBinding(binding))) return false;
-          await reinstallPageContextBundleEntries(tabId, binding);
+          try {
+            await reinstallPageContextBundleEntries(tabId, binding);
+          } catch {
+            return false;
+          }
         }
       }
       if (!(await verifyInstallBinding(binding))) return false;

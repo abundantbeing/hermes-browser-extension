@@ -38,6 +38,8 @@ function panelHarness(stored = {}) {
     pageContextInjectionDecision,
     pageContextSkipMessageKey: () => 'status.page_context_skipped',
     translateUiText: (value) => value,
+    t: (value) => value,
+    acquirePageContextInstallBinding: async () => ({ captureRequestAnchorToken: 'gmail-fixture-token' }),
     sendContentMessageWithInstallFallback: async (_id, message) => {
       calls.push(message.options);
       const adapter = inspectSite(documentAt(gmailHtml, gmailUrl), { url: gmailUrl, explicitCapture: message.options.explicitSiteCapture });

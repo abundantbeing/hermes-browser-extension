@@ -29,9 +29,15 @@ function hrefAnchor(href) {
   return { href, origin, token: `${origin}\u0000${href}` };
 }
 
-function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {}) {
+function createDocumentBoundHarness({
+  settings,
+  enableDocumentIds = true,
+  navigateOnRefresh = true,
+  bundleComplete = false,
+} = {}) {
   let currentHref = 'https://example.com/dashboard';
   let liveDocumentId = 'doc-example-001';
+  let refreshNavigationObserved = false;
   const fileInjections = [];
   const documentById = new Map([
     ['doc-example-001', 'https://example.com/dashboard'],
@@ -57,18 +63,25 @@ function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {})
         return [{ result: hrefAnchor(href) }];
       }
       if (source.includes('HermesContentExtractor')) {
-        return [{ result: { restart: true, extractorReady: false, bridgeLoaded: true } }];
+        return [{
+          result: bundleComplete
+            ? { restart: false, extractorReady: true, bridgeLoaded: true }
+            : { restart: true, extractorReady: false, bridgeLoaded: true },
+        }];
       }
       if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
         return [{ result: true }];
       }
       if (source.includes('hermesRefreshPageScriptPolicy')) {
-        currentHref = 'http://localhost/dashboard';
-        liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
+        if (navigateOnRefresh) {
+          currentHref = 'http://localhost/dashboard';
+          liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
+          refreshNavigationObserved = true;
+        }
         const decision = pageContextHostPolicyDecision(currentHref, settingsWithLocal);
-        return [{ result: { allowed: decision.inject, restart: decision.inject } }];
+        return [{ result: { allowed: decision.inject, restart: !bundleComplete && decision.inject } }];
       }
-      const result = await request.func();
+      const result = typeof request.func === 'function' ? await request.func() : undefined;
       return [{ result }];
     }
     if (target.frameIds?.length) {
@@ -81,18 +94,25 @@ function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {})
         return [{ result: hrefAnchor(currentHref) }];
       }
       if (source.includes('HermesContentExtractor')) {
-        return [{ result: { restart: true, extractorReady: false, bridgeLoaded: true } }];
+        return [{
+          result: bundleComplete
+            ? { restart: false, extractorReady: true, bridgeLoaded: true }
+            : { restart: true, extractorReady: false, bridgeLoaded: true },
+        }];
       }
       if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
         return [{ result: true }];
       }
       if (source.includes('hermesRefreshPageScriptPolicy')) {
-        currentHref = 'http://localhost/dashboard';
-        liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
+        if (navigateOnRefresh) {
+          currentHref = 'http://localhost/dashboard';
+          liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
+          refreshNavigationObserved = true;
+        }
         const decision = pageContextHostPolicyDecision(currentHref, settingsWithLocal);
-        return [{ result: { allowed: decision.inject, restart: decision.inject } }];
+        return [{ result: { allowed: decision.inject, restart: !bundleComplete && decision.inject } }];
       }
-      const result = await request.func();
+      const result = typeof request.func === 'function' ? await request.func() : undefined;
       return [{ result }];
     }
     throw new Error('unexpected executeScript target');
@@ -161,12 +181,18 @@ function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {})
     probePageContextBundleRestartNeeded: (binding) => probePageContextBundleRestartNeeded(executeScript, binding),
   });
 
-  return { runGateEnsure, fileInjections, getLiveDocumentId: () => liveDocumentId };
+  return {
+    runGateEnsure,
+    fileInjections,
+    getLiveDocumentId: () => liveDocumentId,
+    getCurrentHref: () => currentHref,
+    refreshNavigationObserved: () => refreshNavigationObserved,
+  };
 }
 
 test('navigation to blocked origin between allow and restart does not inject bundle (documentId target)', async () => {
   const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
-  const { runGateEnsure, fileInjections, getLiveDocumentId } = createDocumentBoundHarness({ settings, enableDocumentIds: true });
+  const { runGateEnsure, fileInjections, refreshNavigationObserved, getCurrentHref } = createDocumentBoundHarness({ settings, enableDocumentIds: true });
 
   const start = hrefAnchor('https://example.com/dashboard');
   const allowed = await runGateEnsure(7, {
@@ -180,12 +206,14 @@ test('navigation to blocked origin between allow and restart does not inject bun
   });
 
   assert.equal(allowed, false);
+  assert.equal(refreshNavigationObserved(), true);
+  assert.equal(getCurrentHref(), 'http://localhost/dashboard');
   assert.equal(fileInjections.length, 0, 'must not inject bundle after navigation to blocked origin');
 });
 
 test('frame-only fallback aborts when navigation reaches a blocked origin', async () => {
   const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
-  const { runGateEnsure, fileInjections } = createDocumentBoundHarness({ settings, enableDocumentIds: false });
+  const { runGateEnsure, fileInjections, getCurrentHref, refreshNavigationObserved } = createDocumentBoundHarness({ settings, enableDocumentIds: false });
 
   const start = hrefAnchor('https://example.com/dashboard');
   const allowed = await runGateEnsure(8, {
@@ -199,6 +227,8 @@ test('frame-only fallback aborts when navigation reaches a blocked origin', asyn
   });
 
   assert.equal(allowed, false);
+  assert.equal(refreshNavigationObserved(), true, 'policy refresh must observe navigation to blocked origin');
+  assert.equal(getCurrentHref(), 'http://localhost/dashboard');
   const injectedBundle = fileInjections.some((row) =>
   row.files.some((file) => file.endsWith('content.js') || file.endsWith('content-extractor.js')));
   assert.equal(injectedBundle, false, 'must not inject bundle entries after navigation to blocked origin');
@@ -275,4 +305,28 @@ test('restart file list without gate is a hard failure', () => {
     () => pageContextBundleRestartFilesFromManifest(['content.js']),
     PageContextMissingGateError,
   );
+});
+
+test('frame fallback unchanged allowed origin completes gate ensure with no bundle inject', async () => {
+  const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
+  const { runGateEnsure, fileInjections, getCurrentHref, refreshNavigationObserved } = createDocumentBoundHarness({
+    settings,
+    enableDocumentIds: false,
+    navigateOnRefresh: false,
+    bundleComplete: true,
+  });
+  const start = hrefAnchor('https://example.com/dashboard');
+  const allowed = await runGateEnsure(9, {
+    tabId: 9,
+    frameId: 0,
+    documentId: null,
+    allowFrameFallback: true,
+    href: start.href,
+    anchorToken: start.token,
+    captureRequestAnchorToken: start.token,
+  });
+  assert.equal(allowed, true);
+  assert.equal(refreshNavigationObserved(), false);
+  assert.equal(getCurrentHref(), 'https://example.com/dashboard');
+  assert.equal(fileInjections.length, 0);
 });

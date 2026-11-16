@@ -25275,8 +25275,10 @@ const pageContextBundleRestart = createPageContextBundleRestartCoalescer({
     binding,
   ),
   runBundleRestart: async (binding) => {
-    if (!(await verifyPageContextInstallBinding(binding))) return;
-    await runPageContextBundleRestart(
+    if (!(await verifyPageContextInstallBinding(binding))) {
+      throw pageContextPolicySkipError(binding.href || '', { inject: false, reason: 'private' });
+    }
+    const ok = await runPageContextBundleRestart(
       executePageContextScript,
       binding,
       pageContextBundleRestartFiles(),
@@ -25286,6 +25288,9 @@ const pageContextBundleRestart = createPageContextBundleRestartCoalescer({
         afterInject: async () => verifyPageContextInstallBinding(binding),
       },
     );
+    if (!ok) {
+      throw pageContextPolicySkipError(binding.href || '', { inject: false, reason: 'private' });
+    }
   },
 });
 const {
@@ -25521,7 +25526,7 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
             const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
             throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
           }
-          await runPageContextBundleRestart(
+          const bridgeInjected = await runPageContextBundleRestart(
             executePageContextScript,
             installBinding,
             filesToInject,
@@ -25531,6 +25536,10 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
               afterInject: async () => verifyPageContextInstallBinding(installBinding),
             },
           );
+          if (!bridgeInjected) {
+            const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+            throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+          }
         } else if (!afterEnsure.extractorReady && !(await probePageContextBundleRestartNeeded(installBinding))) {
           if (!(await verifyPageContextInstallBinding(installBinding))) {
             const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
@@ -25539,7 +25548,7 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
           const restartFiles = pageContextBundleRestartFiles();
           const gateFile = restartFiles[0];
           if (gateFile) {
-            await runPageContextBundleRestart(
+            const gateInjected = await runPageContextBundleRestart(
               executePageContextScript,
               installBinding,
               [gateFile],
@@ -25549,6 +25558,10 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
                 afterInject: async () => verifyPageContextInstallBinding(installBinding),
               },
             );
+            if (!gateInjected) {
+              const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+              throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+            }
           }
           const allowedAfterGate = await ensurePageContextGateAndRefresh(tabId, installBinding);
           if (!allowedAfterGate) {
@@ -25560,7 +25573,7 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
               const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
               throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
             }
-            await runPageContextBundleRestart(
+            const retryExtractorInjected = await runPageContextBundleRestart(
               executePageContextScript,
               installBinding,
               [extractorPath],
@@ -25570,6 +25583,10 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
                 afterInject: async () => verifyPageContextInstallBinding(installBinding),
               },
             );
+            if (!retryExtractorInjected) {
+              const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+              throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+            }
           }
         }
       }
@@ -25592,6 +25609,66 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
 }
 
 function collectPageContextWithSharedExtractor(options = {}) {
+  const expected = String(options?.captureRequestAnchorToken || '').trim();
+  if (expected) {
+    let token = '';
+    try {
+      token = `${location.origin}\u0000${location.href}`;
+    } catch {
+      token = '';
+    }
+    if (!token || token !== expected) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: 'blocked',
+        reasonKey: 'status.page_context_capture_off',
+        reason: '',
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+  }
+  const gate = globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
+  if (!gate || gate.latestInject !== true || globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ === true) {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: 'blocked',
+      reasonKey: 'status.page_context_capture_off',
+      reason: '',
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
+  try {
+    const token = `${location.origin}\u0000${location.href}`;
+    if (gate.policyLocationToken && gate.policyLocationToken !== token) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: 'blocked',
+        reasonKey: 'status.page_context_capture_off',
+        reason: '',
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+  } catch {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: 'blocked',
+      reasonKey: 'status.page_context_capture_off',
+      reason: '',
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
   const TEXT_LIMITS = { minimal: 4_000, normal: 12_000, full: 30_000 };
   const HermesContentExtractor = globalThis.HermesContentExtractor;
   if (!HermesContentExtractor?.collectPageContext) {
@@ -25645,6 +25722,9 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         selectedText: '',
         meta: {},
       };
+    }
+    if (options?.captureRequestAnchorToken) {
+      installBinding.captureRequestAnchorToken = options.captureRequestAnchorToken;
     }
     const scriptTarget = pageContextScriptInjectionTarget(installBinding);
     if (!scriptTarget) {
@@ -25715,7 +25795,22 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
-    await runPageContextBundleRestart(
+    const captureToken = installBinding.captureRequestAnchorToken || installBinding.anchorToken;
+    const grantAnchor = await readPageScriptDocumentAnchor(executePageContextScript, installBinding);
+    if (!grantAnchor || !pageContextPolicyGrantMatchesAnchor(installBinding, grantAnchor)) {
+      const blockedUrl = grantAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    const extractorInjected = await runPageContextBundleRestart(
       executePageContextScript,
       installBinding,
       [extractorPath],
@@ -25725,10 +25820,23 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         afterInject: async () => verifyPageContextInstallBinding(installBinding),
       },
     );
+    if (!extractorInjected || !(await verifyPageContextInstallBinding(installBinding))) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
     const [injected] = await browserApi.scripting.executeScript({
       target: scriptTarget,
       func: collectPageContextWithSharedExtractor,
-      args: [options],
+      args: [{ ...options, captureRequestAnchorToken: captureToken }],
     });
     if (injected?.result) {
       return {
@@ -25800,6 +25908,14 @@ async function getPageContext(tab, options = {}) {
     explicitSiteCapture: Boolean(options.explicitSiteCapture) || (settings.gmailCaptureEnabled === true && isGmailThreadUrl(tab.url)),
     frameId: Number(options.frameId || 0),
   };
+  if (options.captureRequestAnchorToken) {
+    requestOptions.captureRequestAnchorToken = options.captureRequestAnchorToken;
+  } else {
+    const peekBinding = await acquirePageContextInstallBinding(tab.id, requestOptions.frameId);
+    if (peekBinding?.captureRequestAnchorToken) {
+      requestOptions.captureRequestAnchorToken = peekBinding.captureRequestAnchorToken;
+    }
+  }
   try {
     let response = await sendContentMessageWithInstallFallback(
       tab.id,
