@@ -52,12 +52,11 @@ test('element pick failures surface in the operation toast', async () => {
 
 test('ensurePageContextGateAndRefresh awaits async policy refresh inside the target', async () => {
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const block = source.slice(
-    source.indexOf('async function runPageContextGateEnsureForTarget'),
-    source.indexOf('async function ensurePageContextGateAndRefresh'),
-  );
-  assert.match(block, /func: async \(\) =>/);
-  assert.match(block, /await refresh\(\)/);
+  const runner = await readFile(new URL('../extension/lib/page-context-bundle-restart.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /func: async \(\) =>/);
+  assert.match(runner, /await refresh\(\)/);
+  assert.match(runner, /readPageScriptDocumentAnchor/);
+  assert.match(source, /createPageContextGateEnsureRunner/);
   assert.match(source, /createPageContextGateEnsureCoalescer/);
   assert.match(source, /ensurePageContextGateAndRefresh/);
 });
@@ -74,6 +73,7 @@ test('sidepanel installer enforces pageContextInjectionDecision before scripting
   assert.doesNotMatch(block, /frame > 0 \? \{ frameId: frame \} : undefined/);
   assert.match(block, /pageContextScriptTarget\(tabId, frame\)/);
   assert.match(block, /pageContextBundleRestartFiles\(\)/);
+  assert.match(block, /readBoundPageContextTarget/);
 });
 
 test('overlapping page-context actions share one bundle restart per tab frame', async () => {
@@ -99,14 +99,12 @@ test('opt-in bundle reinstall runs bundle entries after gate in dependency order
     source.indexOf('function pageContextBundleRestartFiles'),
     source.indexOf('function pageContextScriptTarget'),
   );
-  assert.match(block, /page-context-bundle-gate/);
-  assert.match(block, /\.slice\(gateIdx \+ 1\)/);
-  const refreshBlock = source.slice(
-    source.indexOf('async function runPageContextGateEnsureForTarget'),
-    source.indexOf('async function ensurePageContextGateAndRefresh'),
-  );
-  assert.match(refreshBlock, /reinstallPageContextBundleEntries/);
-  assert.match(refreshBlock, /probePageContextBundleRestartNeeded/);
+  assert.match(block, /pageContextBundleRestartFilesFromManifest/);
+  assert.match(await readFile(new URL('../extension/lib/page-context-bundle-restart.mjs', import.meta.url), 'utf8'), /page-context-bundle-gate/);
+  const runner = await readFile(new URL('../extension/lib/page-context-bundle-restart.mjs', import.meta.url), 'utf8');
+  assert.match(runner, /reinstallPageContextBundleEntries/);
+  assert.match(runner, /probePageContextBundleRestartNeeded/);
+  assert.match(runner, /page-context-bundle-gate/);
 });
 
 test('adoptHermesBrowserSettingsStorageChange tracks page-context settings fields', async () => {

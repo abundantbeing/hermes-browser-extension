@@ -135,7 +135,12 @@ import {
 import {
   createPageContextBundleRestartCoalescer,
   createPageContextGateEnsureCoalescer,
+  createPageContextGateEnsureRunner,
+  pageContextBundleRestartFilesFromManifest,
+  pageContextInstallAllowedForAnchor,
+  pageScriptDocumentAnchorsMatch,
   probePageContextBundleRestartNeeded as probePageContextBundleRestartNeededInTab,
+  readPageScriptDocumentAnchor,
   runPageContextBundleRestart,
 } from './lib/page-context-bundle-restart.mjs';
 import {
@@ -25193,9 +25198,11 @@ function manifestContentScriptFiles() {
 }
 
 function pageContextBundleRestartFiles() {
-  const files = manifestContentScriptFiles();
-  const gateIdx = files.findIndex((file) => file.includes('page-context-bundle-gate'));
-  return gateIdx >= 0 ? files.slice(gateIdx + 1) : [...files];
+  return pageContextBundleRestartFilesFromManifest(manifestContentScriptFiles());
+}
+
+function pageContextInjectionDecisionForUrl(url) {
+  return pageContextInjectionDecision(url, settings);
 }
 
 function pageContextScriptTarget(tabId, frameId = 0) {
@@ -25208,63 +25215,52 @@ function contentMessageDeliveryOptions(frameId = 0) {
   return { frameId: frame };
 }
 
+const executePageContextScript = (request) => browserApi.scripting.executeScript(request);
+
 const pageContextBundleRestart = createPageContextBundleRestartCoalescer({
   probeRestartNeeded: (scriptTarget) => probePageContextBundleRestartNeededInTab(
-    (request) => browserApi.scripting.executeScript(request),
+    executePageContextScript,
     scriptTarget,
   ),
-  runBundleRestart: (scriptTarget) => runPageContextBundleRestart(
-    (request) => browserApi.scripting.executeScript(request),
-    scriptTarget,
-    pageContextBundleRestartFiles(),
-  ),
+  runBundleRestart: async (scriptTarget) => {
+    const binding = await readPageScriptDocumentAnchor(executePageContextScript, scriptTarget);
+    if (!pageContextInstallAllowedForAnchor(binding, pageContextInjectionDecisionForUrl)) return;
+    await runPageContextBundleRestart(
+      executePageContextScript,
+      scriptTarget,
+      pageContextBundleRestartFiles(),
+      {
+        beforeInject: async () => {
+          const anchor = await readPageScriptDocumentAnchor(executePageContextScript, scriptTarget);
+          if (!pageScriptDocumentAnchorsMatch(binding, anchor)) return false;
+          return pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl);
+        },
+        afterInject: async () => {
+          const anchor = await readPageScriptDocumentAnchor(executePageContextScript, scriptTarget);
+          if (!pageScriptDocumentAnchorsMatch(binding, anchor)) return false;
+          return pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl);
+        },
+      },
+    );
+  },
 });
 const {
   awaitPageContextBundleRestart,
   reinstallPageContextBundleEntries,
 } = pageContextBundleRestart;
 
-async function runPageContextGateEnsureForTarget(tabId, target) {
-  await awaitPageContextBundleRestart(tabId, target);
-  try {
-    const files = manifestContentScriptFiles();
-    const gateFile = files.find((file) => file.includes('page-context-bundle-gate'));
-    const [hasRefresh] = await browserApi.scripting.executeScript({
-      target,
-      func: () => typeof globalThis.hermesRefreshPageScriptPolicy === 'function',
-    });
-    if (!hasRefresh?.result && gateFile) {
-      await browserApi.scripting.executeScript({ target, files: [gateFile] });
-    }
-    const [refreshed] = await browserApi.scripting.executeScript({
-      target,
-      func: async () => {
-        const refresh = globalThis.hermesRefreshPageScriptPolicy;
-        if (typeof refresh !== 'function') return { allowed: false, restart: false };
-        try {
-          const allowed = Boolean(await refresh());
-          const restart = globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ === true;
-          if (restart) globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
-          return { allowed, restart };
-        } catch {
-          return { allowed: false, restart: false };
-        }
-      },
-    });
-    const outcome = refreshed?.result || {};
-    if (!outcome.allowed) return false;
-    let needsRestart = outcome.restart || (await probePageContextBundleRestartNeeded(target));
-    if (needsRestart) {
-      await reinstallPageContextBundleEntries(tabId, target);
-      await awaitPageContextBundleRestart(tabId, target);
-      needsRestart = await probePageContextBundleRestartNeeded(target);
-      if (needsRestart) await reinstallPageContextBundleEntries(tabId, target);
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
+const runPageContextGateEnsureForTarget = createPageContextGateEnsureRunner({
+  executeScript: executePageContextScript,
+  manifestContentScriptFiles,
+  pageContextBundleRestartFiles,
+  pageContextInjectionDecision: pageContextInjectionDecisionForUrl,
+  awaitPageContextBundleRestart,
+  reinstallPageContextBundleEntries,
+  probePageContextBundleRestartNeeded: (target) => probePageContextBundleRestartNeededInTab(
+    executePageContextScript,
+    target,
+  ),
+});
 
 const pageContextGateEnsure = createPageContextGateEnsureCoalescer({
   resolveTarget(tabId, scriptTarget) {
@@ -25277,10 +25273,13 @@ const pageContextGateEnsure = createPageContextGateEnsureCoalescer({
 const { ensurePageContextGateAndRefresh } = pageContextGateEnsure;
 
 async function probePageContextBundleRestartNeeded(scriptTarget) {
-  return probePageContextBundleRestartNeededInTab(
-    (request) => browserApi.scripting.executeScript(request),
-    scriptTarget,
-  );
+  return probePageContextBundleRestartNeededInTab(executePageContextScript, scriptTarget);
+}
+
+async function readBoundPageContextTarget(scriptTarget) {
+  const anchor = await readPageScriptDocumentAnchor(executePageContextScript, scriptTarget);
+  if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return null;
+  return anchor;
 }
 
 function pageContextPermissionControlDirty(control) {
@@ -25381,6 +25380,11 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
   if (!injection.inject) throw pageContextPolicySkipError(url, injection);
   const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
   if (!refreshed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
+  const boundAfterEnsure = await readBoundPageContextTarget(scriptTarget);
+  if (!boundAfterEnsure) {
+    const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
   try {
     return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
   } catch (originalError) {
@@ -25412,6 +25416,11 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
       if (filesToInject.length) {
         const allowed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
         if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
+        const boundBeforeInject = await readBoundPageContextTarget(scriptTarget);
+        if (!boundBeforeInject || boundBeforeInject.token !== boundAfterEnsure.token) {
+          const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+          throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+        }
         await awaitPageContextBundleRestart(tabId, scriptTarget);
         const [sentinelAfterEnsure] = await browserApi.scripting.executeScript({
           target: scriptTarget,
@@ -25431,6 +25440,11 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         }
       }
       await awaitPageContextBundleRestart(tabId, scriptTarget);
+      const boundBeforeSend = await readBoundPageContextTarget(scriptTarget);
+      if (!boundBeforeSend || boundBeforeSend.token !== boundAfterEnsure.token) {
+        const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+        throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+      }
       return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
     } catch (fallbackError) {
       if (fallbackError && typeof fallbackError === 'object' && !fallbackError.cause) fallbackError.cause = originalError;
@@ -25494,7 +25508,35 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
+    const boundAfterEnsure = await readBoundPageContextTarget(scriptTarget);
+    if (!boundAfterEnsure) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
     await awaitPageContextBundleRestart(tabId, scriptTarget);
+  const boundBeforeCapture = await readBoundPageContextTarget(scriptTarget);
+    if (!boundBeforeCapture || boundBeforeCapture.token !== boundAfterEnsure.token) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
     await browserApi.scripting.executeScript({
