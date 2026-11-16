@@ -25958,6 +25958,20 @@ async function getPageContext(tab, options = {}) {
           ? fallback
           : { ...fallback, selectedText: String(options.selectedTextOverride || '') };
       }
+      if (fallback?.skipped) {
+        const skipped = {
+          ok: false,
+          skipped: true,
+          skipReason: fallback.skipReason,
+          reason: fallback.reason || '',
+          text: '',
+          selectedText: '',
+          meta: fallback.meta || {},
+        };
+        return options.selectedTextOverride === undefined
+          ? skipped
+          : { ...skipped, selectedText: String(options.selectedTextOverride || '') };
+      }
     }
     return response || { ok: false, error: 'No page context response', text: '', selectedText: '', meta: {} };
   } catch (error) {
@@ -25977,6 +25991,20 @@ async function getPageContext(tab, options = {}) {
       return options.selectedTextOverride === undefined
         ? fallback
         : { ...fallback, selectedText: String(options.selectedTextOverride || '') };
+    }
+    if (fallback?.skipped) {
+      const skipped = {
+        ok: false,
+        skipped: true,
+        skipReason: fallback.skipReason,
+        reason: fallback.reason || '',
+        text: '',
+        selectedText: '',
+        meta: fallback.meta || {},
+      };
+      return options.selectedTextOverride === undefined
+        ? skipped
+        : { ...skipped, selectedText: String(options.selectedTextOverride || '') };
     }
     return {
       ok: false,
