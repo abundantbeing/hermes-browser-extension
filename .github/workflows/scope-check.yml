@@ -1,8 +1,9 @@
 name: Scope check
 
+# Disabled while GitHub Actions cannot start jobs on this account (billing lock).
+# To re-enable, restore the pull_request_target trigger below.
 on:
-  pull_request_target:
-    types: [opened, edited, synchronize]
+  workflow_dispatch:
 
 permissions:
   contents: read
