@@ -6359,6 +6359,14 @@
     "message": "Đã yêu cầu mẫu Hermes",
     "description": "Runtime interface message ui.hermes.model.requested"
   },
+  "runtime_ui_hermes_models_catalog_refresh_finished_previous_profile": {
+    "message": "Đã hoàn tất làm mới danh mục mô hình cho hồ sơ trước đó.",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_finished_previous_profile"
+  },
+  "runtime_ui_hermes_models_catalog_refresh_started_previous_profile": {
+    "message": "Đã bắt đầu làm mới danh mục mô hình cho hồ sơ trước đó.",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_started_previous_profile"
+  },
   "runtime_ui_hermes_models_synced": {
     "message": "Đã đồng bộ hóa các mô hình Hermes",
     "description": "Runtime interface message ui.hermes.models.synced"

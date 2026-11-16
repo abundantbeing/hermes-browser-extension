@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Tùy chọn mô hình Hermes không khớp",
   "ui.hermes.model.options.pending": "Tùy chọn mô hình Hermes đang chờ xử lý",
   "ui.hermes.model.requested": "Đã yêu cầu mẫu Hermes",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "Đã hoàn tất làm mới danh mục mô hình cho hồ sơ trước đó.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "Đã bắt đầu làm mới danh mục mô hình cho hồ sơ trước đó.",
   "ui.hermes.models.synced": "Đã đồng bộ hóa các mô hình Hermes",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes Từ đánh thức gốc không có sẵn.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes trên máy này. Mặc định và có khả năng ngoại tuyến.",

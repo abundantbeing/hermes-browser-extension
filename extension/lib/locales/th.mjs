@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "ตัวเลือกโมเดล Hermes ไม่ตรงกัน",
   "ui.hermes.model.options.pending": "ตัวเลือกโมเดล Hermes อยู่ระหว่างดำเนินการ",
   "ui.hermes.model.requested": "ขอโมเดล Hermes",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "รีเฟรชแคตตาล็อกโมเดลสำหรับโปรไฟล์ก่อนหน้าเสร็จสิ้นแล้ว",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "เริ่มรีเฟรชแคตตาล็อกโมเดลสำหรับโปรไฟล์ก่อนหน้าแล้ว",
   "ui.hermes.models.synced": "ซิงค์โมเดล Hermes แล้ว",
   "ui.hermes.native.wake.word.is.unavailable": "คำปลุกแบบเนทีฟของ Hermes ไม่พร้อมใช้งาน",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes บนเครื่องนี้ ค่าเริ่มต้นและความสามารถแบบออฟไลน์",

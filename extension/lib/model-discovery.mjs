@@ -1434,3 +1434,17 @@ export async function discoverModelsFromExternalSources({
   }
   return { ok: results.some((result) => result.ok), models: mergeModelsByRawId(results.map((result) => result.models)), results };
 }
+
+export async function raceModelDiscovery(promise, timeoutMs) {
+  let timeoutId;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((resolve) => {
+        timeoutId = setTimeout(() => resolve({ ok: false, error: 'timeout' }), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+}

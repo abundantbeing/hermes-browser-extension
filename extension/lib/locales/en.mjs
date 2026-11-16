@@ -1066,6 +1066,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes model options mismatch",
   "ui.hermes.model.options.pending": "Hermes model options pending",
   "ui.hermes.model.requested": "Hermes model requested",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "Model catalog refresh finished for a previous profile.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "Model catalog refresh started for a previous profile.",
   "ui.hermes.models.synced": "Hermes models synced",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes native wake word is unavailable.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes on this machine. Default and offline-capable.",

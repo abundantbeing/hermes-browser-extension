@@ -38,11 +38,22 @@ import {
   resolveProfileSessionModel,
   normalizeExternalModelSourceList,
   discoverModelsFromExternalSources,
+  raceModelDiscovery,
 } from '../extension/lib/model-discovery.mjs';
 import {
   DEFAULT_SETTINGS,
   normalizeHermesModels,
 } from '../extension/lib/common.mjs';
+
+test('raceModelDiscovery clears its timeout when discovery resolves first', async () => {
+  const started = Date.now();
+  const outcome = await raceModelDiscovery(
+  Promise.resolve({ ok: true, models: [{ id: 'demo::m1' }] }),
+  20_000,
+  );
+  assert.equal(outcome.ok, true);
+  assert.ok(Date.now() - started < 500, 'resolved discovery must not wait for the race timeout');
+});
 
 test('fetchWithTimeout keeps healthy real Response objects readable', async () => {
   const result = await discoverModelsFromExternalSources({
@@ -852,6 +863,7 @@ test('sidepanel loadModels prunes stale provider models across cache slots, pres
     },
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    raceModelDiscovery,
     discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
@@ -908,6 +920,9 @@ test('sidepanel loadModels prunes stale provider models across cache slots, pres
 
   // Confirm the timeout allows slower /api/model/options?refresh=true responses (>2.5s)
   assert.match(sidepanelSource, /const registryTimeoutMs = refresh \? 20_000 : 5_000;/);
+  assert.match(sidepanelSource, /raceModelDiscovery\(/);
+  assert.match(sidepanelSource, /raceModelDiscovery\(\s*\n\s*discoverModelsFromRegistry/);
+  assert.match(sidepanelSource, /raceModelDiscovery\(\s*\n\s*discoverModelsFromDashboard/);
 
   const liveOutcome = await context.loadModels({ quiet: true, refresh: true });
   assert.equal(liveOutcome.ok, true);
@@ -1015,6 +1030,7 @@ test('loadModels stale replies do not overwrite cache after profile switch', asy
     },
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    raceModelDiscovery,
     discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
@@ -1135,6 +1151,7 @@ test('loadModels removes emptied provider models from availableModels after auth
     }),
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    raceModelDiscovery,
     discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
@@ -1243,6 +1260,7 @@ test('loadModels reruns a deferred profile refresh after an in-flight refresh fi
     },
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    raceModelDiscovery,
     discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
@@ -1366,6 +1384,7 @@ test('loadModels cache fallback uses newer shared provider rows when scoped cach
     apiFetch: async () => ({ ok: false, status: 503, text: async () => '{}' }),
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    raceModelDiscovery,
     discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
@@ -1494,6 +1513,7 @@ test('loadModels queues quiet loads behind an in-flight manual refresh', async (
     },
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    raceModelDiscovery,
     discoverModelsFromExternalSources,
     discoverModelsFromDashboard: async () => ({ ok: false, models: [] }),
     discoverGatewayVirtualModels,
@@ -1619,6 +1639,7 @@ test('loadModels persists gateway catalog without custom external discovery rows
     }),
     readJsonResponse: async (res) => JSON.parse(await res.text()),
     discoverModelsFromRegistry,
+    raceModelDiscovery,
     discoverModelsFromExternalSources: async () => ({
       ok: true,
       models: [{

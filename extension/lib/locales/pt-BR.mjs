@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes incompatibilidade de opções de modelo",
   "ui.hermes.model.options.pending": "Hermes opções de modelo pendentes",
   "ui.hermes.model.requested": "Hermes modelo solicitado",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "A atualização do catálogo de modelos terminou para um perfil anterior.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "A atualização do catálogo de modelos começou para um perfil anterior.",
   "ui.hermes.models.synced": "Hermes modelos sincronizados",
   "ui.hermes.native.wake.word.is.unavailable": "A palavra de ativação nativa Hermes não está disponível.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes nesta máquina. Padrão e compatível com off-line.",

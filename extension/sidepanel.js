@@ -532,6 +532,7 @@ import {
   discoverModelsFromExternalSources,
   discoverModelsFromRegistry,
   discoverModelsFromSessions,
+  raceModelDiscovery,
   mergeModelsByRawId,
   mergeModelsWithRegistry,
   mergeSharedModelCatalog,
@@ -12233,7 +12234,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
   if (!startup) await refreshHermesContextRegistry({ storage: browserApi.storage.local, refresh });
   if (!startup && !modelCatalogLoadContextMatches(catalogLoadContext)) {
     if (refresh && !payload) modelCatalogRefreshDeferred = true;
-    return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh started for a previous profile.' };
+    return { ok: false, stale: true, skipped: true, error: t('ui.hermes.models.catalog_refresh_started_previous_profile') };
   }
   const previousSelectedModel = settings.model;
   const previousAvailableModels = availableModels;
@@ -12286,7 +12287,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     }
 
     if (!modelCatalogLoadContextMatches(catalogLoadContext)) {
-      return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
+      return { ok: false, stale: true, skipped: true, error: t('ui.hermes.models.catalog_refresh_finished_previous_profile') };
     }
 
     if (data) {
@@ -12297,10 +12298,10 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       }
     } else {
       const registryTimeoutMs = refresh ? 20_000 : 5_000;
-      const registryResult = await Promise.race([
+      const registryResult = await raceModelDiscovery(
         discoverModelsFromRegistry({ apiFetch, readJsonResponse, refresh }),
-        new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout' }), registryTimeoutMs)),
-      ]);
+        registryTimeoutMs,
+      );
       if (registryResult.ok) {
         discoveryOptionsPayload = registryResult.optionsPayload || discoveryOptionsPayload;
         discoveredProviderSlugs = resolveDiscoveredProviderSlugs({
@@ -12317,15 +12318,15 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         // Gateway /p/<profile>/ needs that profile's own API_SERVER_KEY; the
         // desktop dashboard honors ?profile= with the session token, so a
         // profile key gap never blocks model discovery for named profiles.
-        const dashRetry = await Promise.race([
+        const dashRetry = await raceModelDiscovery(
           discoverModelsFromDashboard({
             baseUrl: localDashboardUrl(),
             refresh,
             profile: settings.activeProfile,
             dashboardToken: await dashboardTokenFor(localDashboardUrl(), ''),
           }),
-          new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout' }), registryTimeoutMs)),
-        ]);
+          registryTimeoutMs,
+        );
         if (dashRetry.ok) {
           discoveryOptionsPayload = dashRetry.optionsPayload || discoveryOptionsPayload;
           discoveredProviderSlugs = resolveDiscoveredProviderSlugs({
@@ -12385,7 +12386,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     }
 
     if (!modelCatalogLoadContextMatches(catalogLoadContext)) {
-      return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
+      return { ok: false, stale: true, skipped: true, error: t('ui.hermes.models.catalog_refresh_finished_previous_profile') };
     }
 
     if (shouldPreferCachedCatalogOverSparseLiveDiscovery({
@@ -12408,7 +12409,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     }
 
     if (!modelCatalogLoadContextMatches(catalogLoadContext)) {
-      return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
+      return { ok: false, stale: true, skipped: true, error: t('ui.hermes.models.catalog_refresh_finished_previous_profile') };
     }
 
     if (registryModels.length && shouldEnrichCanonicalProviderCatalog(registrySource)) {
@@ -12471,7 +12472,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     }
 
     if (!modelCatalogLoadContextMatches(catalogLoadContext) || !isCurrentModelCatalogLoad()) {
-      return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
+      return { ok: false, stale: true, skipped: true, error: t('ui.hermes.models.catalog_refresh_finished_previous_profile') };
     }
 
     if (
@@ -12538,7 +12539,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     }
 
     if (!modelCatalogLoadContextMatches(catalogLoadContext) || !isCurrentModelCatalogLoad()) {
-      return { ok: false, stale: true, skipped: true, error: 'Model catalog refresh finished for a previous profile.' };
+      return { ok: false, stale: true, skipped: true, error: t('ui.hermes.models.catalog_refresh_finished_previous_profile') };
     }
 
     availableModels = registryModels;
