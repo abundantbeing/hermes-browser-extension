@@ -117,8 +117,9 @@ test('Hermes Control rows follow the debugger permission and the screenshot perm
 });
 
 test('Assist, context menu and shortcut rows follow the manifest and are kept by the Firefox build', () => {
-  const assist = manifest.content_scripts.find((script) => script.js.includes('content-inline-helper.js'));
-  assert.ok(assist && assist.matches.includes('https://*/*'), 'the Assist content script is declared for web pages');
+  const assistBundle = read('extension/lib/page-script-host-policy.mjs');
+  assert.match(assistBundle, /content-inline-helper\.js/, 'the Assist bundle is registered for web pages');
+  assert.match(read('extension/background.js'), /syncPageContextScripts/);
   assert.equal(firefoxProfile.removedManifestKeys.includes('content_scripts'), false);
   assert.ok(manifest.permissions.includes('contextMenus'));
   assert.equal(firefoxProfile.removedPermissions.includes('contextMenus'), false);

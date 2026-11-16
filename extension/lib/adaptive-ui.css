@@ -46,17 +46,14 @@
   text-transform: uppercase;
   overflow-wrap: anywhere;
 }
-.haui-stat-value {
-  font-family: var(--hermes-font-display);
-  /* The headline face is narrow under Hermes signature; the profile's display
-     scale keeps the number as big as it reads in the other fonts. */
+.haui-stat-value {font-family: var(--hermes-font-display);
+  
   font-size: calc(2em * var(--hermes-display-scale, 1));
   font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.01em;
+  line-height: var(--hermes-display-line-height, 1.25);
+  letter-spacing: var(--hermes-display-tracking);
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
+  overflow-wrap: anywhere;}
 .haui-stat-delta { font-size: 0.88em; font-weight: 600; font-variant-numeric: tabular-nums; }
 .haui-stat[data-trend="up"] .haui-stat-delta { color: color-mix(in srgb, var(--hermes-success, #1f9d63) 72%, var(--hermes-ink)); }
 .haui-stat[data-trend="down"] .haui-stat-delta { color: color-mix(in srgb, var(--hermes-danger, #d64545) 72%, var(--hermes-ink)); }
@@ -360,15 +357,13 @@ ol.haui-list-items > li::before {
   line-height: 1.5;
 }
 .message.assistant[data-response-style="vivid"] .message-content > :is(h1, h2, h3),
-:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > :is(h1, h2, h3) {
-  margin: 1.1em 0 0.5em;
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > :is(h1, h2, h3) {margin: 1.1em 0 0.5em;
   padding-bottom: 0.3em;
   border-bottom: 1px solid var(--haui-line);
   font-family: var(--hermes-font-display);
   font-weight: 400;
-  line-height: 1.15;
-  letter-spacing: 0.01em;
-}
+  line-height: var(--hermes-display-line-height, 1.25);
+  letter-spacing: var(--hermes-display-tracking);}
 .message.assistant[data-response-style="vivid"] .message-content > :is(h1, h2, h3):first-child,
 :root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > :is(h1, h2, h3):first-child { margin-top: 0; }
 .message.assistant[data-response-style="vivid"] .message-content > :is(h4, h5, h6),

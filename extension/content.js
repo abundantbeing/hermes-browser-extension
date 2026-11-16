@@ -11,10 +11,12 @@
  *   - cross-run coordination happens exclusively through globalThis sentinels
  *     (__HERMES_BROWSER_CONTENT_LISTENER__, __HERMES_BROWSER_CONTENT_LOADED__),
  *   - the previous run's message listener is removed before a fresh one binds,
+ *     stale element-pick capture handlers are detached via __HERMES_ELEMENT_PICK_HANDLERS__,
  *     and element-pick styles are added only when absent.
  * Do not hoist any declaration out of the IIFE.
  */
 (() => {
+  const boot = () => {
   const browserApi = globalThis.hermesBrowserApi;
   const CONTENT_SCRIPT_VERSION = '2026-07-16-extraction-site-adapters-v1';
   const previousListener = globalThis.__HERMES_BROWSER_CONTENT_LISTENER__;
@@ -73,6 +75,19 @@
   let pickPurpose = 'context';
   let pickTheme = null;
   let highlightedElement = null;
+
+  function detachGlobalPickHandlers() {
+    const handlers = globalThis.__HERMES_ELEMENT_PICK_HANDLERS__;
+    if (!handlers) return;
+    document.removeEventListener('mousemove', handlers.onPickMouseMove, true);
+    document.removeEventListener('click', handlers.onPickClick, true);
+    document.removeEventListener('keydown', handlers.onPickKeydown, true);
+    globalThis.__HERMES_ELEMENT_PICK_HANDLERS__ = null;
+    document.documentElement.classList.remove('hermes-element-pick-mode');
+    document.documentElement.removeAttribute('data-hermes-pick-purpose');
+  }
+
+  detachGlobalPickHandlers();
   let browserControlIndicatorHost = null;
   let browserControlIndicatorSuspended = false;
   let browserControlIndicatorShownAt = 0;
@@ -220,7 +235,61 @@
     };
   }
 
+  function pageContextCaptureRefusedResponse(reasonKey = 'status.page_context_capture_off') {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: 'blocked',
+      reasonKey,
+      reason: '',
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
+
+  function pageScriptPolicyLocationToken() {
+    try {
+      return `${location.origin}\u0000${location.href}`;
+    } catch {
+      return '';
+    }
+  }
+
+  function pageContextCaptureAllowedForCurrentLocation() {
+    const gate = globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
+    if (!gate || gate.latestInject !== true) return false;
+    if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ === true) return false;
+    const token = pageScriptPolicyLocationToken();
+    if (token && gate.policyLocationToken && gate.policyLocationToken !== token) return false;
+    return true;
+  }
+
+  function pageContextCaptureMatchesRequest(message) {
+    const expected = String(message?.options?.captureRequestAnchorToken || '').trim();
+    if (!expected) return true;
+    return pageScriptPolicyLocationToken() === expected;
+  }
+
+  function pageContextCaptureBlockedByGate() {
+    if (!pageContextCaptureAllowedForCurrentLocation()) return true;
+    return false;
+  }
+
+  function pageContextCaptureUrlBlocked(url = location.href) {
+    const check = globalThis.hermesIsPageContextCaptureUrlBlocked;
+    if (typeof check !== 'function') return false;
+    const allowLocal = globalThis.__HERMES_PAGE_SCRIPT_POLICY__?.allowLocalDocuments === true;
+    return check(String(url || ''), { allowLocalDocuments: allowLocal });
+  }
+
   function collectContext(options = {}) {
+    if (pageContextCaptureUrlBlocked()) {
+      return pageContextCaptureRefusedResponse('status.page_context_capture_blocked');
+    }
+    if (pageContextCaptureBlockedByGate()) {
+      return pageContextCaptureRefusedResponse();
+    }
     if (!HermesContentExtractor?.collectPageContext) {
       throw new Error('Hermes content extractor runtime is unavailable.');
     }
@@ -387,15 +456,11 @@
   }
 
   function teardownPickMode({ cancelled = false, pickedElement = null } = {}) {
-    if (!pickModeActive) return;
+    if (!pickModeActive && !globalThis.__HERMES_ELEMENT_PICK_HANDLERS__) return;
     pickModeActive = false;
     pickPurpose = 'context';
     clearHighlight();
-    document.documentElement.classList.remove('hermes-element-pick-mode');
-    document.documentElement.removeAttribute('data-hermes-pick-purpose');
-    document.removeEventListener('mousemove', onPickMouseMove, true);
-    document.removeEventListener('click', onPickClick, true);
-    document.removeEventListener('keydown', onPickKeydown, true);
+    detachGlobalPickHandlers();
     if (cancelled) {
       browserApi.runtime.sendMessage({
         type: ELEMENT_PICK_MESSAGES.CANCELLED,
@@ -498,6 +563,7 @@
     if (pickModeActive) return { ok: true, alreadyActive: true };
     annotationController?.cancel?.();
     HermesPageAnnotation?.hidePageCommentCard?.(document);
+    detachGlobalPickHandlers();
     pickModeActive = true;
     pickPurpose = message.purpose === 'comment' ? 'comment' : 'context';
     pickTheme = message.theme && typeof message.theme === 'object' ? message.theme : null;
@@ -507,6 +573,7 @@
     document.addEventListener('mousemove', onPickMouseMove, true);
     document.addEventListener('click', onPickClick, true);
     document.addEventListener('keydown', onPickKeydown, true);
+    globalThis.__HERMES_ELEMENT_PICK_HANDLERS__ = { onPickMouseMove, onPickClick, onPickKeydown };
     browserApi.runtime.sendMessage({ type: ELEMENT_PICK_MESSAGES.PICKING, url: location.href }).catch(() => {});
     return { ok: true };
   }
@@ -580,6 +647,39 @@
       return false;
     }
     if (message?.type === 'HERMES_GET_PAGE_CONTEXT') {
+      const refresh = globalThis.hermesRefreshPageScriptPolicy;
+      if (typeof refresh === 'function') {
+        refresh()
+          .then((allowed) => {
+            if (!allowed) {
+              sendResponse(pageContextCaptureRefusedResponse());
+              return;
+            }
+            if (!pageContextCaptureAllowedForCurrentLocation()) {
+              sendResponse(pageContextCaptureRefusedResponse());
+              return;
+            }
+            if (!pageContextCaptureMatchesRequest(message)) {
+              sendResponse(pageContextCaptureRefusedResponse());
+              return;
+            }
+            if (pageContextCaptureUrlBlocked()) {
+              sendResponse(pageContextCaptureRefusedResponse('status.page_context_capture_blocked'));
+              return;
+            }
+            try {
+              sendResponse(collectContext(message.options || {}));
+            } catch (error) {
+              sendResponse({ ok: false, error: error?.message || String(error) });
+            }
+          })
+          .catch(() => sendResponse(pageContextCaptureRefusedResponse()));
+        return true;
+      }
+      if (pageContextCaptureBlockedByGate()) {
+        sendResponse(pageContextCaptureRefusedResponse());
+        return false;
+      }
       try {
         sendResponse(collectContext(message.options || {}));
       } catch (error) {
@@ -644,4 +744,10 @@
 
   browserApi.runtime.onMessage.addListener(messageListener);
   globalThis.__HERMES_BROWSER_CONTENT_LISTENER__ = messageListener;
+  };
+  if (typeof globalThis.hermesAwaitPageScriptPolicy === 'function') {
+    globalThis.hermesAwaitPageScriptPolicy(boot);
+  } else {
+    boot();
+  }
 })();

@@ -81,6 +81,12 @@ import {
   hydrateSavedConnectionSecrets,
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
 } from './lib/saved-connections.mjs';
+import { createPageScriptRegistrar } from './lib/page-script-registration.mjs';
+import {
+  extensionPageContextPackaged,
+  pageContextAllowLocalDocumentsForUrl,
+  pageContextHostPolicyDecision,
+} from './lib/page-script-host-policy.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -90,6 +96,24 @@ const browserProduct = detectBrowserProduct({
   braveApi: globalThis.navigator?.brave || null,
   extensionUrl: browserApi.runtime.getURL(''),
 });
+const pageScriptRegistrar = createPageScriptRegistrar({
+  scriptingApi: browserApi.scripting,
+  packaged: extensionPageContextPackaged(() => browserApi.runtime.getManifest()),
+});
+
+const syncPageContextScripts = createHeaderRuleSync({
+  read: readStoredSettings,
+  apply: async (settings) => {
+    const result = await pageScriptRegistrar.sync(settings);
+    if (result?.ok === false) throw new Error(result.reason || 'page-script-registration-failed');
+    return result;
+  },
+  onError: (error) => {
+    console.warn('[Hermes Browser] Page script registration failed:', error);
+    return { ok: false, reason: error?.message || String(error) };
+  },
+});
+
 const browserControlRuntime = createBrowserControlRuntime({
   browserApi,
   product: browserProduct,
@@ -1073,11 +1097,13 @@ void installLoopbackCorsRules().catch((error) => {
   console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
 });
 void syncConnectionHeaders();
+void syncPageContextScripts();
 browserApi.runtime.onInstalled.addListener((details) => {
   void installLoopbackCorsRules().catch((error) => {
     console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
   });
   void syncConnectionHeaders();
+  void syncPageContextScripts();
   return configureInstalledSurfaces(details);
 });
 browserApi.runtime.onStartup.addListener(async () => {
@@ -1085,6 +1111,7 @@ browserApi.runtime.onStartup.addListener(async () => {
     console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
   });
   await syncConnectionHeaders();
+  await syncPageContextScripts();
   await configureInstalledSurfaces({ controllerReason: 'browser-startup' });
   restoreWakeController();
 });
@@ -1174,6 +1201,13 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
     if (changes.hermesBrowserSettings) pendingPairingGatewayUrls.clear();
     void syncConnectionHeaders();
   }
+  if (changes.hermesBrowserSettings?.newValue) {
+    const previous = changes.hermesBrowserSettings.oldValue || {};
+    const next = changes.hermesBrowserSettings.newValue || {};
+    const pageContextKeys = ['pageContextOnPrivateNetworks', 'pageContextExcludedOrigins'];
+    const pageContextChanged = pageContextKeys.some((key) => JSON.stringify(previous[key]) !== JSON.stringify(next[key]));
+    if (pageContextChanged) void syncPageContextScripts();
+  }
   if (changes.hermesBrowserSettings?.newValue
     && wakeNeedsReconfigure(changes.hermesBrowserSettings.oldValue, changes.hermesBrowserSettings.newValue)) {
     wakeController.restore().catch((error) => console.warn('[Hermes Browser] Wake could not follow the connection change:', error));
@@ -1255,6 +1289,17 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
           ? getYoutubeTranscript(message)
           : message?.type === LOOPBACK_FETCH_MESSAGE
             ? handleLoopbackFetchMessage(message)
+            : message?.type === 'HERMES_PAGE_SCRIPT_POLICY'
+              ? readStoredSettings().then((settings) => {
+                const url = message?.url || sender?.tab?.url || sender?.url || '';
+                const decision = pageContextHostPolicyDecision(url, settings);
+                return {
+                  inject: decision.inject,
+                  reason: decision.reason,
+                  allowLocalDocuments: pageContextAllowLocalDocumentsForUrl(url, settings),
+                  seq: message?.seq,
+                };
+              })
             : message?.type === SYNC_GATEWAY_RULES_MESSAGE
               ? syncGatewayRulesForPanel(message)
               : null;

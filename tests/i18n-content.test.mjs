@@ -16,8 +16,8 @@ test('generated content i18n bridge stays classic and precedes Hermes Assist', a
   assert.doesNotMatch(source, /^\s*(?:import|export)\s/m);
   assert.doesNotMatch(source, /MutationObserver/);
 
-  const manifest = JSON.parse(read('extension/manifest.json'));
-  const scripts = manifest.content_scripts.flatMap((entry) => entry.js || []);
+  const { buildRegisteredPageScriptDefinition } = await import('../extension/lib/page-script-host-policy.mjs');
+  const scripts = buildRegisteredPageScriptDefinition({}, { packaged: true }).js;
   assert.ok(scripts.indexOf('lib/browser-api-global.js') >= 0);
   assert.ok(scripts.indexOf('lib/browser-api-global.js') < scripts.indexOf('lib/i18n-content.js'));
   assert.ok(scripts.indexOf('lib/i18n-content.js') >= 0);
@@ -57,6 +57,32 @@ test('Hermes Assist bridge excludes settings-only copy and remains bounded acros
   const source = read('extension/lib/i18n-content.js');
   assert.doesNotMatch(source, /Select your interface language/);
   assert.ok(source.length < 500_000, `content i18n bridge grew to ${source.length} bytes`);
+});
+
+test('content i18n bridge removes the prior storage listener before re-initializing', async () => {
+  const source = read('extension/lib/i18n-content.js');
+  const facade = read('extension/lib/browser-api-global.js');
+  const listeners = new Set();
+  const sandbox = {
+    console,
+    chrome: {
+      storage: {
+        local: { get: async () => ({}) },
+        onChanged: {
+          addListener: (listener) => listeners.add(listener),
+          removeListener: (listener) => listeners.delete(listener),
+        },
+      },
+    },
+  };
+  sandbox.globalThis = sandbox;
+  vm.runInNewContext(facade, sandbox);
+  vm.runInNewContext(source, sandbox);
+  await sandbox.HermesI18nContent.ready;
+  assert.equal(listeners.size, 1);
+  vm.runInNewContext(source, sandbox);
+  await sandbox.HermesI18nContent.ready;
+  assert.equal(listeners.size, 1, 'bundle restart must not stack storage listeners');
 });
 
 test('Hermes Assist canonicalizes locale aliases and cannot miss an initialization race', async () => {

@@ -218,7 +218,7 @@ test('the stylesheet pins the static hover state, the touch, forced-colour and p
   assert.match(css, /@media \(hover: none\) \{\s*\.onboarding :is\([^)]*\):hover:not\(:focus-visible\)/, 'no sticky hover on touch');
   assert.match(css, /\.dither-hover-canvas \{ position: absolute; z-index: 2; pointer-events: none; image-rendering: pixelated; \}/, 'never blocks input, crisp pixels');
   assert.match(css, /\.onboarding \[data-dither="run"\] \{ color: transparent !important;/);
-  assert.match(css, /@media \(forced-colors: active\) \{\s*\.onboarding :is\([^)]*\) \{ background: ButtonFace;[\s\S]*?\.dither-hover-canvas \{ display: none; \}/, 'forced colours: system colours, no effect');
+  assert.match(css, /@media \(forced-colors: active\) \{\s*\.onboarding :is\([^)]*\) \{ min-height: 44px; \}[\s\S]*?\.dither-hover-canvas \{ display: none; \}/, 'forced colours: system colours, no effect');
   assert.match(css, /\.onboarding :is\([^)]*\):active \{ transform: translateY\(1px\); transition: none; \}/, 'an instant 1px press');
 });
 

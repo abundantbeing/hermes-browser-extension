@@ -8,10 +8,10 @@ html[data-hermes-text-zoom] .voice-card {
 }
 
 html[data-hermes-text-zoom] .permission-card h1,
-html[data-hermes-text-zoom] .voice-card h1 {
-  font-size: calc(28px * var(--hermes-text-zoom, 1));
+html[data-hermes-text-zoom] .voice-card h1 {font-size: calc(28px * var(--hermes-text-zoom, 1));
   font-family: var(--hermes-font-display, Georgia, serif);
-}
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 
 html[data-hermes-text-zoom] .permission-card p,
 html[data-hermes-text-zoom] .voice-card p,
@@ -25,31 +25,25 @@ html[data-hermes-text-zoom] #voiceStatus {
 html[data-hermes-text-zoom] .web-shell h1,
 html[data-hermes-text-zoom] .web-shell h2,
 html[data-hermes-text-zoom] .web-shell h3,
-html[data-hermes-text-zoom] .web-shell h4 {
-  font-family: var(--hermes-font-display, Georgia, serif);
-}
+html[data-hermes-text-zoom] .web-shell h4 {font-family: var(--hermes-font-display, Georgia, serif);
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 html[data-hermes-text-zoom] .web-message-content h1,
 html[data-hermes-text-zoom] .web-message-content h2,
 html[data-hermes-text-zoom] .web-message-content h3,
-html[data-hermes-text-zoom] .web-message-content h4 {
-  font-family: var(--hermes-font-display, "HermesDisplay", Georgia, serif);
+html[data-hermes-text-zoom] .web-message-content h4 {font-family: var(--hermes-font-display, "HermesDisplay", Georgia, serif);
   font-weight: 500;
   line-height: 1.2;
-  letter-spacing: 0.03em;
-  text-transform: none;
-}
-html[data-hermes-font-profile="signature"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
-  font-family: var(--hermes-font-display);
+  letter-spacing: var(--hermes-display-tracking);
+  text-transform: none;}
+html[data-hermes-font-profile="signature"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {font-family: var(--hermes-font-display);
   font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 0.92;
-  text-transform: none;
-}
-html[data-hermes-font-profile="cinzel"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
-  font-family: var(--hermes-font-display);
-  letter-spacing: 0.01em;
-  line-height: 1.15;
-}
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);
+  text-transform: none;}
+html[data-hermes-font-profile="cinzel"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {font-family: var(--hermes-font-display);
+  letter-spacing: var(--hermes-display-tracking);
+  line-height: var(--hermes-display-line-height, 1.25);}
 
 .web-deprecation-banner {
   grid-column: 1 / -1;

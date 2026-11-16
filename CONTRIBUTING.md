@@ -47,6 +47,10 @@ npm run build:firefox
 npm run verify
 ```
 
+### Display headline typography
+
+Rules that set `font-family: var(--hermes-font-display)` (Rules Gothic / HermesDisplay) must keep readable tracking and line height: use `--hermes-display-tracking` (0.04em) and `--hermes-display-line-height` (1.25), avoid clipping descenders with tight `overflow: hidden`, and run `npm run check:display-typography` (included in `npm run verify`) before pushing.
+
 ---
 
 ## 3. Submitting Pull Requests

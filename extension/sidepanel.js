@@ -126,6 +126,35 @@ import {
   interceptChatLinkClick,
 } from './lib/common.mjs';
 import {
+  buildRegisteredPageScriptDefinition,
+  extensionPageContextPackaged,
+  normalizePageContextExcludedOrigins,
+  pageContextAllowLocalDocumentsForUrl,
+  pageContextHostPolicyDecision,
+  pageContextInjectionDecision,
+  pageContextSkipMessageKey,
+} from './lib/page-script-host-policy.mjs';
+import {
+  createPageContextBundleRestartCoalescer,
+  createPageContextGateEnsureCoalescer,
+  createPageContextGateEnsureRunner,
+  pageContextBundleRestartFilesFromManifest,
+  pageContextInstallAllowedForAnchor,
+  pageContextInstallBindingStillLive,
+  pageScriptDocumentAnchorsMatch,
+  probePageContextBundleRestartNeeded as probePageContextBundleRestartNeededInTab,
+  readPageScriptDocumentAnchor,
+  pageContextPolicyGrantMatchesAnchor,
+  runPageContextBundleRestart,
+} from './lib/page-context-bundle-restart.mjs';
+import {
+  pageContextBindingUsesFrameFallback,
+  pageContextScriptInjectionTarget,
+  pageContextTabMessageOptions,
+  probePageContextFrameDocumentId,
+} from './lib/page-context-document-target.mjs';
+import { isPageContextCaptureUrlBlocked } from './lib/page-context-capture-guard.mjs';
+import {
   BUILD_RELOAD_BOOT_RECHECK_MS,
   BUILD_RELOAD_WATCH_INTERVAL_MS,
   HBE_RELEASES_URL,
@@ -1069,6 +1098,8 @@ const els = {
   gmailCaptureEnabledInput: $('#gmailCaptureEnabledInput'),
   gmailCaptureToggleTitle: $('#gmailCaptureToggleTitle'),
   gmailCaptureToggleHint: $('#gmailCaptureToggleHint'),
+  pageContextOnPrivateNetworksInput: $('#pageContextOnPrivateNetworksInput'),
+  pageContextExcludedOriginsInput: $('#pageContextExcludedOriginsInput'),
   contextScopeButton: $('#contextScopeButton'),
   contextScopeLabel: $('#contextScopeLabel'),
   contextScopeMenu: $('#contextScopeMenu'),
@@ -21797,8 +21828,13 @@ function dismissLocalDocumentApprovalNotice() {
 function renderLocalDocumentApproval(tab = currentContext?.activeTab) {
   if (!els.localDocumentApprovalNotice) return;
   const url = tab?.url || '';
-  const isLocal = isLocalDocumentUrl(url);
-  if (!isLocal || settings.allowLocalDocuments === true) {
+  let isFileDocument = false;
+  try {
+    isFileDocument = new URL(url).protocol === 'file:';
+  } catch {
+    isFileDocument = false;
+  }
+  if (!isFileDocument || settings.allowLocalDocuments === true) {
     dismissLocalDocumentApprovalNotice();
     return;
   }
@@ -24322,6 +24358,7 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
     'trustedDashboardOrigin', 'trustedDashboardTabId',
     'activeSavedConnectionId', 'savedConnections', 'connectionHeaders', 'connectionTrustSelfSigned',
+    'pageContextOnPrivateNetworks', 'pageContextExcludedOrigins',
     // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
     // panel, they share this record, and adopting another panel's binding would make this one resume
     // (and then write into) the other panel's session on its next reconnect.
@@ -24339,6 +24376,11 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     const differs = Array.isArray(next[key]) ? JSON.stringify(next[key]) !== JSON.stringify(settings[key]) : next[key] !== settings[key];
     if (connectionKeys.has(key) && differs) connectionChanged = true;
   }
+  let pageContextSettingsChanged = false;
+  if (Object.hasOwn(patch, 'pageContextOnPrivateNetworks')
+    || Object.hasOwn(patch, 'pageContextExcludedOrigins')) {
+    pageContextSettingsChanged = true;
+  }
   if (Object.keys(patch).length) {
     settings = { ...settings, ...patch };
     if (connectionChanged) {
@@ -24353,6 +24395,30 @@ async function adoptHermesBrowserSettingsStorageChange(changes) {
     updateConnectionPrompt();
     renderBrowserControl();
     renderSavedConnections();
+    if (pageContextSettingsChanged) {
+      adoptPageContextPermissionControlsFromStorage(next);
+      const tab = currentContext?.activeTab;
+      if (tab?.url) {
+        const injection = pageContextInjectionDecision(tab.url, settings);
+        if (!injection.inject) {
+          currentContext = {
+            ...currentContext,
+            pageContext: {
+              ok: false,
+              skipped: true,
+              skipReason: injection.reason,
+              reason: t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+              text: '',
+              selectedText: '',
+              meta: {},
+            },
+          };
+        } else if (currentContext?.pageContext?.skipped) {
+          currentContext = { ...currentContext, pageContext: null };
+        }
+        renderContextWindow();
+      }
+    }
   }
   adoptStoredResponsePresentation(next);
   if (Object.hasOwn(next, 'inlineAssistIcon')) adoptInlineAssistIconChange(next.inlineAssistIcon);
@@ -24801,6 +24867,15 @@ function syncSettingsForm() {
   if (els.wakeWordBrowserFallbackInput) els.wakeWordBrowserFallbackInput.checked = settings.wakeWordBrowserFallback !== false;
   if (els.wakeWordSpeakRepliesInput) els.wakeWordSpeakRepliesInput.checked = settings.wakeWordSpeakReplies !== false;
   if (els.gmailCaptureEnabledInput) els.gmailCaptureEnabledInput.checked = settings.gmailCaptureEnabled === true;
+  if (els.pageContextOnPrivateNetworksInput) {
+    els.pageContextOnPrivateNetworksInput.checked = settings.pageContextOnPrivateNetworks === true;
+  }
+  if (els.pageContextExcludedOriginsInput) {
+    const excluded = Array.isArray(settings.pageContextExcludedOrigins)
+      ? settings.pageContextExcludedOrigins
+      : [];
+    els.pageContextExcludedOriginsInput.value = excluded.join('\n');
+  }
   if (els.gmailCaptureToggleTitle) els.gmailCaptureToggleTitle.textContent = translateUiText('Gmail thread context');
   if (els.gmailCaptureToggleHint) els.gmailCaptureToggleHint.textContent = translateUiText('Share the open Gmail thread with Hermes on every message. Stays on until disabled. Inbox lists, drafts and input values stay excluded.');
   renderWakeState();
@@ -24918,6 +24993,12 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
       els.transcriptProviderInput.value,
     ),
     gmailCaptureEnabled: els.gmailCaptureEnabledInput ? els.gmailCaptureEnabledInput.checked : settings.gmailCaptureEnabled === true,
+    pageContextOnPrivateNetworks: els.pageContextOnPrivateNetworksInput
+      ? els.pageContextOnPrivateNetworksInput.checked
+      : settings.pageContextOnPrivateNetworks === true,
+    pageContextExcludedOrigins: els.pageContextExcludedOriginsInput
+      ? els.pageContextExcludedOriginsInput.value.split(/\n+/).map((line) => line.trim()).filter(Boolean)
+      : (Array.isArray(settings.pageContextExcludedOrigins) ? settings.pageContextExcludedOrigins : []),
     wakeWordEnabled: els.wakeWordEnabledInput ? els.wakeWordEnabledInput.checked : Boolean(settings.wakeWordEnabled),
     wakeWordPhrase: normalizeWakeWordSettings({ wakeWordPhrase: els.wakeWordPhraseInput?.value }).phrase,
     wakeWordPreferNative: settings.wakeWordPreferNative !== false,
@@ -25123,40 +25204,408 @@ async function tabsForCurrentScope() {
 }
 
 function manifestContentScriptFiles() {
-  const scripts = browserApi.runtime.getManifest()?.content_scripts?.flatMap((entry) => entry?.js || []) || [];
-  return scripts.length ? scripts : ['content-extractor.js', 'content.js'];
+  const packaged = extensionPageContextPackaged(() => browserApi.runtime.getManifest());
+  return buildRegisteredPageScriptDefinition(settings, { packaged }).js;
 }
 
-async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0 } = {}) {
-  const messageOptions = Number(frameId) > 0 ? { frameId: Number(frameId) } : undefined;
-  const scriptTarget = Number(frameId) > 0
-    ? { tabId, frameIds: [Number(frameId)] }
-    : { tabId };
+function pageContextBundleRestartFiles() {
+  return pageContextBundleRestartFilesFromManifest(manifestContentScriptFiles());
+}
+
+function pageContextInjectionDecisionForUrl(url) {
+  return pageContextHostPolicyDecision(url, settings);
+}
+
+function pageContextScriptTarget(tabId, frameId = 0) {
+  const frame = Math.max(0, Number(frameId) || 0);
+  return { tabId, frameIds: [frame] };
+}
+
+const executePageContextScript = (request) => browserApi.scripting.executeScript(request);
+
+async function lookupPageContextFrameDocumentId(tabId, frameId) {
+  return probePageContextFrameDocumentId(executePageContextScript, tabId, frameId);
+}
+
+async function acquirePageContextInstallBinding(tabId, frameId = 0) {
+  const frame = Math.max(0, Number(frameId) || 0);
+  const documentId = await lookupPageContextFrameDocumentId(tabId, frame);
+  const allowFrameFallback = pageContextBindingUsesFrameFallback(documentId);
+  const binding = {
+    tabId,
+    frameId: frame,
+    documentId,
+    allowFrameFallback,
+  };
+  if (!pageContextScriptInjectionTarget(binding)) return null;
+  const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
+  if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return null;
+  const token = anchor.token;
+  return {
+    ...binding,
+    href: anchor.href,
+    anchorToken: token,
+    captureRequestAnchorToken: token,
+  };
+}
+
+async function verifyPageContextInstallBinding(binding) {
+  if (!binding) return false;
+  const live = await pageContextInstallBindingStillLive(binding, lookupPageContextFrameDocumentId);
+  if (!live) return false;
+  const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
+  if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return false;
+  const allowLocal = pageContextAllowLocalDocumentsForUrl(anchor.href, settings);
+  if (isPageContextCaptureUrlBlocked(anchor.href, { allowLocalDocuments: allowLocal })) return false;
+  return pageContextPolicyGrantMatchesAnchor(binding, anchor);
+}
+
+function contentMessageDeliveryOptions(binding = null, frameId = 0) {
+  if (binding) {
+    const options = pageContextTabMessageOptions(binding);
+    if (options) return options;
+  }
+  const frame = Math.max(0, Number(frameId) || 0);
+  return { frameId: frame };
+}
+
+const pageContextBundleRestart = createPageContextBundleRestartCoalescer({
+  probeRestartNeeded: (binding) => probePageContextBundleRestartNeededInTab(
+    executePageContextScript,
+    binding,
+  ),
+  runBundleRestart: async (binding) => {
+    if (!(await verifyPageContextInstallBinding(binding))) return;
+    const ok = await runPageContextBundleRestart(
+      executePageContextScript,
+      binding,
+      pageContextBundleRestartFiles(),
+      {
+        verifyBinding: verifyPageContextInstallBinding,
+        beforeInject: async () => verifyPageContextInstallBinding(binding),
+        afterInject: async () => verifyPageContextInstallBinding(binding),
+      },
+    );
+    if (!ok) return;
+  },
+});
+const {
+  awaitPageContextBundleRestart,
+  reinstallPageContextBundleEntries,
+} = pageContextBundleRestart;
+
+const runPageContextGateEnsureForTarget = createPageContextGateEnsureRunner({
+  executeScript: executePageContextScript,
+  manifestContentScriptFiles,
+  pageContextBundleRestartFiles,
+  pageContextInjectionDecision: pageContextInjectionDecisionForUrl,
+  acquireInstallBinding: acquirePageContextInstallBinding,
+  verifyInstallBinding: verifyPageContextInstallBinding,
+  awaitPageContextBundleRestart,
+  reinstallPageContextBundleEntries,
+  probePageContextBundleRestartNeeded: (binding) => probePageContextBundleRestartNeededInTab(
+    executePageContextScript,
+    binding,
+  ),
+});
+
+async function resolvePageContextGateBinding(tabId, scriptTarget) {
+  if (!scriptTarget) {
+    const frameId = 0;
+    return acquirePageContextInstallBinding(tabId, frameId);
+  }
+  if (scriptTarget.href && scriptTarget.anchorToken) {
+    const frozenToken = scriptTarget.captureRequestAnchorToken || scriptTarget.anchorToken;
+    return { ...scriptTarget, captureRequestAnchorToken: frozenToken };
+  }
+  const frameId = scriptTarget?.frameIds?.[0] ?? scriptTarget?.frameId ?? 0;
+  const acquired = await acquirePageContextInstallBinding(tabId, frameId);
+  if (!acquired) return null;
+  if (scriptTarget.documentId) {
+    const frozenToken = scriptTarget.captureRequestAnchorToken || scriptTarget.anchorToken;
+    return {
+      ...acquired,
+      ...scriptTarget,
+      href: acquired.href,
+      anchorToken: acquired.anchorToken,
+      captureRequestAnchorToken: frozenToken || acquired.captureRequestAnchorToken,
+    };
+  }
+  return acquired;
+}
+
+const pageContextGateEnsure = createPageContextGateEnsureCoalescer({
+  resolveBinding: resolvePageContextGateBinding,
+  runPageContextGateEnsureForTarget,
+});
+const { ensurePageContextGateAndRefresh } = pageContextGateEnsure;
+
+async function probePageContextBundleRestartNeeded(binding) {
+  return probePageContextBundleRestartNeededInTab(executePageContextScript, binding);
+}
+
+async function readBoundPageContextTarget(binding) {
+  if (!(await verifyPageContextInstallBinding(binding))) return null;
+  const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
+  if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return null;
+  return anchor;
+}
+
+function pageContextPermissionControlDirty(control) {
+  if (!control || !settingsBaseline) return false;
+  const pane = control.closest('[data-settings-pane]')?.dataset.settingsPane || 'permissions';
+  const key = `${pane}\u0000${control.id}:${control.type === 'radio' ? control.value : ''}`;
+  if (!settingsBaseline.has(key)) return false;
+  const baseline = settingsBaseline.get(key);
+  const current = control.type === 'checkbox' ? String(control.checked) : String(control.value);
+  return current !== baseline;
+}
+
+function adoptPageContextPermissionControlsFromStorage(next) {
+  if (!next) return;
+  if (els.pageContextOnPrivateNetworksInput) {
+    const editing = document.activeElement === els.pageContextOnPrivateNetworksInput;
+    const dirty = pageContextPermissionControlDirty(els.pageContextOnPrivateNetworksInput);
+    if (!editing && !dirty && Object.hasOwn(next, 'pageContextOnPrivateNetworks')) {
+      els.pageContextOnPrivateNetworksInput.checked = next.pageContextOnPrivateNetworks === true;
+      adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
+    }
+  }
+  if (els.pageContextExcludedOriginsInput) {
+    const editing = document.activeElement === els.pageContextExcludedOriginsInput;
+    const dirty = pageContextPermissionControlDirty(els.pageContextExcludedOriginsInput);
+    if (!editing && !dirty && Object.hasOwn(next, 'pageContextExcludedOrigins')) {
+      const excluded = Array.isArray(next.pageContextExcludedOrigins) ? next.pageContextExcludedOrigins : [];
+      els.pageContextExcludedOriginsInput.value = excluded.join('\n');
+      adoptSettingsBaselineValue(els.pageContextExcludedOriginsInput);
+    }
+  }
+}
+
+async function persistPageContextPermissions(field = 'all') {
+  const stored = await readBrowserSettingsFromStorage();
+  const pageContextOnPrivateNetworks = field === 'excluded'
+    ? stored.pageContextOnPrivateNetworks === true
+    : els.pageContextOnPrivateNetworksInput?.checked === true;
+  const pageContextExcludedOrigins = field === 'private'
+    ? normalizePageContextExcludedOrigins(stored.pageContextExcludedOrigins)
+    : normalizePageContextExcludedOrigins(els.pageContextExcludedOriginsInput?.value);
+  await mergePackedBrowserSettingsFromStorage((record) => ({
+    ...record,
+    pageContextOnPrivateNetworks,
+    pageContextExcludedOrigins,
+  }));
+  // Only the permission keys: the stored record also holds other panels' session bindings.
+  settings = { ...settings, pageContextOnPrivateNetworks, pageContextExcludedOrigins };
+  if (field !== 'excluded' && els.pageContextOnPrivateNetworksInput) {
+    adoptSettingsBaselineValue(els.pageContextOnPrivateNetworksInput);
+  }
+  if (field !== 'private' && els.pageContextExcludedOriginsInput) {
+    adoptSettingsBaselineValue(els.pageContextExcludedOriginsInput);
+  }
+}
+
+async function resolveTabUrlForPageScriptPolicy(tabId, tabUrl = '') {
+  const direct = String(tabUrl || '').trim();
+  if (direct) return direct;
   try {
-    return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
+    const tab = await browserApi.tabs.get(tabId);
+    return String(tab?.url || '');
+  } catch {
+    return '';
+  }
+}
+
+async function resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId = 0, tabUrl = '') {
+  const frame = Number(frameId);
+  if (frame > 0) {
+    try {
+      const [probe] = await browserApi.scripting.executeScript({
+        target: { tabId, frameIds: [frame] },
+        func: () => location.href,
+      });
+      const href = String(probe?.result || '').trim();
+      if (href) return href;
+    } catch {
+      /* fall back to the tab URL when the frame cannot be read */
+    }
+  }
+  return resolveTabUrlForPageScriptPolicy(tabId, tabUrl);
+}
+
+function pageContextPolicySkipError(url, injection) {
+  const skipError = new Error(t(pageContextSkipMessageKey(injection.reason), { url }));
+  skipError.hermesPageContextSkipped = true;
+  return skipError;
+}
+
+async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0, tabUrl = '' } = {}) {
+  const frame = Math.max(0, Number(frameId) || 0);
+  const installBinding = await acquirePageContextInstallBinding(tabId, frame);
+  if (!installBinding) {
+    const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
+  const scriptTarget = pageContextScriptInjectionTarget(installBinding);
+  const messageOptions = contentMessageDeliveryOptions(installBinding, frame);
+  if (!scriptTarget || !messageOptions) {
+    throw pageContextPolicySkipError(installBinding.href || tabUrl, { inject: false, reason: 'private' });
+  }
+  if (!(await verifyPageContextInstallBinding(installBinding))) {
+    const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
+  try {
+    await awaitPageContextBundleRestart(tabId, installBinding);
+  } catch {
+    const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
+  const url = installBinding.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+  const injection = pageContextInjectionDecision(url, settings);
+  if (!injection.inject) throw pageContextPolicySkipError(url, injection);
+  const refreshed = await ensurePageContextGateAndRefresh(tabId, installBinding);
+  if (!refreshed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
+  if (!(await verifyPageContextInstallBinding(installBinding))) {
+    const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
+  const grantAnchor = await readPageScriptDocumentAnchor(executePageContextScript, installBinding);
+  if (!grantAnchor || !pageContextPolicyGrantMatchesAnchor(installBinding, grantAnchor)) {
+    const blockedUrl = grantAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
+  const captureRequestAnchorToken = installBinding.captureRequestAnchorToken || installBinding.anchorToken;
+  if (captureRequestAnchorToken) installBinding.captureRequestAnchorToken = captureRequestAnchorToken;
+  const outboundMessage = message?.type === 'HERMES_GET_PAGE_CONTEXT' && captureRequestAnchorToken
+    ? {
+      ...message,
+      options: {
+        ...(message.options || {}),
+        captureRequestAnchorToken,
+      },
+    }
+    : message;
+  try {
+    return await browserApi.tabs.sendMessage(tabId, outboundMessage, messageOptions);
   } catch (originalError) {
     try {
-      // Issue #86: the fallback must be idempotent. The manifest bridge may
-      // already be alive in this tab/frame (a rejection can mean "listener
-      // not ready yet", "message target torn down", or "policy error"), and
-      // blindly re-running content.js into an initialized frame wasted work
-      // and risked double-binding listeners. Probe the re-entry sentinel the
-      // bridge sets (content.js) and inject only what is actually missing.
-      // Re-execution itself remains SAFE since content.js now scopes all
-      // state inside an IIFE with listener-cleanup-first semantics.
       const sentinel = await browserApi.scripting.executeScript({
         target: scriptTarget,
-        func: () => globalThis.__HERMES_BROWSER_CONTENT_LOADED__ || null,
+        func: () => ({
+          bridgeLoaded: Boolean(globalThis.__HERMES_BROWSER_CONTENT_LOADED__),
+          extractorReady: Boolean(globalThis.HermesContentExtractor?.collectPageContext),
+        }),
       });
-      const bridgeAlreadyLoaded = Boolean(sentinel?.[0]?.result);
-      const files = manifestContentScriptFiles();
-      const filesToInject = bridgeAlreadyLoaded
-        ? files.filter((file) => file.endsWith('content-extractor.js'))
-        : files;
-      if (filesToInject.length) {
-        await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
+      const runtimeState = sentinel?.[0]?.result || {};
+      const bridgeAlreadyLoaded = Boolean(runtimeState.bridgeLoaded);
+      let filesToInject = [];
+      if (!bridgeAlreadyLoaded) {
+        filesToInject = pageContextBundleRestartFiles();
+      } else if (!runtimeState.extractorReady) {
+        filesToInject = pageContextBundleRestartFiles();
       }
-      return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
+      if (filesToInject.length) {
+        const allowed = await ensurePageContextGateAndRefresh(tabId, installBinding);
+        if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
+        if (!(await verifyPageContextInstallBinding(installBinding))) {
+          const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+          throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+        }
+        const retryGrantAnchor = await readPageScriptDocumentAnchor(executePageContextScript, installBinding);
+        if (!retryGrantAnchor || !pageContextPolicyGrantMatchesAnchor(installBinding, retryGrantAnchor)) {
+          const blockedUrl = retryGrantAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+          throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+        }
+        await awaitPageContextBundleRestart(tabId, installBinding);
+        const [sentinelAfterEnsure] = await browserApi.scripting.executeScript({
+          target: scriptTarget,
+          func: () => ({
+            bridgeLoaded: Boolean(globalThis.__HERMES_BROWSER_CONTENT_LOADED__),
+            extractorReady: Boolean(globalThis.HermesContentExtractor?.collectPageContext),
+          }),
+        });
+        const afterEnsure = sentinelAfterEnsure?.result || {};
+        if (!afterEnsure.bridgeLoaded) {
+          if (!(await verifyPageContextInstallBinding(installBinding))) {
+            const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+            throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+          }
+          const bridgeInjected = await runPageContextBundleRestart(
+            executePageContextScript,
+            installBinding,
+            filesToInject,
+            {
+              verifyBinding: verifyPageContextInstallBinding,
+              beforeInject: async () => verifyPageContextInstallBinding(installBinding),
+              afterInject: async () => verifyPageContextInstallBinding(installBinding),
+            },
+          );
+          if (!bridgeInjected) {
+            const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+            throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+          }
+        } else if (!afterEnsure.extractorReady && !(await probePageContextBundleRestartNeeded(installBinding))) {
+          if (!(await verifyPageContextInstallBinding(installBinding))) {
+            const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+            throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+          }
+          const restartFiles = pageContextBundleRestartFiles();
+          const gateFile = restartFiles[0];
+          if (gateFile) {
+            const gateInjected = await runPageContextBundleRestart(
+              executePageContextScript,
+              installBinding,
+              [gateFile],
+              {
+                verifyBinding: verifyPageContextInstallBinding,
+                beforeInject: async () => verifyPageContextInstallBinding(installBinding),
+                afterInject: async () => verifyPageContextInstallBinding(installBinding),
+              },
+            );
+            if (!gateInjected) {
+              const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+              throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+            }
+          }
+          const allowedAfterGate = await ensurePageContextGateAndRefresh(tabId, installBinding);
+          if (!allowedAfterGate) {
+            throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
+          }
+          const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
+          if (extractorPath) {
+            if (!(await verifyPageContextInstallBinding(installBinding))) {
+              const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+              throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+            }
+            const retryExtractorInjected = await runPageContextBundleRestart(
+              executePageContextScript,
+              installBinding,
+              [extractorPath],
+              {
+                verifyBinding: verifyPageContextInstallBinding,
+                beforeInject: async () => verifyPageContextInstallBinding(installBinding),
+                afterInject: async () => verifyPageContextInstallBinding(installBinding),
+              },
+            );
+            if (!retryExtractorInjected) {
+              const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+              throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+            }
+          }
+        }
+      }
+      await awaitPageContextBundleRestart(tabId, installBinding);
+      if (!(await verifyPageContextInstallBinding(installBinding))) {
+        const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+        throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+      }
+      const retryAnchor = await readPageScriptDocumentAnchor(executePageContextScript, installBinding);
+      if (!retryAnchor || !pageContextPolicyGrantMatchesAnchor(installBinding, retryAnchor)) {
+        const blockedUrl = retryAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+        throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+      }
+      return await browserApi.tabs.sendMessage(tabId, outboundMessage, messageOptions);
     } catch (fallbackError) {
       if (fallbackError && typeof fallbackError === 'object' && !fallbackError.cause) fallbackError.cause = originalError;
       throw fallbackError;
@@ -25165,6 +25614,66 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
 }
 
 function collectPageContextWithSharedExtractor(options = {}) {
+  const expected = String(options?.captureRequestAnchorToken || '').trim();
+  if (expected) {
+    let token = '';
+    try {
+      token = `${location.origin}\u0000${location.href}`;
+    } catch {
+      token = '';
+    }
+    if (!token || token !== expected) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: 'blocked',
+        reasonKey: 'status.page_context_capture_off',
+        reason: '',
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+  }
+  const gate = globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
+  if (!gate || gate.latestInject !== true || globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ === true) {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: 'blocked',
+      reasonKey: 'status.page_context_capture_off',
+      reason: '',
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
+  try {
+    const token = `${location.origin}\u0000${location.href}`;
+    if (gate.policyLocationToken && gate.policyLocationToken !== token) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: 'blocked',
+        reasonKey: 'status.page_context_capture_off',
+        reason: '',
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+  } catch {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: 'blocked',
+      reasonKey: 'status.page_context_capture_off',
+      reason: '',
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
   const TEXT_LIMITS = { minimal: 4_000, normal: 12_000, full: 30_000 };
   const HermesContentExtractor = globalThis.HermesContentExtractor;
   if (!HermesContentExtractor?.collectPageContext) {
@@ -25189,21 +25698,160 @@ function collectPageContextWithSharedExtractor(options = {}) {
   return HermesSiteAdapters.applySiteAdapterPolicy(pageContext, siteAdapter);
 }
 
-async function getPageContextViaScripting(tabId, options, originalError) {
+async function getPageContextViaScripting(tabId, options, originalError, tabUrl = '') {
   try {
+    const frameId = Number(options?.frameId || 0);
+    const url = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+    const injection = pageContextInjectionDecision(url, settings);
+    if (!injection.inject) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: injection.reason,
+        reason: t(pageContextSkipMessageKey(injection.reason), { url }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    const installBinding = await acquirePageContextInstallBinding(tabId, frameId);
+    if (!installBinding) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    if (options?.captureRequestAnchorToken) {
+      installBinding.captureRequestAnchorToken = options.captureRequestAnchorToken;
+    }
+    const scriptTarget = pageContextScriptInjectionTarget(installBinding);
+    if (!scriptTarget) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    await awaitPageContextBundleRestart(tabId, installBinding);
+    const refreshed = await ensurePageContextGateAndRefresh(tabId, installBinding);
+    if (!refreshed) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: injection.reason || 'excluded',
+        reason: t(pageContextSkipMessageKey(injection.reason || 'excluded'), { url }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    if (!(await verifyPageContextInstallBinding(installBinding))) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    await awaitPageContextBundleRestart(tabId, installBinding);
+    if (!(await verifyPageContextInstallBinding(installBinding))) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
-    const scriptTarget = Number(options?.frameId) > 0
-      ? { tabId, frameIds: [Number(options.frameId)] }
-      : { tabId };
-    await browserApi.scripting.executeScript({
-      target: scriptTarget,
-      files: [extractorPath],
-    });
+    if (!(await verifyPageContextInstallBinding(installBinding))) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    const captureToken = installBinding.captureRequestAnchorToken || installBinding.anchorToken;
+    const grantAnchor = await readPageScriptDocumentAnchor(executePageContextScript, installBinding);
+    if (!grantAnchor || !pageContextPolicyGrantMatchesAnchor(installBinding, grantAnchor)) {
+      const blockedUrl = grantAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    const extractorInjected = await runPageContextBundleRestart(
+      executePageContextScript,
+      installBinding,
+      [extractorPath],
+      {
+        verifyBinding: verifyPageContextInstallBinding,
+        beforeInject: async () => verifyPageContextInstallBinding(installBinding),
+        afterInject: async () => verifyPageContextInstallBinding(installBinding),
+      },
+    );
+    if (!extractorInjected || !(await verifyPageContextInstallBinding(installBinding))) {
+      const liveUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const livePolicy = pageContextInjectionDecision(liveUrl, settings);
+      if (!livePolicy.inject) {
+        return {
+          ok: false,
+          skipped: true,
+          skipReason: livePolicy.reason,
+          reason: t(pageContextSkipMessageKey(livePolicy.reason), { url: liveUrl }),
+          text: '',
+          selectedText: '',
+          meta: {},
+        };
+      }
+      return {
+        ok: false,
+        error: originalError?.message || String(originalError || 'Page context scripting fallback failed'),
+        reason: originalError?.message || String(originalError || 'Page context scripting fallback failed'),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
     const [injected] = await browserApi.scripting.executeScript({
       target: scriptTarget,
       func: collectPageContextWithSharedExtractor,
-      args: [options],
+      args: [{ ...options, captureRequestAnchorToken: captureToken }],
     });
     if (injected?.result) {
       return {
@@ -25256,6 +25904,19 @@ async function getPageContext(tab, options = {}) {
     };
   }
 
+  const injection = pageContextInjectionDecision(tab.url, settings);
+  if (!injection.inject) {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: injection.reason,
+      reason: t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
+
   const requestOptions = {
     depth: settings.contextDepth,
     maxTextChars: usesDashboardWsChatTransport() && settings.includePageText !== false && settings.contextDepth !== 'minimal' ? 200_000 : undefined,
@@ -25263,11 +25924,26 @@ async function getPageContext(tab, options = {}) {
     frameId: Number(options.frameId || 0),
   };
   try {
-    const response = await sendContentMessageWithInstallFallback(
+    if (options.captureRequestAnchorToken) {
+      requestOptions.captureRequestAnchorToken = options.captureRequestAnchorToken;
+    } else {
+      try {
+        const peekBinding = await acquirePageContextInstallBinding(tab.id, requestOptions.frameId);
+        if (peekBinding?.captureRequestAnchorToken) {
+          requestOptions.captureRequestAnchorToken = peekBinding.captureRequestAnchorToken;
+        }
+      } catch {
+        /* Binding probe failed; capture may still proceed without a frozen anchor token. */
+      }
+    }
+    let response = await sendContentMessageWithInstallFallback(
       tab.id,
       { type: 'HERMES_GET_PAGE_CONTEXT', options: requestOptions },
       { frameId: requestOptions.frameId },
     );
+    if (response?.reasonKey) {
+      response = { ...response, reason: t(response.reasonKey, { url: tab.url }) };
+    }
     if (response?.ok && (requestOptions.explicitSiteCapture && isGmailThreadUrl(tab.url)
       ? Boolean(response.text)
       : (response.text || response.selectedText || response.meta?.headings?.length))) {
@@ -25276,24 +25952,63 @@ async function getPageContext(tab, options = {}) {
         : { ...response, selectedText: String(options.selectedTextOverride || '') };
     }
     if (response?.ok) {
-      const fallback = await getPageContextViaScripting(tab.id, requestOptions, new Error('Stale content script: empty page context'));
+      const fallback = await getPageContextViaScripting(tab.id, requestOptions, new Error('Stale content script: empty page context'), tab.url);
       if (fallback?.ok) {
         return options.selectedTextOverride === undefined
           ? fallback
           : { ...fallback, selectedText: String(options.selectedTextOverride || '') };
       }
+      if (fallback?.skipped) {
+        const skipped = {
+          ok: false,
+          skipped: true,
+          skipReason: fallback.skipReason,
+          reason: fallback.reason || '',
+          text: '',
+          selectedText: '',
+          meta: fallback.meta || {},
+        };
+        return options.selectedTextOverride === undefined
+          ? skipped
+          : { ...skipped, selectedText: String(options.selectedTextOverride || '') };
+      }
     }
     return response || { ok: false, error: 'No page context response', text: '', selectedText: '', meta: {} };
   } catch (error) {
-    const fallback = await getPageContextViaScripting(tab.id, requestOptions, error);
+    if (error?.hermesPageContextSkipped) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: pageContextInjectionDecision(tab.url, settings).reason,
+        reason: error.message,
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    const fallback = await getPageContextViaScripting(tab.id, requestOptions, error, tab.url);
     if (fallback?.ok) {
       return options.selectedTextOverride === undefined
         ? fallback
         : { ...fallback, selectedText: String(options.selectedTextOverride || '') };
     }
+    if (fallback?.skipped) {
+      const skipped = {
+        ok: false,
+        skipped: true,
+        skipReason: fallback.skipReason,
+        reason: fallback.reason || '',
+        text: '',
+        selectedText: '',
+        meta: fallback.meta || {},
+      };
+      return options.selectedTextOverride === undefined
+        ? skipped
+        : { ...skipped, selectedText: String(options.selectedTextOverride || '') };
+    }
     return {
       ok: false,
-      error: fallback?.error || error?.message || String(error),
+      error: fallback?.error || fallback?.reason || error?.message || String(error),
       reason: fallback?.reason || error?.message || String(error),
       text: '',
       selectedText: '',
@@ -25476,10 +26191,23 @@ async function startElementPick({ purpose = 'context' } = {}) {
   }
   try {
     if (elementPickActiveForTab(tab)) {
-      await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL });
+      await browserApi.tabs.sendMessage(
+        tab.id,
+        { type: ELEMENT_PICK_MESSAGES.CANCEL },
+        contentMessageDeliveryOptions(0),
+      );
       await clearElementPickState({ tabId: tab.id });
       pageCommentPickActive = false;
       setStatus('ok', purpose === 'comment' ? 'Page comments cancelled' : 'Element pick cancelled', '');
+      return;
+    }
+    const injection = pageContextInjectionDecision(tab.url, settings);
+    if (!injection.inject) {
+      const detail = t(pageContextSkipMessageKey(injection.reason), { url: tab.url });
+      const titleKey = purpose === 'comment'
+        ? 'status.page_comments_unavailable'
+        : 'status.element_pick_unavailable';
+      setStatus('warn', t(titleKey), detail, { translateDetail: false });
       return;
     }
     pageCommentPickActive = purpose === 'comment';
@@ -25500,7 +26228,14 @@ async function startElementPick({ purpose = 'context' } = {}) {
     const wasComment = pageCommentPickActive;
     pageCommentPickActive = false;
     await clearElementPickState({ tabId: tab.id });
-    setStatus('warn', wasComment ? 'Page comments failed' : 'Element pick failed', error?.message || String(error), { translateDetail: false });
+    const detail = error?.message || String(error);
+    setStatus('warn', wasComment ? 'Page comments failed' : 'Element pick failed', detail, { translateDetail: false });
+    showOperationToast({
+      kind: 'warn',
+      title: wasComment ? 'Page comments failed' : 'Element pick failed',
+      detail,
+      duration: 12_000,
+    });
   }
 }
 
@@ -25767,7 +26502,11 @@ async function startPageAnnotation(mode = pageAnnotationMode) {
     return;
   }
   if (elementPickActiveForTab(tab)) {
-    await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL }).catch(() => {});
+    await browserApi.tabs.sendMessage(
+      tab.id,
+      { type: ELEMENT_PICK_MESSAGES.CANCEL },
+      contentMessageDeliveryOptions(0),
+    ).catch(() => {});
     await clearElementPickState({ tabId: tab.id });
   }
   pageAnnotationMode = mode === PAGE_ANNOTATION_MODES.AREA ? PAGE_ANNOTATION_MODES.AREA : PAGE_ANNOTATION_MODES.ELEMENT;
@@ -25951,6 +26690,14 @@ async function refreshContext(options = {}) {
     setStatus('warn', 'No active tab detected', 'Open a normal browser tab and try again.');
   } else if (pageContext?.restricted) {
     setStatus('warn', tab.title || translateUiText('Restricted page'), t('status.page_context_restricted', { url: tab.url }), { translateTitle: false, translateDetail: false });
+  } else if (pageContext?.skipped) {
+    const detailKey = pageContextSkipMessageKey(pageContext.skipReason || '');
+    setStatus(
+      'warn',
+      tab.title || t('ui.page_context_skipped'),
+      t(detailKey, { url: tab.url }),
+      { translateTitle: false, translateDetail: false },
+    );
   } else if (pageContext?.ok) {
     setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
   } else {
@@ -26029,7 +26776,27 @@ async function refreshContextPreview() {
     if (isRestrictedUrl(tab.url, { allowLocalDocuments: isLocalDocumentUrl(tab.url) })) {
       setStatus('warn', tab.title || translateUiText('Restricted page'), t('status.page_context_restricted', { url: tab.url }), { translateTitle: false, translateDetail: false });
     } else {
-      setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
+      const injection = pageContextInjectionDecision(tab.url, settings);
+      if (!injection.inject) {
+        const skippedContext = {
+          ok: false,
+          skipped: true,
+          skipReason: injection.reason,
+          reason: t(pageContextSkipMessageKey(injection.reason), { url: tab.url }),
+          text: '',
+          selectedText: '',
+          meta: {},
+        };
+        currentContext = { ...currentContext, pageContext: skippedContext };
+        setStatus(
+          'warn',
+          tab.title || t('ui.page_context_skipped'),
+          skippedContext.reason,
+          { translateTitle: false, translateDetail: false },
+        );
+      } else {
+        setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
+      }
     }
   }
   renderLocalDocumentApproval(tab);
@@ -31085,6 +31852,16 @@ function bindEvents() {
     trackInstantSave('permissions', setBrowserContextConsent(els.browserContextConsentInput.checked)).catch((error) => {
       renderBrowserContextConsentControl();
       setStatus('warn', 'Context sharing unchanged', error?.message || String(error), { translateDetail: false });
+    });
+  });
+  els.pageContextOnPrivateNetworksInput?.addEventListener('change', () => {
+    trackInstantSave('permissions', persistPageContextPermissions('private')).catch((error) => {
+      setStatus('warn', t('settings.page_context_private.save_unchanged_title'), error?.message || String(error), { translateDetail: false });
+    });
+  });
+  els.pageContextExcludedOriginsInput?.addEventListener('change', () => {
+    trackInstantSave('permissions', persistPageContextPermissions('excluded')).catch((error) => {
+      setStatus('warn', t('settings.page_context_excluded.save_unchanged_title'), error?.message || String(error), { translateDetail: false });
     });
   });
   browserControlDialogUi = createBrowserControlDialog({
