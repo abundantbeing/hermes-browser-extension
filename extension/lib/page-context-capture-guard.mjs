@@ -1,0 +1,1 @@
+export { isRestrictedUrl as isPageContextCaptureUrlBlocked } from './browser-context-protocol.mjs';

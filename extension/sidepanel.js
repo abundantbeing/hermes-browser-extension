@@ -145,11 +145,12 @@ import {
   runPageContextBundleRestart,
 } from './lib/page-context-bundle-restart.mjs';
 import {
+  pageContextBindingUsesFrameFallback,
   pageContextScriptInjectionTarget,
   pageContextTabMessageOptions,
-  pageContextUsesFrameTargetFallback,
-  resolvePageContextFrameDocumentId,
+  probePageContextFrameDocumentId,
 } from './lib/page-context-document-target.mjs';
+import { isPageContextCaptureUrlBlocked } from './lib/page-context-capture-guard.mjs';
 import {
   BUILD_RELOAD_BOOT_RECHECK_MS,
   BUILD_RELOAD_WATCH_INTERVAL_MS,
@@ -25217,26 +25218,21 @@ function pageContextScriptTarget(tabId, frameId = 0) {
   return { tabId, frameIds: [frame] };
 }
 
-const pageContextAllowFrameFallback = pageContextUsesFrameTargetFallback({
-  webNavigation: browserApi.webNavigation,
-  scripting: browserApi.scripting,
-});
-
 const executePageContextScript = (request) => browserApi.scripting.executeScript(request);
 
 async function lookupPageContextFrameDocumentId(tabId, frameId) {
-  return resolvePageContextFrameDocumentId(browserApi.webNavigation, tabId, frameId);
+  return probePageContextFrameDocumentId(executePageContextScript, tabId, frameId);
 }
 
 async function acquirePageContextInstallBinding(tabId, frameId = 0) {
   const frame = Math.max(0, Number(frameId) || 0);
   const documentId = await lookupPageContextFrameDocumentId(tabId, frame);
-  if (!documentId && !pageContextAllowFrameFallback) return null;
+  const allowFrameFallback = pageContextBindingUsesFrameFallback(documentId);
   const binding = {
     tabId,
     frameId: frame,
     documentId,
-    allowFrameFallback: pageContextAllowFrameFallback,
+    allowFrameFallback,
   };
   if (!pageContextScriptInjectionTarget(binding)) return null;
   const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
@@ -25250,7 +25246,7 @@ async function verifyPageContextInstallBinding(binding) {
   if (!live) return false;
   const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
   if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return false;
-  if (binding.documentId) return true;
+  if (isPageContextCaptureUrlBlocked(anchor.href)) return false;
   if (binding.anchorToken && anchor?.token !== binding.anchorToken) return false;
   return true;
 }

@@ -174,7 +174,12 @@ test('registered page script definitions include a document_start guard', () => 
   const guard = defs.find((def) => def.runAt === 'document_start');
   const bundle = defs.find((def) => def.runAt === 'document_idle');
   assert.equal(guard?.js?.[0], 'page-context-install-guard.js');
-  assert.deepEqual(bundle.js.slice(0, 3), ['lib/page-context-bundle-gate.js', 'lib/browser-api-global.js', 'content-extractor.js']);
+  assert.deepEqual(bundle.js.slice(0, 4), [
+    'lib/page-context-bundle-gate.js',
+    'lib/page-context-capture-guard.js',
+    'lib/browser-api-global.js',
+    'content-extractor.js',
+  ]);
   const def = buildRegisteredPageScriptDefinition({}, { packaged: true });
   assert.equal(def.id, 'hermes-page-context-bundle');
   assert.equal(def.runAt, 'document_idle');

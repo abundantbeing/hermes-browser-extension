@@ -25,8 +25,7 @@
     "storage",
     "unlimitedStorage",
     "tabs",
-    "tabGroups",
-    "webNavigation"
+    "tabGroups"
   ],
   "optional_permissions": [
     "webRequest"

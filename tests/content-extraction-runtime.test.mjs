@@ -63,8 +63,8 @@ test('registered page script bundle loads the extractor before the content bridg
   const { buildRegisteredPageScriptDefinition } = await import('../extension/lib/page-script-host-policy.mjs');
   const packaged = buildRegisteredPageScriptDefinition({}, { packaged: true });
   const repository = buildRegisteredPageScriptDefinition({}, { packaged: false });
-  assert.deepEqual(packaged.js.slice(2, 4), ['content-extractor.js', 'content.js']);
-  assert.deepEqual(repository.js.slice(2, 4), ['extension/content-extractor.js', 'extension/content.js']);
+  assert.deepEqual(packaged.js.slice(3, 5), ['content-extractor.js', 'content.js']);
+  assert.deepEqual(repository.js.slice(3, 5), ['extension/content-extractor.js', 'extension/content.js']);
 });
 
 test('build scripts generate the classic runtime before copying extension files', async () => {

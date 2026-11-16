@@ -53,8 +53,8 @@ test('overlapping page-context ensures share one in-flight gate refresh per tab 
   assert.match(source, /createPageContextBundleRestartCoalescer/);
   assert.match(source, /createPageContextGateEnsureCoalescer/);
   assert.match(source, /pageContextScriptInjectionTarget/);
-  assert.match(source, /resolvePageContextFrameDocumentId/);
-  assert.match(source, /webNavigation/);
+  assert.match(source, /probePageContextFrameDocumentId/);
+  assert.doesNotMatch(source, /webNavigation/);
   const sendBlock = source.slice(
     source.indexOf('async function sendContentMessageWithInstallFallback'),
     source.indexOf('function collectPageContextWithSharedExtractor'),

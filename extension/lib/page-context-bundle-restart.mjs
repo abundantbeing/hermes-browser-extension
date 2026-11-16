@@ -78,6 +78,15 @@ export async function probePageContextBundleRestartNeeded(executeScript, binding
   return Boolean(state.restart || (state.bridgeLoaded && !state.extractorReady));
 }
 
+export function describePageContextBundleRestartInjection(binding, restartFiles) {
+  const target = pageContextScriptInjectionTarget(binding);
+  return {
+    target,
+    files: [...(restartFiles || [])],
+    gateFirst: Boolean(restartFiles?.[0]?.includes(GATE_FILE_MARKER)),
+  };
+}
+
 export async function runPageContextBundleRestart(executeScript, binding, restartFiles, hooks = {}) {
   const target = pageContextScriptInjectionTarget(binding);
   if (!target) return false;

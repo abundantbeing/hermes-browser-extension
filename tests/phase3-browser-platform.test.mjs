@@ -231,9 +231,11 @@ test('classic content scripts use a preloaded shared browser API facade', async 
   const packagedBundle = buildRegisteredPageScriptDefinition({}, { packaged: true });
   const repositoryBundle = buildRegisteredPageScriptDefinition({}, { packaged: false });
   assert.equal(packagedBundle.js[0], 'lib/page-context-bundle-gate.js');
-  assert.equal(packagedBundle.js[1], 'lib/browser-api-global.js');
+  assert.equal(packagedBundle.js[1], 'lib/page-context-capture-guard.js');
+  assert.equal(packagedBundle.js[2], 'lib/browser-api-global.js');
   assert.equal(repositoryBundle.js[0], 'extension/lib/page-context-bundle-gate.js');
-  assert.equal(repositoryBundle.js[1], 'extension/lib/browser-api-global.js');
+  assert.equal(repositoryBundle.js[1], 'extension/lib/page-context-capture-guard.js');
+  assert.equal(repositoryBundle.js[2], 'extension/lib/browser-api-global.js');
 
   for (const file of ['content.js', 'content-inline-helper.js', 'lib/i18n-content.js']) {
     const source = readFileSync(new URL(`../extension/${file}`, import.meta.url), 'utf8');

@@ -5,6 +5,7 @@ export const PAGE_CONTEXT_GUARD_SCRIPT_ID = 'hermes-page-context-guard';
 
 const PACKAGED_PAGE_SCRIPT_JS = Object.freeze([
   'lib/page-context-bundle-gate.js',
+  'lib/page-context-capture-guard.js',
   'lib/browser-api-global.js',
   'content-extractor.js',
   'content.js',
@@ -22,6 +23,7 @@ export function packagedPageContextScriptFiles() {
 
 const REPOSITORY_PAGE_SCRIPT_JS = Object.freeze([
   'extension/lib/page-context-bundle-gate.js',
+  'extension/lib/page-context-capture-guard.js',
   'extension/lib/browser-api-global.js',
   'extension/content-extractor.js',
   'extension/content.js',
