@@ -100,6 +100,11 @@ export function unionCachedModelCatalogs(cache = {}, { gatewayPrefix = '', exclu
         ? lowerRaw.slice(provider.length + 2)
         : lowerRaw;
       const key = provider ? `${provider}::${bareRaw}` : bareRaw;
+      const existing = byKey.get(key);
+      if (existing) {
+        const existingProvider = String(existing.provider || '').trim();
+        if (existingProvider && !provider) continue;
+      }
       byKey.set(key, model);
     }
   }
@@ -222,13 +227,21 @@ export function reconcileScopedAndSharedCachedCatalog(scopedEntry, sharedEntry) 
   return scoped;
 }
 
+function isSelectedModelPlaceholder(model = {}) {
+  if (!model || typeof model !== 'object') return false;
+  if (model.source === 'selected') return true;
+  if (String(model.provider || '').trim()) return false;
+  return model.runtimeSelectable === false && String(model.owner || '').trim() === 'selected';
+}
+
 export function normalizeCachedModelCatalog(payload = []) {
   const rows = Array.isArray(payload) ? payload : [];
   return rows
     .filter((model) => model
       && typeof model === 'object'
       && String(model.id || '').trim()
-      && model.gatewayAlias !== true)
+      && model.gatewayAlias !== true
+      && !isSelectedModelPlaceholder(model))
     .map((model) => ({
       ...model,
       source: 'cache',

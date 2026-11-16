@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { ReadableStream } from 'node:stream/web';
 import vm from 'node:vm';
 
 import {
@@ -196,6 +197,46 @@ test('cached catalog does not trigger session-history expansion', async () => {
     registrySource: 'cache',
     registryModels: [{ id: 'openrouter::model', source: 'cache' }],
   }), false);
+});
+
+test('normalizeCachedModelCatalog drops selected placeholders before persisting shared cache', () => {
+  const selectedOnly = normalizeHermesModels(
+    { data: [{ id: 'custom::only-live', rawModelId: 'only-live', provider: 'custom' }] },
+    'qwen-token-plan::qwen3.8-max',
+  );
+  const models = normalizeCachedModelCatalog(selectedOnly);
+  assert.ok(
+    models.some((model) => model.id === 'custom::only-live'),
+    'verified provider rows must still be cached',
+  );
+  assert.ok(
+    !models.some((model) => model.id === 'qwen-token-plan::qwen3.8-max'),
+    'provider-less selected placeholders must not be written to the catalog cache',
+  );
+});
+
+test('unionCachedModelCatalogs keeps verified provider rows when a provider-less placeholder shares the cache key', () => {
+  const verified = {
+    id: 'qwen-token-plan::qwen3.8-max',
+    rawModelId: 'qwen3.8-max',
+    provider: 'qwen-token-plan',
+    source: 'cache',
+    runtimeSelectable: true,
+  };
+  const placeholder = {
+    id: 'qwen-token-plan::qwen3.8-max',
+    label: 'qwen-token-plan::qwen3.8-max',
+    owner: 'selected',
+    source: 'cache',
+    runtimeSelectable: false,
+  };
+  const union = unionCachedModelCatalogs({
+    older: { savedAt: 100, models: [verified] },
+    newer: { savedAt: 200, models: [placeholder] },
+  });
+  assert.equal(union.length, 1);
+  assert.equal(union[0].provider, 'qwen-token-plan');
+  assert.equal(union[0].runtimeSelectable, true);
 });
 
 test('cached catalog normalization keeps provider identity, strips malformed rows, and drops stale gateway aliases', () => {
