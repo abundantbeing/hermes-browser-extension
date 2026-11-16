@@ -18,6 +18,12 @@ function createBundleRestartHarness({ restartDelayMs = 60 } = {}) {
     extractorReady: false,
     bridgeLoaded: true,
   };
+  const binding = {
+    tabId: 1,
+    frameId: 0,
+    documentId: 'doc-coalesce-test',
+    allowFrameFallback: false,
+  };
   const executeScript = async (request) => {
     if (request.files) {
       restartInjectionCount += 1;
@@ -32,8 +38,11 @@ function createBundleRestartHarness({ restartDelayMs = 60 } = {}) {
     return [{ result }];
   };
   const bundleRestart = createPageContextBundleRestartCoalescer({
-    probeRestartNeeded: (target) => probePageContextBundleRestartNeeded(executeScript, target),
-    runBundleRestart: (target) => runPageContextBundleRestart(executeScript, target, ['content.js']),
+    probeRestartNeeded: (b) => probePageContextBundleRestartNeeded(executeScript, b),
+    runBundleRestart: (b) => runPageContextBundleRestart(executeScript, b, [
+      'lib/page-context-bundle-gate.js',
+      'content.js',
+    ]),
   });
   return { ...bundleRestart, getRestartInjectionCount: () => restartInjectionCount };
 }
@@ -43,6 +52,9 @@ test('overlapping page-context ensures share one in-flight gate refresh per tab 
   assert.match(source, /from '\.\/lib\/page-context-bundle-restart\.mjs'/);
   assert.match(source, /createPageContextBundleRestartCoalescer/);
   assert.match(source, /createPageContextGateEnsureCoalescer/);
+  assert.match(source, /pageContextScriptInjectionTarget/);
+  assert.match(source, /resolvePageContextFrameDocumentId/);
+  assert.match(source, /webNavigation/);
   const sendBlock = source.slice(
     source.indexOf('async function sendContentMessageWithInstallFallback'),
     source.indexOf('function collectPageContextWithSharedExtractor'),
@@ -52,7 +64,7 @@ test('overlapping page-context ensures share one in-flight gate refresh per tab 
 
 test('coalesced bundle reinstall re-probes readiness after awaiting a shared restart', async () => {
   const tabId = 1;
-  const scriptTarget = { tabId, frameIds: [0] };
+  const scriptTarget = { tabId, frameId: 0, documentId: 'doc-coalesce-test', allowFrameFallback: false };
   const {
     reinstallPageContextBundleEntries,
     awaitPageContextBundleRestart,
@@ -90,7 +102,7 @@ test('coalesced bundle reinstall re-probes readiness after awaiting a shared res
 
 test('overlapping gate ensures share one runPageContextGateEnsureForTarget per tab frame', async () => {
   const tabId = 3;
-  const target = { tabId, frameIds: [0] };
+  const target = { tabId, frameId: 0, documentId: 'doc-gate-coalesce', allowFrameFallback: false };
   let gateRuns = 0;
   let resolveGate;
   const gateStarted = new Promise((resolve) => { resolveGate = resolve; });
@@ -101,7 +113,7 @@ test('overlapping gate ensures share one runPageContextGateEnsureForTarget per t
     return true;
   };
   const { ensurePageContextGateAndRefresh } = createPageContextGateEnsureCoalescer({
-    resolveTarget: (_tabId, scriptTarget) => scriptTarget || target,
+    resolveBinding: async (_tabId, scriptTarget) => scriptTarget || target,
     runPageContextGateEnsureForTarget,
   });
   const p1 = ensurePageContextGateAndRefresh(tabId, target);

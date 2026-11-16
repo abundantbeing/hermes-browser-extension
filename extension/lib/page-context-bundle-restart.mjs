@@ -1,19 +1,37 @@
-/** Coalesced page-context bundle reinstall and gate-ensure for one tab frame. */
+/** Coalesced page-context bundle reinstall and gate-ensure for one tab frame/document. */
 
-export function pageContextBundleRestartKey(tabId, scriptTarget) {
-  const frame = Math.max(0, Number(scriptTarget?.frameIds?.[0]) || 0);
-  return `${tabId}\u0000${frame}`;
+import {
+  PageContextMissingGateError,
+  pageContextInstallBindingKey,
+  pageContextInstallBindingStillLive,
+  pageContextScriptInjectionTarget,
+} from './page-context-document-target.mjs';
+
+const GATE_FILE_MARKER = 'page-context-bundle-gate';
+
+export function pageContextBundleRestartKey(tabId, bindingOrLegacyTarget) {
+  if (bindingOrLegacyTarget?.tabId && (bindingOrLegacyTarget.documentId || bindingOrLegacyTarget.allowFrameFallback != null)) {
+    return pageContextInstallBindingKey(bindingOrLegacyTarget);
+  }
+  const frame = Math.max(0, Number(bindingOrLegacyTarget?.frameIds?.[0] ?? bindingOrLegacyTarget?.frameId) || 0);
+  return `${tabId}\u0000f${frame}`;
 }
 
 /** Gate-first bundle paths for dynamic reinstall (gate re-checks policy on every restart). */
 export function pageContextBundleRestartFilesFromManifest(files = []) {
-  const gateIdx = files.findIndex((file) => file.includes('page-context-bundle-gate'));
-  return gateIdx >= 0 ? files.slice(gateIdx) : [...files];
+  const list = Array.isArray(files) ? files : [];
+  const gateIdx = list.findIndex((file) => file.includes(GATE_FILE_MARKER));
+  if (gateIdx < 0) {
+    throw new PageContextMissingGateError();
+  }
+  return list.slice(gateIdx);
 }
 
-export async function readPageScriptDocumentAnchor(executeScript, scriptTarget) {
+export async function readPageScriptDocumentAnchor(executeScript, binding) {
+  const target = pageContextScriptInjectionTarget(binding);
+  if (!target) return null;
   const [row] = await executeScript({
-    target: scriptTarget,
+    target,
     func: () => {
       let href = '';
       let origin = '';
@@ -41,9 +59,11 @@ export function pageContextInstallAllowedForAnchor(anchor, injectionDecision) {
   return injectionDecision(anchor.href).inject === true;
 }
 
-export async function probePageContextBundleRestartNeeded(executeScript, scriptTarget) {
+export async function probePageContextBundleRestartNeeded(executeScript, binding) {
+  const target = pageContextScriptInjectionTarget(binding);
+  if (!target) return false;
   const [bundleState] = await executeScript({
-    target: scriptTarget,
+    target,
     func: () => {
       const restart = globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ === true;
       if (restart) globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ = false;
@@ -58,13 +78,16 @@ export async function probePageContextBundleRestartNeeded(executeScript, scriptT
   return Boolean(state.restart || (state.bridgeLoaded && !state.extractorReady));
 }
 
-export async function runPageContextBundleRestart(executeScript, scriptTarget, restartFiles, hooks = {}) {
+export async function runPageContextBundleRestart(executeScript, binding, restartFiles, hooks = {}) {
+  const target = pageContextScriptInjectionTarget(binding);
+  if (!target) return false;
+  if (hooks.verifyBinding && !(await hooks.verifyBinding(binding))) return false;
   if (hooks.beforeInject && (await hooks.beforeInject()) === false) return false;
   if (!restartFiles.length) return true;
-  await executeScript({ target: scriptTarget, files: restartFiles });
+  await executeScript({ target, files: restartFiles });
   if (hooks.afterInject && (await hooks.afterInject()) === false) return false;
   await executeScript({
-    target: scriptTarget,
+    target,
     func: () => new Promise((resolve) => setTimeout(resolve, 0)),
   });
   return true;
@@ -72,28 +95,28 @@ export async function runPageContextBundleRestart(executeScript, scriptTarget, r
 
 /**
  * @param {object} deps
- * @param {(scriptTarget: object) => Promise<boolean>} deps.probeRestartNeeded
- * @param {(scriptTarget: object) => Promise<void>} deps.runBundleRestart
+ * @param {(binding: object) => Promise<boolean>} deps.probeRestartNeeded
+ * @param {(binding: object) => Promise<void>} deps.runBundleRestart
  */
 export function createPageContextBundleRestartCoalescer({ probeRestartNeeded, runBundleRestart }) {
   const pageContextBundleRestartByTarget = new Map();
 
-  async function awaitPageContextBundleRestart(tabId, scriptTarget) {
-    const pending = pageContextBundleRestartByTarget.get(pageContextBundleRestartKey(tabId, scriptTarget));
+  async function awaitPageContextBundleRestart(tabId, binding) {
+    const pending = pageContextBundleRestartByTarget.get(pageContextBundleRestartKey(tabId, binding));
     if (pending) await pending;
   }
 
-  async function reinstallPageContextBundleEntries(tabId, scriptTarget) {
-    const key = pageContextBundleRestartKey(tabId, scriptTarget);
+  async function reinstallPageContextBundleEntries(tabId, binding) {
+    const key = pageContextBundleRestartKey(tabId, binding);
     while (true) {
       const existing = pageContextBundleRestartByTarget.get(key);
       if (existing) {
         await existing;
-        if (!(await probeRestartNeeded(scriptTarget))) return;
+        if (!(await probeRestartNeeded(binding))) return;
         continue;
       }
       const run = (async () => {
-        await runBundleRestart(scriptTarget);
+        await runBundleRestart(binding);
       })();
       pageContextBundleRestartByTarget.set(key, run);
       try {
@@ -118,9 +141,11 @@ export function createPageContextBundleRestartCoalescer({ probeRestartNeeded, ru
  * @param {() => string[]} deps.manifestContentScriptFiles
  * @param {() => string[]} deps.pageContextBundleRestartFiles
  * @param {(url: string) => { inject: boolean }} deps.pageContextInjectionDecision
- * @param {(tabId: number, scriptTarget: object) => Promise<void>} deps.awaitPageContextBundleRestart
- * @param {(tabId: number, scriptTarget: object) => Promise<void>} deps.reinstallPageContextBundleEntries
- * @param {(scriptTarget: object) => Promise<boolean>} deps.probePageContextBundleRestartNeeded
+ * @param {(tabId: number, frameId: number) => Promise<object|null>} deps.acquireInstallBinding
+ * @param {(binding: object) => Promise<boolean>} deps.verifyInstallBinding
+ * @param {(tabId: number, binding: object) => Promise<void>} deps.awaitPageContextBundleRestart
+ * @param {(tabId: number, binding: object) => Promise<void>} deps.reinstallPageContextBundleEntries
+ * @param {(binding: object) => Promise<boolean>} deps.probePageContextBundleRestartNeeded
  */
 export function createPageContextGateEnsureRunner(deps) {
   const {
@@ -128,36 +153,39 @@ export function createPageContextGateEnsureRunner(deps) {
     manifestContentScriptFiles,
     pageContextBundleRestartFiles,
     pageContextInjectionDecision,
+    acquireInstallBinding,
+    verifyInstallBinding,
     awaitPageContextBundleRestart,
     reinstallPageContextBundleEntries,
     probePageContextBundleRestartNeeded,
   } = deps;
 
-  async function anchorStillAllowed(binding, scriptTarget) {
-    const anchor = await readPageScriptDocumentAnchor(executeScript, scriptTarget);
-    if (!pageScriptDocumentAnchorsMatch(binding, anchor)) return null;
-    if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecision)) return null;
-    return anchor;
-  }
-
-  return async function runPageContextGateEnsureForTarget(tabId, target) {
-    await awaitPageContextBundleRestart(tabId, target);
+  return async function runPageContextGateEnsureForTarget(tabId, request = {}) {
+    const frameId = Math.max(0, Number(request?.frameIds?.[0] ?? request?.frameId) || 0);
+    const binding = request?.documentId || request?.allowFrameFallback != null
+      ? request
+      : await acquireInstallBinding(tabId, frameId);
+    if (!binding) return false;
+    await awaitPageContextBundleRestart(tabId, binding);
     try {
-      const initial = await readPageScriptDocumentAnchor(executeScript, target);
+      if (!(await verifyInstallBinding(binding))) return false;
+      const initial = await readPageScriptDocumentAnchor(executeScript, binding);
       if (!pageContextInstallAllowedForAnchor(initial, pageContextInjectionDecision)) return false;
 
       const files = manifestContentScriptFiles();
-      const gateFile = files.find((file) => file.includes('page-context-bundle-gate'));
+      const gateFile = files.find((file) => file.includes(GATE_FILE_MARKER));
+      const target = pageContextScriptInjectionTarget(binding);
+      if (!target) return false;
       const [hasRefresh] = await executeScript({
         target,
         func: () => typeof globalThis.hermesRefreshPageScriptPolicy === 'function',
       });
       if (!hasRefresh?.result && gateFile) {
-        if (!(await anchorStillAllowed(initial, target))) return false;
+        if (!(await verifyInstallBinding(binding))) return false;
         await executeScript({ target, files: [gateFile] });
-        if (!(await anchorStillAllowed(initial, target))) return false;
+        if (!(await verifyInstallBinding(binding))) return false;
       }
-      if (!(await anchorStillAllowed(initial, target))) return false;
+      if (!(await verifyInstallBinding(binding))) return false;
       const [refreshed] = await executeScript({
         target,
         func: async () => {
@@ -173,23 +201,25 @@ export function createPageContextGateEnsureRunner(deps) {
           }
         },
       });
-      if (!(await anchorStillAllowed(initial, target))) return false;
+      if (!(await verifyInstallBinding(binding))) return false;
       const outcome = refreshed?.result || {};
       if (!outcome.allowed) return false;
+      const anchorAfterAllow = await readPageScriptDocumentAnchor(executeScript, binding);
+      if (!pageContextInstallAllowedForAnchor(anchorAfterAllow, pageContextInjectionDecision)) return false;
 
-      let needsRestart = outcome.restart || (await probePageContextBundleRestartNeeded(target));
+      let needsRestart = outcome.restart || (await probePageContextBundleRestartNeeded(binding));
       if (needsRestart) {
-        if (!(await anchorStillAllowed(initial, target))) return false;
-        await reinstallPageContextBundleEntries(tabId, target);
-        await awaitPageContextBundleRestart(tabId, target);
-        if (!(await anchorStillAllowed(initial, target))) return false;
-        needsRestart = await probePageContextBundleRestartNeeded(target);
+        if (!(await verifyInstallBinding(binding))) return false;
+        await reinstallPageContextBundleEntries(tabId, binding);
+        await awaitPageContextBundleRestart(tabId, binding);
+        if (!(await verifyInstallBinding(binding))) return false;
+        needsRestart = await probePageContextBundleRestartNeeded(binding);
         if (needsRestart) {
-          if (!(await anchorStillAllowed(initial, target))) return false;
-          await reinstallPageContextBundleEntries(tabId, target);
+          if (!(await verifyInstallBinding(binding))) return false;
+          await reinstallPageContextBundleEntries(tabId, binding);
         }
       }
-      if (!(await anchorStillAllowed(initial, target))) return false;
+      if (!(await verifyInstallBinding(binding))) return false;
       return true;
     } catch {
       return false;
@@ -199,19 +229,20 @@ export function createPageContextGateEnsureRunner(deps) {
 
 /**
  * @param {object} deps
- * @param {(tabId: number, scriptTarget: object | null) => object} deps.resolveTarget
- * @param {(tabId: number, target: object) => Promise<boolean>} deps.runPageContextGateEnsureForTarget
+ * @param {(tabId: number, scriptTarget: object | null) => Promise<object>|object} deps.resolveBinding
+ * @param {(tabId: number, binding: object) => Promise<boolean>} deps.runPageContextGateEnsureForTarget
  */
-export function createPageContextGateEnsureCoalescer({ resolveTarget, runPageContextGateEnsureForTarget }) {
+export function createPageContextGateEnsureCoalescer({ resolveBinding, runPageContextGateEnsureForTarget }) {
   const pageContextGateEnsureByTarget = new Map();
 
   async function ensurePageContextGateAndRefresh(tabId, scriptTarget = null) {
     if (!tabId) return false;
-    const target = resolveTarget(tabId, scriptTarget);
-    const key = pageContextBundleRestartKey(tabId, target);
+    const binding = await resolveBinding(tabId, scriptTarget);
+    if (!binding) return false;
+    const key = pageContextBundleRestartKey(tabId, binding);
     const inflight = pageContextGateEnsureByTarget.get(key);
     if (inflight) return inflight;
-    const run = runPageContextGateEnsureForTarget(tabId, target);
+    const run = runPageContextGateEnsureForTarget(tabId, binding);
     pageContextGateEnsureByTarget.set(key, run);
     try {
       return await run;
@@ -222,3 +253,5 @@ export function createPageContextGateEnsureCoalescer({ resolveTarget, runPageCon
 
   return { pageContextGateEnsureByTarget, ensurePageContextGateAndRefresh };
 }
+
+export { pageContextInstallBindingStillLive };

@@ -21,7 +21,8 @@ test('manual installs refresh in-tab page-script policy before messaging', async
     source.indexOf('async function sendContentMessageWithInstallFallback'),
     source.indexOf('function collectPageContextWithSharedExtractor'),
   );
-  assert.match(block, /ensurePageContextGateAndRefresh\(tabId, scriptTarget\)/);
+  assert.match(block, /ensurePageContextGateAndRefresh\(tabId, installBinding\)/);
+  assert.match(block, /verifyPageContextInstallBinding/);
   assert.match(block, /resolveScriptTargetUrlForPageScriptPolicy/);
   assert.match(block, /if \(!refreshed\) throw pageContextPolicySkipError/);
   assert.match(block, /if \(!allowed\) throw pageContextPolicySkipError/);
@@ -69,11 +70,11 @@ test('sidepanel installer enforces pageContextInjectionDecision before scripting
   );
   assert.match(block, /pageContextInjectionDecision\(url, settings\)/);
   assert.match(block, /pageContextPolicySkipError/);
-  assert.match(block, /contentMessageDeliveryOptions\(frame\)/);
-  assert.doesNotMatch(block, /frame > 0 \? \{ frameId: frame \} : undefined/);
-  assert.match(block, /pageContextScriptTarget\(tabId, frame\)/);
+  assert.match(block, /acquirePageContextInstallBinding/);
+  assert.match(block, /pageContextScriptInjectionTarget/);
+  assert.match(block, /contentMessageDeliveryOptions\(installBinding/);
   assert.match(block, /pageContextBundleRestartFiles\(\)/);
-  assert.match(block, /readBoundPageContextTarget/);
+  assert.match(block, /verifyPageContextInstallBinding/);
 });
 
 test('overlapping page-context actions share one bundle restart per tab frame', async () => {
@@ -85,12 +86,12 @@ test('overlapping page-context actions share one bundle restart per tab frame', 
     source.indexOf('async function sendContentMessageWithInstallFallback'),
     source.indexOf('function collectPageContextWithSharedExtractor'),
   );
-  assert.match(sendBlock, /await awaitPageContextBundleRestart\(tabId, scriptTarget\)/);
+  assert.match(sendBlock, /await awaitPageContextBundleRestart\(tabId, installBinding\)/);
   const extractorBlock = source.slice(
     source.indexOf('async function getPageContextViaScripting'),
     source.indexOf('async function getPageContext('),
   );
-  assert.match(extractorBlock, /await awaitPageContextBundleRestart\(tabId, scriptTarget\)/);
+  assert.match(extractorBlock, /await awaitPageContextBundleRestart\(tabId, installBinding\)/);
 });
 
 test('opt-in bundle reinstall runs bundle entries after gate in dependency order', async () => {

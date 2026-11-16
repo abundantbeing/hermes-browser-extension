@@ -138,11 +138,18 @@ import {
   createPageContextGateEnsureRunner,
   pageContextBundleRestartFilesFromManifest,
   pageContextInstallAllowedForAnchor,
+  pageContextInstallBindingStillLive,
   pageScriptDocumentAnchorsMatch,
   probePageContextBundleRestartNeeded as probePageContextBundleRestartNeededInTab,
   readPageScriptDocumentAnchor,
   runPageContextBundleRestart,
 } from './lib/page-context-bundle-restart.mjs';
+import {
+  pageContextScriptInjectionTarget,
+  pageContextTabMessageOptions,
+  pageContextUsesFrameTargetFallback,
+  resolvePageContextFrameDocumentId,
+} from './lib/page-context-document-target.mjs';
 import {
   BUILD_RELOAD_BOOT_RECHECK_MS,
   BUILD_RELOAD_WATCH_INTERVAL_MS,
@@ -25210,36 +25217,68 @@ function pageContextScriptTarget(tabId, frameId = 0) {
   return { tabId, frameIds: [frame] };
 }
 
-function contentMessageDeliveryOptions(frameId = 0) {
+const pageContextAllowFrameFallback = pageContextUsesFrameTargetFallback({
+  webNavigation: browserApi.webNavigation,
+  scripting: browserApi.scripting,
+});
+
+const executePageContextScript = (request) => browserApi.scripting.executeScript(request);
+
+async function lookupPageContextFrameDocumentId(tabId, frameId) {
+  return resolvePageContextFrameDocumentId(browserApi.webNavigation, tabId, frameId);
+}
+
+async function acquirePageContextInstallBinding(tabId, frameId = 0) {
+  const frame = Math.max(0, Number(frameId) || 0);
+  const documentId = await lookupPageContextFrameDocumentId(tabId, frame);
+  if (!documentId && !pageContextAllowFrameFallback) return null;
+  const binding = {
+    tabId,
+    frameId: frame,
+    documentId,
+    allowFrameFallback: pageContextAllowFrameFallback,
+  };
+  if (!pageContextScriptInjectionTarget(binding)) return null;
+  const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
+  if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return null;
+  return { ...binding, href: anchor.href, anchorToken: anchor.token };
+}
+
+async function verifyPageContextInstallBinding(binding) {
+  if (!binding) return false;
+  const live = await pageContextInstallBindingStillLive(binding, lookupPageContextFrameDocumentId);
+  if (!live) return false;
+  const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
+  if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return false;
+  if (binding.documentId) return true;
+  if (binding.anchorToken && anchor?.token !== binding.anchorToken) return false;
+  return true;
+}
+
+function contentMessageDeliveryOptions(binding = null, frameId = 0) {
+  if (binding) {
+    const options = pageContextTabMessageOptions(binding);
+    if (options) return options;
+  }
   const frame = Math.max(0, Number(frameId) || 0);
   return { frameId: frame };
 }
 
-const executePageContextScript = (request) => browserApi.scripting.executeScript(request);
-
 const pageContextBundleRestart = createPageContextBundleRestartCoalescer({
-  probeRestartNeeded: (scriptTarget) => probePageContextBundleRestartNeededInTab(
+  probeRestartNeeded: (binding) => probePageContextBundleRestartNeededInTab(
     executePageContextScript,
-    scriptTarget,
+    binding,
   ),
-  runBundleRestart: async (scriptTarget) => {
-    const binding = await readPageScriptDocumentAnchor(executePageContextScript, scriptTarget);
-    if (!pageContextInstallAllowedForAnchor(binding, pageContextInjectionDecisionForUrl)) return;
+  runBundleRestart: async (binding) => {
+    if (!(await verifyPageContextInstallBinding(binding))) return;
     await runPageContextBundleRestart(
       executePageContextScript,
-      scriptTarget,
+      binding,
       pageContextBundleRestartFiles(),
       {
-        beforeInject: async () => {
-          const anchor = await readPageScriptDocumentAnchor(executePageContextScript, scriptTarget);
-          if (!pageScriptDocumentAnchorsMatch(binding, anchor)) return false;
-          return pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl);
-        },
-        afterInject: async () => {
-          const anchor = await readPageScriptDocumentAnchor(executePageContextScript, scriptTarget);
-          if (!pageScriptDocumentAnchorsMatch(binding, anchor)) return false;
-          return pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl);
-        },
+        verifyBinding: verifyPageContextInstallBinding,
+        beforeInject: async () => verifyPageContextInstallBinding(binding),
+        afterInject: async () => verifyPageContextInstallBinding(binding),
       },
     );
   },
@@ -25254,30 +25293,35 @@ const runPageContextGateEnsureForTarget = createPageContextGateEnsureRunner({
   manifestContentScriptFiles,
   pageContextBundleRestartFiles,
   pageContextInjectionDecision: pageContextInjectionDecisionForUrl,
+  acquireInstallBinding: acquirePageContextInstallBinding,
+  verifyInstallBinding: verifyPageContextInstallBinding,
   awaitPageContextBundleRestart,
   reinstallPageContextBundleEntries,
-  probePageContextBundleRestartNeeded: (target) => probePageContextBundleRestartNeededInTab(
+  probePageContextBundleRestartNeeded: (binding) => probePageContextBundleRestartNeededInTab(
     executePageContextScript,
-    target,
+    binding,
   ),
 });
 
+async function resolvePageContextGateBinding(tabId, scriptTarget) {
+  if (scriptTarget?.documentId || scriptTarget?.allowFrameFallback != null) return scriptTarget;
+  const frameId = scriptTarget?.frameIds?.[0] ?? scriptTarget?.frameId ?? 0;
+  return acquirePageContextInstallBinding(tabId, frameId);
+}
+
 const pageContextGateEnsure = createPageContextGateEnsureCoalescer({
-  resolveTarget(tabId, scriptTarget) {
-    return scriptTarget && scriptTarget.frameIds
-      ? scriptTarget
-      : pageContextScriptTarget(tabId, scriptTarget?.frameIds?.[0] ?? 0);
-  },
+  resolveBinding: resolvePageContextGateBinding,
   runPageContextGateEnsureForTarget,
 });
 const { ensurePageContextGateAndRefresh } = pageContextGateEnsure;
 
-async function probePageContextBundleRestartNeeded(scriptTarget) {
-  return probePageContextBundleRestartNeededInTab(executePageContextScript, scriptTarget);
+async function probePageContextBundleRestartNeeded(binding) {
+  return probePageContextBundleRestartNeededInTab(executePageContextScript, binding);
 }
 
-async function readBoundPageContextTarget(scriptTarget) {
-  const anchor = await readPageScriptDocumentAnchor(executePageContextScript, scriptTarget);
+async function readBoundPageContextTarget(binding) {
+  if (!(await verifyPageContextInstallBinding(binding))) return null;
+  const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
   if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return null;
   return anchor;
 }
@@ -25372,16 +25416,23 @@ function pageContextPolicySkipError(url, injection) {
 
 async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0, tabUrl = '' } = {}) {
   const frame = Math.max(0, Number(frameId) || 0);
-  const messageOptions = contentMessageDeliveryOptions(frame);
-  const scriptTarget = pageContextScriptTarget(tabId, frame);
-  await awaitPageContextBundleRestart(tabId, scriptTarget);
-  const url = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+  const installBinding = await acquirePageContextInstallBinding(tabId, frame);
+  if (!installBinding) {
+    const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
+  const scriptTarget = pageContextScriptInjectionTarget(installBinding);
+  const messageOptions = contentMessageDeliveryOptions(installBinding, frame);
+  if (!scriptTarget || !messageOptions) {
+    throw pageContextPolicySkipError(installBinding.href || tabUrl, { inject: false, reason: 'private' });
+  }
+  await awaitPageContextBundleRestart(tabId, installBinding);
+  const url = installBinding.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
   const injection = pageContextInjectionDecision(url, settings);
   if (!injection.inject) throw pageContextPolicySkipError(url, injection);
-  const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+  const refreshed = await ensurePageContextGateAndRefresh(tabId, installBinding);
   if (!refreshed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
-  const boundAfterEnsure = await readBoundPageContextTarget(scriptTarget);
-  if (!boundAfterEnsure) {
+  if (!(await verifyPageContextInstallBinding(installBinding))) {
     const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
     throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
   }
@@ -25389,14 +25440,6 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
     return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
   } catch (originalError) {
     try {
-      // Issue #86: the fallback must be idempotent. The manifest bridge may
-      // already be alive in this tab/frame (a rejection can mean "listener
-      // not ready yet", "message target torn down", or "policy error"), and
-      // blindly re-running content.js into an initialized frame wasted work
-      // and risked double-binding listeners. Probe the re-entry sentinel the
-      // bridge sets (content.js) and inject only what is actually missing.
-      // Re-execution itself remains SAFE since content.js now scopes all
-      // state inside an IIFE with listener-cleanup-first semantics.
       const sentinel = await browserApi.scripting.executeScript({
         target: scriptTarget,
         func: () => ({
@@ -25414,14 +25457,13 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         filesToInject = pageContextBundleRestartFiles();
       }
       if (filesToInject.length) {
-        const allowed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
+        const allowed = await ensurePageContextGateAndRefresh(tabId, installBinding);
         if (!allowed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
-        const boundBeforeInject = await readBoundPageContextTarget(scriptTarget);
-        if (!boundBeforeInject || boundBeforeInject.token !== boundAfterEnsure.token) {
+        if (!(await verifyPageContextInstallBinding(installBinding))) {
           const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
           throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
         }
-        await awaitPageContextBundleRestart(tabId, scriptTarget);
+        await awaitPageContextBundleRestart(tabId, installBinding);
         const [sentinelAfterEnsure] = await browserApi.scripting.executeScript({
           target: scriptTarget,
           func: () => ({
@@ -25432,16 +25474,15 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         const afterEnsure = sentinelAfterEnsure?.result || {};
         if (!afterEnsure.bridgeLoaded) {
           await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
-        } else if (!afterEnsure.extractorReady && !(await probePageContextBundleRestartNeeded(scriptTarget))) {
+        } else if (!afterEnsure.extractorReady && !(await probePageContextBundleRestartNeeded(installBinding))) {
           const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
           if (extractorPath) {
             await browserApi.scripting.executeScript({ target: scriptTarget, files: [extractorPath] });
           }
         }
       }
-      await awaitPageContextBundleRestart(tabId, scriptTarget);
-      const boundBeforeSend = await readBoundPageContextTarget(scriptTarget);
-      if (!boundBeforeSend || boundBeforeSend.token !== boundAfterEnsure.token) {
+      await awaitPageContextBundleRestart(tabId, installBinding);
+      if (!(await verifyPageContextInstallBinding(installBinding))) {
         const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
         throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
       }
@@ -25494,22 +25535,8 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
-    const scriptTarget = pageContextScriptTarget(tabId, frameId);
-    await awaitPageContextBundleRestart(tabId, scriptTarget);
-    const refreshed = await ensurePageContextGateAndRefresh(tabId, scriptTarget);
-    if (!refreshed) {
-      return {
-        ok: false,
-        skipped: true,
-        skipReason: injection.reason || 'excluded',
-        reason: t(pageContextSkipMessageKey(injection.reason || 'excluded'), { url }),
-        text: '',
-        selectedText: '',
-        meta: {},
-      };
-    }
-    const boundAfterEnsure = await readBoundPageContextTarget(scriptTarget);
-    if (!boundAfterEnsure) {
+    const installBinding = await acquirePageContextInstallBinding(tabId, frameId);
+    if (!installBinding) {
       const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
       const blocked = pageContextInjectionDecision(blockedUrl, settings);
       return {
@@ -25522,9 +25549,48 @@ async function getPageContextViaScripting(tabId, options, originalError, tabUrl 
         meta: {},
       };
     }
-    await awaitPageContextBundleRestart(tabId, scriptTarget);
-  const boundBeforeCapture = await readBoundPageContextTarget(scriptTarget);
-    if (!boundBeforeCapture || boundBeforeCapture.token !== boundAfterEnsure.token) {
+    const scriptTarget = pageContextScriptInjectionTarget(installBinding);
+    if (!scriptTarget) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    await awaitPageContextBundleRestart(tabId, installBinding);
+    const refreshed = await ensurePageContextGateAndRefresh(tabId, installBinding);
+    if (!refreshed) {
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: injection.reason || 'excluded',
+        reason: t(pageContextSkipMessageKey(injection.reason || 'excluded'), { url }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    if (!(await verifyPageContextInstallBinding(installBinding))) {
+      const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
+      const blocked = pageContextInjectionDecision(blockedUrl, settings);
+      return {
+        ok: false,
+        skipped: true,
+        skipReason: blocked.reason,
+        reason: t(pageContextSkipMessageKey(blocked.reason), { url: blockedUrl }),
+        text: '',
+        selectedText: '',
+        meta: {},
+      };
+    }
+    await awaitPageContextBundleRestart(tabId, installBinding);
+    if (!(await verifyPageContextInstallBinding(installBinding))) {
       const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frameId, tabUrl);
       const blocked = pageContextInjectionDecision(blockedUrl, settings);
       return {

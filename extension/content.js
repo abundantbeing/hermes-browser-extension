@@ -235,7 +235,29 @@
     };
   }
 
+  function pageContextCaptureRefusedResponse(reason = 'Page context is off for this site.') {
+    return {
+      ok: false,
+      skipped: true,
+      skipReason: 'blocked',
+      reason,
+      text: '',
+      selectedText: '',
+      meta: {},
+    };
+  }
+
+  function pageContextCaptureBlockedByGate() {
+    if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ === true) return true;
+    const gate = globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
+    if (gate && gate.latestInject === false) return true;
+    return false;
+  }
+
   function collectContext(options = {}) {
+    if (pageContextCaptureBlockedByGate()) {
+      return pageContextCaptureRefusedResponse();
+    }
     if (!HermesContentExtractor?.collectPageContext) {
       throw new Error('Hermes content extractor runtime is unavailable.');
     }
@@ -593,6 +615,27 @@
       return false;
     }
     if (message?.type === 'HERMES_GET_PAGE_CONTEXT') {
+      if (pageContextCaptureBlockedByGate()) {
+        sendResponse(pageContextCaptureRefusedResponse());
+        return false;
+      }
+      const refresh = globalThis.hermesRefreshPageScriptPolicy;
+      if (typeof refresh === 'function') {
+        refresh()
+          .then((allowed) => {
+            if (!allowed) {
+              sendResponse(pageContextCaptureRefusedResponse());
+              return;
+            }
+            try {
+              sendResponse(collectContext(message.options || {}));
+            } catch (error) {
+              sendResponse({ ok: false, error: error?.message || String(error) });
+            }
+          })
+          .catch(() => sendResponse(pageContextCaptureRefusedResponse()));
+        return true;
+      }
       try {
         sendResponse(collectContext(message.options || {}));
       } catch (error) {
