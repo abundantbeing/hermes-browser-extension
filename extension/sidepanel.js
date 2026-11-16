@@ -25303,9 +25303,18 @@ const runPageContextGateEnsureForTarget = createPageContextGateEnsureRunner({
 });
 
 async function resolvePageContextGateBinding(tabId, scriptTarget) {
-  if (scriptTarget?.documentId || scriptTarget?.allowFrameFallback != null) return scriptTarget;
+  if (!scriptTarget) {
+    const frameId = 0;
+    return acquirePageContextInstallBinding(tabId, frameId);
+  }
+  if (scriptTarget.href && scriptTarget.anchorToken) return scriptTarget;
   const frameId = scriptTarget?.frameIds?.[0] ?? scriptTarget?.frameId ?? 0;
-  return acquirePageContextInstallBinding(tabId, frameId);
+  const acquired = await acquirePageContextInstallBinding(tabId, frameId);
+  if (!acquired) return null;
+  if (scriptTarget.documentId) {
+    return { ...acquired, ...scriptTarget, href: acquired.href, anchorToken: acquired.anchorToken };
+  }
+  return acquired;
 }
 
 const pageContextGateEnsure = createPageContextGateEnsureCoalescer({
@@ -25474,6 +25483,19 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
         if (!afterEnsure.bridgeLoaded) {
           await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
         } else if (!afterEnsure.extractorReady && !(await probePageContextBundleRestartNeeded(installBinding))) {
+          if (!(await verifyPageContextInstallBinding(installBinding))) {
+            const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+            throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+          }
+          const restartFiles = pageContextBundleRestartFiles();
+          const gateFile = restartFiles[0];
+          if (gateFile) {
+            await browserApi.scripting.executeScript({ target: scriptTarget, files: [gateFile] });
+          }
+          const allowedAfterGate = await ensurePageContextGateAndRefresh(tabId, installBinding);
+          if (!allowedAfterGate) {
+            throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
+          }
           const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
           if (extractorPath) {
             await browserApi.scripting.executeScript({ target: scriptTarget, files: [extractorPath] });

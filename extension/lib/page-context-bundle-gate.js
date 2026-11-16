@@ -77,6 +77,17 @@
     }
   }
 
+  function denyLatestPolicyRefresh(gate, requestSeq) {
+    if (requestSeq !== gate.policySeq) return;
+    if (typeof gate._resolvePendingPolicy !== 'function') return;
+    globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
+    gate.latestInject = false;
+    gate.decided = true;
+    gate.policyLocationToken = pageScriptPolicyLocationToken();
+    settlePendingPolicyPromise(gate, false);
+    gate.promise = Promise.resolve(false);
+  }
+
   function invalidatePolicyForLocationMismatch(gate) {
     globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
     publishPendingPolicyPromise(gate);
@@ -176,14 +187,22 @@
         if (typeof globalThis.browser?.runtime?.sendMessage === 'function') {
           Promise.resolve(globalThis.browser.runtime.sendMessage(message))
             .then((response) => Promise.resolve(settleRefresh(response)).then(resolve))
-            .catch(() => resolve(false));
+            .catch(() => {
+              denyLatestPolicyRefresh(gate, requestSeq);
+              resolve(false);
+            });
         } else {
           browserApi.runtime.sendMessage(message, (response) => {
-            if (browserApi.runtime.lastError) resolve(false);
-            else Promise.resolve(settleRefresh(response)).then(resolve);
+            if (browserApi.runtime.lastError) {
+              denyLatestPolicyRefresh(gate, requestSeq);
+              resolve(false);
+              return;
+            }
+            Promise.resolve(settleRefresh(response)).then(resolve);
           });
         }
       } catch {
+        denyLatestPolicyRefresh(gate, requestSeq);
         resolve(false);
       }
     });

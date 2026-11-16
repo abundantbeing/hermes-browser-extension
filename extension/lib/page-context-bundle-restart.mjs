@@ -176,12 +176,21 @@ export function createPageContextGateEnsureRunner(deps) {
     probePageContextBundleRestartNeeded,
   } = deps;
 
+  async function syncInstallBindingAnchor(binding) {
+    const anchor = await readPageScriptDocumentAnchor(executeScript, binding);
+    if (!anchor) return null;
+    return { ...binding, href: anchor.href, anchorToken: anchor.token };
+  }
+
   return async function runPageContextGateEnsureForTarget(tabId, request = {}) {
     const frameId = Math.max(0, Number(request?.frameIds?.[0] ?? request?.frameId) || 0);
-    const binding = request?.documentId || request?.allowFrameFallback != null
+    let binding = request?.documentId || request?.allowFrameFallback != null
       ? request
       : await acquireInstallBinding(tabId, frameId);
     if (!binding) return false;
+    binding = await syncInstallBindingAnchor(binding);
+    if (!binding) return false;
+    const frameFallback = Boolean(binding.allowFrameFallback && !binding.documentId);
     await awaitPageContextBundleRestart(tabId, binding);
     try {
       if (!(await verifyInstallBinding(binding))) return false;
@@ -196,7 +205,7 @@ export function createPageContextGateEnsureRunner(deps) {
         target,
         func: () => typeof globalThis.hermesRefreshPageScriptPolicy === 'function',
       });
-      if (!hasRefresh?.result && gateFile) {
+      if ((!hasRefresh?.result || frameFallback) && gateFile) {
         if (!(await verifyInstallBinding(binding))) return false;
         await executeScript({ target, files: [gateFile] });
         if (!(await verifyInstallBinding(binding))) return false;
@@ -222,6 +231,8 @@ export function createPageContextGateEnsureRunner(deps) {
       if (!outcome.allowed) return false;
       const anchorAfterAllow = await readPageScriptDocumentAnchor(executeScript, binding);
       if (!pageContextInstallAllowedForAnchor(anchorAfterAllow, pageContextInjectionDecision)) return false;
+      binding = await syncInstallBindingAnchor(binding);
+      if (!binding || !(await verifyInstallBinding(binding))) return false;
 
       let needsRestart = outcome.restart || (await probePageContextBundleRestartNeeded(binding));
       if (needsRestart) {
