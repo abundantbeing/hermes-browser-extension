@@ -2275,6 +2275,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "Stop met voorlezen",
   "read_aloud.failed": "Dit antwoord kon niet worden voorgelezen",
   "read_aloud.nothing": "Dit antwoord bevat geen tekst om voor te lezen.",
+  "read_aloud.no_voice": "Deze browser heeft geen stem voor {lang}; installeer er een in de spraakinstellingen van je systeem.",
   "read_aloud.label": "Stem (voorlezen)",
   "read_aloud.route.gateway": "Gateway-TTS",
   "read_aloud.route.browser": "Spraak van de browser",

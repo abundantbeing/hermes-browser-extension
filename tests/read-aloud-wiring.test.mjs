@@ -44,7 +44,7 @@ test('the speaker button is square like its neighbours and gives no pill shape',
 
 test('every string the read aloud button and Voice row show is in the catalog', () => {
   for (const key of [
-    'ui.read.aloud', 'ui.stop.reading.aloud', 'read_aloud.failed', 'read_aloud.nothing', 'read_aloud.label',
+    'ui.read.aloud', 'ui.stop.reading.aloud', 'read_aloud.failed', 'read_aloud.nothing', 'read_aloud.no_voice', 'read_aloud.label',
     'read_aloud.route.gateway', 'read_aloud.route.browser', 'read_aloud.route.none',
     'read_aloud.reason.gateway', 'read_aloud.reason.gateway_fell_back', 'read_aloud.reason.browser', 'read_aloud.reason.none',
     'read_aloud.meta.gateway', 'read_aloud.meta.browser', 'read_aloud.meta.none',

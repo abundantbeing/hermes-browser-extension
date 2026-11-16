@@ -570,22 +570,25 @@ const SCRIPT_LANGUAGES = [
   [/[぀-ヿ]/u, 'ja'],
   [/[가-힯]/u, 'ko'],
   [/[一-鿿]/u, 'zh'],
-  [/[Ѐ-ӿ]/u, 'ru'],
   [/[؀-ۿ]/u, 'ar'],
   [/[ऀ-ॿ]/u, 'hi'],
   [/[฀-๿]/u, 'th'],
 ];
-const SCRIPT_SIBLINGS = { zh: ['zh'], ru: ['ru', 'uk'] };
+const SCRIPT_SIBLINGS = { zh: ['zh'] };
+const UKRAINIAN_LETTERS = /[іїєґ]/giu;
+const CYRILLIC_LETTERS = /[Ѐ-ӿ]/gu;
 const LATIN_WORDS = {
   pt: 'de que não é os as um uma para com em do da dos das no na você está também são mais isso pelo pela muito ao foi seu sua quando',
   es: 'el la los las que de y en es un una por para con no está pero muy también lo del al su sus como más hay este esta',
   en: 'the and is are of to you that it with for this not be on have was what your can will an or by from',
-  fr: 'le la les et est une des du pas vous que pour avec ce dans sur qui il elle nous au aux sont mais',
+  fr: 'le la les et est une des du pas vous que pour avec ce dans sur qui il elle nous au aux sont mais ça garçon français',
   de: 'der die das und ist nicht ein eine ich sie mit zu den auch es auf für wir dem sich von',
   it: 'il di che è non una per con sono gli della anche questo nel alla lo le si come più',
 };
 const LATIN_WORD_SETS = Object.fromEntries(Object.entries(LATIN_WORDS).map(([code, words]) => [code, new Set(words.split(' '))]));
-const LATIN_MARKS = { pt: /[ãõç]/giu, es: /[ñ¿¡]/giu };
+const LATIN_MARKS = { pt: /[ãõ]/giu, es: /[ñ¿¡]/giu };
+
+export const READ_ALOUD_ERROR = Object.freeze({ noVoiceForLang: 'no-voice-for-lang' });
 const DEFAULT_REGIONS = {
   pt: 'pt-BR', es: 'es-ES', en: 'en-US', fr: 'fr-FR', de: 'de-DE', it: 'it-IT',
   ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', ru: 'ru-RU', uk: 'uk-UA', ar: 'ar-SA', hi: 'hi-IN', th: 'th-TH',
@@ -610,11 +613,23 @@ function withRegion(code, fallbackLang) {
  * A BCP 47 tag for the language `text` is written in, or `fallbackLang` when the text
  * is too short or too mixed to tell.
  */
+function latinLetterCount(text) {
+  return (text.match(/\p{Script=Latin}/gu) || []).length;
+}
+
 export function guessSpeechLanguage(text, fallbackLang = '') {
   const sample = String(text || '').slice(0, 4000);
   const fallbackPrimary = primaryOf(fallbackLang);
+  const latinCount = latinLetterCount(sample);
+  const cyrillicCount = (sample.match(CYRILLIC_LETTERS) || []).length;
+  if (cyrillicCount > 0 && cyrillicCount > latinCount) {
+    const ukrainianMarks = (sample.match(UKRAINIAN_LETTERS) || []).length;
+    if (ukrainianMarks > 0 || fallbackPrimary === 'uk') return withRegion('uk', fallbackLang);
+    return withRegion('ru', fallbackLang);
+  }
   for (const [pattern, code] of SCRIPT_LANGUAGES) {
-    if (!pattern.test(sample)) continue;
+    const scriptCount = (sample.match(new RegExp(pattern.source, 'gu')) || []).length;
+    if (!scriptCount || scriptCount <= latinCount) continue;
     const siblings = SCRIPT_SIBLINGS[code] || [code];
     return withRegion(siblings.includes(fallbackPrimary) ? fallbackPrimary : code, fallbackLang);
   }
@@ -627,7 +642,22 @@ export function guessSpeechLanguage(text, fallbackLang = '') {
   const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const [[best, top], [, runnerUp]] = ranked;
   if (top >= 2 && top > runnerUp) return withRegion(best, fallbackLang);
-  return fallbackLang ? String(fallbackLang).replace(/_/g, '-') : '';
+  return fallbackPrimary ? withRegion(fallbackPrimary, fallbackLang) : '';
+}
+
+/** User-facing detail for a failed read-aloud toggle; `translate` is the panel's `t()`. */
+export function readAloudFailureDetail(error, translate = (key) => key) {
+  if (error && typeof error === 'object' && error.code === READ_ALOUD_ERROR.noVoiceForLang) {
+    return translate('read_aloud.no_voice', { lang: error.lang || '' });
+  }
+  return typeof error === 'string' ? error : messageOf(error);
+}
+
+function formatReadAloudFailure(error) {
+  if (error?.code === READ_ALOUD_ERROR.noVoiceForLang) {
+    return { code: error.code, lang: String(error.lang || '') };
+  }
+  return messageOf(error);
 }
 
 /** The installed voice for `lang`: same region first, then the same language; null when none. */
@@ -662,7 +692,10 @@ export function createBrowserSpeech({
       try { voices = synth.getVoices?.() || []; } catch { voices = []; }
       const voice = pickSpeechVoice(voices, spokenLang);
       if (spokenLang && voices.length && !voice) {
-        throw new Error(`This browser has no voice for ${spokenLang}; install one in your system's speech settings.`);
+        const error = new Error(READ_ALOUD_ERROR.noVoiceForLang);
+        error.code = READ_ALOUD_ERROR.noVoiceForLang;
+        error.lang = spokenLang;
+        throw error;
       }
       let at = 0;
       let stopped = false;
@@ -825,7 +858,7 @@ export function createReadAloudPlayer({ gateway = null, browser = null, onChange
     if (token !== generation) return { ok: true, stopped: true };
     current = null;
     set({ status: READ_ALOUD_STATUS.idle, target: null, route: null });
-    return { ok: false, error: lastError ? messageOf(lastError) : 'No voice is available.' };
+    return { ok: false, error: lastError ? formatReadAloudFailure(lastError) : 'No voice is available.' };
   }
 
   async function toggle(target, text, {

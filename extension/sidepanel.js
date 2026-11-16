@@ -788,6 +788,7 @@ import {
   describeVoiceRoute,
   ensureReadAloudReplyId,
   preserveReadAloudReplyIds,
+  readAloudFailureDetail,
   readAloudKey,
   readAloudKeysMatch,
   readAloudRouteOrder,
@@ -1607,7 +1608,9 @@ async function toggleReadAloud(record, node) {
   }
   void refreshDashboardRoutes().catch(() => undefined);
   const result = await readAloudPlayer.toggle(key, text, { order: readAloudRouteOrder(readAloudAvailability()) });
-  if (result?.ok === false) showOperationToast({ kind: 'warn', title: t('read_aloud.failed'), detail: result.error });
+  if (result?.ok === false) {
+    showOperationToast({ kind: 'warn', title: t('read_aloud.failed'), detail: readAloudFailureDetail(result.error, t) });
+  }
 }
 
 window.addEventListener('pagehide', () => readAloudPlayer.stop());

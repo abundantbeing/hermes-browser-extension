@@ -2275,6 +2275,7 @@ export default Object.freeze({
   "ui.stop.reading.aloud": "停止朗讀",
   "read_aloud.failed": "無法朗讀此回覆",
   "read_aloud.nothing": "此回覆中沒有可朗讀的文字。",
+  "read_aloud.no_voice": "此瀏覽器沒有 {lang} 的語音；請在系統的語音設定中安裝一個。",
   "read_aloud.label": "語音（朗讀）",
   "read_aloud.route.gateway": "閘道 TTS",
   "read_aloud.route.browser": "瀏覽器語音",

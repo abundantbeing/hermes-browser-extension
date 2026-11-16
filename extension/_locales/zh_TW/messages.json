@@ -3835,6 +3835,10 @@
     "message": "來源：無",
     "description": "Runtime interface message read_aloud.meta.none"
   },
+  "runtime_read_aloud_no_voice": {
+    "message": "此瀏覽器沒有 {lang} 的語音；請在系統的語音設定中安裝一個。",
+    "description": "Runtime interface message read_aloud.no_voice"
+  },
   "runtime_read_aloud_nothing": {
     "message": "此回覆中沒有可朗讀的文字。",
     "description": "Runtime interface message read_aloud.nothing"
