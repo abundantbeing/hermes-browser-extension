@@ -109,6 +109,36 @@ function simpleCalcPx(expr = '') {
   return null;
 }
 
+function evalCalcPx(expr = '') {
+  const text = String(expr).trim();
+  const inner = text.match(/^calc\(\s*(.+)\s*\)$/i)?.[1];
+  if (!inner) return null;
+  if (/var\(|clamp\(/i.test(inner)) return null;
+
+  const single = simpleCalcPx(text);
+  if (single != null) return single;
+
+  const tokens = inner.split(/\s+/).filter(Boolean);
+  if (tokens.length < 3 || tokens.length % 2 === 0) return null;
+  let result = null;
+  for (let i = 0; i < tokens.length; i += 2) {
+    const term = tokens[i];
+    const px = term.match(/^([\d.]+)px$/i);
+    const unitless = !px && /^[\d.]+$/.test(term) ? term : null;
+    const n = px ? Number(px[1]) : unitless ? Number(unitless) : null;
+    if (n == null || !Number.isFinite(n)) return null;
+    if (result == null) {
+      result = n;
+      continue;
+    }
+    const op = tokens[i - 1];
+    if (op === '+') result += n;
+    else if (op === '-') result -= n;
+    else return null;
+  }
+  return result;
+}
+
 export function fontSizePxFromShorthandBefore(before = '') {
   const text = String(before).trim();
   if (!text) return null;
@@ -120,7 +150,7 @@ export function fontSizePxFromShorthandBefore(before = '') {
   const calcOnly = sizeToken.match(/^(calc\([^)]*\))$/i)?.[1]
     || text.match(/(calc\([^)]*\))/i)?.[1];
   if (calcOnly) {
-    const px = simpleCalcPx(calcOnly);
+    const px = evalCalcPx(calcOnly);
     if (px != null) return px;
     if (/var\(|clamp\(/i.test(calcOnly)) return null;
     return null;
@@ -165,6 +195,7 @@ export function effectiveLineHeight(body) {
     if (pxMatch) {
       const fsPx = effectiveFontSizePx(body);
       if (fsPx) return Number(pxMatch[1]) / fsPx;
+      return null;
     }
   }
   const font = lastDeclaration(body, 'font');
@@ -198,6 +229,10 @@ export function auditRule(rule) {
 
   if (lh != null && lh < LINE_HEIGHT_MIN) {
     errors.push(`line-height ${lh} < ${LINE_HEIGHT_MIN}`);
+  } else if (lh == null && /^[\d.]+px$/i.test(lastDeclaration(body, 'line-height'))) {
+    if (effectiveFontSizePx(body) == null) {
+      errors.push('cannot verify line-height: font size is not a known pixel value');
+    }
   } else if (lh == null && /font\s*:/i.test(body) && !lastDeclaration(body, 'line-height')) {
     errors.push('missing line-height on display-font font shorthand');
   }

@@ -107,6 +107,34 @@ test('font shorthand parser ignores division inside calc()', () => {
   assert.deepEqual(auditCss(rule, 'calc-div-lh.css'), []);
 });
 
+test('display typography lint rejects multi-term calc with separate px line-height', () => {
+  const cramped = `
+.headline {
+  font: 500 calc(20px + 2px + 2px) var(--hermes-font-display);
+  line-height: 16px;
+  letter-spacing: 0.04em;
+}`;
+  const violations = auditCss(cramped, 'calc-multi-separate-lh.css');
+  assert.ok(
+    violations.some((v) => /line-height/.test(v.detail)),
+    violations.map((v) => v.detail).join('; '),
+  );
+});
+
+test('display typography lint rejects unresolvable calc font size with px line-height', () => {
+  const rule = `
+.headline {
+  font: 500 calc(20px * var(--hermes-text-zoom, 1)) var(--hermes-font-display);
+  line-height: 16px;
+  letter-spacing: 0.04em;
+}`;
+  const violations = auditCss(rule, 'calc-var-separate-lh.css');
+  assert.ok(
+    violations.some((v) => /cannot verify line-height|line-height/.test(v.detail)),
+    violations.map((v) => v.detail).join('; '),
+  );
+});
+
 test('display typography lint rejects cramped calc font size with px line-height', () => {
   const cramped = `
 .headline {
