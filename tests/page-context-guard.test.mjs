@@ -27,7 +27,7 @@ test('generated guard embeds the same privateNetworkHost classifier as common.mj
     assert.equal(privateNetworkHost(host), expected, host);
     assert.equal(source.includes(`privateNetworkHost('${host}')`), false);
   }
-  const embedded = source.match(/const privateNetworkHost = ([\s\S]+?)\n\n  const likelyPrivate/)?.[1];
+  const embedded = source.match(/const privateNetworkHost = ([\s\S]+?)\n\n {2}const likelyPrivate/)?.[1];
   assert.ok(embedded, 'embedded classifier missing');
   const context = { globalThis: {} };
   vm.createContext(context);

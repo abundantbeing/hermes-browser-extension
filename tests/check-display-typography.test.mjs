@@ -76,6 +76,22 @@ test('display typography lint audits rules inside @media blocks', () => {
   assert.ok(auditCss(nested, 'nested.css').length > 0);
 });
 
+test('display typography lint audits rules nested in @media and @supports', () => {
+  const nested = `
+@media (max-width: 340px) {
+  @supports (display: grid) {
+    .onboarding-title {
+      font-family: var(--hermes-font-display);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+  }
+}`;
+  const rules = parseRules(nested, 'nested-at.css');
+  assert.ok(rules.some((r) => r.selector.includes('onboarding-title')), rules.map((r) => r.selector).join('; '));
+  assert.ok(auditCss(nested, 'nested-at.css').length > 0);
+});
+
 test('display typography lint honors later line-height and letter-spacing overrides', () => {
   const overrides = `
 .headline {
@@ -93,6 +109,13 @@ test('display typography lint honors later line-height and letter-spacing overri
   letter-spacing: 0;
 }`;
   assert.ok(auditCss(cramped, 'override-bad.css').length >= 2);
+  const fontWins = `
+.headline {
+  line-height: 1.25;
+  letter-spacing: var(--hermes-display-tracking);
+  font: 500 20px/1 var(--hermes-font-display);
+}`;
+  assert.ok(auditCss(fontWins, 'font-wins.css').some((v) => /line-height/.test(v.detail)));
 });
 
 test('font shorthand parser ignores division inside calc()', () => {

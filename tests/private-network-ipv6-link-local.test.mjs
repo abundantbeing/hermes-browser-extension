@@ -20,7 +20,7 @@ test('privateNetworkHost covers fe80::/10 with fec0::/10 as the public boundary'
 
 test('generated install guard embeds the same fe80::/10 classifier', async () => {
   const guard = await readFile(new URL('../extension/page-context-install-guard.js', import.meta.url), 'utf8');
-  const embedded = guard.match(/const privateNetworkHost = ([\s\S]+?)\n\n  const likelyPrivate/)?.[1];
+  const embedded = guard.match(/const privateNetworkHost = ([\s\S]+?)\n\n {2}const likelyPrivate/)?.[1];
   assert.ok(embedded, 'embedded classifier');
   for (const [host, expected] of LINK_LOCAL) {
     assert.equal(guard.includes(`value >= 0xfe80 && value <= 0xfebf`), true);

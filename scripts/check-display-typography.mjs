@@ -33,7 +33,7 @@ export function parseRules(css, fileLabel = '') {
     const ch = stripped[i];
     if (ch === '{') {
       const selector = stripped.slice(chunkStart, i).trim();
-      if (depth === 0) chunkStart = i + 1;
+      chunkStart = i + 1;
       selectorStack.push(selector);
       bodyStart = i + 1;
       depth += 1;
@@ -174,46 +174,77 @@ export function lineHeightFromFontShorthand(fontDecl = '') {
   return null;
 }
 
-export function effectiveFontSizePx(body) {
-  const fs = lastDeclaration(body, 'font-size');
-  const pxFromFs = fs.match(/([\d.]+)px/i);
-  if (pxFromFs) return Number(pxFromFs[1]);
-  const font = lastDeclaration(body, 'font');
-  if (!font) return null;
-  return fontSizePxFromShorthandBefore(fontShorthandParts(font).before);
-}
-
-export function effectiveLineHeight(body) {
-  const lhRaw = lastDeclaration(body, 'line-height');
-  if (lhRaw) {
-    if (TRACKING_TOKEN.test(lhRaw) || /var\(\s*--hermes-display-line-height/i.test(lhRaw)) {
-      return LINE_HEIGHT_MIN;
-    }
-    const unitless = Number(lhRaw);
-    if (Number.isFinite(unitless) && !lhRaw.includes('px') && !lhRaw.includes('%')) return unitless;
-    const pxMatch = lhRaw.match(/^([\d.]+)px$/i);
-    if (pxMatch) {
-      const fsPx = effectiveFontSizePx(body);
-      if (fsPx) return Number(pxMatch[1]) / fsPx;
-      return null;
-    }
+function resolveLineHeightRaw(lhRaw, fontSizePx) {
+  if (!lhRaw) return null;
+  if (TRACKING_TOKEN.test(lhRaw) || /var\(\s*--hermes-display-line-height/i.test(lhRaw)) {
+    return LINE_HEIGHT_MIN;
   }
-  const font = lastDeclaration(body, 'font');
-  if (font) return lineHeightFromFontShorthand(font);
+  const unitless = Number(lhRaw);
+  if (Number.isFinite(unitless) && !lhRaw.includes('px') && !lhRaw.includes('%')) return unitless;
+  const pxMatch = lhRaw.match(/^([\d.]+)px$/i);
+  if (pxMatch && fontSizePx) return Number(pxMatch[1]) / fontSizePx;
   return null;
 }
 
-function displayFontDecls(body) {
-  const decls = [];
-  for (const m of body.matchAll(/(?:^|;)\s*font-family\s*:\s*([^;]+)/gi)) decls.push(m[1]);
-  for (const m of body.matchAll(/(?:^|;)\s*font\s*:\s*([^;]+)/gi)) decls.push(m[1]);
-  return decls;
+export function effectiveFontSizePx(body) {
+  let fontSizePx = null;
+  for (const decl of declarations(body)) {
+    const colon = decl.indexOf(':');
+    if (colon < 0) continue;
+    const prop = decl.slice(0, colon).trim().toLowerCase();
+    const val = decl.slice(colon + 1).trim();
+    if (prop === 'font-size') {
+      const pxFromFs = val.match(/([\d.]+)px/i);
+      if (pxFromFs) fontSizePx = Number(pxFromFs[1]);
+    } else if (prop === 'font') {
+      const px = fontSizePxFromShorthandBefore(fontShorthandParts(val).before);
+      if (px != null) fontSizePx = px;
+    }
+  }
+  return fontSizePx;
+}
+
+export function effectiveLineHeight(body) {
+  let fontSizePx = null;
+  let lh = null;
+  for (const decl of declarations(body)) {
+    const colon = decl.indexOf(':');
+    if (colon < 0) continue;
+    const prop = decl.slice(0, colon).trim().toLowerCase();
+    const val = decl.slice(colon + 1).trim();
+    if (prop === 'font-size') {
+      const pxFromFs = val.match(/([\d.]+)px/i);
+      if (pxFromFs) fontSizePx = Number(pxFromFs[1]);
+    } else if (prop === 'font') {
+      const parts = fontShorthandParts(val);
+      const px = fontSizePxFromShorthandBefore(parts.before);
+      if (px != null) fontSizePx = px;
+      if (parts.lhRaw) {
+        lh = resolveLineHeightRaw(parts.lhRaw, fontSizePx) ?? lineHeightFromFontShorthand(val);
+      } else {
+        lh = null;
+      }
+    } else if (prop === 'line-height') {
+      lh = resolveLineHeightRaw(val, fontSizePx);
+    }
+  }
+  return lh;
 }
 
 export function usesDisplayFont(rule) {
   if (SKIP_SELECTOR.test(rule.selector)) return false;
   if (/html\[dir="rtl"\]/i.test(rule.selector)) return false;
-  return displayFontDecls(rule.body).some((value) => DISPLAY_MARKERS.test(value));
+  let family = '';
+  let font = '';
+  for (const decl of declarations(rule.body)) {
+    const colon = decl.indexOf(':');
+    if (colon < 0) continue;
+    const prop = decl.slice(0, colon).trim().toLowerCase();
+    const val = decl.slice(colon + 1).trim();
+    if (prop === 'font-family') family = val;
+    else if (prop === 'font') font = val;
+  }
+  return [family, font].some((value) => value && DISPLAY_MARKERS.test(value));
 }
 
 export function auditRule(rule) {
@@ -233,7 +264,7 @@ export function auditRule(rule) {
     if (effectiveFontSizePx(body) == null) {
       errors.push('cannot verify line-height: font size is not a known pixel value');
     }
-  } else if (lh == null && /font\s*:/i.test(body) && !lastDeclaration(body, 'line-height')) {
+  } else if (lh == null && lastDeclaration(body, 'font') && !fontShorthandParts(lastDeclaration(body, 'font')).lhRaw) {
     errors.push('missing line-height on display-font font shorthand');
   }
 
