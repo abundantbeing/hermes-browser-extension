@@ -57,8 +57,7 @@ import { createThemeMarketplaceController } from './lib/theme-marketplace-contro
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { installLoopbackCorsRules, handleLoopbackFetchMessage, LOOPBACK_FETCH_MESSAGE } from './lib/loopback-cors.mjs';
 import { applyConnectionHeaderRules, createHeaderRuleSync, extensionInitiatorHost } from './lib/connection-headers.mjs';
-import { SYNC_GATEWAY_RULES_MESSAGE, applyGatewayOriginRule } from './lib/gateway-origin-rule.mjs';
-import { createPendingPairingGatewayUrlRegistry } from './lib/pending-pairing-gateway-urls.mjs';
+import { SYNC_GATEWAY_RULES_MESSAGE, PendingPairingGatewayUrls, applyGatewayOriginRule } from './lib/gateway-origin-rule.mjs';
 import {
   CONTROLLER_HEARTBEAT_ALARM,
   CONTROLLER_RECONCILE_ALARM,
@@ -1053,9 +1052,9 @@ void initI18n().catch((error) => {
 // The active connection's custom headers ride on every request to its address, WebSocket handshake included,
 // and its API requests leave without the Origin header Hermes would refuse (gateway-origin-rule.mjs). This
 // worker is the only writer of both rules: every update reads stored settings when it runs, one at a time.
-// Loopback addresses panels pair with before they are saved. Each attempt registers its own hold;
-// a worker restart drops them all. Saving settings from one panel must not clear another panel's hold.
-const pendingPairingGatewayUrls = createPendingPairingGatewayUrlRegistry();
+// A panel pairing with a loopback address it has not saved yet registers that address until the
+// attempt ends; another panel's ordinary sync must not clear it. The next settings change drops all.
+const pendingPairingGatewayUrls = new PendingPairingGatewayUrls();
 const syncConnectionHeaders = createHeaderRuleSync({
   read: readStoredSettings,
   apply: async (settings) => {
@@ -1064,7 +1063,7 @@ const syncConnectionHeaders = createHeaderRuleSync({
       gatewayUrl: settings.gatewayUrl,
       connectionTransport: settings.connectionTransport,
       extensionHost,
-      pendingGatewayUrls: pendingPairingGatewayUrls.list(),
+      pendingGatewayUrls: pendingPairingGatewayUrls.values(),
     }).catch((error) => console.warn('[Hermes Browser] Gateway origin rule failed:', error));
     return applyConnectionHeaderRules({ gatewayUrl: settings.gatewayUrl, headers: settings.connectionHeaders, extensionHost });
   },
@@ -1172,6 +1171,7 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
     })();
   }
   if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]) {
+    if (changes.hermesBrowserSettings) pendingPairingGatewayUrls.clear();
     void syncConnectionHeaders();
   }
   if (changes.hermesBrowserSettings?.newValue
