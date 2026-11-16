@@ -72,6 +72,16 @@ Do this on the machine that runs Hermes.
    curl -H "Authorization: Bearer <the-key>" http://127.0.0.1:8642/v1/models
    ```
 
+   ```powershell
+   # Windows PowerShell 5.1: curl is Invoke-WebRequest and does not accept -H; use curl.exe or Invoke-RestMethod
+   curl.exe http://127.0.0.1:8642/health
+   curl.exe -H "Authorization: Bearer <the-key>" http://127.0.0.1:8642/v1/models
+
+   # Or with built-in cmdlets:
+   Invoke-RestMethod http://127.0.0.1:8642/health
+   Invoke-RestMethod http://127.0.0.1:8642/v1/models -Headers @{ Authorization = "Bearer <the-key>" }
+   ```
+
    The first command should print a small JSON status. The second should list at least one model.
 
 Read the key with `hermes config get API_SERVER_KEY --raw` when you need to paste it into the extension.

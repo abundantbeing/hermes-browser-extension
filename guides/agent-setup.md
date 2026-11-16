@@ -43,6 +43,7 @@ curl http://127.0.0.1:8642/health
 curl -H "Authorization: Bearer <key>" http://127.0.0.1:8642/v1/models
 ```
 
+- On native Windows PowerShell 5.1, `curl` is `Invoke-WebRequest` and does not accept `-H`. Use the `curl.exe` or `Invoke-RestMethod` lines in the [connection guide](./connection-guide.md#step-1-give-hermes-an-api-key) instead.
 - Both commands must succeed before you go on.
 - To read the key back, use `hermes config get API_SERVER_KEY --raw`.
 - Never paste the key into a chat log, an issue or a commit. The person will paste it into the extension.
