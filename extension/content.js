@@ -264,6 +264,12 @@
     return true;
   }
 
+  function pageContextCaptureMatchesRequest(message) {
+    const expected = String(message?.options?.captureRequestAnchorToken || '').trim();
+    if (!expected) return true;
+    return pageScriptPolicyLocationToken() === expected;
+  }
+
   function pageContextCaptureBlockedByGate() {
     if (!pageContextCaptureAllowedForCurrentLocation()) return true;
     return false;
@@ -649,6 +655,10 @@
               return;
             }
             if (!pageContextCaptureAllowedForCurrentLocation()) {
+              sendResponse(pageContextCaptureRefusedResponse());
+              return;
+            }
+            if (!pageContextCaptureMatchesRequest(message)) {
               sendResponse(pageContextCaptureRefusedResponse());
               return;
             }

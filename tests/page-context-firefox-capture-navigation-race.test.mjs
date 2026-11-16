@@ -11,7 +11,7 @@ import {
   pageContextPolicyGrantMatchesAnchor,
   pageContextVerifyInstallAnchor,
   probePageContextBundleRestartNeeded,
-  publishPageContextPolicyGrant,
+  sealPageContextPolicyGrant,
   runPageContextBundleRestart,
 } from '../extension/lib/page-context-bundle-restart.mjs';
 import {
@@ -44,6 +44,7 @@ test('Firefox capture race: allow reply then localhost navigation blocks restart
     allowFrameFallback: true,
     href,
     anchorToken: `${new URL(href).origin}\u0000${href}`,
+    captureRequestAnchorToken: `${new URL(href).origin}\u0000${href}`,
   };
 
   const pageVm = await loadCaptureVm(href, policyForUrl);
@@ -129,7 +130,7 @@ test('Firefox capture race: allow reply then localhost navigation blocks restart
   const allowed = await runGateEnsure(40, installBinding);
   assert.equal(allowed, false, 'restart must not succeed after navigation to blocked localhost');
 
-  publishPageContextPolicyGrant(installBinding, {
+  sealPageContextPolicyGrant(installBinding, {
     href: 'https://example.com/capture',
     token: 'https://example.com\u0000https://example.com/capture',
   });

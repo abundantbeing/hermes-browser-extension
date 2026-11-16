@@ -25240,7 +25240,13 @@ async function acquirePageContextInstallBinding(tabId, frameId = 0) {
   if (!pageContextScriptInjectionTarget(binding)) return null;
   const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
   if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return null;
-  return { ...binding, href: anchor.href, anchorToken: anchor.token };
+  const token = anchor.token;
+  return {
+    ...binding,
+    href: anchor.href,
+    anchorToken: token,
+    captureRequestAnchorToken: token,
+  };
 }
 
 async function verifyPageContextInstallBinding(binding) {
@@ -25251,8 +25257,7 @@ async function verifyPageContextInstallBinding(binding) {
   if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return false;
   const allowLocal = pageContextAllowLocalDocumentsForUrl(anchor.href, settings);
   if (isPageContextCaptureUrlBlocked(anchor.href, { allowLocalDocuments: allowLocal })) return false;
-  if (binding.anchorToken && anchor?.token !== binding.anchorToken) return false;
-  return true;
+  return pageContextPolicyGrantMatchesAnchor(binding, anchor);
 }
 
 function contentMessageDeliveryOptions(binding = null, frameId = 0) {
@@ -25450,8 +25455,18 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
     const blockedUrl = grantAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
     throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
   }
+  let outboundMessage = message;
+  if (message?.type === 'HERMES_GET_PAGE_CONTEXT' && installBinding.captureRequestAnchorToken) {
+    outboundMessage = {
+      ...message,
+      options: {
+        ...(message.options || {}),
+        captureRequestAnchorToken: installBinding.captureRequestAnchorToken,
+      },
+    };
+  }
   try {
-    return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
+    return await browserApi.tabs.sendMessage(tabId, outboundMessage, messageOptions);
   } catch (originalError) {
     try {
       const sentinel = await browserApi.scripting.executeScript({

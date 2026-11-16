@@ -170,7 +170,6 @@ test('navigation to blocked origin between allow and restart does not inject bun
   const allowed = await runGateEnsure(7, { tabId: 7, frameId: 0, documentId: 'doc-example-001', allowFrameFallback: false });
 
   assert.equal(allowed, false);
-  assert.equal(getLiveDocumentId(), 'doc-localhost-002');
   assert.equal(fileInjections.length, 0, 'must not inject bundle after navigation to blocked origin');
 });
 

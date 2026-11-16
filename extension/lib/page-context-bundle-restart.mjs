@@ -69,21 +69,31 @@ export function pageContextInstallAllowedForAnchor(anchor, injectionDecision) {
   return injectionDecision(anchor.href).inject === true;
 }
 
-export function publishPageContextPolicyGrant(binding, anchor) {
-  if (!binding || !anchor?.token) return binding;
-  binding.href = anchor.href;
-  binding.anchorToken = anchor.token;
+export function captureRequestAnchorToken(binding) {
+  return binding?.captureRequestAnchorToken || binding?.anchorToken || null;
+}
+
+export function liveAnchorMatchesCaptureRequest(binding, anchor) {
+  const requestToken = captureRequestAnchorToken(binding);
+  if (!anchor?.token) return false;
+  if (!requestToken) return true;
+  return requestToken === anchor.token;
+}
+
+export function sealPageContextPolicyGrant(binding, anchor) {
+  if (!binding || !anchor?.token) return false;
+  if (!liveAnchorMatchesCaptureRequest(binding, anchor)) return false;
   binding.pageContextPolicyGrantToken = anchor.token;
-  return binding;
+  return true;
 }
 
 export function pageContextPolicyGrantMatchesAnchor(binding, anchor) {
-  if (!anchor?.token) return false;
+  if (!liveAnchorMatchesCaptureRequest(binding, anchor)) return false;
+  const requestToken = captureRequestAnchorToken(binding);
   if (binding?.pageContextPolicyGrantToken) {
-    return binding.pageContextPolicyGrantToken === anchor.token;
+    return binding.pageContextPolicyGrantToken === requestToken;
   }
-  if (binding?.anchorToken) return binding.anchorToken === anchor.token;
-  return true;
+  return Boolean(requestToken);
 }
 
 export function pageContextVerifyInstallAnchor(anchor, binding, injectionDecision, isCaptureBlocked) {
@@ -203,24 +213,20 @@ export function createPageContextGateEnsureRunner(deps) {
     probePageContextBundleRestartNeeded,
   } = deps;
 
-  async function syncInstallBindingAnchor(binding) {
-    const anchor = await readPageScriptDocumentAnchor(executeScript, binding);
-    if (!anchor) return null;
-    return { ...binding, href: anchor.href, anchorToken: anchor.token };
-  }
-
   return async function runPageContextGateEnsureForTarget(tabId, request = {}) {
     const frameId = Math.max(0, Number(request?.frameIds?.[0] ?? request?.frameId) || 0);
     let binding = request?.documentId || request?.allowFrameFallback != null
-      ? request
+      ? { ...request }
       : await acquireInstallBinding(tabId, frameId);
     if (!binding) return false;
-    binding = await syncInstallBindingAnchor(binding);
-    if (!binding) return false;
+    const firstAnchor = await readPageScriptDocumentAnchor(executeScript, binding);
+    if (!firstAnchor || !liveAnchorMatchesCaptureRequest(request, firstAnchor)) return false;
+    binding = { ...binding, href: firstAnchor.href };
     await awaitPageContextBundleRestart(tabId, binding);
     try {
       if (!(await verifyInstallBinding(binding))) return false;
       const initial = await readPageScriptDocumentAnchor(executeScript, binding);
+      if (!liveAnchorMatchesCaptureRequest(request, initial)) return false;
       if (!pageContextInstallAllowedForAnchor(initial, pageContextInjectionDecision)) return false;
 
       const files = manifestContentScriptFiles();
@@ -256,10 +262,11 @@ export function createPageContextGateEnsureRunner(deps) {
       const outcome = refreshed?.result || {};
       if (!outcome.allowed) return false;
       const anchorAfterAllow = await readPageScriptDocumentAnchor(executeScript, binding);
+      if (!liveAnchorMatchesCaptureRequest(request, anchorAfterAllow)) return false;
       if (!pageContextInstallAllowedForAnchor(anchorAfterAllow, pageContextInjectionDecision)) return false;
       if (!pageScriptDocumentAnchorsMatch(initial, anchorAfterAllow)) return false;
-      publishPageContextPolicyGrant(binding, anchorAfterAllow);
-      publishPageContextPolicyGrant(request, anchorAfterAllow);
+      if (!sealPageContextPolicyGrant(binding, anchorAfterAllow)) return false;
+      if (!sealPageContextPolicyGrant(request, anchorAfterAllow)) return false;
       if (!(await verifyInstallBinding(binding))) return false;
 
       const bundleIncomplete = await probePageContextBundleRestartNeeded(binding);
