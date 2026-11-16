@@ -86,6 +86,7 @@ test('sidepanel installer enforces pageContextInjectionDecision before scripting
   assert.match(block, /if \(!bridgeInjected\)/);
   assert.match(block, /if \(!gateInjected\)/);
   assert.match(block, /if \(!retryExtractorInjected\)/);
+  assert.doesNotMatch(block, /runBundleRestart:[\s\S]*throw pageContextPolicySkipError/);
 });
 
 test('overlapping page-context actions share one bundle restart per tab frame', async () => {

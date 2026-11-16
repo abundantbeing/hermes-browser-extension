@@ -170,7 +170,11 @@ export function createPageContextBundleRestartCoalescer({ probeRestartNeeded, ru
         continue;
       }
       const run = (async () => {
-        await runBundleRestart(binding);
+        try {
+          await runBundleRestart(binding);
+        } catch {
+          /* Fail closed: no bundle entries when restart is refused. */
+        }
       })();
       pageContextBundleRestartByTarget.set(key, run);
       try {

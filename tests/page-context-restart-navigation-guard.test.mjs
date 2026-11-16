@@ -78,6 +78,10 @@ function createDocumentBoundHarness({
           liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
           refreshNavigationObserved = true;
         }
+        if (typeof request.func === 'function' && navigateOnRefresh) {
+          const pageResult = await request.func().catch(() => ({ allowed: false, restart: false }));
+          if (pageResult && typeof pageResult === 'object') return [{ result: pageResult }];
+        }
         const decision = pageContextHostPolicyDecision(currentHref, settingsWithLocal);
         return [{ result: { allowed: decision.inject, restart: !bundleComplete && decision.inject } }];
       }
@@ -108,6 +112,10 @@ function createDocumentBoundHarness({
           currentHref = 'http://localhost/dashboard';
           liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
           refreshNavigationObserved = true;
+        }
+        if (typeof request.func === 'function' && navigateOnRefresh) {
+          const pageResult = await request.func().catch(() => ({ allowed: false, restart: false }));
+          if (pageResult && typeof pageResult === 'object') return [{ result: pageResult }];
         }
         const decision = pageContextHostPolicyDecision(currentHref, settingsWithLocal);
         return [{ result: { allowed: decision.inject, restart: !bundleComplete && decision.inject } }];

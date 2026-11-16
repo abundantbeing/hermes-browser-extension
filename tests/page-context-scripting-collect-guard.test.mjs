@@ -1,59 +1,154 @@
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { packagedPageContextScriptFiles } from '../extension/lib/page-script-host-policy.mjs';
-import { runPageContextBundleRestart } from '../extension/lib/page-context-bundle-restart.mjs';
+import { pageContextInjectionDecision, pageContextSkipMessageKey } from '../extension/lib/page-script-host-policy.mjs';
 
-const LOCALHOST = 'http://localhost/private';
+const root = new URL('../', import.meta.url);
+const panelSource = await readFile(new URL('extension/sidepanel.js', root), 'utf8');
+
+function extractFunction(source, start, end) {
+  const from = source.indexOf(start);
+  const to = source.indexOf(end, from);
+  return source.slice(from, to);
+}
+
+const collectSource = extractFunction(
+  panelSource,
+  'function collectPageContextWithSharedExtractor(options = {}) {',
+  'async function getPageContextViaScripting(tabId, options, originalError, tabUrl = \'\') {',
+);
+
+const viaSource = extractFunction(
+  panelSource,
+  'async function getPageContextViaScripting(tabId, options, originalError, tabUrl = \'\') {',
+  'async function persistGmailCaptureEnabled(enabled) {',
+);
+
 const PUBLIC = 'https://example.com/page-a';
+const LOCALHOST = 'http://localhost/private';
 const tokenFor = (href) => `${new URL(href).origin}\u0000${href}`;
 
-test('runPageContextBundleRestart return false blocks follow-up scripting collect on navigated frame', async () => {
-  const sidepanel = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const collect = sidepanel.match(/function collectPageContextWithSharedExtractor\(options = \{\}\) \{[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(collect, /captureRequestAnchorToken/);
-  assert.match(collect, /__HERMES_PAGE_SCRIPT_POLICY__/);
-  assert.match(collect, /policyLocationToken/);
-
-  const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
-  let href = PUBLIC;
-  const binding = {
-    tabId: 61,
+function buildScriptingFallbackRuntime({
+  href,
+  extractorInjected,
+  enforceExtractorGuard = true,
+}) {
+  let documentReads = 0;
+  const installBinding = {
+    tabId: 71,
     frameId: 0,
     documentId: null,
     allowFrameFallback: true,
-    captureRequestAnchorToken: tokenFor(PUBLIC),
+    href,
     anchorToken: tokenFor(PUBLIC),
+    captureRequestAnchorToken: tokenFor(PUBLIC),
+    pageContextPolicyGrantToken: tokenFor(PUBLIC),
   };
-  const fileInjections = [];
-  const executeScript = async (request) => {
-    if (request.files) {
-      fileInjections.push([...request.files]);
-      return [{ result: undefined }];
-    }
-    const source = request.func.toString();
-    if (source.includes('location.href')) {
-      return [{ result: { href, origin: new URL(href).origin, token: tokenFor(href) } }];
-    }
-    return [{ result: undefined }];
-  };
-  href = LOCALHOST;
-  const ok = await runPageContextBundleRestart(
-    executeScript,
-    binding,
-    packagedPageContextScriptFiles(),
-    {
-      verifyBinding: async () => false,
-      beforeInject: async () => false,
+  const context = vm.createContext({
+    settings: { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] },
+    browserApi: {
+      scripting: {
+        executeScript: async (request) => {
+          if (request.func) documentReads += 1;
+          return [{ result: { ok: true, text: 'LOCALHOST_SECRET', selectedText: '', meta: {} } }];
+        },
+      },
     },
-  );
-  assert.equal(ok, false);
-  assert.equal(fileInjections.length, 0);
-  const scriptingFallback = sidepanel.match(
-    /async function getPageContextViaScripting\(tabId, options, originalError, tabUrl = ''\) \{[\s\S]*?\n\}/,
-  )?.[0] || '';
-  assert.match(scriptingFallback, /if \(!extractorInjected/);
-  assert.match(scriptingFallback, /captureRequestAnchorToken: captureToken/);
-  assert.match(scriptingFallback, /pageContextPolicyGrantMatchesAnchor/);
+    resolveScriptTargetUrlForPageScriptPolicy: async () => PUBLIC,
+    pageContextInjectionDecision,
+    pageContextSkipMessageKey,
+    t: (key) => key,
+    acquirePageContextInstallBinding: async () => ({ ...installBinding }),
+    pageContextScriptInjectionTarget: () => ({ tabId: 71, frameIds: [0] }),
+    awaitPageContextBundleRestart: async () => {},
+    ensurePageContextGateAndRefresh: async () => true,
+    verifyPageContextInstallBinding: async () => true,
+    manifestContentScriptFiles: () => ['content-extractor.js'],
+    readPageScriptDocumentAnchor: async () => ({
+      href: PUBLIC,
+      origin: 'https://example.com',
+      token: tokenFor(PUBLIC),
+    }),
+    pageContextPolicyGrantMatchesAnchor: () => true,
+    runPageContextBundleRestart: async () => extractorInjected,
+    executePageContextScript: async (request) => {
+      if (request.func) documentReads += 1;
+      return [{ result: request.func ? await request.func() : undefined }];
+    },
+    enforceExtractorGuard,
+  });
+  let patchedVia = viaSource;
+  if (!enforceExtractorGuard) {
+    patchedVia = patchedVia.replace(
+      'if (!extractorInjected || !(await verifyPageContextInstallBinding(installBinding)))',
+      'if (false && (!extractorInjected || !(await verifyPageContextInstallBinding(installBinding))))',
+    );
+  }
+  vm.runInContext(`${collectSource}\n${patchedVia}; globalThis.getPageContextViaScripting = getPageContextViaScripting;`, context);
+  return {
+    context,
+    async run() {
+      return context.getPageContextViaScripting(71, {}, new Error('probe'), PUBLIC);
+    },
+    get documentReads() {
+      return documentReads;
+    },
+  };
+}
+
+test('getPageContextViaScripting refuses extractor inject and never collects after navigation', async () => {
+  const runtime = buildScriptingFallbackRuntime({
+    href: LOCALHOST,
+    extractorInjected: false,
+    enforceExtractorGuard: true,
+  });
+  const result = await runtime.run();
+  assert.equal(result?.ok, false);
+  assert.equal(result?.skipped, true);
+  assert.equal(result?.text, '');
+  assert.equal(runtime.documentReads, 0);
+});
+
+test('collectPageContextWithSharedExtractor refuses mismatched capture token in page', async () => {
+  const context = vm.createContext({
+    location: { href: LOCALHOST, origin: 'http://localhost' },
+    globalThis: {},
+    __HERMES_PAGE_SCRIPT_POLICY__: {
+      latestInject: true,
+      policyLocationToken: tokenFor(LOCALHOST),
+    },
+    __HERMES_PAGE_SCRIPTS_BLOCKED__: false,
+    HermesContentExtractor: {
+      collectPageContext: () => ({ ok: true, text: 'LOCALHOST_SECRET', selectedText: '', meta: {} }),
+    },
+    HermesSiteAdapters: {},
+  });
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(`${collectSource}; globalThis.collectPageContextWithSharedExtractor = collectPageContextWithSharedExtractor;`, context);
+  const refused = context.globalThis.collectPageContextWithSharedExtractor({
+    captureRequestAnchorToken: tokenFor(PUBLIC),
+  });
+  assert.equal(refused?.ok, false);
+  assert.equal(refused?.text, '');
+});
+
+test('without extractor inject guard the fallback test would read the navigated document', async () => {
+  const guarded = buildScriptingFallbackRuntime({
+    href: LOCALHOST,
+    extractorInjected: false,
+    enforceExtractorGuard: true,
+  });
+  const unguarded = buildScriptingFallbackRuntime({
+    href: LOCALHOST,
+    extractorInjected: false,
+    enforceExtractorGuard: false,
+  });
+  assert.equal((await guarded.run())?.text, '');
+  assert.equal(guarded.documentReads, 0);
+  const leaked = await unguarded.run();
+  assert.match(leaked?.text || '', /LOCALHOST_SECRET/);
+  assert.ok(unguarded.documentReads > 0);
 });

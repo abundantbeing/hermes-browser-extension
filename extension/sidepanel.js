@@ -25275,9 +25275,7 @@ const pageContextBundleRestart = createPageContextBundleRestartCoalescer({
     binding,
   ),
   runBundleRestart: async (binding) => {
-    if (!(await verifyPageContextInstallBinding(binding))) {
-      throw pageContextPolicySkipError(binding.href || '', { inject: false, reason: 'private' });
-    }
+    if (!(await verifyPageContextInstallBinding(binding))) return;
     const ok = await runPageContextBundleRestart(
       executePageContextScript,
       binding,
@@ -25288,9 +25286,7 @@ const pageContextBundleRestart = createPageContextBundleRestartCoalescer({
         afterInject: async () => verifyPageContextInstallBinding(binding),
       },
     );
-    if (!ok) {
-      throw pageContextPolicySkipError(binding.href || '', { inject: false, reason: 'private' });
-    }
+    if (!ok) return;
   },
 });
 const {
@@ -25455,7 +25451,16 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
   if (!scriptTarget || !messageOptions) {
     throw pageContextPolicySkipError(installBinding.href || tabUrl, { inject: false, reason: 'private' });
   }
-  await awaitPageContextBundleRestart(tabId, installBinding);
+  if (!(await verifyPageContextInstallBinding(installBinding))) {
+    const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
+  try {
+    await awaitPageContextBundleRestart(tabId, installBinding);
+  } catch {
+    const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
   const url = installBinding.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
   const injection = pageContextInjectionDecision(url, settings);
   if (!injection.inject) throw pageContextPolicySkipError(url, injection);
@@ -25908,15 +25913,19 @@ async function getPageContext(tab, options = {}) {
     explicitSiteCapture: Boolean(options.explicitSiteCapture) || (settings.gmailCaptureEnabled === true && isGmailThreadUrl(tab.url)),
     frameId: Number(options.frameId || 0),
   };
-  if (options.captureRequestAnchorToken) {
-    requestOptions.captureRequestAnchorToken = options.captureRequestAnchorToken;
-  } else {
-    const peekBinding = await acquirePageContextInstallBinding(tab.id, requestOptions.frameId);
-    if (peekBinding?.captureRequestAnchorToken) {
-      requestOptions.captureRequestAnchorToken = peekBinding.captureRequestAnchorToken;
-    }
-  }
   try {
+    if (options.captureRequestAnchorToken) {
+      requestOptions.captureRequestAnchorToken = options.captureRequestAnchorToken;
+    } else {
+      try {
+        const peekBinding = await acquirePageContextInstallBinding(tab.id, requestOptions.frameId);
+        if (peekBinding?.captureRequestAnchorToken) {
+          requestOptions.captureRequestAnchorToken = peekBinding.captureRequestAnchorToken;
+        }
+      } catch {
+        /* Binding probe failed; capture may still proceed without a frozen anchor token. */
+      }
+    }
     let response = await sendContentMessageWithInstallFallback(
       tab.id,
       { type: 'HERMES_GET_PAGE_CONTEXT', options: requestOptions },
@@ -25961,7 +25970,8 @@ async function getPageContext(tab, options = {}) {
     }
     return {
       ok: false,
-      error: fallback?.error || error?.message || String(error),
+      skipped: true,
+      skipReason: pageContextInjectionDecision(tab.url, settings).reason,
       reason: fallback?.reason || error?.message || String(error),
       text: '',
       selectedText: '',
