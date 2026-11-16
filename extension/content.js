@@ -247,10 +247,25 @@
     };
   }
 
-  function pageContextCaptureBlockedByGate() {
-    if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ === true) return true;
+  function pageScriptPolicyLocationToken() {
+    try {
+      return `${location.origin}\u0000${location.href}`;
+    } catch {
+      return '';
+    }
+  }
+
+  function pageContextCaptureAllowedForCurrentLocation() {
     const gate = globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
-    if (gate && gate.latestInject === false) return true;
+    if (!gate || gate.latestInject !== true) return false;
+    if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ === true) return false;
+    const token = pageScriptPolicyLocationToken();
+    if (token && gate.policyLocationToken && gate.policyLocationToken !== token) return false;
+    return true;
+  }
+
+  function pageContextCaptureBlockedByGate() {
+    if (!pageContextCaptureAllowedForCurrentLocation()) return true;
     return false;
   }
 
@@ -630,6 +645,10 @@
         refresh()
           .then((allowed) => {
             if (!allowed) {
+              sendResponse(pageContextCaptureRefusedResponse());
+              return;
+            }
+            if (!pageContextCaptureAllowedForCurrentLocation()) {
               sendResponse(pageContextCaptureRefusedResponse());
               return;
             }

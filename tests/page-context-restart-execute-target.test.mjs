@@ -44,3 +44,17 @@ test('shipped bundle restart uses documentId target, gate-first files, and docum
   assert.deepEqual(calls[1].target, { tabId: 9, documentIds: ['doc-restart-abc'] });
   assert.doesNotMatch(JSON.stringify(calls[0]), /frameIds/);
 });
+
+test('frame fallback shipped restart targets frameIds and injects gate-first file list', async () => {
+  const binding = {
+    tabId: 3,
+    frameId: 0,
+    documentId: null,
+    allowFrameFallback: true,
+  };
+  const restartFiles = pageContextBundleRestartFilesFromManifest(packagedPageContextScriptFiles());
+  const described = describePageContextBundleRestartInjection(binding, restartFiles);
+  assert.deepEqual(described.target, { tabId: 3, frameIds: [0] });
+  assert.equal(described.gateFirst, true);
+  assert.match(described.files[0], /page-context-bundle-gate/);
+});

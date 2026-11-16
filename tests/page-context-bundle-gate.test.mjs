@@ -42,6 +42,35 @@ test('freshly injected gate uses latestInject after stale promise denied', async
   assert.equal(context.run, 1);
 });
 
+test('stale policyLocationToken does not allow capture after in-document navigation', async () => {
+  const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
+  const context = {
+    location: { href: 'http://localhost/private', origin: 'http://localhost' },
+    browser: {
+      runtime: {
+        sendMessage(message) {
+          return Promise.resolve({ inject: false, seq: message.seq, allowLocalDocuments: false });
+        },
+      },
+    },
+    __HERMES_PAGE_SCRIPTS_BLOCKED__: false,
+    __HERMES_PAGE_SCRIPT_POLICY__: {
+      decided: true,
+      latestInject: true,
+      policyLocationToken: 'https://example.com\u0000https://example.com/safe',
+      policySeq: 0,
+    },
+    globalThis: {},
+    URL,
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(gateSource, context);
+  const inject = await context.hermesPageScriptPolicyPromise();
+  assert.equal(inject, false);
+  assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, true);
+});
+
 test('re-injected bundle gate clears stale allow before booting bundle code', async () => {
   const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
   let calls = 0;

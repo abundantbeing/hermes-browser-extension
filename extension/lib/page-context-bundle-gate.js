@@ -22,6 +22,19 @@
 
   globalThis.__hermesPageScriptPolicyDecided = notifyPolicyDecision;
 
+  function pageScriptPolicyLocationToken() {
+    let href = '';
+    let origin = '';
+    try {
+      href = String(location.href || '');
+      origin = String(location.origin || '');
+    } catch {
+      return '';
+    }
+    if (!href) return '';
+    return `${origin}\u0000${href}`;
+  }
+
   function ensurePageScriptPolicyRecord() {
     if (!globalThis.__HERMES_PAGE_SCRIPT_POLICY__) {
       globalThis.__HERMES_PAGE_SCRIPT_POLICY__ = {
@@ -29,12 +42,50 @@
         decided: false,
         latestInject: null,
         policySeq: 0,
+        policyLocationToken: null,
       };
     }
     if (typeof globalThis.__HERMES_PAGE_SCRIPT_POLICY__.policySeq !== 'number') {
       globalThis.__HERMES_PAGE_SCRIPT_POLICY__.policySeq = 0;
     }
     return globalThis.__HERMES_PAGE_SCRIPT_POLICY__;
+  }
+
+  function policyDecisionFreshForLocation(gate) {
+    const current = pageScriptPolicyLocationToken();
+    if (!current) return typeof gate.latestInject === 'boolean';
+    if (!gate.policyLocationToken) return typeof gate.latestInject === 'boolean';
+    return gate.policyLocationToken === current;
+  }
+
+  function publishPendingPolicyPromise(gate) {
+    gate.decided = false;
+    gate.latestInject = null;
+    gate.policyLocationToken = null;
+    gate.allowLocalDocuments = false;
+    let resolvePending;
+    gate.promise = new Promise((resolve) => {
+      resolvePending = resolve;
+    });
+    gate._resolvePendingPolicy = resolvePending;
+  }
+
+  function settlePendingPolicyPromise(gate, inject) {
+    if (typeof gate._resolvePendingPolicy === 'function') {
+      gate._resolvePendingPolicy(inject);
+      delete gate._resolvePendingPolicy;
+    }
+  }
+
+  function invalidatePolicyForLocationMismatch(gate) {
+    globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
+    publishPendingPolicyPromise(gate);
+    try {
+      const refresh = globalThis.hermesRefreshPageScriptPolicy;
+      if (typeof refresh === 'function') void refresh();
+    } catch {
+      /* remain blocked */
+    }
   }
 
   function nextPageScriptPolicySeq(gate) {
@@ -53,6 +104,8 @@
     globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
     gate.latestInject = inject;
     gate.decided = true;
+    gate.policyLocationToken = pageScriptPolicyLocationToken();
+    settlePendingPolicyPromise(gate, inject);
     gate.promise = Promise.resolve(inject);
     if (gate._resolvePolicy) gate._resolvePolicy(inject);
     if (inject && (priorInject === false || (priorInject === null && wasBlocked))) {
@@ -64,18 +117,34 @@
 
   function pageScriptPolicyPromise() {
     const gate = ensurePageScriptPolicyRecord();
-    if (typeof gate.latestInject === 'boolean') {
+    const currentToken = pageScriptPolicyLocationToken();
+    if (currentToken && gate.policyLocationToken && gate.policyLocationToken !== currentToken) {
+      invalidatePolicyForLocationMismatch(gate);
+      return gate.promise;
+    }
+    if (typeof gate.latestInject === 'boolean' && policyDecisionFreshForLocation(gate)) {
       return Promise.resolve(gate.latestInject);
     }
-    if (gate.decided) {
+    if (gate.decided && policyDecisionFreshForLocation(gate)) {
       return Promise.resolve(!globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__);
     }
     if (gate.promise) {
       return gate.promise.then((initial) => (
-        typeof gate.latestInject === 'boolean' ? gate.latestInject : initial
+        typeof gate.latestInject === 'boolean' && policyDecisionFreshForLocation(gate)
+          ? gate.latestInject
+          : initial
       ));
     }
-    if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__) return Promise.resolve(false);
+    if (globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__) {
+      publishPendingPolicyPromise(gate);
+      try {
+        const refresh = globalThis.hermesRefreshPageScriptPolicy;
+        if (typeof refresh === 'function') void refresh();
+      } catch {
+        /* stay on pending promise */
+      }
+      return gate.promise;
+    }
     return Promise.resolve(true);
   }
 
@@ -91,6 +160,10 @@
     const browserApi = globalThis.browser || globalThis.chrome;
     if (!browserApi?.runtime?.sendMessage) return Promise.resolve(false);
     const gate = ensurePageScriptPolicyRecord();
+    const awaitingReply = typeof gate._resolvePendingPolicy === 'function';
+    if (!awaitingReply && (!policyDecisionFreshForLocation(gate) || gate.latestInject == null)) {
+      publishPendingPolicyPromise(gate);
+    }
     const requestSeq = nextPageScriptPolicySeq(gate);
     const message = { type: 'HERMES_PAGE_SCRIPT_POLICY', url: location.href, seq: requestSeq };
     const settleRefresh = (response) => {
@@ -125,10 +198,7 @@
     if (!reinject) return false;
     globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
     const gate = ensurePageScriptPolicyRecord();
-    gate.latestInject = null;
-    gate.decided = false;
-    gate.allowLocalDocuments = false;
-    delete gate.promise;
+    publishPendingPolicyPromise(gate);
     return true;
   }
 
