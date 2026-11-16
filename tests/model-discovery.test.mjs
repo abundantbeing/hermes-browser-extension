@@ -10,6 +10,8 @@ import {
   modelsFromModelOptionsPayload,
   discoverModelsFromRegistry,
   discoverCanonicalProviderCatalog,
+  NOUS_LIVE_MODEL_CATALOG_URL,
+  HERMES_CANONICAL_MODEL_CATALOG_URL,
   shouldEnrichCanonicalProviderCatalog,
   shouldTrySessionModelFallback,
   modelCatalogRefreshDecision,
@@ -39,6 +41,61 @@ import {
   DEFAULT_SETTINGS,
   normalizeHermesModels,
 } from '../extension/lib/common.mjs';
+
+test('fetchWithTimeout keeps healthy real Response objects readable', async () => {
+  const result = await discoverModelsFromExternalSources({
+    sourceUrls: ['https://example.test/catalog.json'],
+    fetchFn: async () => new Response(JSON.stringify({ data: [{ id: 'm1', name: 'Model One' }] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+    timeoutMs: 5000,
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.results[0]?.ok, true);
+  assert.equal(result.results[0]?.models?.length, 1);
+  assert.equal(result.results[0]?.models?.[0]?.rawModelId, 'm1');
+});
+
+test('canonical catalog keeps static fallback when live Nous body read times out', async () => {
+  const registryModels = [{
+    id: 'nous::openai/gpt-5.6-luna',
+    rawModelId: 'openai/gpt-5.6-luna',
+    provider: 'nous',
+    providerLabel: 'Nous Portal',
+    authenticated: true,
+    runtimeSelectable: true,
+  }];
+  const stalledLiveBody = new ReadableStream({
+    pull() {},
+  });
+  const result = await discoverCanonicalProviderCatalog({
+    registryModels,
+    timeoutMs: 80,
+    fetchFn: async (url) => {
+      if (String(url) === NOUS_LIVE_MODEL_CATALOG_URL) {
+        return new Response(stalledLiveBody, {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (String(url) === HERMES_CANONICAL_MODEL_CATALOG_URL) {
+        return new Response(JSON.stringify({
+          providers: {
+            nous: { models: [{ id: 'moonshotai/kimi-k3' }] },
+          },
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      throw new Error(`unexpected-url:${url}`);
+    },
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.source, 'canonical');
+  assert.ok(result.models.some((model) => model.rawModelId === 'moonshotai/kimi-k3'));
+});
 
 test('discoverModelsFromExternalSources times out when the response body stalls after headers', async () => {
   const fetchFn = async () => ({

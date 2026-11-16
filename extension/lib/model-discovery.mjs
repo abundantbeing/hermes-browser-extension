@@ -569,7 +569,7 @@ function responseWithBodyDeadline(response, deadlineMs) {
       if (prop === 'arrayBuffer') {
         return () => readResponseBodyWithDeadline(target, 'arrayBuffer', deadlineMs);
       }
-      const value = Reflect.get(target, prop, receiver);
+      const value = Reflect.get(target, prop, target);
       return typeof value === 'function' ? value.bind(target) : value;
     },
   });
@@ -690,23 +690,31 @@ export async function discoverCanonicalProviderCatalog({
   let liveNousLoaded = false;
   let staticCatalogLoaded = false;
 
-  // The two reads are independent: both go out now (live Nous first) and their
-  // answers are applied in the same order as before.
-  const requestCatalog = (url) => fetchWithTimeout(fetchFn, url, {
+  const catalogRequestOptions = {
     method: 'GET',
     headers: { Accept: 'application/json' },
     cache: 'no-store',
     credentials: 'omit',
-  }, timeoutMs).then((response) => ({ response }), (error) => ({ error }));
-  const liveRequest = nousProviders.length ? requestCatalog(NOUS_LIVE_MODEL_CATALOG_URL) : null;
-  const staticRequest = requestCatalog(catalogUrl);
-
-  if (liveRequest) {
+  };
+  const readCatalogPayload = async (url) => {
     try {
-      const { response, error: requestError } = await liveRequest;
-      if (requestError) throw requestError;
+      const response = await fetchWithTimeout(fetchFn, url, catalogRequestOptions, timeoutMs);
       if (!response.ok) throw new Error(`status-${response.status}`);
-      const payload = await response.json();
+      return { payload: await response.json() };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  const [liveOutcome, staticOutcome] = await Promise.all([
+    nousProviders.length ? readCatalogPayload(NOUS_LIVE_MODEL_CATALOG_URL) : null,
+    readCatalogPayload(catalogUrl),
+  ]);
+
+  if (liveOutcome) {
+    try {
+      if (liveOutcome.error) throw liveOutcome.error;
+      const payload = liveOutcome.payload;
       if (!Array.isArray(payload?.data)) throw new Error('invalid-live-nous-catalog');
       const providers = Object.fromEntries(nousProviders.map((provider) => [provider, { models: payload.data }]));
       models = canonicalProviderModels({ providers }, models, enrichProviders);
@@ -717,10 +725,8 @@ export async function discoverCanonicalProviderCatalog({
   }
 
   try {
-    const { response, error: requestError } = await staticRequest;
-    if (requestError) throw requestError;
-    if (!response.ok) throw new Error(`status-${response.status}`);
-    const payload = catalogWithNousAliases(await response.json(), nousProviders);
+    if (staticOutcome.error) throw staticOutcome.error;
+    const payload = catalogWithNousAliases(staticOutcome.payload, nousProviders);
     models = canonicalProviderModels(payload, models, enrichProviders);
     staticCatalogLoaded = true;
   } catch (error) {
