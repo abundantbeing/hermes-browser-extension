@@ -18,11 +18,15 @@ function createBundleRestartHarness({ restartDelayMs = 60 } = {}) {
     extractorReady: false,
     bridgeLoaded: true,
   };
+  const anchorHref = 'https://coalesce.test/app';
+  const anchorToken = `https://coalesce.test\u0000${anchorHref}`;
   const binding = {
     tabId: 1,
     frameId: 0,
     documentId: 'doc-coalesce-test',
     allowFrameFallback: false,
+    anchorToken,
+    captureRequestAnchorToken: anchorToken,
   };
   const executeScript = async (request) => {
     if (request.files) {
@@ -31,7 +35,17 @@ function createBundleRestartHarness({ restartDelayMs = 60 } = {}) {
       probeState = { restart: false, extractorReady: true, bridgeLoaded: true };
       return [{ result: undefined }];
     }
-    if (request.func.toString().includes('HermesContentExtractor')) {
+    const src = request.func?.toString() || '';
+    if (src.includes('location.href') && src.includes('token')) {
+      return [{
+        result: {
+          href: anchorHref,
+          origin: 'https://coalesce.test',
+          token: anchorToken,
+        },
+      }];
+    }
+    if (src.includes('HermesContentExtractor')) {
       return [{ result: { ...probeState } }];
     }
     const result = await request.func();
@@ -64,7 +78,16 @@ test('overlapping page-context ensures share one in-flight gate refresh per tab 
 
 test('coalesced bundle reinstall re-probes readiness after awaiting a shared restart', async () => {
   const tabId = 1;
-  const scriptTarget = { tabId, frameId: 0, documentId: 'doc-coalesce-test', allowFrameFallback: false };
+  const anchorHref = 'https://coalesce.test/app';
+  const anchorToken = `https://coalesce.test\u0000${anchorHref}`;
+  const scriptTarget = {
+    tabId,
+    frameId: 0,
+    documentId: 'doc-coalesce-test',
+    allowFrameFallback: false,
+    anchorToken,
+    captureRequestAnchorToken: anchorToken,
+  };
   const {
     reinstallPageContextBundleEntries,
     awaitPageContextBundleRestart,

@@ -106,7 +106,8 @@ test('getPageContextViaScripting refuses extractor inject and never collects aft
   });
   const result = await runtime.run();
   assert.equal(result?.ok, false);
-  assert.equal(result?.skipped, true);
+  assert.equal(result?.skipped, undefined);
+  assert.match(result?.error || result?.reason || '', /probe/);
   assert.equal(result?.text, '');
   assert.equal(runtime.documentReads, 0);
 });

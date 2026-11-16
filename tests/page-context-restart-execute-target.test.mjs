@@ -27,6 +27,17 @@ test('shipped bundle restart uses documentId target, gate-first files, and docum
     calls.push(request);
     if (request.files) return [{ result: undefined, documentId: binding.documentId }];
     if (typeof request.func === 'function') {
+      const src = request.func.toString();
+      if (src.includes('location.href') && src.includes('token')) {
+        return [{
+          result: {
+            href: 'https://example.com/',
+            origin: 'https://example.com',
+            token: binding.anchorToken,
+          },
+          documentId: binding.documentId,
+        }];
+      }
       await request.func();
     }
     return [{ result: undefined, documentId: binding.documentId }];
@@ -38,11 +49,13 @@ test('shipped bundle restart uses documentId target, gate-first files, and docum
     afterInject: async () => true,
   });
 
-  assert.equal(calls.length, 2);
-  assert.deepEqual(calls[0].target, { tabId: 9, documentIds: ['doc-restart-abc'] });
-  assert.deepEqual(calls[0].files, described.files);
+  assert.equal(calls.length, 3, 'anchor probe, file inject, post-inject wait');
+  assert.equal(typeof calls[0].func, 'function');
+  assert.equal(calls[0].files, undefined);
   assert.deepEqual(calls[1].target, { tabId: 9, documentIds: ['doc-restart-abc'] });
-  assert.doesNotMatch(JSON.stringify(calls[0]), /frameIds/);
+  assert.deepEqual(calls[1].files, described.files);
+  assert.deepEqual(calls[2].target, { tabId: 9, documentIds: ['doc-restart-abc'] });
+  assert.doesNotMatch(JSON.stringify(calls[1]), /frameIds/);
 });
 
 test('frame fallback shipped restart targets frameIds and injects gate-first file list', async () => {
