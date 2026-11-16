@@ -144,6 +144,7 @@ import {
   pageScriptDocumentAnchorsMatch,
   probePageContextBundleRestartNeeded as probePageContextBundleRestartNeededInTab,
   readPageScriptDocumentAnchor,
+  pageContextPolicyGrantMatchesAnchor,
   runPageContextBundleRestart,
 } from './lib/page-context-bundle-restart.mjs';
 import {
@@ -25442,6 +25443,11 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
   if (!refreshed) throw pageContextPolicySkipError(url, { inject: false, reason: injection.reason || 'excluded' });
   if (!(await verifyPageContextInstallBinding(installBinding))) {
     const blockedUrl = await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
+    throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
+  }
+  const grantAnchor = await readPageScriptDocumentAnchor(executePageContextScript, installBinding);
+  if (!grantAnchor || !pageContextPolicyGrantMatchesAnchor(installBinding, grantAnchor)) {
+    const blockedUrl = grantAnchor?.href || await resolveScriptTargetUrlForPageScriptPolicy(tabId, frame, tabUrl);
     throw pageContextPolicySkipError(blockedUrl, { inject: false, reason: 'private' });
   }
   try {

@@ -69,10 +69,27 @@ export function pageContextInstallAllowedForAnchor(anchor, injectionDecision) {
   return injectionDecision(anchor.href).inject === true;
 }
 
+export function publishPageContextPolicyGrant(binding, anchor) {
+  if (!binding || !anchor?.token) return binding;
+  binding.href = anchor.href;
+  binding.anchorToken = anchor.token;
+  binding.pageContextPolicyGrantToken = anchor.token;
+  return binding;
+}
+
+export function pageContextPolicyGrantMatchesAnchor(binding, anchor) {
+  if (!anchor?.token) return false;
+  if (binding?.pageContextPolicyGrantToken) {
+    return binding.pageContextPolicyGrantToken === anchor.token;
+  }
+  if (binding?.anchorToken) return binding.anchorToken === anchor.token;
+  return true;
+}
+
 export function pageContextVerifyInstallAnchor(anchor, binding, injectionDecision, isCaptureBlocked) {
   if (!pageContextInstallAllowedForAnchor(anchor, injectionDecision)) return false;
   if (typeof isCaptureBlocked === 'function' && isCaptureBlocked(anchor.href)) return false;
-  if (binding?.anchorToken && anchor?.token !== binding.anchorToken) return false;
+  if (!pageContextPolicyGrantMatchesAnchor(binding, anchor)) return false;
   return true;
 }
 
@@ -241,15 +258,16 @@ export function createPageContextGateEnsureRunner(deps) {
       const anchorAfterAllow = await readPageScriptDocumentAnchor(executeScript, binding);
       if (!pageContextInstallAllowedForAnchor(anchorAfterAllow, pageContextInjectionDecision)) return false;
       if (!pageScriptDocumentAnchorsMatch(initial, anchorAfterAllow)) return false;
-      binding = await syncInstallBindingAnchor(binding);
-      if (!binding || !(await verifyInstallBinding(binding))) return false;
+      publishPageContextPolicyGrant(binding, anchorAfterAllow);
+      publishPageContextPolicyGrant(request, anchorAfterAllow);
+      if (!(await verifyInstallBinding(binding))) return false;
 
       const bundleIncomplete = await probePageContextBundleRestartNeeded(binding);
       let needsRestart = shouldScheduleBundleRestart(outcome, initial, anchorAfterAllow, bundleIncomplete);
       if (needsRestart) {
         const anchorBeforeRestart = await readPageScriptDocumentAnchor(executeScript, binding);
         if (!pageScriptDocumentAnchorsMatch(anchorAfterAllow, anchorBeforeRestart)) return false;
-        if (binding.anchorToken && anchorBeforeRestart?.token !== binding.anchorToken) return false;
+        if (!pageContextPolicyGrantMatchesAnchor(binding, anchorBeforeRestart)) return false;
         if (!(await verifyInstallBinding(binding))) return false;
         await reinstallPageContextBundleEntries(tabId, binding);
         await awaitPageContextBundleRestart(tabId, binding);
