@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ReadableStream } from 'node:stream/web';
+import { setImmediate } from 'node:timers';
 import vm from 'node:vm';
 
 import {
