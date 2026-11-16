@@ -5,6 +5,7 @@ import {
   auditCss,
   auditFiles,
   effectiveLineHeight,
+  fontShorthandParts,
   lineHeightFromFontShorthand,
   parseRules,
 } from '../scripts/check-display-typography.mjs';
@@ -92,6 +93,31 @@ test('display typography lint honors later line-height and letter-spacing overri
   letter-spacing: 0;
 }`;
   assert.ok(auditCss(cramped, 'override-bad.css').length >= 2);
+});
+
+test('font shorthand parser ignores division inside calc()', () => {
+  const parts = fontShorthandParts('500 calc(20px / 2)/1.25 var(--hermes-font-display)');
+  assert.equal(parts.lhRaw, '1.25');
+  assert.equal(lineHeightFromFontShorthand('500 calc(20px / 2)/1.25 var(--hermes-font-display)'), 1.25);
+  const rule = `
+.headline {
+  font: 500 calc(20px / 2)/1.25 var(--hermes-font-display);
+  letter-spacing: 0.04em;
+}`;
+  assert.deepEqual(auditCss(rule, 'calc-div-lh.css'), []);
+});
+
+test('display typography lint rejects cramped calc font size with px line-height', () => {
+  const cramped = `
+.headline {
+  font: 500 calc(20px + 4px)/16px var(--hermes-font-display);
+  letter-spacing: 0.04em;
+}`;
+  assert.ok(
+    auditCss(cramped, 'calc-cramped.css').some((v) => /line-height/.test(v.detail)),
+    auditCss(cramped, 'calc-cramped.css').map((v) => v.detail).join('; '),
+  );
+  assert.ok(lineHeightFromFontShorthand('500 calc(20px + 4px)/16px var(--hermes-font-display)') < 1.2);
 });
 
 test('display typography lint accepts px line-height in font shorthand', () => {

@@ -77,19 +77,69 @@ export function lastDeclaration(body, property) {
   return '';
 }
 
-export function lineHeightFromFontShorthand(fontDecl = '') {
+export function fontShorthandParts(fontDecl = '') {
   const font = String(fontDecl).trim();
-  const slash = font.indexOf('/');
-  if (slash < 0) return null;
-  const lhRaw = font.slice(slash + 1).trim().split(/\s+/)[0] || '';
-  const before = font.slice(0, slash);
+  let depth = 0;
+  for (let i = 0; i < font.length; i += 1) {
+    const ch = font[i];
+    if (ch === '(') depth += 1;
+    else if (ch === ')') depth -= 1;
+    else if (ch === '/' && depth === 0) {
+      return {
+        before: font.slice(0, i).trim(),
+        lhRaw: font.slice(i + 1).trim().split(/\s+/)[0] || '',
+      };
+    }
+  }
+  return { before: font, lhRaw: '' };
+}
+
+function simpleCalcPx(expr = '') {
+  const text = String(expr).trim();
+  const m = text.match(/^calc\(\s*([\d.]+)px\s*([+\-*/])\s*([\d.]+)(?:px)?\s*\)$/i);
+  if (!m) return null;
+  const a = Number(m[1]);
+  const op = m[2];
+  const b = Number(m[3]);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  if (op === '+') return a + b;
+  if (op === '-') return a - b;
+  if (op === '*') return a * b;
+  if (op === '/') return b !== 0 ? a / b : null;
+  return null;
+}
+
+export function fontSizePxFromShorthandBefore(before = '') {
+  const text = String(before).trim();
+  if (!text) return null;
+  const tokens = text.split(/\s+/);
+  const sizeToken = tokens[tokens.length - 1] || '';
+  if (/^[\d.]+px$/i.test(sizeToken)) {
+    return Number(sizeToken.match(/^([\d.]+)px$/i)[1]);
+  }
+  const calcOnly = sizeToken.match(/^(calc\([^)]*\))$/i)?.[1]
+    || text.match(/(calc\([^)]*\))/i)?.[1];
+  if (calcOnly) {
+    const px = simpleCalcPx(calcOnly);
+    if (px != null) return px;
+    if (/var\(|clamp\(/i.test(calcOnly)) return null;
+    return null;
+  }
+  if (text.includes('calc(')) return null;
+  const simple = text.match(/([\d.]+)px/i);
+  return simple ? Number(simple[1]) : null;
+}
+
+export function lineHeightFromFontShorthand(fontDecl = '') {
+  const { before, lhRaw } = fontShorthandParts(fontDecl);
+  if (!lhRaw) return null;
   const unitless = Number(lhRaw);
   if (Number.isFinite(unitless) && lhRaw !== '' && !/px|em|rem|%/i.test(lhRaw)) return unitless;
   const lhPx = lhRaw.match(/^([\d.]+)px$/i);
   if (lhPx) {
-    const sizes = [...before.matchAll(/([\d.]+)px/gi)];
-    const fsPx = sizes.length ? Number(sizes[sizes.length - 1][1]) : null;
+    const fsPx = fontSizePxFromShorthandBefore(before);
     if (fsPx) return Number(lhPx[1]) / fsPx;
+    return null;
   }
   return null;
 }
@@ -99,9 +149,8 @@ export function effectiveFontSizePx(body) {
   const pxFromFs = fs.match(/([\d.]+)px/i);
   if (pxFromFs) return Number(pxFromFs[1]);
   const font = lastDeclaration(body, 'font');
-  const pxFromFont = font.match(/([\d.]+)px/i);
-  if (pxFromFont) return Number(pxFromFont[1]);
-  return null;
+  if (!font) return null;
+  return fontSizePxFromShorthandBefore(fontShorthandParts(font).before);
 }
 
 export function effectiveLineHeight(body) {
