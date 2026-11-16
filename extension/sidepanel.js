@@ -129,6 +129,8 @@ import {
   buildRegisteredPageScriptDefinition,
   extensionPageContextPackaged,
   normalizePageContextExcludedOrigins,
+  pageContextAllowLocalDocumentsForUrl,
+  pageContextHostPolicyDecision,
   pageContextInjectionDecision,
   pageContextSkipMessageKey,
 } from './lib/page-script-host-policy.mjs';
@@ -25210,7 +25212,7 @@ function pageContextBundleRestartFiles() {
 }
 
 function pageContextInjectionDecisionForUrl(url) {
-  return pageContextInjectionDecision(url, settings);
+  return pageContextHostPolicyDecision(url, settings);
 }
 
 function pageContextScriptTarget(tabId, frameId = 0) {
@@ -25246,7 +25248,8 @@ async function verifyPageContextInstallBinding(binding) {
   if (!live) return false;
   const anchor = await readPageScriptDocumentAnchor(executePageContextScript, binding);
   if (!pageContextInstallAllowedForAnchor(anchor, pageContextInjectionDecisionForUrl)) return false;
-  if (isPageContextCaptureUrlBlocked(anchor.href)) return false;
+  const allowLocal = pageContextAllowLocalDocumentsForUrl(anchor.href, settings);
+  if (isPageContextCaptureUrlBlocked(anchor.href, { allowLocalDocuments: allowLocal })) return false;
   if (binding.anchorToken && anchor?.token !== binding.anchorToken) return false;
   return true;
 }

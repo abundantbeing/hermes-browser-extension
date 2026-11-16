@@ -33,7 +33,8 @@
     return Boolean(auth);
   }
 
-  function hermesIsPageContextCaptureUrlBlocked(url = '') {
+  function hermesIsPageContextCaptureUrlBlocked(url = '', options = {}) {
+    const allowLocalDocuments = options && options.allowLocalDocuments === true;
     if (!url) return true;
     let parsed;
     try {
@@ -42,7 +43,7 @@
       return true;
     }
     if (RESTRICTED_SCHEMES.has(parsed.protocol)) return true;
-    if (parsed.protocol === 'file:') return true;
+    if (parsed.protocol === 'file:') return !allowLocalDocuments;
     if (!['http:', 'https:'].includes(parsed.protocol)) return true;
     if (hasCredentialBearingUrl(parsed)) return true;
     const haystack = restrictedUrlHaystack(parsed);

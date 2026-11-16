@@ -47,6 +47,7 @@
       return null;
     }
     const inject = response && typeof response.inject === 'boolean' ? response.inject : false;
+    gate.allowLocalDocuments = Boolean(response && response.allowLocalDocuments);
     const wasBlocked = globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ === true;
     const priorInject = typeof gate.latestInject === 'boolean' ? gate.latestInject : null;
     globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = !inject;
@@ -114,4 +115,29 @@
       }
     });
   };
+
+  function resetBundleGatePolicyForCurrentLocation() {
+    const reinject = Boolean(
+      globalThis.__HERMES_BROWSER_CONTENT_LOADED__
+      || globalThis.HermesContentExtractor
+      || globalThis.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__ === true,
+    );
+    if (!reinject) return false;
+    globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__ = true;
+    const gate = ensurePageScriptPolicyRecord();
+    gate.latestInject = null;
+    gate.decided = false;
+    gate.allowLocalDocuments = false;
+    delete gate.promise;
+    return true;
+  }
+
+  if (resetBundleGatePolicyForCurrentLocation()) {
+    try {
+      const refresh = globalThis.hermesRefreshPageScriptPolicy;
+      if (typeof refresh === 'function') void refresh();
+    } catch {
+      /* stay blocked until a later refresh succeeds */
+    }
+  }
 })();

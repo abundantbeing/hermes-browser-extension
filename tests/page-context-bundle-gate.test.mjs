@@ -42,6 +42,41 @@ test('freshly injected gate uses latestInject after stale promise denied', async
   assert.equal(context.run, 1);
 });
 
+test('re-injected bundle gate clears stale allow before booting bundle code', async () => {
+  const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
+  let calls = 0;
+  const context = {
+    location: { href: 'http://localhost/' },
+    bundleRan: 0,
+    __HERMES_BROWSER_CONTENT_LOADED__: 'reinject-test',
+    browser: {
+      runtime: {
+        sendMessage() {
+          calls += 1;
+          return Promise.resolve({ inject: false, seq: calls });
+        },
+      },
+    },
+    __HERMES_PAGE_SCRIPTS_BLOCKED__: false,
+    __HERMES_PAGE_SCRIPT_POLICY__: {
+      decided: true,
+      latestInject: true,
+      policySeq: 0,
+      promise: Promise.resolve(true),
+    },
+    globalThis: {},
+  };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(gateSource, context);
+  assert.equal(context.__HERMES_PAGE_SCRIPTS_BLOCKED__, true);
+  assert.equal(context.__HERMES_PAGE_SCRIPT_POLICY__.latestInject, null);
+  context.hermesAwaitPageScriptPolicy(() => { context.bundleRan += 1; });
+  assert.equal(context.bundleRan, 0);
+  const inject = await context.hermesPageScriptPolicyPromise();
+  assert.equal(inject, false);
+});
+
 test('deny first, refresh allow, then newly injected bundle gate runs deferred steps', async () => {
   const gateSource = await readFile(new URL('../extension/lib/page-context-bundle-gate.js', import.meta.url), 'utf8');
   const denied = {

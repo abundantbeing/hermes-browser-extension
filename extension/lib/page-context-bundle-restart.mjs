@@ -59,6 +59,13 @@ export function pageContextInstallAllowedForAnchor(anchor, injectionDecision) {
   return injectionDecision(anchor.href).inject === true;
 }
 
+export function pageContextVerifyInstallAnchor(anchor, binding, injectionDecision, isCaptureBlocked) {
+  if (!pageContextInstallAllowedForAnchor(anchor, injectionDecision)) return false;
+  if (typeof isCaptureBlocked === 'function' && isCaptureBlocked(anchor.href)) return false;
+  if (binding?.anchorToken && anchor?.token !== binding.anchorToken) return false;
+  return true;
+}
+
 export async function probePageContextBundleRestartNeeded(executeScript, binding) {
   const target = pageContextScriptInjectionTarget(binding);
   if (!target) return false;

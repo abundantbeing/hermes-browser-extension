@@ -256,7 +256,9 @@
 
   function pageContextCaptureUrlBlocked(url = location.href) {
     const check = globalThis.hermesIsPageContextCaptureUrlBlocked;
-    return typeof check === 'function' ? check(String(url || '')) : false;
+    if (typeof check !== 'function') return false;
+    const allowLocal = globalThis.__HERMES_PAGE_SCRIPT_POLICY__?.allowLocalDocuments === true;
+    return check(String(url || ''), { allowLocalDocuments: allowLocal });
   }
 
   function collectContext(options = {}) {

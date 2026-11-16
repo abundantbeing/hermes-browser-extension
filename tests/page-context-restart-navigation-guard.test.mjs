@@ -1,16 +1,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { isPageContextCaptureUrlBlocked } from '../extension/lib/page-context-capture-guard.mjs';
 import {
   buildRegisteredPageScriptDefinition,
   packagedPageContextScriptFiles,
-  pageContextInjectionDecision,
+  pageContextAllowLocalDocumentsForUrl,
+  pageContextHostPolicyDecision,
 } from '../extension/lib/page-script-host-policy.mjs';
 import {
   createPageContextBundleRestartCoalescer,
   createPageContextGateEnsureRunner,
   pageContextBundleRestartFilesFromManifest,
   pageContextInstallBindingStillLive,
+  pageContextVerifyInstallAnchor,
   probePageContextBundleRestartNeeded,
   runPageContextBundleRestart,
 } from '../extension/lib/page-context-bundle-restart.mjs';
@@ -34,7 +37,8 @@ function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {})
     ['doc-example-001', 'https://example.com/dashboard'],
     ['doc-localhost-002', 'http://localhost/dashboard'],
   ]);
-  const injectionDecision = (url) => pageContextInjectionDecision(url, settings);
+  const settingsWithLocal = { ...settings };
+  const injectionDecision = (url) => pageContextHostPolicyDecision(url, settingsWithLocal);
 
   const executeScript = async (request) => {
     const target = request.target || {};
@@ -59,9 +63,10 @@ function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {})
         return [{ result: true }];
       }
       if (source.includes('hermesRefreshPageScriptPolicy')) {
-        liveDocumentId = 'doc-localhost-002';
         currentHref = 'http://localhost/dashboard';
-        return [{ result: { allowed: true, restart: true } }];
+        liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
+        const decision = pageContextHostPolicyDecision(currentHref, settingsWithLocal);
+        return [{ result: { allowed: decision.inject, restart: decision.inject } }];
       }
       const result = await request.func();
       return [{ result }];
@@ -82,9 +87,10 @@ function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {})
         return [{ result: true }];
       }
       if (source.includes('hermesRefreshPageScriptPolicy')) {
-        liveDocumentId = 'doc-localhost-002';
         currentHref = 'http://localhost/dashboard';
-        return [{ result: { allowed: true, restart: true } }];
+        liveDocumentId = enableDocumentIds ? 'doc-localhost-002' : liveDocumentId;
+        const decision = pageContextHostPolicyDecision(currentHref, settingsWithLocal);
+        return [{ result: { allowed: decision.inject, restart: decision.inject } }];
       }
       const result = await request.func();
       return [{ result }];
@@ -116,7 +122,14 @@ function createDocumentBoundHarness({ settings, enableDocumentIds = true } = {})
       func: () => ({ href: location.href, origin: location.origin, token: `${location.origin}\u0000${location.href}` }),
     });
     const anchor = row?.result;
-    return Boolean(anchor && injectionDecision(anchor.href).inject);
+    if (!anchor) return false;
+    const allowLocal = pageContextAllowLocalDocumentsForUrl(anchor.href, settingsWithLocal);
+    return pageContextVerifyInstallAnchor(
+      anchor,
+      binding,
+      injectionDecision,
+      (href) => isPageContextCaptureUrlBlocked(href, { allowLocalDocuments: allowLocal }),
+    );
   }
 
   const bundleRestart = createPageContextBundleRestartCoalescer({
@@ -168,6 +181,61 @@ test('frame-only fallback aborts when navigation reaches a blocked origin', asyn
   const allowed = await runGateEnsure(8, { tabId: 8, frameId: 0, documentId: null, allowFrameFallback: true });
 
   assert.equal(allowed, false);
+  assert.equal(fileInjections.length, 0);
+});
+
+test('frame fallback direct restart after navigation to localhost does not inject bundle files', async () => {
+  const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
+  let currentHref = 'https://example.com/app';
+  const fileInjections = [];
+  const binding = {
+    tabId: 11,
+    frameId: 0,
+    documentId: null,
+    allowFrameFallback: true,
+    anchorToken: `${new URL(currentHref).origin}\u0000${currentHref}`,
+  };
+  const executeScript = async (request) => {
+    if (request.files) {
+      fileInjections.push([...request.files]);
+      return [{ result: undefined }];
+    }
+    const source = request.func.toString();
+    if (source.includes('location.href')) {
+      return [{ result: { href: currentHref, origin: new URL(currentHref).origin, token: `${new URL(currentHref).origin}\u0000${currentHref}` } }];
+    }
+    if (typeof request.func === 'function') {
+      await request.func();
+    }
+    return [{ result: undefined }];
+  };
+  currentHref = 'http://localhost/app';
+  const injectionDecision = (url) => pageContextHostPolicyDecision(url, settings);
+  const verify = async () => {
+    const target = pageContextScriptInjectionTarget(binding);
+    const [row] = await executeScript({
+      target,
+      func: () => ({ href: location.href, origin: location.origin, token: `${location.origin}\u0000${location.href}` }),
+    });
+    const allowLocal = pageContextAllowLocalDocumentsForUrl(row.result.href, settings);
+    return pageContextVerifyInstallAnchor(
+      row.result,
+      binding,
+      injectionDecision,
+      (href) => isPageContextCaptureUrlBlocked(href, { allowLocalDocuments: allowLocal }),
+    );
+  };
+  const ok = await runPageContextBundleRestart(
+    executeScript,
+    binding,
+    pageContextBundleRestartFilesFromManifest(MANIFEST_FILES),
+    {
+      verifyBinding: verify,
+      beforeInject: verify,
+      afterInject: verify,
+    },
+  );
+  assert.equal(ok, false);
   assert.equal(fileInjections.length, 0);
 });
 

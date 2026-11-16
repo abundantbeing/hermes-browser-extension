@@ -1,4 +1,5 @@
 import { privateNetworkHost } from './common.mjs';
+import { isLocalDocumentUrl, isRestrictedUrl } from './browser-context-protocol.mjs';
 
 export const PAGE_CONTEXT_SCRIPT_ID = 'hermes-page-context-bundle';
 export const PAGE_CONTEXT_GUARD_SCRIPT_ID = 'hermes-page-context-guard';
@@ -108,6 +109,21 @@ export function pageContextInjectionDecision(url = '', settings = {}) {
     return { inject: false, reason: 'private-network' };
   }
   return { inject: true, reason: '' };
+}
+
+export function pageContextAllowLocalDocumentsForUrl(url = '', settings = {}) {
+  return settings.allowLocalDocuments === true && isLocalDocumentUrl(url);
+}
+
+/** Host policy for page scripts and capture: private/excluded plus restricted URLs. */
+export function pageContextHostPolicyDecision(url = '', settings = {}) {
+  const decision = pageContextInjectionDecision(url, settings);
+  if (!decision.inject) return decision;
+  const allowLocalDocuments = pageContextAllowLocalDocumentsForUrl(url, settings);
+  if (isRestrictedUrl(url, { allowLocalDocuments })) {
+    return { inject: false, reason: 'restricted-url' };
+  }
+  return decision;
 }
 
 /**

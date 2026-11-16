@@ -82,7 +82,11 @@ import {
   SAVED_CONNECTION_SECRETS_STORAGE_KEY,
 } from './lib/saved-connections.mjs';
 import { createPageScriptRegistrar } from './lib/page-script-registration.mjs';
-import { extensionPageContextPackaged, pageContextInjectionDecision } from './lib/page-script-host-policy.mjs';
+import {
+  extensionPageContextPackaged,
+  pageContextAllowLocalDocumentsForUrl,
+  pageContextHostPolicyDecision,
+} from './lib/page-script-host-policy.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -1287,10 +1291,12 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
             ? handleLoopbackFetchMessage(message)
             : message?.type === 'HERMES_PAGE_SCRIPT_POLICY'
               ? readStoredSettings().then((settings) => {
-                const decision = pageContextInjectionDecision(message?.url || sender?.tab?.url || sender?.url || '', settings);
+                const url = message?.url || sender?.tab?.url || sender?.url || '';
+                const decision = pageContextHostPolicyDecision(url, settings);
                 return {
                   inject: decision.inject,
                   reason: decision.reason,
+                  allowLocalDocuments: pageContextAllowLocalDocumentsForUrl(url, settings),
                   seq: message?.seq,
                 };
               })
