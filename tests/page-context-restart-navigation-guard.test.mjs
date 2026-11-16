@@ -185,8 +185,8 @@ test('frame-only fallback aborts when navigation reaches a blocked origin', asyn
   row.files.some((file) => file.endsWith('content.js') || file.endsWith('content-extractor.js')));
   assert.equal(injectedBundle, false, 'must not inject bundle entries after navigation to blocked origin');
   const injectedGate = fileInjections.some((row) =>
-  row.files.some((file) => file.includes('page-context-bundle-gate')));
-  assert.equal(injectedGate, true, 'frame fallback must reinject gate before policy refresh');
+    row.files.some((file) => file.includes('page-context-bundle-gate')));
+  assert.equal(injectedGate, false, 'loaded frame must refresh policy without reinjecting gate');
 });
 
 test('frame fallback direct restart after navigation to localhost does not inject bundle files', async () => {

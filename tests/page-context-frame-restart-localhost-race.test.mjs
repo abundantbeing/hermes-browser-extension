@@ -37,6 +37,7 @@ test('frame fallback gate ensure reinjects gate and blocks capture after localho
     href,
     anchorToken: `${new URL(href).origin}\u0000${href}`,
   };
+  const pageVm = await loadFrameGateVm(href, injectionDecision);
 
   const executeScript = async (request) => {
     const target = request.target || {};
@@ -67,10 +68,12 @@ test('frame fallback gate ensure reinjects gate and blocks capture after localho
         href,
         anchorToken: `${new URL(href).origin}\u0000${href}`,
       };
-      const ctx = await loadFrameGateVm(href, injectionDecision);
-      return [{ result: await ctx.hermesRefreshPageScriptPolicy() }];
+      pageVm.globalThis.location = { href, origin: new URL(href).origin };
+      const outcome = await pageVm.run(request.func);
+      return [{ result: outcome }];
     }
-    return [{ result: await request.func() }];
+    const result = typeof request.func === 'function' ? await pageVm.run(request.func) : undefined;
+    return [{ result }];
   };
 
   async function verifyInstallBinding(currentBinding) {
@@ -124,11 +127,73 @@ test('frame fallback gate ensure reinjects gate and blocks capture after localho
 
   const allowed = await runGateEnsure(12, binding);
   assert.equal(allowed, false);
-  const injectedGate = fileInjections.some((row) => row.files[0]?.includes('page-context-bundle-gate'));
-  assert.equal(injectedGate, true, 'frame fallback must inject gate before evaluating current location');
   const injectedBundle = fileInjections.some((row) =>
-    row.files.some((file) => file.endsWith('content.js')));
+    row.files.some((file) => file.endsWith('content.js') || file.endsWith('content-extractor.js')));
   assert.equal(injectedBundle, false, 'must not boot bundle on blocked localhost');
+});
+
+test('frame fallback refresh on stable allowed page does not schedule bundle restart', async () => {
+  const settings = { pageContextOnPrivateNetworks: false, pageContextExcludedOrigins: [] };
+  const href = 'https://example.com/stable';
+  const injectionDecision = (url) => pageContextHostPolicyDecision(url, settings);
+  const pageVm = await loadFrameGateVm(href, injectionDecision);
+  const binding = {
+    tabId: 13,
+    frameId: 0,
+    documentId: null,
+    allowFrameFallback: true,
+    href,
+    anchorToken: `${new URL(href).origin}\u0000${href}`,
+  };
+  const restarts = [];
+
+  const executeScript = async (request) => {
+    if (request.files) {
+      restarts.push([...request.files]);
+      return [{ result: undefined }];
+    }
+    const source = request.func.toString();
+    if (source.includes('location.href')) {
+      return [{
+        result: {
+          href,
+          origin: new URL(href).origin,
+          token: `${new URL(href).origin}\u0000${href}`,
+        },
+      }];
+    }
+    if (source.includes('HermesContentExtractor')) {
+      return [{ result: { restart: false, extractorReady: true, bridgeLoaded: true } }];
+    }
+    if (source.includes('typeof globalThis.hermesRefreshPageScriptPolicy')) {
+      return [{ result: true }];
+    }
+    if (source.includes('hermesRefreshPageScriptPolicy') && source.includes('async')) {
+      return [{ result: await pageVm.run(request.func) }];
+    }
+    return [{ result: await pageVm.run(request.func) }];
+  };
+
+  const bundleRestart = createPageContextBundleRestartCoalescer({
+    probeRestartNeeded: (b) => probePageContextBundleRestartNeeded(executeScript, b),
+    runBundleRestart: async () => { restarts.push(['restart']); },
+  });
+
+  const runGateEnsure = createPageContextGateEnsureRunner({
+    executeScript,
+    manifestContentScriptFiles: () => [...MANIFEST_FILES],
+    pageContextBundleRestartFiles: () => pageContextBundleRestartFilesFromManifest(MANIFEST_FILES),
+    pageContextInjectionDecision: injectionDecision,
+    acquireInstallBinding: async () => binding,
+    verifyInstallBinding: async () => true,
+    awaitPageContextBundleRestart: bundleRestart.awaitPageContextBundleRestart,
+    reinstallPageContextBundleEntries: bundleRestart.reinstallPageContextBundleEntries,
+    probePageContextBundleRestartNeeded: (b) => probePageContextBundleRestartNeeded(executeScript, b),
+  });
+
+  const allowed = await runGateEnsure(13, binding);
+  assert.equal(allowed, true);
+  assert.equal(restarts.length, 0);
 });
 
 async function loadFrameGateVm(href, injectionDecision) {
@@ -138,9 +203,7 @@ async function loadFrameGateVm(href, injectionDecision) {
     readFile(browserApiUrl, 'utf8'),
   ]);
   const context = {
-    get location() {
-      return { href, origin: new URL(href).origin };
-    },
+    location: { href, origin: new URL(href).origin },
     __HERMES_BROWSER_CONTENT_LOADED__: 'restart-race',
     bundleBoots: 0,
     browser: {
@@ -170,5 +233,16 @@ async function loadFrameGateVm(href, injectionDecision) {
   vm.runInContext(gateSource, context);
   vm.runInContext(captureGuardSource, context);
   vm.runInContext(browserSource, context);
-  return context;
+  const token = `${new URL(href).origin}\u0000${href}`;
+  context.__HERMES_PAGE_SCRIPTS_BLOCKED__ = false;
+  context.__HERMES_PAGE_SCRIPT_POLICY__.decided = true;
+  context.__HERMES_PAGE_SCRIPT_POLICY__.latestInject = true;
+  context.__HERMES_PAGE_SCRIPT_POLICY__.policyLocationToken = token;
+  delete context.__HERMES_PAGE_SCRIPT_BUNDLE_RESTART__;
+  return {
+    globalThis: context,
+    async run(fn) {
+      return vm.runInContext(`(async () => (${fn})())()`, context);
+    },
+  };
 }
