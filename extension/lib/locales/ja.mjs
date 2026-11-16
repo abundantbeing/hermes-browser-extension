@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes モデルオプションの不一致",
   "ui.hermes.model.options.pending": "Hermes モデルオプション保留中",
   "ui.hermes.model.requested": "Hermes モデルをリクエストしました",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "以前のプロファイルのモデル カタログ更新が完了しました。",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "以前のプロファイルのモデル カタログ更新が開始されました。",
   "ui.hermes.models.synced": "Hermes モデルを同期しました",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes ネイティブ ウェイク ワードは利用できません。",
   "ui.hermes.on.this.machine.default.and.offline.capable": "このマシンの Hermes。既定で、オフラインでも使用可能。",

@@ -6415,6 +6415,14 @@
     "message": "Modello Hermes richiesto",
     "description": "Runtime interface message ui.hermes.model.requested"
   },
+  "runtime_ui_hermes_models_catalog_refresh_finished_previous_profile": {
+    "message": "L’aggiornamento del catalogo modelli è terminato per un profilo precedente.",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_finished_previous_profile"
+  },
+  "runtime_ui_hermes_models_catalog_refresh_started_previous_profile": {
+    "message": "L’aggiornamento del catalogo modelli è iniziato per un profilo precedente.",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_started_previous_profile"
+  },
   "runtime_ui_hermes_models_synced": {
     "message": "Modelli Hermes sincronizzati",
     "description": "Runtime interface message ui.hermes.models.synced"

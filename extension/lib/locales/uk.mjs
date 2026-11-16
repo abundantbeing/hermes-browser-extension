@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Невідповідність параметрів моделі Hermes",
   "ui.hermes.model.options.pending": "Hermes варіанти моделі очікують на розгляд",
   "ui.hermes.model.requested": "Запитана модель Hermes",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "Оновлення каталогу моделей завершено для попереднього профілю.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "Оновлення каталогу моделей розпочато для попереднього профілю.",
   "ui.hermes.models.synced": "Hermes моделей синхронізовано",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes рідне слово пробудження недоступне.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes на цій машині. За замовчуванням і з можливістю автономної роботи.",

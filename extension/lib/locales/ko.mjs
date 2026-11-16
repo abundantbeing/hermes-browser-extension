@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes 모델 옵션 불일치",
   "ui.hermes.model.options.pending": "Hermes 모델 옵션 대기 중",
   "ui.hermes.model.requested": "Hermes 모델 요청됨",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "이전 프로필에 대한 모델 카탈로그 새로 고침이 완료되었습니다.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "이전 프로필에 대한 모델 카탈로그 새로 고침이 시작되었습니다.",
   "ui.hermes.models.synced": "Hermes 모델 동기화됨",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes 기본 깨우기 단어를 사용할 수 없습니다.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "이 컴퓨터의 Hermes. 기본값이며 오프라인 사용 가능.",

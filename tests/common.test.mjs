@@ -3492,7 +3492,10 @@ test('Cloud Preview flattens provider-aware model.options payloads before render
   assert.deepEqual(modelRowsFromGatewayOptions(legacyRows), legacyRows);
 
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(sidepanel, /modelRowsFromGatewayOptions\(await remoteWsConnection\.client\.request\(WS_METHODS\.modelOptions\)\)/);
+  assert.match(
+    sidepanel,
+    /const optionsPayload = isRemoteWsMode\(\)[\s\S]*modelRowsFromGatewayOptions\(optionsPayload\)/,
+  );
 });
 
 test('Cloud Preview applies model picks to the live session and refreshes context metadata', () => {

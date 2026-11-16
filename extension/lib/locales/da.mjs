@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes modelvalg stemmer ikke overens",
   "ui.hermes.model.options.pending": "Hermes model muligheder afventer",
   "ui.hermes.model.requested": "Hermes model efterspurgt",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "Opdatering af modelkataloget blev færdig for en tidligere profil.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "Opdatering af modelkataloget startede for en tidligere profil.",
   "ui.hermes.models.synced": "Hermes-modeller synkroniseret",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes’ indbyggede vækkeord er ikke tilgængeligt.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes på denne maskine. Standard og offline-kompatibel.",

@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes 模型選項不匹配",
   "ui.hermes.model.options.pending": "Hermes 模型選項待處理",
   "ui.hermes.model.requested": "Hermes 模型已請求",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "已為上一設定檔完成模型目錄重新整理。",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "已為上一設定檔開始重新整理模型目錄。",
   "ui.hermes.models.synced": "Hermes 模型已同步",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes 原生喚醒詞無法使用。",
   "ui.hermes.on.this.machine.default.and.offline.capable": "本機上的 Hermes。預設且支援離線。",

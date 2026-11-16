@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes model seçenekleri uyuşmazlığı",
   "ui.hermes.model.options.pending": "Hermes model seçenekleri beklemede",
   "ui.hermes.model.requested": "Hermes modeli talep edildi",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "Model kataloğu yenilemesi önceki bir profil için tamamlandı.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "Model kataloğu yenilemesi önceki bir profil için başladı.",
   "ui.hermes.models.synced": "Hermes modelleri senkronize edildi",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes yerel uyandırma sözcüğü kullanılamıyor.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Bu makinede Hermes. Varsayılan ve çevrimdışı özellikli.",

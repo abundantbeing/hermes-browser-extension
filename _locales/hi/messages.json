@@ -6415,6 +6415,14 @@
     "message": "Hermes मॉडल का अनुरोध किया गया",
     "description": "Runtime interface message ui.hermes.model.requested"
   },
+  "runtime_ui_hermes_models_catalog_refresh_finished_previous_profile": {
+    "message": "मॉडल कैटलॉग रिफ़्रेश पिछले प्रोफ़ाइल के लिए समाप्त हुआ।",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_finished_previous_profile"
+  },
+  "runtime_ui_hermes_models_catalog_refresh_started_previous_profile": {
+    "message": "मॉडल कैटलॉग रिफ़्रेश पिछले प्रोफ़ाइल के लिए शुरू हुआ।",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_started_previous_profile"
+  },
   "runtime_ui_hermes_models_synced": {
     "message": "Hermes मॉडल समन्वयित हुए",
     "description": "Runtime interface message ui.hermes.models.synced"

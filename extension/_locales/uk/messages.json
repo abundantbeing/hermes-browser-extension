@@ -6415,6 +6415,14 @@
     "message": "Запитана модель Hermes",
     "description": "Runtime interface message ui.hermes.model.requested"
   },
+  "runtime_ui_hermes_models_catalog_refresh_finished_previous_profile": {
+    "message": "Оновлення каталогу моделей завершено для попереднього профілю.",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_finished_previous_profile"
+  },
+  "runtime_ui_hermes_models_catalog_refresh_started_previous_profile": {
+    "message": "Оновлення каталогу моделей розпочато для попереднього профілю.",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_started_previous_profile"
+  },
   "runtime_ui_hermes_models_synced": {
     "message": "Hermes моделей синхронізовано",
     "description": "Runtime interface message ui.hermes.models.synced"

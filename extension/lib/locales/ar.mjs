@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "خيارات نموذج Hermes غير متطابقة",
   "ui.hermes.model.options.pending": "خيارات نموذج Hermes معلقة",
   "ui.hermes.model.requested": "نموذج Hermes المطلوب",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "انتهى تحديث كتالوج النماذج لملف تعريف سابق.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "بدأ تحديث كتالوج النماذج لملف تعريف سابق.",
   "ui.hermes.models.synced": "تمت مزامنة نماذج Hermes",
   "ui.hermes.native.wake.word.is.unavailable": "كلمة التنبيه الأصلية لـ Hermes غير متاحة.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes على هذا الجهاز. افتراضي وغير متصل.",

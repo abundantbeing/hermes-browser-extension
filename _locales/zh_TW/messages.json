@@ -6415,6 +6415,14 @@
     "message": "Hermes 模型已請求",
     "description": "Runtime interface message ui.hermes.model.requested"
   },
+  "runtime_ui_hermes_models_catalog_refresh_finished_previous_profile": {
+    "message": "已為上一設定檔完成模型目錄重新整理。",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_finished_previous_profile"
+  },
+  "runtime_ui_hermes_models_catalog_refresh_started_previous_profile": {
+    "message": "已為上一設定檔開始重新整理模型目錄。",
+    "description": "Runtime interface message ui.hermes.models.catalog_refresh_started_previous_profile"
+  },
   "runtime_ui_hermes_models_synced": {
     "message": "Hermes 模型已同步",
     "description": "Runtime interface message ui.hermes.models.synced"
