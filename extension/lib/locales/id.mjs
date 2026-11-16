@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes opsi model tidak cocok",
   "ui.hermes.model.options.pending": "Hermes opsi model tertunda",
   "ui.hermes.model.requested": "Hermes model diminta",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "Penyegaran katalog model selesai untuk profil sebelumnya.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "Penyegaran katalog model dimulai untuk profil sebelumnya.",
   "ui.hermes.models.synced": "Hermes model disinkronkan",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes kata bangun asli tidak tersedia.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes pada mesin ini. Default dan berkemampuan offline.",

@@ -116,3 +116,28 @@ test('a window the catalog itself reports outranks a learned one, and the learne
   assert.equal(plain.contextTokens, 300_000);
   gatewayModelContext.clear();
 });
+
+test('hermesContextForModel strips provider:: prefixes and resolves OSS and alias windows accurately', () => {
+  gatewayModelContext.clear();
+  const rows = normalizeHermesModels([
+    { id: 'custom::gemini-4-hydrogen', rawModelId: 'gemini-4-hydrogen', provider: 'custom' },
+    { id: 'custom::claude-opus-5-5-high', rawModelId: 'claude-opus-5-5-high', provider: 'custom' },
+    { id: 'custom::claude-sonnet-5-5-high', rawModelId: 'claude-sonnet-5-5-high', provider: 'custom' },
+    { id: 'custom::gpt-oss-120b-medium', rawModelId: 'gpt-oss-120b-medium', provider: 'custom' },
+    { id: 'custom::gpt-oss-20b', rawModelId: 'gpt-oss-20b', provider: 'custom' },
+  ]);
+  const byId = Object.fromEntries(rows.map((r) => [r.rawModelId, r.contextTokens]));
+  assert.deepEqual(byId, {
+    'gemini-4-hydrogen': 1_048_576,
+    'claude-opus-5-5-high': 1_000_000,
+    'claude-sonnet-5-5-high': 1_000_000,
+    'gpt-oss-120b-medium': 131_072,
+    'gpt-oss-20b': 131_072,
+  });
+  const [overridden] = normalizeHermesModels([
+    { id: 'custom::gpt-oss-120b-medium', rawModelId: 'gpt-oss-120b-medium', provider: 'custom', context_length: 114_000 },
+  ]);
+  assert.equal(overridden.contextTokens, 114_000);
+  assert.equal(hermesContextForModel({ id: 'custom::unknown-model', rawModelId: 'unknown-model' }), 256_000);
+  assert.equal(hermesContextForModel({ id: 'openai/gpt-oss-120b' }), 131_072);
+});

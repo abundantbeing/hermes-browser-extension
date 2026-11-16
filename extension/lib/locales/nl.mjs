@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes-modelopties komen niet overeen",
   "ui.hermes.model.options.pending": "Hermes-modelopties in behandeling",
   "ui.hermes.model.requested": "Hermes-model aangevraagd",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "Het vernieuwen van de modelcatalogus is voltooid voor een eerdere profiel.",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "Het vernieuwen van de modelcatalogus is gestart voor een eerdere profiel.",
   "ui.hermes.models.synced": "Hermes-modellen gesynchroniseerd",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes native wake-word is niet beschikbaar.",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes op deze machine. Standaard en offline geschikt.",

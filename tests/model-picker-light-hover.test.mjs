@@ -121,3 +121,13 @@ test('light model meta on hover reaches 4.5:1 over the tinted row', () => {
     assert.ok(contrast(text, row) >= 4.5, `${name}: meta ${contrast(text, row).toFixed(2)}:1 at alpha ${meta}`);
   }
 });
+
+test('model option context badges stay unclipped while session meta keeps its 42% cap', () => {
+  const modelMeta = RULES.find((r) => r.selectors.includes('.model-option-meta'));
+  const sessionMeta = RULES.find((r) => r.selectors.includes('.session-option-meta'));
+  assert.ok(modelMeta, '.model-option-meta rule is defined');
+  assert.ok(sessionMeta, '.session-option-meta rule is defined');
+  assert.equal(modelMeta.decls['max-width'], 'none');
+  assert.equal(modelMeta.decls['flex-shrink'], '0');
+  assert.equal(sessionMeta.decls['max-width'], '42%');
+});

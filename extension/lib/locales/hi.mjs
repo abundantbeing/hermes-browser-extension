@@ -1073,6 +1073,8 @@ export default Object.freeze({
   "ui.hermes.model.options.mismatch": "Hermes मॉडल विकल्प बेमेल हैं",
   "ui.hermes.model.options.pending": "Hermes मॉडल विकल्प लंबित हैं",
   "ui.hermes.model.requested": "Hermes मॉडल का अनुरोध किया गया",
+  "ui.hermes.models.catalog_refresh_finished_previous_profile": "मॉडल कैटलॉग रिफ़्रेश पिछले प्रोफ़ाइल के लिए समाप्त हुआ।",
+  "ui.hermes.models.catalog_refresh_started_previous_profile": "मॉडल कैटलॉग रिफ़्रेश पिछले प्रोफ़ाइल के लिए शुरू हुआ।",
   "ui.hermes.models.synced": "Hermes मॉडल समन्वयित हुए",
   "ui.hermes.native.wake.word.is.unavailable": "Hermes नेटिव वेक वर्ड अनुपलब्ध है।",
   "ui.hermes.on.this.machine.default.and.offline.capable": "Hermes इस मशीन पर। डिफ़ॉल्ट और ऑफ़लाइन-सक्षम.",
