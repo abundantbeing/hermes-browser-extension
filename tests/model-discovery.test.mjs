@@ -40,6 +40,25 @@ import {
   normalizeHermesModels,
 } from '../extension/lib/common.mjs';
 
+test('discoverModelsFromExternalSources times out when the response body stalls after headers', async () => {
+  const fetchFn = async () => ({
+    ok: true,
+    status: 200,
+    json: () => new Promise(() => {}),
+    text: () => new Promise(() => {}),
+  });
+  const started = Date.now();
+  const result = await discoverModelsFromExternalSources({
+    sourceUrls: ['https://openrouter.ai/api/v1/models'],
+    fetchFn,
+    timeoutMs: 80,
+  });
+  const elapsed = Date.now() - started;
+  assert.ok(elapsed < 500, 'stalled body reads must not hang catalog discovery');
+  assert.equal(result.ok, false);
+  assert.ok(result.results.some((entry) => entry.error === 'timeout'));
+});
+
 test('the shared catalog cache key is profile-independent and distinct from every profile key', () => {
   const shared = globalModelCatalogCacheKey({ gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642' });
   assert.equal(shared, 'local-api|http://127.0.0.1:8642|__shared__');

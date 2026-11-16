@@ -529,17 +529,71 @@ export function resolveDiscoveredProviderSlugs({
   return catalogProvidersTouchedByDiscovery({ models });
 }
 
+async function readResponseBodyWithDeadline(response, method, deadlineMs) {
+  const remaining = deadlineMs - Date.now();
+  if (remaining <= 0) {
+    const error = new Error('timeout');
+    error.name = 'AbortError';
+    throw error;
+  }
+  const reader = response[method];
+  if (typeof reader !== 'function') {
+    throw new Error(`unsupported-response-body-${method}`);
+  }
+  let timer;
+  try {
+    return await Promise.race([
+      reader.call(response),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          const error = new Error('timeout');
+          error.name = 'AbortError';
+          reject(error);
+        }, remaining);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function responseWithBodyDeadline(response, deadlineMs) {
+  return new Proxy(response, {
+    get(target, prop, receiver) {
+      if (prop === 'json') {
+        return () => readResponseBodyWithDeadline(target, 'json', deadlineMs);
+      }
+      if (prop === 'text') {
+        return () => readResponseBodyWithDeadline(target, 'text', deadlineMs);
+      }
+      if (prop === 'arrayBuffer') {
+        return () => readResponseBodyWithDeadline(target, 'arrayBuffer', deadlineMs);
+      }
+      const value = Reflect.get(target, prop, receiver);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
+}
+
 async function fetchWithTimeout(fetchFn, url, options = {}, timeoutMs = 5000) {
   if (typeof fetchFn !== 'function') throw new Error('no-fetch');
   if (typeof AbortController === 'undefined' || !timeoutMs) {
     return fetchFn(url, { ...options, redirect: 'error' });
   }
+  const deadlineMs = Date.now() + timeoutMs;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetchFn(url, { ...options, signal: controller.signal, redirect: 'error' });
-  } finally {
+  let timer = setTimeout(() => controller.abort(), timeoutMs);
+  const clearTimer = () => {
     clearTimeout(timer);
+    timer = null;
+  };
+  try {
+    const response = await fetchFn(url, { ...options, signal: controller.signal, redirect: 'error' });
+    clearTimer();
+    return responseWithBodyDeadline(response, deadlineMs);
+  } catch (error) {
+    clearTimer();
+    throw error;
   }
 }
 
