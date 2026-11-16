@@ -434,6 +434,12 @@ test('the spoken language comes from the reply, not the panel locale', () => {
   assert.equal(guessSpeechLanguage('The word こんにちは is a greeting.', 'en'), 'en-US', 'embedded Japanese yields to English words');
   assert.equal(guessSpeechLanguage('JavaScript開発環境の初期設定手順を説明します。', 'en'), 'ja-JP', 'kana and kanji beat embedded Latin');
   assert.equal(guessSpeechLanguage('ロシア語で「Привет」は「こんにちは」という意味です。', 'ja'), 'ja-JP', 'Japanese beats a short Cyrillic quote');
+  assert.equal(
+    guessSpeechLanguage('JavaScript 配置已经完成，请重启浏览器。日语「こんにちは」表示问候。', 'zh-CN'),
+    'zh-CN',
+    'a short Japanese quote does not flip predominantly Chinese prose to Japanese',
+  );
+  assert.equal(guessSpeechLanguage('これは日本語のテキストです。', 'zh-CN'), 'ja-JP', 'substantial kana still selects Japanese');
   assert.equal(guessSpeechLanguage('OK', 'pt-BR'), 'pt-BR', 'too little to tell keeps the locale');
   assert.equal(guessSpeechLanguage('OK', ''), '');
 });
@@ -493,6 +499,27 @@ test('browser speech reads French with a French voice and no Portuguese voice', 
   speech.speak(['Ça fonctionne correctement.']);
   assert.equal(synth.spoken[0].lang, 'fr-FR');
   assert.equal(synth.spoken[0].voice, thomas);
+});
+
+test('browser speech reads Chinese prose with a short Japanese quote in a Chinese panel', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  const chinese = { name: 'Ting-Ting', lang: 'zh-CN' };
+  synth.getVoices = () => [{ name: 'Samantha', lang: 'en-US', default: true }, chinese];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'zh-CN' });
+  const line = 'JavaScript 配置已经完成，请重启浏览器。日语「こんにちは」表示问候。';
+  speech.speak([line]);
+  assert.equal(synth.spoken[0].lang, 'zh-CN');
+  assert.equal(synth.spoken[0].voice, chinese);
+});
+
+test('browser speech still reads real Japanese in a Chinese panel when a Japanese voice is installed', () => {
+  const { synth, Utterance } = fakeSpeechSynthesis();
+  const japanese = { name: 'Kyoko', lang: 'ja-JP' };
+  synth.getVoices = () => [{ name: 'Ting-Ting', lang: 'zh-CN' }, japanese];
+  const speech = createBrowserSpeech({ synth, Utterance, fallbackLang: 'zh-CN' });
+  speech.speak(['これは日本語のテキストです。']);
+  assert.equal(synth.spoken[0].lang, 'ja-JP');
+  assert.equal(synth.spoken[0].voice, japanese);
 });
 
 test('browser speech reads Ukrainian in an English panel when a Ukrainian voice is installed', () => {

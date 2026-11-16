@@ -619,13 +619,31 @@ function letterCount(pattern, text) {
   return (text.match(pattern) || []).length;
 }
 
+/** True when kana looks like Japanese prose, not a short quote inside mostly Han text. */
+function substantialJapaneseEvidence(kanaCount, hanCount) {
+  if (!kanaCount) return false;
+  if (!hanCount) return kanaCount >= 3;
+  const cjk = kanaCount + hanCount;
+  if (kanaCount >= hanCount) return true;
+  return kanaCount >= 4 && kanaCount / cjk >= 0.3;
+}
+
+function embeddedKanaInPredominantHan(kanaCount, hanCount) {
+  if (!kanaCount || !hanCount) return false;
+  return hanCount > kanaCount * 3 && kanaCount <= 8;
+}
+
 /** Pick a non-Latin script only when it beats Latin and every other script in the sample. */
 function dominantScriptLanguage(sample, fallbackPrimary, fallbackLang) {
   const latinCount = latinLetterCount(sample);
   const kanaCount = letterCount(KANA_LETTERS, sample);
   const hanCount = letterCount(HAN_LETTERS, sample);
-  const japaneseCount = kanaCount > 0 ? kanaCount + hanCount : 0;
-  const chineseCount = kanaCount > 0 ? 0 : hanCount;
+  const hanQuote = embeddedKanaInPredominantHan(kanaCount, hanCount);
+  const japaneseDominant = kanaCount > 0 && !hanQuote && (
+    substantialJapaneseEvidence(kanaCount, hanCount) || kanaCount + hanCount > latinCount
+  );
+  const japaneseCount = kanaCount + (japaneseDominant ? hanCount : 0);
+  const chineseCount = japaneseDominant ? 0 : hanCount;
   const competitors = [
     ['ja', japaneseCount],
     ['zh', chineseCount],
