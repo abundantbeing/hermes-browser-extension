@@ -45,14 +45,42 @@ import {
   normalizeHermesModels,
 } from '../extension/lib/common.mjs';
 
+function raceDiscoveryTimerSpies() {
+  const clearedIds = [];
+  let scheduledId;
+  const timers = {
+    setTimeout(callback, delayMs) {
+      scheduledId = setTimeout(callback, delayMs);
+      return scheduledId;
+    },
+    clearTimeout(timeoutId) {
+      clearedIds.push(timeoutId);
+      clearTimeout(timeoutId);
+    },
+  };
+  return { timers, clearedIds, scheduledId: () => scheduledId };
+}
+
 test('raceModelDiscovery clears its timeout when discovery resolves first', async () => {
-  const started = Date.now();
+  const { timers, clearedIds, scheduledId } = raceDiscoveryTimerSpies();
   const outcome = await raceModelDiscovery(
-  Promise.resolve({ ok: true, models: [{ id: 'demo::m1' }] }),
-  20_000,
+    Promise.resolve({ ok: true, models: [{ id: 'demo::m1' }] }),
+    20_000,
+    timers,
   );
   assert.equal(outcome.ok, true);
-  assert.ok(Date.now() - started < 500, 'resolved discovery must not wait for the race timeout');
+  assert.equal(clearedIds.length, 1, 'race timeout must be cleared after discovery resolves');
+  assert.equal(clearedIds[0], scheduledId());
+});
+
+test('raceModelDiscovery clears its timeout when discovery rejects', async () => {
+  const { timers, clearedIds, scheduledId } = raceDiscoveryTimerSpies();
+  await assert.rejects(
+    () => raceModelDiscovery(Promise.reject(new Error('discovery failed')), 20_000, timers),
+    /discovery failed/,
+  );
+  assert.equal(clearedIds.length, 1, 'race timeout must be cleared after discovery rejects');
+  assert.equal(clearedIds[0], scheduledId());
 });
 
 test('fetchWithTimeout keeps healthy real Response objects readable', async () => {
