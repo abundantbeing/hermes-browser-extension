@@ -201,8 +201,17 @@ test('a canceled Connect attempt must not unlock connectButton while a newer att
   );
   assert.match(
     sidepanelSource,
-    /function applyConnectionMode\([\s\S]{0,900}connectionController\.cancel\('connection settings changed'\)[\s\S]{0,400}els\.connectButton\.disabled = false/,
+    /function applyConnectionMode\([\s\S]{0,900}connectionController\.cancel\('connection settings changed'\)[\s\S]{0,400}resetConnectButtonIdle\(\)/,
     'canceled Connect UI resets where connection mode changes',
+  );
+});
+
+test('saveSettingsFromForm resets Connect when Save cancels a pairing attempt', () => {
+  const save = sidepanelSource.match(/async function saveSettingsFromForm\([\s\S]*?const writeSettingsRecord = async/)?.[0] || '';
+  assert.match(
+    save,
+    /if \(connectionChanged\) \{[\s\S]*?connectionController\.cancel\('connection settings changed'\)[\s\S]*?resetConnectButtonIdle\(\)/,
+    'saving a different gateway address must unlock Connect after cancel',
   );
 });
 

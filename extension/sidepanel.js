@@ -6323,6 +6323,12 @@ function renderConnectionModePanel() {
   renderGatewayHelp();
 }
 
+function resetConnectButtonIdle() {
+  if (!els.connectButton) return;
+  els.connectButton.disabled = false;
+  els.connectButton.textContent = translateUiText('Connect to Hermes');
+}
+
 function applyConnectionMode(value) {
   if (!els.connectionModeInput || !els.gatewayModeInput) return;
   const previousMode = normalizeConnectionMode(els.connectionModeInput.value || settings.connectionMode);
@@ -6347,10 +6353,7 @@ function applyConnectionMode(value) {
     }
     remoteWsConnection = null;
     trustedDashboardTabId = null;
-    if (els.connectButton) {
-      els.connectButton.disabled = false;
-      els.connectButton.textContent = translateUiText('Connect to Hermes');
-    }
+    resetConnectButtonIdle();
     if (els.testConnectionButton) {
       setTestConnectionBusy(false);
       setTestConnectionButtonLabel('TEST');
@@ -24759,6 +24762,7 @@ async function saveSettingsFromForm({ lockHeld = false } = {}) {
     remoteWsConnection = null;
     profileWsConnection?.client?.close?.();
     profileWsConnection = null;
+    resetConnectButtonIdle();
   }
   resetLocalDashboardState();
   if (previousSettings.botModeEnabled === true && settings.botModeEnabled !== true) {
