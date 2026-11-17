@@ -20,10 +20,8 @@ function pxValue(raw = '') {
   return match ? Number(match[1]) : null;
 }
 
-function paddingSides(body) {
-  const block = lastDeclaration(body, 'padding');
-  if (!block) return null;
-  const parts = block.split(/\s+/).filter(Boolean);
+function paddingSidesFromValue(block) {
+  const parts = String(block).trim().split(/\s+/).filter(Boolean);
   if (parts.length === 1) {
     const value = pxValue(parts[0]);
     return value == null ? null : { top: value, right: value, bottom: value, left: value };
@@ -52,12 +50,58 @@ function paddingSides(body) {
   return null;
 }
 
+function paddingSides(body) {
+  const block = lastDeclaration(body, 'padding');
+  if (!block) return null;
+  return paddingSidesFromValue(block);
+}
+
+function ruleDeclarations(body) {
+  return String(body)
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/** Resolve padding-inline-start in source order; later declarations win. */
 function inlineInsetPx(body) {
-  const logical = pxValue(lastDeclaration(body, 'padding-inline-start'));
-  if (logical != null) return logical;
-  const sides = paddingSides(body);
-  if (sides) return sides.left;
-  return pxValue(lastDeclaration(body, 'padding-left'));
+  let left = null;
+  for (const decl of ruleDeclarations(body)) {
+    const colon = decl.indexOf(':');
+    if (colon < 0) continue;
+    const prop = decl.slice(0, colon).trim().toLowerCase();
+    const value = decl.slice(colon + 1).trim();
+    if (prop === 'padding-inline-start') {
+      const px = pxValue(value);
+      if (px != null) left = px;
+    } else if (prop === 'padding-inline') {
+      const parts = value.split(/\s+/).filter(Boolean);
+      const start = pxValue(parts[0]);
+      if (start != null) left = start;
+    } else if (prop === 'padding-left') {
+      const px = pxValue(value);
+      if (px != null) left = px;
+    } else if (prop === 'padding') {
+      const sides = paddingSidesFromValue(value);
+      if (sides) left = sides.left;
+    }
+  }
+  return left;
+}
+
+const SETTINGS_CONTAINER = /(?:\.settings-dialog|\.web-settings-dialog|\.settings-pane)\b/;
+
+function selectorPartTargetsSettingsFormField(part) {
+  const trimmed = part.trim();
+  if (!SETTINGS_CONTAINER.test(trimmed)) return false;
+  if (/composer|#promptInput|model-sources-input/.test(trimmed)) return false;
+  if (/\btextarea\b/.test(trimmed)) return true;
+  if (/\binput\b/.test(trimmed) && !/\binput\[type\s*=\s*['"]?checkbox/.test(trimmed)) return true;
+  return false;
+}
+
+function ruleTargetsSettingsFormField(selector) {
+  return String(selector).split(',').some(selectorPartTargetsSettingsFormField);
 }
 
 function auditComposerTextareaRule(rules) {
@@ -118,12 +162,9 @@ function auditSettingsTextareaOverride(rules) {
 }
 
 function auditSettingsFormFieldRules(rules) {
-  const formField = /(?:\.settings-dialog|\.web-settings-dialog|\.settings-pane)\s+(?:input|textarea)(?!\[type=.?checkbox)/;
   const violations = [];
   for (const rule of rules) {
-    if (!formField.test(rule.selector)) continue;
-    if (!/\bpadding(?:-inline-start|-left)?\s*:/.test(rule.body)) continue;
-    if (/composer|#promptInput|model-sources-input/.test(rule.selector)) continue;
+    if (!ruleTargetsSettingsFormField(rule.selector)) continue;
     const textIndent = lastDeclaration(rule.body, 'text-indent');
     if (textIndent && textIndent !== '0' && textIndent !== '0px') {
       violations.push({
@@ -133,6 +174,7 @@ function auditSettingsFormFieldRules(rules) {
         detail: `text-indent must be 0 on settings fields (got ${textIndent})`,
       });
     }
+    if (!/\bpadding(?:-inline(?:-start)?|-left)?\s*:/.test(rule.body)) continue;
     const inset = inlineInsetPx(rule.body);
     if (inset != null && inset > MAX_INLINE_INSET_PX && !/marketplace-theme-search/.test(rule.selector)) {
       violations.push({

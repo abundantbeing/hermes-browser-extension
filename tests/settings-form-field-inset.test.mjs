@@ -43,3 +43,54 @@ test('sidepanel.html keeps the exclusions textarea as a settings control', () =>
     'the private/LAN exclusions field must stay a settings textarea',
   );
 });
+
+test('inline inset respects later padding-left after padding shorthand', () => {
+  const css = `
+textarea { padding: 10px 68px 34px 36px; }
+:is(.settings-dialog, .web-settings-dialog) textarea { padding: 9px; padding-left: 40px; }
+`;
+  const violations = auditSettingsFormFieldInsetCss(css, 'order.css');
+  assert.ok(
+    violations.some((entry) => entry.detail.includes('40px')),
+    'later padding-left must win over earlier padding shorthand',
+  );
+});
+
+test('inline inset respects later padding shorthand after padding-left', () => {
+  const css = `
+textarea { padding: 10px 68px 34px 36px; }
+:is(.settings-dialog, .web-settings-dialog) textarea { padding-left: 40px; padding: 9px; }
+`;
+  const violations = auditSettingsFormFieldInsetCss(css, 'order.css');
+  const padViolations = violations.filter((entry) => entry.detail.includes('padding-inline-start'));
+  assert.ok(
+  padViolations.every((entry) => !entry.detail.includes('40px')),
+    'later padding shorthand must win over earlier padding-left',
+  );
+});
+
+test('nested settings field selectors are audited', () => {
+  const css = `
+textarea { padding: 10px 68px 34px 36px; }
+:is(.settings-dialog, .web-settings-dialog) textarea { padding: 9px; }
+.settings-pane .settings-field > textarea { padding: 36px; }
+`;
+  const violations = auditSettingsFormFieldInsetCss(css, 'nested.css');
+  assert.ok(
+    violations.some((entry) => entry.selector?.includes('.settings-pane .settings-field > textarea')),
+    'nested settings textarea rules must be checked',
+  );
+});
+
+test('text-indent-only settings field rules are audited', () => {
+  const css = `
+textarea { padding: 10px 68px 34px 36px; }
+:is(.settings-dialog, .web-settings-dialog) textarea { padding: 9px; }
+.settings-dialog input { text-indent: 36px; }
+`;
+  const violations = auditSettingsFormFieldInsetCss(css, 'indent.css');
+  assert.ok(
+    violations.some((entry) => entry.detail.includes('text-indent') && entry.detail.includes('36px')),
+    'text-indent must be checked without a padding declaration',
+  );
+});

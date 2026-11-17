@@ -238,6 +238,18 @@ async function openSettingsPane(panel, pane) {
   await waitFor(() => panel.evaluate(`document.querySelector('[data-settings-pane="${pane}"]')?.hidden === false`));
 }
 
+async function prepareSettingsPaneForInsetProbe(panel, pane) {
+  if (pane !== 'appearance') return;
+  await panel.evaluate(`(() => {
+    const manager = document.querySelector('#customThemeManager');
+    if (manager) {
+      manager.open = true;
+    }
+    return true;
+  })()`);
+  await waitFor(() => panel.evaluate(`document.querySelector('#customThemeManager')?.open === true`));
+}
+
 async function saveScreenshot(client, filePath) {
   const shot = await client.call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
   assert.ok(shot.data, `Screenshot data missing for ${filePath}`);
@@ -302,7 +314,7 @@ async function main() {
         && String(target.url || '').startsWith(`chrome-extension://${extensionId}/`)
       )) || null;
     }, 30_000);
-    const setup = new CdpClient(workerTarget.webSocketDebuggerUrl);
+    setup = new CdpClient(workerTarget.webSocketDebuggerUrl);
     await setup.connect();
     await setup.call('Runtime.enable');
     await waitFor(() => setup.evaluate('Boolean(globalThis.chrome?.storage?.local)'));
@@ -358,10 +370,17 @@ async function main() {
     const failures = [];
   for (const pane of SETTINGS_CATEGORIES) {
       await openSettingsPane(panel, pane);
+      await prepareSettingsPaneForInsetProbe(panel, pane);
       const probe = await panel.evaluate(fieldInsetProbe);
       if (!probe?.ok) {
         failures.push({ pane, reason: probe?.reason || 'probe failed' });
         continue;
+      }
+      if (pane === 'appearance') {
+        const measuredIds = probe.fields.map((field) => field.id);
+        if (!measuredIds.includes('customThemeImportTextarea')) {
+          failures.push({ pane, field: 'customThemeImportTextarea', kind: 'missing', reason: 'custom theme import textarea not measured' });
+        }
       }
       for (const field of probe.fields) {
         if (field.textIndent > 0.01) {
@@ -391,7 +410,7 @@ async function main() {
 
     if (failures.length) {
       console.error('[settings-inset] failures', JSON.stringify(failures, null, 2));
-      process.exit(1);
+      throw new Error(`[settings-inset] ${failures.length} field inset failure(s)`);
     }
     console.log('[settings-inset] all visible settings text fields within inset budget');
   } finally {
@@ -403,4 +422,9 @@ async function main() {
   }
 }
 
-await main();
+try {
+  await main();
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+}
