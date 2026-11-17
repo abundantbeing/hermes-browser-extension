@@ -89,6 +89,23 @@ test('findEscapeHatchesInFile scans HTML comments and inline script comments', (
   assert.deepEqual(patterns, ['FIXME', 'TODO']);
 });
 
+test('findEscapeHatchesInFile skips non-JavaScript script bodies in HTML', () => {
+  const html = [
+    '<script type="application/json">{"label":"TODO in json"}</script>',
+    '<!-- TODO: only this hatch -->',
+    '<script type="text/javascript">',
+    '// TODO: still flagged',
+    '</script>',
+    '<script type="module">',
+    '// TODO: module hatch',
+    '</script>',
+  ].join('\n');
+  const hits = findEscapeHatchesInFile('extension/page.html', `${html}\n`);
+  const patterns = hits.map((h) => h.pattern).sort();
+  assert.deepEqual(patterns, ['TODO', 'TODO', 'TODO']);
+  assert.equal(hits.filter((h) => h.pattern === 'TODO' && h.comment.includes('only this')).length, 1);
+});
+
 test('findEscapeHatchesInFile scans Python line comments but not strings', () => {
   const source = ['label = "not a # TODO"', '# TODO: migrate script'].join('\n');
   const hits = findEscapeHatchesInFile('scripts/pytools/sample.py', `${source}\n`);

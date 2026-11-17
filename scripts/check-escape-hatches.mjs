@@ -235,11 +235,34 @@ function* commentSpansFromPython(source) {
   }
 }
 
-function scriptModuleFromOpenTag(openTag) {
-  const match = openTag.match(/\btype\s*=\s*(['"])([^'"]+)\1/i);
-  if (!match) return true;
-  const type = match[2].trim().toLowerCase();
-  return type === 'module';
+function scriptTypeAttributeFromOpenTag(openTag) {
+  const quoted = openTag.match(/\btype\s*=\s*(['"])([^'"]*)\1/i);
+  if (quoted) return quoted[2].trim();
+  const unquoted = openTag.match(/\btype\s*=\s*([^\s"'`=<>]+)/i);
+  if (unquoted) return unquoted[1].trim();
+  return undefined;
+}
+
+const EXECUTABLE_SCRIPT_MIME_BASES = new Set([
+  'text/javascript',
+  'application/javascript',
+  'application/ecmascript',
+  'text/ecmascript',
+  'text/jscript',
+  'application/x-javascript',
+  'text/x-javascript',
+]);
+
+/** @returns {null | 'inline.mjs' | 'inline.cjs'} */
+function inlineScriptEspreeFileFromOpenTag(openTag) {
+  const typeAttr = scriptTypeAttributeFromOpenTag(openTag);
+  if (typeAttr === undefined || typeAttr === '') {
+    return 'inline.cjs';
+  }
+  const base = typeAttr.toLowerCase().split(';', 1)[0].trim();
+  if (base === 'module') return 'inline.mjs';
+  if (EXECUTABLE_SCRIPT_MIME_BASES.has(base)) return 'inline.cjs';
+  return null;
 }
 
 /** @returns {Generator<{ start: number, end: number, text: string }>} */
@@ -265,8 +288,8 @@ function* commentSpansFromHtml(source) {
       if (closeMatch === -1) break;
       const bodyEnd = bodyStart + closeMatch;
       const body = source.slice(bodyStart, bodyEnd);
-      if (body.trim()) {
-        const pseudoFile = scriptModuleFromOpenTag(openTag) ? 'inline.mjs' : 'inline.cjs';
+      const pseudoFile = inlineScriptEspreeFileFromOpenTag(openTag);
+      if (pseudoFile && body.trim()) {
         for (const span of commentSpansFromEspree(pseudoFile, body)) {
           yield { start: bodyStart + span.start, end: bodyStart + span.end, text: span.text };
         }
