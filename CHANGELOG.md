@@ -4,7 +4,7 @@
 
 ### Changed
 
-- **`npm run verify` now includes ESLint and an escape-hatch baseline check.** Inline `eslint-disable` comments, TypeScript checkpoint pragmas, and `TODO`/`FIXME`/`HACK`/`XXX` markers in comments are allowed only when listed in `scripts/escape-hatch-baseline.json`; new ones fail CI-style verification. ESLint reports unused disable directives as errors.
+- **`npm run verify` now includes ESLint and an escape-hatch baseline check.** Inline `eslint-disable` comments, TypeScript checkpoint pragmas, and `TODO`/`FIXME`/`HACK`/`XXX` markers in comments are allowed only when listed in `scripts/escape-hatch-baseline.json`; new ones fail CI-style verification. ESLint reports unused disable directives as errors. The gate parses JavaScript-family sources with Espree (regex literals, template expressions, and strings), and scans `.css`, `.html`, and `.py` under the same roots; TypeScript-only syntax in `.ts`/`.tsx` files fails the check until a TS-aware parser is added.
 
 - **Read aloud uses the reply's language for the browser voice.** Browser read-aloud now guesses the spoken language from the reply text (not the panel locale), including mixed Latin-script replies, Ukrainian Cyrillic, and short embedded foreign quotes, and shows a translated warning when no voice is installed for the requested language.
 

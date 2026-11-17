@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import * as espree from 'espree';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultRoot = path.resolve(scriptDir, '..');
@@ -70,7 +71,17 @@ export const SKIPPED_DIRECTORY_NAMES = Object.freeze([
   { name: '.git', reason: 'git metadata' },
 ]);
 
-export const SCANNABLE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx']);
+export const SCANNABLE_EXTENSIONS = new Set([
+  '.js',
+  '.mjs',
+  '.cjs',
+  '.ts',
+  '.tsx',
+  '.jsx',
+  '.css',
+  '.html',
+  '.py',
+]);
 
 export const DEFAULT_SCAN_ROOTS = Object.freeze([
   'extension',
@@ -103,21 +114,54 @@ export function baselineEntryKey(relativeFile, pattern, commentText) {
     .slice(0, 16);
 }
 
+function espreeCommentText(comment) {
+  return comment.type === 'Line' ? `//${comment.value}` : `/*${comment.value}*/`;
+}
+
+function espreeOptionsForFile(relativeFile) {
+  const ext = path.extname(relativeFile).toLowerCase();
+  /** @type {import('espree').EspreeOptions} */
+  const options = {
+    ecmaVersion: 'latest',
+    comment: true,
+    range: true,
+  };
+  options.sourceType = ext === '.cjs' ? 'script' : 'module';
+  if (ext === '.jsx' || ext === '.tsx') {
+    options.ecmaFeatures = { jsx: true };
+  }
+  return options;
+}
+
+/** @returns {Array<{ start: number, end: number, text: string }>} */
+function commentSpansFromEspree(relativeFile, source) {
+  const ext = path.extname(relativeFile).toLowerCase();
+  try {
+    const ast = espree.parse(source, espreeOptionsForFile(relativeFile));
+    const comments = ast.comments ?? [];
+    return comments.map((comment) => ({
+      start: comment.start,
+      end: comment.end,
+      text: espreeCommentText(comment),
+    }));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (ext === '.ts' || ext === '.tsx') {
+      throw new Error(
+        `escape-hatch scan cannot parse ${relativeFile}: TypeScript-only syntax is not supported by the ECMAScript parser. ${message}`,
+      );
+    }
+    throw new Error(`escape-hatch scan cannot parse ${relativeFile}: ${message}`);
+  }
+}
+
 /** @returns {Generator<{ start: number, end: number, text: string }>} */
-function* commentSpans(source) {
+function* commentSpansFromCss(source) {
   let index = 0;
   const length = source.length;
   while (index < length) {
     const char = source[index];
     const next = source[index + 1];
-    if (char === '/' && next === '/') {
-      const start = index;
-      index += 2;
-      while (index < length && source[index] !== '\n') index += 1;
-      const end = index;
-      yield { start, end, text: source.slice(start, end) };
-      continue;
-    }
     if (char === '/' && next === '*') {
       const start = index;
       index += 2;
@@ -142,14 +186,44 @@ function* commentSpans(source) {
       }
       continue;
     }
-    if (char === '`') {
+    index += 1;
+  }
+}
+
+/** @returns {Generator<{ start: number, end: number, text: string }>} */
+function* commentSpansFromPython(source) {
+  let index = 0;
+  const length = source.length;
+  while (index < length) {
+    const char = source[index];
+    if (char === '#') {
+      const start = index;
+      while (index < length && source[index] !== '\n') index += 1;
+      yield { start, end: index, text: source.slice(start, index) };
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      const quote = char;
+      const triple = source[index + 1] === quote && source[index + 2] === quote;
+      if (triple) {
+        index += 3;
+        while (index < length) {
+          if (source[index] === quote && source[index + 1] === quote && source[index + 2] === quote) {
+            index += 3;
+            break;
+          }
+          if (source[index] === '\\') index += 2;
+          else index += 1;
+        }
+        continue;
+      }
       index += 1;
       while (index < length) {
         if (source[index] === '\\') {
           index += 2;
           continue;
         }
-        if (source[index] === '`') {
+        if (source[index] === quote) {
           index += 1;
           break;
         }
@@ -159,6 +233,73 @@ function* commentSpans(source) {
     }
     index += 1;
   }
+}
+
+function scriptModuleFromOpenTag(openTag) {
+  const match = openTag.match(/\btype\s*=\s*(['"])([^'"]+)\1/i);
+  if (!match) return true;
+  const type = match[2].trim().toLowerCase();
+  return type === 'module';
+}
+
+/** @returns {Generator<{ start: number, end: number, text: string }>} */
+function* commentSpansFromHtml(source) {
+  let index = 0;
+  const length = source.length;
+  while (index < length) {
+    if (source.startsWith('<!--', index)) {
+      const start = index;
+      index += 4;
+      while (index < length - 2 && !source.startsWith('-->', index)) index += 1;
+      index = Math.min(length, index + 3);
+      yield { start, end: index, text: source.slice(start, index) };
+      continue;
+    }
+    const lower = source.slice(index, index + 7).toLowerCase();
+    if (lower.startsWith('<script')) {
+      const openEnd = source.indexOf('>', index);
+      if (openEnd === -1) break;
+      const openTag = source.slice(index, openEnd + 1);
+      const bodyStart = openEnd + 1;
+      const closeMatch = source.slice(bodyStart).toLowerCase().indexOf('</script>');
+      if (closeMatch === -1) break;
+      const bodyEnd = bodyStart + closeMatch;
+      const body = source.slice(bodyStart, bodyEnd);
+      if (body.trim()) {
+        const pseudoFile = scriptModuleFromOpenTag(openTag) ? 'inline.mjs' : 'inline.cjs';
+        for (const span of commentSpansFromEspree(pseudoFile, body)) {
+          yield { start: bodyStart + span.start, end: bodyStart + span.end, text: span.text };
+        }
+      }
+      index = bodyEnd + '</script>'.length;
+      continue;
+    }
+    if (source.slice(index, index + 6).toLowerCase().startsWith('<style')) {
+      const openEnd = source.indexOf('>', index);
+      if (openEnd === -1) break;
+      const bodyStart = openEnd + 1;
+      const closeMatch = source.slice(bodyStart).toLowerCase().indexOf('</style>');
+      if (closeMatch === -1) break;
+      const bodyEnd = bodyStart + closeMatch;
+      const body = source.slice(bodyStart, bodyEnd);
+      for (const span of commentSpansFromCss(body)) {
+        yield { start: bodyStart + span.start, end: bodyStart + span.end, text: span.text };
+      }
+      index = bodyEnd + '</style>'.length;
+      continue;
+    }
+    index += 1;
+  }
+}
+
+/** @returns {Iterable<{ start: number, end: number, text: string }>} */
+export function commentSpansForFile(relativeFile, source) {
+  const ext = path.extname(relativeFile).toLowerCase();
+  if (ext === '.css') return commentSpansFromCss(source);
+  if (ext === '.html') return commentSpansFromHtml(source);
+  if (ext === '.py') return commentSpansFromPython(source);
+  if (SCANNABLE_EXTENSIONS.has(ext)) return commentSpansFromEspree(relativeFile, source);
+  return [];
 }
 
 function classifyPattern(commentText) {
@@ -173,7 +314,7 @@ export function findEscapeHatchesInFile(relativeFile, source) {
   /** @type {Array<{ file: string, pattern: string, key: string, comment: string }>} */
   const hits = [];
   const ordinal = new Map();
-  for (const span of commentSpans(source)) {
+  for (const span of commentSpansForFile(relativeFile, source)) {
     const patterns = classifyPattern(span.text);
     for (const pattern of patterns) {
       const base = baselineEntryKey(relativeFile, pattern, span.text);
@@ -205,7 +346,7 @@ function collectFiles(absoluteRoot, relativePrefix, out) {
     if (SKIPPED_DIRECTORY_NAMES.some(({ name }) => name === entry.name)) continue;
     const absolute = path.join(absoluteRoot, entry.name);
     const relative = relativePrefix ? path.posix.join(relativePrefix, entry.name) : entry.name;
-  if (entry.isDirectory()) {
+    if (entry.isDirectory()) {
       collectFiles(absolute, relative, out);
       continue;
     }

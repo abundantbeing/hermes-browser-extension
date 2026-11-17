@@ -45,6 +45,70 @@ test('findEscapeHatchesInFile flags TODO in line comments', () => {
   assert.equal(hits[0].pattern, 'TODO');
 });
 
+test('findEscapeHatchesInFile sees TODO after a regex literal with a quote', () => {
+  const hits = findEscapeHatchesInFile(
+    'fixture/regex.mjs',
+    'const quote = /"/; // TODO: remove this\n',
+  );
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+});
+
+test('findEscapeHatchesInFile does not treat TODO inside strings after regex', () => {
+  const hits = findEscapeHatchesInFile(
+    'fixture/regex2.mjs',
+    'const a = /[/*]/; const b = "TODO: hide";\n',
+  );
+  assert.equal(hits.length, 0);
+});
+
+test('findEscapeHatchesInFile sees TODO inside template expression comments', () => {
+  const hits = findEscapeHatchesInFile(
+    'fixture/template.mjs',
+    'const x = `a${/* TODO: inner */ 1}b`;\n',
+  );
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+});
+
+test('findEscapeHatchesInFile scans CSS block comments', () => {
+  const hits = findEscapeHatchesInFile('extension/panel.css', '/* TODO: tune spacing */\n.rule {}\n');
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+});
+
+test('findEscapeHatchesInFile scans HTML comments and inline script comments', () => {
+  const html = [
+    '<!-- FIXME: ship layout -->',
+    '<script type="module">',
+    '// TODO: boot',
+    '</script>',
+  ].join('\n');
+  const hits = findEscapeHatchesInFile('extension/page.html', `${html}\n`);
+  const patterns = hits.map((h) => h.pattern).sort();
+  assert.deepEqual(patterns, ['FIXME', 'TODO']);
+});
+
+test('findEscapeHatchesInFile scans Python line comments but not strings', () => {
+  const source = ['label = "not a # TODO"', '# TODO: migrate script'].join('\n');
+  const hits = findEscapeHatchesInFile('scripts/pytools/sample.py', `${source}\n`);
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+});
+
+test('findEscapeHatchesInFile rejects TypeScript-only syntax', () => {
+  assert.throws(
+    () => findEscapeHatchesInFile('fixture/typed.ts', 'const x: number = 1;\n'),
+    /cannot parse fixture\/typed\.ts/i,
+  );
+});
+
+test('findEscapeHatchesInFile accepts TypeScript extension when syntax is plain ECMAScript', () => {
+  const hits = findEscapeHatchesInFile('fixture/plain.ts', '// TODO: later\n');
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+});
+
 test('checkEscapeHatches fails when a new hatch is not baselined', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hbe-escape-new-'));
   const baselinePath = path.join(root, 'baseline.json');
