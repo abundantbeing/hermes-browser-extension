@@ -10392,6 +10392,13 @@ html[dir="rtl"] .settings-pane-back svg { transform: scaleX(-1); }
 .settings-pane label > input,
 .settings-pane label > select,
 .settings-pane label > textarea { margin-top: 0; }
+/* Settings fields use normal form inset; never the composer textarea padding (left 36px). */
+:is(.settings-dialog, .web-settings-dialog) textarea:not(.model-sources-input) {
+  min-height: 40px;
+  max-height: none;
+  padding: 9px;
+  resize: vertical;
+}
 
 /* Connection mode cards: copy on the start side, a square mark on the end side. Never a circle, never a tick. */
 .gateway-mode { gap: 8px; margin-bottom: 6px; }
