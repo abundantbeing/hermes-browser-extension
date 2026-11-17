@@ -190,6 +190,111 @@ function* commentSpansFromCss(source) {
   }
 }
 
+function pythonStringPrefixBeforeQuote(source, quoteIndex) {
+  let i = quoteIndex - 1;
+  let prefix = '';
+  while (i >= 0 && /[a-zA-Z]/.test(source[i])) {
+    prefix = source[i] + prefix;
+    i -= 1;
+  }
+  return prefix;
+}
+
+function isPythonFormattedPrefix(prefix) {
+  return /f/i.test(prefix);
+}
+
+/**
+ * @param {string} source
+ * @param {number} index index at opening quote
+ * @returns {{ nextIndex: number, spans: Array<{ start: number, end: number, text: string }> }}
+ */
+function formattedPythonStringCommentSpans(source, index) {
+  /** @type {Array<{ start: number, end: number, text: string }>} */
+  const spans = [];
+  const quote = source[index];
+  const triple = source[index + 1] === quote && source[index + 2] === quote;
+  let i = index + (triple ? 3 : 1);
+  const length = source.length;
+  let depth = 0;
+
+  while (i < length) {
+    if (depth === 0 && triple && source[i] === quote && source[i + 1] === quote && source[i + 2] === quote) {
+      i += 3;
+      break;
+    }
+    if (depth === 0 && !triple) {
+      if (source[i] === '\\') {
+        i += 2;
+        continue;
+      }
+      if (source[i] === quote) {
+        i += 1;
+        break;
+      }
+    }
+
+    if (depth === 0) {
+      if (source[i] === '{') {
+        if (source[i + 1] === '{') {
+          i += 2;
+          continue;
+        }
+        depth = 1;
+        i += 1;
+        continue;
+      }
+      i += 1;
+      continue;
+    }
+
+    const char = source[i];
+    if (char === '#') {
+      const start = i;
+      while (i < length && source[i] !== '\n') i += 1;
+      spans.push({ start, end: i, text: source.slice(start, i) });
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      const embedded = char;
+      const embeddedTriple = source[i + 1] === embedded && source[i + 2] === embedded;
+      i += embeddedTriple ? 3 : 1;
+      while (i < length) {
+        if (embeddedTriple && source[i] === embedded && source[i + 1] === embedded && source[i + 2] === embedded) {
+          i += 3;
+          break;
+        }
+        if (!embeddedTriple) {
+          if (source[i] === '\\') {
+            i += 2;
+            continue;
+          }
+          if (source[i] === embedded) {
+            i += 1;
+            break;
+          }
+        }
+        if (embeddedTriple && source[i] === '\\') i += 2;
+        else i += 1;
+      }
+      continue;
+    }
+    if (char === '{') {
+      depth += 1;
+      i += 1;
+      continue;
+    }
+    if (char === '}') {
+      depth -= 1;
+      i += 1;
+      continue;
+    }
+    i += 1;
+  }
+
+  return { nextIndex: i, spans };
+}
+
 /** @returns {Generator<{ start: number, end: number, text: string }>} */
 function* commentSpansFromPython(source) {
   let index = 0;
@@ -203,6 +308,13 @@ function* commentSpansFromPython(source) {
       continue;
     }
     if (char === '"' || char === "'") {
+      const prefix = pythonStringPrefixBeforeQuote(source, index);
+      if (isPythonFormattedPrefix(prefix)) {
+        const { nextIndex, spans } = formattedPythonStringCommentSpans(source, index);
+        for (const span of spans) yield span;
+        index = nextIndex;
+        continue;
+      }
       const quote = char;
       const triple = source[index + 1] === quote && source[index + 2] === quote;
       if (triple) {
