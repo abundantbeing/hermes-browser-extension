@@ -76,9 +76,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9",
+    "css-tree": "^3.2.1",
     "eslint": "^9",
     "eslint-plugin-security": "^4.0.1",
     "jsdom": "^30.0.1",
+    "parse5": "^8.0.1",
     "linkedom": "0.18.12",
     "web-ext": "^10.6.0"
   },

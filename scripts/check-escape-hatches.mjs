@@ -13,8 +13,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import * as espree from 'espree';
+import * as parse5 from 'parse5';
+import { tokenize, tokenTypes } from 'css-tree';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultRoot = path.resolve(scriptDir, '..');
@@ -155,204 +158,114 @@ function commentSpansFromEspree(relativeFile, source) {
   }
 }
 
-/** @returns {Generator<{ start: number, end: number, text: string }>} */
-function* commentSpansFromCss(source) {
-  let index = 0;
-  const length = source.length;
-  while (index < length) {
-    const char = source[index];
-    const next = source[index + 1];
-    if (char === '/' && next === '*') {
-      const start = index;
-      index += 2;
-      while (index < length - 1 && !(source[index] === '*' && source[index + 1] === '/')) index += 1;
-      index = Math.min(length, index + 2);
-      yield { start, end: index, text: source.slice(start, index) };
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      const quote = char;
-      index += 1;
-      while (index < length) {
-        if (source[index] === '\\') {
-          index += 2;
-          continue;
-        }
-        if (source[index] === quote) {
-          index += 1;
-          break;
-        }
-        index += 1;
-      }
-      continue;
-    }
-    index += 1;
-  }
-}
-
-function pythonStringPrefixBeforeQuote(source, quoteIndex) {
-  let i = quoteIndex - 1;
-  let prefix = '';
-  while (i >= 0 && /[a-zA-Z]/.test(source[i])) {
-    prefix = source[i] + prefix;
-    i -= 1;
-  }
-  return prefix;
-}
-
-function isPythonFormattedPrefix(prefix) {
-  return /f/i.test(prefix);
-}
-
-/**
- * @param {string} source
- * @param {number} index index at opening quote
- * @returns {{ nextIndex: number, spans: Array<{ start: number, end: number, text: string }> }}
- */
-function formattedPythonStringCommentSpans(source, index) {
+/** @returns {Array<{ start: number, end: number, text: string }>} */
+function commentSpansFromCss(source) {
   /** @type {Array<{ start: number, end: number, text: string }>} */
   const spans = [];
-  const quote = source[index];
-  const triple = source[index + 1] === quote && source[index + 2] === quote;
-  let i = index + (triple ? 3 : 1);
-  const length = source.length;
-  let depth = 0;
-
-  while (i < length) {
-    if (depth === 0 && triple && source[i] === quote && source[i + 1] === quote && source[i + 2] === quote) {
-      i += 3;
-      break;
+  tokenize(source, (type, start, end) => {
+    if (type === tokenTypes.Comment) {
+      spans.push({ start, end, text: source.slice(start, end) });
     }
-    if (depth === 0 && !triple) {
-      if (source[i] === '\\') {
-        i += 2;
-        continue;
-      }
-      if (source[i] === quote) {
-        i += 1;
-        break;
-      }
-    }
-
-    if (depth === 0) {
-      if (source[i] === '{') {
-        if (source[i + 1] === '{') {
-          i += 2;
-          continue;
-        }
-        depth = 1;
-        i += 1;
-        continue;
-      }
-      i += 1;
-      continue;
-    }
-
-    const char = source[i];
-    if (char === '#') {
-      const start = i;
-      while (i < length && source[i] !== '\n') i += 1;
-      spans.push({ start, end: i, text: source.slice(start, i) });
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      const embedded = char;
-      const embeddedTriple = source[i + 1] === embedded && source[i + 2] === embedded;
-      i += embeddedTriple ? 3 : 1;
-      while (i < length) {
-        if (embeddedTriple && source[i] === embedded && source[i + 1] === embedded && source[i + 2] === embedded) {
-          i += 3;
-          break;
-        }
-        if (!embeddedTriple) {
-          if (source[i] === '\\') {
-            i += 2;
-            continue;
-          }
-          if (source[i] === embedded) {
-            i += 1;
-            break;
-          }
-        }
-        if (embeddedTriple && source[i] === '\\') i += 2;
-        else i += 1;
-      }
-      continue;
-    }
-    if (char === '{') {
-      depth += 1;
-      i += 1;
-      continue;
-    }
-    if (char === '}') {
-      depth -= 1;
-      i += 1;
-      continue;
-    }
-    i += 1;
-  }
-
-  return { nextIndex: i, spans };
+  });
+  return spans;
 }
 
-/** @returns {Generator<{ start: number, end: number, text: string }>} */
-function* commentSpansFromPython(source) {
-  let index = 0;
-  const length = source.length;
-  while (index < length) {
-    const char = source[index];
-    if (char === '#') {
-      const start = index;
-      while (index < length && source[index] !== '\n') index += 1;
-      yield { start, end: index, text: source.slice(start, index) };
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      const prefix = pythonStringPrefixBeforeQuote(source, index);
-      if (isPythonFormattedPrefix(prefix)) {
-        const { nextIndex, spans } = formattedPythonStringCommentSpans(source, index);
-        for (const span of spans) yield span;
-        index = nextIndex;
-        continue;
-      }
-      const quote = char;
-      const triple = source[index + 1] === quote && source[index + 2] === quote;
-      if (triple) {
-        index += 3;
-        while (index < length) {
-          if (source[index] === quote && source[index + 1] === quote && source[index + 2] === quote) {
-            index += 3;
-            break;
-          }
-          if (source[index] === '\\') index += 2;
-          else index += 1;
-        }
-        continue;
-      }
-      index += 1;
-      while (index < length) {
-        if (source[index] === '\\') {
-          index += 2;
-          continue;
-        }
-        if (source[index] === quote) {
-          index += 1;
-          break;
-        }
-        index += 1;
-      }
-      continue;
-    }
-    index += 1;
-  }
+const PYTHON_COMMENT_EXTRACTOR = String.raw`
+import io
+import json
+import sys
+import tokenize
+
+if sys.version_info < (3, 12):
+    print(json.dumps({"ok": False, "error": "escape-hatch scan requires Python 3.12 or newer (tokenize f-string comments)"}))
+    sys.exit(1)
+
+source = sys.stdin.read()
+line_starts = [0]
+for index, char in enumerate(source):
+    if char == "\n":
+        line_starts.append(index + 1)
+
+def position_offset(position):
+    line, column = position
+    return line_starts[line - 1] + column
+
+spans = []
+try:
+    for tok in tokenize.generate_tokens(io.StringIO(source).readline):
+        if tok.type == tokenize.COMMENT:
+            start = position_offset(tok.start)
+            end = position_offset(tok.end)
+            spans.append({"start": start, "end": end, "text": source[start:end]})
+except tokenize.TokenError as error:
+    print(json.dumps({"ok": False, "error": str(error)}))
+    sys.exit(1)
+
+print(json.dumps({"ok": True, "spans": spans}))
+`;
+
+let pythonTokenizerProbe;
+
+function pythonExecutable() {
+  return process.env.PYTHON || 'python3';
 }
 
-function scriptTypeAttributeFromOpenTag(openTag) {
-  const quoted = openTag.match(/\btype\s*=\s*(['"])([^'"]*)\1/i);
-  if (quoted) return quoted[2].trim();
-  const unquoted = openTag.match(/\btype\s*=\s*([^\s"'`=<>]+)/i);
-  if (unquoted) return unquoted[1].trim();
-  return undefined;
+function ensurePythonTokenizerAvailable() {
+  if (pythonTokenizerProbe !== undefined) return pythonTokenizerProbe;
+  const probe = spawnSync(pythonExecutable(), ['-c', 'import sys; print(".".join(map(str, sys.version_info[:3])))'], {
+    encoding: 'utf8',
+  });
+  if (probe.error || probe.status !== 0) {
+    pythonTokenizerProbe = {
+      ok: false,
+      message: `escape-hatch scan requires Python 3.12+ (${pythonExecutable()} missing or not runnable).`,
+    };
+    return pythonTokenizerProbe;
+  }
+  const version = probe.stdout.trim();
+  const parts = version.split('.').map((part) => Number.parseInt(part, 10));
+  if (parts.length < 2 || parts[0] < 3 || (parts[0] === 3 && parts[1] < 12)) {
+    pythonTokenizerProbe = {
+      ok: false,
+      message: `escape-hatch scan requires Python 3.12+ (${pythonExecutable()} is ${version}).`,
+    };
+    return pythonTokenizerProbe;
+  }
+  pythonTokenizerProbe = { ok: true };
+  return pythonTokenizerProbe;
+}
+
+/** @returns {Array<{ start: number, end: number, text: string }>} */
+function commentSpansFromPython(relativeFile, source) {
+  const availability = ensurePythonTokenizerAvailable();
+  if (!availability.ok) {
+    throw new Error(availability.message);
+  }
+  const run = spawnSync(pythonExecutable(), ['-c', PYTHON_COMMENT_EXTRACTOR], {
+    input: source,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (run.error) {
+    throw new Error(`escape-hatch scan cannot run Python for ${relativeFile}: ${run.error.message}`);
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(run.stdout || '{}');
+  } catch {
+    throw new Error(
+      `escape-hatch scan cannot parse Python comment output for ${relativeFile}: ${(run.stderr || run.stdout || '').trim()}`,
+    );
+  }
+  if (!parsed.ok) {
+    throw new Error(`escape-hatch scan cannot tokenize ${relativeFile}: ${parsed.error ?? 'unknown Python error'}`);
+  }
+  return parsed.spans ?? [];
+}
+
+function scriptTypeAttributeFromAttrs(attrs) {
+  const match = attrs.find((attr) => attr.name === 'type');
+  return match ? match.value.trim() : undefined;
 }
 
 const EXECUTABLE_SCRIPT_MIME_BASES = new Set([
@@ -366,8 +279,8 @@ const EXECUTABLE_SCRIPT_MIME_BASES = new Set([
 ]);
 
 /** @returns {null | 'inline.mjs' | 'inline.cjs'} */
-function inlineScriptEspreeFileFromOpenTag(openTag) {
-  const typeAttr = scriptTypeAttributeFromOpenTag(openTag);
+function inlineScriptEspreeFileFromAttrs(attrs) {
+  const typeAttr = scriptTypeAttributeFromAttrs(attrs);
   if (typeAttr === undefined || typeAttr === '') {
     return 'inline.cjs';
   }
@@ -379,52 +292,48 @@ function inlineScriptEspreeFileFromOpenTag(openTag) {
 
 /** @returns {Generator<{ start: number, end: number, text: string }>} */
 function* commentSpansFromHtml(source) {
-  let index = 0;
-  const length = source.length;
-  while (index < length) {
-    if (source.startsWith('<!--', index)) {
-      const start = index;
-      index += 4;
-      while (index < length - 2 && !source.startsWith('-->', index)) index += 1;
-      index = Math.min(length, index + 3);
-      yield { start, end: index, text: source.slice(start, index) };
-      continue;
+  const document = parse5.parse(source, { sourceCodeLocationInfo: true });
+
+  function* walk(node) {
+    if (!node) return;
+    if (node.nodeName === '#comment') {
+      const loc = node.sourceCodeLocation;
+      if (loc) {
+        yield { start: loc.startOffset, end: loc.endOffset, text: source.slice(loc.startOffset, loc.endOffset) };
+      }
+      return;
     }
-    const lower = source.slice(index, index + 7).toLowerCase();
-    if (lower.startsWith('<script')) {
-      const openEnd = source.indexOf('>', index);
-      if (openEnd === -1) break;
-      const openTag = source.slice(index, openEnd + 1);
-      const bodyStart = openEnd + 1;
-      const closeMatch = source.slice(bodyStart).toLowerCase().indexOf('</script>');
-      if (closeMatch === -1) break;
-      const bodyEnd = bodyStart + closeMatch;
-      const body = source.slice(bodyStart, bodyEnd);
-      const pseudoFile = inlineScriptEspreeFileFromOpenTag(openTag);
-      if (pseudoFile && body.trim()) {
-        for (const span of commentSpansFromEspree(pseudoFile, body)) {
-          yield { start: bodyStart + span.start, end: bodyStart + span.end, text: span.text };
+    const tagName = node.tagName;
+    if (tagName === 'script' || tagName === 'style') {
+      const loc = node.sourceCodeLocation;
+      const startTag = loc?.startTag;
+      const endTag = loc?.endTag;
+      if (startTag && endTag) {
+        const bodyStart = startTag.endOffset;
+        const bodyEnd = endTag.startOffset;
+        const body = source.slice(bodyStart, bodyEnd);
+        if (tagName === 'script') {
+          const pseudoFile = inlineScriptEspreeFileFromAttrs(node.attrs ?? []);
+          if (pseudoFile && body.trim()) {
+            for (const span of commentSpansFromEspree(pseudoFile, body)) {
+              yield { start: bodyStart + span.start, end: bodyStart + span.end, text: span.text };
+            }
+          }
+        } else {
+          for (const span of commentSpansFromCss(body)) {
+            yield { start: bodyStart + span.start, end: bodyStart + span.end, text: span.text };
+          }
         }
       }
-      index = bodyEnd + '</script>'.length;
-      continue;
     }
-    if (source.slice(index, index + 6).toLowerCase().startsWith('<style')) {
-      const openEnd = source.indexOf('>', index);
-      if (openEnd === -1) break;
-      const bodyStart = openEnd + 1;
-      const closeMatch = source.slice(bodyStart).toLowerCase().indexOf('</style>');
-      if (closeMatch === -1) break;
-      const bodyEnd = bodyStart + closeMatch;
-      const body = source.slice(bodyStart, bodyEnd);
-      for (const span of commentSpansFromCss(body)) {
-        yield { start: bodyStart + span.start, end: bodyStart + span.end, text: span.text };
+    if (node.childNodes) {
+      for (const child of node.childNodes) {
+        yield* walk(child);
       }
-      index = bodyEnd + '</style>'.length;
-      continue;
     }
-    index += 1;
   }
+
+  yield* walk(document);
 }
 
 /** @returns {Iterable<{ start: number, end: number, text: string }>} */
@@ -432,7 +341,7 @@ export function commentSpansForFile(relativeFile, source) {
   const ext = path.extname(relativeFile).toLowerCase();
   if (ext === '.css') return commentSpansFromCss(source);
   if (ext === '.html') return commentSpansFromHtml(source);
-  if (ext === '.py') return commentSpansFromPython(source);
+  if (ext === '.py') return commentSpansFromPython(relativeFile, source);
   if (SCANNABLE_EXTENSIONS.has(ext)) return commentSpansFromEspree(relativeFile, source);
   return [];
 }

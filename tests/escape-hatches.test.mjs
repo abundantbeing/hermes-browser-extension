@@ -227,3 +227,82 @@ test('checkEscapeHatches passes on the real repository tree', () => {
   const result = checkEscapeHatches({ root: repoRoot });
   assert.equal(result.ok, true, result.message);
 });
+
+test('findEscapeHatchesInFile ignores Python format specs but flags line comments', () => {
+  const source = [
+    'x = f"{stamp:# TODO %Y}"',
+    'y = f"""{255:#x}"""',
+    '# TODO: after fstring',
+  ].join('\n');
+  const hits = findEscapeHatchesInFile('scripts/sample.py', `${source}\n`);
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+  assert.match(hits[0].comment, /after fstring/);
+});
+
+test('findEscapeHatchesInFile keeps scanning HTML after spaced script end tags', () => {
+  const html = '<script src="local.js"></script ><!-- TODO: real -->\n';
+  const hits = findEscapeHatchesInFile('extension/page.html', html);
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+  assert.match(hits[0].comment, /real/);
+});
+
+test('findEscapeHatchesInFile keeps scanning HTML after spaced style end tags', () => {
+  const html = '<style>.x{}</style ><!-- FIXME: real -->\n';
+  const hits = findEscapeHatchesInFile('extension/page.html', html);
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'FIXME');
+});
+
+test('findEscapeHatchesInFile uses type attribute not data-type for script bodies', () => {
+  const html = [
+    '<script data-type="application/json" type="module">// TODO: module body</script>',
+    '<script type="application/json">{"TODO":"skip"}</script>',
+  ].join('\n');
+  const hits = findEscapeHatchesInFile('extension/page.html', `${html}\n`);
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+  assert.match(hits[0].comment, /module body/);
+});
+
+test('findEscapeHatchesInFile does not flag hatch-like text in HTML attribute values', () => {
+  const html = '<div title="<!-- TODO: text -->"></div><!-- TODO: real -->\n';
+  const hits = findEscapeHatchesInFile('extension/page.html', html);
+  assert.equal(hits.length, 1);
+  assert.match(hits[0].comment, /real/);
+});
+
+test('findEscapeHatchesInFile sees TODO in nested Python f-string replacement fields', () => {
+  const source = `x = f"""{
+    f'''{
+        1 # TODO nested
+    }'''
+}"""
+`;
+  const hits = findEscapeHatchesInFile('scripts/sample.py', source);
+  assert.equal(hits.length, 1);
+  assert.match(hits[0].comment, /nested/);
+});
+
+test('findEscapeHatchesInFile ignores literal TODO in escaped triple-quoted f-strings', () => {
+  const source = 'z = f"""literal \\""" not comment"""\n# TODO: after escaped triple\n';
+  const hits = findEscapeHatchesInFile('scripts/sample.py', source);
+  assert.equal(hits.length, 1);
+  assert.match(hits[0].comment, /after escaped triple/);
+});
+
+test('findEscapeHatchesInFile sees CSS comments after escaped selector quotes', () => {
+  const css = '.icon\\" { color: red; } /* TODO: real comment */\n';
+  const hits = findEscapeHatchesInFile('extension/panel.css', css);
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0].pattern, 'TODO');
+  assert.match(hits[0].comment, /real comment/);
+});
+
+test('findEscapeHatchesInFile ignores comment-like text inside CSS strings', () => {
+  const css = '.note::before { content: "/* TODO fake */"; } /* TODO: real */\n';
+  const hits = findEscapeHatchesInFile('extension/panel.css', css);
+  assert.equal(hits.length, 1);
+  assert.match(hits[0].comment, /real/);
+});
