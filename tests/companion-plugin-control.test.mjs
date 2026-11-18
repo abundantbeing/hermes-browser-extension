@@ -1316,6 +1316,48 @@ asyncio.run(main())
   if (!skipped(JSON.parse(out))) assert.deepEqual(JSON.parse(out), { passed: true });
 });
 
+test('after context compression a call from the continued session still reaches the browser attached to the chat', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}
+ROWS = {
+    "chat-root": {"id": "chat-root", "end_reason": "compression"},
+    "seg-1": {"id": "seg-1", "parent_session_id": "chat-root", "end_reason": "compression"},
+    "seg-2": {"id": "seg-2", "parent_session_id": "seg-1", "end_reason": None},
+    "sub-1": {"id": "sub-1", "parent_session_id": "seg-2", "end_reason": None},
+    "loop-a": {"id": "loop-a", "parent_session_id": "loop-b", "end_reason": "compression"},
+    "loop-b": {"id": "loop-b", "parent_session_id": "loop-a", "end_reason": "compression"},
+}
+tools._get_session_row = lambda session_id: ROWS.get(session_id)
+
+async def main():
+    seen = {}
+    client, broker, _ = await make(adapter=StoreAdapter(set(ROWS)))
+    async with client:
+        ws, _ = await attach(client, broker, session="chat-root")
+        seen["ancestors"] = tools._compression_ancestors("seg-2")
+        task = asyncio.create_task(call("browser_snapshot", {}, session="seg-2"))
+        frame = await ws.receive_json(timeout=5)
+        await ws.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": {"title": "Continued"}
+        }})
+        seen["continued"] = json.loads(await task).get("title")
+        # A delegated subagent's parent did not end by compression: it never inherits the browser.
+        seen["subagent"] = json.loads(await call("browser_snapshot", {}, session="sub-1"))["code"]
+        seen["loop"] = json.loads(await call("browser_snapshot", {}, session="loop-a"))["code"]
+        seen["unknown"] = json.loads(await call("browser_snapshot", {}, session="nowhere"))["code"]
+        await ws.close()
+    return seen
+
+print(json.dumps(asyncio.run(main())))
+`);
+  const data = JSON.parse(out);
+  if (skipped(data)) return;
+  assert.deepEqual(data.ancestors, ['seg-1', 'chat-root']);
+  assert.equal(data.continued, 'Continued');
+  assert.equal(data.subagent, 'no_browser');
+  assert.equal(data.loop, 'no_browser');
+  assert.equal(data.unknown, 'no_browser');
+});
+
 test('an opted-in loopback controller receives the trusted session id without manual Attach', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 async def main():
