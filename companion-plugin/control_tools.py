@@ -156,14 +156,12 @@ def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
     return get_control_broker(resolved_profile)
 
 
-#: How many compression segments ``_session_lane_scopes`` walks back at most.
-MAX_COMPRESSION_HOPS = 32
 _session_db_lock = threading.Lock()
 _session_db: Any = None
 
 
-def _get_session_row(session_id: str) -> Optional[dict[str, Any]]:
-    """The Hermes session row for ``session_id``, or ``None`` when it is unknown or the store is unavailable."""
+def _get_session_db() -> Any:
+    """The Hermes session store, or ``None`` outside Hermes or when it cannot open (never retried per call)."""
     global _session_db
     with _session_db_lock:
         if _session_db is None:
@@ -172,43 +170,38 @@ def _get_session_row(session_id: str) -> Optional[dict[str, Any]]:
 
                 _session_db = SessionDB()
             except Exception:
-                # Outside Hermes (or a store that cannot open): remember it, never retry per call.
                 logger.debug("Hermes Control has no session store for compression lineage", exc_info=True)
                 _session_db = False
-        db = _session_db
-    if db is False:
-        return None
-    try:
-        row = db.get_session(session_id)
-    except Exception:
-        logger.debug("Hermes Control could not read session %s", session_id, exc_info=True)
-        return None
-    return row if isinstance(row, dict) else None
+        return _session_db or None
 
 
 def _compression_ancestors(session_id: str) -> list[str]:
     """Sessions this one continues through context compression, nearest first.
 
-    Compression ends the running session (``end_reason == "compression"``) and
-    continues the same conversation under a new id whose ``parent_session_id``
-    names it. The extension registered its controller on the chat's original
-    session, so the agent's later tool calls carry the new id. Only compression
-    hops are followed: a delegated subagent's parent did not end by compression,
-    so a subagent never inherits the person's browser this way.
+    Compression ends the running session and continues the same conversation
+    under a new id. The extension registered its controller on the chat's
+    original session, so the agent's later tool calls carry the new id. The
+    lineage comes from Hermes itself (``SessionDB.get_compression_lineage``),
+    which accepts a hop only when the child really is that session's
+    compression continuation: a delegated subagent, branch or reset keeps a
+    ``parent_session_id`` but is not one, even after its parent later ends by
+    compression. When Hermes cannot establish the lineage, no browser is
+    inherited.
     """
-    ancestors: list[str] = []
-    current = session_id
-    for _ in range(MAX_COMPRESSION_HOPS):
-        row = _get_session_row(current)
-        parent = _trusted_identifier((row or {}).get("parent_session_id"))
-        if not parent or parent == session_id or parent in ancestors:
-            break
-        parent_row = _get_session_row(parent)
-        if (parent_row or {}).get("end_reason") != "compression":
-            break
-        ancestors.append(parent)
-        current = parent
-    return ancestors
+    db = _get_session_db()
+    if db is None:
+        return []
+    try:
+        lineage = db.get_compression_lineage(session_id)
+    except Exception:
+        logger.debug("Hermes Control could not read the compression lineage of %s", session_id, exc_info=True)
+        return []
+    if not isinstance(lineage, (list, tuple)) or session_id not in lineage:
+        return []
+    earlier = [_trusted_identifier(item) for item in lineage[: lineage.index(session_id)]]
+    if not all(earlier):
+        return []
+    return list(reversed(earlier))
 
 
 def _session_lane_scopes(broker: ControlBroker, profile: str, session_id: str) -> list:
