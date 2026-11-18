@@ -9,6 +9,7 @@
 // Environment overrides (tests only):
 //   HERMES_ESCAPE_HATCHES_ROOT
 //   HERMES_ESCAPE_HATCHES_BASELINE
+//   HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -180,7 +181,7 @@ if sys.version_info < (3, 12):
     print(json.dumps({"ok": False, "error": "escape-hatch scan requires Python 3.12 or newer (tokenize f-string comments)"}))
     sys.exit(1)
 
-source = sys.stdin.read()
+source = sys.stdin.buffer.read().decode("utf-8")
 line_starts = [0]
 for index, char in enumerate(source):
     if char == "\n":
@@ -235,6 +236,19 @@ function ensurePythonTokenizerAvailable() {
   return pythonTokenizerProbe;
 }
 
+function pythonTokenizerSpawnEnv() {
+  const env = {
+    ...process.env,
+    PYTHONUTF8: '1',
+    PYTHONIOENCODING: 'utf-8',
+  };
+  if (process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE === '1') {
+    env.PYTHONUTF8 = '0';
+    env.LC_ALL = 'C';
+  }
+  return env;
+}
+
 /** @returns {Array<{ start: number, end: number, text: string }>} */
 function commentSpansFromPython(relativeFile, source) {
   const availability = ensurePythonTokenizerAvailable();
@@ -244,6 +258,7 @@ function commentSpansFromPython(relativeFile, source) {
   const run = spawnSync(pythonExecutable(), ['-c', PYTHON_COMMENT_EXTRACTOR], {
     input: source,
     encoding: 'utf8',
+    env: pythonTokenizerSpawnEnv(),
     maxBuffer: 64 * 1024 * 1024,
   });
   if (run.error) {
@@ -268,15 +283,33 @@ function scriptTypeAttributeFromAttrs(attrs) {
   return match ? match.value.trim() : undefined;
 }
 
-const EXECUTABLE_SCRIPT_MIME_BASES = new Set([
-  'text/javascript',
-  'application/javascript',
+/** WHATWG HTML JavaScript MIME type essence match (parameters ignored, case-insensitive). */
+const JAVASCRIPT_MIME_TYPE_ESSENCES = new Set([
   'application/ecmascript',
-  'text/ecmascript',
-  'text/jscript',
+  'application/javascript',
+  'application/x-ecmascript',
   'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
   'text/x-javascript',
 ]);
+
+function scriptMimeTypeEssence(typeAttr) {
+  return typeAttr.trim().toLowerCase().split(';', 1)[0].trim();
+}
+
+function isJavaScriptMimeTypeEssence(essence) {
+  return JAVASCRIPT_MIME_TYPE_ESSENCES.has(essence);
+}
 
 /** @returns {null | 'inline.mjs' | 'inline.cjs'} */
 function inlineScriptEspreeFileFromAttrs(attrs) {
@@ -284,9 +317,9 @@ function inlineScriptEspreeFileFromAttrs(attrs) {
   if (typeAttr === undefined || typeAttr === '') {
     return 'inline.cjs';
   }
-  const base = typeAttr.toLowerCase().split(';', 1)[0].trim();
-  if (base === 'module') return 'inline.mjs';
-  if (EXECUTABLE_SCRIPT_MIME_BASES.has(base)) return 'inline.cjs';
+  const essence = scriptMimeTypeEssence(typeAttr);
+  if (essence === 'module') return 'inline.mjs';
+  if (isJavaScriptMimeTypeEssence(essence)) return 'inline.cjs';
   return null;
 }
 
@@ -328,6 +361,11 @@ function* commentSpansFromHtml(source) {
     }
     if (node.childNodes) {
       for (const child of node.childNodes) {
+        yield* walk(child);
+      }
+    }
+    if (node.content?.childNodes) {
+      for (const child of node.content.childNodes) {
         yield* walk(child);
       }
     }

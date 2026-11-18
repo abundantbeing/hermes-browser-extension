@@ -306,3 +306,89 @@ test('findEscapeHatchesInFile ignores comment-like text inside CSS strings', () 
   assert.equal(hits.length, 1);
   assert.match(hits[0].comment, /real/);
 });
+
+test('findEscapeHatchesInFile tokenizes UTF-8 Python under a non-UTF-8 locale', () => {
+  const source = ['label = "ā"', '# TODO: after mācrōn'].join('\n');
+  const prev = process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE;
+  process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE = '1';
+  try {
+    const hits = findEscapeHatchesInFile('scripts/utf8_sample.py', `${source}\n`);
+    assert.equal(hits.length, 1);
+    assert.equal(hits[0].pattern, 'TODO');
+    assert.match(hits[0].comment, /mācrōn/);
+  } finally {
+    if (prev === undefined) delete process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE;
+    else process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE = prev;
+  }
+});
+
+test('findEscapeHatchesInFile reports correct Python line after non-BMP text', () => {
+  const source = ['emoji = "\u{1F600}"', '# TODO: on line three'].join('\n');
+  const prev = process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE;
+  process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE = '1';
+  try {
+    const hits = findEscapeHatchesInFile('scripts/unicode_line.py', source);
+    assert.equal(hits.length, 1);
+    const lineNumber = source.slice(0, source.indexOf('# TODO')).split('\n').length;
+    assert.equal(lineNumber, 2);
+    assert.match(hits[0].comment, /line three/);
+  } finally {
+    if (prev === undefined) delete process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE;
+    else process.env.HERMES_ESCAPE_HATCHES_PYTHON_STRESS_LOCALE = prev;
+  }
+});
+
+test('findEscapeHatchesInFile scans comments inside template elements', () => {
+  const html = [
+    '<template><!-- TODO: later --></template>',
+    '<template><script>// TODO x</script></template>',
+  ].join('\n');
+  const hits = findEscapeHatchesInFile('extension/template.html', `${html}\n`);
+  assert.equal(hits.length, 2);
+  assert.ok(hits.every((h) => h.pattern === 'TODO'));
+  assert.ok(hits.some((h) => /TODO:\s*later/.test(h.comment)));
+  assert.ok(hits.some((h) => /TODO x/.test(h.comment)));
+});
+
+const JAVASCRIPT_SCRIPT_TYPES = [
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+];
+
+for (const scriptType of JAVASCRIPT_SCRIPT_TYPES) {
+  test(`findEscapeHatchesInFile scans script type ${scriptType}`, () => {
+    const html = `<script type="${scriptType}">// TODO: mime</script>\n`;
+    const hits = findEscapeHatchesInFile('extension/mime.html', html);
+    assert.equal(hits.length, 1);
+    assert.equal(hits[0].pattern, 'TODO');
+    assert.match(hits[0].comment, /mime/);
+  });
+}
+
+test('findEscapeHatchesInFile scans script type parameters after JavaScript MIME essence', () => {
+  const html = '<script type="text/javascript; charset=utf-8">// TODO: params</script>\n';
+  const hits = findEscapeHatchesInFile('extension/mime-params.html', html);
+  assert.equal(hits.length, 1);
+  assert.match(hits[0].comment, /params/);
+});
+
+test('findEscapeHatchesInFile matches JavaScript MIME types case-insensitively', () => {
+  const html = '<script type="TEXT/JavaScript">// TODO: case</script>\n';
+  const hits = findEscapeHatchesInFile('extension/mime-case.html', html);
+  assert.equal(hits.length, 1);
+  assert.match(hits[0].comment, /case/);
+});
