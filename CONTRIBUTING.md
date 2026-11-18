@@ -43,9 +43,15 @@ npm run build
 # Build Firefox extension into dist/firefox
 npm run build:firefox
 
-# Run complete canonical verification (tests, JS syntax checks, manifest & locale validation)
+# Run complete canonical verification (tests, lint, escape-hatch baseline, JS syntax checks, manifest & locale validation)
 npm run verify
 ```
+
+### Escape hatches and inline silences
+
+`npm run verify` runs ESLint and `npm run check:escape-hatches`. The escape-hatch gate scans first-party source under `extension/`, `scripts/`, `tests/`, and root config (`.js`, `.mjs`, `.cjs`, `.jsx`, `.ts`, `.tsx`, `.css`, `.html`, `.py`) for inline silences (`eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`) and comment work-item markers (`TODO`, `FIXME`, `HACK`, `XXX`). Vendored and generated trees are excluded. Plain `.ts`/`.tsx` must be parseable as ECMAScript; files that use TypeScript-only syntax block the check.
+
+New occurrences fail the build. Each existing one is listed in `scripts/escape-hatch-baseline.json` with a stable key (not a line number). The baseline only shrinks: `node scripts/check-escape-hatches.mjs --update-baseline` drops stale rows after you remove a hatch, but never adds new ones — add those by hand in review. Prefer fixing the code or a targeted `eslint.config.js` rule with an explicit reason instead of an inline disable.
 
 ### Display headline typography
 

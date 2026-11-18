@@ -32,8 +32,9 @@
     "check:i18n": "node scripts/generate-browser-locales.mjs --check && node scripts/check-i18n.mjs",
     "check:manifest": "npm run check:i18n && node scripts/check-manifest.mjs",
     "check:display-typography": "node scripts/check-display-typography.mjs",
+    "check:escape-hatches": "node scripts/check-escape-hatches.mjs",
     "check:settings-form-field-inset": "node scripts/check-settings-form-field-inset.mjs",
-    "verify": "npm run test && npm run check:js && npm run check:voice && npm run check:manifest && npm run check:display-typography && npm run check:settings-form-field-inset",
+    "verify": "npm run test && npm run lint && npm run check:escape-hatches && npm run check:js && npm run check:voice && npm run check:manifest && npm run check:display-typography && npm run check:settings-form-field-inset",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build:content-runtime": "node scripts/build-content-runtime.mjs",
@@ -75,9 +76,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9",
+    "css-tree": "^3.2.1",
     "eslint": "^9",
     "eslint-plugin-security": "^4.0.1",
     "jsdom": "^30.0.1",
+    "parse5": "^8.0.1",
     "linkedom": "0.18.12",
     "web-ext": "^10.6.0"
   },

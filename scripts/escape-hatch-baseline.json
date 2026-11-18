@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "file": "extension/content-extractor.js",
+      "pattern": "eslint-disable",
+      "key": "8321f21afdd7a4f4"
+    },
+    {
+      "file": "extension/content-extractor.js",
+      "pattern": "eslint-disable",
+      "key": "62b8b89ceee09c46"
+    },
+    {
+      "file": "extension/lib/appearance-preferences.mjs",
+      "pattern": "eslint-disable",
+      "key": "bf2d775b4faeffd2"
+    },
+    {
+      "file": "extension/lib/appearance-preferences.mjs",
+      "pattern": "eslint-disable",
+      "key": "106e0cbf540d2975"
+    },
+    {
+      "file": "extension/lib/controller-protocol.mjs",
+      "pattern": "eslint-disable",
+      "key": "1ddfa25bc80b773d"
+    },
+    {
+      "file": "extension/lib/hermes-webapp.mjs",
+      "pattern": "eslint-disable",
+      "key": "3c2e7e933df7d8d9"
+    },
+    {
+      "file": "scripts/check-self-contained.mjs",
+      "pattern": "eslint-disable",
+      "key": "3a775f7f905d80a4"
+    },
+    {
+      "file": "scripts/hermes-home.mjs",
+      "pattern": "eslint-disable",
+      "key": "2254339b26570321"
+    },
+    {
+      "file": "scripts/vendor-security-libs.mjs",
+      "pattern": "eslint-disable",
+      "key": "b06b0bbccc7f595c"
+    },
+    {
+      "file": "tests/completion-reveal-sidepanel.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "dc860d002401d868"
+    },
+    {
+      "file": "tests/dashboard-bridge.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "ebb8da4033ba9118"
+    },
+    {
+      "file": "tests/dashboard-image-attach.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "0426809bc4dcd4ce"
+    },
+    {
+      "file": "tests/helpers/settings-save-harness.mjs",
+      "pattern": "eslint-disable",
+      "key": "09424eb893d33b53"
+    },
+    {
+      "file": "tests/helpers/settings-save-harness.mjs",
+      "pattern": "eslint-disable",
+      "key": "09424eb893d33b53:1"
+    },
+    {
+      "file": "tests/history-merged-user-replay.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "f49231551a180b56"
+    },
+    {
+      "file": "tests/inline-assist-sites-settings.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "55ffe7c542b71ba0"
+    },
+    {
+      "file": "tests/session-history-paint.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "0614230c7782ad61"
+    },
+    {
+      "file": "tests/side-question-card.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "1c05ca256d545287"
+    },
+    {
+      "file": "tests/steer-queued-notice.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "dae2b0cdc357e426"
+    },
+    {
+      "file": "tests/subagent-render-scroll.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "b625278ac1435e21"
+    },
+    {
+      "file": "tests/update-flow.test.mjs",
+      "pattern": "eslint-disable",
+      "key": "2e1b21c789e076ff"
+    }
+  ]
+}

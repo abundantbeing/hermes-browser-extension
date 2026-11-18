@@ -2,6 +2,12 @@ import js from '@eslint/js';
 import security from 'eslint-plugin-security';
 
 export default [
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
+
   js.configs.recommended,
 
   {
