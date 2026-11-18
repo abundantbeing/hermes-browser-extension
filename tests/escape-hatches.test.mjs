@@ -92,6 +92,7 @@ test('findEscapeHatchesInFile scans HTML comments and inline script comments', (
 test('findEscapeHatchesInFile skips non-JavaScript script bodies in HTML', () => {
   const html = [
     '<script type="application/json">{"label":"TODO in json"}</script>',
+    '<script type="importmap">{"imports":{"x":"y # TODO"}}</script>',
     '<!-- TODO: only this hatch -->',
     '<script type="text/javascript">',
     '// TODO: still flagged',
@@ -107,8 +108,12 @@ test('findEscapeHatchesInFile skips non-JavaScript script bodies in HTML', () =>
 });
 
 test('findEscapeHatchesInFile sees TODO in Python f-string replacement expressions', () => {
-  const source = 'value = f"""before {1 # TODO: revisit\n} literal TODO here"""\n';
-  const hits = findEscapeHatchesInFile('scripts/sample.py', source);
+  const source = [
+    'value = f"""before {1 # TODO: revisit',
+    '} literal TODO here"""',
+    'f"brace {{ not a field # TODO: literal }}"',
+  ].join('\n');
+  const hits = findEscapeHatchesInFile('scripts/sample.py', `${source}\n`);
   assert.equal(hits.length, 1);
   assert.equal(hits[0].pattern, 'TODO');
   assert.match(hits[0].comment, /revisit/);
