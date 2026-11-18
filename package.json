@@ -33,7 +33,8 @@
     "check:manifest": "npm run check:i18n && node scripts/check-manifest.mjs",
     "check:display-typography": "node scripts/check-display-typography.mjs",
     "check:escape-hatches": "node scripts/check-escape-hatches.mjs",
-    "verify": "npm run test && npm run lint && npm run check:escape-hatches && npm run check:js && npm run check:voice && npm run check:manifest && npm run check:display-typography",
+    "check:settings-form-field-inset": "node scripts/check-settings-form-field-inset.mjs",
+    "verify": "npm run test && npm run lint && npm run check:escape-hatches && npm run check:js && npm run check:voice && npm run check:manifest && npm run check:display-typography && npm run check:settings-form-field-inset",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build:content-runtime": "node scripts/build-content-runtime.mjs",
@@ -67,7 +68,8 @@
     "test:e2e:browser-control:youtube": "npm run build && node tests/e2e-phase6-youtube-like.mjs",
     "test:e2e:prompt-cards": "npm run build && node tests/e2e-agent-prompt-cards.mjs",
     "test:e2e:image-reveal": "npm run build && node tests/e2e-generated-image-reveal.mjs",
-    "test:e2e:page-annotation": "npm run build:content-runtime && node tests/e2e-page-annotation.mjs"
+    "test:e2e:page-annotation": "npm run build:content-runtime && node tests/e2e-page-annotation.mjs",
+    "test:e2e:settings-inset": "npm run build && node tests/e2e-settings-form-field-inset.mjs"
   },
   "engines": {
     "node": ">=20"
