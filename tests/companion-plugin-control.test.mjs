@@ -1316,6 +1316,135 @@ asyncio.run(main())
   if (!skipped(JSON.parse(out))) assert.deepEqual(JSON.parse(out), { passed: true });
 });
 
+// A stand-in for Hermes' SessionDB with its lineage rule: a hop counts only when the parent ended by
+// compression and the child is not a delegate/branch/reset fork of it (``_delegate_from`` etc.).
+const FAKE_HERMES_STATE = `
+import types
+STORE = {"opened": 0, "fail_open": False, "fail_read": False}
+ROWS = {
+    "chat-root": {"id": "chat-root", "end_reason": "compression"},
+    "seg-1": {"id": "seg-1", "parent_session_id": "chat-root", "end_reason": "compression"},
+    "seg-2": {"id": "seg-2", "parent_session_id": "seg-1", "end_reason": None},
+    # A subagent spawned while seg-2 was live, still running after seg-2 later compressed.
+    "live-root": {"id": "live-root", "end_reason": "compression"},
+    "late-sub": {"id": "late-sub", "parent_session_id": "live-root", "end_reason": None,
+                 "model_config": {"_delegate_from": "live-root"}},
+    "live-cont": {"id": "live-cont", "parent_session_id": "live-root", "end_reason": None},
+    "loop-a": {"id": "loop-a", "parent_session_id": "loop-b", "end_reason": "compression"},
+    "loop-b": {"id": "loop-b", "parent_session_id": "loop-a", "end_reason": "compression"},
+}
+
+def _fork(row):
+    cfg = row.get("model_config") or {}
+    return any(cfg.get(m) == row.get("parent_session_id") for m in ("_branched_from", "_delegate_from", "_reset_from"))
+
+class SessionDB:
+    def __init__(self):
+        STORE["opened"] += 1
+        if STORE["fail_open"]:
+            raise RuntimeError("store cannot open")
+
+    def get_session(self, sid):
+        if STORE["fail_read"]:
+            raise RuntimeError("read failed")
+        return ROWS.get(sid)
+
+    def get_compression_lineage(self, sid):
+        row = self.get_session(sid)
+        if row is None or _fork(row):
+            return [sid] if row else []
+        chain, seen = [sid], {sid}
+        while True:
+            parent = ROWS.get(ROWS[chain[0]].get("parent_session_id"))
+            if parent is None or parent["id"] in seen or parent.get("end_reason") != "compression" or _fork(ROWS[chain[0]]):
+                break
+            chain.insert(0, parent["id"])
+            seen.add(parent["id"])
+        return chain
+
+module_state = types.ModuleType("hermes_state")
+module_state.SessionDB = SessionDB
+sys.modules["hermes_state"] = module_state
+
+def fresh_store(**flags):
+    tools._session_db = None
+    STORE.update({"opened": 0, "fail_open": False, "fail_read": False}); STORE.update(flags)
+`;
+
+test('after context compression a call from the continued session still reaches the browser attached to the chat', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}${FAKE_HERMES_STATE}
+async def code_for(session):
+    return json.loads(await call("browser_snapshot", {}, session=session)).get("code")
+
+async def main():
+    seen = {}
+    client, broker, _ = await make(adapter=StoreAdapter(set(ROWS)))
+    async with client:
+        ws, _ = await attach(client, broker, session="chat-root")
+        ws2, _ = await attach(client, broker, session="live-root")
+        fresh_store()
+        seen["ancestors"] = tools._compression_ancestors("seg-2")
+        task = asyncio.create_task(call("browser_snapshot", {}, session="seg-2"))
+        frame = await ws.receive_json(timeout=5)
+        await ws.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": {"title": "Continued"}
+        }})
+        seen["continued"] = json.loads(await task).get("title")
+        # The genuine continuation of a compressed session reaches its browser; a subagent that
+        # was spawned while that session was live does not, even though the session later compressed.
+        seen["live_cont_ancestors"] = tools._compression_ancestors("live-cont")
+        seen["late_sub_ancestors"] = tools._compression_ancestors("late-sub")
+        task = asyncio.create_task(call("browser_snapshot", {}, session="live-cont"))
+        frame = await ws2.receive_json(timeout=5)
+        await ws2.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": {"title": "Live continuation"}
+        }})
+        seen["live_cont"] = json.loads(await task).get("title")
+        seen["late_sub"] = await code_for("late-sub")
+        # Nothing from the subagent reached the parent's browser.
+        try:
+            stray = await ws2.receive_json(timeout=0.2)
+        except asyncio.TimeoutError:
+            stray = None
+        seen["late_sub_frame"] = stray
+        seen["loop"] = await code_for("loop-a")
+        seen["unknown"] = await code_for("nowhere")
+        # One store open serves every lookup above.
+        seen["opened"] = STORE["opened"]
+        # A store that cannot read, or one without lineage support, never grants a browser.
+        STORE["fail_read"] = True
+        seen["read_failure"] = [tools._compression_ancestors("seg-2"), await code_for("seg-2")]
+        STORE["fail_read"] = False
+        SessionDB.get_compression_lineage, saved = None, SessionDB.get_compression_lineage
+        seen["no_lineage_api"] = [tools._compression_ancestors("seg-2"), await code_for("seg-2")]
+        SessionDB.get_compression_lineage = saved
+        # A failed open is remembered and never retried per call.
+        fresh_store(fail_open=True)
+        seen["open_failure"] = [tools._compression_ancestors("seg-2"), tools._compression_ancestors("seg-2"), await code_for("seg-2")]
+        seen["open_attempts"] = STORE["opened"]
+        await ws.close(); await ws2.close()
+    return seen
+
+print(json.dumps(asyncio.run(main())))
+`);
+  const data = JSON.parse(out);
+  if (skipped(data)) return;
+  assert.deepEqual(data.ancestors, ['seg-1', 'chat-root']);
+  assert.equal(data.continued, 'Continued');
+  assert.deepEqual(data.live_cont_ancestors, ['live-root']);
+  assert.equal(data.live_cont, 'Live continuation');
+  assert.deepEqual(data.late_sub_ancestors, []);
+  assert.equal(data.late_sub_frame, null);
+  assert.equal(data.late_sub, 'no_browser');
+  assert.equal(data.loop, 'no_browser');
+  assert.equal(data.unknown, 'no_browser');
+  assert.equal(data.opened, 1);
+  assert.deepEqual(data.read_failure, [[], 'no_browser']);
+  assert.deepEqual(data.no_lineage_api, [[], 'no_browser']);
+  assert.deepEqual(data.open_failure, [[], [], 'no_browser']);
+  assert.equal(data.open_attempts, 1);
+});
+
 test('an opted-in loopback controller receives the trusted session id without manual Attach', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 async def main():

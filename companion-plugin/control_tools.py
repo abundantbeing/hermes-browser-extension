@@ -156,13 +156,73 @@ def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
     return get_control_broker(resolved_profile)
 
 
+_session_db_lock = threading.Lock()
+_session_db: Any = None
+
+
+def _get_session_db() -> Any:
+    """The Hermes session store, or ``None`` outside Hermes or when it cannot open (never retried per call)."""
+    global _session_db
+    with _session_db_lock:
+        if _session_db is None:
+            try:
+                from hermes_state import SessionDB
+
+                _session_db = SessionDB()
+            except Exception:
+                logger.debug("Hermes Control has no session store for compression lineage", exc_info=True)
+                _session_db = False
+        return _session_db or None
+
+
+def _compression_ancestors(session_id: str) -> list[str]:
+    """Sessions this one continues through context compression, nearest first.
+
+    Compression ends the running session and continues the same conversation
+    under a new id. The extension registered its controller on the chat's
+    original session, so the agent's later tool calls carry the new id. The
+    lineage comes from Hermes itself (``SessionDB.get_compression_lineage``),
+    which accepts a hop only when the child really is that session's
+    compression continuation: a delegated subagent, branch or reset keeps a
+    ``parent_session_id`` but is not one, even after its parent later ends by
+    compression. When Hermes cannot establish the lineage, no browser is
+    inherited.
+    """
+    db = _get_session_db()
+    if db is None:
+        return []
+    try:
+        lineage = db.get_compression_lineage(session_id)
+    except Exception:
+        logger.debug("Hermes Control could not read the compression lineage of %s", session_id, exc_info=True)
+        return []
+    if not isinstance(lineage, (list, tuple)) or session_id not in lineage:
+        return []
+    earlier = [_trusted_identifier(item) for item in lineage[: lineage.index(session_id)]]
+    if not all(earlier):
+        return []
+    return list(reversed(earlier))
+
+
+def _session_lane_scopes(broker: ControlBroker, profile: str, session_id: str) -> list:
+    """Controllers attached for ``session_id``, else for the session it continues after compression."""
+    scopes = broker.lane_scopes(profile_id=profile, session_id=session_id)
+    if scopes:
+        return scopes
+    for ancestor in _compression_ancestors(session_id):
+        scopes = broker.lane_scopes(profile_id=profile, session_id=ancestor)
+        if scopes:
+            return scopes
+    return []
+
+
 def background_browser_available(session_id: str, kwargs: dict[str, Any]) -> bool:
     """Whether this session can use the opted-in background controller."""
     if core_extension_control_on():
         return False
     broker = _broker(kwargs)
     profile = _profile_for_control(kwargs)
-    if broker.lane_scopes(profile_id=profile, session_id=session_id):
+    if _session_lane_scopes(broker, profile, session_id):
         return False
     available = [
         scope for scope in broker.lane_scopes(profile_id=profile, session_id=BACKGROUND_SESSION)
@@ -373,7 +433,7 @@ def run_control_action(action: str, args: Any, kwargs: Optional[dict[str, Any]] 
     tool = TOOL_FOR_ACTION[action]
     profile = _profile_for_control(kwargs or {})
     broker = _broker(kwargs)
-    scopes = broker.lane_scopes(profile_id=profile, session_id=session_id)
+    scopes = _session_lane_scopes(broker, profile, session_id)
     background_scopes = [
         scope for scope in broker.lane_scopes(profile_id=profile, session_id=BACKGROUND_SESSION)
         if broker.offered_capabilities(scope) is not None
