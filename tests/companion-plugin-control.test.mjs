@@ -1320,7 +1320,7 @@ asyncio.run(main())
 // compression and the child is not a delegate/branch/reset fork of it (``_delegate_from`` etc.).
 const FAKE_HERMES_STATE = `
 import types
-STORE = {"opened": 0, "fail_open": False, "fail_read": False, "has_lineage": True}
+STORE = {"opened": 0, "fail_open": False, "fail_read": False}
 ROWS = {
     "chat-root": {"id": "chat-root", "end_reason": "compression"},
     "seg-1": {"id": "seg-1", "parent_session_id": "chat-root", "end_reason": "compression"},
@@ -1368,7 +1368,7 @@ sys.modules["hermes_state"] = module_state
 
 def fresh_store(**flags):
     tools._session_db = None
-    STORE.update({"opened": 0, "fail_open": False, "fail_read": False, "has_lineage": True}); STORE.update(flags)
+    STORE.update({"opened": 0, "fail_open": False, "fail_read": False}); STORE.update(flags)
 `;
 
 test('after context compression a call from the continued session still reaches the browser attached to the chat', () => {
@@ -1394,7 +1394,19 @@ async def main():
         # was spawned while that session was live does not, even though the session later compressed.
         seen["live_cont_ancestors"] = tools._compression_ancestors("live-cont")
         seen["late_sub_ancestors"] = tools._compression_ancestors("late-sub")
+        task = asyncio.create_task(call("browser_snapshot", {}, session="live-cont"))
+        frame = await ws2.receive_json(timeout=5)
+        await ws2.send_json({"method": "browser.controller.result", "params": {
+            "command_id": frame["params"]["command_id"], "ok": True, "result": {"title": "Live continuation"}
+        }})
+        seen["live_cont"] = json.loads(await task).get("title")
         seen["late_sub"] = await code_for("late-sub")
+        # Nothing from the subagent reached the parent's browser.
+        try:
+            stray = await ws2.receive_json(timeout=0.2)
+        except asyncio.TimeoutError:
+            stray = None
+        seen["late_sub_frame"] = stray
         seen["loop"] = await code_for("loop-a")
         seen["unknown"] = await code_for("nowhere")
         # One store open serves every lookup above.
@@ -1420,7 +1432,9 @@ print(json.dumps(asyncio.run(main())))
   assert.deepEqual(data.ancestors, ['seg-1', 'chat-root']);
   assert.equal(data.continued, 'Continued');
   assert.deepEqual(data.live_cont_ancestors, ['live-root']);
+  assert.equal(data.live_cont, 'Live continuation');
   assert.deepEqual(data.late_sub_ancestors, []);
+  assert.equal(data.late_sub_frame, null);
   assert.equal(data.late_sub, 'no_browser');
   assert.equal(data.loop, 'no_browser');
   assert.equal(data.unknown, 'no_browser');
