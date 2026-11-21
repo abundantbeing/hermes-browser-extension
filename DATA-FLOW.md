@@ -18,7 +18,7 @@ In local mode, context is sent from the extension to the Hermes Gateway/API serv
 
 ### Hermes Cloud Preview
 
-Cloud Preview requires the exact active, fully loaded, signed-in HTTPS Hermes agent tab. That tab mints a short-lived single-use WebSocket ticket, the extension revalidates the tab and origin, and the ticket stays memory-only. Cloud Preview is Chat-only: page text, selected text, open-tab context, and attachments are not sent through this transport.
+Cloud Preview requires the exact active, fully loaded, signed-in HTTPS Hermes agent tab. That tab mints a short-lived single-use WebSocket ticket, the extension revalidates the tab and origin, and the ticket stays memory-only. Automatic page text, selected text, and open-tab context stay off on Cloud Preview until you approve **Share page context with this connection** for that exact verified origin, account, profile, controller, and transport (default off; fails closed when unapproved or when the account cannot be verified). Files and images you explicitly attach still send over the dashboard socket, and when page context is approved, oversize page text is staged as `page-context.txt` over that socket. Hermes Control is not available on Cloud Preview.
 
 ### Remote Hermes API
 
@@ -28,7 +28,7 @@ In this mode Bot Mode reads its roster from the gateway's `GET /v1/profiles` and
 
 ### Remote dashboard WebSocket
 
-When remote mode has a dashboard URL and no API key, the extension uses the signed-in dashboard tab to mint a single-use WebSocket ticket and connects to the dashboard socket. In this mode, REST-only features such as profile list and image upload can be unavailable.
+When remote mode has a dashboard URL and no API key, the extension uses the signed-in dashboard tab to mint a single-use WebSocket ticket and connects to the dashboard socket. Automatic page context stays off until you approve **Share page context with this connection** for that exact verified connection; explicit user-chosen attachments still send over the dashboard socket. REST-only features such as profile list, REST image upload, and plugin HTTP Hermes Control are unavailable here.
 
 ## What can be sent to Hermes
 
