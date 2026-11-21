@@ -98,3 +98,26 @@ test('dialog flair arms on activation but does not restart on each status poll',
   f.render();
   assert.equal(f.dialog.classList.contains('is-energized'), false);
 });
+
+test('the launcher stays available for a task-tab approval when Hermes Control is off', async () => {
+  const f = fixture();
+  f.ui.render({
+    enabled: false,
+    view: { state: 'approval', tone: 'warn', title: 'Approval needed', detail: 'Switch to this task tab?' },
+  });
+  assert.equal(f.byId('launch').hidden, false);
+  f.byId('launch').click();
+  await settle();
+  assert.equal(f.dialog.open, true);
+  f.ui.render({
+    enabled: false,
+    view: { state: 'approval', tone: 'warn', title: 'Approval needed', detail: 'Switch to this task tab?' },
+  });
+  assert.equal(f.dialog.open, true, 'a later poll must not close the approval dialog');
+  f.ui.render({
+    enabled: false,
+    view: { state: 'off', tone: 'neutral', title: 'Control is off', detail: '' },
+  });
+  assert.equal(f.byId('launch').hidden, true);
+  assert.equal(f.dialog.open, false);
+});
