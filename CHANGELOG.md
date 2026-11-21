@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Active task tabs.** An opt-in switch under Background task tabs. Off, task tabs stay in the background and cannot be switched to. On, Hermes asks before bringing a named task tab and its window forward, then can switch to it. Screenshot, hover, and coordinate clicks use that same approval before they raise the tab. Background task tabs remain the default.
+
 ### Changed
 
 - **`npm run verify` now includes ESLint and an escape-hatch baseline check.** Inline `eslint-disable` comments, TypeScript checkpoint pragmas, and `TODO`/`FIXME`/`HACK`/`XXX` markers in comments are allowed only when listed in `scripts/escape-hatch-baseline.json`; new ones fail CI-style verification. ESLint reports unused disable directives as errors. The gate parses JavaScript-family sources with Espree (regex literals, template expressions, and strings), and scans `.css`, `.html`, and `.py` under the same roots; TypeScript-only syntax in `.ts`/`.tsx` files fails the check until a TS-aware parser is added. Non-executable `<script>` blocks (JSON, import maps, templates, and similar) are skipped instead of being parsed as JavaScript; Python scanning finds `#` comments inside f-string `{...}` replacement fields while ignoring literal text and `{{` / `}}` escapes.

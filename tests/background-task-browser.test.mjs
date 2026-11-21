@@ -318,8 +318,12 @@ test('active task tabs are opt-in and do not change the background default', asy
         create: async (options) => { created.push(options); return opened; },
         query: async () => [],
         group: async () => 2,
-        update: async (id, patch) => { created.push(['update', id, patch]); return { ...opened, ...patch }; },
-        get: async () => opened,
+        update: async (id, patch) => {
+          created.push(['update', id, patch]);
+          if (patch.active === true) opened.active = true;
+          return { ...opened, ...patch };
+        },
+        get: async () => ({ ...opened }),
       },
       tabGroups: { update: async () => {} },
     },
@@ -330,7 +334,14 @@ test('active task tabs are opt-in and do not change the background default', asy
         return { close() {}, send({ params }) { replies.get(params.command_id).resolve(params); } };
       },
     },
-    runtime: { async execute() { return { ok: true, result: {} }; }, releaseTab() {} },
+    runtime: {
+      calls: [],
+      async execute(frame, context) {
+        this.calls.push({ action: frame.action, backgroundTask: context.backgroundTask === true, tabId: frame.tab_id });
+        return { ok: true, result: { status: 'tab-activated' } };
+      },
+      releaseTab() {},
+    },
   });
   function command(id, action, args) {
     const reply = deferred();
@@ -353,11 +364,20 @@ test('active task tabs are opt-in and do not change the background default', asy
   await controller.settingsChanged({ hermesActiveTaskTabs: { oldValue: undefined, newValue: true } });
   assert.equal(capabilities.includes('browser_tab_activate'), true);
   created.length = 0;
+  focused.length = 0;
   const activeOpen = await command('active-open', 'browser_tab_create', { url: opened.url });
   assert.equal(activeOpen.ok, true);
-  assert.equal(created[0].active, true);
+  assert.equal(created[0].active, false, 'a new tab stays in the background until the switch is approved');
+  focused.length = 0;
+  created.length = 0;
+  opened.active = false;
   const activated = await command('active-switch', 'browser_tab_activate', { tab_id: opened.id });
   assert.equal(activated.ok, true);
   assert.equal(activated.result.status, 'tab-activated');
-  assert.equal(focused.some((call) => call[0] === 4 && call[1].focused === true), true);
+  assert.equal(activated.result.tab.active, true);
+  assert.deepEqual(
+    created.filter((entry) => Array.isArray(entry) && entry[2]?.active === true).at(-1),
+    ['update', opened.id, { active: true }],
+  );
+  assert.deepEqual(focused.at(-1), [4, { focused: true }]);
 });

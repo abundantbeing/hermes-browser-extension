@@ -75,6 +75,8 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   let revision = 0;
   let sync = Promise.resolve();
   const sessionQueues = new Map();
+  // One lock per window so two task sessions cannot hide each other's tab mid-action.
+  const windowLocks = new Map();
   // Read at connect time. Off is the original background-tab behavior.
   let activeTaskTabs = false;
 
@@ -89,6 +91,63 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     if (action !== 'browser_click') return false;
     if (Number.isFinite(Number(args.x)) && Number.isFinite(Number(args.y))) return true;
     return /^@xy:/i.test(String(args.ref || ''));
+  }
+
+  function withWindowLock(windowId, task) {
+    const key = Number(windowId) || 0;
+    const previous = windowLocks.get(key) || Promise.resolve();
+    const run = previous.catch(() => {}).then(task);
+    const settled = run.then(() => {}, () => {});
+    windowLocks.set(key, settled);
+    settled.finally(() => {
+      if (windowLocks.get(key) === settled) windowLocks.delete(key);
+    });
+    return run;
+  }
+
+  function waitFor(ms, signal) {
+    return new Promise((resolve, reject) => {
+      if (signal?.aborted) {
+        reject(signal.reason || new Error('cancelled'));
+        return;
+      }
+      const timer = setTimeout(finish, ms);
+      const onAbort = () => {
+        clearTimeout(timer);
+        reject(signal.reason || new Error('cancelled'));
+      };
+      function finish() {
+        signal?.removeEventListener?.('abort', onAbort);
+        resolve();
+      }
+      signal?.addEventListener?.('abort', onAbort, { once: true });
+    });
+  }
+
+  // View changes go through the executor so the approval is bound to this tab.
+  // backgroundTask is omitted: that flag refuses the ask instead of showing it.
+  async function approvedFocus(tabId, lease, params, controller, scope) {
+    lease.abort = () => controller.abort();
+    const approved = await runtime.execute({
+      action: 'browser_tab_activate',
+      arguments: { tab_id: tabId },
+      command_id: `${params.command_id || 'focus'}:switch`,
+      tab_id: tabId,
+      frame_id: 0,
+      document_generation: lease.document,
+    }, {
+      scope: { ...scope, tabId },
+      signal: controller.signal,
+      leasedTabIds: [tabId],
+      ownedTabIds: [tabId],
+      currentWindowId: scope.windowId,
+      currentDocumentGeneration: () => lease.document,
+      controlHalted: () => controller.signal.aborted,
+    }, { browserControlEnabled: true });
+    if (!approved?.ok) return approved;
+    if (controller.signal.aborted) return failure('cancelled', 'The background command was cancelled.');
+    await focusTaskTab(tabId);
+    return approved;
   }
 
   async function focusTaskTab(tabId) {
@@ -138,16 +197,12 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
       return failure('no_normal_window', 'Open a regular Chrome window for Hermes background tasks.');
     }
     signal.throwIfAborted();
-    const tab = await tabs.create({ windowId: window.id, url: 'about:blank', active: activeTaskTabs });
+    const tab = await tabs.create({ windowId: window.id, url: 'about:blank', active: false });
     try {
       signal.throwIfAborted();
       state.groupId = await groupTab(state, tab, signal);
       signal.throwIfAborted();
-      if (activeTaskTabs) await focusTaskTab(tab.id);
-      const updated = await tabs.update(tab.id, {
-        url: destination.url,
-        ...(activeTaskTabs ? { active: true } : {}),
-      });
+      const updated = await tabs.update(tab.id, { url: destination.url });
       const { timedOut } = await waitForLoad(tab.id, {
         signal, startUrl: 'about:blank', sawLoading: updated.status === 'loading', timeoutMs: 10_000,
       });
@@ -187,7 +242,24 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     }
     if (action === 'browser_tab_create' || (action === 'browser_navigate' && !state.tabs.size && args.tab_id == null)) {
       const result = await createTab(state, args.url, signal);
-      if (result.ok) sessions.set(sessionId, state);
+      if (result.ok) {
+        sessions.set(sessionId, state);
+        if (activeTaskTabs) {
+          const createdId = result.result.tab.id;
+          const lease = state.tabs.get(createdId);
+          const createdTab = await getTab(createdId);
+          if (lease && createdTab) {
+            const raised = await withWindowLock(createdTab.windowId, () => approvedFocus(createdId, lease, params, controller, {
+              controllerId, leaseOwnerId: controllerId, leaseId: lease.leaseId, leaseGeneration: 1,
+              tabId: createdId, frameId: 0, documentGeneration: lease.document, windowId: createdTab.windowId,
+            }));
+            if (!raised?.ok) return raised;
+            delete lease.abort;
+            const shown = await getTab(createdId);
+            if (shown) result.result.tab = { ...tabView(shown), loading: result.result.tab.loading };
+          }
+        }
+      }
       return result;
     }
     if (action === 'browser_tab_activate') {
@@ -195,13 +267,22 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
         return failure('background_action_unavailable', 'This action is unavailable in background task tabs.');
       }
       const activateId = Number(args.tab_id);
-      if (!state.tabs.has(activateId)) {
-        return failure('lease_not_owned', 'Use tab_create to open a tab owned by this Hermes session.');
-      }
-      await focusTaskTab(activateId);
-      const activated = await getTab(activateId);
-      if (!activated) return failure('lease_not_owned', 'The task tab is no longer available.');
-      return { ok: true, result: { status: 'tab-activated', tab: tabView(activated) } };
+      const lease = state.tabs.get(activateId);
+      if (!lease) return failure('lease_not_owned', 'Use tab_create to open a tab owned by this Hermes session.');
+      const target = await getTab(activateId);
+      if (!target) return failure('lease_not_owned', 'The task tab is no longer available.');
+      return withWindowLock(target.windowId, async () => {
+        const raised = await approvedFocus(activateId, lease, params, controller, {
+          controllerId, leaseOwnerId: controllerId, leaseId: lease.leaseId, leaseGeneration: 1,
+          tabId: activateId, frameId: 0, documentGeneration: lease.document, windowId: target.windowId,
+        });
+        if (!raised?.ok) return raised;
+        if (!state.tabs.has(activateId)) return failure('lease_not_owned', 'The task tab is no longer available.');
+        const activated = await getTab(activateId);
+        if (!activated) return failure('lease_not_owned', 'The task tab is no longer available.');
+        state.lastTab = activateId;
+        return { ok: true, result: { status: 'tab-activated', tab: tabView(activated) } };
+      });
     }
     if (!PAGE_ACTIONS.has(action) && !(activeTaskTabs && (action === 'browser_screenshot' || action === 'browser_hover'))) {
       return failure('background_action_unavailable', 'This action is unavailable in background task tabs.');
@@ -217,29 +298,34 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
       lease.document += 1;
     }
     signal.throwIfAborted();
-    // Pointer and capture actions are dropped on a hidden tab. This tab belongs to the
-    // agent, so bring it forward instead of failing with tab_hidden.
-    if (activeTaskTabs && needsVisibleTab(action, args)) {
-      await focusTaskTab(id);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      signal.throwIfAborted();
-    }
     const scope = {
       controllerId, leaseOwnerId: controllerId, leaseId: lease.leaseId, leaseGeneration: 1,
-      tabId: id, frameId: 0, documentGeneration: lease.document,
+      tabId: id, frameId: 0, documentGeneration: lease.document, windowId: tab.windowId,
     };
+    // Installed before any wait so cancelling the debugger banner aborts the command.
     lease.abort = () => controller.abort();
     try {
-      const result = await runtime.execute({
-        ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
-      }, {
-        scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
-        currentWindowId: tab.windowId,
-        currentDocumentGeneration: () => lease.document,
-        controlHalted: () => signal.aborted || !state.tabs.has(id),
-      }, { browserControlEnabled: true });
-      if (result.ok) state.lastTab = id;
-      return result;
+      return await withWindowLock(tab.windowId, async () => {
+        if (activeTaskTabs && needsVisibleTab(action, args)) {
+          const raised = await approvedFocus(id, lease, params, controller, scope);
+          if (!raised?.ok) return raised;
+          await waitFor(300, signal);
+          if (signal.aborted || !state.tabs.has(id)) {
+            return failure('lease_not_owned', 'The task tab is no longer available.');
+          }
+        }
+        if (!state.tabs.has(id)) return failure('lease_not_owned', 'The task tab is no longer available.');
+        const result = await runtime.execute({
+          ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
+        }, {
+          scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
+          currentWindowId: tab.windowId,
+          currentDocumentGeneration: () => lease.document,
+          controlHalted: () => signal.aborted || !state.tabs.has(id),
+        }, { browserControlEnabled: true });
+        if (result.ok) state.lastTab = id;
+        return result;
+      });
     } finally {
       delete lease.abort;
     }

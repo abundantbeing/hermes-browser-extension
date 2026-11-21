@@ -1012,8 +1012,27 @@ initBackgroundTaskBrowserSetting();
 function initActiveTaskTabsSetting() {
   const row = document.getElementById('activeTaskTabsSetting');
   const input = document.getElementById('activeTaskTabsInput');
+  const status = document.getElementById('activeTaskTabsStatus');
   const storage = browserApi.storage?.local;
-  if (!row || !input || !storage) return;
+  if (!row || !input || !status || !storage || !browserApi.tabGroups || !browserApi.debugger) return;
+
+  async function gatewaySupportsTasks(connection) {
+    try {
+      const url = new URL(connection.gatewayUrl);
+      url.pathname = url.pathname.replace(/\/+$/, '') + controllerProfilePath(COMPANION_STATUS_PATH, connection.activeProfile);
+      url.search = '';
+      url.hash = '';
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${connection.apiKey}` },
+        redirect: 'error',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      });
+      return response.ok && companionSupportsBackgroundTasks(parseCompanionStatusPayload(await response.json()));
+    } catch {
+      return false;
+    }
+  }
 
   async function render() {
     const stored = await storage.get([
@@ -1021,9 +1040,12 @@ function initActiveTaskTabsSetting() {
     ]);
     const connection = await hydrateHermesBrowserSettingsFromStorage(stored);
     const consentIdentity = await backgroundBrowserConsentIdentity(connection);
-    row.hidden = !consentIdentity;
+    const available = Boolean(consentIdentity) && await gatewaySupportsTasks(connection);
+    row.hidden = !available && stored[ACTIVE_TASK_TABS] !== true;
     input.checked = stored[ACTIVE_TASK_TABS] === true;
-    input.disabled = !consentIdentity;
+    input.disabled = !available && stored[ACTIVE_TASK_TABS] !== true;
+    if (available) status.textContent = '';
+    else if (!row.hidden) status.textContent = t('browser_control.background_unavailable');
   }
 
   input.addEventListener('change', async () => {
@@ -1032,9 +1054,9 @@ function initActiveTaskTabsSetting() {
     try {
       if (checked) await storage.set({ [ACTIVE_TASK_TABS]: true });
       else await storage.remove(ACTIVE_TASK_TABS);
+      status.textContent = '';
     } catch {
-      input.disabled = false;
-      return;
+      status.textContent = t('browser_control.active_tabs_save_error');
     }
     await render().catch(() => {});
   });
