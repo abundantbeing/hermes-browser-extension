@@ -148,7 +148,12 @@ Keep the API server on loopback on the Hermes machine and let Tailscale give it 
 tailscale serve --bg 8642
 ```
 
-Tailscale prints an address like `https://hermes-box.tail1234.ts.net`. Add a **Remote gateway** with that address and the key. It is HTTPS, so Hermes Control works over it.
+Tailscale prints an address like `https://hermes-box.tail1234.ts.net`. Add a **Remote gateway** with that address and the key and install the [companion plugin](#add-hermes-control-the-plugin) on the Hermes machine.
+
+**What you get on `https://…ts.net` (Remote API + key + plugin):**
+- **Page context:** available after you approve **Share page context with this connection** in Settings (default off).
+- **Hermes Control:** works on tabs you explicitly attach once you enable **Settings > Permissions & Control > Hermes Control** (full clicks/typing on Chromium, read/navigate/tabs on Firefox).
+- **Still local-only:** **Background task tabs** are refused over remote connections (`background_browser_local_only`).
 
 Without `tailscale serve`, you can instead:
 1. Set `API_SERVER_HOST` to the machine's Tailscale IP (`100.x.y.z`).
@@ -213,7 +218,12 @@ server {
 }
 ```
 
-Add a **Remote gateway** at `https://hermes.example.com` with the key. If the proxy asks for its own sign-in header (for example Cloudflare Access service tokens), add those under **Options > Custom headers** for that connection.
+Add a **Remote gateway** at `https://hermes.example.com` with the key and install the [companion plugin](#add-hermes-control-the-plugin) on the Hermes machine. If the proxy asks for its own sign-in header (for example Cloudflare Access service tokens), add those under **Options > Custom headers** for that connection.
+
+**What you get behind an HTTPS reverse proxy (Remote API + key + plugin):**
+- **Page context:** available after you approve **Share page context with this connection** in Settings (default off).
+- **Hermes Control:** works on tabs you explicitly attach once you enable **Settings > Permissions & Control > Hermes Control** (WebSocket upgrade must be forwarded as shown above).
+- **Still local-only:** **Background task tabs** are refused over remote connections.
 
 If the proxy uses a certificate your browser does not trust yet, Add connection offers to open the address in a tab so you can accept it. Do **not** expose the API server to the internet without HTTPS and the key. It runs the real Hermes, with its tools.
 
