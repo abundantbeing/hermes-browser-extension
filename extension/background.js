@@ -1262,8 +1262,10 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   const controllerType = message?.type;
   const taskApproval = (
-    controllerType === CONTROLLER_WORKER_MESSAGES.approvalGrant
-    || controllerType === CONTROLLER_WORKER_MESSAGES.approvalReject
+    (
+      controllerType === CONTROLLER_WORKER_MESSAGES.approvalGrant
+      || controllerType === CONTROLLER_WORKER_MESSAGES.approvalReject
+    ) && isExtensionPageSender(sender, browserApi.runtime)
   ) ? backgroundTaskBrowser?.handleApproval?.(message) : null;
   const action = CONTROLLER_WORKER_MESSAGE_TYPES.has(controllerType)
     ? taskApproval != null
