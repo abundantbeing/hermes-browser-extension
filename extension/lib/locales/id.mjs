@@ -2308,4 +2308,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Sumber: dasbor Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Sumber: browser ini (speechSynthesis)",
   "read_aloud.meta.none": "Sumber: tidak ada",
+  "settings.cloud_gateway_help": "Hermes Cloud menggunakan Trusted Dashboard Attach. Buka dasbor agen yang sudah masuk di tab aktif, lalu pilih “Uji koneksi”. Konteks halaman tetap nonaktif sampai Anda menyetujui “Bagikan konteks halaman dengan koneksi ini” untuk akun Cloud yang tepat ini.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach melalui WebSocket. Biarkan dasbor yang sudah masuk tetap menjadi tab aktif Anda, lalu gunakan “Uji koneksi” untuk menyetujui origin HTTPS-nya. Konteks halaman tetap nonaktif sampai Anda menyetujui berbagi dengan koneksi yang tepat ini. Tidak perlu kunci.",
 });

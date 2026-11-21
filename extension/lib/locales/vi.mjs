@@ -2308,4 +2308,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Nguồn: bảng điều khiển Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Nguồn: trình duyệt này (speechSynthesis)",
   "read_aloud.meta.none": "Nguồn: không có",
+  "settings.cloud_gateway_help": "Hermes Cloud dùng Trusted Dashboard Attach. Mở bảng điều khiển tác tử đã đăng nhập trong thẻ đang hoạt động, rồi chọn “Kiểm tra kết nối”. Ngữ cảnh trang vẫn tắt cho đến khi bạn phê duyệt “Chia sẻ ngữ cảnh trang với kết nối này” cho đúng tài khoản Cloud này.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach qua WebSocket. Giữ bảng điều khiển đã đăng nhập làm thẻ đang hoạt động, rồi dùng “Kiểm tra kết nối” để phê duyệt nguồn gốc HTTPS của nó. Ngữ cảnh trang vẫn tắt cho đến khi bạn phê duyệt chia sẻ với đúng kết nối này. Không cần khóa.",
 });

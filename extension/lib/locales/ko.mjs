@@ -2308,4 +2308,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "출처: Hermes 대시보드 (/api/audio/speak)",
   "read_aloud.meta.browser": "출처: 이 브라우저 (speechSynthesis)",
   "read_aloud.meta.none": "출처: 없음",
+  "settings.cloud_gateway_help": "Hermes Cloud는 Trusted Dashboard Attach를 사용합니다. 로그인된 에이전트 대시보드를 활성 탭에서 연 다음 “테스트 연결”을 선택하세요. 이 Cloud 계정에 대해 “이 연결과 페이지 컨텍스트 공유”를 승인할 때까지 페이지 컨텍스트는 꺼진 상태로 유지됩니다.",
+  "settings.remote_dashboard_setup_hint": "WebSocket을 통한 Trusted Dashboard Attach입니다. 로그인된 대시보드를 활성 탭으로 유지한 다음 “테스트 연결”을 사용해 HTTPS 출처를 승인하세요. 이 연결과의 공유를 승인할 때까지 페이지 컨텍스트는 꺼진 상태로 유지됩니다. 키는 필요하지 않습니다.",
 });

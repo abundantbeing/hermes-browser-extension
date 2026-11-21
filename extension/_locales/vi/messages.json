@@ -4127,6 +4127,10 @@
     "message": "Giọng nói & đánh thức",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud dùng Trusted Dashboard Attach. Mở bảng điều khiển tác tử đã đăng nhập trong thẻ đang hoạt động, rồi chọn “Kiểm tra kết nối”. Ngữ cảnh trang vẫn tắt cho đến khi bạn phê duyệt “Chia sẻ ngữ cảnh trang với kết nối này” cho đúng tài khoản Cloud này.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Đầy đủ",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4310,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· giải nén alpha / tải công khai",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach qua WebSocket. Giữ bảng điều khiển đã đăng nhập làm thẻ đang hoạt động, rồi dùng “Kiểm tra kết nối” để phê duyệt nguồn gốc HTTPS của nó. Ngữ cảnh trang vẫn tắt cho đến khi bạn phê duyệt chia sẻ với đúng kết nối này. Không cần khóa.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Chưa lưu: {detail}",

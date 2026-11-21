@@ -2308,4 +2308,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Origem: painel do Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Origem: este navegador (speechSynthesis)",
   "read_aloud.meta.none": "Origem: nenhuma",
+  "settings.cloud_gateway_help": "O Hermes Cloud usa Trusted Dashboard Attach. Abra o painel do agente conectado na aba ativa e escolha “Conexão de teste”. O contexto da página fica desativado até você aprovar “Compartilhar o contexto da página com esta conexão” para esta conta do Cloud exata.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach via WebSocket. Mantenha o painel conectado como aba ativa e use “Conexão de teste” para aprovar a origem HTTPS dele. O contexto da página fica desativado até você aprovar o compartilhamento com esta conexão exata. Nenhuma chave necessária.",
 });
