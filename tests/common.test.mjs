@@ -910,7 +910,12 @@ test('gateway settings support explicit local and remote Hermes API servers', ()
   assert.match(dashboard.setupHint, /Trusted Dashboard Attach/);
   assert.match(dashboard.setupHint, /active tab/);
   assert.match(dashboard.setupHint, /Test connection/);
-  assert.match(dashboard.setupHint, /Chat-only/);
+  assert.doesNotMatch(dashboard.setupHint, /Chat-only/i);
+  assert.match(dashboard.setupHint, /Page context stays off until you approve/i);
+  assert.match(dashboard.setupHint, /exact connection/i);
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(sidepanel, /Cloud connections are Chat-only/);
+  assert.match(sidepanel, /Share page context with this connection/);
 });
 
 test('isUsableRemoteGatewayUrl requires a parseable https URL', () => {
