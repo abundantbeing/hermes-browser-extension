@@ -188,7 +188,9 @@ test('sidepanel primary Connect and Test use one explicit connection-mode dispat
   assert.match(js, /connectionActionForSettings\(settings\)/);
   assert.match(js, /CLOUD_ACTIVE_TAB_ATTACH/);
   assert.match(js, /connectTicketTransport\(\{\s*cloud:\s*true\s*\}\)/);
-  assert.match(html, /Hermes Cloud Preview/);
+  const cloudCardTitles = [...html.matchAll(/<span class="conn-mode-title" data-i18n="ui\.hermes\.cloud\.preview">([^<]*)<\/span>/g)].map((match) => match[1]);
+  assert.deepEqual(cloudCardTitles, ['Hermes Cloud', 'Hermes Cloud'], 'both Cloud connection cards must be titled exactly Hermes Cloud');
+  assert.doesNotMatch(html, /Hermes Cloud Preview/, 'the old Hermes Cloud Preview name must not return');
   assert.match(js, /async function connectApiWithPairing\(\)[\s\S]*?transportUsesDashboardTicket\(settings\.connectionTransport\)/, 'the Local/Remote API connector must reject ticket transports before URL normalization');
   assert.match(js, /sanitizeGatewayUrlForConnectionMode\(/, 'Cloud persistence must remove loopback and inherited Local URLs');
 });

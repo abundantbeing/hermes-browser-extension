@@ -14,7 +14,7 @@ test('Cloud agent URLs normalize to exact credential-free HTTPS origins', () => 
   assert.throws(() => normalizeCloudAgentOrigin('https://user@agent.example.test'), /username or password/);
 });
 
-test('Cloud Preview requires the active complete non-discarded tab', async () => {
+test('Hermes Cloud requires the active complete non-discarded tab', async () => {
   await assert.rejects(() => resolveActiveCloudAgentTab({
     tabsApi: { query: async () => [{ id: 10, status: 'loading', url: 'https://agent.example.test' }] },
   }), /finish loading/);
@@ -34,7 +34,7 @@ test('Cloud Preview requires the active complete non-discarded tab', async () =>
   });
 });
 
-test('Cloud Preview aborts when the leased tab changes origin', async () => {
+test('Hermes Cloud aborts when the leased tab changes origin', async () => {
   await assert.rejects(() => assertCloudAgentTabStillMatches({
     tabsApi: {
       get: async () => ({
