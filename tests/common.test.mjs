@@ -3503,7 +3503,7 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
   assert.equal(result.models.at(-1).contextTokens, 1_000_000);
 });
 
-test('Cloud Preview flattens provider-aware model.options payloads before rendering', async () => {
+test('Hermes Cloud flattens provider-aware model.options payloads before rendering', async () => {
   const { modelRowsFromGatewayOptions } = await import('../extension/lib/model-discovery.mjs');
   const providerPayload = {
     providers: [
@@ -3540,7 +3540,7 @@ test('Cloud Preview flattens provider-aware model.options payloads before render
   );
 });
 
-test('Cloud Preview applies model picks to the live session and refreshes context metadata', () => {
+test('Hermes Cloud applies model picks to the live session and refreshes context metadata', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(sidepanel, /buildSessionModelSwitchRequest\(\{/);
   assert.match(sidepanel, /connection\.client\.request\(request\.method, request\.params\)/);

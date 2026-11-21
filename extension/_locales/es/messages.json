@@ -6372,7 +6372,7 @@
     "description": "Runtime interface message ui.hermes.cloud"
   },
   "runtime_ui_hermes_cloud_preview": {
-    "message": "Hermes Cloud Preview",
+    "message": "Hermes Cloud",
     "description": "Runtime interface message ui.hermes.cloud.preview"
   },
   "runtime_ui_hermes_cloud_unavailable": {
@@ -7484,7 +7484,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "Prefiere el motor de activación nativo Hermes localmente y utiliza la voz del navegador disponible en el dispositivo para Cloud Preview.",
+    "message": "Prefiere el motor de activación nativo Hermes localmente y utiliza la voz del navegador disponible en el dispositivo para Hermes Cloud.",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -7808,7 +7808,7 @@
     "description": "Runtime interface message ui.required"
   },
   "runtime_ui_required_for_cloud_preview_and_older_hermes_builds_it_refuses_c_f0bdad5b": {
-    "message": "Requerido para Cloud Preview y compilaciones anteriores de Hermes. Rechaza el reconocimiento de voz en la nube.",
+    "message": "Requerido para Hermes Cloud y compilaciones anteriores de Hermes. Rechaza el reconocimiento de voz en la nube.",
     "description": "Runtime interface message ui.required.for.cloud.preview.and.older.hermes.builds.it.refuses.c.f0bdad5b"
   },
   "runtime_ui_rerun": {
