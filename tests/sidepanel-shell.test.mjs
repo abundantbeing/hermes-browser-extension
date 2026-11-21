@@ -188,7 +188,7 @@ test('sidepanel primary Connect and Test use one explicit connection-mode dispat
   assert.match(js, /connectionActionForSettings\(settings\)/);
   assert.match(js, /CLOUD_ACTIVE_TAB_ATTACH/);
   assert.match(js, /connectTicketTransport\(\{\s*cloud:\s*true\s*\}\)/);
-  assert.match(html, /Hermes Cloud Preview/);
+  assert.match(html, /Hermes Cloud/);
   assert.match(js, /async function connectApiWithPairing\(\)[\s\S]*?transportUsesDashboardTicket\(settings\.connectionTransport\)/, 'the Local/Remote API connector must reject ticket transports before URL normalization');
   assert.match(js, /sanitizeGatewayUrlForConnectionMode\(/, 'Cloud persistence must remove loopback and inherited Local URLs');
 });

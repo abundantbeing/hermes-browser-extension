@@ -28823,7 +28823,7 @@ async function connectTicketTransport({ cloud = false } = {}) {
     if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'dashboard-ws', sessionId: readiness.sessionId })) return;
     const target = normalizeGatewayUrl(settings.gatewayUrl);
     markGatewayReachable(target);
-    setStatus('ok', cloud ? 'Hermes Cloud Preview connected' : 'Remote Hermes dashboard connected', `${target} · Session ${readiness.sessionId}`);
+    setStatus('ok', cloud ? 'Hermes Cloud connected' : 'Remote Hermes dashboard connected', `${target} · Session ${readiness.sessionId}`);
     els.connectStatus.textContent = cloud
       ? `Connected to the active signed-in Hermes Cloud agent (${target}).`
       : `Connected to ${target}.`;
@@ -28834,7 +28834,7 @@ async function connectTicketTransport({ cloud = false } = {}) {
     if (connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) {
       markGatewayUnreachable(error, diagnostic);
       els.connectStatus.textContent = diagnostic.detail;
-      setStatus('error', cloud ? 'Hermes Cloud Preview failed' : 'Dashboard Attach failed', diagnostic.userMessage, { translateDetail: false });
+      setStatus('error', cloud ? 'Hermes Cloud failed' : 'Dashboard Attach failed', diagnostic.userMessage, { translateDetail: false });
     }
   } finally {
     if (connectionController.isCurrent(generation)) {
