@@ -124,6 +124,66 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     });
   }
 
+
+  // Approvals for a task-tab switch are bound to this controller's leases, not
+  // to the attached Hermes Control worker. The panel still sends the same grant
+  // and reject messages; those are routed here when the pending request is ours.
+  function sourceCommandId(commandId) {
+    return String(commandId || '').endsWith(':switch')
+      ? String(commandId).slice(0, -':switch'.length)
+      : String(commandId || '');
+  }
+
+  function leaseForTab(tabId) {
+    for (const state of sessions.values()) {
+      const lease = state.tabs.get(tabId);
+      if (lease) return lease;
+    }
+    return null;
+  }
+
+  function handleApproval(message = {}) {
+    const grant = message?.type === 'HERMES_CONTROLLER_APPROVAL_GRANT';
+    const reject = message?.type === 'HERMES_CONTROLLER_APPROVAL_REJECT';
+    if (!grant && !reject) return null;
+    const store = runtime?.approvals;
+    if (!store?.pending || !store.grant) return null;
+    const approvalId = String(message.approvalId || '').trim();
+    const request = store.pending().find((entry) => entry.approvalId === approvalId);
+    if (!request || request.controllerId !== controllerId) return null;
+    const commandId = String(message.commandId || '').trim();
+    const tabId = Number(message.tabId);
+    const requestedFrame = Number.isInteger(Number(message.frameId)) ? Number(message.frameId) : 0;
+    if (
+      request.commandId !== commandId
+      || request.action !== String(message.action || '').trim()
+      || request.tabId !== tabId
+      || (request.frameId ?? 0) !== requestedFrame
+      || request.documentGeneration !== Number(message.documentGeneration)
+    ) {
+      return { ok: false, error: 'approval_missing' };
+    }
+    const parentId = sourceCommandId(commandId);
+    if (!pending.has(parentId) && !pending.has(commandId)) {
+      store.cancelRequest?.(approvalId, 'approval_cancelled');
+      return { ok: false, error: 'approval_terminal' };
+    }
+    const lease = leaseForTab(tabId);
+    if (!lease) return { ok: false, error: 'lease_required' };
+    if (request.leaseId && request.leaseId !== lease.leaseId) return { ok: false, error: 'approval_mismatch' };
+    if (request.leaseGeneration && request.leaseGeneration !== 1) return { ok: false, error: 'approval_mismatch' };
+    if (Number(lease.document) !== Number(request.documentGeneration)) return { ok: false, error: 'stale_document' };
+    if (reject) {
+      store.cancelRequest?.(approvalId, 'approval_denied');
+      return { ok: true, commandId, cancelled: true };
+    }
+    if (request.state !== 'paused') {
+      store.cancelRequest?.(approvalId, 'approval_cancelled');
+      return { ok: false, error: 'approval_terminal' };
+    }
+    return store.grant(request);
+  }
+
   // View changes go through the executor so the approval is bound to this tab.
   // backgroundTask is omitted: that flag refuses the ask instead of showing it.
   async function approvedFocus(tabId, lease, params, controller, scope) {
@@ -253,8 +313,16 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
               controllerId, leaseOwnerId: controllerId, leaseId: lease.leaseId, leaseGeneration: 1,
               tabId: createdId, frameId: 0, documentGeneration: lease.document, windowId: createdTab.windowId,
             }));
-            if (!raised?.ok) return raised;
             delete lease.abort;
+            if (!raised?.ok) {
+              return {
+                ok: true,
+                result: {
+                  ...result.result,
+                  focus_error: raised?.error || { code: 'approval_required', message: 'The tab was created, but bringing it forward was not approved.' },
+                },
+              };
+            }
             const shown = await getTab(createdId);
             if (shown) result.result.tab = { ...tabView(shown), loading: result.result.tab.loading };
           }
@@ -304,28 +372,34 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     };
     // Installed before any wait so cancelling the debugger banner aborts the command.
     lease.abort = () => controller.abort();
-    try {
-      return await withWindowLock(tab.windowId, async () => {
-        if (activeTaskTabs && needsVisibleTab(action, args)) {
-          const raised = await approvedFocus(id, lease, params, controller, scope);
-          if (!raised?.ok) return raised;
-          await waitFor(300, signal);
-          if (signal.aborted || !state.tabs.has(id)) {
-            return failure('lease_not_owned', 'The task tab is no longer available.');
-          }
+    const runPageAction = async () => {
+      if (activeTaskTabs && needsVisibleTab(action, args)) {
+        const raised = await approvedFocus(id, lease, params, controller, scope);
+        if (!raised?.ok) return raised;
+        await waitFor(300, signal);
+        if (signal.aborted || !state.tabs.has(id)) {
+          return failure('lease_not_owned', 'The task tab is no longer available.');
         }
-        if (!state.tabs.has(id)) return failure('lease_not_owned', 'The task tab is no longer available.');
-        const result = await runtime.execute({
-          ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
-        }, {
-          scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
-          currentWindowId: tab.windowId,
-          currentDocumentGeneration: () => lease.document,
-          controlHalted: () => signal.aborted || !state.tabs.has(id),
-        }, { browserControlEnabled: true });
-        if (result.ok) state.lastTab = id;
-        return result;
-      });
+      }
+      if (!state.tabs.has(id)) return failure('lease_not_owned', 'The task tab is no longer available.');
+      const result = await runtime.execute({
+        ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
+      }, {
+        scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
+        currentWindowId: tab.windowId,
+        currentDocumentGeneration: () => lease.document,
+        controlHalted: () => signal.aborted || !state.tabs.has(id),
+      }, { browserControlEnabled: true });
+      if (result.ok) state.lastTab = id;
+      return result;
+    };
+    try {
+      // The window lock is only for work that must keep a tab visible. Background-only
+      // page actions in the same window must not wait behind each other.
+      if (activeTaskTabs && needsVisibleTab(action, args)) {
+        return await withWindowLock(tab.windowId, runPageAction);
+      }
+      return await runPageAction();
     } finally {
       delete lease.abort;
     }
@@ -462,5 +536,6 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
         if (state.tabs.delete(id) && !state.tabs.size) sessions.delete(session);
       }
     },
+    handleApproval,
   };
 }

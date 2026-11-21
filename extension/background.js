@@ -1260,11 +1260,18 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ ...FORBIDDEN_SENDER_RESPONSE });
     return false;
   }
-  const action = CONTROLLER_WORKER_MESSAGE_TYPES.has(message?.type)
-    ? controllerWorker
-      ? controllerWorker.handleMessage(message, sender)
-      : Promise.resolve({ ok: false, error: 'controller_worker_unavailable' })
-    : WAKE_BACKGROUND_MESSAGE_TYPES.has(message?.type)
+  const controllerType = message?.type;
+  const taskApproval = (
+    controllerType === CONTROLLER_WORKER_MESSAGES.approvalGrant
+    || controllerType === CONTROLLER_WORKER_MESSAGES.approvalReject
+  ) ? backgroundTaskBrowser?.handleApproval?.(message) : null;
+  const action = CONTROLLER_WORKER_MESSAGE_TYPES.has(controllerType)
+    ? taskApproval != null
+      ? Promise.resolve(taskApproval)
+      : controllerWorker
+        ? controllerWorker.handleMessage(message, sender)
+        : Promise.resolve({ ok: false, error: 'controller_worker_unavailable' })
+    : WAKE_BACKGROUND_MESSAGE_TYPES.has(controllerType)
     ? wakeController.handleMessage(message)
     : [CONTEXT_MENU_CONFIG_GET, CONTEXT_MENU_CONFIG_MUTATE, CONTEXT_MENU_REQUEST_CLAIM].includes(message?.type)
       ? contextMenuController.handleMessage(message)
