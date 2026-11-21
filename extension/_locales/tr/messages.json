@@ -2595,6 +2595,14 @@
     "message": "Temada doğrulama hataları var.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Dashboard Attach için {origin} kaynağına güvenilsin mi?\n\nHermes Browser Extension, kısa ömürlü ve tek kullanımlık bir WebSocket bileti istemek için etkin pano sekmenizdeki oturumu kullanır. Bu pano bu bilgisayarda çalıştığı için panelde seçtiğiniz sayfa bağlamı, bağlantı başına ayrı bir onay olmadan onunla paylaşılır. Bilet yalnızca bellekte tutulur ve hiçbir zaman saklanmaz.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Dashboard Attach için {origin} kaynağına güvenilsin mi?\n\nHermes Browser Extension, kısa ömürlü ve tek kullanımlık bir WebSocket bileti istemek için etkin pano sekmenizdeki oturumu kullanır. Bu hesap için “Sayfa bağlamını bu bağlantıyla paylaş” seçeneğini onaylayana kadar sayfa bağlamı kapalı kalır. Bilet yalnızca bellekte tutulur ve hiçbir zaman saklanmaz.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Sağlık denetimi yanıt verdi, ancak korumalı uzantı ve model rotaları Authorization: Bearer *** gerektiriyor. API anahtarını veya kapsamı belirlenmiş tarayıcı belirtecini Ayarlar’a yapıştırın.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

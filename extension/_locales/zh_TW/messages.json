@@ -2595,6 +2595,14 @@
     "message": "主題有驗證錯誤。",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "要信任 {origin} 用於 Dashboard Attach 嗎？\n\nHermes Browser Extension 會使用使用中儀表板分頁的已登入工作階段，要求一個短期有效、僅能使用一次的 WebSocket 票證。此儀表板在這台電腦上執行，因此您在面板中選擇的頁面內容會與其共享，不需要個別的逐連線核准。票證只保留在記憶體中，絕不會儲存。",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "要信任 {origin} 用於 Dashboard Attach 嗎？\n\nHermes Browser Extension 會使用使用中儀表板分頁的已登入工作階段，要求一個短期有效、僅能使用一次的 WebSocket 票證。在您為這個確切帳戶核准「與此連線共享頁面內容」之前，頁面內容會保持關閉。票證只保留在記憶體中，絕不會儲存。",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "健康檢查已有回應，但受保護的擴充功能/模型路由需要 Authorization: Bearer *** 請在「設定」中貼上 API 金鑰或範圍限定的瀏覽器權杖。",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

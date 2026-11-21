@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "non configurata",
   "context_consent.share_detail": "Solo chat finché non approvi questa connessione specifica. Il consenso è isolato per endpoint, account, profilo e controller del browser.",
   "context_consent.share_label": "Condividi il contesto della pagina con questa connessione",
+  "dashboard.trust_prompt_remote": "Considerare attendibile {origin} per Dashboard Attach?\n\nHermes Browser Extension userà la sessione con accesso eseguito nella scheda attiva della dashboard per richiedere un ticket WebSocket monouso e di breve durata. Il contesto della pagina resta disattivato finché non approvi “Condividi il contesto della pagina con questa connessione” per questo specifico account. Il ticket resta solo in memoria e non viene mai salvato.",
+  "dashboard.trust_prompt_local": "Considerare attendibile {origin} per Dashboard Attach?\n\nHermes Browser Extension userà la sessione con accesso eseguito nella scheda attiva della dashboard per richiedere un ticket WebSocket monouso e di breve durata. Questa dashboard è in esecuzione su questo computer, quindi il contesto della pagina scelto nel pannello viene condiviso con essa senza un’approvazione separata per connessione. Il ticket resta solo in memoria e non viene mai salvato.",
   "context.attached_tab": "Scheda allegata",
   "context.follow_active_tab": "Segui la scheda attiva",
   "context.return_attached_tab": "Torna alla scheda collegata",

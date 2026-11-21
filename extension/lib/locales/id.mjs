@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "belum dikonfigurasi",
   "context_consent.share_detail": "Hanya chat sampai Anda menyetujui koneksi yang tepat ini. Persetujuan dipisahkan berdasarkan endpoint, akun, profil, dan pengontrol Browser.",
   "context_consent.share_label": "Bagikan konteks halaman dengan koneksi ini",
+  "dashboard.trust_prompt_remote": "Percayai {origin} untuk Dashboard Attach?\n\nHermes Browser Extension akan menggunakan sesi yang sudah masuk di tab dasbor aktif Anda untuk meminta tiket WebSocket sekali pakai yang berumur pendek. Konteks halaman tetap nonaktif sampai Anda menyetujui “Bagikan konteks halaman dengan koneksi ini” untuk akun yang tepat ini. Tiket hanya ada di memori dan tidak pernah disimpan.",
+  "dashboard.trust_prompt_local": "Percayai {origin} untuk Dashboard Attach?\n\nHermes Browser Extension akan menggunakan sesi yang sudah masuk di tab dasbor aktif Anda untuk meminta tiket WebSocket sekali pakai yang berumur pendek. Dasbor ini berjalan di komputer ini, jadi konteks halaman yang Anda pilih di panel dibagikan dengannya tanpa persetujuan terpisah per koneksi. Tiket hanya ada di memori dan tidak pernah disimpan.",
   "context.attached_tab": "Tab terlampir",
   "context.follow_active_tab": "Ikuti tab aktif",
   "context.return_attached_tab": "Kembali ke tab terlampir",

@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "no configurada",
   "context_consent.share_detail": "Solo chat hasta que apruebes esta conexión exacta. El consentimiento se aísla por endpoint, cuenta, perfil y controlador del navegador.",
   "context_consent.share_label": "Compartir el contexto de la página con esta conexión",
+  "dashboard.trust_prompt_remote": "¿Confiar en {origin} para Dashboard Attach?\n\nHermes Browser Extension usará la sesión iniciada en tu pestaña activa del panel para solicitar un ticket de WebSocket de corta duración y de un solo uso. El contexto de la página permanece desactivado hasta que apruebes “Compartir el contexto de la página con esta conexión” para esta cuenta exacta. El ticket solo se guarda en memoria y nunca se almacena.",
+  "dashboard.trust_prompt_local": "¿Confiar en {origin} para Dashboard Attach?\n\nHermes Browser Extension usará la sesión iniciada en tu pestaña activa del panel para solicitar un ticket de WebSocket de corta duración y de un solo uso. Este panel se ejecuta en este equipo, así que el contexto de la página que elijas en el panel se comparte con él sin una aprobación aparte por conexión. El ticket solo se guarda en memoria y nunca se almacena.",
   "context.attached_tab": "Pestaña adjunta",
   "context.follow_active_tab": "Seguir pestaña activa",
   "context.return_attached_tab": "Volver a la pestaña adjunta",

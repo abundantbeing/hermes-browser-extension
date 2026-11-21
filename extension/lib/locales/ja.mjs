@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "未設定",
   "context_consent.share_detail": "この接続を明示的に承認するまではチャットのみです。同意はエンドポイント、アカウント、プロファイル、ブラウザーコントローラーごとに分離されます。",
   "context_consent.share_label": "この接続とページコンテキストを共有",
+  "dashboard.trust_prompt_remote": "Dashboard Attach で {origin} を信頼しますか？\n\nHermes Browser Extension は、アクティブなダッシュボードタブのサインイン済みセッションを使って、短時間有効な使い捨ての WebSocket チケットを要求します。このアカウントで「この接続とページコンテキストを共有」を承認するまで、ページコンテキストはオフのままです。チケットはメモリ内にのみ保持され、保存されることはありません。",
+  "dashboard.trust_prompt_local": "Dashboard Attach で {origin} を信頼しますか？\n\nHermes Browser Extension は、アクティブなダッシュボードタブのサインイン済みセッションを使って、短時間有効な使い捨ての WebSocket チケットを要求します。このダッシュボードはこのコンピューター上で動作しているため、パネルで選択したページコンテキストは接続ごとの個別承認なしで共有されます。チケットはメモリ内にのみ保持され、保存されることはありません。",
   "context.attached_tab": "付属タブ",
   "context.follow_active_tab": "アクティブなタブをフォローする",
   "context.return_attached_tab": "接続中のタブに戻る",

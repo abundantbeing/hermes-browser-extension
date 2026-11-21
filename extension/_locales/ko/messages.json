@@ -2595,6 +2595,14 @@
     "message": "테마에 유효성 검사 오류가 있습니다.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Dashboard Attach에 {origin}을(를) 신뢰하시겠습니까?\n\nHermes Browser Extension은 활성 대시보드 탭의 로그인된 세션을 사용해 수명이 짧은 일회용 WebSocket 티켓을 요청합니다. 이 대시보드는 이 컴퓨터에서 실행되므로 패널에서 선택한 페이지 컨텍스트는 연결별 별도 승인 없이 공유됩니다. 티켓은 메모리에만 있으며 저장되지 않습니다.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Dashboard Attach에 {origin}을(를) 신뢰하시겠습니까?\n\nHermes Browser Extension은 활성 대시보드 탭의 로그인된 세션을 사용해 수명이 짧은 일회용 WebSocket 티켓을 요청합니다. 이 계정에 대해 “이 연결과 페이지 컨텍스트 공유”를 승인할 때까지 페이지 컨텍스트는 꺼진 상태로 유지됩니다. 티켓은 메모리에만 있으며 저장되지 않습니다.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "상태 확인에는 응답이 있었지만 보호된 확장 프로그램/모델 경로에는 Authorization: Bearer ***가 필요합니다. 설정에 API 키 또는 범위가 지정된 브라우저 토큰을 붙여넣으세요.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

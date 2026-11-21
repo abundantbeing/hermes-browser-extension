@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "ikke konfigureret",
   "context_consent.share_detail": "Kun chat, indtil du godkender netop denne forbindelse. Samtykke er isoleret efter slutpunkt, konto, profil og browsercontroller.",
   "context_consent.share_label": "Del sidekontekst med denne forbindelse",
+  "dashboard.trust_prompt_remote": "Vil du stole på {origin} til Dashboard Attach?\n\nHermes Browser Extension bruger den loggede ind session i din aktive dashboard-fane til at anmode om en kortlivet WebSocket-billet til engangsbrug. Sidekontekst forbliver slået fra, indtil du godkender “Del sidekontekst med denne forbindelse” for netop denne konto. Billetten findes kun i hukommelsen og gemmes aldrig.",
+  "dashboard.trust_prompt_local": "Vil du stole på {origin} til Dashboard Attach?\n\nHermes Browser Extension bruger den loggede ind session i din aktive dashboard-fane til at anmode om en kortlivet WebSocket-billet til engangsbrug. Dette dashboard kører på denne computer, så den sidekontekst, du vælger i panelet, deles med det uden en separat godkendelse pr. forbindelse. Billetten findes kun i hukommelsen og gemmes aldrig.",
   "context.attached_tab": "Vedhæftet fane",
   "context.follow_active_tab": "Følg den aktive fane",
   "context.return_attached_tab": "Gå tilbage til den tilknyttede fane",

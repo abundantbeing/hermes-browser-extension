@@ -429,6 +429,8 @@ export default Object.freeze({
   "connection.not_configured_short": "not configured",
   "context_consent.share_detail": "Chat only until you approve this exact connection. Consent is isolated by endpoint, account, profile, and Browser controller.",
   "context_consent.share_label": "Share page context with this connection",
+  "dashboard.trust_prompt_remote": "Trust {origin} for Dashboard Attach?\n\nThe Hermes Browser Extension will use the signed-in session in your active dashboard tab to request a short-lived, single-use WebSocket ticket. Page context stays off until you approve “Share page context with this connection” for this exact account. The ticket is memory-only and is never stored.",
+  "dashboard.trust_prompt_local": "Trust {origin} for Dashboard Attach?\n\nThe Hermes Browser Extension will use the signed-in session in your active dashboard tab to request a short-lived, single-use WebSocket ticket. This dashboard runs on this computer, so the page context you choose in the panel is shared with it without a separate per-connection approval. The ticket is memory-only and is never stored.",
   "context.attached_tab": "Attached tab",
   "context.follow_active_tab": "Follow active tab",
   "context.return_attached_tab": "Return to attached tab",

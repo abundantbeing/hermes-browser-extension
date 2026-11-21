@@ -2595,6 +2595,14 @@
     "message": "O tema contém erros de validação.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Confiar em {origin} para Dashboard Attach?\n\nA Hermes Browser Extension usará a sessão conectada na aba ativa do painel para solicitar um ticket WebSocket de curta duração e uso único. Este painel roda neste computador, então o contexto da página que você escolher no painel lateral é compartilhado com ele sem uma aprovação separada por conexão. O ticket fica apenas na memória e nunca é armazenado.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Confiar em {origin} para Dashboard Attach?\n\nA Hermes Browser Extension usará a sessão conectada na aba ativa do painel para solicitar um ticket WebSocket de curta duração e uso único. O contexto da página fica desativado até você aprovar “Compartilhar o contexto da página com esta conexão” para esta conta exata. O ticket fica apenas na memória e nunca é armazenado.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "A verificação de integridade respondeu, mas as rotas protegidas da extensão e do modelo exigem Authorization: Bearer ***. Cole a chave API ou o token do navegador com escopo em Configurações.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

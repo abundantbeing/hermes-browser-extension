@@ -2595,6 +2595,14 @@
     "message": "تحتوي السمة على أخطاء تحقق.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "هل تثق في {origin} لميزة Dashboard Attach؟\n\nستستخدم Hermes Browser Extension الجلسة المسجّل الدخول إليها في علامة تبويب لوحة التحكم النشطة لطلب تذكرة WebSocket قصيرة العمر وأحادية الاستخدام. تعمل لوحة التحكم هذه على هذا الكمبيوتر، لذا يُشارك سياق الصفحة الذي تختاره في اللوحة معها دون موافقة منفصلة لكل اتصال. تبقى التذكرة في الذاكرة فقط ولا تُخزَّن أبدًا.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "هل تثق في {origin} لميزة Dashboard Attach؟\n\nستستخدم Hermes Browser Extension الجلسة المسجّل الدخول إليها في علامة تبويب لوحة التحكم النشطة لطلب تذكرة WebSocket قصيرة العمر وأحادية الاستخدام. يبقى سياق الصفحة متوقفًا حتى توافق على “مشاركة سياق الصفحة مع هذا الاتصال” لهذا الحساب بالتحديد. تبقى التذكرة في الذاكرة فقط ولا تُخزَّن أبدًا.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "استجاب فحص الصحة، لكن المسارات المحمية للإضافة والنموذج تتطلب Authorization: Bearer ***. الصق مفتاح API أو رمز المتصفح المحدد النطاق في الإعدادات.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

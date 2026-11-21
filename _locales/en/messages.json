@@ -2595,6 +2595,14 @@
     "message": "Theme has validation errors.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Trust {origin} for Dashboard Attach?\n\nThe Hermes Browser Extension will use the signed-in session in your active dashboard tab to request a short-lived, single-use WebSocket ticket. This dashboard runs on this computer, so the page context you choose in the panel is shared with it without a separate per-connection approval. The ticket is memory-only and is never stored.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Trust {origin} for Dashboard Attach?\n\nThe Hermes Browser Extension will use the signed-in session in your active dashboard tab to request a short-lived, single-use WebSocket ticket. Page context stays off until you approve “Share page context with this connection” for this exact account. The ticket is memory-only and is never stored.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Health responded, but the protected extension and model routes need Authorization: Bearer *** Paste the API key or scoped browser token in Settings.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
