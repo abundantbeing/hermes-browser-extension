@@ -16,9 +16,9 @@ http://127.0.0.1:8642
 
 In local mode, context is sent from the extension to the Hermes Gateway/API server running on the same machine.
 
-### Hermes Cloud Preview
+### Hermes Cloud
 
-Cloud Preview requires the exact active, fully loaded, signed-in HTTPS Hermes agent tab. That tab mints a short-lived single-use WebSocket ticket, the extension revalidates the tab and origin, and the ticket stays memory-only. Automatic page text, selected text, and open-tab context stay off on Cloud Preview until you approve **Share page context with this connection** for that exact verified origin, account, profile, controller, and transport (default off; fails closed when unapproved or when the account cannot be verified). Files and images you explicitly attach still send over the dashboard socket, and when page context is approved, oversize page text is staged as `page-context.txt` over that socket. Hermes Control on Cloud Preview works only when the gateway supports `browser.controller.register` over the dashboard socket; it cannot use the plugin's HTTP Control routes.
+Hermes Cloud requires the exact active, fully loaded, signed-in HTTPS Hermes agent tab. That tab mints a short-lived single-use WebSocket ticket, the extension revalidates the tab and origin, and the ticket stays memory-only. Automatic page text, selected text, and open-tab context stay off on Hermes Cloud until you approve **Share page context with this connection** for that exact verified origin, account, profile, controller, and transport (default off; fails closed when unapproved or when the account cannot be verified). Files and images you explicitly attach still send over the dashboard socket, and when page context is approved, oversize page text is staged as `page-context.txt` over that socket. Hermes Control on Hermes Cloud works only when the gateway supports `browser.controller.register` over the dashboard socket; it cannot use the plugin's HTTP Control routes.
 
 ### Remote Hermes API
 
