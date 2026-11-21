@@ -400,10 +400,13 @@ function approvalRuntime() {
       if (settings?.browserControlEnabled !== true) {
         return { ok: false, error: { code: 'action_disabled', message: 'Browser control is not enabled with the required permission.' } };
       }
-      if (frame.action === 'browser_tab_activate' && context.backgroundTask !== true) {
+      if (context.backgroundTask === true && (frame.action === 'browser_tab_activate' || frame.action === 'browser_click')) {
+        return { ok: false, error: { code: 'approval_required', message: 'This action requires a person in a manually attached tab.' } };
+      }
+      if (frame.action === 'browser_tab_activate' || (frame.action === 'browser_click' && Number.isFinite(Number(frame.arguments?.x)))) {
         const approval = {
-          approvalId: frame.command_id,
-          approvalNonce: frame.command_id,
+          approvalId: `${frame.command_id}:${frame.action}`,
+          approvalNonce: `${frame.command_id}:${frame.action}`,
           commandId: frame.command_id,
           controllerId: context.scope.controllerId,
           leaseId: context.scope.leaseId,
@@ -414,13 +417,13 @@ function approvalRuntime() {
           action: frame.action,
           state: 'paused',
         };
-        const requested = await approvals.request({ ...approval, reason: 'Switch to this tab?' });
+        const requested = await approvals.request({ ...approval, reason: frame.action === 'browser_click' ? 'Click at these coordinates?' : 'Switch to this tab?' });
         if (!requested?.ok) {
           return { ok: false, error: { code: requested?.error || 'approval_cancelled', message: 'The approval request was cancelled.' } };
         }
         const consumed = approvals.consume(approval);
         if (!consumed.ok) return { ok: false, error: { code: 'approval_required', message: 'This action requires approval.' } };
-        return { ok: true, result: { status: 'tab-activated' } };
+        return { ok: true, result: { status: frame.action === 'browser_click' ? 'clicked' : 'tab-activated' } };
       }
       return { ok: true, result: { status: 'ok' } };
     },
@@ -428,10 +431,10 @@ function approvalRuntime() {
   };
 }
 
-async function waitForPending(approvals, timeoutMs = 1000) {
+async function waitForPending(approvals, timeoutMs = 1000, { exceptId = '' } = {}) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const [request] = approvals.pending();
+    const request = approvals.pending().find((entry) => entry.approvalId !== exceptId);
     if (request) return request;
     await new Promise((resolve) => setTimeout(resolve, 5));
   }
@@ -684,4 +687,69 @@ test('background-only page actions in the same window do not wait on the focus l
   gates.forEach((release) => release());
   assert.equal((await first).ok, true);
   assert.equal((await second).ok, true);
+});
+
+
+test('an approved active-mode coordinate click can ask for the click itself', async () => {
+  const settings = { connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'test-key' };
+  const consent = await backgroundBrowserConsentIdentity(settings);
+  const opened = { id: 21, windowId: 4, status: 'complete', url: 'https://example.test/', title: 'Example', active: true };
+  const replies = new Map();
+  let receive;
+  const runtime = approvalRuntime();
+  const saved = {
+    hermesBrowserSettings: settings,
+    [BACKGROUND_BROWSER_CONSENT]: consent,
+    [ACTIVE_TASK_TABS]: true,
+  };
+  const controller = createBackgroundTaskBrowser({
+    browserApi: {
+      storage: { local: { get: async () => ({ ...saved }) } },
+      alarms: { create() {}, clear() {} },
+      windows: {
+        getLastFocused: async () => ({ id: 4, type: 'normal' }),
+        get: async () => ({ id: 4, type: 'normal' }),
+        update: async () => {},
+      },
+      tabs: {
+        create: async () => ({ ...opened, active: false }),
+        query: async () => [],
+        group: async () => 2,
+        update: async (id, patch) => ({ ...opened, ...patch }),
+        get: async () => ({ ...opened }),
+      },
+      tabGroups: { update: async () => {} },
+    },
+    connector: {
+      async connect({ onFrame }) {
+        receive = onFrame;
+        return { close() {}, send({ params }) { replies.get(params.command_id).resolve(params); } };
+      },
+    },
+    runtime,
+  });
+  function command(id, action, args) {
+    const reply = deferred();
+    replies.set(id, reply);
+    receive({ method: 'browser.controller.command', params: {
+      command_id: id, background_session: 'session', action, arguments: args,
+    } });
+    return reply.promise;
+  }
+  await controller.sync();
+  const opening = command('open', 'browser_tab_create', { url: opened.url });
+  assert.equal(controller.handleApproval(grantMessage(await waitForPending(runtime.approvals))).ok, true);
+  assert.equal((await opening).ok, true);
+
+  const clicking = command('xy-click', 'browser_click', { x: 40, y: 80 });
+  const switchRequest = await waitForPending(runtime.approvals);
+  assert.equal(switchRequest.action, 'browser_tab_activate');
+  assert.equal(controller.handleApproval(grantMessage(switchRequest)).ok, true);
+  const clickRequest = await waitForPending(runtime.approvals, 1000, { exceptId: switchRequest.approvalId });
+  assert.equal(clickRequest.action, 'browser_click');
+  assert.equal(clickRequest.commandId, 'xy-click');
+  assert.equal(controller.handleApproval(grantMessage(clickRequest)).ok, true);
+  const clicked = await clicking;
+  assert.equal(clicked.ok, true);
+  assert.equal(clicked.result.status, 'clicked');
 });

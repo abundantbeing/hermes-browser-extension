@@ -385,7 +385,12 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
       const result = await runtime.execute({
         ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
       }, {
-        scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
+        scope, signal,
+        // Active-mode visible actions must be able to ask for their own approval
+        // (a coordinate click) after the tab-switch approval. Background-only
+        // work still refuses those actions.
+        backgroundTask: !(activeTaskTabs && needsVisibleTab(action, args)),
+        leasedTabIds: [id], ownedTabIds: [id],
         currentWindowId: tab.windowId,
         currentDocumentGeneration: () => lease.document,
         controlHalted: () => signal.aborted || !state.tabs.has(id),
