@@ -1159,6 +1159,18 @@
     "message": "Lijstweergave",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Een alternatief voor achtergrondtabbladen. Nadat je het genoemde tabblad hebt goedgekeurd, openen taaktabbladen vooraan en kan Hermes ernaar overschakelen. Laat dit uit om achtergrondtabbladen voor taken op de achtergrond te houden.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Actieve taaktabbladen",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Actieve taaktabbladen konden niet worden opgeslagen.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Eenmalig goedkeuren",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium geeft deze extensie debuggertoegang wanneer deze wordt geïnstalleerd of bijgewerkt. Hermes gebruikt de debugger alleen op tabbladen die je koppelt, haalt nooit een browservenster naar voren en blokkeert inloggegevens, MFA, betaalvelden en geheime tekst.",
+    "message": "Chromium geeft deze extensie debuggertoegang wanneer deze wordt geïnstalleerd of bijgewerkt. Hermes gebruikt de debugger alleen op tabbladen die je koppelt, haalt nooit een browservenster naar voren, tenzij Actieve taaktabbladen is ingeschakeld en je die wissel goedkeurt en blokkeert inloggegevens, MFA, betaalvelden en geheime tekst.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

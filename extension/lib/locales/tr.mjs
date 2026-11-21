@@ -1,5 +1,8 @@
 export default Object.freeze({
   "browser_control.background_label": "Arka plan görev sekmeleri",
+  "browser_control.active_tabs_label": "Etkin görev sekmeleri",
+  "browser_control.active_tabs_help": "Arka plan sekmelerine bir alternatiftir. Adı belirtilen sekmeyi onayladıktan sonra görev sekmeleri önde açılır ve Hermes bunlara geçebilir. Arka plan görev sekmelerini arkada tutmak için bunu kapalı bırakın.",
+  "browser_control.active_tabs_save_error": "Etkin görev sekmeleri kaydedilemedi.",
   "browser_control.background_help": "Mesajlaşma uygulamalarından gelenler de dahil olmak üzere bu yerel Hermes profilindeki görevlerin, sekme bağlamadan kendi Chrome sekme gruplarını açmasına ve yönetmesine izin verin.",
   "browser_control.background_save_error": "Arka plan tarayıcı izni kaydedilemedi.",
   "browser_control.background_unavailable": "Arka plan görevleri, bu ağ geçidinde yardımcı eklentinin sekme araçlarını gerektirir.",
@@ -305,7 +308,7 @@ export default Object.freeze({
   "browser_control.help_resume": "Hâlâ bağlı olan sekmelerde Hermes Kontrolü'nü sürdürün.",
   "browser_control.help_stop": "Kontrolü kapatmadan mevcut ve sıradaki tarayıcı işlemlerini durdurun.",
   "browser_control.kicker": "HERMES KONTROLÜ",
-  "browser_control.note": "Chromium, bu eklentiye yüklendiğinde veya güncellendiğinde hata ayıklayıcı erişimi verir. Hermes hata ayıklayıcıyı yalnızca bağladığınız sekmelerde kullanır, bir tarayıcı penceresini asla öne getirmez ve kimlik bilgilerini, MFA kodlarını, ödeme alanlarını ve gizli metinleri engeller.",
+  "browser_control.note": "Chromium, bu eklentiye yüklendiğinde veya güncellendiğinde hata ayıklayıcı erişimi verir. Hermes hata ayıklayıcıyı yalnızca bağladığınız sekmelerde kullanır, Etkin görev sekmeleri açık değilse ve bu geçişi onaylamazsanız bir tarayıcı penceresini asla öne getirmez ve kimlik bilgilerini, MFA kodlarını, ödeme alanlarını ve gizli metinleri engeller.",
   "browser_control.note_screenshot_frame": "Hermes ekran görüntüsünü almadı: bu sayfadaki bir çerçeve, Hermes'in okuyamadığı bir sayfada.",
   "browser_control.note_action_frame": "Hermes orada işlem yapmadı: o nokta, Hermes'in okuyamadığı bir sayfadaki bir çerçevenin içinde.",
   "browser_control.note_screenshot_page": "Hermes ekran görüntüsünü almadı: sayfa, Hermes'in yakalamadığı bir sayfaya geçti.",

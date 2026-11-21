@@ -1159,6 +1159,18 @@
     "message": "Vista elenco",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternativa alle schede in background. Dopo che approvi la scheda indicata, le schede delle attività si aprono in primo piano e Hermes può passare a esse. Lascia disattivata l’opzione per tenere le schede delle attività in background.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Schede delle attività attive",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Impossibile salvare le schede delle attività attive.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approva una volta",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium concede a questa estensione l’accesso al debugger quando viene installata o aggiornata. Hermes usa il debugger solo sulle schede che colleghi, non porta mai in primo piano una finestra del browser e blocca credenziali, MFA, campi di pagamento e testo segreto.",
+    "message": "Chromium concede a questa estensione l’accesso al debugger quando viene installata o aggiornata. Hermes usa il debugger solo sulle schede che colleghi, non porta mai in primo piano una finestra del browser, a meno che le schede delle attività attive siano attive e tu approvi quel passaggio e blocca credenziali, MFA, campi di pagamento e testo segreto.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

@@ -1,5 +1,8 @@
 export default Object.freeze({
   "browser_control.background_label": "علامات تبويب المهام في الخلفية",
+  "browser_control.active_tabs_label": "علامات تبويب المهام النشطة",
+  "browser_control.active_tabs_help": "بديل عن علامات تبويب المهام في الخلفية. بعد موافقتك على التبويب المحدد، تُفتح علامات تبويب المهام في الواجهة ويمكن لـ Hermes التبديل إليها. أبقِ هذا الخيار مغلقًا لإبقاء علامات تبويب المهام في الخلفية.",
+  "browser_control.active_tabs_save_error": "تعذر حفظ علامات تبويب المهام النشطة.",
   "browser_control.background_help": "اسمح لمهام ملف Hermes المحلي، بما فيها مهام تطبيقات المراسلة، بفتح مجموعات علامات تبويب Chrome الخاصة بها والتحكم فيها دون إرفاق.",
   "browser_control.background_save_error": "تعذر حفظ إذن المتصفح في الخلفية.",
   "browser_control.background_unavailable": "تتطلب مهام الخلفية أدوات علامات التبويب الخاصة بالملحق المرافق على هذه البوابة.",
@@ -305,7 +308,7 @@ export default Object.freeze({
   "browser_control.help_resume": "استأنف Hermes Control على التبويبات المرفقة التي لا تزال متصلة.",
   "browser_control.help_stop": "أوقف إجراءات المتصفح الحالية والمنتظرة دون تعطيل التحكم.",
   "browser_control.kicker": "HERMES CONTROL",
-  "browser_control.note": "يمنح Chromium هذه الإضافة وصول المصحح عند تثبيتها أو تحديثها. يستخدم Hermes المصحح فقط على التبويبات التي ترفقها، ولا يُحضر نافذة المتصفح إلى الواجهة أبدًا، ويحظر بيانات الاعتماد ورموز MFA وحقول الدفع والنصوص السرية.",
+  "browser_control.note": "يمنح Chromium هذه الإضافة وصول المصحح عند تثبيتها أو تحديثها. يستخدم Hermes المصحح فقط على التبويبات التي ترفقها، ولا يُحضر نافذة المتصفح إلى الواجهة أبدًا إلا إذا كانت علامات تبويب المهام النشطة مفعّلة ووافقت على ذلك التبديل، ويحظر بيانات الاعتماد ورموز MFA وحقول الدفع والنصوص السرية.",
   "browser_control.note_screenshot_frame": "لم يلتقط Hermes لقطة الشاشة: إطار في هذه الصفحة موجود على صفحة لا يستطيع Hermes قراءتها.",
   "browser_control.note_action_frame": "لم ينفّذ Hermes إجراءً هناك: الموضع داخل إطار في صفحة لا يستطيع Hermes قراءتها.",
   "browser_control.note_screenshot_page": "لم يلتقط Hermes لقطة الشاشة: انتقلت الصفحة إلى صفحة لا يلتقطها Hermes.",

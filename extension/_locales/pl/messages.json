@@ -1159,6 +1159,18 @@
     "message": "Widok listy",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternatywa dla kart w tle. Po zatwierdzeniu wskazanej karty karty zadań otwierają się na pierwszym planie, a Hermes może na nie przełączać. Pozostaw wyłączone, aby karty zadań w tle zostały w tle.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Aktywne karty zadań",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Nie udało się zapisać aktywnych kart zadań.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Zatwierdź raz",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium przyznaje temu rozszerzeniu dostęp do debuggera podczas instalacji lub aktualizacji. Hermes używa debuggera tylko na kartach, które podłączysz, nigdy nie przenosi okna przeglądarki na pierwszy plan i blokuje dane logowania, kody MFA, pola płatności oraz tekst poufny.",
+    "message": "Chromium przyznaje temu rozszerzeniu dostęp do debuggera podczas instalacji lub aktualizacji. Hermes używa debuggera tylko na kartach, które podłączysz, nigdy nie przenosi okna przeglądarki na pierwszy plan, chyba że aktywne karty zadań są włączone i zatwierdzisz to przełączenie i blokuje dane logowania, kody MFA, pola płatności oraz tekst poufny.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

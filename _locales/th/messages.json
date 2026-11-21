@@ -1159,6 +1159,18 @@
     "message": "มุมมองรายการ",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "ทางเลือกแทนแท็บงานเบื้องหลัง เมื่อคุณอนุมัติแท็บที่ระบุแล้ว แท็บงานจะเปิดขึ้นด้านหน้า และ Hermes สามารถสลับไปยังแท็บนั้นได้ ปิดตัวเลือกนี้ไว้หากต้องการให้แท็บงานเบื้องหลังอยู่ในเบื้องหลัง",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "แท็บงานที่ใช้งานอยู่",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "ไม่สามารถบันทึกแท็บงานที่ใช้งานอยู่ได้",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "อนุมัติครั้งเดียว",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium ให้สิทธิ์การเข้าถึงดีบักเกอร์แก่ส่วนขยายนี้เมื่อติดตั้งหรืออัปเดต Hermes ใช้ดีบักเกอร์เฉพาะกับแท็บที่คุณเชื่อมต่อเท่านั้น จะไม่นำหน้าต่างเบราว์เซอร์ขึ้นมาข้างหน้า และบล็อกข้อมูลรับรองตัวตน MFA ช่องชำระเงิน และข้อความลับ",
+    "message": "Chromium ให้สิทธิ์การเข้าถึงดีบักเกอร์แก่ส่วนขยายนี้เมื่อติดตั้งหรืออัปเดต Hermes ใช้ดีบักเกอร์เฉพาะกับแท็บที่คุณเชื่อมต่อเท่านั้น จะไม่นำหน้าต่างเบราว์เซอร์ขึ้นมาข้างหน้า เว้นแต่แท็บงานที่ใช้งานอยู่จะเปิดอยู่และคุณอนุมัติการสลับนั้น และบล็อกข้อมูลรับรองตัวตน MFA ช่องชำระเงิน และข้อความลับ",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

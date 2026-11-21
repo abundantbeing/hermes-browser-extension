@@ -1,5 +1,8 @@
 export default Object.freeze({
   "browser_control.background_label": "Karty zadań w tle",
+  "browser_control.active_tabs_label": "Aktywne karty zadań",
+  "browser_control.active_tabs_help": "Alternatywa dla kart w tle. Po zatwierdzeniu wskazanej karty karty zadań otwierają się na pierwszym planie, a Hermes może na nie przełączać. Pozostaw wyłączone, aby karty zadań w tle zostały w tle.",
+  "browser_control.active_tabs_save_error": "Nie udało się zapisać aktywnych kart zadań.",
   "browser_control.background_help": "Zezwól zadaniom tego lokalnego profilu Hermes, w tym zadaniom z komunikatorów, otwierać i obsługiwać własne grupy kart Chrome bez dołączania.",
   "browser_control.background_save_error": "Nie udało się zapisać uprawnienia do pracy przeglądarki w tle.",
   "browser_control.background_unavailable": "Zadania w tle wymagają narzędzi do kart z wtyczki towarzyszącej na tej bramie.",
@@ -305,7 +308,7 @@ export default Object.freeze({
   "browser_control.help_resume": "Wznów Sterowanie Hermes na kartach, które nadal są podłączone.",
   "browser_control.help_stop": "Zatrzymaj bieżące i oczekujące działania przeglądarki bez wyłączania sterowania.",
   "browser_control.kicker": "STEROWANIE HERMES",
-  "browser_control.note": "Chromium przyznaje temu rozszerzeniu dostęp do debuggera podczas instalacji lub aktualizacji. Hermes używa debuggera tylko na kartach, które podłączysz, nigdy nie przenosi okna przeglądarki na pierwszy plan i blokuje dane logowania, kody MFA, pola płatności oraz tekst poufny.",
+  "browser_control.note": "Chromium przyznaje temu rozszerzeniu dostęp do debuggera podczas instalacji lub aktualizacji. Hermes używa debuggera tylko na kartach, które podłączysz, nigdy nie przenosi okna przeglądarki na pierwszy plan, chyba że aktywne karty zadań są włączone i zatwierdzisz to przełączenie i blokuje dane logowania, kody MFA, pola płatności oraz tekst poufny.",
   "browser_control.note_screenshot_frame": "Hermes nie zrobił zrzutu ekranu: ramka na tej stronie znajduje się na stronie, której Hermes nie może odczytać.",
   "browser_control.note_action_frame": "Hermes nie wykonał tam działania: to miejsce leży w ramce na stronie, której Hermes nie może odczytać.",
   "browser_control.note_screenshot_page": "Hermes nie zrobił zrzutu ekranu: strona przeszła na stronę, której Hermes nie przechwytuje.",

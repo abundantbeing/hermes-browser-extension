@@ -1159,6 +1159,18 @@
     "message": "Tampilan daftar",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternatif untuk tab latar belakang. Setelah Anda menyetujui tab yang disebutkan, tab tugas terbuka di depan dan Hermes dapat berpindah ke tab itu. Biarkan ini nonaktif agar tab tugas latar belakang tetap di latar belakang.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Tab tugas aktif",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Tidak dapat menyimpan Tab tugas aktif.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Setujui sekali",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium memberi ekstensi ini akses debugger saat dipasang atau diperbarui. Hermes hanya menggunakan debugger pada tab yang Anda hubungkan, tidak pernah memunculkan jendela browser, dan memblokir kredensial, MFA, kolom pembayaran, dan teks rahasia.",
+    "message": "Chromium memberi ekstensi ini akses debugger saat dipasang atau diperbarui. Hermes hanya menggunakan debugger pada tab yang Anda hubungkan, tidak pernah memunculkan jendela browser, kecuali Tab tugas aktif aktif dan Anda menyetujui peralihan itu, dan memblokir kredensial, MFA, kolom pembayaran, dan teks rahasia.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

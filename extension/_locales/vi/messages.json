@@ -1159,6 +1159,18 @@
     "message": "Xem danh sách",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Phương án thay cho thẻ nền. Sau khi bạn chấp thuận thẻ được nêu, các thẻ tác vụ mở ở phía trước và Hermes có thể chuyển sang chúng. Để tắt nếu muốn giữ thẻ tác vụ nền ở chế độ nền.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Thẻ tác vụ đang hoạt động",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Không thể lưu thẻ tác vụ đang hoạt động.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Cho phép một lần",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium cấp cho tiện ích này quyền truy cập trình gỡ lỗi khi được cài đặt hoặc cập nhật. Hermes chỉ dùng trình gỡ lỗi trên các thẻ bạn kết nối, không bao giờ đưa cửa sổ trình duyệt lên trước và chặn thông tin đăng nhập, MFA, trường thanh toán và văn bản bí mật.",
+    "message": "Chromium cấp cho tiện ích này quyền truy cập trình gỡ lỗi khi được cài đặt hoặc cập nhật. Hermes chỉ dùng trình gỡ lỗi trên các thẻ bạn kết nối, không bao giờ đưa cửa sổ trình duyệt lên trước, trừ khi thẻ tác vụ đang hoạt động được bật và bạn chấp thuận lần chuyển đó và chặn thông tin đăng nhập, MFA, trường thanh toán và văn bản bí mật.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

@@ -1159,6 +1159,18 @@
     "message": "सूची दृश्य",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "पृष्ठभूमि टैब का विकल्प। आपके द्वारा नामित टैब स्वीकृत करने के बाद, कार्य टैब आगे खुलते हैं और Hermes उन पर स्विच कर सकता है। पृष्ठभूमि कार्य टैब को पीछे रखने के लिए इसे बंद रखें।",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "सक्रिय कार्य टैब",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "सक्रिय कार्य टैब सहेजे नहीं जा सके।",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "एक बार स्वीकृत करें",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium इस एक्सटेंशन को इंस्टॉल या अपडेट होने पर डीबगर एक्सेस देता है। Hermes डीबगर का उपयोग केवल उन टैब पर करता है जिन्हें आप जोड़ते हैं, कभी ब्राउज़र विंडो को सामने नहीं लाता, और क्रेडेंशियल, MFA, भुगतान फ़ील्ड और गोपनीय टेक्स्ट को ब्लॉक करता है।",
+    "message": "Chromium इस एक्सटेंशन को इंस्टॉल या अपडेट होने पर डीबगर एक्सेस देता है। Hermes डीबगर का उपयोग केवल उन टैब पर करता है जिन्हें आप जोड़ते हैं, कभी ब्राउज़र विंडो को सामने नहीं लाता, जब तक सक्रिय कार्य टैब चालू न हों और आप उस स्विच को स्वीकृत न करें, और क्रेडेंशियल, MFA, भुगतान फ़ील्ड और गोपनीय टेक्स्ट को ब्लॉक करता है।",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

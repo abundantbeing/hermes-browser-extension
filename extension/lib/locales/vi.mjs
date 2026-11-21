@@ -1,5 +1,8 @@
 export default Object.freeze({
   "browser_control.background_label": "Thẻ tác vụ nền",
+  "browser_control.active_tabs_label": "Thẻ tác vụ đang hoạt động",
+  "browser_control.active_tabs_help": "Phương án thay cho thẻ nền. Sau khi bạn chấp thuận thẻ được nêu, các thẻ tác vụ mở ở phía trước và Hermes có thể chuyển sang chúng. Để tắt nếu muốn giữ thẻ tác vụ nền ở chế độ nền.",
+  "browser_control.active_tabs_save_error": "Không thể lưu thẻ tác vụ đang hoạt động.",
   "browser_control.background_help": "Cho phép tác vụ trên hồ sơ Hermes cục bộ này, kể cả từ ứng dụng nhắn tin, mở và điều khiển nhóm thẻ Chrome riêng mà không cần gắn thẻ.",
   "browser_control.background_save_error": "Không thể lưu quyền điều khiển trình duyệt ở chế độ nền.",
   "browser_control.background_unavailable": "Tác vụ nền cần công cụ thẻ của plugin đồng hành trên cổng kết nối này.",
@@ -305,7 +308,7 @@ export default Object.freeze({
   "browser_control.help_resume": "Tiếp tục Điều khiển Hermes trên các thẻ vẫn đang kết nối.",
   "browser_control.help_stop": "Dừng các thao tác trình duyệt hiện tại và đang chờ mà không tắt điều khiển.",
   "browser_control.kicker": "ĐIỀU KHIỂN HERMES",
-  "browser_control.note": "Chromium cấp cho tiện ích này quyền truy cập trình gỡ lỗi khi được cài đặt hoặc cập nhật. Hermes chỉ dùng trình gỡ lỗi trên các thẻ bạn kết nối, không bao giờ đưa cửa sổ trình duyệt lên trước và chặn thông tin đăng nhập, MFA, trường thanh toán và văn bản bí mật.",
+  "browser_control.note": "Chromium cấp cho tiện ích này quyền truy cập trình gỡ lỗi khi được cài đặt hoặc cập nhật. Hermes chỉ dùng trình gỡ lỗi trên các thẻ bạn kết nối, không bao giờ đưa cửa sổ trình duyệt lên trước, trừ khi thẻ tác vụ đang hoạt động được bật và bạn chấp thuận lần chuyển đó và chặn thông tin đăng nhập, MFA, trường thanh toán và văn bản bí mật.",
   "browser_control.note_screenshot_frame": "Hermes không chụp ảnh màn hình: một khung trên trang này nằm trên trang mà Hermes không thể đọc.",
   "browser_control.note_action_frame": "Hermes không thao tác ở đó: vị trí đó nằm trong một khung trên trang mà Hermes không thể đọc.",
   "browser_control.note_screenshot_page": "Hermes không chụp ảnh màn hình: trang đã chuyển sang một trang mà Hermes không chụp.",

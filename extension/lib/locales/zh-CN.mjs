@@ -1,5 +1,8 @@
 export default Object.freeze({
   "browser_control.background_label": "后台任务标签页",
+  "browser_control.active_tabs_label": "前台任务标签页",
+  "browser_control.active_tabs_help": "后台标签页的替代方案。你批准指定标签页后，任务标签页会在前台打开，Hermes 可以切换到它们。若要让后台任务标签页留在后台，请关闭此选项。",
+  "browser_control.active_tabs_save_error": "无法保存前台任务标签页设置。",
   "browser_control.background_help": "允许此本机 Hermes 配置中的任务（包括飞书等消息应用）创建和控制自己的 Chrome 标签组，无需逐次 Attach。",
   "browser_control.background_save_error": "无法保存后台浏览器授权。",
   "browser_control.background_unavailable": "后台任务需要此网关提供配套插件的标签页工具。",
@@ -282,7 +285,7 @@ export default Object.freeze({
   "browser_control.help_resume": "在仍然连接的标签页上恢复 Hermes 控制。",
   "browser_control.help_stop": "停止当前和排队中的浏览器操作，但不关闭控制。",
   "browser_control.kicker": "HERMES 控制",
-  "browser_control.note": "Chromium 会在安装或更新此扩展时授予其调试器访问权限。Hermes 只会在你连接的标签页上使用调试器，从不把浏览器窗口置于前台，并会阻止凭据、MFA、支付字段和机密文本。",
+  "browser_control.note": "Chromium 会在安装或更新此扩展时授予其调试器访问权限。Hermes 只会在你连接的标签页上使用调试器，从不把浏览器窗口置于前台（除非已开启前台任务标签页且你批准了该切换），并会阻止凭据、MFA、支付字段和机密文本。",
   "browser_control.note_screenshot_frame": "Hermes 没有截图：此页面中的一个框架位于 Hermes 无法读取的页面上。",
   "browser_control.note_action_frame": "Hermes 没有在那里操作：该位置在 Hermes 无法读取的页面的框架内。",
   "browser_control.note_screenshot_page": "Hermes 没有截图：页面已跳转到 Hermes 不会截取的页面。",

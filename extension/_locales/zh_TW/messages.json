@@ -1159,6 +1159,18 @@
     "message": "清單檢視",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "背景分頁的替代方案。你核准指定分頁後，工作分頁會在前景開啟，Hermes 可以切換到這些分頁。若要讓背景工作分頁留在背景，請關閉此選項。",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "前景工作分頁",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "無法儲存前景工作分頁設定。",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "核准一次",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium 會在安裝或更新此擴充功能時授予其偵錯工具存取權限。Hermes 只會在你連接的分頁上使用偵錯工具，從不把瀏覽器視窗移到前景，並會封鎖憑證、MFA、付款欄位和機密文字。",
+    "message": "Chromium 會在安裝或更新此擴充功能時授予其偵錯工具存取權限。Hermes 只會在你連接的分頁上使用偵錯工具，從不把瀏覽器視窗移到前景（除非已開啟前景工作分頁且你核准了該次切換），並會封鎖憑證、MFA、付款欄位和機密文字。",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

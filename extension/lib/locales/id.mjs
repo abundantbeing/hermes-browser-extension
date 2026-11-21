@@ -1,5 +1,8 @@
 export default Object.freeze({
   "browser_control.background_label": "Tab tugas latar belakang",
+  "browser_control.active_tabs_label": "Tab tugas aktif",
+  "browser_control.active_tabs_help": "Alternatif untuk tab latar belakang. Setelah Anda menyetujui tab yang disebutkan, tab tugas terbuka di depan dan Hermes dapat berpindah ke tab itu. Biarkan ini nonaktif agar tab tugas latar belakang tetap di latar belakang.",
+  "browser_control.active_tabs_save_error": "Tidak dapat menyimpan Tab tugas aktif.",
   "browser_control.background_help": "Izinkan tugas pada profil Hermes lokal ini, termasuk dari aplikasi pesan, membuka dan mengontrol grup tab Chrome miliknya tanpa perlu melampirkan tab.",
   "browser_control.background_save_error": "Izin browser latar belakang tidak dapat disimpan.",
   "browser_control.background_unavailable": "Tugas latar belakang memerlukan alat tab dari plugin pendamping pada gateway ini.",
@@ -305,7 +308,7 @@ export default Object.freeze({
   "browser_control.help_resume": "Lanjutkan Hermes Control pada tab yang masih terhubung.",
   "browser_control.help_stop": "Hentikan tindakan browser yang berjalan dan mengantre tanpa menonaktifkan kontrol.",
   "browser_control.kicker": "HERMES CONTROL",
-  "browser_control.note": "Chromium memberi ekstensi ini akses debugger saat dipasang atau diperbarui. Hermes hanya menggunakan debugger pada tab yang Anda hubungkan, tidak pernah memunculkan jendela browser, dan memblokir kredensial, MFA, kolom pembayaran, dan teks rahasia.",
+  "browser_control.note": "Chromium memberi ekstensi ini akses debugger saat dipasang atau diperbarui. Hermes hanya menggunakan debugger pada tab yang Anda hubungkan, tidak pernah memunculkan jendela browser, kecuali Tab tugas aktif aktif dan Anda menyetujui peralihan itu, dan memblokir kredensial, MFA, kolom pembayaran, dan teks rahasia.",
   "browser_control.note_screenshot_frame": "Hermes tidak mengambil tangkapan layar: sebuah bingkai di halaman ini berada di halaman yang tidak dapat dibaca Hermes.",
   "browser_control.note_action_frame": "Hermes tidak bertindak di sana: titik itu berada di dalam bingkai pada halaman yang tidak dapat dibaca Hermes.",
   "browser_control.note_screenshot_page": "Hermes tidak mengambil tangkapan layar: halaman berpindah ke halaman yang tidak ditangkap Hermes.",

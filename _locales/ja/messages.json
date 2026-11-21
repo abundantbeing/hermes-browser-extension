@@ -1159,6 +1159,18 @@
     "message": "リスト表示",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "バックグラウンドタブの代替です。指定したタブを承認すると、タスクのタブが前面に開き、Hermes はそれらに切り替えられます。バックグラウンドタスクのタブを背面のままにするには、この設定をオフにしてください。",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "アクティブタスクのタブ",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "アクティブタスクのタブを保存できませんでした。",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "1回だけ許可",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium は、この拡張機能のインストールまたは更新時にデバッガーへのアクセスを許可します。Hermes は、接続したタブでのみデバッガーを使用し、ブラウザーウィンドウを前面に出すことはなく、認証情報、MFA、支払い欄、機密テキストをブロックします。",
+    "message": "Chromium は、この拡張機能のインストールまたは更新時にデバッガーへのアクセスを許可します。Hermes は、接続したタブでのみデバッガーを使用し、アクティブタスクのタブがオンで、その切り替えを承認した場合を除き、ブラウザーウィンドウを前面に出すことはなく、認証情報、MFA、支払い欄、機密テキストをブロックします。",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

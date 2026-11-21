@@ -1159,6 +1159,18 @@
     "message": "عرض القائمة",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "بديل عن علامات تبويب المهام في الخلفية. بعد موافقتك على التبويب المحدد، تُفتح علامات تبويب المهام في الواجهة ويمكن لـ Hermes التبديل إليها. أبقِ هذا الخيار مغلقًا لإبقاء علامات تبويب المهام في الخلفية.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "علامات تبويب المهام النشطة",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "تعذر حفظ علامات تبويب المهام النشطة.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "الموافقة مرة واحدة",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "يمنح Chromium هذه الإضافة وصول المصحح عند تثبيتها أو تحديثها. يستخدم Hermes المصحح فقط على التبويبات التي ترفقها، ولا يُحضر نافذة المتصفح إلى الواجهة أبدًا، ويحظر بيانات الاعتماد ورموز MFA وحقول الدفع والنصوص السرية.",
+    "message": "يمنح Chromium هذه الإضافة وصول المصحح عند تثبيتها أو تحديثها. يستخدم Hermes المصحح فقط على التبويبات التي ترفقها، ولا يُحضر نافذة المتصفح إلى الواجهة أبدًا إلا إذا كانت علامات تبويب المهام النشطة مفعّلة ووافقت على ذلك التبديل، ويحظر بيانات الاعتماد ورموز MFA وحقول الدفع والنصوص السرية.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

@@ -1159,6 +1159,18 @@
     "message": "Vista de lista",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternativa a las pestañas en segundo plano. Después de aprobar la pestaña indicada, las pestañas de tareas se abren al frente y Hermes puede cambiar a ellas. Déjalo desactivado para mantener las pestañas de tareas en segundo plano.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Pestañas de tareas activas",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "No se pudieron guardar las pestañas de tareas activas.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Aprobar una vez",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium concede a esta extensión acceso al depurador al instalarla o actualizarla. Hermes usa el depurador solo en las pestañas que vinculas, nunca trae una ventana del navegador al frente y bloquea credenciales, MFA, campos de pago y texto secreto.",
+    "message": "Chromium concede a esta extensión acceso al depurador al instalarla o actualizarla. Hermes usa el depurador solo en las pestañas que vinculas, nunca trae una ventana del navegador al frente, salvo que las pestañas de tareas activas estén activadas y apruebes ese cambio y bloquea credenciales, MFA, campos de pago y texto secreto.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

@@ -1159,6 +1159,18 @@
     "message": "列表视图",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "后台标签页的替代方案。你批准指定标签页后，任务标签页会在前台打开，Hermes 可以切换到它们。若要让后台任务标签页留在后台，请关闭此选项。",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "前台任务标签页",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "无法保存前台任务标签页设置。",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "批准一次",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium 会在安装或更新此扩展时授予其调试器访问权限。Hermes 只会在你连接的标签页上使用调试器，从不把浏览器窗口置于前台，并会阻止凭据、MFA、支付字段和机密文本。",
+    "message": "Chromium 会在安装或更新此扩展时授予其调试器访问权限。Hermes 只会在你连接的标签页上使用调试器，从不把浏览器窗口置于前台（除非已开启前台任务标签页且你批准了该切换），并会阻止凭据、MFA、支付字段和机密文本。",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

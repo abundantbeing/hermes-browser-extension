@@ -1,5 +1,8 @@
 export default Object.freeze({
   "browser_control.background_label": "पृष्ठभूमि कार्य टैब",
+  "browser_control.active_tabs_label": "सक्रिय कार्य टैब",
+  "browser_control.active_tabs_help": "पृष्ठभूमि टैब का विकल्प। आपके द्वारा नामित टैब स्वीकृत करने के बाद, कार्य टैब आगे खुलते हैं और Hermes उन पर स्विच कर सकता है। पृष्ठभूमि कार्य टैब को पीछे रखने के लिए इसे बंद रखें।",
+  "browser_control.active_tabs_save_error": "सक्रिय कार्य टैब सहेजे नहीं जा सके।",
   "browser_control.background_help": "इस स्थानीय Hermes प्रोफ़ाइल के कार्यों को, मैसेजिंग ऐप वाले कार्यों सहित, बिना अटैच किए अपने Chrome टैब समूह खोलने और नियंत्रित करने दें।",
   "browser_control.background_save_error": "पृष्ठभूमि ब्राउज़र की अनुमति सहेजी नहीं जा सकी।",
   "browser_control.background_unavailable": "पृष्ठभूमि कार्यों के लिए इस गेटवे पर साथी प्लगइन के टैब टूल ज़रूरी हैं।",
@@ -305,7 +308,7 @@ export default Object.freeze({
   "browser_control.help_resume": "अभी भी जुड़े टैब पर Hermes Control फिर शुरू करें।",
   "browser_control.help_stop": "नियंत्रण बंद किए बिना ब्राउज़र की चल रही और कतार में मौजूद कार्रवाइयाँ रोकें।",
   "browser_control.kicker": "HERMES CONTROL",
-  "browser_control.note": "Chromium इस एक्सटेंशन को इंस्टॉल या अपडेट होने पर डीबगर एक्सेस देता है। Hermes डीबगर का उपयोग केवल उन टैब पर करता है जिन्हें आप जोड़ते हैं, कभी ब्राउज़र विंडो को सामने नहीं लाता, और क्रेडेंशियल, MFA, भुगतान फ़ील्ड और गोपनीय टेक्स्ट को ब्लॉक करता है।",
+  "browser_control.note": "Chromium इस एक्सटेंशन को इंस्टॉल या अपडेट होने पर डीबगर एक्सेस देता है। Hermes डीबगर का उपयोग केवल उन टैब पर करता है जिन्हें आप जोड़ते हैं, कभी ब्राउज़र विंडो को सामने नहीं लाता, जब तक सक्रिय कार्य टैब चालू न हों और आप उस स्विच को स्वीकृत न करें, और क्रेडेंशियल, MFA, भुगतान फ़ील्ड और गोपनीय टेक्स्ट को ब्लॉक करता है।",
   "browser_control.note_screenshot_frame": "Hermes ने स्क्रीनशॉट नहीं लिया: इस पेज का एक फ़्रेम ऐसे पेज पर है जिसे Hermes पढ़ नहीं सकता।",
   "browser_control.note_action_frame": "Hermes ने वहाँ कार्रवाई नहीं की: वह स्थान ऐसे पेज के फ़्रेम के भीतर है जिसे Hermes पढ़ नहीं सकता।",
   "browser_control.note_screenshot_page": "Hermes ने स्क्रीनशॉट नहीं लिया: पेज ऐसे पेज पर चला गया जिसे Hermes कैप्चर नहीं करता।",

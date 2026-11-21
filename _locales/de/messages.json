@@ -1159,6 +1159,18 @@
     "message": "Listenansicht",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternative zu Hintergrund-Tabs. Nachdem du den genannten Tab bestätigt hast, öffnen sich Aufgaben-Tabs im Vordergrund, und Hermes kann zu ihnen wechseln. Lass dies aus, damit Hintergrund-Tabs für Aufgaben im Hintergrund bleiben.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Aktive Aufgaben-Tabs",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Aktive Aufgaben-Tabs konnten nicht gespeichert werden.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Einmal genehmigen",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1356,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium gewährt dieser Erweiterung beim Installieren oder Aktualisieren Debugger-Zugriff. Hermes nutzt den Debugger nur für Tabs, die du verbindest, holt nie ein Browserfenster in den Vordergrund und blockiert Anmeldedaten, MFA, Zahlungsfelder und geheime Texte.",
+    "message": "Chromium gewährt dieser Erweiterung beim Installieren oder Aktualisieren Debugger-Zugriff. Hermes nutzt den Debugger nur für Tabs, die du verbindest, holt nie ein Browserfenster in den Vordergrund, außer Aktive Aufgaben-Tabs ist eingeschaltet und du bestätigst diesen Wechsel und blockiert Anmeldedaten, MFA, Zahlungsfelder und geheime Texte.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {

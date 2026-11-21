@@ -1,5 +1,8 @@
 export default Object.freeze({
   "browser_control.background_label": "Baggrundsfaner til opgaver",
+  "browser_control.active_tabs_label": "Aktive opgavefaner",
+  "browser_control.active_tabs_help": "Et alternativ til baggrundsfaner. Når du har godkendt den navngivne fane, åbnes opgavefaner forrest, og Hermes kan skifte til dem. Lad dette være slået fra for at beholde baggrundsfaner til opgaver i baggrunden.",
+  "browser_control.active_tabs_save_error": "Kunne ikke gemme Aktive opgavefaner.",
   "browser_control.background_help": "Tillad opgaver på denne lokale Hermes-profil, også fra beskedapps, at åbne og styre egne Chrome-fanegrupper uden tilknytning.",
   "browser_control.background_save_error": "Tilladelsen til baggrundsbrowseren kunne ikke gemmes.",
   "browser_control.background_unavailable": "Baggrundsopgaver kræver ledsagerpluginnets faneværktøjer på denne gateway.",
@@ -305,7 +308,7 @@ export default Object.freeze({
   "browser_control.help_resume": "Genoptag Hermes-styring på de faner, der stadig er tilknyttet.",
   "browser_control.help_stop": "Stop igangværende og ventende browserhandlinger uden at slå styringen fra.",
   "browser_control.kicker": "HERMES-STYRING",
-  "browser_control.note": "Chromium giver denne udvidelse debugger-adgang, når den installeres eller opdateres. Hermes bruger kun debuggeren på faner, du tilknytter, bringer aldrig et browservindue frem og blokerer legitimationsoplysninger, MFA, betalingsfelter og hemmelig tekst.",
+  "browser_control.note": "Chromium giver denne udvidelse debugger-adgang, når den installeres eller opdateres. Hermes bruger kun debuggeren på faner, du tilknytter, bringer aldrig et browservindue frem, medmindre Aktive opgavefaner er slået til, og du godkender skiftet og blokerer legitimationsoplysninger, MFA, betalingsfelter og hemmelig tekst.",
   "browser_control.note_screenshot_frame": "Hermes tog ikke skærmbilledet: en frame på denne side ligger på en side, som Hermes ikke kan læse.",
   "browser_control.note_action_frame": "Hermes handlede ikke dér: stedet ligger i en frame på en side, som Hermes ikke kan læse.",
   "browser_control.note_screenshot_page": "Hermes tog ikke skærmbilledet: siden skiftede til en side, som Hermes ikke fanger.",
