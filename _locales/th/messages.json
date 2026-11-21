@@ -4135,6 +4135,10 @@
     "message": "เสียงและการปลุก",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud ใช้ Trusted Dashboard Attach เปิดแดชบอร์ดเอเจนต์ที่ลงชื่อเข้าใช้แล้วในแท็บที่ใช้งานอยู่ จากนั้นเลือก “ทดสอบการเชื่อมต่อ” บริบทของหน้าจะปิดอยู่จนกว่าคุณจะอนุมัติ “แชร์บริบทของหน้ากับการเชื่อมต่อนี้” สำหรับบัญชี Cloud นี้โดยเฉพาะ",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "เต็ม",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4314,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· อัลฟ่าสาธารณะ / โหลดที่แยกออกมา",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach ผ่าน WebSocket ให้แดชบอร์ดที่ลงชื่อเข้าใช้แล้วเป็นแท็บที่ใช้งานอยู่ จากนั้นใช้ “ทดสอบการเชื่อมต่อ” เพื่ออนุมัติต้นทาง HTTPS ของแดชบอร์ด บริบทของหน้าจะปิดอยู่จนกว่าคุณจะอนุมัติการแชร์กับการเชื่อมต่อนี้โดยเฉพาะ ไม่ต้องใช้คีย์",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "ยังไม่ได้บันทึก: {detail}",

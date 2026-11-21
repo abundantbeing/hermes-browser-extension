@@ -4135,6 +4135,10 @@
     "message": "Voz e ativação",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "O Hermes Cloud usa Trusted Dashboard Attach. Abra o painel do agente conectado na aba ativa e escolha “Conexão de teste”. O contexto da página fica desativado até você aprovar “Compartilhar o contexto da página com esta conexão” para esta conta do Cloud exata.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Completo",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4314,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· alfa público/carga descompactada",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach via WebSocket. Mantenha o painel conectado como aba ativa e use “Conexão de teste” para aprovar a origem HTTPS dele. O contexto da página fica desativado até você aprovar o compartilhamento com esta conexão exata. Nenhuma chave necessária.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Não salvo: {detail}",

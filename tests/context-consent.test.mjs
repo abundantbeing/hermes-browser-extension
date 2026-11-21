@@ -187,3 +187,78 @@ test('consent decisions use a dedicated locked storage key and preserve revocati
   assert.equal(state[CONTEXT_CONSENT_STORAGE_KEY].entries[contextConsentKey(scoped)].revokedAt, 20);
   assert.equal(Object.hasOwn(state, 'hermesBrowserSettings'), false);
 });
+
+test('a self-hosted dashboard grant never satisfies Hermes Cloud and every Cloud identity axis is isolated in contextScopeWithConsent', () => {
+  const selfHosted = identity({
+    gatewayUrl: 'https://self-hosted.example',
+    transport: 'remote-dashboard',
+  });
+  const cloud = identity({
+    gatewayUrl: 'https://cloud.example',
+    transport: 'cloud-ticket-ws',
+  });
+  const ledger = withContextConsent({}, selfHosted, true, 1000);
+
+  const crossOrigin = contextScopeWithConsent(pinned, {
+    gatewayUrl: cloud.origin,
+    identity: cloud,
+    ledger,
+  });
+  assert.equal(crossOrigin.allowed, false);
+  assert.equal(crossOrigin.reason, 'consent-required');
+  assert.equal(crossOrigin.scope.mode, CONTEXT_SCOPE_MODES.CHAT_ONLY);
+  assert.equal(crossOrigin.scope.pinnedTabId, null);
+  assert.deepEqual(crossOrigin.scope.selectedTabIds, []);
+
+  const sameOriginDifferentTransport = contextScopeWithConsent(pinned, {
+    gatewayUrl: selfHosted.origin,
+    identity: identity({ gatewayUrl: selfHosted.origin, transport: 'cloud-ticket-ws' }),
+    ledger,
+  });
+  assert.equal(sameOriginDifferentTransport.allowed, false);
+  assert.equal(sameOriginDifferentTransport.scope.mode, CONTEXT_SCOPE_MODES.CHAT_ONLY);
+
+  const cloudLedger = withContextConsent({}, cloud, true, 2000);
+  assert.equal(contextScopeWithConsent(pinned, {
+    gatewayUrl: cloud.origin,
+    identity: cloud,
+    ledger: cloudLedger,
+  }).allowed, true);
+
+  for (const mutated of [
+    identity({ gatewayUrl: 'https://other-cloud.example', transport: 'cloud-ticket-ws' }),
+    identity({ gatewayUrl: cloud.origin, principal: 'nous:user-99:org-2', transport: 'cloud-ticket-ws' }),
+    identity({ gatewayUrl: cloud.origin, profile: 'secondary', transport: 'cloud-ticket-ws' }),
+    identity({ gatewayUrl: cloud.origin, controller: 'extension-controller-other', transport: 'cloud-ticket-ws' }),
+    identity({ gatewayUrl: cloud.origin, transport: 'remote-dashboard' }),
+  ]) {
+    const blocked = contextScopeWithConsent(pinned, {
+      gatewayUrl: mutated.origin,
+      identity: mutated,
+      ledger: cloudLedger,
+    });
+    assert.equal(blocked.allowed, false);
+    assert.equal(blocked.reason, 'consent-required');
+    assert.equal(blocked.scope.mode, CONTEXT_SCOPE_MODES.CHAT_ONLY);
+    assert.equal(blocked.scope.pinnedTabId, null);
+    assert.deepEqual(blocked.scope.selectedTabIds, []);
+  }
+});
+
+test('missing principal on Cloud fails closed to chat-only even if the origin has a prior ledger grant', () => {
+  const cloud = identity({
+    gatewayUrl: 'https://cloud.example',
+    transport: 'cloud-ticket-ws',
+  });
+  const cloudLedger = withContextConsent({}, cloud, true, 2000);
+  const unverified = contextScopeWithConsent(pinned, {
+    gatewayUrl: cloud.origin,
+    identity: null,
+    ledger: cloudLedger,
+  });
+  assert.equal(unverified.allowed, false);
+  assert.equal(unverified.reason, 'principal-unavailable');
+  assert.equal(unverified.scope.mode, CONTEXT_SCOPE_MODES.CHAT_ONLY);
+  assert.equal(unverified.scope.pinnedTabId, null);
+  assert.deepEqual(unverified.scope.selectedTabIds, []);
+});

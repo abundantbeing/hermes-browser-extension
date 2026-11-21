@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "來源：Hermes 儀表板 (/api/audio/speak)",
   "read_aloud.meta.browser": "來源：此瀏覽器 (speechSynthesis)",
   "read_aloud.meta.none": "來源：無",
+  "settings.cloud_gateway_help": "Hermes Cloud 使用 Trusted Dashboard Attach。在使用中的分頁開啟已登入的代理程式儀表板，然後選擇「測試連線」。在您為這個確切的 Cloud 帳戶核准「與此連線共享頁面內容」之前，頁面內容會保持關閉。",
+  "settings.remote_dashboard_setup_hint": "透過 WebSocket 的 Trusted Dashboard Attach。讓已登入的儀表板保持為使用中的分頁，然後使用「測試連線」核准其 HTTPS 來源。在您核准與這個確切連線共享之前，頁面內容會保持關閉。不需要金鑰。",
 });

@@ -1316,6 +1316,61 @@ asyncio.run(main())
   if (!skipped(JSON.parse(out))) assert.deepEqual(JSON.parse(out), { passed: true });
 });
 
+test('the background registration succeeds from loopback with tab tools and refuses non-loopback peers (background_browser_local_only)', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}
+from aiohttp import streams
+from aiohttp.base_protocol import BaseProtocol
+from aiohttp.test_utils import make_mocked_request
+
+class FakeTransport:
+    def __init__(self, peer):
+        self._peer = peer
+    def get_extra_info(self, name, default=None):
+        return self._peer if name == "peername" else default
+
+async def call_register(handler, payload_dict, *, transport):
+    loop = asyncio.get_running_loop()
+    reader = streams.StreamReader(BaseProtocol(loop), 2**16, loop=loop)
+    reader.feed_data(json.dumps(payload_dict).encode("utf-8"))
+    reader.feed_eof()
+    request = make_mocked_request(
+        "POST",
+        REGISTER,
+        headers={"Authorization": TOKEN},
+        payload=reader,
+        transport=transport,
+    )
+    response = await handler(request)
+    return response.status, json.loads(response.text)
+
+async def main():
+    client, _, _ = await make(adapter=StoreAdapter(set()), listed_tools=("tab_create",))
+    async with client:
+        status, payload = await register(client, session=broker_module.BACKGROUND_SESSION)
+        assert status == 201 and payload.get("ticket"), (status, payload)
+
+    handler = routes.make_register_handler(StoreAdapter(set()), profile="luxord")
+    remote_status, remote_payload = await call_register(
+        handler,
+        body(session=broker_module.BACKGROUND_SESSION),
+        transport=FakeTransport(("10.0.0.5", 54321)),
+    )
+    assert remote_status == 403 and remote_payload["error"]["code"] == "background_browser_local_only", (remote_status, remote_payload)
+
+    missing_status, missing_payload = await call_register(
+        handler,
+        body(session=broker_module.BACKGROUND_SESSION),
+        transport=FakeTransport(None),
+    )
+    assert missing_status == 403 and missing_payload["error"]["code"] == "background_browser_local_only", (missing_status, missing_payload)
+
+    print(json.dumps({"passed": True}))
+
+asyncio.run(main())
+`);
+  if (!skipped(JSON.parse(out))) assert.deepEqual(JSON.parse(out), { passed: true });
+});
+
 // A stand-in for Hermes' SessionDB with its lineage rule: a hop counts only when the parent ended by
 // compression and the child is not a delegate/branch/reset fork of it (``_delegate_from`` etc.).
 const FAKE_HERMES_STATE = `

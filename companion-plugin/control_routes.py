@@ -132,16 +132,35 @@ async def _session_known(adapter: Any, session_id: str) -> bool:
 
     Fails closed: a store that is not offered, cannot be opened or raises when
     asked raises ``LookupError`` and the registration is refused, never allowed.
+
+    Two adapter shapes are supported. Current Hermes exposes
+    ``_ensure_store_async()`` and hands the session handle out through
+    ``gateway.platforms.api_server_store.adapter_persistence(adapter)`` — the
+    same route core uses in ``_get_existing_session_or_404`` — whose
+    ``.aio.sessions.get`` is the lookup. Older builds exposed
+    ``_ensure_session_db_async()`` returning an object with ``get_session``.
+    Resolving only the old name raises on every current build and turns
+    registration into a permanent 503 (``session_db_unavailable``), even though
+    the database itself is healthy.
     """
-    opener = getattr(adapter, "_ensure_session_db_async", None)
-    if not callable(opener):
-        raise LookupError("no session store")
     try:
-        db = await opener()
-        get_session = getattr(db, "get_session", None)
-        if not callable(get_session):
+        opener = getattr(adapter, "_ensure_session_db_async", None)
+        if opener is not None:
+            db = await opener()
+            get_session = getattr(db, "get_session", None)
+            if not callable(get_session):
+                raise LookupError("session store has no lookup")
+            return bool(await asyncio.to_thread(get_session, session_id))
+        ensure = getattr(adapter, "_ensure_store_async", None)
+        if ensure is None:
+            raise LookupError("no session store")
+        await ensure()
+        from gateway.platforms.api_server_store import adapter_persistence
+
+        store = adapter_persistence(adapter)
+        if store is None:
             raise LookupError("session store has no lookup")
-        return bool(await asyncio.to_thread(get_session, session_id))
+        return bool(await store.aio.sessions.get(session_id))
     except LookupError:
         raise
     except Exception as exc:

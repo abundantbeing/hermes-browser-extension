@@ -4135,6 +4135,10 @@
     "message": "Stimme & Aktivierung",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud verwendet Trusted Dashboard Attach. Öffne das angemeldete Agent-Dashboard im aktiven Tab und wähle dann „Testverbindung“. Der Seitenkontext bleibt aus, bis du „Seitenkontext mit dieser Verbindung teilen“ für genau dieses Cloud-Konto genehmigst.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Vollständig",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4314,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· öffentliche Alpha / entpackt laden",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach über WebSocket. Lass das angemeldete Dashboard als aktiven Tab geöffnet und genehmige dann mit „Testverbindung“ seinen HTTPS-Ursprung. Der Seitenkontext bleibt aus, bis du das Teilen mit genau dieser Verbindung genehmigst. Kein Schlüssel nötig.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Nicht gespeichert: {detail}",

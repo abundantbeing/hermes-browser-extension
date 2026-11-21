@@ -2309,4 +2309,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "来源：Hermes 仪表板 (/api/audio/speak)",
   "read_aloud.meta.browser": "来源：此浏览器 (speechSynthesis)",
   "read_aloud.meta.none": "来源：无",
+  "settings.cloud_gateway_help": "Hermes Cloud 使用 Trusted Dashboard Attach。在活动标签页中打开已登录的智能体仪表板，然后选择“测试连接”。在您为这个确切的 Cloud 账户批准“与此连接共享页面上下文”之前，页面上下文保持关闭。",
+  "settings.remote_dashboard_setup_hint": "通过 WebSocket 的 Trusted Dashboard Attach。将已登录的仪表板保持为活动标签页，然后使用“测试连接”批准其 HTTPS 来源。在您批准与这个确切连接共享之前，页面上下文保持关闭。无需密钥。",
 });

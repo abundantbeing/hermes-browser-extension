@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "ソース: Hermes ダッシュボード (/api/audio/speak)",
   "read_aloud.meta.browser": "ソース: このブラウザー (speechSynthesis)",
   "read_aloud.meta.none": "ソース: なし",
+  "settings.cloud_gateway_help": "Hermes Cloud は Trusted Dashboard Attach を使用します。サインイン済みのエージェントダッシュボードをアクティブなタブで開き、「テスト接続」を選択してください。この Cloud アカウントで「この接続とページコンテキストを共有」を承認するまで、ページコンテキストはオフのままです。",
+  "settings.remote_dashboard_setup_hint": "WebSocket 経由の Trusted Dashboard Attach。サインイン済みのダッシュボードをアクティブなタブにしたまま、「テスト接続」でその HTTPS オリジンを承認してください。この接続との共有を承認するまで、ページコンテキストはオフのままです。キーは不要です。",
 });

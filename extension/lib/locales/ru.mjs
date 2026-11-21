@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Источник: панель Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Источник: этот браузер (speechSynthesis)",
   "read_aloud.meta.none": "Источник: нет",
+  "settings.cloud_gateway_help": "Hermes Cloud использует Trusted Dashboard Attach. Откройте панель агента, в которой выполнен вход, на активной вкладке, затем выберите «Тестовое соединение». Контекст страницы остаётся выключенным, пока вы не одобрите «Делиться контекстом страницы с этим подключением» для именно этого аккаунта Cloud.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach через WebSocket. Оставьте панель, в которой выполнен вход, активной вкладкой, затем нажмите «Тестовое соединение», чтобы одобрить её источник HTTPS. Контекст страницы остаётся выключенным, пока вы не одобрите передачу именно этому подключению. Ключ не нужен.",
 });

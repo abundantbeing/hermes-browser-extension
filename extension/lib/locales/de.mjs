@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Quelle: Hermes-Dashboard (/api/audio/speak)",
   "read_aloud.meta.browser": "Quelle: dieser Browser (speechSynthesis)",
   "read_aloud.meta.none": "Quelle: keine",
+  "settings.cloud_gateway_help": "Hermes Cloud verwendet Trusted Dashboard Attach. Öffne das angemeldete Agent-Dashboard im aktiven Tab und wähle dann „Testverbindung“. Der Seitenkontext bleibt aus, bis du „Seitenkontext mit dieser Verbindung teilen“ für genau dieses Cloud-Konto genehmigst.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach über WebSocket. Lass das angemeldete Dashboard als aktiven Tab geöffnet und genehmige dann mit „Testverbindung“ seinen HTTPS-Ursprung. Der Seitenkontext bleibt aus, bis du das Teilen mit genau dieser Verbindung genehmigst. Kein Schlüssel nötig.",
 });

@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Source: Hermes dashboard (/api/audio/speak)",
   "read_aloud.meta.browser": "Source: this browser (speechSynthesis)",
   "read_aloud.meta.none": "Source: none",
+  "settings.cloud_gateway_help": "Hermes Cloud uses Trusted Dashboard Attach. Open the signed-in agent dashboard in the active tab, then choose Test connection. Page context stays off until you approve “Share page context with this connection” for this exact Cloud account.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach over WebSocket. Keep the signed-in dashboard as your active tab, then use Test connection to approve its HTTPS origin. Page context stays off until you approve sharing it with this exact connection. No key needed.",
 });

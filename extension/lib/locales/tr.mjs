@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Kaynak: Hermes kontrol paneli (/api/audio/speak)",
   "read_aloud.meta.browser": "Kaynak: bu tarayıcı (speechSynthesis)",
   "read_aloud.meta.none": "Kaynak: yok",
+  "settings.cloud_gateway_help": "Hermes Cloud, Trusted Dashboard Attach kullanır. Oturum açılmış ajan panosunu etkin sekmede açın, ardından “Bağlantıyı test edin” seçeneğini seçin. Bu Cloud hesabı için “Sayfa bağlamını bu bağlantıyla paylaş” seçeneğini onaylayana kadar sayfa bağlamı kapalı kalır.",
+  "settings.remote_dashboard_setup_hint": "WebSocket üzerinden Trusted Dashboard Attach. Oturum açılmış panoyu etkin sekmeniz olarak tutun, ardından HTTPS kaynağını onaylamak için “Bağlantıyı test edin” seçeneğini kullanın. Bu bağlantıyla paylaşımı onaylayana kadar sayfa bağlamı kapalı kalır. Anahtar gerekmez.",
 });

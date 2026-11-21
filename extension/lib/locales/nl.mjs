@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Bron: Hermes-dashboard (/api/audio/speak)",
   "read_aloud.meta.browser": "Bron: deze browser (speechSynthesis)",
   "read_aloud.meta.none": "Bron: geen",
+  "settings.cloud_gateway_help": "Hermes Cloud gebruikt Trusted Dashboard Attach. Open het ingelogde agentdashboard in het actieve tabblad en kies daarna “Verbinding testen”. Paginacontext blijft uit totdat je “Paginacontext delen met deze verbinding” goedkeurt voor precies dit Cloud-account.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach via WebSocket. Houd het ingelogde dashboard als actief tabblad open en gebruik daarna “Verbinding testen” om de HTTPS-oorsprong goed te keuren. Paginacontext blijft uit totdat je delen met precies deze verbinding goedkeurt. Geen sleutel nodig.",
 });

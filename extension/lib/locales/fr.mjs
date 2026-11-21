@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Source : tableau de bord Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Source : ce navigateur (speechSynthesis)",
   "read_aloud.meta.none": "Source : aucune",
+  "settings.cloud_gateway_help": "Hermes Cloud utilise Trusted Dashboard Attach. Ouvrez le tableau de bord de l’agent connecté dans l’onglet actif, puis choisissez « Tester la connexion ». Le contexte de la page reste désactivé jusqu’à ce que vous approuviez « Partager le contexte de la page avec cette connexion » pour ce compte Cloud précis.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach via WebSocket. Gardez le tableau de bord connecté comme onglet actif, puis utilisez « Tester la connexion » pour approuver son origine HTTPS. Le contexte de la page reste désactivé jusqu’à ce que vous approuviez son partage avec cette connexion précise. Aucune clé nécessaire.",
 });

@@ -2310,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "المصدر: لوحة تحكم Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "المصدر: هذا المتصفح (speechSynthesis)",
   "read_aloud.meta.none": "المصدر: لا شيء",
+  "settings.cloud_gateway_help": "يستخدم Hermes Cloud ميزة Trusted Dashboard Attach. افتح لوحة تحكم الوكيل المسجّل الدخول إليها في علامة التبويب النشطة، ثم اختر “اتصال الاختبار”. يبقى سياق الصفحة متوقفًا حتى توافق على “مشاركة سياق الصفحة مع هذا الاتصال” لحساب Cloud هذا بالتحديد.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach عبر WebSocket. أبقِ لوحة التحكم المسجّل الدخول إليها علامة التبويب النشطة، ثم استخدم “اتصال الاختبار” للموافقة على أصل HTTPS الخاص بها. يبقى سياق الصفحة متوقفًا حتى توافق على مشاركته مع هذا الاتصال بالتحديد. لا حاجة إلى مفتاح.",
 });

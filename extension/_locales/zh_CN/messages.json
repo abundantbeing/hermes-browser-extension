@@ -4135,6 +4135,10 @@
     "message": "语音与唤醒",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud 使用 Trusted Dashboard Attach。在活动标签页中打开已登录的智能体仪表板，然后选择“测试连接”。在您为这个确切的 Cloud 账户批准“与此连接共享页面上下文”之前，页面上下文保持关闭。",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "完整",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4314,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· 公开测试版 / 加载未打包扩展",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "通过 WebSocket 的 Trusted Dashboard Attach。将已登录的仪表板保持为活动标签页，然后使用“测试连接”批准其 HTTPS 来源。在您批准与这个确切连接共享之前，页面上下文保持关闭。无需密钥。",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "未保存：{detail}",

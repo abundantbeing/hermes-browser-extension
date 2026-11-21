@@ -4135,6 +4135,10 @@
     "message": "Voice & Wake",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud uses Trusted Dashboard Attach. Open the signed-in agent dashboard in the active tab, then choose Test connection. Page context stays off until you approve “Share page context with this connection” for this exact Cloud account.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Full",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4314,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· public alpha / load unpacked",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach over WebSocket. Keep the signed-in dashboard as your active tab, then use Test connection to approve its HTTPS origin. Page context stays off until you approve sharing it with this exact connection. No key needed.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Not saved: {detail}",
