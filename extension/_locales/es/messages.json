@@ -2595,6 +2595,14 @@
     "message": "El tema contiene errores de validación.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "¿Confiar en {origin} para Dashboard Attach?\n\nHermes Browser Extension usará la sesión iniciada en tu pestaña activa del panel para solicitar un ticket de WebSocket de corta duración y de un solo uso. Este panel se ejecuta en este equipo, así que el contexto de la página que elijas en el panel se comparte con él sin una aprobación aparte por conexión. El ticket solo se guarda en memoria y nunca se almacena.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "¿Confiar en {origin} para Dashboard Attach?\n\nHermes Browser Extension usará la sesión iniciada en tu pestaña activa del panel para solicitar un ticket de WebSocket de corta duración y de un solo uso. El contexto de la página permanece desactivado hasta que apruebes “Compartir el contexto de la página con esta conexión” para esta cuenta exacta. El ticket solo se guarda en memoria y nunca se almacena.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "La comprobación de estado respondió, pero las rutas protegidas de la extensión y del modelo requieren Authorization: Bearer ***. Pegue la clave API o el token de navegador con ámbito en Configuración.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
@@ -4127,6 +4135,10 @@
     "message": "Voz y activación",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud usa Trusted Dashboard Attach. Abre el panel del agente con la sesión iniciada en la pestaña activa y luego elige “Conexión de prueba”. El contexto de la página permanece desactivado hasta que apruebes “Compartir el contexto de la página con esta conexión” para esta cuenta de Cloud exacta.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Completo",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· alfa público/carga desempaquetada",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach mediante WebSocket. Mantén el panel con la sesión iniciada como pestaña activa y usa “Conexión de prueba” para aprobar su origen HTTPS. El contexto de la página permanece desactivado hasta que apruebes compartirlo con esta conexión exacta. No se necesita clave.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "No se guardó: {detail}",

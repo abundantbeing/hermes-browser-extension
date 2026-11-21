@@ -910,7 +910,49 @@ test('gateway settings support explicit local and remote Hermes API servers', ()
   assert.match(dashboard.setupHint, /Trusted Dashboard Attach/);
   assert.match(dashboard.setupHint, /active tab/);
   assert.match(dashboard.setupHint, /Test connection/);
-  assert.match(dashboard.setupHint, /Chat-only/);
+  assert.doesNotMatch(dashboard.setupHint, /Chat-only/i);
+  assert.match(dashboard.setupHint, /Page context stays off until you approve/i);
+  assert.match(dashboard.setupHint, /exact connection/i);
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(sidepanel, /Cloud connections are Chat-only/);
+});
+
+test('Cloud and remote-dashboard setup help explain default-off per-connection consent in every locale', async () => {
+  const { default: english } = await import('../extension/lib/locales/en.mjs');
+  const { loadLocaleMessages, SUPPORTED_LOCALES } = await import('../extension/lib/i18n-registry.mjs');
+  const dashboard = gatewayConnectionSummary({ gatewayMode: 'remote-dashboard', gatewayUrl: 'https://host.ts.net' });
+  // translateUiText needs an exact whole-message match, so the hint must equal its catalog entry.
+  assert.equal(dashboard.setupHint, english['settings.remote_dashboard_setup_hint']);
+
+  const cloudHelp = english['settings.cloud_gateway_help'];
+  assert.match(cloudHelp, /Trusted Dashboard Attach/);
+  assert.match(cloudHelp, /Page context stays off until you approve/);
+  assert.ok(cloudHelp.includes(english['context_consent.share_label']));
+  assert.match(cloudHelp, /for this exact Cloud account/);
+  assert.doesNotMatch(cloudHelp, /Chat-only/i);
+
+  // The Cloud branch of renderGatewayHelp must render this catalog message, not inline English.
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const start = sidepanel.indexOf('function renderGatewayHelp()');
+  assert.notEqual(start, -1);
+  const body = sidepanel.slice(start, sidepanel.indexOf('\n}\n', start));
+  assert.match(body, /connectionMode === 'cloud'\s*\?\s*t\('settings\.cloud_gateway_help'\)/);
+  assert.match(body, /translateUiText\(summary\.setupHint\)/);
+
+  for (const locale of SUPPORTED_LOCALES) {
+    if (locale.id === 'en') continue;
+    const catalog = await loadLocaleMessages(locale.id);
+    const {
+      'settings.cloud_gateway_help': localizedHelp,
+      'settings.remote_dashboard_setup_hint': localizedHint,
+      'context_consent.share_label': localizedShareLabel,
+    } = catalog;
+    assert.equal(typeof localizedHelp, 'string', `${locale.id} Cloud help`);
+    assert.equal(typeof localizedHint, 'string', `${locale.id} dashboard hint`);
+    assert.notEqual(localizedHelp, cloudHelp, `${locale.id} Cloud help is untranslated`);
+    assert.notEqual(localizedHint, dashboard.setupHint, `${locale.id} dashboard hint is untranslated`);
+    assert.ok(localizedHelp.includes(localizedShareLabel), `${locale.id} Cloud help names the localized sharing switch`);
+  }
 });
 
 test('isUsableRemoteGatewayUrl requires a parseable https URL', () => {

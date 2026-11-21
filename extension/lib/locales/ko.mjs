@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "구성되지 않음",
   "context_consent.share_detail": "이 정확한 연결을 승인하기 전에는 채팅만 사용할 수 있습니다. 동의는 엔드포인트, 계정, 프로필 및 브라우저 컨트롤러별로 분리됩니다.",
   "context_consent.share_label": "이 연결과 페이지 컨텍스트 공유",
+  "dashboard.trust_prompt_remote": "Dashboard Attach에 {origin}을(를) 신뢰하시겠습니까?\n\nHermes Browser Extension은 활성 대시보드 탭의 로그인된 세션을 사용해 수명이 짧은 일회용 WebSocket 티켓을 요청합니다. 이 계정에 대해 “이 연결과 페이지 컨텍스트 공유”를 승인할 때까지 페이지 컨텍스트는 꺼진 상태로 유지됩니다. 티켓은 메모리에만 있으며 저장되지 않습니다.",
+  "dashboard.trust_prompt_local": "Dashboard Attach에 {origin}을(를) 신뢰하시겠습니까?\n\nHermes Browser Extension은 활성 대시보드 탭의 로그인된 세션을 사용해 수명이 짧은 일회용 WebSocket 티켓을 요청합니다. 이 대시보드는 이 컴퓨터에서 실행되므로 패널에서 선택한 페이지 컨텍스트는 연결별 별도 승인 없이 공유됩니다. 티켓은 메모리에만 있으며 저장되지 않습니다.",
   "context.attached_tab": "첨부 탭",
   "context.follow_active_tab": "활성 탭 팔로우",
   "context.return_attached_tab": "연결된 탭으로 돌아가기",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "출처: Hermes 대시보드 (/api/audio/speak)",
   "read_aloud.meta.browser": "출처: 이 브라우저 (speechSynthesis)",
   "read_aloud.meta.none": "출처: 없음",
+  "settings.cloud_gateway_help": "Hermes Cloud는 Trusted Dashboard Attach를 사용합니다. 로그인된 에이전트 대시보드를 활성 탭에서 연 다음 “테스트 연결”을 선택하세요. 이 Cloud 계정에 대해 “이 연결과 페이지 컨텍스트 공유”를 승인할 때까지 페이지 컨텍스트는 꺼진 상태로 유지됩니다.",
+  "settings.remote_dashboard_setup_hint": "WebSocket을 통한 Trusted Dashboard Attach입니다. 로그인된 대시보드를 활성 탭으로 유지한 다음 “테스트 연결”을 사용해 HTTPS 출처를 승인하세요. 이 연결과의 공유를 승인할 때까지 페이지 컨텍스트는 꺼진 상태로 유지됩니다. 키는 필요하지 않습니다.",
 });

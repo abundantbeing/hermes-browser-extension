@@ -62,7 +62,7 @@ curl -H "Authorization: Bearer <key>" http://127.0.0.1:8642/v1/models
 
 Never bind the API server to a public interface without HTTPS in front of it.
 
-If they want Hermes Control, the address must be `127.0.0.1` / `localhost` (Local gateway, which includes an SSH tunnel) or `https://` (Remote gateway): Hermes Control refuses a remote `http://` address. A plain LAN or tailnet IP is chat only; offer the SSH tunnel or `tailscale serve` instead.
+If they want Hermes Control, the address must be `127.0.0.1` / `localhost` (Local gateway, which includes an SSH tunnel) or `https://` (Remote gateway, such as `tailscale serve` or an HTTPS reverse proxy with WebSocket upgrade): Hermes Control refuses a remote `http://` address. A plain LAN or tailnet `http://` IP cannot run Hermes Control (chat and consent-gated page context only); offer `tailscale serve`, an HTTPS reverse proxy, or an SSH tunnel instead.
 
 For a named profile:
 - keep the plain gateway address: do not add `/p/<profile>`, because the extension adds it when the person picks the profile in the side panel's bot list;
@@ -117,7 +117,7 @@ Then tell the person:
 2. Turn on **Settings > Permissions & Control > Hermes Control**.
 3. Attach a tab.
 
-Hermes Control clicks and types only in Chromium. Firefox has a restricted version.
+Hermes Control clicks and types only in Chromium (Firefox has a restricted version), works over both Local gateways and HTTPS Remote API gateways (`tailscale serve` or HTTPS reverse proxy), and keeps **Background task tabs** local-only (refused on remote gateways).
 
 ## 7. Confirm
 

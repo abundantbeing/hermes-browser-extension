@@ -2595,6 +2595,14 @@
     "message": "У темі є помилки перевірки.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Довіряти {origin} для Dashboard Attach?\n\nHermes Browser Extension використає сеанс із виконаним входом в активній вкладці панелі, щоб запросити короткочасний одноразовий квиток WebSocket. Ця панель працює на цьому комп’ютері, тому вибраний у боковій панелі контекст сторінки передається їй без окремого схвалення для кожного підключення. Квиток зберігається лише в пам’яті й ніколи не записується.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Довіряти {origin} для Dashboard Attach?\n\nHermes Browser Extension використає сеанс із виконаним входом в активній вкладці панелі, щоб запросити короткочасний одноразовий квиток WebSocket. Контекст сторінки залишається вимкненим, доки ви не схвалите «Ділитися контекстом сторінки з цим підключенням» саме для цього облікового запису. Квиток зберігається лише в пам’яті й ніколи не записується.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Перевірка стану відповіла, але захищені маршрути розширення та моделей потребують Authorization: Bearer *** Вставте ключ API або браузерний токен з обмеженою областю дії в Налаштування.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
@@ -4127,6 +4135,10 @@
     "message": "Голос і активація",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud використовує Trusted Dashboard Attach. Відкрийте панель агента, у якій виконано вхід, в активній вкладці, а потім виберіть «Тестове підключення». Контекст сторінки залишається вимкненим, доки ви не схвалите «Ділитися контекстом сторінки з цим підключенням» саме для цього облікового запису Cloud.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Повністю",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· публічна альфа-версія / завантажити розпаковане",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach через WebSocket. Залиште панель, у якій виконано вхід, активною вкладкою, а потім натисніть «Тестове підключення», щоб схвалити її джерело HTTPS. Контекст сторінки залишається вимкненим, доки ви не схвалите передавання саме цьому підключенню. Ключ не потрібен.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Не збережено: {detail}",

@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "non configurata",
   "context_consent.share_detail": "Solo chat finché non approvi questa connessione specifica. Il consenso è isolato per endpoint, account, profilo e controller del browser.",
   "context_consent.share_label": "Condividi il contesto della pagina con questa connessione",
+  "dashboard.trust_prompt_remote": "Considerare attendibile {origin} per Dashboard Attach?\n\nHermes Browser Extension userà la sessione con accesso eseguito nella scheda attiva della dashboard per richiedere un ticket WebSocket monouso e di breve durata. Il contesto della pagina resta disattivato finché non approvi “Condividi il contesto della pagina con questa connessione” per questo specifico account. Il ticket resta solo in memoria e non viene mai salvato.",
+  "dashboard.trust_prompt_local": "Considerare attendibile {origin} per Dashboard Attach?\n\nHermes Browser Extension userà la sessione con accesso eseguito nella scheda attiva della dashboard per richiedere un ticket WebSocket monouso e di breve durata. Questa dashboard è in esecuzione su questo computer, quindi il contesto della pagina scelto nel pannello viene condiviso con essa senza un’approvazione separata per connessione. Il ticket resta solo in memoria e non viene mai salvato.",
   "context.attached_tab": "Scheda allegata",
   "context.follow_active_tab": "Segui la scheda attiva",
   "context.return_attached_tab": "Torna alla scheda collegata",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Origine: dashboard di Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Origine: questo browser (speechSynthesis)",
   "read_aloud.meta.none": "Origine: nessuna",
+  "settings.cloud_gateway_help": "Hermes Cloud usa Trusted Dashboard Attach. Apri la dashboard dell’agente con accesso eseguito nella scheda attiva, quindi scegli “Testare la connessione”. Il contesto della pagina resta disattivato finché non approvi “Condividi il contesto della pagina con questa connessione” per questo specifico account Cloud.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach tramite WebSocket. Mantieni la dashboard con accesso eseguito come scheda attiva, quindi usa “Testare la connessione” per approvarne l’origine HTTPS. Il contesto della pagina resta disattivato finché non approvi la condivisione con questa specifica connessione. Nessuna chiave necessaria.",
 });

@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "no configurada",
   "context_consent.share_detail": "Solo chat hasta que apruebes esta conexión exacta. El consentimiento se aísla por endpoint, cuenta, perfil y controlador del navegador.",
   "context_consent.share_label": "Compartir el contexto de la página con esta conexión",
+  "dashboard.trust_prompt_remote": "¿Confiar en {origin} para Dashboard Attach?\n\nHermes Browser Extension usará la sesión iniciada en tu pestaña activa del panel para solicitar un ticket de WebSocket de corta duración y de un solo uso. El contexto de la página permanece desactivado hasta que apruebes “Compartir el contexto de la página con esta conexión” para esta cuenta exacta. El ticket solo se guarda en memoria y nunca se almacena.",
+  "dashboard.trust_prompt_local": "¿Confiar en {origin} para Dashboard Attach?\n\nHermes Browser Extension usará la sesión iniciada en tu pestaña activa del panel para solicitar un ticket de WebSocket de corta duración y de un solo uso. Este panel se ejecuta en este equipo, así que el contexto de la página que elijas en el panel se comparte con él sin una aprobación aparte por conexión. El ticket solo se guarda en memoria y nunca se almacena.",
   "context.attached_tab": "Pestaña adjunta",
   "context.follow_active_tab": "Seguir pestaña activa",
   "context.return_attached_tab": "Volver a la pestaña adjunta",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Origen: panel de Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Origen: este navegador (speechSynthesis)",
   "read_aloud.meta.none": "Origen: ninguno",
+  "settings.cloud_gateway_help": "Hermes Cloud usa Trusted Dashboard Attach. Abre el panel del agente con la sesión iniciada en la pestaña activa y luego elige “Conexión de prueba”. El contexto de la página permanece desactivado hasta que apruebes “Compartir el contexto de la página con esta conexión” para esta cuenta de Cloud exacta.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach mediante WebSocket. Mantén el panel con la sesión iniciada como pestaña activa y usa “Conexión de prueba” para aprobar su origen HTTPS. El contexto de la página permanece desactivado hasta que apruebes compartirlo con esta conexión exacta. No se necesita clave.",
 });

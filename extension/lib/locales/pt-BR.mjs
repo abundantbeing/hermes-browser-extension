@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "não configurada",
   "context_consent.share_detail": "Somente chat até você aprovar esta conexão exata. O consentimento é isolado por endpoint, conta, perfil e controlador do navegador.",
   "context_consent.share_label": "Compartilhar o contexto da página com esta conexão",
+  "dashboard.trust_prompt_remote": "Confiar em {origin} para Dashboard Attach?\n\nA Hermes Browser Extension usará a sessão conectada na aba ativa do painel para solicitar um ticket WebSocket de curta duração e uso único. O contexto da página fica desativado até você aprovar “Compartilhar o contexto da página com esta conexão” para esta conta exata. O ticket fica apenas na memória e nunca é armazenado.",
+  "dashboard.trust_prompt_local": "Confiar em {origin} para Dashboard Attach?\n\nA Hermes Browser Extension usará a sessão conectada na aba ativa do painel para solicitar um ticket WebSocket de curta duração e uso único. Este painel roda neste computador, então o contexto da página que você escolher no painel lateral é compartilhado com ele sem uma aprovação separada por conexão. O ticket fica apenas na memória e nunca é armazenado.",
   "context.attached_tab": "Aba anexada",
   "context.follow_active_tab": "Seguir aba ativa",
   "context.return_attached_tab": "Voltar para a aba anexada",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Origem: painel do Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Origem: este navegador (speechSynthesis)",
   "read_aloud.meta.none": "Origem: nenhuma",
+  "settings.cloud_gateway_help": "O Hermes Cloud usa Trusted Dashboard Attach. Abra o painel do agente conectado na aba ativa e escolha “Conexão de teste”. O contexto da página fica desativado até você aprovar “Compartilhar o contexto da página com esta conexão” para esta conta do Cloud exata.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach via WebSocket. Mantenha o painel conectado como aba ativa e use “Conexão de teste” para aprovar a origem HTTPS dele. O contexto da página fica desativado até você aprovar o compartilhamento com esta conexão exata. Nenhuma chave necessária.",
 });
