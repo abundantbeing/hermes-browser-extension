@@ -1159,6 +1159,22 @@
     "message": "Roster view",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternative to background tabs. After you approve the named tab, task tabs open in front and Hermes can switch to them. Leave this off to keep Background task tabs in the background.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Active task tabs",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Could not save Active task tabs.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "Approval needed",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approve once",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium grants this extension debugger access when it is installed or updated. Hermes uses the debugger only on tabs you attach, never brings a browser window to the front, and blocks credentials, MFA, payment fields, and secret text.",
+    "message": "Chromium grants this extension debugger access when it is installed or updated. Hermes uses the debugger only on tabs you attach, never brings a browser window to the front unless Active task tabs is on and you approve that switch, and blocks credentials, MFA, payment fields, and secret text.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "Hermes did not take the screenshot: Firefox needs extra permission. Use Allow screenshots on Firefox.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes can read approved context but cannot operate tabs.",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "Pause",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Stop",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Switch your view to this tab?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Switch your view to \"{title}\"?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Not available. Browser pages and sensitive pages, such as banking or password pages, cannot be controlled.",

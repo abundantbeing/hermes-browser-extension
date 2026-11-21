@@ -793,8 +793,26 @@ export function createBrowserControlExecutor({
       }
     }
 
-    function tabSwitchReason(args) {
-      return namedTabReason(args, APPROVAL_MESSAGES['tab-activate'], (label) => `Switch your view to "${label}"?`);
+    async function tabSwitchApproval(args) {
+      const generic = APPROVAL_MESSAGES['tab-activate'];
+      const targetTabId = Number(args.tab_id);
+      if (typeof adapter.inspect !== 'function' || !Number.isInteger(targetTabId) || targetTabId <= 0) {
+        return { reason: generic, reasonKey: 'browser_control.switch_view' };
+      }
+      try {
+        const info = await adapter.inspect({
+          tabId: targetTabId, frameId: 0, signal: controller.signal, light: true,
+        });
+        const label = tabSwitchLabel(info?.title, info?.currentUrl);
+        if (!label) return { reason: generic, reasonKey: 'browser_control.switch_view' };
+        return {
+          reason: `Switch your view to "${label}"?`,
+          reasonKey: 'browser_control.switch_view_to',
+          reasonParams: { title: label },
+        };
+      } catch {
+        return { reason: generic, reasonKey: 'browser_control.switch_view' };
+      }
     }
 
     function tabCloseReason(args) {
@@ -889,6 +907,8 @@ export function createBrowserControlExecutor({
           || APPROVAL_MESSAGES[policy.reason]
           || 'This browser action requires approval.';
         if (step) approvalReason = `Step ${step.number} of ${step.total}: ${approvalReason}`;
+        let approvalReasonKey = '';
+        let approvalReasonParams;
         let approvalDetail = '';
         if (action === 'browser_evaluate') {
           const preview = compact(String(args.code ?? args.expression ?? ''), 800);
@@ -898,7 +918,14 @@ export function createBrowserControlExecutor({
         let consumed = approvals.consume(approval);
         if (!consumed.ok) {
           if (action === 'browser_tab_activate' || action === 'browser_tab_close') {
-            approvalReason = await (action === 'browser_tab_activate' ? tabSwitchReason(args) : tabCloseReason(args));
+            if (action === 'browser_tab_activate') {
+              const named = await tabSwitchApproval(args);
+              approvalReason = named.reason;
+              approvalReasonKey = named.reasonKey;
+              approvalReasonParams = named.reasonParams;
+            } else {
+              approvalReason = await tabCloseReason(args);
+            }
             // A cancel that landed during the title read must not leave a request behind.
             if (controller.signal.aborted) {
               return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');
@@ -917,6 +944,8 @@ export function createBrowserControlExecutor({
           const requested = await approvals.request({
             ...approval,
             reason: approvalReason,
+            ...(approvalReasonKey ? { reasonKey: approvalReasonKey } : {}),
+            ...(approvalReasonParams ? { reasonParams: approvalReasonParams } : {}),
             ...(approvalDetail ? { detail: approvalDetail } : {}),
           });
           clearTimeout(approvalTimer);

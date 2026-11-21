@@ -1159,6 +1159,22 @@
     "message": "Visualização em lista",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternativa às abas em segundo plano. Depois que você aprovar a aba indicada, as abas de tarefas abrem na frente e o Hermes pode alternar para elas. Deixe isso desligado para manter as abas de tarefas em segundo plano.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Abas de tarefas ativas",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Não foi possível salvar as abas de tarefas ativas.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "Aprovação necessária",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Aprovar uma vez",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "O Chromium concede a esta extensão acesso ao depurador quando ela é instalada ou atualizada. O Hermes usa o depurador apenas nas abas que você conecta, nunca traz uma janela do navegador para a frente e bloqueia credenciais, MFA, campos de pagamento e textos secretos.",
+    "message": "O Chromium concede a esta extensão acesso ao depurador quando ela é instalada ou atualizada. O Hermes usa o depurador apenas nas abas que você conecta, nunca traz uma janela do navegador para a frente, a menos que as abas de tarefas ativas estejam ligadas e você aprove essa troca e bloqueia credenciais, MFA, campos de pagamento e textos secretos.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "O Hermes não tirou a captura de tela: o Firefox precisa de uma permissão extra. Use Permitir capturas de tela no Firefox.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "O Hermes pode ler o contexto aprovado, mas não pode operar abas.",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "Pausar",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Parar",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Mudar sua visualização para esta aba?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Mudar sua visualização para \"{title}\"?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Indisponível. Páginas do navegador e páginas sensíveis, como as de banco ou de senhas, não podem ser controladas.",

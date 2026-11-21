@@ -1159,6 +1159,22 @@
     "message": "Liste görünümü",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Arka plan sekmelerine bir alternatiftir. Adı belirtilen sekmeyi onayladıktan sonra görev sekmeleri önde açılır ve Hermes bunlara geçebilir. Arka plan görev sekmelerini arkada tutmak için bunu kapalı bırakın.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Etkin görev sekmeleri",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Etkin görev sekmeleri kaydedilemedi.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "Onay gerekli",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Bir kez onayla",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium, bu eklentiye yüklendiğinde veya güncellendiğinde hata ayıklayıcı erişimi verir. Hermes hata ayıklayıcıyı yalnızca bağladığınız sekmelerde kullanır, bir tarayıcı penceresini asla öne getirmez ve kimlik bilgilerini, MFA kodlarını, ödeme alanlarını ve gizli metinleri engeller.",
+    "message": "Chromium, bu eklentiye yüklendiğinde veya güncellendiğinde hata ayıklayıcı erişimi verir. Hermes hata ayıklayıcıyı yalnızca bağladığınız sekmelerde kullanır, Etkin görev sekmeleri açık değilse ve bu geçişi onaylamazsanız bir tarayıcı penceresini asla öne getirmez ve kimlik bilgilerini, MFA kodlarını, ödeme alanlarını ve gizli metinleri engeller.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "Hermes ekran görüntüsünü almadı: Firefox ek izne ihtiyaç duyuyor. Firefox'ta ekran görüntülerine izin ver seçeneğini kullanın.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes onaylanmış bağlamı okuyabilir, ancak sekmeleri yönetemez.",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "Duraklat",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Durdur",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Görünümünüzü bu sekmeye geçirin?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Görünümünüzü “{title}” sekmesine geçirin?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Kullanılamıyor. Tarayıcı sayfaları ile bankacılık veya parola sayfaları gibi hassas sayfalar kontrol edilemez.",

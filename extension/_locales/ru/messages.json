@@ -1159,6 +1159,22 @@
     "message": "Список",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Альтернатива фоновым вкладкам. После вашего подтверждения указанной вкладки вкладки задач открываются на переднем плане, и Hermes может на них переключаться. Оставьте выключенным, чтобы вкладки фоновых задач оставались в фоне.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Активные вкладки задач",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Не удалось сохранить активные вкладки задач.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "Требуется подтверждение",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Разрешить один раз",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium предоставляет этому расширению доступ к отладчику при установке или обновлении. Hermes использует отладчик только на вкладках, которые вы подключили, никогда не выводит окно браузера на передний план и блокирует учётные данные, MFA, поля оплаты и секретный текст.",
+    "message": "Chromium предоставляет этому расширению доступ к отладчику при установке или обновлении. Hermes использует отладчик только на вкладках, которые вы подключили, никогда не выводит окно браузера на передний план, если только не включены активные вкладки задач и вы не подтвердили это переключение и блокирует учётные данные, MFA, поля оплаты и секретный текст.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "Hermes не сделал снимок: Firefox требует дополнительное разрешение. Используйте «Разрешить скриншоты в Firefox».",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes может читать одобренный контекст, но не может управлять вкладками.",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "Пауза",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Остановить",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Переключить вид на эту вкладку?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Переключить вид на «{title}»?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Недоступно. Страницы браузера и чувствительные страницы, например банковские или страницы паролей, управлять которыми нельзя.",

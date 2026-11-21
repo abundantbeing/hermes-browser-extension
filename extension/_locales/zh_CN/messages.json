@@ -1159,6 +1159,22 @@
     "message": "列表视图",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "后台标签页的替代方案。你批准指定标签页后，任务标签页会在前台打开，Hermes 可以切换到它们。若要让后台任务标签页留在后台，请关闭此选项。",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "前台任务标签页",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "无法保存前台任务标签页设置。",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "需要批准",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "批准一次",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium 会在安装或更新此扩展时授予其调试器访问权限。Hermes 只会在你连接的标签页上使用调试器，从不把浏览器窗口置于前台，并会阻止凭据、MFA、支付字段和机密文本。",
+    "message": "Chromium 会在安装或更新此扩展时授予其调试器访问权限。Hermes 只会在你连接的标签页上使用调试器，从不把浏览器窗口置于前台（除非已开启前台任务标签页且你批准了该切换），并会阻止凭据、MFA、支付字段和机密文本。",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "Hermes 没有截图：Firefox 需要额外权限。请使用“允许在 Firefox 中截图”。",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes 可以读取已批准的上下文，但不能操作标签页。",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "暂停",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "停止",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "要将视图切换到此标签页吗？",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "要将视图切换到“{title}”吗？",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "不可用。浏览器页面以及银行、密码等敏感页面无法被控制。",

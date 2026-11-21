@@ -17,6 +17,7 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
   applyScope, translate = (key) => key,
 }) {
   let enabled = false;
+  let allowOpen = false;
   let backdropPressed = false;
   let canChangeScope = false;
   let applying = false;
@@ -195,7 +196,7 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
   };
 
   launcher.addEventListener('click', (event) => {
-    if (!enabled || dialog.open) return;
+    if (!allowOpen || dialog.open) return;
     dialog.classList.toggle('is-pointer-open', event.detail > 0);
     dialog.showModal();
     playFlair();
@@ -247,12 +248,14 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
           if (helpTarget === button) showHelp(button);
         }
       }
-      launcher.hidden = !enabled;
+      const showApproval = view.state === 'approval';
+      allowOpen = enabled || showApproval;
+      launcher.hidden = !allowOpen;
       launcher.dataset.state = view.state;
       launcher.dataset.tone = view.tone;
       launcher.setAttribute('aria-label', `${label()}: ${view.title}`);
       launcher.title = `${label()}: ${view.title}\n${view.detail}`;
-      if (!enabled) close();
+      if (!allowOpen) close();
     },
   };
 }

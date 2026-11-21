@@ -313,6 +313,19 @@ function approvalKey(value = {}) {
   ].join('\u0000');
 }
 
+const APPROVAL_REASON_KEY = /^browser_control\.[a-z0-9_]+$/;
+
+function approvalReasonKey(value) {
+  const key = compact(value);
+  return APPROVAL_REASON_KEY.test(key) ? key : '';
+}
+
+function approvalReasonParams(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const title = compact(value.title).slice(0, 80);
+  return title ? { title } : null;
+}
+
 export function createBrowserControlApprovalStore({
   now = Date.now,
   ttlMs = 30_000,
@@ -422,9 +435,13 @@ export function createBrowserControlApprovalStore({
     }
     let resolve;
     const promise = new Promise((settle) => { resolve = settle; });
+    const reasonKey = approvalReasonKey(value.reasonKey);
+    const reasonParams = approvalReasonParams(value.reasonParams);
     requests.set(normalized.approvalId, {
       ...normalized,
       reason: compact(value.reason).slice(0, 300),
+      ...(reasonKey ? { reasonKey } : {}),
+      ...(reasonParams ? { reasonParams } : {}),
       ...(compact(value.detail) ? { detail: compact(value.detail).slice(0, 1_000) } : {}),
       createdAt: Number(now()),
       promise,
@@ -442,8 +459,8 @@ export function createBrowserControlApprovalStore({
   function pending() {
     return [...requests.values()].map(({
       approvalId, approvalNonce, commandId, controllerId, leaseId, leaseGeneration,
-      tabId, frameId, documentGeneration, action, state, reason, binding, detail,
-      targetRole, targetName, destination, valueHash,
+      tabId, frameId, documentGeneration, action, state, reason, reasonKey, reasonParams,
+      binding, detail, targetRole, targetName, destination, valueHash,
     }) => ({
       approvalId,
       ...(approvalNonce ? { approvalNonce } : {}),
@@ -457,6 +474,8 @@ export function createBrowserControlApprovalStore({
       action,
       ...(state ? { state } : {}),
       reason,
+      ...(reasonKey ? { reasonKey } : {}),
+      ...(reasonParams ? { reasonParams } : {}),
       ...(binding ? { binding } : {}),
       ...(targetRole ? { targetRole } : {}),
       ...(targetName ? { targetName } : {}),

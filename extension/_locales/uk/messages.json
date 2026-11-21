@@ -1159,6 +1159,22 @@
     "message": "Список",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Альтернатива фоновим вкладкам. Після підтвердження названої вкладки Hermes відкриває її на передньому плані і може перемикатись на неї. Вимкніть, щоб фонові вкладки лишались у фоні.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Активні вкладки завдань",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Не вдалося зберегти активні вкладки завдань.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "Потрібне підтвердження",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Дозволити один раз",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium надає цьому розширенню доступ до налагоджувача під час встановлення або оновлення. Hermes використовує налагоджувач лише на вкладках, які ви підключаєте, ніколи не виводить вікно браузера на передній план і блокує облікові дані, MFA, платіжні поля та секретний текст.",
+    "message": "Chromium надає цьому розширенню доступ до налагоджувача під час встановлення або оновлення. Hermes використовує налагоджувач лише на вкладках, які ви підключаєте, ніколи не виводить вікно браузера на передній план, якщо не увімкнено активні вкладки завдань і ви не підтвердили це перемикання, і блокує облікові дані, MFA, платіжні поля та секретний текст.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "Hermes не зробив знімок: Firefox потребує додаткового дозволу. Скористайтеся «Дозволити знімки екрана у Firefox».",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes може читати схвалений контекст, але не може керувати вкладками.",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "Пауза",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Зупинити",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Перемкнути перегляд на цю вкладку?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Перемкнути перегляд на «{title}»?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Недоступно. Сторінки браузера та чутливі сторінки, наприклад банківські або сторінки паролів, керувати якими не можна.",

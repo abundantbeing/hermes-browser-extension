@@ -1159,6 +1159,22 @@
     "message": "清單檢視",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "背景分頁的替代方案。你核准指定分頁後，工作分頁會在前景開啟，Hermes 可以切換到這些分頁。若要讓背景工作分頁留在背景，請關閉此選項。",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "前景工作分頁",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "無法儲存前景工作分頁設定。",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "需要核准",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "核准一次",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium 會在安裝或更新此擴充功能時授予其偵錯工具存取權限。Hermes 只會在你連接的分頁上使用偵錯工具，從不把瀏覽器視窗移到前景，並會封鎖憑證、MFA、付款欄位和機密文字。",
+    "message": "Chromium 會在安裝或更新此擴充功能時授予其偵錯工具存取權限。Hermes 只會在你連接的分頁上使用偵錯工具，從不把瀏覽器視窗移到前景（除非已開啟前景工作分頁且你核准了該次切換），並會封鎖憑證、MFA、付款欄位和機密文字。",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "Hermes 沒有截圖：Firefox 需要額外權限。請使用「允許在 Firefox 中截圖」。",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes 可以讀取已核准的內容，但不能操作分頁。",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "暫停",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "停止",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "要將檢視切換到此分頁嗎？",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "要將檢視切換到「{title}」嗎？",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "不可用。瀏覽器頁面以及銀行、密碼等敏感頁面無法被控制。",

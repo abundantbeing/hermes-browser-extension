@@ -1159,6 +1159,22 @@
     "message": "Listenansicht",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternative zu Hintergrund-Tabs. Nachdem du den genannten Tab bestätigt hast, öffnen sich Aufgaben-Tabs im Vordergrund, und Hermes kann zu ihnen wechseln. Lass dies aus, damit Hintergrund-Tabs für Aufgaben im Hintergrund bleiben.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Aktive Aufgaben-Tabs",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Aktive Aufgaben-Tabs konnten nicht gespeichert werden.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "Genehmigung erforderlich",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Einmal genehmigen",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium gewährt dieser Erweiterung beim Installieren oder Aktualisieren Debugger-Zugriff. Hermes nutzt den Debugger nur für Tabs, die du verbindest, holt nie ein Browserfenster in den Vordergrund und blockiert Anmeldedaten, MFA, Zahlungsfelder und geheime Texte.",
+    "message": "Chromium gewährt dieser Erweiterung beim Installieren oder Aktualisieren Debugger-Zugriff. Hermes nutzt den Debugger nur für Tabs, die du verbindest, holt nie ein Browserfenster in den Vordergrund, außer Aktive Aufgaben-Tabs ist eingeschaltet und du bestätigst diesen Wechsel und blockiert Anmeldedaten, MFA, Zahlungsfelder und geheime Texte.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "Hermes hat den Screenshot nicht gemacht: Firefox braucht eine zusätzliche Berechtigung. Nutze „Screenshots in Firefox erlauben“.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes kann freigegebenen Kontext lesen, aber keine Tabs steuern.",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "Pausieren",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Stoppen",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Ansicht zu diesem Tab wechseln?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Ansicht zu „{title}“ wechseln?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Nicht verfügbar. Browserseiten und sensible Seiten, etwa Bank- oder Passwortseiten, können nicht gesteuert werden.",

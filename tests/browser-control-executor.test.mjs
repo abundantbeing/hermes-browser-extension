@@ -365,6 +365,8 @@ test('a tab switch names the tab it switches to, and its approval cannot be spen
   const [pending] = approvals.pending();
   // The card names the target (cut to 60 characters), and the request is bound to it.
   assert.equal(pending.reason, 'Switch your view to "Quarterly planning for the whole product team and every par…"?');
+  assert.equal(pending.reasonKey, 'browser_control.switch_view_to');
+  assert.deepEqual(pending.reasonParams, { title: 'Quarterly planning for the whole product team and every par…' });
   assert.equal(pending.binding, 'tab:8');
   // The approval still belongs to the command's own tab and lease, which the worker checks on the grant.
   assert.equal(pending.tabId, 7);
@@ -425,6 +427,33 @@ test('a tab-switch approval names the host when the tab has no title or its titl
   assert.equal(await tabSwitchReasonFor({ title: 'Q3 plan', currentUrl: url }), 'Switch your view to "Q3 plan"?');
   assert.equal(await tabSwitchReasonFor({ title: '' }), 'Switch your view to this tab?');
   assert.equal(await tabSwitchReasonFor({ title: 'about:blank', currentUrl: 'about:blank' }), 'Switch your view to this tab?');
+});
+
+test('a tab-switch approval carries a catalog key so the panel can translate the reason', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const approvals = createBrowserControlApprovalStore();
+  const adapter = fullAdapter(async () => ({ status: 'tab-activated' }));
+  adapter.inspect = async () => ({ title: 'Example tab', currentUrl: 'https://example.test/' });
+  const executor = createBrowserControlExecutor({ adapter, approvals, refs: createBrowserControlRefStore(), now: () => 5_000 });
+  const activating = executor.execute(frame('browser_tab_activate', { tab_id: 8 }, { command_id: 'activate-8' }), { scope, leasedTabIds: [7, 8] });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const [named] = approvals.pending();
+  assert.equal(named.reasonKey, 'browser_control.switch_view_to');
+  assert.deepEqual(named.reasonParams, { title: 'Example tab' });
+  assert.equal(approvals.grant(named).ok, true);
+  assert.equal((await activating).ok, true);
+
+  const genericApprovals = createBrowserControlApprovalStore();
+  adapter.inspect = async () => ({ title: '', currentUrl: 'about:blank' });
+  const genericExecutor = createBrowserControlExecutor({ adapter, approvals: genericApprovals, refs: createBrowserControlRefStore(), now: () => 5_000 });
+  const genericRun = genericExecutor.execute(frame('browser_tab_activate', { tab_id: 8 }, { command_id: 'activate-generic' }), { scope, leasedTabIds: [7, 8] });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const [generic] = genericApprovals.pending();
+  assert.equal(generic.reason, 'Switch your view to this tab?');
+  assert.equal(generic.reasonKey, 'browser_control.switch_view');
+  assert.equal(generic.reasonParams, undefined);
+  assert.equal(genericApprovals.grant(generic).ok, true);
+  assert.equal((await genericRun).ok, true);
 });
 
 test('Phase 6 tab mutations require exact owned tabs and return sanitized metadata', async () => {

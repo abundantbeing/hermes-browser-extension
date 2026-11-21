@@ -1159,6 +1159,22 @@
     "message": "Vue de la liste",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "Alternative aux onglets en arrière-plan. Après votre approbation de l’onglet indiqué, les onglets de tâches s’ouvrent au premier plan et Hermes peut basculer vers eux. Laissez cette option désactivée pour garder les onglets de tâches en arrière-plan.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "Onglets de tâches actifs",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "Impossible d’enregistrer les onglets de tâches actifs.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "Approbation requise",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approuver une fois",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "Chromium accorde à cette extension l’accès au débogueur lors de l’installation ou de la mise à jour. Hermes n’utilise le débogueur que sur les onglets que vous associez, ne fait jamais passer une fenêtre du navigateur au premier plan et bloque les identifiants, l’MFA, les champs de paiement et les textes secrets.",
+    "message": "Chromium accorde à cette extension l’accès au débogueur lors de l’installation ou de la mise à jour. Hermes n’utilise le débogueur que sur les onglets que vous associez, ne fait jamais passer une fenêtre du navigateur au premier plan, sauf si les onglets de tâches actifs sont activés et que vous approuvez ce basculement et bloque les identifiants, l’MFA, les champs de paiement et les textes secrets.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "Hermes n'a pas fait la capture : Firefox demande une autorisation supplémentaire. Utilisez Autoriser les captures dans Firefox.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes peut lire le contexte approuvé, mais ne peut pas piloter les onglets.",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "Pause",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Arrêter",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Passer votre affichage sur cet onglet ?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Passer votre affichage sur « {title} » ?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Non disponible. Les pages du navigateur et les pages sensibles, comme les pages bancaires ou de mot de passe, ne peuvent pas être contrôlées.",

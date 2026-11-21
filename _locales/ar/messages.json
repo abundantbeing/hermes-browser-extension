@@ -1159,6 +1159,22 @@
     "message": "عرض القائمة",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_active_tabs_help": {
+    "message": "بديل عن علامات تبويب المهام في الخلفية. بعد موافقتك على التبويب المحدد، تُفتح علامات تبويب المهام في الواجهة ويمكن لـ Hermes التبديل إليها. أبقِ هذا الخيار مغلقًا لإبقاء علامات تبويب المهام في الخلفية.",
+    "description": "Runtime interface message browser_control.active_tabs_help"
+  },
+  "runtime_browser_control_active_tabs_label": {
+    "message": "علامات تبويب المهام النشطة",
+    "description": "Runtime interface message browser_control.active_tabs_label"
+  },
+  "runtime_browser_control_active_tabs_save_error": {
+    "message": "تعذر حفظ علامات تبويب المهام النشطة.",
+    "description": "Runtime interface message browser_control.active_tabs_save_error"
+  },
+  "runtime_browser_control_approval_needed": {
+    "message": "يلزم الحصول على موافقة",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "الموافقة مرة واحدة",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1344,7 +1360,7 @@
     "description": "Runtime interface message browser_control.local_document_detail"
   },
   "runtime_browser_control_note": {
-    "message": "يمنح Chromium هذه الإضافة وصول المصحح عند تثبيتها أو تحديثها. يستخدم Hermes المصحح فقط على التبويبات التي ترفقها، ولا يُحضر نافذة المتصفح إلى الواجهة أبدًا، ويحظر بيانات الاعتماد ورموز MFA وحقول الدفع والنصوص السرية.",
+    "message": "يمنح Chromium هذه الإضافة وصول المصحح عند تثبيتها أو تحديثها. يستخدم Hermes المصحح فقط على التبويبات التي ترفقها، ولا يُحضر نافذة المتصفح إلى الواجهة أبدًا إلا إذا كانت علامات تبويب المهام النشطة مفعّلة ووافقت على ذلك التبديل، ويحظر بيانات الاعتماد ورموز MFA وحقول الدفع والنصوص السرية.",
     "description": "Runtime interface message browser_control.note"
   },
   "runtime_browser_control_note_action_frame": {
@@ -1362,6 +1378,10 @@
   "runtime_browser_control_note_screenshot_permission": {
     "message": "لم يلتقط Hermes الصورة: يحتاج Firefox إلى إذن إضافي. استخدم «السماح بلقطات الشاشة في Firefox».",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
+  "runtime_browser_control_off_detail": {
+    "message": "يمكن لـ Hermes قراءة السياق المعتمد، لكنه لا يستطيع تشغيل علامات التبويب.",
+    "description": "Runtime interface message browser_control.off_detail"
   },
   "runtime_browser_control_pause": {
     "message": "إيقاف مؤقت",
@@ -1446,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "إيقاف",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "هل تريد تبديل العرض إلى علامة التبويب هذه؟",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "هل تريد تبديل العرض إلى \"{title}\"؟",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "غير متاح. لا يمكن التحكم في صفحات المتصفح والصفحات الحساسة، مثل صفحات الخدمات المصرفية أو كلمات المرور.",

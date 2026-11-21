@@ -159,7 +159,7 @@ test('Hermes Control shows its status as a light in the title row, after the hea
   assert.doesNotMatch(html, /THIS TAB IS READY|browser-control-live-indicator/);
   assert.match(html, /id="browserControlLight"[^>]*tabindex="0"/);
   assert.match(html, /id="browserControlLight"[^>]*data-control-help="status"/);
-  assert.match(source, /browserControlLightState\(view, \{ paused \}\)/);
+  assert.match(source, /browserControlLightState\(view, \{ paused, enabled \}\)/);
   assert.match(source, /dataset\.attention = String\(view\.attention === true\)/);
 });
 

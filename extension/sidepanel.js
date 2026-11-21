@@ -863,7 +863,7 @@ import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-
 import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteFromInput, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
-import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
+import { BACKGROUND_BROWSER_CONSENT, ACTIVE_TASK_TABS, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
@@ -1008,6 +1008,79 @@ function initBackgroundTaskBrowserSetting() {
   void render().catch(() => {});
 }
 initBackgroundTaskBrowserSetting();
+
+function initActiveTaskTabsSetting() {
+  const row = document.getElementById('activeTaskTabsSetting');
+  const input = document.getElementById('activeTaskTabsInput');
+  const status = document.getElementById('activeTaskTabsStatus');
+  const storage = browserApi.storage?.local;
+  if (!row || !input || !status || !storage || !browserApi.tabGroups || !browserApi.debugger) return;
+
+  async function gatewaySupportsTasks(connection) {
+    try {
+      const url = new URL(connection.gatewayUrl);
+      url.pathname = url.pathname.replace(/\/+$/, '') + controllerProfilePath(COMPANION_STATUS_PATH, connection.activeProfile);
+      url.search = '';
+      url.hash = '';
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${connection.apiKey}` },
+        redirect: 'error',
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      });
+      return response.ok && companionSupportsBackgroundTasks(parseCompanionStatusPayload(await response.json()));
+    } catch {
+      return false;
+    }
+  }
+
+  let renderRevision = 0;
+  async function render() {
+    const revision = ++renderRevision;
+    const stored = await storage.get([
+      'hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY, BACKGROUND_BROWSER_CONSENT, ACTIVE_TASK_TABS,
+    ]);
+    const connection = await hydrateHermesBrowserSettingsFromStorage(stored);
+    const consentIdentity = await backgroundBrowserConsentIdentity(connection);
+    if (revision !== renderRevision) return;
+    const available = Boolean(consentIdentity) && await gatewaySupportsTasks(connection);
+    if (revision !== renderRevision) return;
+    row.hidden = !available && stored[ACTIVE_TASK_TABS] !== true;
+    input.checked = stored[ACTIVE_TASK_TABS] === true;
+    input.disabled = !available && stored[ACTIVE_TASK_TABS] !== true;
+    pollForTaskApprovals = input.checked === true;
+    scheduleBrowserControlPoll();
+    if (available) status.textContent = '';
+    else if (!row.hidden) status.textContent = t('browser_control.background_unavailable');
+  }
+
+  input.addEventListener('change', async () => {
+    const checked = input.checked;
+    input.disabled = true;
+    try {
+      if (checked) await storage.set({ [ACTIVE_TASK_TABS]: true });
+      else await storage.remove(ACTIVE_TASK_TABS);
+      status.textContent = '';
+    } catch {
+      status.textContent = t('browser_control.active_tabs_save_error');
+      input.checked = !checked;
+      input.disabled = false;
+      return;
+    }
+    await render().catch(() => {});
+  });
+  browserApi.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && (
+      changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]
+      || changes[BACKGROUND_BROWSER_CONSENT] || changes[ACTIVE_TASK_TABS]
+    )) {
+      void render().catch(() => {});
+    }
+  });
+  subscribeLocale(() => { void render().catch(() => {}); });
+  void render().catch(() => {});
+}
+initActiveTaskTabsSetting();
 const dashboardFetch = createBackgroundLoopbackFetch({
   sendMessage: (message) => browserApi.runtime.sendMessage(message),
   fetchFn: globalThis.fetch?.bind(globalThis),
@@ -2196,6 +2269,7 @@ let browserControlCurrentTarget = null;
 // The tab the Show tab button would bring forward, or null when it is hidden.
 let browserControlShowTabId = null;
 let browserControlPollTimer = null;
+let pollForTaskApprovals = false;
 let browserControlDialogUi = null;
 let latestUpdateReview = null;
 let sessionsRefreshing = false;
@@ -3765,8 +3839,10 @@ function renderBrowserControl() {
   const enabled = settings.browserControlEnabled === true;
   const paused = browserControlStatus?.paused === true;
   const pendingApproval = browserControlStatus?.pendingApproval || null;
-  const lightState = browserControlLightState(view, { paused });
-  const statusLine = browserControlStatusLine({ title: translateUiText(view.title), detail: translateUiText(view.detail) });
+  const lightState = browserControlLightState(view, { paused, enabled });
+  const viewTitle = view.titleKey ? t(view.titleKey, view.titleParams || {}) : translateUiText(view.title);
+  const viewDetail = view.detailKey ? t(view.detailKey, view.detailParams || {}) : translateUiText(view.detail);
+  const statusLine = browserControlStatusLine({ title: viewTitle, detail: viewDetail });
 
   const stateKey = {
     off: 'browser_control.state_off',
@@ -3782,7 +3858,7 @@ function renderBrowserControl() {
   }[view.state] || 'browser_control.state_off';
   els.browserControlState.textContent = t(stateKey).toUpperCase();
   els.browserControlState.dataset.state = view.state;
-  els.browserControlCardDetail.textContent = translateUiText(view.detail);
+  els.browserControlCardDetail.textContent = viewDetail;
   els.browserControlScopeInput.value = ['this-tab', 'selected-tabs', 'task-set'].includes(settings.browserControlScope)
     ? settings.browserControlScope
     : 'this-tab';
@@ -3801,7 +3877,7 @@ function renderBrowserControl() {
     canChangeScope: enabled && browserControlStatus?.connected === true && browserControlStatus?.controlEnabled === true
       && !browserControlStatus?.activeAction && !browserControlStatus?.pendingCommands
       && !browserControlStatus?.pendingApproval && !browserControlStatus?.pendingApprovals && !browserControlStatus?.scopeChanging,
-    view: { ...view, title: translateUiText(view.title), detail: translateUiText(view.detail) },
+    view: { ...view, title: viewTitle, detail: viewDetail },
     help: {
       'show-tab': t('browser_control.help_show_tab'),
       attach: t('browser_control.help_attach'), off: t('browser_control.help_off'),
@@ -3813,12 +3889,12 @@ function renderBrowserControl() {
       status: statusLine,
     },
   });
-  els.browserControlStrip.hidden = !enabled;
+  els.browserControlStrip.hidden = !enabled && !pendingApproval;
   els.browserControlStrip.dataset.tone = view.tone;
   // The title and detail stay in the DOM for screen readers; the window shows the detail only when the person must act.
   els.browserControlStrip.dataset.attention = String(view.attention === true);
-  els.browserControlStripTitle.textContent = translateUiText(view.title);
-  els.browserControlStripDetail.textContent = translateUiText(view.detail);
+  els.browserControlStripTitle.textContent = viewTitle;
+  els.browserControlStripDetail.textContent = viewDetail;
   if (els.browserControlLight) els.browserControlLight.dataset.state = lightState;
   if (els.browserControlLightWord) {
     els.browserControlLightWord.textContent = t(lightState === 'on' ? 'browser_control.status_on' : 'browser_control.state_off');
@@ -3881,10 +3957,14 @@ async function refreshBrowserControlStatus() {
 function scheduleBrowserControlPoll() {
   if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
   browserControlPollTimer = null;
-  if (settings.browserControlEnabled !== true || document.visibilityState === 'hidden') return;
-  // A Hermes without extension control never connects: polling it is a dead loop.
-  // A gateway or settings change re-arms the poll (setGatewayCapabilities, enable).
-  if (browserControlSupportState() === 'unsupported') return;
+  if (document.visibilityState === 'hidden') return;
+  const needTaskApprovals = pollForTaskApprovals || Boolean(browserControlStatus?.pendingApproval);
+  if (!needTaskApprovals) {
+    if (settings.browserControlEnabled !== true) return;
+    // A Hermes without extension control never connects: polling it is a dead loop.
+    // A gateway or settings change re-arms the poll (setGatewayCapabilities, enable).
+    if (browserControlSupportState() === 'unsupported') return;
+  }
   browserControlPollTimer = setTimeout(async () => {
     await refreshBrowserControlStatus();
     scheduleBrowserControlPoll();
