@@ -48,7 +48,12 @@ test('dashboard trust is bound to one canonical HTTPS origin', () => {
   assert.equal(isTrustedDashboardOrigin('https://other.ts.net', 'https://host.ts.net'), false);
   assert.equal(isTrustedDashboardOrigin('http://host.ts.net', 'https://host.ts.net'), false);
   assert.match(dashboardTrustPrompt('https://host.ts.net'), /short-lived, single-use WebSocket ticket/i);
-  assert.match(dashboardTrustPrompt('https://host.ts.net'), /Chat-only/i);
+  const prompt = dashboardTrustPrompt('https://host.ts.net');
+  assert.doesNotMatch(prompt, /Chat-only/i);
+  assert.doesNotMatch(prompt, /will not send browser page context/i);
+  assert.match(prompt, /Page context stays off until you approve/i);
+  assert.match(prompt, /Share page context with this connection/);
+  assert.match(prompt, /memory-only/i);
 });
 
 test('mintTicketInPage maps fetch outcomes to structured results', async () => {
