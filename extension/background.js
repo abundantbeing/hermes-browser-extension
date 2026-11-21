@@ -70,7 +70,7 @@ import {
 } from './lib/controller-service-worker.mjs';
 import { createBrowserControlRuntime } from './lib/browser-control-runtime.mjs';
 import {
-  BACKGROUND_BROWSER_ALARM, BACKGROUND_BROWSER_CONSENT, createBackgroundTaskBrowser,
+  BACKGROUND_BROWSER_ALARM, BACKGROUND_BROWSER_CONSENT, ACTIVE_TASK_TABS, createBackgroundTaskBrowser,
 } from './lib/background-task-browser.mjs';
 import {
   createBrowserControlArtifactClient,
@@ -1172,7 +1172,7 @@ browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
 });
 browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   if (areaName !== 'local') return;
-  if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || changes[BACKGROUND_BROWSER_CONSENT]) {
+  if (changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || changes[BACKGROUND_BROWSER_CONSENT] || changes[ACTIVE_TASK_TABS]) {
     backgroundTaskBrowser?.settingsChanged(changes).catch(() => {});
   }
   contextMenuController.handleStorageChanged(changes, areaName)

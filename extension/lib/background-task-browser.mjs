@@ -8,6 +8,8 @@ import { redactSensitiveText } from './browser-context-protocol.mjs';
 
 export const BACKGROUND_BROWSER_CONSENT = 'hermesBackgroundBrowserConsent';
 export const BACKGROUND_BROWSER_ALARM = 'hermes-background-browser-reconnect';
+// Opt-in. Off keeps Background task tabs in the background and refuses tab switches.
+export const ACTIVE_TASK_TABS = 'hermesActiveTaskTabs';
 
 function backgroundBrowserGateway(settings = {}) {
   try {
@@ -73,6 +75,34 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   let revision = 0;
   let sync = Promise.resolve();
   const sessionQueues = new Map();
+  // Read at connect time. Off is the original background-tab behavior.
+  let activeTaskTabs = false;
+
+  function taskCapabilities() {
+    return activeTaskTabs
+      ? [...BACKGROUND_BROWSER_ACTIONS, 'browser_tab_activate', 'browser_screenshot', 'browser_hover']
+      : BACKGROUND_BROWSER_ACTIONS;
+  }
+
+  function needsVisibleTab(action, args = {}) {
+    if (action === 'browser_screenshot' || action === 'browser_hover') return true;
+    if (action !== 'browser_click') return false;
+    if (Number.isFinite(Number(args.x)) && Number.isFinite(Number(args.y))) return true;
+    return /^@xy:/i.test(String(args.ref || ''));
+  }
+
+  async function focusTaskTab(tabId) {
+    const activated = await tabs.update(tabId, { active: true });
+    const windowId = Number(activated?.windowId);
+    if (windowId && typeof windows.update === 'function') {
+      try {
+        await windows.update(windowId, { focused: true });
+      } catch {
+        // The tab is in front in its own window either way.
+      }
+    }
+    return activated;
+  }
 
   async function getTab(id) {
     try {
@@ -108,12 +138,16 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
       return failure('no_normal_window', 'Open a regular Chrome window for Hermes background tasks.');
     }
     signal.throwIfAborted();
-    const tab = await tabs.create({ windowId: window.id, url: 'about:blank', active: false });
+    const tab = await tabs.create({ windowId: window.id, url: 'about:blank', active: activeTaskTabs });
     try {
       signal.throwIfAborted();
       state.groupId = await groupTab(state, tab, signal);
       signal.throwIfAborted();
-      const updated = await tabs.update(tab.id, { url: destination.url });
+      if (activeTaskTabs) await focusTaskTab(tab.id);
+      const updated = await tabs.update(tab.id, {
+        url: destination.url,
+        ...(activeTaskTabs ? { active: true } : {}),
+      });
       const { timedOut } = await waitForLoad(tab.id, {
         signal, startUrl: 'about:blank', sawLoading: updated.status === 'loading', timeoutMs: 10_000,
       });
@@ -156,7 +190,20 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
       if (result.ok) sessions.set(sessionId, state);
       return result;
     }
-    if (!PAGE_ACTIONS.has(action)) {
+    if (action === 'browser_tab_activate') {
+      if (!activeTaskTabs) {
+        return failure('background_action_unavailable', 'This action is unavailable in background task tabs.');
+      }
+      const activateId = Number(args.tab_id);
+      if (!state.tabs.has(activateId)) {
+        return failure('lease_not_owned', 'Use tab_create to open a tab owned by this Hermes session.');
+      }
+      await focusTaskTab(activateId);
+      const activated = await getTab(activateId);
+      if (!activated) return failure('lease_not_owned', 'The task tab is no longer available.');
+      return { ok: true, result: { status: 'tab-activated', tab: tabView(activated) } };
+    }
+    if (!PAGE_ACTIONS.has(action) && !(activeTaskTabs && (action === 'browser_screenshot' || action === 'browser_hover'))) {
       return failure('background_action_unavailable', 'This action is unavailable in background task tabs.');
     }
 
@@ -170,6 +217,13 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
       lease.document += 1;
     }
     signal.throwIfAborted();
+    // Pointer and capture actions are dropped on a hidden tab. This tab belongs to the
+    // agent, so bring it forward instead of failing with tab_hidden.
+    if (activeTaskTabs && needsVisibleTab(action, args)) {
+      await focusTaskTab(id);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      signal.throwIfAborted();
+    }
     const scope = {
       controllerId, leaseOwnerId: controllerId, leaseId: lease.leaseId, leaseGeneration: 1,
       tabId: id, frameId: 0, documentGeneration: lease.document,
@@ -235,10 +289,12 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     const readRevision = revision;
     const saved = await storage.local.get([
       'hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY, BACKGROUND_BROWSER_CONSENT,
+      ACTIVE_TASK_TABS,
     ]);
     const settings = await hydrateHermesBrowserSettingsFromStorage(saved);
     const consentIdentity = await backgroundBrowserConsentIdentity(settings);
     if (readRevision !== revision) return;
+    activeTaskTabs = saved[ACTIVE_TASK_TABS] === true;
     const enabled = consentIdentity && saved[BACKGROUND_BROWSER_CONSENT] === consentIdentity;
     const nextRoute = enabled ? consentIdentity : null;
     if (nextRoute !== route) {
@@ -276,7 +332,7 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
     candidate = await connector.connect({
       settings,
       identity: { controllerId, browserProfileId: controllerId, hermesSessionId: BACKGROUND_BROWSER_SESSION,
-        product, capabilities: BACKGROUND_BROWSER_ACTIONS },
+        product, capabilities: taskCapabilities() },
       onFrame: (frame) => onFrame(frame, () => candidate, connectionRevision),
       onClose: () => { if (connection === candidate) close(); },
     });
@@ -290,7 +346,7 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   return {
     settingsChanged(changes) {
       const change = changes.hermesBrowserSettings;
-      if (changes[BACKGROUND_BROWSER_CONSENT] || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || (change && (
+      if (changes[ACTIVE_TASK_TABS] || changes[BACKGROUND_BROWSER_CONSENT] || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || (change && (
         backgroundBrowserGateway(change.oldValue) !== backgroundBrowserGateway(change.newValue)
         || backgroundBrowserApiKey(change.oldValue) !== backgroundBrowserApiKey(change.newValue)
       ))) {

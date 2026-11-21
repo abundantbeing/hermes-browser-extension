@@ -863,7 +863,7 @@ import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-
 import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteForHost, inlineSiteFromInput, inlineSiteLabel, isGmailThreadUrl, normalizeInlineSiteContextPreferences } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
-import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
+import { BACKGROUND_BROWSER_CONSENT, ACTIVE_TASK_TABS, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
@@ -1008,6 +1008,47 @@ function initBackgroundTaskBrowserSetting() {
   void render().catch(() => {});
 }
 initBackgroundTaskBrowserSetting();
+
+function initActiveTaskTabsSetting() {
+  const row = document.getElementById('activeTaskTabsSetting');
+  const input = document.getElementById('activeTaskTabsInput');
+  const storage = browserApi.storage?.local;
+  if (!row || !input || !storage) return;
+
+  async function render() {
+    const stored = await storage.get([
+      'hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY, BACKGROUND_BROWSER_CONSENT, ACTIVE_TASK_TABS,
+    ]);
+    const connection = await hydrateHermesBrowserSettingsFromStorage(stored);
+    const consentIdentity = await backgroundBrowserConsentIdentity(connection);
+    row.hidden = !consentIdentity;
+    input.checked = stored[ACTIVE_TASK_TABS] === true;
+    input.disabled = !consentIdentity;
+  }
+
+  input.addEventListener('change', async () => {
+    const checked = input.checked;
+    input.disabled = true;
+    try {
+      if (checked) await storage.set({ [ACTIVE_TASK_TABS]: true });
+      else await storage.remove(ACTIVE_TASK_TABS);
+    } catch {
+      input.disabled = false;
+      return;
+    }
+    await render().catch(() => {});
+  });
+  browserApi.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && (
+      changes.hermesBrowserSettings || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY]
+      || changes[BACKGROUND_BROWSER_CONSENT] || changes[ACTIVE_TASK_TABS]
+    )) {
+      void render().catch(() => {});
+    }
+  });
+  void render().catch(() => {});
+}
+initActiveTaskTabsSetting();
 const dashboardFetch = createBackgroundLoopbackFetch({
   sendMessage: (message) => browserApi.runtime.sendMessage(message),
   fetchFn: globalThis.fetch?.bind(globalThis),

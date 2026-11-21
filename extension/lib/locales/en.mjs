@@ -1,5 +1,7 @@
 export default Object.freeze({
   "browser_control.background_label": "Background task tabs",
+  "browser_control.active_tabs_label": "Active task tabs",
+  "browser_control.active_tabs_help": "Alternative to background tabs. Task tabs open in front, and Hermes can switch to them. Leave this off to keep Background task tabs in the background.",
   "browser_control.background_help": "Allow tasks on this local Hermes profile, including messaging apps, to open and control their own Chrome tab groups without Attach.",
   "browser_control.background_save_error": "Could not save background browser authorization.",
   "browser_control.background_unavailable": "Background tasks require the companion plugin’s tab tools on this gateway.",

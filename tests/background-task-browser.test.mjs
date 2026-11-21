@@ -291,3 +291,73 @@ test('background consent identity change releases task tab leases', async () => 
   assert.equal(snapshot.error.code, 'lease_not_owned');
   assert.equal(released, 1);
 });
+
+test('active task tabs are opt-in and do not change the background default', async () => {
+  const settings = { connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'test-key' };
+  const consent = await backgroundBrowserConsentIdentity(settings);
+  const opened = { id: 21, windowId: 4, status: 'complete', url: 'https://example.test/', title: 'Example', active: false };
+  const created = [];
+  const focused = [];
+  const replies = new Map();
+  let receive;
+  let capabilities;
+  const saved = {
+    hermesBrowserSettings: settings,
+    [BACKGROUND_BROWSER_CONSENT]: consent,
+  };
+  const controller = createBackgroundTaskBrowser({
+    browserApi: {
+      storage: { local: { get: async () => ({ ...saved }) } },
+      alarms: { create() {}, clear() {} },
+      windows: {
+        getLastFocused: async () => ({ id: 4, type: 'normal' }),
+        get: async () => ({ id: 4, type: 'normal' }),
+        update: async (id, patch) => { focused.push([id, patch]); },
+      },
+      tabs: {
+        create: async (options) => { created.push(options); return opened; },
+        query: async () => [],
+        group: async () => 2,
+        update: async (id, patch) => { created.push(['update', id, patch]); return { ...opened, ...patch }; },
+        get: async () => opened,
+      },
+      tabGroups: { update: async () => {} },
+    },
+    connector: {
+      async connect({ identity, onFrame }) {
+        capabilities = identity.capabilities;
+        receive = onFrame;
+        return { close() {}, send({ params }) { replies.get(params.command_id).resolve(params); } };
+      },
+    },
+    runtime: { async execute() { return { ok: true, result: {} }; }, releaseTab() {} },
+  });
+  function command(id, action, args) {
+    const reply = deferred();
+    replies.set(id, reply);
+    receive({ method: 'browser.controller.command', params: {
+      command_id: id, background_session: 'session', action, arguments: args,
+    } });
+    return reply.promise;
+  }
+
+  await controller.sync();
+  assert.equal(capabilities.includes('browser_tab_activate'), false);
+  const backgroundOpen = await command('bg-open', 'browser_tab_create', { url: opened.url });
+  assert.equal(backgroundOpen.ok, true);
+  assert.equal(created[0].active, false);
+  const refused = await command('bg-activate', 'browser_tab_activate', { tab_id: opened.id });
+  assert.equal(refused.error.code, 'background_action_unavailable');
+
+  saved.hermesActiveTaskTabs = true;
+  await controller.settingsChanged({ hermesActiveTaskTabs: { oldValue: undefined, newValue: true } });
+  assert.equal(capabilities.includes('browser_tab_activate'), true);
+  created.length = 0;
+  const activeOpen = await command('active-open', 'browser_tab_create', { url: opened.url });
+  assert.equal(activeOpen.ok, true);
+  assert.equal(created[0].active, true);
+  const activated = await command('active-switch', 'browser_tab_activate', { tab_id: opened.id });
+  assert.equal(activated.ok, true);
+  assert.equal(activated.result.status, 'tab-activated');
+  assert.equal(focused.some((call) => call[0] === 4 && call[1].focused === true), true);
+});
