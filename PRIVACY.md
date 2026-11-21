@@ -69,7 +69,9 @@ Hermes itself may then call models/tools/providers according to your Hermes conf
 
 ### Remote API/dashboard mode
 
-If you configure a remote Hermes URL, browser context is sent to that remote Hermes runtime. Only configure remote endpoints you control and trust. A remote connection never contacts a Hermes Dashboard on this computer.
+If you configure a remote Hermes URL, browser context is sent to that remote Hermes runtime only after you approve **Share page context with this connection** for that exact verified origin, credential or signed-in account, Hermes profile, controller, and transport (default off, fail closed). Only configure remote endpoints you control and trust. A remote connection never contacts a Hermes Dashboard on this computer.
+
+On **Hermes Cloud** and **self-hosted remote dashboard** connections, the same per-connection consent ledger gates automatic page text, selected text, and open-tab context; a grant for a self-hosted dashboard never satisfies Hermes Cloud, and vice versa. Files and images you explicitly attach in the composer still send over the dashboard socket. Hermes Control on Cloud or keyless dashboard transports works only when the gateway supports `browser.controller.register` over the dashboard socket, never through the plugin's HTTP Control routes.
 
 ## Hermes Assist privacy
 
