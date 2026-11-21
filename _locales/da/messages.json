@@ -1171,6 +1171,10 @@
     "message": "Kunne ikke gemme Aktive opgavefaner.",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Godkendelse påkrævet",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Godkend én gang",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes tog ikke skærmbilledet: Firefox kræver ekstra tilladelse. Brug Tillad skærmbilleder i Firefox.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes kan læse godkendt kontekst, men kan ikke styre faner.",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "Pause",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Stop",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Skift din visning til denne fane?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Skift din visning til „{title}“?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Ikke tilgængelig. Browsersider og følsomme sider, f.eks. bank- eller adgangskodesider, kan ikke styres.",

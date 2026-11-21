@@ -1171,6 +1171,10 @@
     "message": "無法儲存前景工作分頁設定。",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "需要核准",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "核准一次",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes 沒有截圖：Firefox 需要額外權限。請使用「允許在 Firefox 中截圖」。",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes 可以讀取已核准的內容，但不能操作分頁。",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "暫停",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "停止",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "要將檢視切換到此分頁嗎？",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "要將檢視切換到「{title}」嗎？",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "不可用。瀏覽器頁面以及銀行、密碼等敏感頁面無法被控制。",

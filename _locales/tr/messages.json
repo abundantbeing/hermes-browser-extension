@@ -1171,6 +1171,10 @@
     "message": "Etkin görev sekmeleri kaydedilemedi.",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Onay gerekli",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Bir kez onayla",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes ekran görüntüsünü almadı: Firefox ek izne ihtiyaç duyuyor. Firefox'ta ekran görüntülerine izin ver seçeneğini kullanın.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes onaylanmış bağlamı okuyabilir, ancak sekmeleri yönetemez.",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "Duraklat",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Durdur",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Görünümünüzü bu sekmeye geçirin?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Görünümünüzü “{title}” sekmesine geçirin?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Kullanılamıyor. Tarayıcı sayfaları ile bankacılık veya parola sayfaları gibi hassas sayfalar kontrol edilemez.",

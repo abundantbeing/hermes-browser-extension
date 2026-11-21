@@ -3839,8 +3839,10 @@ function renderBrowserControl() {
   const enabled = settings.browserControlEnabled === true;
   const paused = browserControlStatus?.paused === true;
   const pendingApproval = browserControlStatus?.pendingApproval || null;
-  const lightState = browserControlLightState(view, { paused });
-  const statusLine = browserControlStatusLine({ title: translateUiText(view.title), detail: translateUiText(view.detail) });
+  const lightState = browserControlLightState(view, { paused, enabled });
+  const viewTitle = view.titleKey ? t(view.titleKey, view.titleParams || {}) : translateUiText(view.title);
+  const viewDetail = view.detailKey ? t(view.detailKey, view.detailParams || {}) : translateUiText(view.detail);
+  const statusLine = browserControlStatusLine({ title: viewTitle, detail: viewDetail });
 
   const stateKey = {
     off: 'browser_control.state_off',
@@ -3856,7 +3858,7 @@ function renderBrowserControl() {
   }[view.state] || 'browser_control.state_off';
   els.browserControlState.textContent = t(stateKey).toUpperCase();
   els.browserControlState.dataset.state = view.state;
-  els.browserControlCardDetail.textContent = translateUiText(view.detail);
+  els.browserControlCardDetail.textContent = viewDetail;
   els.browserControlScopeInput.value = ['this-tab', 'selected-tabs', 'task-set'].includes(settings.browserControlScope)
     ? settings.browserControlScope
     : 'this-tab';
@@ -3875,7 +3877,7 @@ function renderBrowserControl() {
     canChangeScope: enabled && browserControlStatus?.connected === true && browserControlStatus?.controlEnabled === true
       && !browserControlStatus?.activeAction && !browserControlStatus?.pendingCommands
       && !browserControlStatus?.pendingApproval && !browserControlStatus?.pendingApprovals && !browserControlStatus?.scopeChanging,
-    view: { ...view, title: translateUiText(view.title), detail: translateUiText(view.detail) },
+    view: { ...view, title: viewTitle, detail: viewDetail },
     help: {
       'show-tab': t('browser_control.help_show_tab'),
       attach: t('browser_control.help_attach'), off: t('browser_control.help_off'),
@@ -3891,8 +3893,8 @@ function renderBrowserControl() {
   els.browserControlStrip.dataset.tone = view.tone;
   // The title and detail stay in the DOM for screen readers; the window shows the detail only when the person must act.
   els.browserControlStrip.dataset.attention = String(view.attention === true);
-  els.browserControlStripTitle.textContent = translateUiText(view.title);
-  els.browserControlStripDetail.textContent = translateUiText(view.detail);
+  els.browserControlStripTitle.textContent = viewTitle;
+  els.browserControlStripDetail.textContent = viewDetail;
   if (els.browserControlLight) els.browserControlLight.dataset.state = lightState;
   if (els.browserControlLightWord) {
     els.browserControlLightWord.textContent = t(lightState === 'on' ? 'browser_control.status_on' : 'browser_control.state_off');

@@ -1171,6 +1171,10 @@
     "message": "Impossibile salvare le schede delle attività attive.",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Approvazione necessaria",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approva una volta",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes non ha fatto lo screenshot: Firefox richiede un'autorizzazione aggiuntiva. Usa Consenti screenshot in Firefox.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes può leggere il contesto approvato, ma non può usare le schede.",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "Pausa",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Ferma",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Passare a questa scheda?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Passare a «{title}»?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Non disponibile. Le pagine del browser e le pagine sensibili, come quelle bancarie o per le password, non possono essere controllate.",

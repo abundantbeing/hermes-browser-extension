@@ -1171,6 +1171,10 @@
     "message": "Nie udało się zapisać aktywnych kart zadań.",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Wymagane potwierdzenie",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Zatwierdź raz",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes nie zrobił zrzutu ekranu: Firefox wymaga dodatkowego uprawnienia. Użyj opcji Zezwól na zrzuty ekranu w przeglądarce Firefox.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes może odczytać zatwierdzony kontekst, ale nie może sterować kartami.",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "Wstrzymaj",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Zatrzymaj",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Przełączyć widok na tę kartę?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Przełączyć widok na „{title}”?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Niedostępne. Stron przeglądarki i stron wrażliwych, takich jak strony bankowe lub haseł, nie można sterować.",

@@ -1171,6 +1171,10 @@
     "message": "सक्रिय कार्य टैब सहेजे नहीं जा सके।",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "अनुमोदन आवश्यक",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "एक बार स्वीकृत करें",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes ने स्क्रीनशॉट नहीं लिया: Firefox को अतिरिक्त अनुमति चाहिए। Firefox में स्क्रीनशॉट की अनुमति दें का उपयोग करें।",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes स्वीकृत संदर्भ पढ़ सकता है, लेकिन टैब संचालित नहीं कर सकता।",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "विराम दें",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "रोकें",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "इस टैब पर अपना दृश्य बदलें?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "अपना दृश्य \"{title}\" पर बदलें?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "उपलब्ध नहीं है। ब्राउज़र पेज और संवेदनशील पेज, जैसे बैंकिंग या पासवर्ड पेज, नियंत्रित नहीं किए जा सकते।",

@@ -1171,6 +1171,10 @@
     "message": "Impossible d’enregistrer les onglets de tâches actifs.",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Approbation requise",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approuver une fois",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes n'a pas fait la capture : Firefox demande une autorisation supplémentaire. Utilisez Autoriser les captures dans Firefox.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes peut lire le contexte approuvé, mais ne peut pas piloter les onglets.",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "Pause",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Arrêter",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Passer votre affichage sur cet onglet ?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Passer votre affichage sur « {title} » ?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Non disponible. Les pages du navigateur et les pages sensibles, comme les pages bancaires ou de mot de passe, ne peuvent pas être contrôlées.",

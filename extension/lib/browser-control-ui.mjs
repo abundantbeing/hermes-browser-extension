@@ -131,8 +131,8 @@ function baseView(overrides = {}) {
 // A pause blocks new actions, so the light is off while paused even if an approval waits.
 const LIGHT_ON_STATES = new Set(['ready', 'active', 'approval']);
 
-export function browserControlLightState(view = {}, { paused = false } = {}) {
-  if (paused === true) return 'off';
+export function browserControlLightState(view = {}, { paused = false, enabled = true } = {}) {
+  if (paused === true || enabled !== true) return 'off';
   return LIGHT_ON_STATES.has(String(view?.state || '')) ? 'on' : 'off';
 }
 
@@ -166,11 +166,19 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
   const enabled = settings?.browserControlEnabled === true;
   const pendingApproval = status?.pendingApproval;
   if (pendingApproval) {
+    const reasonKey = String(pendingApproval.reasonKey || '').trim();
     return baseView({
       state: 'approval',
       tone: 'warn',
       title: 'Approval needed',
+      titleKey: 'browser_control.approval_needed',
       detail: String(pendingApproval.reason || 'This browser action requires approval.'),
+      ...(reasonKey ? {
+        detailKey: reasonKey,
+        detailParams: pendingApproval.reasonParams && typeof pendingApproval.reasonParams === 'object'
+          ? pendingApproval.reasonParams
+          : {},
+      } : {}),
       canEnable: false,
       canPause: enabled,
       canStop: enabled,
@@ -179,7 +187,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
     });
   }
   if (support === 'unsupported') return unsupportedView({ enabled });
-  if (!enabled) return baseView();
+  if (!enabled) return baseView({ detailKey: 'browser_control.off_detail' });
   if (status?.connected !== true) {
     const failure = status?.lastConnectFailure;
     if (failure?.reason === CONTROLLER_UNSUPPORTED_GATEWAY) return unsupportedView({ enabled });

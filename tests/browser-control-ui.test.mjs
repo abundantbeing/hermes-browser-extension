@@ -85,19 +85,18 @@ test('Show tab only targets attached tabs and only while Hermes Control is conne
 
 test('Phase 6 visible state is derived from worker authority and exposes no arguments or page content', async () => {
   const { browserControlView } = await uiModule();
-  assert.deepEqual(browserControlView({ settings: { browserControlEnabled: false }, status: {} }), {
-    state: 'off',
-    tone: 'neutral',
-    title: 'Control is off',
-    detail: 'Hermes can read approved context but cannot operate tabs.',
-    canEnable: true,
-    canAttach: false,
-    canAuthorize: false,
-    canPause: false,
-    canStop: false,
-    canDetach: false,
-    attention: false,
-  });
+  const offView = browserControlView({ settings: { browserControlEnabled: false }, status: {} });
+  assert.equal(offView.state, 'off');
+  assert.equal(offView.title, 'Control is off');
+  assert.equal(offView.detail, 'Hermes can read approved context but cannot operate tabs.');
+  assert.equal(offView.detailKey, 'browser_control.off_detail');
+  assert.equal(offView.canEnable, true);
+  assert.equal(offView.canAttach, false);
+  assert.equal(offView.canAuthorize, false);
+  assert.equal(offView.canPause, false);
+  assert.equal(offView.canStop, false);
+  assert.equal(offView.canDetach, false);
+  assert.equal(offView.attention, false);
   const active = browserControlView({
     settings: { browserControlEnabled: true },
     status: {
@@ -144,6 +143,7 @@ test('Phase 6 visible state is derived from worker authority and exposes no argu
   });
   assert.equal(taskApproval.state, 'approval');
   assert.equal(taskApproval.title, 'Approval needed');
+  assert.equal(taskApproval.titleKey, 'browser_control.approval_needed');
   assert.equal(taskApproval.detail, 'Switch to this task tab?');
   assert.equal(taskApproval.attention, true);
   assert.equal(taskApproval.canPause, false);
@@ -350,6 +350,24 @@ test('the status light is on only while Hermes can act on the attached tab, and 
   const pausedApproval = browserControlView({ settings: enabled, status: { ...leased, paused: true, pendingApproval: { approvalId: 'a1', reason: 'Press Enter to submit?' } }, activeTab: tab });
   assert.equal(pausedApproval.state, 'approval');
   assert.equal(browserControlLightState(pausedApproval, { paused: true }), 'off', 'paused with an approval waiting: light');
+  // A task-tab approval can appear while Hermes Control is off. The light must
+  // stay off: Control cannot act on an attached tab until it is turned on.
+  const taskApprovalOff = browserControlView({
+    settings: { browserControlEnabled: false },
+    status: {
+      pendingApproval: {
+        approvalId: 'a2', commandId: 'c2', action: 'browser_tab_activate', tabId: 21,
+        reason: 'Switch your view to "Example tab"?',
+        reasonKey: 'browser_control.switch_view_to',
+        reasonParams: { title: 'Example tab' },
+      },
+    },
+  });
+  assert.equal(taskApprovalOff.state, 'approval');
+  assert.equal(taskApprovalOff.detailKey, 'browser_control.switch_view_to');
+  assert.deepEqual(taskApprovalOff.detailParams, { title: 'Example tab' });
+  assert.equal(browserControlLightState(taskApprovalOff, { enabled: false }), 'off', 'Control off with a task-tab approval: light');
+  assert.equal(browserControlLightState(taskApprovalOff), 'on', 'the same approval is on only when Control is enabled');
 });
 
 test('the status line is the title and detail as one sentence pair, without doubled punctuation', async () => {

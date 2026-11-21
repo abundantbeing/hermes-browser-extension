@@ -1171,6 +1171,10 @@
     "message": "Không thể lưu thẻ tác vụ đang hoạt động.",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Cần phê duyệt",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Cho phép một lần",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes đã không chụp ảnh màn hình: Firefox cần thêm quyền. Hãy dùng Cho phép chụp ảnh màn hình trên Firefox.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes có thể đọc ngữ cảnh đã được chấp thuận, nhưng không thể thao tác các thẻ.",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "Tạm dừng",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "Dừng",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "Chuyển chế độ xem sang thẻ này?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "Chuyển chế độ xem sang “{title}”?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "Không khả dụng. Không thể điều khiển các trang của trình duyệt và trang nhạy cảm, chẳng hạn trang ngân hàng hoặc trang mật khẩu.",

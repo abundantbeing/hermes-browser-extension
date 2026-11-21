@@ -1171,6 +1171,10 @@
     "message": "활성 작업 탭을 저장할 수 없습니다.",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "승인이 필요합니다",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "한 번만 승인",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes가 스크린샷을 찍지 않았습니다. Firefox의 추가 권한이 필요합니다. 'Firefox에서 스크린샷 허용'을 사용하세요.",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes는 승인된 컨텍스트를 읽을 수 있지만 탭은 조작할 수 없습니다.",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "일시 중지",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "중지",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "이 탭으로 보기를 전환할까요?",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "“{title}”(으)로 보기를 전환할까요?",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "사용할 수 없습니다. 브라우저 페이지와 은행 또는 비밀번호 페이지 같은 민감한 페이지는 제어할 수 없습니다.",

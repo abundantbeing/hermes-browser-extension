@@ -1171,6 +1171,10 @@
     "message": "ไม่สามารถบันทึกแท็บงานที่ใช้งานอยู่ได้",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "ต้องได้รับการอนุมัติ",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "อนุมัติครั้งเดียว",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "Hermes ไม่ได้ถ่ายภาพหน้าจอ: Firefox ต้องมีสิทธิ์เพิ่มเติม ใช้ อนุญาตภาพหน้าจอใน Firefox",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "Hermes อ่านบริบทที่ได้รับอนุมัติได้ แต่ไม่สามารถควบคุมแท็บได้",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "หยุดชั่วคราว",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "หยุด",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "สลับมุมมองไปที่แท็บนี้หรือไม่",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "สลับมุมมองไปที่ “{title}” หรือไม่",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "ไม่พร้อมใช้งาน หน้าของเบราว์เซอร์และหน้าที่ละเอียดอ่อน เช่น หน้าธนาคารหรือหน้ารหัสผ่าน ไม่สามารถควบคุมได้",

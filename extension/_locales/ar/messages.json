@@ -1171,6 +1171,10 @@
     "message": "تعذر حفظ علامات تبويب المهام النشطة.",
     "description": "Runtime interface message browser_control.active_tabs_save_error"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "يلزم الحصول على موافقة",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
   "runtime_browser_control_approve_once": {
     "message": "الموافقة مرة واحدة",
     "description": "Runtime interface message browser_control.approve_once"
@@ -1375,6 +1379,10 @@
     "message": "لم يلتقط Hermes الصورة: يحتاج Firefox إلى إذن إضافي. استخدم «السماح بلقطات الشاشة في Firefox».",
     "description": "Runtime interface message browser_control.note_screenshot_permission"
   },
+  "runtime_browser_control_off_detail": {
+    "message": "يمكن لـ Hermes قراءة السياق المعتمد، لكنه لا يستطيع تشغيل علامات التبويب.",
+    "description": "Runtime interface message browser_control.off_detail"
+  },
   "runtime_browser_control_pause": {
     "message": "إيقاف مؤقت",
     "description": "Runtime interface message browser_control.pause"
@@ -1458,6 +1466,14 @@
   "runtime_browser_control_stop": {
     "message": "إيقاف",
     "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_switch_view": {
+    "message": "هل تريد تبديل العرض إلى علامة التبويب هذه؟",
+    "description": "Runtime interface message browser_control.switch_view"
+  },
+  "runtime_browser_control_switch_view_to": {
+    "message": "هل تريد تبديل العرض إلى \"{title}\"؟",
+    "description": "Runtime interface message browser_control.switch_view_to"
   },
   "runtime_browser_control_tab_restricted": {
     "message": "غير متاح. لا يمكن التحكم في صفحات المتصفح والصفحات الحساسة، مثل صفحات الخدمات المصرفية أو كلمات المرور.",
