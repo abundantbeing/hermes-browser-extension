@@ -58,13 +58,6 @@ export function normalizeContextScope(scope = {}) {
   };
 }
 
-export function contextScopeForGateway(scope = DEFAULT_CONTEXT_SCOPE, gatewayMode = '') {
-  if (String(gatewayMode || '').trim().toLowerCase() === 'remote-dashboard') {
-    return normalizeContextScope({ mode: CONTEXT_SCOPE_MODES.CHAT_ONLY });
-  }
-  return normalizeContextScope(scope);
-}
-
 export function tabScopeId(scope = DEFAULT_CONTEXT_SCOPE, conversationScope = scope) {
   const normalized = normalizeContextScope(scope);
   if (normalized.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {

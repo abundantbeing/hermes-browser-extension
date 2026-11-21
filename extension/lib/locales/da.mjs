@@ -2308,4 +2308,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Kilde: Hermes-dashboard (/api/audio/speak)",
   "read_aloud.meta.browser": "Kilde: denne browser (speechSynthesis)",
   "read_aloud.meta.none": "Kilde: ingen",
+  "settings.cloud_gateway_help": "Hermes Cloud bruger Trusted Dashboard Attach. Åbn det loggede ind agent-dashboard i den aktive fane, og vælg derefter “Test forbindelse”. Sidekontekst forbliver slået fra, indtil du godkender “Del sidekontekst med denne forbindelse” for netop denne Cloud-konto.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach via WebSocket. Behold det loggede ind dashboard som din aktive fane, og brug derefter “Test forbindelse” til at godkende dets HTTPS-oprindelse. Sidekontekst forbliver slået fra, indtil du godkender at dele den med netop denne forbindelse. Ingen nøgle nødvendig.",
 });

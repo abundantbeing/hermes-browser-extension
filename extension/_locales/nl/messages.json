@@ -4127,6 +4127,10 @@
     "message": "Stem & activering",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud gebruikt Trusted Dashboard Attach. Open het ingelogde agentdashboard in het actieve tabblad en kies daarna “Verbinding testen”. Paginacontext blijft uit totdat je “Paginacontext delen met deze verbinding” goedkeurt voor precies dit Cloud-account.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Volledig",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4310,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· openbare alpha / niet-uitgepakte extensie laden",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach via WebSocket. Houd het ingelogde dashboard als actief tabblad open en gebruik daarna “Verbinding testen” om de HTTPS-oorsprong goed te keuren. Paginacontext blijft uit totdat je delen met precies deze verbinding goedkeurt. Geen sleutel nodig.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Niet opgeslagen: {detail}",

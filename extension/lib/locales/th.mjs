@@ -2308,4 +2308,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "ที่มา: แดชบอร์ด Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "ที่มา: เบราว์เซอร์นี้ (speechSynthesis)",
   "read_aloud.meta.none": "ที่มา: ไม่มี",
+  "settings.cloud_gateway_help": "Hermes Cloud ใช้ Trusted Dashboard Attach เปิดแดชบอร์ดเอเจนต์ที่ลงชื่อเข้าใช้แล้วในแท็บที่ใช้งานอยู่ จากนั้นเลือก “ทดสอบการเชื่อมต่อ” บริบทของหน้าจะปิดอยู่จนกว่าคุณจะอนุมัติ “แชร์บริบทของหน้ากับการเชื่อมต่อนี้” สำหรับบัญชี Cloud นี้โดยเฉพาะ",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach ผ่าน WebSocket ให้แดชบอร์ดที่ลงชื่อเข้าใช้แล้วเป็นแท็บที่ใช้งานอยู่ จากนั้นใช้ “ทดสอบการเชื่อมต่อ” เพื่ออนุมัติต้นทาง HTTPS ของแดชบอร์ด บริบทของหน้าจะปิดอยู่จนกว่าคุณจะอนุมัติการแชร์กับการเชื่อมต่อนี้โดยเฉพาะ ไม่ต้องใช้คีย์",
 });

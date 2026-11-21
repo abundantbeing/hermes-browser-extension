@@ -145,3 +145,16 @@ test('right-click background route re-reads consent after session creation and r
   assert.doesNotMatch(refresh, /hermesBrowserSettings/);
   assert.doesNotMatch(refresh, /\n\s*settings\s*=/);
 });
+
+test('askHermes gates dashboard page-context attachment staging while allowing explicit user attachments before the gate', () => {
+  const sender = sidepanel.match(/async function askHermes\([\s\S]*?\n\}/)?.[0] || '';
+  const gateIdx = sender.indexOf('effectiveContextGate(');
+  const attachFileIdx = sender.indexOf('stageUserFiles(fileConnection.client');
+  const attachImgIdx = sender.indexOf('attachDashboardTurnImages(');
+  const pageContextBlock = sender.match(/if \(dashboardTransport && turnContextScope\.mode !== CONTEXT_SCOPE_MODES\.CHAT_ONLY\) \{[\s\S]*?\n {4}\}/)?.[0] || '';
+  assert.ok(attachFileIdx !== -1 && attachFileIdx < gateIdx, 'explicit user file attachments stay allowed before page-context consent gate');
+  assert.ok(attachImgIdx !== -1 && attachImgIdx < gateIdx, 'explicit user image attachments stay allowed before page-context consent gate');
+  assert.match(pageContextBlock, /createPageContextAttachment\(/);
+  assert.match(pageContextBlock, /stageUserFiles\(connection\.client, sessionId, \[pageFile\]/);
+  assert.ok(gateIdx < sender.indexOf('if (dashboardTransport && turnContextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY)'), 'dashboard page-context file staging must happen only after consent gate');
+});
