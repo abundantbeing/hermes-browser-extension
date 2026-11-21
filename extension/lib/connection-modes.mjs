@@ -2,7 +2,7 @@ export const CONNECTION_SCHEMA_VERSION = 1;
 
 export const CONNECTION_MODES = Object.freeze([
   { value: 'local', label: 'Local gateway' },
-  { value: 'cloud', label: 'Hermes Cloud Preview' },
+  { value: 'cloud', label: 'Hermes Cloud' },
   { value: 'remote', label: 'Remote gateway' },
 ]);
 

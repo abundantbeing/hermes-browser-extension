@@ -28,7 +28,7 @@ const sidepanelHtmlSource = readFileSync(new URL('../extension/sidepanel.html', 
 
 test('connection modes expose Desktop-aligned product choices', () => {
   assert.deepEqual(CONNECTION_MODES.map((mode) => mode.value), ['local', 'cloud', 'remote']);
-  assert.equal(CONNECTION_MODES.find((mode) => mode.value === 'cloud')?.label, 'Hermes Cloud Preview');
+  assert.equal(CONNECTION_MODES.find((mode) => mode.value === 'cloud')?.label, 'Hermes Cloud');
   assert.equal(normalizeConnectionMode('CLOUD'), 'cloud');
   assert.equal(normalizeConnectionMode('bogus'), 'local');
   const freshInstall = migrateConnectionSettings({});
