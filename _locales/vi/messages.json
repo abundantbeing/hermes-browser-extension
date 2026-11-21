@@ -2595,6 +2595,14 @@
     "message": "Chủ đề có lỗi xác thực.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Tin cậy {origin} cho Dashboard Attach?\n\nHermes Browser Extension sẽ dùng phiên đã đăng nhập trong thẻ bảng điều khiển đang hoạt động để yêu cầu một vé WebSocket dùng một lần, có thời hạn ngắn. Bảng điều khiển này chạy trên máy tính này, nên ngữ cảnh trang bạn chọn trong bảng bên được chia sẻ với nó mà không cần phê duyệt riêng cho từng kết nối. Vé chỉ nằm trong bộ nhớ và không bao giờ được lưu trữ.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Tin cậy {origin} cho Dashboard Attach?\n\nHermes Browser Extension sẽ dùng phiên đã đăng nhập trong thẻ bảng điều khiển đang hoạt động để yêu cầu một vé WebSocket dùng một lần, có thời hạn ngắn. Ngữ cảnh trang vẫn tắt cho đến khi bạn phê duyệt “Chia sẻ ngữ cảnh trang với kết nối này” cho đúng tài khoản này. Vé chỉ nằm trong bộ nhớ và không bao giờ được lưu trữ.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Kiểm tra tình trạng đã phản hồi, nhưng các tuyến tiện ích mở rộng và mô hình được bảo vệ cần Authorization: Bearer *** Hãy dán khóa API hoặc mã thông báo trình duyệt có phạm vi trong Cài đặt.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

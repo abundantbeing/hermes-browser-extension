@@ -2595,6 +2595,14 @@
     "message": "У темі є помилки перевірки.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Довіряти {origin} для Dashboard Attach?\n\nHermes Browser Extension використає сеанс із виконаним входом в активній вкладці панелі, щоб запросити короткочасний одноразовий квиток WebSocket. Ця панель працює на цьому комп’ютері, тому вибраний у боковій панелі контекст сторінки передається їй без окремого схвалення для кожного підключення. Квиток зберігається лише в пам’яті й ніколи не записується.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Довіряти {origin} для Dashboard Attach?\n\nHermes Browser Extension використає сеанс із виконаним входом в активній вкладці панелі, щоб запросити короткочасний одноразовий квиток WebSocket. Контекст сторінки залишається вимкненим, доки ви не схвалите «Ділитися контекстом сторінки з цим підключенням» саме для цього облікового запису. Квиток зберігається лише в пам’яті й ніколи не записується.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Перевірка стану відповіла, але захищені маршрути розширення та моделей потребують Authorization: Bearer *** Вставте ключ API або браузерний токен з обмеженою областю дії в Налаштування.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

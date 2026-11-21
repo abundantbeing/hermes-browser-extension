@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import * as dashboardBridge from '../extension/lib/dashboard-bridge.mjs';
 
@@ -47,8 +48,59 @@ test('dashboard trust is bound to one canonical HTTPS origin', () => {
   assert.equal(isTrustedDashboardOrigin('https://host.ts.net/other', 'https://host.ts.net/'), true);
   assert.equal(isTrustedDashboardOrigin('https://other.ts.net', 'https://host.ts.net'), false);
   assert.equal(isTrustedDashboardOrigin('http://host.ts.net', 'https://host.ts.net'), false);
-  assert.match(dashboardTrustPrompt('https://host.ts.net'), /short-lived, single-use WebSocket ticket/i);
-  assert.match(dashboardTrustPrompt('https://host.ts.net'), /Chat-only/i);
+});
+
+test('dashboard trust prompt is localized and tells remote and local dashboards apart', async () => {
+  const { formatMessage } = await import('../extension/lib/i18n.mjs');
+  const { loadLocaleMessages, SUPPORTED_LOCALES } = await import('../extension/lib/i18n-registry.mjs');
+  const translatorFor = (catalog, locale) => (key, params) => formatMessage(catalog[String(key)], params, locale);
+  const english = await loadLocaleMessages('en');
+  const translate = translatorFor(english, 'en');
+  const shareLabel = english['context_consent.share_label'];
+
+  // A remote dashboard needs the per-connection grant before any page context is sent.
+  const remote = dashboardTrustPrompt('https://host.ts.net', { consentRequired: true, translate });
+  assert.match(remote, /^Trust https:\/\/host\.ts\.net for Dashboard Attach\?/);
+  assert.match(remote, /short-lived, single-use WebSocket ticket/i);
+  assert.doesNotMatch(remote, /Chat-only/i);
+  assert.match(remote, /Page context stays off until you approve/i);
+  assert.ok(remote.includes(shareLabel));
+  assert.match(remote, /memory-only/i);
+  assert.equal(dashboardTrustPrompt('https://host.ts.net', { translate }), remote, 'consent is required unless the caller says otherwise');
+
+  // A loopback dashboard keeps the chosen page scope without a grant and has no sharing switch.
+  const local = dashboardTrustPrompt('http://127.0.0.1:9119', { consentRequired: false, translate });
+  assert.match(local, /^Trust http:\/\/127\.0\.0\.1:9119 for Dashboard Attach\?/);
+  assert.match(local, /runs on this computer/);
+  assert.match(local, /shared with it without a separate per-connection approval/);
+  assert.doesNotMatch(local, /stays off/i);
+  assert.ok(!local.includes(shareLabel));
+  assert.match(local, /memory-only/i);
+
+  for (const locale of SUPPORTED_LOCALES) {
+    if (locale.id === 'en') continue;
+    const catalog = await loadLocaleMessages(locale.id);
+    const localized = translatorFor(catalog, locale.id);
+    const localizedRemote = dashboardTrustPrompt('https://host.ts.net', { consentRequired: true, translate: localized });
+    const localizedLocal = dashboardTrustPrompt('http://127.0.0.1:9119', { consentRequired: false, translate: localized });
+    assert.notEqual(localizedRemote, remote, `${locale.id} remote prompt is untranslated`);
+    assert.notEqual(localizedLocal, local, `${locale.id} local prompt is untranslated`);
+    assert.ok(localizedRemote.includes('https://host.ts.net'), `${locale.id} remote prompt names the origin`);
+    assert.ok(localizedLocal.includes('http://127.0.0.1:9119'), `${locale.id} local prompt names the origin`);
+    assert.ok(localizedRemote.includes(catalog['context_consent.share_label']), `${locale.id} remote prompt names the sharing switch`);
+  }
+});
+
+test('both trust prompt callers pass the panel translator and the connection consent requirement', () => {
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const calls = sidepanel.match(/confirm\?\.\(dashboardTrustPrompt\([^\n]*\)\) === true/g) || [];
+  assert.equal(calls.length, 2);
+  assert.ok(calls.includes(
+    'confirm?.(dashboardTrustPrompt(origin, { consentRequired: consentRequiredForConnection({ gatewayUrl: settings.gatewayUrl }), translate: t })) === true',
+  ));
+  assert.ok(calls.includes(
+    'confirm?.(dashboardTrustPrompt(selected.origin, { consentRequired: consentRequiredForConnection({ gatewayUrl: selected.origin }), translate: t })) === true',
+  ));
 });
 
 test('mintTicketInPage maps fetch outcomes to structured results', async () => {

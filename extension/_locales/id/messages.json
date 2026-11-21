@@ -2595,6 +2595,14 @@
     "message": "Tema memiliki kesalahan validasi.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Percayai {origin} untuk Dashboard Attach?\n\nHermes Browser Extension akan menggunakan sesi yang sudah masuk di tab dasbor aktif Anda untuk meminta tiket WebSocket sekali pakai yang berumur pendek. Dasbor ini berjalan di komputer ini, jadi konteks halaman yang Anda pilih di panel dibagikan dengannya tanpa persetujuan terpisah per koneksi. Tiket hanya ada di memori dan tidak pernah disimpan.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Percayai {origin} untuk Dashboard Attach?\n\nHermes Browser Extension akan menggunakan sesi yang sudah masuk di tab dasbor aktif Anda untuk meminta tiket WebSocket sekali pakai yang berumur pendek. Konteks halaman tetap nonaktif sampai Anda menyetujui “Bagikan konteks halaman dengan koneksi ini” untuk akun yang tepat ini. Tiket hanya ada di memori dan tidak pernah disimpan.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Pemeriksaan kesehatan merespons, tetapi rute ekstensi dan model yang dilindungi memerlukan Authorization: Bearer *** Tempel kunci API atau token browser dengan cakupan tertentu di Pengaturan.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "chưa được cấu hình",
   "context_consent.share_detail": "Chỉ trò chuyện cho đến khi bạn phê duyệt đúng kết nối này. Sự đồng ý được tách biệt theo điểm cuối, tài khoản, hồ sơ và bộ điều khiển Trình duyệt.",
   "context_consent.share_label": "Chia sẻ ngữ cảnh trang với kết nối này",
+  "dashboard.trust_prompt_remote": "Tin cậy {origin} cho Dashboard Attach?\n\nHermes Browser Extension sẽ dùng phiên đã đăng nhập trong thẻ bảng điều khiển đang hoạt động để yêu cầu một vé WebSocket dùng một lần, có thời hạn ngắn. Ngữ cảnh trang vẫn tắt cho đến khi bạn phê duyệt “Chia sẻ ngữ cảnh trang với kết nối này” cho đúng tài khoản này. Vé chỉ nằm trong bộ nhớ và không bao giờ được lưu trữ.",
+  "dashboard.trust_prompt_local": "Tin cậy {origin} cho Dashboard Attach?\n\nHermes Browser Extension sẽ dùng phiên đã đăng nhập trong thẻ bảng điều khiển đang hoạt động để yêu cầu một vé WebSocket dùng một lần, có thời hạn ngắn. Bảng điều khiển này chạy trên máy tính này, nên ngữ cảnh trang bạn chọn trong bảng bên được chia sẻ với nó mà không cần phê duyệt riêng cho từng kết nối. Vé chỉ nằm trong bộ nhớ và không bao giờ được lưu trữ.",
   "context.attached_tab": "Tab đính kèm",
   "context.follow_active_tab": "Theo dõi tab đang hoạt động",
   "context.return_attached_tab": "Quay lại tab được gắn",

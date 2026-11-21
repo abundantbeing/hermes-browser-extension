@@ -2595,6 +2595,14 @@
     "message": "主题存在验证错误。",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "是否信任 {origin} 用于 Dashboard Attach？\n\nHermes Browser Extension 将使用活动仪表板标签页中的已登录会话，请求一个短期有效、仅可使用一次的 WebSocket 票据。此仪表板运行在这台计算机上，因此您在面板中选择的页面上下文会与其共享，无需单独的逐连接批准。票据仅保存在内存中，从不存储。",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "是否信任 {origin} 用于 Dashboard Attach？\n\nHermes Browser Extension 将使用活动仪表板标签页中的已登录会话，请求一个短期有效、仅可使用一次的 WebSocket 票据。在您为这个确切账户批准“与此连接共享页面上下文”之前，页面上下文保持关闭。票据仅保存在内存中，从不存储。",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Health 已响应，但受保护的扩展/模型路由需要 Authorization: Bearer ***。请在设置中粘贴 API key 或限定范围的浏览器令牌。",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

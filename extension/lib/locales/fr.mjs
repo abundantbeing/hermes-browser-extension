@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "non configurée",
   "context_consent.share_detail": "Chat uniquement jusqu’à l’approbation de cette connexion précise. Le consentement est isolé par point de terminaison, compte, profil et contrôleur du navigateur.",
   "context_consent.share_label": "Partager le contexte de la page avec cette connexion",
+  "dashboard.trust_prompt_remote": "Faire confiance à {origin} pour Dashboard Attach ?\n\nHermes Browser Extension utilisera la session connectée de votre onglet de tableau de bord actif pour demander un ticket WebSocket à usage unique et de courte durée. Le contexte de la page reste désactivé jusqu’à ce que vous approuviez « Partager le contexte de la page avec cette connexion » pour ce compte précis. Le ticket reste uniquement en mémoire et n’est jamais enregistré.",
+  "dashboard.trust_prompt_local": "Faire confiance à {origin} pour Dashboard Attach ?\n\nHermes Browser Extension utilisera la session connectée de votre onglet de tableau de bord actif pour demander un ticket WebSocket à usage unique et de courte durée. Ce tableau de bord s’exécute sur cet ordinateur : le contexte de la page que vous choisissez dans le panneau est donc partagé avec lui sans approbation distincte par connexion. Le ticket reste uniquement en mémoire et n’est jamais enregistré.",
   "context.attached_tab": "Onglet joint",
   "context.follow_active_tab": "Suivre l'onglet actif",
   "context.return_attached_tab": "Revenir à l'onglet attaché",

@@ -2595,6 +2595,14 @@
     "message": "Motyw zawiera błędy walidacji.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Czy ufać {origin} w Dashboard Attach?\n\nHermes Browser Extension użyje zalogowanej sesji w aktywnej karcie panelu, aby poprosić o krótkotrwały, jednorazowy bilet WebSocket. Ten panel działa na tym komputerze, więc kontekst strony wybrany w panelu bocznym jest mu udostępniany bez osobnej zgody dla każdego połączenia. Bilet jest przechowywany tylko w pamięci i nigdy nie jest zapisywany.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Czy ufać {origin} w Dashboard Attach?\n\nHermes Browser Extension użyje zalogowanej sesji w aktywnej karcie panelu, aby poprosić o krótkotrwały, jednorazowy bilet WebSocket. Kontekst strony pozostaje wyłączony, dopóki nie zatwierdzisz opcji „Udostępnij kontekst strony temu połączeniu” dla dokładnie tego konta. Bilet jest przechowywany tylko w pamięci i nigdy nie jest zapisywany.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Usługa kontroli stanu odpowiedziała, ale chronione trasy rozszerzenia i modeli wymagają Authorization: Bearer ***. Wklej klucz API lub token przeglądarki o ograniczonym zakresie w Ustawieniach.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

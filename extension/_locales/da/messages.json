@@ -2595,6 +2595,14 @@
     "message": "Temaet har valideringsfejl.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Vil du stole på {origin} til Dashboard Attach?\n\nHermes Browser Extension bruger den loggede ind session i din aktive dashboard-fane til at anmode om en kortlivet WebSocket-billet til engangsbrug. Dette dashboard kører på denne computer, så den sidekontekst, du vælger i panelet, deles med det uden en separat godkendelse pr. forbindelse. Billetten findes kun i hukommelsen og gemmes aldrig.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Vil du stole på {origin} til Dashboard Attach?\n\nHermes Browser Extension bruger den loggede ind session i din aktive dashboard-fane til at anmode om en kortlivet WebSocket-billet til engangsbrug. Sidekontekst forbliver slået fra, indtil du godkender “Del sidekontekst med denne forbindelse” for netop denne konto. Billetten findes kun i hukommelsen og gemmes aldrig.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Sundhedstjekket svarede, men de beskyttede udvidelses- og modelruter kræver Authorization: Bearer *** Indsæt API-nøglen eller browsertokenet med begrænset omfang i Indstillinger.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

@@ -2595,6 +2595,14 @@
     "message": "テーマに検証エラーがあります。",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Dashboard Attach で {origin} を信頼しますか？\n\nHermes Browser Extension は、アクティブなダッシュボードタブのサインイン済みセッションを使って、短時間有効な使い捨ての WebSocket チケットを要求します。このダッシュボードはこのコンピューター上で動作しているため、パネルで選択したページコンテキストは接続ごとの個別承認なしで共有されます。チケットはメモリ内にのみ保持され、保存されることはありません。",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Dashboard Attach で {origin} を信頼しますか？\n\nHermes Browser Extension は、アクティブなダッシュボードタブのサインイン済みセッションを使って、短時間有効な使い捨ての WebSocket チケットを要求します。このアカウントで「この接続とページコンテキストを共有」を承認するまで、ページコンテキストはオフのままです。チケットはメモリ内にのみ保持され、保存されることはありません。",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "ヘルスチェックは応答しましたが、保護された拡張機能/モデルルートには Authorization: Bearer *** が必要です。API キーまたはスコープ付きブラウザトークンを設定に貼り付けてください。",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

@@ -2595,6 +2595,14 @@
     "message": "Het thema bevat validatiefouten.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "{origin} vertrouwen voor Dashboard Attach?\n\nHermes Browser Extension gebruikt de ingelogde sessie in je actieve dashboardtabblad om een kortlevend WebSocket-ticket voor eenmalig gebruik aan te vragen. Dit dashboard draait op deze computer, dus de paginacontext die je in het paneel kiest, wordt ermee gedeeld zonder aparte goedkeuring per verbinding. Het ticket staat alleen in het geheugen en wordt nooit opgeslagen.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "{origin} vertrouwen voor Dashboard Attach?\n\nHermes Browser Extension gebruikt de ingelogde sessie in je actieve dashboardtabblad om een kortlevend WebSocket-ticket voor eenmalig gebruik aan te vragen. Paginacontext blijft uit totdat je “Paginacontext delen met deze verbinding” goedkeurt voor precies dit account. Het ticket staat alleen in het geheugen en wordt nooit opgeslagen.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "De gezondheidscontrole antwoordde, maar de beveiligde extensie- en modelroutes vereisen Authorization: Bearer *** Plak de API-sleutel of het browser-token met beperkt bereik in Instellingen.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

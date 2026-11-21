@@ -2595,6 +2595,14 @@
     "message": "Il tema contiene errori di convalida.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Considerare attendibile {origin} per Dashboard Attach?\n\nHermes Browser Extension userà la sessione con accesso eseguito nella scheda attiva della dashboard per richiedere un ticket WebSocket monouso e di breve durata. Questa dashboard è in esecuzione su questo computer, quindi il contesto della pagina scelto nel pannello viene condiviso con essa senza un’approvazione separata per connessione. Il ticket resta solo in memoria e non viene mai salvato.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Considerare attendibile {origin} per Dashboard Attach?\n\nHermes Browser Extension userà la sessione con accesso eseguito nella scheda attiva della dashboard per richiedere un ticket WebSocket monouso e di breve durata. Il contesto della pagina resta disattivato finché non approvi “Condividi il contesto della pagina con questa connessione” per questo specifico account. Il ticket resta solo in memoria e non viene mai salvato.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Il controllo di integrità ha risposto, ma le route protette dell'estensione e del modello richiedono Authorization: Bearer ***. Incolla la chiave API o il token del browser con ambito nelle Impostazioni.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

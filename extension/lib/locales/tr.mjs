@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "yapılandırılmadı",
   "context_consent.share_detail": "Bu bağlantıyı açıkça onaylayana kadar yalnızca sohbet kullanılabilir. Onay; uç nokta, hesap, profil ve tarayıcı denetleyicisine göre ayrılır.",
   "context_consent.share_label": "Sayfa bağlamını bu bağlantıyla paylaş",
+  "dashboard.trust_prompt_remote": "Dashboard Attach için {origin} kaynağına güvenilsin mi?\n\nHermes Browser Extension, kısa ömürlü ve tek kullanımlık bir WebSocket bileti istemek için etkin pano sekmenizdeki oturumu kullanır. Bu hesap için “Sayfa bağlamını bu bağlantıyla paylaş” seçeneğini onaylayana kadar sayfa bağlamı kapalı kalır. Bilet yalnızca bellekte tutulur ve hiçbir zaman saklanmaz.",
+  "dashboard.trust_prompt_local": "Dashboard Attach için {origin} kaynağına güvenilsin mi?\n\nHermes Browser Extension, kısa ömürlü ve tek kullanımlık bir WebSocket bileti istemek için etkin pano sekmenizdeki oturumu kullanır. Bu pano bu bilgisayarda çalıştığı için panelde seçtiğiniz sayfa bağlamı, bağlantı başına ayrı bir onay olmadan onunla paylaşılır. Bilet yalnızca bellekte tutulur ve hiçbir zaman saklanmaz.",
   "context.attached_tab": "Ekli sekme",
   "context.follow_active_tab": "Etkin sekmeyi takip et",
   "context.return_attached_tab": "Ekli sekmeye dön",
