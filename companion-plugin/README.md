@@ -40,9 +40,11 @@ Things to know:
   that profile's own plugin routes under `/p/<profile>/api/plugins/...`
   (NousResearch/hermes-agent#147703); until your Hermes has that, use the default
   profile for Hermes Control there. Chat with named profiles is unaffected.
-- **Hermes Cloud and keyless dashboard connections** handle opt-in page context
-  in the extension through its per-connection consent ledger and the dashboard
-  WebSocket, so page context does not use this plugin. The plugin's Control HTTP
+- **Hermes Cloud and keyless dashboard connections** gate opt-in page context
+  in the extension through its per-connection consent ledger and send it over
+  the dashboard WebSocket, so those turns skip this plugin's HTTP context-upload
+  route. If this plugin is enabled on that profile, its hooks still receive those
+  turns, including any page context you approved. The plugin's Control HTTP
   routes are not reachable on those transports.
 - **One browser per chat.** Hermes Control drives the browser that attached the
   chat; two browsers on the same chat are refused rather than guessed between.
