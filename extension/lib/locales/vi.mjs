@@ -1050,7 +1050,7 @@ export default Object.freeze({
   "ui.hermes.browser.update.channel": "HERMES BROWSER / KÊNH CẬP NHẬT",
   "ui.hermes.chat.actions": "Hành động trò chuyện Hermes",
   "ui.hermes.cloud": "Hermes Cloud",
-  "ui.hermes.cloud.preview": "Xem trước Hermes Cloud",
+  "ui.hermes.cloud.preview": "Hermes Cloud",
   "ui.hermes.cloud.unavailable": "Hermes Cloud không có sẵn",
   "ui.hermes.compatibility": "Khả năng tương thích Hermes",
   "ui.hermes.compatibility.fallback": "Dự phòng tương thích Hermes",

@@ -1050,7 +1050,7 @@ export default Object.freeze({
   "ui.hermes.browser.update.channel": "HERMES BROWSER / UPDATE CHANNEL",
   "ui.hermes.chat.actions": "Działania na czacie Hermes",
   "ui.hermes.cloud": "Hermes Chmura",
-  "ui.hermes.cloud.preview": "Podgląd chmury Hermes",
+  "ui.hermes.cloud.preview": "Hermes Cloud",
   "ui.hermes.cloud.unavailable": "Hermes Chmura niedostępna",
   "ui.hermes.compatibility": "Kompatybilność z Hermes",
   "ui.hermes.compatibility.fallback": "Awaryjna kompatybilność Hermes",

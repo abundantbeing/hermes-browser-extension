@@ -1050,7 +1050,7 @@ export default Object.freeze({
   "ui.hermes.browser.update.channel": "HERMES BROWSER / КАНАЛ ОНОВЛЕНЬ",
   "ui.hermes.chat.actions": "Hermes дії в чаті",
   "ui.hermes.cloud": "Hermes Cloud",
-  "ui.hermes.cloud.preview": "Hermes Cloud Попередній перегляд",
+  "ui.hermes.cloud.preview": "Hermes Cloud",
   "ui.hermes.cloud.unavailable": "Hermes Cloud недоступний",
   "ui.hermes.compatibility": "Hermes сумісність",
   "ui.hermes.compatibility.fallback": "Hermes резервна сумісність",

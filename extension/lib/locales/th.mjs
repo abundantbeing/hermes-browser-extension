@@ -1050,7 +1050,7 @@ export default Object.freeze({
   "ui.hermes.browser.update.channel": "HERMES BROWSER / อัปเดตช่อง",
   "ui.hermes.chat.actions": "การดำเนินการแชท Hermes",
   "ui.hermes.cloud": "Hermes Cloud",
-  "ui.hermes.cloud.preview": "Hermes Cloud Preview",
+  "ui.hermes.cloud.preview": "Hermes Cloud",
   "ui.hermes.cloud.unavailable": "Hermes Cloud ไม่พร้อมใช้งาน",
   "ui.hermes.compatibility": "ความเข้ากันได้ของ Hermes",
   "ui.hermes.compatibility.fallback": "ทางเลือกความเข้ากันได้ของ Hermes",

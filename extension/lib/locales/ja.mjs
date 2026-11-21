@@ -1050,7 +1050,7 @@ export default Object.freeze({
   "ui.hermes.browser.update.channel": "HERMES BROWSER / 更新チャンネル",
   "ui.hermes.chat.actions": "Hermes チャットアクション",
   "ui.hermes.cloud": "Hermes Cloud",
-  "ui.hermes.cloud.preview": "Hermes Cloud Preview",
+  "ui.hermes.cloud.preview": "Hermes Cloud",
   "ui.hermes.cloud.unavailable": "Hermes Cloudは利用できません",
   "ui.hermes.compatibility": "Hermes 互換性",
   "ui.hermes.compatibility.fallback": "Hermes 互換性フォールバック",

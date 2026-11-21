@@ -1039,7 +1039,7 @@ export default Object.freeze({
   "ui.hermes.browser.update.channel": "HERMES BROWSER / 更新渠道",
   "ui.hermes.chat.actions": "Hermes 聊天操作",
   "ui.hermes.cloud": "Hermes 云",
-  "ui.hermes.cloud.preview": "Hermes 云预览",
+  "ui.hermes.cloud.preview": "Hermes Cloud",
   "ui.hermes.cloud.unavailable": "Hermes Cloud 不可用",
   "ui.hermes.compatibility": "Hermes 兼容性",
   "ui.hermes.compatibility.fallback": "Hermes 兼容性回退",
