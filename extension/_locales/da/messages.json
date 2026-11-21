@@ -4127,6 +4127,10 @@
     "message": "Stemme og aktivering",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud bruger Trusted Dashboard Attach. Åbn det loggede ind agent-dashboard i den aktive fane, og vælg derefter “Test forbindelse”. Sidekontekst forbliver slået fra, indtil du godkender “Del sidekontekst med denne forbindelse” for netop denne Cloud-konto.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Fuld",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4310,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· offentlig alfa / indlæs udpakket",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach via WebSocket. Behold det loggede ind dashboard som din aktive fane, og brug derefter “Test forbindelse” til at godkende dets HTTPS-oprindelse. Sidekontekst forbliver slået fra, indtil du godkender at dele den med netop denne forbindelse. Ingen nøgle nødvendig.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Ikke gemt: {detail}",

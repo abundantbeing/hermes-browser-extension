@@ -2308,4 +2308,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "स्रोत: Hermes डैशबोर्ड (/api/audio/speak)",
   "read_aloud.meta.browser": "स्रोत: यह ब्राउज़र (speechSynthesis)",
   "read_aloud.meta.none": "स्रोत: कोई नहीं",
+  "settings.cloud_gateway_help": "Hermes Cloud, Trusted Dashboard Attach का उपयोग करता है। सक्रिय टैब में साइन-इन किया हुआ एजेंट डैशबोर्ड खोलें, फिर “कनेक्शन का परीक्षण करें” चुनें। जब तक आप इस सटीक Cloud खाते के लिए “इस कनेक्शन के साथ पेज संदर्भ साझा करें” को मंज़ूरी नहीं देते, पेज संदर्भ बंद रहता है।",
+  "settings.remote_dashboard_setup_hint": "WebSocket पर Trusted Dashboard Attach। साइन-इन किए हुए डैशबोर्ड को अपना सक्रिय टैब रखें, फिर उसके HTTPS मूल को मंज़ूरी देने के लिए “कनेक्शन का परीक्षण करें” का उपयोग करें। जब तक आप इसे इस सटीक कनेक्शन के साथ साझा करने को मंज़ूरी नहीं देते, पेज संदर्भ बंद रहता है। किसी कुंजी की ज़रूरत नहीं।",
 });

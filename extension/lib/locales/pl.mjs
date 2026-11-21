@@ -2308,4 +2308,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Źródło: panel Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Źródło: ta przeglądarka (speechSynthesis)",
   "read_aloud.meta.none": "Źródło: brak",
+  "settings.cloud_gateway_help": "Hermes Cloud używa Trusted Dashboard Attach. Otwórz zalogowany panel agenta w aktywnej karcie, a następnie wybierz „Połączenie testowe”. Kontekst strony pozostaje wyłączony, dopóki nie zatwierdzisz opcji „Udostępnij kontekst strony temu połączeniu” dla dokładnie tego konta Cloud.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach przez WebSocket. Pozostaw zalogowany panel jako aktywną kartę, a następnie użyj „Połączenie testowe”, aby zatwierdzić jego źródło HTTPS. Kontekst strony pozostaje wyłączony, dopóki nie zatwierdzisz udostępniania go dokładnie temu połączeniu. Klucz nie jest potrzebny.",
 });

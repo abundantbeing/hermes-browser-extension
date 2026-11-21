@@ -4127,6 +4127,10 @@
     "message": "語音與喚醒",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud 使用 Trusted Dashboard Attach。在使用中的分頁開啟已登入的代理程式儀表板，然後選擇「測試連線」。在您為這個確切的 Cloud 帳戶核准「與此連線共享頁面內容」之前，頁面內容會保持關閉。",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "完整",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4310,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· 公開 Alpha / 載入未封裝擴充功能",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "透過 WebSocket 的 Trusted Dashboard Attach。讓已登入的儀表板保持為使用中的分頁，然後使用「測試連線」核准其 HTTPS 來源。在您核准與這個確切連線共享之前，頁面內容會保持關閉。不需要金鑰。",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "未儲存：{detail}",

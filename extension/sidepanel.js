@@ -4288,9 +4288,7 @@ function renderGatewayHelp() {
     gatewayUrl: els.gatewayUrlInput?.value || settings.gatewayUrl,
   });
   if (els.gatewayHelp) {
-    els.gatewayHelp.textContent = translateUiText(connectionMode === 'cloud'
-      ? 'Hermes Cloud uses Trusted Dashboard Attach. Open the signed-in agent dashboard in the active tab, then choose Test connection. Page context stays off until you approve "Share page context with this connection" for this exact Cloud account.'
-      : summary.setupHint);
+    els.gatewayHelp.textContent = connectionMode === 'cloud' ? t('settings.cloud_gateway_help') : translateUiText(summary.setupHint);
   }
   if (els.gatewayUrlInput) els.gatewayUrlInput.placeholder = summary.mode.defaultUrl || DEFAULT_SETTINGS.gatewayUrl;
   renderBrowserContextConsentControl();

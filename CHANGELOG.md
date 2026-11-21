@@ -10,6 +10,8 @@
 
 - **The Hermes plugin uses only public Hermes APIs for profiles.** It no longer adds its own `/p/<profile>/api/plugins/...` routes or moves them ahead of Hermes' profile catch-all in the API server's route table, and it no longer reads Hermes' plugin manager, the API server's request-profile variable or runs plugin discovery from a request. Each profile's `register()` binds its routes to that profile (`ctx.profile_name`). On a gateway that serves several profiles at one address, Hermes Control for a named profile needs Hermes to serve that profile's own plugin routes (NousResearch/hermes-agent#147703); until then use the default profile for Hermes Control there. A named profile on its own gateway address is unaffected. A guard test keeps those internals out of the plugin.
 
+- **Cloud and remote-dashboard setup help describe per-connection page-context consent.** Settings no longer calls Hermes Cloud or a keyless remote dashboard Chat-only: the help says page context stays off until you approve **Share page context with this connection** for that exact account or connection. Both messages are now translated in all 21 languages.
+
 ### Fixed
 
 - **Hermes Control keeps working after Hermes compresses the conversation.** Compression continues the chat under a new session id, so tool calls no longer matched the browser attached to the original one and failed with `no_browser` until it was attached again. The plugin now asks Hermes for the conversation's compression lineage and follows only genuine compression continuations to the attached browser; a delegated subagent, branch or reset never inherits it, even after its parent later compresses, and the browser is not inherited when Hermes cannot establish the lineage.
