@@ -68,23 +68,37 @@ class BareAdapter:
     """A runtime that offers no session store at all."""
 
 
-def _handle(known):
-    """A store handle with the surface ``_get_existing_session_or_404`` uses."""
+def _handle(adapter):
+    """A store handle with the surface ``_get_existing_session_or_404`` uses.
+
+    Gated on the store having been opened: a lookup that runs before
+    ``_ensure_store_async()`` returns raises, so a change that reads a handle the
+    runtime has not opened yet fails here instead of reaching a person as a failed
+    attach. The final open count alone cannot catch that order.
+    """
 
     async def get(session_id):
-        return {'id': session_id} if session_id in known else None
+        if adapter.opened < 1:
+            raise AssertionError('session lookup ran before the store was opened')
+        return {'id': session_id} if session_id in adapter.known else None
 
     return SimpleNamespace(aio=SimpleNamespace(sessions=SimpleNamespace(get=get)))
 
 
-def _store_module(handle):
+def _store_module(adapter, *, none=False):
     module = ModuleType('gateway.platforms.api_server_store')
-    setattr(module, 'adapter_persistence', lambda _adapter: handle)
+
+    def adapter_persistence(_adapter):
+        if adapter.opened < 1:
+            raise AssertionError('adapter_persistence ran before the store was opened')
+        return None if none else _handle(adapter)
+
+    setattr(module, 'adapter_persistence', adapter_persistence)
     return module
 
 
-def _modules(handle=None, *, absent=False):
-    entry = None if absent else _store_module(handle)
+def _modules(adapter=None, *, absent=False, none=False):
+    entry = None if absent else _store_module(adapter, none=none)
     return {
         'gateway': ModuleType('gateway'),
         'gateway.platforms': ModuleType('gateway.platforms'),
@@ -104,17 +118,17 @@ class SessionKnownTests(unittest.TestCase):
 
     def test_current_adapter_reports_known_session(self):
         adapter = CurrentAdapter({'sess-1'})
-        with patch.dict(sys.modules, _modules(_handle(adapter.known))):
+        with patch.dict(sys.modules, _modules(adapter)):
             self.assertTrue(asyncio.run(control_routes._session_known(adapter, 'sess-1')))
 
     def test_current_adapter_reports_unknown_session(self):
         adapter = CurrentAdapter({'sess-1'})
-        with patch.dict(sys.modules, _modules(_handle(adapter.known))):
+        with patch.dict(sys.modules, _modules(adapter)):
             self.assertFalse(asyncio.run(control_routes._session_known(adapter, 'other')))
 
     def test_current_adapter_opens_store_before_lookup(self):
         adapter = CurrentAdapter({'sess-1'})
-        with patch.dict(sys.modules, _modules(_handle(adapter.known))):
+        with patch.dict(sys.modules, _modules(adapter)):
             asyncio.run(control_routes._session_known(adapter, 'sess-1'))
         self.assertEqual(adapter.opened, 1)
 
@@ -130,7 +144,7 @@ class SessionKnownTests(unittest.TestCase):
 
     def test_store_offered_but_no_handle_fails_closed(self):
         adapter = CurrentAdapter({'sess-1'})
-        with patch.dict(sys.modules, _modules(None)), self.assertRaises(LookupError):
+        with patch.dict(sys.modules, _modules(adapter, none=True)), self.assertRaises(LookupError):
             asyncio.run(control_routes._session_known(adapter, 'sess-1'))
 
     def test_lookup_error_is_raised_for_unreadable_store(self):
