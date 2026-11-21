@@ -257,3 +257,76 @@ test('the protocol exports stay stable and gain the plugin route', () => {
   assert.equal(controllerSocketPath('core', undefined), '/v1/browser-control/ws');
   assert.equal(controllerSocketPath('core', ` ${PLUGIN_WS_PATH} `), PLUGIN_WS_PATH);
 });
+
+test('controller API base URL gates enforce loopback for local-api, HTTPS for remote-api, and reject non-loopback plain HTTP', () => {
+  const localLoopback = controllerRegistrationFor({
+    family: CONTROLLER_TRANSPORT_FAMILIES.LOCAL_API,
+    baseUrl: 'http://127.0.0.1:8642',
+    identity: IDENTITY,
+  });
+  assert.equal(localLoopback.registrationUrl, CORE_REGISTER);
+
+  const remoteHttps = controllerRegistrationFor({
+    family: CONTROLLER_TRANSPORT_FAMILIES.REMOTE_API,
+    baseUrl: 'https://hermes.example.ts.net',
+    identity: IDENTITY,
+    route: CONTROLLER_ROUTES.plugin,
+  });
+  assert.equal(remoteHttps.registrationUrl, 'https://hermes.example.ts.net/api/plugins/hermes-browser-extension/control/register');
+  assert.equal(
+    controllerWebSocketUrl('https://hermes.example.ts.net', PLUGIN_WS_PATH),
+    'wss://hermes.example.ts.net/api/plugins/hermes-browser-extension/control/ws',
+  );
+
+  assert.throws(
+    () => controllerRegistrationFor({
+      family: CONTROLLER_TRANSPORT_FAMILIES.LOCAL_API,
+      baseUrl: 'http://192.168.1.50:8642',
+      identity: IDENTITY,
+    }),
+    /Local controller API base URL must use a loopback host\./,
+  );
+  assert.throws(
+    () => controllerRegistrationFor({
+      family: CONTROLLER_TRANSPORT_FAMILIES.REMOTE_API,
+      baseUrl: 'http://100.64.0.9:8642',
+      identity: IDENTITY,
+    }),
+    /Remote controller API base URL must use HTTPS\./,
+  );
+  assert.throws(
+    () => controllerWebSocketUrl('http://100.64.0.9:8642'),
+    /HTTP controller API base URL is allowed only for a loopback host\./,
+  );
+
+  const credentialed = new URL('https://hermes.example.ts.net');
+  credentialed.username = ['fixture', 'user'].join('-');
+  credentialed.password = ['fixture', 'pass'].join('-');
+  assert.throws(
+    () => controllerRegistrationFor({
+      family: CONTROLLER_TRANSPORT_FAMILIES.REMOTE_API,
+      baseUrl: credentialed.href,
+      identity: IDENTITY,
+    }),
+    /must not contain credentials\./,
+  );
+  assert.throws(
+    () => controllerWebSocketUrl(credentialed.href),
+    /must not contain credentials\./,
+  );
+
+  for (const badUrl of ['https://hermes.example.ts.net/?q=1', 'https://hermes.example.ts.net/#frag']) {
+    assert.throws(
+      () => controllerRegistrationFor({
+        family: CONTROLLER_TRANSPORT_FAMILIES.REMOTE_API,
+        baseUrl: badUrl,
+        identity: IDENTITY,
+      }),
+      /must not contain query parameters or a fragment\./,
+    );
+    assert.throws(
+      () => controllerWebSocketUrl(badUrl),
+      /must not contain query parameters or a fragment\./,
+    );
+  }
+});
