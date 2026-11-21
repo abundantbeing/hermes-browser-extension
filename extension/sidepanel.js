@@ -1034,13 +1034,17 @@ function initActiveTaskTabsSetting() {
     }
   }
 
+  let renderRevision = 0;
   async function render() {
+    const revision = ++renderRevision;
     const stored = await storage.get([
       'hermesBrowserSettings', SAVED_CONNECTION_SECRETS_STORAGE_KEY, BACKGROUND_BROWSER_CONSENT, ACTIVE_TASK_TABS,
     ]);
     const connection = await hydrateHermesBrowserSettingsFromStorage(stored);
     const consentIdentity = await backgroundBrowserConsentIdentity(connection);
+    if (revision !== renderRevision) return;
     const available = Boolean(consentIdentity) && await gatewaySupportsTasks(connection);
+    if (revision !== renderRevision) return;
     row.hidden = !available && stored[ACTIVE_TASK_TABS] !== true;
     input.checked = stored[ACTIVE_TASK_TABS] === true;
     input.disabled = !available && stored[ACTIVE_TASK_TABS] !== true;
@@ -1057,6 +1061,9 @@ function initActiveTaskTabsSetting() {
       status.textContent = '';
     } catch {
       status.textContent = t('browser_control.active_tabs_save_error');
+      input.checked = !checked;
+      input.disabled = false;
+      return;
     }
     await render().catch(() => {});
   });
@@ -1068,6 +1075,7 @@ function initActiveTaskTabsSetting() {
       void render().catch(() => {});
     }
   });
+  subscribeLocale(() => { void render().catch(() => {}); });
   void render().catch(() => {});
 }
 initActiveTaskTabsSetting();
