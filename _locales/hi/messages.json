@@ -2595,6 +2595,14 @@
     "message": "थीम में सत्यापन त्रुटियाँ हैं।",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "क्या Dashboard Attach के लिए {origin} पर भरोसा करें?\n\nHermes Browser Extension आपके सक्रिय डैशबोर्ड टैब के साइन-इन सत्र का उपयोग करके एक अल्पकालिक, एक बार उपयोग होने वाला WebSocket टिकट माँगेगा। यह डैशबोर्ड इसी कंप्यूटर पर चलता है, इसलिए पैनल में आपके चुने गए पेज संदर्भ को प्रति-कनेक्शन अलग मंज़ूरी के बिना इसके साथ साझा किया जाता है। टिकट केवल मेमोरी में रहता है और कभी संग्रहीत नहीं होता।",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "क्या Dashboard Attach के लिए {origin} पर भरोसा करें?\n\nHermes Browser Extension आपके सक्रिय डैशबोर्ड टैब के साइन-इन सत्र का उपयोग करके एक अल्पकालिक, एक बार उपयोग होने वाला WebSocket टिकट माँगेगा। जब तक आप इस सटीक खाते के लिए “इस कनेक्शन के साथ पेज संदर्भ साझा करें” को मंज़ूरी नहीं देते, पेज संदर्भ बंद रहता है। टिकट केवल मेमोरी में रहता है और कभी संग्रहीत नहीं होता।",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "स्वास्थ्य जाँच ने उत्तर दिया, लेकिन संरक्षित एक्सटेंशन/मॉडल रूट्स को Authorization: Bearer *** की आवश्यकता है। सेटिंग्स में API कुंजी या स्कोप्ड ब्राउज़र टोकन चिपकाएँ।",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
@@ -4127,6 +4135,10 @@
     "message": "आवाज़ और वेक",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud, Trusted Dashboard Attach का उपयोग करता है। सक्रिय टैब में साइन-इन किया हुआ एजेंट डैशबोर्ड खोलें, फिर “कनेक्शन का परीक्षण करें” चुनें। जब तक आप इस सटीक Cloud खाते के लिए “इस कनेक्शन के साथ पेज संदर्भ साझा करें” को मंज़ूरी नहीं देते, पेज संदर्भ बंद रहता है।",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "पूर्ण",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· सार्वजनिक अल्फ़ा / लोड अनपैक्ड",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "WebSocket पर Trusted Dashboard Attach। साइन-इन किए हुए डैशबोर्ड को अपना सक्रिय टैब रखें, फिर उसके HTTPS मूल को मंज़ूरी देने के लिए “कनेक्शन का परीक्षण करें” का उपयोग करें। जब तक आप इसे इस सटीक कनेक्शन के साथ साझा करने को मंज़ूरी नहीं देते, पेज संदर्भ बंद रहता है। किसी कुंजी की ज़रूरत नहीं।",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "सहेजा नहीं गया: {detail}",

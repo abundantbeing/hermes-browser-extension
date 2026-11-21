@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "未設定",
   "context_consent.share_detail": "在您核准此確切連線前僅限聊天。授權會依端點、帳戶、設定檔與瀏覽器控制器隔離。",
   "context_consent.share_label": "與此連線共享頁面內容",
+  "dashboard.trust_prompt_remote": "要信任 {origin} 用於 Dashboard Attach 嗎？\n\nHermes Browser Extension 會使用使用中儀表板分頁的已登入工作階段，要求一個短期有效、僅能使用一次的 WebSocket 票證。在您為這個確切帳戶核准「與此連線共享頁面內容」之前，頁面內容會保持關閉。票證只保留在記憶體中，絕不會儲存。",
+  "dashboard.trust_prompt_local": "要信任 {origin} 用於 Dashboard Attach 嗎？\n\nHermes Browser Extension 會使用使用中儀表板分頁的已登入工作階段，要求一個短期有效、僅能使用一次的 WebSocket 票證。此儀表板在這台電腦上執行，因此您在面板中選擇的頁面內容會與其共享，不需要個別的逐連線核准。票證只保留在記憶體中，絕不會儲存。",
   "context.attached_tab": "已附加的分頁",
   "context.follow_active_tab": "跟隨活動分頁",
   "context.return_attached_tab": "返回附加的分頁",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "來源：Hermes 儀表板 (/api/audio/speak)",
   "read_aloud.meta.browser": "來源：此瀏覽器 (speechSynthesis)",
   "read_aloud.meta.none": "來源：無",
+  "settings.cloud_gateway_help": "Hermes Cloud 使用 Trusted Dashboard Attach。在使用中的分頁開啟已登入的代理程式儀表板，然後選擇「測試連線」。在您為這個確切的 Cloud 帳戶核准「與此連線共享頁面內容」之前，頁面內容會保持關閉。",
+  "settings.remote_dashboard_setup_hint": "透過 WebSocket 的 Trusted Dashboard Attach。讓已登入的儀表板保持為使用中的分頁，然後使用「測試連線」核准其 HTTPS 來源。在您核准與這個確切連線共享之前，頁面內容會保持關閉。不需要金鑰。",
 });

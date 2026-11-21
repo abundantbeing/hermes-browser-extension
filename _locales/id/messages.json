@@ -2595,6 +2595,14 @@
     "message": "Tema memiliki kesalahan validasi.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Percayai {origin} untuk Dashboard Attach?\n\nHermes Browser Extension akan menggunakan sesi yang sudah masuk di tab dasbor aktif Anda untuk meminta tiket WebSocket sekali pakai yang berumur pendek. Dasbor ini berjalan di komputer ini, jadi konteks halaman yang Anda pilih di panel dibagikan dengannya tanpa persetujuan terpisah per koneksi. Tiket hanya ada di memori dan tidak pernah disimpan.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Percayai {origin} untuk Dashboard Attach?\n\nHermes Browser Extension akan menggunakan sesi yang sudah masuk di tab dasbor aktif Anda untuk meminta tiket WebSocket sekali pakai yang berumur pendek. Konteks halaman tetap nonaktif sampai Anda menyetujui “Bagikan konteks halaman dengan koneksi ini” untuk akun yang tepat ini. Tiket hanya ada di memori dan tidak pernah disimpan.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Pemeriksaan kesehatan merespons, tetapi rute ekstensi dan model yang dilindungi memerlukan Authorization: Bearer *** Tempel kunci API atau token browser dengan cakupan tertentu di Pengaturan.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
@@ -4127,6 +4135,10 @@
     "message": "Suara & pemicu",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud menggunakan Trusted Dashboard Attach. Buka dasbor agen yang sudah masuk di tab aktif, lalu pilih “Uji koneksi”. Konteks halaman tetap nonaktif sampai Anda menyetujui “Bagikan konteks halaman dengan koneksi ini” untuk akun Cloud yang tepat ini.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Penuh",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· alpha publik / beban dibongkar",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach melalui WebSocket. Biarkan dasbor yang sudah masuk tetap menjadi tab aktif Anda, lalu gunakan “Uji koneksi” untuk menyetujui origin HTTPS-nya. Konteks halaman tetap nonaktif sampai Anda menyetujui berbagi dengan koneksi yang tepat ini. Tidak perlu kunci.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Tidak tersimpan: {detail}",

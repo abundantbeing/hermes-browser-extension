@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "कॉन्फ़िगर नहीं किया गया",
   "context_consent.share_detail": "इस सटीक कनेक्शन को मंज़ूरी देने तक केवल चैट उपलब्ध है। सहमति एंडपॉइंट, खाते, प्रोफ़ाइल और ब्राउज़र कंट्रोलर के अनुसार अलग रखी जाती है।",
   "context_consent.share_label": "इस कनेक्शन के साथ पेज संदर्भ साझा करें",
+  "dashboard.trust_prompt_remote": "क्या Dashboard Attach के लिए {origin} पर भरोसा करें?\n\nHermes Browser Extension आपके सक्रिय डैशबोर्ड टैब के साइन-इन सत्र का उपयोग करके एक अल्पकालिक, एक बार उपयोग होने वाला WebSocket टिकट माँगेगा। जब तक आप इस सटीक खाते के लिए “इस कनेक्शन के साथ पेज संदर्भ साझा करें” को मंज़ूरी नहीं देते, पेज संदर्भ बंद रहता है। टिकट केवल मेमोरी में रहता है और कभी संग्रहीत नहीं होता।",
+  "dashboard.trust_prompt_local": "क्या Dashboard Attach के लिए {origin} पर भरोसा करें?\n\nHermes Browser Extension आपके सक्रिय डैशबोर्ड टैब के साइन-इन सत्र का उपयोग करके एक अल्पकालिक, एक बार उपयोग होने वाला WebSocket टिकट माँगेगा। यह डैशबोर्ड इसी कंप्यूटर पर चलता है, इसलिए पैनल में आपके चुने गए पेज संदर्भ को प्रति-कनेक्शन अलग मंज़ूरी के बिना इसके साथ साझा किया जाता है। टिकट केवल मेमोरी में रहता है और कभी संग्रहीत नहीं होता।",
   "context.attached_tab": "संलग्न टैब",
   "context.follow_active_tab": "सक्रिय टैब का पालन करें",
   "context.return_attached_tab": "संलग्न टैब पर लौटें",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "स्रोत: Hermes डैशबोर्ड (/api/audio/speak)",
   "read_aloud.meta.browser": "स्रोत: यह ब्राउज़र (speechSynthesis)",
   "read_aloud.meta.none": "स्रोत: कोई नहीं",
+  "settings.cloud_gateway_help": "Hermes Cloud, Trusted Dashboard Attach का उपयोग करता है। सक्रिय टैब में साइन-इन किया हुआ एजेंट डैशबोर्ड खोलें, फिर “कनेक्शन का परीक्षण करें” चुनें। जब तक आप इस सटीक Cloud खाते के लिए “इस कनेक्शन के साथ पेज संदर्भ साझा करें” को मंज़ूरी नहीं देते, पेज संदर्भ बंद रहता है।",
+  "settings.remote_dashboard_setup_hint": "WebSocket पर Trusted Dashboard Attach। साइन-इन किए हुए डैशबोर्ड को अपना सक्रिय टैब रखें, फिर उसके HTTPS मूल को मंज़ूरी देने के लिए “कनेक्शन का परीक्षण करें” का उपयोग करें। जब तक आप इसे इस सटीक कनेक्शन के साथ साझा करने को मंज़ूरी नहीं देते, पेज संदर्भ बंद रहता है। किसी कुंजी की ज़रूरत नहीं।",
 });

@@ -2595,6 +2595,14 @@
     "message": "テーマに検証エラーがあります。",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "Dashboard Attach で {origin} を信頼しますか？\n\nHermes Browser Extension は、アクティブなダッシュボードタブのサインイン済みセッションを使って、短時間有効な使い捨ての WebSocket チケットを要求します。このダッシュボードはこのコンピューター上で動作しているため、パネルで選択したページコンテキストは接続ごとの個別承認なしで共有されます。チケットはメモリ内にのみ保持され、保存されることはありません。",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "Dashboard Attach で {origin} を信頼しますか？\n\nHermes Browser Extension は、アクティブなダッシュボードタブのサインイン済みセッションを使って、短時間有効な使い捨ての WebSocket チケットを要求します。このアカウントで「この接続とページコンテキストを共有」を承認するまで、ページコンテキストはオフのままです。チケットはメモリ内にのみ保持され、保存されることはありません。",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "ヘルスチェックは応答しましたが、保護された拡張機能/モデルルートには Authorization: Bearer *** が必要です。API キーまたはスコープ付きブラウザトークンを設定に貼り付けてください。",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
@@ -4127,6 +4135,10 @@
     "message": "音声とウェイク",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud は Trusted Dashboard Attach を使用します。サインイン済みのエージェントダッシュボードをアクティブなタブで開き、「テスト接続」を選択してください。この Cloud アカウントで「この接続とページコンテキストを共有」を承認するまで、ページコンテキストはオフのままです。",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "完全",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· パブリックアルファ / 解凍されたロード",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "WebSocket 経由の Trusted Dashboard Attach。サインイン済みのダッシュボードをアクティブなタブにしたまま、「テスト接続」でその HTTPS オリジンを承認してください。この接続との共有を承認するまで、ページコンテキストはオフのままです。キーは不要です。",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "保存できませんでした: {detail}",

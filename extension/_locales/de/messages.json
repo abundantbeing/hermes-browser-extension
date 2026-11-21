@@ -2595,6 +2595,14 @@
     "message": "Das Design enthält Validierungsfehler.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "{origin} für Dashboard Attach vertrauen?\n\nDie Hermes Browser Extension verwendet die angemeldete Sitzung in deinem aktiven Dashboard-Tab, um ein kurzlebiges, einmal verwendbares WebSocket-Ticket anzufordern. Dieses Dashboard läuft auf diesem Computer, daher wird der im Panel gewählte Seitenkontext ohne separate Genehmigung pro Verbindung mit ihm geteilt. Das Ticket liegt nur im Arbeitsspeicher und wird nie gespeichert.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "{origin} für Dashboard Attach vertrauen?\n\nDie Hermes Browser Extension verwendet die angemeldete Sitzung in deinem aktiven Dashboard-Tab, um ein kurzlebiges, einmal verwendbares WebSocket-Ticket anzufordern. Der Seitenkontext bleibt aus, bis du „Seitenkontext mit dieser Verbindung teilen“ für genau dieses Konto genehmigst. Das Ticket liegt nur im Arbeitsspeicher und wird nie gespeichert.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Die Zustandsprüfung hat geantwortet, aber die geschützten Erweiterungs- und Modellrouten benötigen Authorization: Bearer ***. Fügen Sie den API-Schlüssel oder das bereichsspezifische Browser-Token in den Einstellungen ein.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
@@ -4127,6 +4135,10 @@
     "message": "Stimme & Aktivierung",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud verwendet Trusted Dashboard Attach. Öffne das angemeldete Agent-Dashboard im aktiven Tab und wähle dann „Testverbindung“. Der Seitenkontext bleibt aus, bis du „Seitenkontext mit dieser Verbindung teilen“ für genau dieses Cloud-Konto genehmigst.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Vollständig",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· öffentliche Alpha / entpackt laden",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach über WebSocket. Lass das angemeldete Dashboard als aktiven Tab geöffnet und genehmige dann mit „Testverbindung“ seinen HTTPS-Ursprung. Der Seitenkontext bleibt aus, bis du das Teilen mit genau dieser Verbindung genehmigst. Kein Schlüssel nötig.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Nicht gespeichert: {detail}",

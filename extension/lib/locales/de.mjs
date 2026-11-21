@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "nicht konfiguriert",
   "context_consent.share_detail": "Nur Chat, bis du genau diese Verbindung genehmigst. Die Einwilligung ist nach Endpunkt, Konto, Profil und Browser-Controller getrennt.",
   "context_consent.share_label": "Seitenkontext mit dieser Verbindung teilen",
+  "dashboard.trust_prompt_remote": "{origin} für Dashboard Attach vertrauen?\n\nDie Hermes Browser Extension verwendet die angemeldete Sitzung in deinem aktiven Dashboard-Tab, um ein kurzlebiges, einmal verwendbares WebSocket-Ticket anzufordern. Der Seitenkontext bleibt aus, bis du „Seitenkontext mit dieser Verbindung teilen“ für genau dieses Konto genehmigst. Das Ticket liegt nur im Arbeitsspeicher und wird nie gespeichert.",
+  "dashboard.trust_prompt_local": "{origin} für Dashboard Attach vertrauen?\n\nDie Hermes Browser Extension verwendet die angemeldete Sitzung in deinem aktiven Dashboard-Tab, um ein kurzlebiges, einmal verwendbares WebSocket-Ticket anzufordern. Dieses Dashboard läuft auf diesem Computer, daher wird der im Panel gewählte Seitenkontext ohne separate Genehmigung pro Verbindung mit ihm geteilt. Das Ticket liegt nur im Arbeitsspeicher und wird nie gespeichert.",
   "context.attached_tab": "Angehängte Registerkarte",
   "context.follow_active_tab": "Folgen Sie der aktiven Registerkarte",
   "context.return_attached_tab": "Zum angehängten Tab zurückkehren",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Quelle: Hermes-Dashboard (/api/audio/speak)",
   "read_aloud.meta.browser": "Quelle: dieser Browser (speechSynthesis)",
   "read_aloud.meta.none": "Quelle: keine",
+  "settings.cloud_gateway_help": "Hermes Cloud verwendet Trusted Dashboard Attach. Öffne das angemeldete Agent-Dashboard im aktiven Tab und wähle dann „Testverbindung“. Der Seitenkontext bleibt aus, bis du „Seitenkontext mit dieser Verbindung teilen“ für genau dieses Cloud-Konto genehmigst.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach über WebSocket. Lass das angemeldete Dashboard als aktiven Tab geöffnet und genehmige dann mit „Testverbindung“ seinen HTTPS-Ursprung. Der Seitenkontext bleibt aus, bis du das Teilen mit genau dieser Verbindung genehmigst. Kein Schlüssel nötig.",
 });

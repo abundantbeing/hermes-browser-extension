@@ -2595,6 +2595,14 @@
     "message": "Het thema bevat validatiefouten.",
     "description": "Runtime interface message custom_theme.validation_errors"
   },
+  "runtime_dashboard_trust_prompt_local": {
+    "message": "{origin} vertrouwen voor Dashboard Attach?\n\nHermes Browser Extension gebruikt de ingelogde sessie in je actieve dashboardtabblad om een kortlevend WebSocket-ticket voor eenmalig gebruik aan te vragen. Dit dashboard draait op deze computer, dus de paginacontext die je in het paneel kiest, wordt ermee gedeeld zonder aparte goedkeuring per verbinding. Het ticket staat alleen in het geheugen en wordt nooit opgeslagen.",
+    "description": "Runtime interface message dashboard.trust_prompt_local"
+  },
+  "runtime_dashboard_trust_prompt_remote": {
+    "message": "{origin} vertrouwen voor Dashboard Attach?\n\nHermes Browser Extension gebruikt de ingelogde sessie in je actieve dashboardtabblad om een kortlevend WebSocket-ticket voor eenmalig gebruik aan te vragen. Paginacontext blijft uit totdat je “Paginacontext delen met deze verbinding” goedkeurt voor precies dit account. Het ticket staat alleen in het geheugen en wordt nooit opgeslagen.",
+    "description": "Runtime interface message dashboard.trust_prompt_remote"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "De gezondheidscontrole antwoordde, maar de beveiligde extensie- en modelroutes vereisen Authorization: Bearer *** Plak de API-sleutel of het browser-token met beperkt bereik in Instellingen.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
@@ -4127,6 +4135,10 @@
     "message": "Stem & activering",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_cloud_gateway_help": {
+    "message": "Hermes Cloud gebruikt Trusted Dashboard Attach. Open het ingelogde agentdashboard in het actieve tabblad en kies daarna “Verbinding testen”. Paginacontext blijft uit totdat je “Paginacontext delen met deze verbinding” goedkeurt voor precies dit Cloud-account.",
+    "description": "Runtime interface message settings.cloud_gateway_help"
+  },
   "runtime_settings_context_depth_full": {
     "message": "Volledig",
     "description": "Runtime interface message settings.context_depth.full"
@@ -4306,6 +4318,10 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· openbare alpha / niet-uitgepakte extensie laden",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_remote_dashboard_setup_hint": {
+    "message": "Trusted Dashboard Attach via WebSocket. Houd het ingelogde dashboard als actief tabblad open en gebruik daarna “Verbinding testen” om de HTTPS-oorsprong goed te keuren. Paginacontext blijft uit totdat je delen met precies deze verbinding goedkeurt. Geen sleutel nodig.",
+    "description": "Runtime interface message settings.remote_dashboard_setup_hint"
   },
   "runtime_settings_save_failed": {
     "message": "Niet opgeslagen: {detail}",

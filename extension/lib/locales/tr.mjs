@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "yapılandırılmadı",
   "context_consent.share_detail": "Bu bağlantıyı açıkça onaylayana kadar yalnızca sohbet kullanılabilir. Onay; uç nokta, hesap, profil ve tarayıcı denetleyicisine göre ayrılır.",
   "context_consent.share_label": "Sayfa bağlamını bu bağlantıyla paylaş",
+  "dashboard.trust_prompt_remote": "Dashboard Attach için {origin} kaynağına güvenilsin mi?\n\nHermes Browser Extension, kısa ömürlü ve tek kullanımlık bir WebSocket bileti istemek için etkin pano sekmenizdeki oturumu kullanır. Bu hesap için “Sayfa bağlamını bu bağlantıyla paylaş” seçeneğini onaylayana kadar sayfa bağlamı kapalı kalır. Bilet yalnızca bellekte tutulur ve hiçbir zaman saklanmaz.",
+  "dashboard.trust_prompt_local": "Dashboard Attach için {origin} kaynağına güvenilsin mi?\n\nHermes Browser Extension, kısa ömürlü ve tek kullanımlık bir WebSocket bileti istemek için etkin pano sekmenizdeki oturumu kullanır. Bu pano bu bilgisayarda çalıştığı için panelde seçtiğiniz sayfa bağlamı, bağlantı başına ayrı bir onay olmadan onunla paylaşılır. Bilet yalnızca bellekte tutulur ve hiçbir zaman saklanmaz.",
   "context.attached_tab": "Ekli sekme",
   "context.follow_active_tab": "Etkin sekmeyi takip et",
   "context.return_attached_tab": "Ekli sekmeye dön",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Kaynak: Hermes kontrol paneli (/api/audio/speak)",
   "read_aloud.meta.browser": "Kaynak: bu tarayıcı (speechSynthesis)",
   "read_aloud.meta.none": "Kaynak: yok",
+  "settings.cloud_gateway_help": "Hermes Cloud, Trusted Dashboard Attach kullanır. Oturum açılmış ajan panosunu etkin sekmede açın, ardından “Bağlantıyı test edin” seçeneğini seçin. Bu Cloud hesabı için “Sayfa bağlamını bu bağlantıyla paylaş” seçeneğini onaylayana kadar sayfa bağlamı kapalı kalır.",
+  "settings.remote_dashboard_setup_hint": "WebSocket üzerinden Trusted Dashboard Attach. Oturum açılmış panoyu etkin sekmeniz olarak tutun, ardından HTTPS kaynağını onaylamak için “Bağlantıyı test edin” seçeneğini kullanın. Bu bağlantıyla paylaşımı onaylayana kadar sayfa bağlamı kapalı kalır. Anahtar gerekmez.",
 });

@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "niet geconfigureerd",
   "context_consent.share_detail": "Alleen chat totdat je precies deze verbinding goedkeurt. Toestemming is gescheiden per eindpunt, account, profiel en browsercontroller.",
   "context_consent.share_label": "Paginacontext delen met deze verbinding",
+  "dashboard.trust_prompt_remote": "{origin} vertrouwen voor Dashboard Attach?\n\nHermes Browser Extension gebruikt de ingelogde sessie in je actieve dashboardtabblad om een kortlevend WebSocket-ticket voor eenmalig gebruik aan te vragen. Paginacontext blijft uit totdat je “Paginacontext delen met deze verbinding” goedkeurt voor precies dit account. Het ticket staat alleen in het geheugen en wordt nooit opgeslagen.",
+  "dashboard.trust_prompt_local": "{origin} vertrouwen voor Dashboard Attach?\n\nHermes Browser Extension gebruikt de ingelogde sessie in je actieve dashboardtabblad om een kortlevend WebSocket-ticket voor eenmalig gebruik aan te vragen. Dit dashboard draait op deze computer, dus de paginacontext die je in het paneel kiest, wordt ermee gedeeld zonder aparte goedkeuring per verbinding. Het ticket staat alleen in het geheugen en wordt nooit opgeslagen.",
   "context.attached_tab": "Bijgevoegd tabblad",
   "context.follow_active_tab": "Volg het actieve tabblad",
   "context.return_attached_tab": "Terug naar het gekoppelde tabblad",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Bron: Hermes-dashboard (/api/audio/speak)",
   "read_aloud.meta.browser": "Bron: deze browser (speechSynthesis)",
   "read_aloud.meta.none": "Bron: geen",
+  "settings.cloud_gateway_help": "Hermes Cloud gebruikt Trusted Dashboard Attach. Open het ingelogde agentdashboard in het actieve tabblad en kies daarna “Verbinding testen”. Paginacontext blijft uit totdat je “Paginacontext delen met deze verbinding” goedkeurt voor precies dit Cloud-account.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach via WebSocket. Houd het ingelogde dashboard als actief tabblad open en gebruik daarna “Verbinding testen” om de HTTPS-oorsprong goed te keuren. Paginacontext blijft uit totdat je delen met precies deze verbinding goedkeurt. Geen sleutel nodig.",
 });

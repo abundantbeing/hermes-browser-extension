@@ -28,8 +28,15 @@ export function isTrustedDashboardOrigin(baseUrl, trustedOrigin) {
   return Boolean(configuredOrigin) && configuredOrigin === originOf(trustedOrigin);
 }
 
-export function dashboardTrustPrompt(origin) {
-  return `Trust ${origin} for Dashboard Attach?\n\nThe Hermes Browser Extension will use the signed-in session in your active dashboard tab to request a short-lived, single-use WebSocket ticket. Dashboard Attach remains Chat-only and will not send browser page context.`;
+// A connection that needs per-connection consent (remote, Cloud) keeps page context off until the
+// user approves "Share page context with this connection"; a loopback one keeps the chosen page scope
+// without a grant, so its prompt must not promise otherwise. `translate` is the panel's i18n `t`.
+export function dashboardTrustPromptKey({ consentRequired = true } = {}) {
+  return consentRequired ? 'dashboard.trust_prompt_remote' : 'dashboard.trust_prompt_local';
+}
+
+export function dashboardTrustPrompt(origin, { consentRequired = true, translate } = {}) {
+  return translate(dashboardTrustPromptKey({ consentRequired }), { origin });
 }
 
 export function wsTicketUrl(baseUrl) {

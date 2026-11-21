@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "nieskonfigurowany",
   "context_consent.share_detail": "Tylko czat, dopóki nie zatwierdzisz dokładnie tego połączenia. Zgoda jest oddzielona według punktu końcowego, konta, profilu i kontrolera przeglądarki.",
   "context_consent.share_label": "Udostępnij kontekst strony temu połączeniu",
+  "dashboard.trust_prompt_remote": "Czy ufać {origin} w Dashboard Attach?\n\nHermes Browser Extension użyje zalogowanej sesji w aktywnej karcie panelu, aby poprosić o krótkotrwały, jednorazowy bilet WebSocket. Kontekst strony pozostaje wyłączony, dopóki nie zatwierdzisz opcji „Udostępnij kontekst strony temu połączeniu” dla dokładnie tego konta. Bilet jest przechowywany tylko w pamięci i nigdy nie jest zapisywany.",
+  "dashboard.trust_prompt_local": "Czy ufać {origin} w Dashboard Attach?\n\nHermes Browser Extension użyje zalogowanej sesji w aktywnej karcie panelu, aby poprosić o krótkotrwały, jednorazowy bilet WebSocket. Ten panel działa na tym komputerze, więc kontekst strony wybrany w panelu bocznym jest mu udostępniany bez osobnej zgody dla każdego połączenia. Bilet jest przechowywany tylko w pamięci i nigdy nie jest zapisywany.",
   "context.attached_tab": "Dołączona zakładka",
   "context.follow_active_tab": "Śledź aktywną kartę",
   "context.return_attached_tab": "Wróć do dołączonej karty",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Źródło: panel Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Źródło: ta przeglądarka (speechSynthesis)",
   "read_aloud.meta.none": "Źródło: brak",
+  "settings.cloud_gateway_help": "Hermes Cloud używa Trusted Dashboard Attach. Otwórz zalogowany panel agenta w aktywnej karcie, a następnie wybierz „Połączenie testowe”. Kontekst strony pozostaje wyłączony, dopóki nie zatwierdzisz opcji „Udostępnij kontekst strony temu połączeniu” dla dokładnie tego konta Cloud.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach przez WebSocket. Pozostaw zalogowany panel jako aktywną kartę, a następnie użyj „Połączenie testowe”, aby zatwierdzić jego źródło HTTPS. Kontekst strony pozostaje wyłączony, dopóki nie zatwierdzisz udostępniania go dokładnie temu połączeniu. Klucz nie jest potrzebny.",
 });

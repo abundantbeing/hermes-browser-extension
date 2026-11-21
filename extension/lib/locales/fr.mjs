@@ -451,6 +451,8 @@ export default Object.freeze({
   "connection.not_configured_short": "non configurée",
   "context_consent.share_detail": "Chat uniquement jusqu’à l’approbation de cette connexion précise. Le consentement est isolé par point de terminaison, compte, profil et contrôleur du navigateur.",
   "context_consent.share_label": "Partager le contexte de la page avec cette connexion",
+  "dashboard.trust_prompt_remote": "Faire confiance à {origin} pour Dashboard Attach ?\n\nHermes Browser Extension utilisera la session connectée de votre onglet de tableau de bord actif pour demander un ticket WebSocket à usage unique et de courte durée. Le contexte de la page reste désactivé jusqu’à ce que vous approuviez « Partager le contexte de la page avec cette connexion » pour ce compte précis. Le ticket reste uniquement en mémoire et n’est jamais enregistré.",
+  "dashboard.trust_prompt_local": "Faire confiance à {origin} pour Dashboard Attach ?\n\nHermes Browser Extension utilisera la session connectée de votre onglet de tableau de bord actif pour demander un ticket WebSocket à usage unique et de courte durée. Ce tableau de bord s’exécute sur cet ordinateur : le contexte de la page que vous choisissez dans le panneau est donc partagé avec lui sans approbation distincte par connexion. Le ticket reste uniquement en mémoire et n’est jamais enregistré.",
   "context.attached_tab": "Onglet joint",
   "context.follow_active_tab": "Suivre l'onglet actif",
   "context.return_attached_tab": "Revenir à l'onglet attaché",
@@ -2308,4 +2310,6 @@ export default Object.freeze({
   "read_aloud.meta.gateway": "Source : tableau de bord Hermes (/api/audio/speak)",
   "read_aloud.meta.browser": "Source : ce navigateur (speechSynthesis)",
   "read_aloud.meta.none": "Source : aucune",
+  "settings.cloud_gateway_help": "Hermes Cloud utilise Trusted Dashboard Attach. Ouvrez le tableau de bord de l’agent connecté dans l’onglet actif, puis choisissez « Tester la connexion ». Le contexte de la page reste désactivé jusqu’à ce que vous approuviez « Partager le contexte de la page avec cette connexion » pour ce compte Cloud précis.",
+  "settings.remote_dashboard_setup_hint": "Trusted Dashboard Attach via WebSocket. Gardez le tableau de bord connecté comme onglet actif, puis utilisez « Tester la connexion » pour approuver son origine HTTPS. Le contexte de la page reste désactivé jusqu’à ce que vous approuviez son partage avec cette connexion précise. Aucune clé nécessaire.",
 });
