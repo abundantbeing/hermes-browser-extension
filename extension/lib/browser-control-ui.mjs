@@ -164,6 +164,20 @@ function unsupportedView({ enabled = false } = {}) {
 // capabilities without extension control, otherwise 'supported' or 'unknown'.
 export function browserControlView({ settings = {}, status = {}, activeTab = null, currentTarget = null, support = 'unknown' } = {}) {
   const enabled = settings?.browserControlEnabled === true;
+  const pendingApproval = status?.pendingApproval;
+  if (pendingApproval) {
+    return baseView({
+      state: 'approval',
+      tone: 'warn',
+      title: 'Approval needed',
+      detail: String(pendingApproval.reason || 'This browser action requires approval.'),
+      canEnable: false,
+      canPause: enabled,
+      canStop: enabled,
+      canDetach: enabled,
+      attention: true,
+    });
+  }
   if (support === 'unsupported') return unsupportedView({ enabled });
   if (!enabled) return baseView();
   if (status?.connected !== true) {
@@ -217,20 +231,6 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       title: 'Control unavailable',
       detail: 'Chromium debugger access is not available for this browser profile, so Hermes cannot operate tabs.',
       canEnable: false,
-      canDetach: true,
-      attention: true,
-    });
-  }
-  const pendingApproval = status?.pendingApproval;
-  if (pendingApproval) {
-    return baseView({
-      state: 'approval',
-      tone: 'warn',
-      title: 'Approval needed',
-      detail: String(pendingApproval.reason || 'This browser action requires approval.'),
-      canEnable: false,
-      canPause: true,
-      canStop: true,
       canDetach: true,
       attention: true,
     });

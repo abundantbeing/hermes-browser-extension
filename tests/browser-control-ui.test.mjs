@@ -131,6 +131,22 @@ test('Phase 6 visible state is derived from worker authority and exposes no argu
   assert.equal(approval.state, 'approval');
   assert.equal(approval.title, 'Approval needed');
   assert.equal(approval.detail, 'Press Enter to submit the current form or message?');
+
+  const taskApproval = browserControlView({
+    settings: { browserControlEnabled: false },
+    support: 'unsupported',
+    status: {
+      pendingApproval: {
+        approvalId: 'a2', commandId: 'c2', action: 'browser_tab_activate', tabId: 21,
+        documentGeneration: 1, reason: 'Switch to this task tab?',
+      },
+    },
+  });
+  assert.equal(taskApproval.state, 'approval');
+  assert.equal(taskApproval.title, 'Approval needed');
+  assert.equal(taskApproval.detail, 'Switch to this task tab?');
+  assert.equal(taskApproval.attention, true);
+  assert.equal(taskApproval.canPause, false);
 });
 
 test('Phase 6 distinguishes global controller state from exact current-tab authority', async () => {

@@ -1048,6 +1048,8 @@ function initActiveTaskTabsSetting() {
     row.hidden = !available && stored[ACTIVE_TASK_TABS] !== true;
     input.checked = stored[ACTIVE_TASK_TABS] === true;
     input.disabled = !available && stored[ACTIVE_TASK_TABS] !== true;
+    pollForTaskApprovals = input.checked === true;
+    scheduleBrowserControlPoll();
     if (available) status.textContent = '';
     else if (!row.hidden) status.textContent = t('browser_control.background_unavailable');
   }
@@ -2267,6 +2269,7 @@ let browserControlCurrentTarget = null;
 // The tab the Show tab button would bring forward, or null when it is hidden.
 let browserControlShowTabId = null;
 let browserControlPollTimer = null;
+let pollForTaskApprovals = false;
 let browserControlDialogUi = null;
 let latestUpdateReview = null;
 let sessionsRefreshing = false;
@@ -3884,7 +3887,7 @@ function renderBrowserControl() {
       status: statusLine,
     },
   });
-  els.browserControlStrip.hidden = !enabled;
+  els.browserControlStrip.hidden = !enabled && !pendingApproval;
   els.browserControlStrip.dataset.tone = view.tone;
   // The title and detail stay in the DOM for screen readers; the window shows the detail only when the person must act.
   els.browserControlStrip.dataset.attention = String(view.attention === true);
@@ -3952,10 +3955,14 @@ async function refreshBrowserControlStatus() {
 function scheduleBrowserControlPoll() {
   if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
   browserControlPollTimer = null;
-  if (settings.browserControlEnabled !== true || document.visibilityState === 'hidden') return;
-  // A Hermes without extension control never connects: polling it is a dead loop.
-  // A gateway or settings change re-arms the poll (setGatewayCapabilities, enable).
-  if (browserControlSupportState() === 'unsupported') return;
+  if (document.visibilityState === 'hidden') return;
+  const needTaskApprovals = pollForTaskApprovals || Boolean(browserControlStatus?.pendingApproval);
+  if (!needTaskApprovals) {
+    if (settings.browserControlEnabled !== true) return;
+    // A Hermes without extension control never connects: polling it is a dead loop.
+    // A gateway or settings change re-arms the poll (setGatewayCapabilities, enable).
+    if (browserControlSupportState() === 'unsupported') return;
+  }
   browserControlPollTimer = setTimeout(async () => {
     await refreshBrowserControlStatus();
     scheduleBrowserControlPoll();
