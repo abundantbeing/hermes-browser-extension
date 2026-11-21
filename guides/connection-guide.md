@@ -237,8 +237,10 @@ Hermes Cloud uses **Trusted Dashboard Attach**:
 
 The extension binds trust to that exact active tab and HTTPS origin, and verifies the tab again before minting. It mints a short-lived, single-use WebSocket ticket in the page, then verifies the WebSocket handshake before reporting success. The ticket is kept in memory only and is never stored or logged. Cloud never falls back to localhost or to a stored Local API key.
 
-Hermes Cloud is **chat-only** in this release:
-- Browser page text, selected text, open-tab context and attachments are disabled for this mode.
+Page context, attachments, and Hermes Control on Hermes Cloud:
+- Automatic browser page text, selected text, and open-tab context stay off until you approve **Share page context with this connection** in Settings for that exact verified Cloud account, profile, and origin (default off, fail closed).
+- Files and images you explicitly attach in the composer still send over the dashboard socket.
+- Hermes Control (tab actions, clicks, and typing) is not available on Cloud connections.
 - The extension does not read dashboard cookies, store a Cloud password, or add `cookies` or `nativeMessaging` permissions.
 
 If the connected Cloud agent does not expose `/api/auth/ws-ticket`, `/api/ws` or the required session and model RPC methods:
@@ -256,6 +258,7 @@ Sign-in uses a single-use WebSocket ticket minted from a signed-in dashboard tab
 - **Test connection** opens the socket and loads models, which confirms the whole path.
 
 Limits in this mode:
+- Automatic page context stays off until you approve **Share page context with this connection** for that exact verified dashboard account, profile, and origin; explicit user-chosen attachments still send over the socket, and Hermes Control is unavailable.
 - The skills and profiles lists are unavailable, because those routes are REST-only and the dashboard's REST routes are not reachable cross-origin.
 - Image handling depends on what the gateway accepts over the socket. See the capability rows in Settings > About & Diagnostics.
 - Projects, moving a session and Compact context work here only if the gateway reports session authority. This combination has not been exercised against a live gateway.
@@ -306,9 +309,9 @@ An unpacked build's id comes from its folder path, so it changes if you move the
 | Firefox | Install from [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/) (Firefox 142+) | Chat and context in a sidebar declared with `sidebar_action`, plus a restricted Hermes Control (read, navigate, scroll, screenshots you allow, tabs). The Firefox package omits the `debugger`, `offscreen` and `sidePanel` permissions, so there is no trusted input (no clicks or typing) and no control of controls inside frames. Every row and its reason: [firefox.md](./firefox.md). |
 | Safari | Not shipped | No Safari package is included. |
 | Local Hermes API server | Yes | Default path: `http://127.0.0.1:8642`, with `API_SERVER_KEY`. |
-| Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Chat-only. |
+| Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Page context stays off until approved per verified account/origin; explicit attachments send; Hermes Control unavailable. |
 | Remote API server | Yes, explicit address and key | Use Tailscale, an SSH tunnel, a trusted LAN or VPN, or an HTTPS reverse proxy; do not expose Hermes naked to the internet. |
-| Self-hosted remote dashboard WebSocket | Best-effort | Select Remote gateway with an HTTPS dashboard address and no API key. Chat, session and model path only. |
+| Self-hosted remote dashboard WebSocket | Best-effort | Select Remote gateway with an HTTPS dashboard address and no API key. Page context stays off until approved per verified account/origin; explicit attachments send; Hermes Control unavailable. |
 | Automatic pairing (Connect to Hermes) | Needs pairing routes | Stock Hermes does not ship them. Use Manual setup with the address and key. |
 | Full-page Hermes Web view | Retired | The side panel is the supported browser surface. |
 | Browser Context Protocol | Yes | Typed `hermes.browser.turn.v2` envelopes, with the v1 payload compatibility path. |
