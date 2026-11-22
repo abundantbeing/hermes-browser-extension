@@ -20,8 +20,10 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
 ## What the extension does about it
 
 - **Nothing is read in the background.** A page reaches Hermes only when you share it or ask about it.
-- **Hidden text is dropped before it is sent.** The page reader leaves out text you cannot see: hidden by CSS or
-  attributes, transparent, zero-size, the same colour as its background, placed off the page, or in HTML comments. Text written for screen readers is kept: it is real content for people who use one.
+- **The common ways to hide text are filtered out.** The page reader leaves out text hidden by CSS or attributes,
+  transparent, zero-size, the same colour as the solid background behind it, laid out off the page, or in HTML
+  comments. Text written for screen readers is kept: it is real content for people who use one. This narrows what a
+  page can slip in; it is not a guarantee (see below).
 - **Page text is marked as untrusted.** It reaches the model between `UNTRUSTED_BROWSER_CONTEXT_START` and
   `UNTRUSTED_BROWSER_CONTEXT_END`, after a rule that page content is reference data, not instructions. A page that
   writes those markers itself cannot close the block or open a fake request.
@@ -40,6 +42,9 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
 
 - **It cannot make a model immune to persuasion.** Marking page text as untrusted lowers the risk; the model still
   decides what to do.
+- **It cannot catch every way to hide text.** Text hidden in ways the reader does not recognise (under a picture, in a
+  font that draws nothing, in a colour close to a busy background) still reaches the model, inside the untrusted
+  block. So does anything the page shows openly.
 - **Reading is not an action.** Hermes can read what is on an attached tab without asking, including other content
   you are signed in to on that site.
 - **The approval check goes by what a control says.** A button named something harmless that does something
