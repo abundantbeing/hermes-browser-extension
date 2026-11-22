@@ -465,13 +465,27 @@ function solidBackdrop(node, view, scan) {
   return found;
 }
 
-// Every element that paints something (a background, a picture, a table column), measured once per page.
+// An element hidden itself or by an ancestor (display, visibility, opacity 0) paints nothing, whatever its background.
+function paintsVisibly(element, view) {
+  try {
+    if (typeof element?.checkVisibility === 'function') return element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+  } catch {
+    // older engines reject the options: walk the ancestors below
+  }
+  for (let current = element; current; current = current.parentElement) {
+    if (liveNodeIsHidden(current, { defaultView: view })) return false;
+  }
+  return true;
+}
+
+// Every visible element that paints something (a background, a picture, a table column), measured once per page.
 function paintersOf(view, scan) {
   if (!scan.painters) {
     scan.painters = [];
     for (const element of scan.liveNodes) {
       try {
         if (!PAINTING_TAGS.has(String(element.tagName || '').toUpperCase()) && !paintsBackground(view.getComputedStyle(element))) continue;
+        if (!paintsVisibly(element, view)) continue;
         const rect = element.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) scan.painters.push({ element, rect });
       } catch {
@@ -504,11 +518,47 @@ function textNodeRects(text, document) {
 
 const ownTextRects = (node, document) => ownTextNodes(node).flatMap((text) => textNodeRects(text, document));
 
+// An ancestor with a transform, filter, perspective, paint containment or a will-change for them becomes the box a
+// fixed element is positioned against, so that element scrolls with the page instead of staying in the window.
+function anchorsFixedDescendants(style) {
+  const set = (value) => String(value || 'none') !== 'none';
+  return set(style?.transform) || set(style?.filter) || set(style?.perspective) || set(style?.backdropFilter)
+    || /\b(?:paint|layout|strict|content)\b/.test(String(style?.contain || ''))
+    || /\b(?:transform|filter|perspective)\b/.test(String(style?.willChange || ''));
+}
+
+// Whether the node is laid out against the window itself: inside a fixed element whose fixed position is not
+// re-anchored to a transformed (or filtered, contained) ancestor.
 function fixedToViewport(node, view) {
-  for (let current = node; current; current = current.parentElement) {
-    if (view.getComputedStyle(current)?.position === 'fixed') return true;
+  let current = node;
+  while (current) {
+    if (view.getComputedStyle(current)?.position !== 'fixed') {
+      current = current.parentElement;
+      continue;
+    }
+    let anchor = null;
+    for (let ancestor = current.parentElement; ancestor; ancestor = ancestor.parentElement) {
+      if (anchorsFixedDescendants(view.getComputedStyle(ancestor))) { anchor = ancestor; break; }
+    }
+    if (!anchor) return true;
+    // the anchor scrolls with the page unless it is itself fixed to the window: judge it next
+    current = anchor;
   }
   return false;
+}
+
+// How far the page and every box the node sits in have been scrolled: text scrolled out of a box is still
+// reachable by scrolling it back.
+function scrolledBy(node, view) {
+  let x = view.scrollX || 0;
+  let y = view.scrollY || 0;
+  const scrolling = view.document?.scrollingElement;
+  for (let current = node?.parentElement; current; current = current.parentElement) {
+    if (current === scrolling) continue;
+    x += current.scrollLeft || 0;
+    y += current.scrollTop || 0;
+  }
+  return { x, y };
 }
 
 // Where the text itself was laid out, not its box: wholly beyond the top or left edge of the page, or, for text
@@ -521,12 +571,13 @@ function textIsOffPage(rects, node, view) {
   if (fixedToViewport(node, view)) {
     return rects.every((r) => r.right < -margin || r.bottom < -margin || r.left > view.innerWidth + margin || r.top > view.innerHeight + margin);
   }
-  return rects.every((r) => r.right + (view.scrollX || 0) < -margin || r.bottom + (view.scrollY || 0) < -margin);
+  const scrolled = scrolledBy(node, view);
+  return rects.every((r) => r.right + scrolled.x < -margin || r.bottom + scrolled.y < -margin);
 }
 
-// Text a person cannot read: no size, no ink, or ink the colour of the solid background behind it (text laid out
-// off the page is removed per text node, by removeOffPageText). Only the element's own text is judged (children carry their own styles and positions), and a
-// gradient fill, a shadow or an outline keeps the text readable.
+// Text a person cannot read: no size, no ink, or ink the colour of the solid background behind it (text laid
+// out off the page is removed per text node, by removeOffPageText). Only the element's own text is judged
+// (children carry their own styles and positions), and a gradient fill, a shadow or an outline keeps it readable.
 function ownTextIsInvisible(node, document, scan) {
   const view = document?.defaultView;
   if (!ownTextNodes(node).length || typeof view?.getComputedStyle !== 'function' || typeof document?.createRange !== 'function') return false;
@@ -555,31 +606,40 @@ function removeOwnText(node) {
   for (const child of Array.from(node?.childNodes || [])) if (child.nodeType === 3) child.remove?.();
 }
 
+// Each live text node and its copy in the clone, paired while the two trees are still identical, so removing
+// one hidden child can never shift which copy another text node points at.
+function pairTextNodes(liveRoot, clone, document) {
+  const pairs = new Map();
+  if (typeof document?.createTreeWalker !== 'function') return pairs;
+  const live = document.createTreeWalker(liveRoot, 4);
+  const copy = document.createTreeWalker(clone, 4);
+  for (let a = live.nextNode(), b = copy.nextNode(); a && b; a = live.nextNode(), b = copy.nextNode()) pairs.set(a, b);
+  return pairs;
+}
+
 // Each own text node laid out wholly off the page is removed on its own, so a hidden first line goes and a
-// readable later line stays. Live and cloned children line up one to one.
-function removeOffPageText(liveNode, cloneNode, document) {
+// readable later line stays.
+function removeOffPageText(liveNode, document, copies) {
   const view = document?.defaultView;
   if (typeof view?.getComputedStyle !== 'function' || typeof document?.createRange !== 'function') return 0;
-  const liveChildren = Array.from(liveNode?.childNodes || []);
-  const cloneChildren = Array.from(cloneNode?.childNodes || []);
   let removed = 0;
-  liveChildren.forEach((child, index) => {
-    if (child.nodeType !== 3 || !/\S/.test(child.nodeValue || '')) return;
+  for (const child of ownTextNodes(liveNode)) {
     try {
       if (textIsOffPage(textNodeRects(child, document), liveNode, view)) {
-        cloneChildren[index]?.remove?.();
+        copies.get(child)?.remove?.();
         removed += 1;
       }
     } catch {
       // text that cannot be measured is kept
     }
-  });
+  }
   return removed;
 }
 
 function cloneVisibleRoot(document, liveRoot) {
   const clone = liveRoot?.cloneNode?.(true) || null;
   if (!clone) return { clone: null, omittedNodes: 0 };
+  const copies = pairTextNodes(liveRoot, clone, document);
   const liveNodes = [liveRoot, ...Array.from(liveRoot?.querySelectorAll?.('*') || [])];
   const cloneNodes = [clone, ...Array.from(clone?.querySelectorAll?.('*') || [])];
   const inspected = Math.min(liveNodes.length, cloneNodes.length, MAX_VISIBILITY_NODES);
@@ -594,7 +654,7 @@ function cloneVisibleRoot(document, liveRoot) {
       removeOwnText(cloneNodes[index]);
       omittedNodes += 1;
     } else {
-      omittedNodes += removeOffPageText(liveNodes[index], cloneNodes[index], document);
+      omittedNodes += removeOffPageText(liveNodes[index], document, copies);
     }
   }
   // the root's own text (usually <body>'s) is judged the same way; its children were judged above
@@ -602,7 +662,7 @@ function cloneVisibleRoot(document, liveRoot) {
     removeOwnText(clone);
     omittedNodes += 1;
   } else {
-    omittedNodes += removeOffPageText(liveRoot, clone, document);
+    omittedNodes += removeOffPageText(liveRoot, document, copies);
   }
   if (liveNodeIsHidden(liveRoot, document)) {
     for (const child of Array.from(clone.childNodes || [])) child.remove?.();

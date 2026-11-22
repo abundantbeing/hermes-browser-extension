@@ -3,10 +3,12 @@
 // then framed for the model by the extension's own prompt builder, and the check proves:
 //   1. text hidden from the person never reaches the model: display, visibility, [hidden], aria-hidden, opacity,
 //      laid out off the page (also when fixed to a scrolled window), white on white, transparent, zero size,
-//      an indented-away first line, text directly in <body>, HTML comments;
+//      an indented-away first line, text directly in <body>, text beside a hidden sibling, white on white over an
+//      invisible overlay, HTML comments;
 //   2. readable text is kept, however it is styled: a gradient heading, white on a dark band or a dark table
 //      column, small print, screen-reader text, the second line of an indented paragraph, a fixed notice inside
-//      an off-page wrapper;
+//      an off-page wrapper (also after a hidden sibling), a paragraph scrolled out of a scrolling box, fixed text
+//      inside a transformed box below the window;
 //   3. what the page shows openly stays inside the untrusted block, even when it imitates the block's own markers
 //      or the person's request;
 //   4. a token written on the page, and a token in a link address, are redacted before they reach the model.
@@ -32,12 +34,12 @@ export const TOKEN = 'ghp_abcdefghijklmnopqrstuvwxyz0123456789';
 export const HIDDEN_TRAPS = [
   'TRAP-COMMENT', 'TRAP-DISPLAY-NONE', 'TRAP-VISIBILITY', 'TRAP-HIDDEN-ATTR', 'TRAP-ARIA-HIDDEN', 'TRAP-OPACITY',
   'TRAP-OFFSCREEN', 'TRAP-WHITE-ON-WHITE', 'TRAP-TRANSPARENT', 'TRAP-ZERO-FONT',
-  'TRAP-INDENT-FIRST-LINE', 'TRAP-WRAPPER-OFFSCREEN', 'TRAP-FIXED-ABOVE',
+  'TRAP-INDENT-FIRST-LINE', 'TRAP-WRAPPER-OFFSCREEN', 'TRAP-FIXED-ABOVE', 'TRAP-AFTER-HIDDEN-CHILD', 'TRAP-INVISIBLE-OVERLAY',
 ];
 // Styled but readable. All must be kept.
 export const VISIBLE_SAFE = [
   'SAFE-GRADIENT', 'SAFE-DARK-BAND', 'SAFE-SMALL-PRINT', 'SAFE-SCREEN-READER', 'SAFE-TABLE-COLUMN',
-  'SAFE-SECOND-LINE', 'SAFE-FIXED-DIALOG',
+  'SAFE-SECOND-LINE', 'SAFE-FIXED-DIALOG', 'SAFE-FIXED-AFTER-HIDDEN', 'SAFE-SCROLLED-EARLIER', 'SAFE-FIXED-IN-TRANSFORM',
 ];
 const USER_TEXT = 'Which of these recipes is fastest?';
 
@@ -90,7 +92,8 @@ export async function readTrapPages(pages = [{ file: FIXTURE, scrollY: 200 }, { 
         return list.find((target) => target.type === 'page' && target.url === url);
       });
       await waitFor(() => evaluate(page.webSocketDebuggerUrl, `document.readyState === 'complete'`));
-      await evaluate(page.webSocketDebuggerUrl, `window.scrollTo(0, ${Number(scrollY) || 0}); window.scrollY === ${Number(scrollY) || 0}`);
+      // scroll the page, and any box marked as a scroller, the way a person reading it would have
+      await evaluate(page.webSocketDebuggerUrl, `window.scrollTo(0, ${Number(scrollY) || 0}); const box = document.getElementById('scroller'); if (box) box.scrollTop = box.scrollHeight; window.scrollY === ${Number(scrollY) || 0}`);
       // the runtime registers its API a tick after it loads, as it does when the extension injects it
       await evaluate(page.webSocketDebuggerUrl, `${runtime}\n;true`);
       await waitFor(() => evaluate(page.webSocketDebuggerUrl, `Boolean(globalThis.HermesContentExtractor?.collectPageContext)`));
