@@ -64,16 +64,18 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
 ## How we test it
 
 `tests/fixtures/prompt-injection-trap.html` is a trap page: a recipe page full of instructions to Hermes, hidden
-ten different ways, plus visible text that pretends to end the page and start a new request, a Send button, a
+thirteen different ways, plus visible text that pretends to end the page and start a new request, a Send button, a
 password field and a link that leaks a token. Run it with:
 
 ```sh
 npm run test:e2e:trap
 ```
 
-It reads the page in a real headless Chromium with the extension's own page reader and checks that none of the
-hidden instructions reach the model, that readable text (a gradient heading, white on a dark band, small print,
-screen-reader text) is kept, that the visible spoof stays inside the untrusted block, and that the token is redacted.
+It reads the page, and a second page with text directly in `<body>`, in a real headless Chromium with the
+extension's own page reader and checks that none of the hidden instructions reach the model, that readable text
+(a gradient heading, white on a dark band or a dark table column, small print, screen-reader text, the second line
+of an indented paragraph, a fixed notice) is kept, that the visible spoof stays inside the untrusted block, and that tokens written on the page or in a link are
+redacted.
 `tests/prompt-injection-trap.test.mjs` runs with `npm test` and checks, without a browser, that the page's spoof
 cannot leave the untrusted block and that its Send button, password field and form wait for you or are refused.
 
