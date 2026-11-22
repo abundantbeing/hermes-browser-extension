@@ -2,7 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- **A guide to using the extension safely, and a trap page in the tests.** [guides/security.md](./guides/security.md) says plainly what an agent in your browser can and cannot do, what the extension guards against, what it cannot, and a setup that keeps a mistake small; the README and the plugin's install guide point to it before Hermes Control. `npm run test:e2e:trap` reads a page full of hidden instructions in a real headless Chromium with the extension's own page reader and fails if any of them would reach the model.
+
 ### Changed
+
+- **Text you cannot see is no longer sent with a page.** Besides text hidden by CSS and attributes, the page reader now leaves out text placed beyond the edge of the page, and text with zero size, a transparent fill, a far negative indent, or the same colour as the solid background behind it. These are common places for instructions meant to steer an AI agent. A gradient fill, a shadow or an outline keeps text readable, and readable styled text and screen-reader text are checked to be kept.
 
 - **Hermes Cloud is no longer labeled Preview.** The connection mode, settings help, voice copy, and data-flow docs now say Hermes Cloud. Saved connections are unchanged: the internal mode value is still `cloud`.
 

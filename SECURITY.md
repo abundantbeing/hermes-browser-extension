@@ -40,7 +40,11 @@ Control is disabled by default. Enabling it registers one authenticated MV3 cont
 
 Extension pages carry a content security policy with `object-src 'none'`, `base-uri 'none'`, `form-action 'none'` and a `frame-src` limited to `http://127.0.0.1:*` and `http://localhost:*`. The one thing framed there is a local gateway's pairing approval page, which only the extension that asked to pair is allowed to frame, in an iframe sandboxed to `allow-forms allow-same-origin`; a gateway that does not offer that opens the page in a tab instead. Response styles do not widen this: Vivid UI blocks are validated JSON drawn by the extension, never HTML, script or network requests, and no block action can send a message, run a Hermes Control command or skip an approval.
 
+The page reader leaves out text a person cannot see before anything is sent: elements hidden by `display`, `visibility`, `[hidden]`, `inert`, `aria-hidden` or zero opacity, positioned wholly beyond the top or left edge of the page, and text with zero size, a transparent fill, an indent far out of its box, or the same colour as the solid background behind it (a gradient fill, a shadow or an outline keeps text readable). Screen-reader-only text is kept: it is real content for people who use a screen reader. HTML comments are never read.
+
 Page text is wrapped in a block labeled `UNTRUSTED_BROWSER_CONTEXT_START` / `UNTRUSTED_BROWSER_CONTEXT_END`. Webpage text cannot authorize control, alter policy, or grant approvals. Browser actions require a user request plus controller policy, and privileged actions still require the separate approval flow.
+
+`npm run test:e2e:trap` reads a trap page (`tests/fixtures/prompt-injection-trap.html`) in a real headless Chromium with the extension's page reader and fails if any of its ten hidden instructions reaches the model, if readable styled text is dropped, or if its visible fake markers escape the untrusted block. What these defenses cannot do, and a safe setup, are in [guides/security.md](guides/security.md).
 
 ## Restricted pages and credentials
 
