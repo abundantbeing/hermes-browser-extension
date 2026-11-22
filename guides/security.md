@@ -21,9 +21,9 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
 
 - **Nothing is read in the background.** A page reaches Hermes only when you share it or ask about it.
 - **The common ways to hide text are filtered out.** The page reader leaves out text hidden by CSS or attributes,
-  transparent, zero-size, the same colour as the solid background behind it, laid out off the page, or in HTML
-  comments. Text written for screen readers is kept: it is real content for people who use one. This narrows what a
-  page can slip in; it is not a guarantee (see below).
+  text too small to read, text with no visible ink (transparent or nearly so, in any colour format), text laid out where
+  no scrolling can reach it, and HTML comments. Text written for screen readers is kept while it stays on the page: it is
+  real content for people who use one. This narrows what a page can slip in; it is not a guarantee (see below).
 - **Page text is marked as untrusted.** It reaches the model between `UNTRUSTED_BROWSER_CONTEXT_START` and
   `UNTRUSTED_BROWSER_CONTEXT_END`, after a rule that page content is reference data, not instructions. A page that
   writes those markers itself cannot close the block or open a fake request.
@@ -42,8 +42,9 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
 
 - **It cannot make a model immune to persuasion.** Marking page text as untrusted lowers the risk; the model still
   decides what to do.
-- **It cannot catch every way to hide text.** Text hidden in ways the reader does not recognise (under a picture, in a
-  font that draws nothing, in a colour close to a busy background) still reaches the model, inside the untrusted
+- **It cannot catch every way to hide text.** Text the same colour as whatever is behind it (white on white, text
+  under a picture, in a font that draws nothing, clipped out of a box that cannot scroll), or text in the same run as
+  readable text but pushed partly off the page, is not detected: it still reaches the model, inside the untrusted
   block. So does anything the page shows openly.
 - **Reading is not an action.** Hermes can read what is on an attached tab without asking, including other content
   you are signed in to on that site.
@@ -68,19 +69,21 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
 
 ## How we test it
 
-`tests/fixtures/prompt-injection-trap.html` is a trap page: a recipe page full of instructions to Hermes, hidden
-thirteen different ways, plus visible text that pretends to end the page and start a new request, a Send button, a
-password field and a link that leaks a token. Run it with:
+`tests/fixtures/prompt-injection-trap.html` is a trap page: a recipe page carrying twenty instructions to Hermes,
+each hidden a different way, plus visible text that pretends to end the page and start a new request, a Send
+button, a password field and a token in the text and in a link. Three more pages put hidden text directly in
+`<body>`, use the browser's dark scheme, and use vertical writing. Run them with:
 
 ```sh
 npm run test:e2e:trap
 ```
 
-It reads the page, and a second page with text directly in `<body>`, in a real headless Chromium with the
-extension's own page reader and checks that none of the hidden instructions reach the model, that readable text
-(a gradient heading, white on a dark band or a dark table column, small print, screen-reader text, the second line
-of an indented paragraph, a fixed notice) is kept, that the visible spoof stays inside the untrusted block, and that tokens written on the page or in a link are
-redacted.
+It reads the pages in a real headless Chromium with the extension's own page reader, after scrolling them and their
+scrolling boxes the way a reader would, and checks that none of the hidden instructions reach the model, that
+readable text (styled, scrolled, right-to-left, vertical, in reversed boxes, on dark pages) is kept, that the
+documented gaps stay inside the untrusted block, that the visible spoof stays inside it too, and that tokens written
+on the page or in a link are redacted.
+
 `tests/prompt-injection-trap.test.mjs` runs with `npm test` and checks, without a browser, that the page's spoof
 cannot leave the untrusted block and that its Send button, password field and form wait for you or are refused.
 

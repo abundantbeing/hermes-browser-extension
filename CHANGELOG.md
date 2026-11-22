@@ -8,7 +8,7 @@
 
 ### Changed
 
-- **Text you cannot see is no longer sent with a page.** Besides text hidden by CSS and attributes, the page reader now leaves out text laid out beyond the edge of the page (or outside the window, for text fixed to it), text with zero size or a transparent fill, and text the same colour as the solid background behind it when nothing else paints there. These are common places for instructions meant to steer an AI agent. A gradient fill, a shadow or an outline keeps text readable, and readable styled text (a dark table column, the second line of an indented paragraph, a fixed notice, screen-reader text) is checked to be kept.
+- **Text you cannot see is no longer sent with a page.** Besides text hidden by CSS and attributes, the page reader now leaves out text too small to read (under 4px), text with no visible ink (in any colour format, counting the opacity of its ancestors), and text laid out where no scrolling can reach it (following what really moves it, in right-to-left, vertical and reversed boxes too). These are common places for instructions meant to steer an AI agent. Readable text is checked to be kept, including on dark-scheme and vertical pages; text the same colour as its background, and a line only partly off the page, are documented limits. Text inside a `display: contents` wrapper is no longer dropped.
 
 - **Hermes Cloud is no longer labeled Preview.** The connection mode, settings help, voice copy, and data-flow docs now say Hermes Cloud. Saved connections are unchanged: the internal mode value is still `cloud`.
 
