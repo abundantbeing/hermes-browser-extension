@@ -5,7 +5,7 @@
     : Promise.resolve(!globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__);
   return policyReady.then(function hermesContentExtractorGate(inject) {
     if (!inject) return;
-/* extension/lib/content-extraction-core.mjs · SHA-256 62d0b33e7f417d7a */
+/* extension/lib/content-extraction-core.mjs · SHA-256 393133bfb8f7a42f */
 (function hermesContentExtractorRuntime(hermesGlobal) {
   'use strict';
 
@@ -437,12 +437,85 @@ function computedStyleHidesNode(node, document) {
   }
 }
 
+// Placed where nobody can scroll to it: wholly beyond the top or left edge of the page. Screen-reader-only text
+// (a 1px clipped box at the edge) is real content for people who use a screen reader, so it is kept.
+const OFF_PAGE_MARGIN_PX = 8;
+function placedOutOfSight(node, document) {
+  const view = document?.defaultView;
+  if (typeof node?.getBoundingClientRect !== 'function' || typeof view?.getComputedStyle !== 'function') return false;
+  try {
+    const style = view.getComputedStyle(node);
+    if (!['absolute', 'fixed'].includes(style?.position)) return false;
+    const rect = node.getBoundingClientRect();
+    return rect.right + (view.scrollX || 0) < -OFF_PAGE_MARGIN_PX || rect.bottom + (view.scrollY || 0) < -OFF_PAGE_MARGIN_PX;
+  } catch {
+    return false;
+  }
+}
+
 function liveNodeIsHidden(node, document) {
   return node?.hasAttribute?.('hidden')
     || node?.hasAttribute?.('inert')
     || node?.getAttribute?.('aria-hidden') === 'true'
     || inlineStyleHidesNode(node)
-    || computedStyleHidesNode(node, document);
+    || computedStyleHidesNode(node, document)
+    || placedOutOfSight(node, document);
+}
+
+function rgbaOf(value) {
+  const match = /rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)/.exec(String(value || ''));
+  if (!match) return null;
+  const alphaText = match[4];
+  const alpha = alphaText === undefined ? 1 : alphaText.endsWith('%') ? Number.parseFloat(alphaText) / 100 : Number.parseFloat(alphaText);
+  return { r: Number(match[1]), g: Number(match[2]), b: Number(match[3]), a: alpha };
+}
+
+// The solid colour behind a node, or null when a picture or gradient may sit behind its text.
+function solidBackdrop(node, view, cache) {
+  const chain = [];
+  let found = null;
+  for (let current = node; current; current = current.parentElement) {
+    if (cache.has(current)) { found = cache.get(current); break; }
+    chain.push(current);
+    const style = view.getComputedStyle(current);
+    if (String(style?.backgroundImage || 'none') !== 'none') { found = null; break; }
+    const colour = rgbaOf(style?.backgroundColor);
+    if (colour && colour.a >= 0.99) { found = colour; break; }
+    if (colour && colour.a > 0.01) { found = null; break; }
+    if (!current.parentElement) found = { r: 255, g: 255, b: 255, a: 1 };
+  }
+  for (const element of chain) cache.set(element, found);
+  return found;
+}
+
+const hasOwnText = (node) => Array.from(node?.childNodes || []).some((child) => child.nodeType === 3 && /\S/.test(child.nodeValue || ''));
+
+// Text a person cannot read even though its box is on the page: no size, no ink, ink the colour of the solid
+// background, or indented far out of its box. Only the element's own text is judged (children carry their own
+// styles), and a gradient fill, a shadow or an outline keeps the text readable.
+function ownTextIsInvisible(node, document, cache) {
+  const view = document?.defaultView;
+  if (!hasOwnText(node) || typeof view?.getComputedStyle !== 'function') return false;
+  try {
+    const style = view.getComputedStyle(node);
+    if (Number.parseFloat(style?.fontSize) === 0) return true;
+    if (Number.parseFloat(style?.textIndent) <= -999) return true;
+    const clippedFill = [style?.backgroundClip, style?.webkitBackgroundClip].some((clip) => String(clip || '').includes('text'));
+    const outlined = String(style?.textShadow || 'none') !== 'none' || Number.parseFloat(style?.webkitTextStrokeWidth) > 0;
+    if (clippedFill || outlined) return false;
+    const ink = rgbaOf(style?.webkitTextFillColor) || rgbaOf(style?.color);
+    if (!ink) return false;
+    if (ink.a <= 0.01) return true;
+    const backdrop = solidBackdrop(node, view, cache);
+    return Boolean(backdrop) && ink.a >= 0.99
+      && Math.max(Math.abs(ink.r - backdrop.r), Math.abs(ink.g - backdrop.g), Math.abs(ink.b - backdrop.b)) <= 8;
+  } catch {
+    return false;
+  }
+}
+
+function removeOwnText(node) {
+  for (const child of Array.from(node?.childNodes || [])) if (child.nodeType === 3) child.remove?.();
 }
 
 function cloneVisibleRoot(document, liveRoot) {
@@ -453,10 +526,15 @@ function cloneVisibleRoot(document, liveRoot) {
   const inspected = Math.min(liveNodes.length, cloneNodes.length, MAX_VISIBILITY_NODES);
   let omittedNodes = Math.max(0, cloneNodes.length - inspected);
   for (let index = cloneNodes.length - 1; index >= inspected; index -= 1) cloneNodes[index]?.remove?.();
+  const backdrops = new Map();
   for (let index = inspected - 1; index >= 1; index -= 1) {
-    if (!liveNodeIsHidden(liveNodes[index], document)) continue;
-    cloneNodes[index]?.remove?.();
-    omittedNodes += 1;
+    if (liveNodeIsHidden(liveNodes[index], document)) {
+      cloneNodes[index]?.remove?.();
+      omittedNodes += 1;
+    } else if (ownTextIsInvisible(liveNodes[index], document, backdrops)) {
+      removeOwnText(cloneNodes[index]);
+      omittedNodes += 1;
+    }
   }
   if (liveNodeIsHidden(liveRoot, document)) {
     for (const child of Array.from(clone.childNodes || [])) child.remove?.();

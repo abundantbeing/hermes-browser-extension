@@ -55,6 +55,7 @@
     "bench:startup": "node scripts/bench-startup.mjs",
     "test:hover-guard": "npm run build && node -e \"process.env.HOVER_GUARD_ONLY='1'; import('./tests/e2e-effort-slider.mjs')\"",
     "test:e2e:loaded": "npm run build && node tests/e2e-loaded-extension.mjs",
+    "test:e2e:trap": "npm run build:content-runtime && node tests/e2e-prompt-injection-trap.mjs",
     "test:e2e:voice": "npm run build && node tests/e2e-voice-wingbeat.mjs",
     "test:e2e:read-aloud": "npm run build && node tests/e2e-read-aloud.mjs",
     "test:e2e:saved-connections": "npm run build && node tests/e2e-saved-connections.mjs",
