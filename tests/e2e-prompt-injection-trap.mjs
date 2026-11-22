@@ -4,12 +4,14 @@
 //   1. text hidden from the person never reaches the model: display, visibility, [hidden], aria-hidden, opacity,
 //      laid out off the page (also when fixed to a scrolled window), white on white, transparent, zero size,
 //      an indented-away first line, text directly in <body>, text beside a hidden sibling, white on white over an
-//      invisible overlay, an absolute child anchored outside a scrolled box and lifted above the page, HTML comments;
+//      invisible overlay, an absolute child anchored outside a scrolled box and lifted above the page, text shrunk
+//      or rotated below a readable size, fixed text inside a boxless or inline transformed wrapper, HTML comments;
 //   2. readable text is kept, however it is styled: a gradient heading, white on a dark band or a dark table
 //      column, small print, screen-reader text, the second line of an indented paragraph, a fixed notice inside
 //      an off-page wrapper (also after a hidden sibling), a paragraph scrolled out of a scrolling box, fixed text
 //      inside a transformed box below the window, visible text in a right-to-left box scrolled to its far end, the
-//      oldest message of a bottom-up chat box scrolled into view;
+//      oldest message of a bottom-up chat box scrolled into view, tiny text scaled or zoomed up, inline text with
+//      overflow set, text in a fixed panel wider than the window, text inside fourteen nested scrolling boxes;
 //   3. what the page shows openly stays inside the untrusted block, even when it imitates the block's own markers
 //      or the person's request;
 //   4. a token written on the page, and a token in a link address, are redacted before they reach the model.
@@ -43,6 +45,8 @@ export const HIDDEN_TRAPS = [
   'TRAP-INDENT-FIRST-LINE', 'TRAP-WRAPPER-OFFSCREEN', 'TRAP-FIXED-ABOVE', 'TRAP-AFTER-HIDDEN-CHILD',
   'TRAP-ABS-OUTSIDE-SCROLLER', 'TRAP-ABOVE-AUTO-BOX', 'TRAP-FONT-2PX', 'TRAP-SCROLL-STATE', 'TRAP-OKLCH-CLEAR', 'TRAP-SHADOW-CLEAR',
   'TRAP-FAINT', 'TRAP-NEAR-ZERO-OPACITY', 'TRAP-TINYFONT', 'TRAP-VIS-PARENT', 'TRAP-STRADDLE',
+  'TRAP-ROTATED-FONT', 'TRAP-SHRUNK-FONT', 'TRAP-CONTENTS-ANCHOR', 'TRAP-INLINE-ANCHOR', 'TRAP-ZERO-SCROLL-BOX',
+  'TRAP-SCALE-ZERO',
 ];
 // Hidden in ways the reader does not judge (text the colour of what is behind it). A documented limit: they may
 // reach the model, but only inside the untrusted block.
@@ -57,6 +61,8 @@ export const VISIBLE_SAFE = [
   'SAFE-VERTICAL-BOX', 'SAFE-VERTICAL-BOX-END', 'SAFE-ROW-REVERSE-RTL', 'SAFE-PARTIAL-TAIL',
   'SAFE-CONTENTS-OPACITY', 'SAFE-VIS-CHILD', 'SAFE-FIXED-IN-TRANSLATE', 'SAFE-CJK-TAIL',
   'SAFE-WILL-CHANGE-ANCHOR', 'SAFE-PRESERVE-3D-ANCHOR', 'SAFE-CLASS-CONTENTS-OPACITY', 'SAFE-ZOOM-BOX',
+  'SAFE-SCALED-FONT', 'SAFE-ZOOMED-FONT', 'SAFE-INLINE-OVERFLOW', 'SAFE-WIDE-PANEL', 'SAFE-ROTATED-LABEL',
+  'SAFE-ZOOM-SCALE-FONT',
 ];
 const USER_TEXT = 'Which of these recipes is fastest?';
 
@@ -174,6 +180,10 @@ async function main() {
   const longText = String(longPage.context.text || '');
   assert.ok(longPage.elapsedMs < LONG_PAGE_BUDGET_MS, `reading the long-line page took ${Math.round(longPage.elapsedMs)} ms (budget ${LONG_PAGE_BUDGET_MS} ms)`);
   assert.match(longText, /SAFE-LONG-INTRO/, 'the long-line page lost its intro');
+  assert.match(longText, /SAFE-NESTED-DEEP/, 'text inside nested scrolling boxes was dropped');
+  assert.ok(!JSON.stringify(longPage.context).includes('TRAP-NESTED-OFF-WINDOW'), 'text in nested boxes fixed below the window reached the reader output');
+  // the long line is partly off the page and kept whole: its readable words inside the output limit survive
+  assert.match(longText, / w100 /, 'the readable part of the long line was dropped');
 
   // 3. what the page shows openly is framed as untrusted, and its fake markers cannot close the frame
   const prompt = trapPrompt(context);

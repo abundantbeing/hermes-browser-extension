@@ -5,7 +5,7 @@
     : Promise.resolve(!globalThis.__HERMES_PAGE_SCRIPTS_BLOCKED__);
   return policyReady.then(function hermesContentExtractorGate(inject) {
     if (!inject) return;
-/* extension/lib/content-extraction-core.mjs · SHA-256 f01b4e852baeb238 */
+/* extension/lib/content-extraction-core.mjs · SHA-256 60d4f9ecfc04617b */
 (function hermesContentExtractorRuntime(hermesGlobal) {
   'use strict';
 
@@ -529,6 +529,49 @@ function drawsVisibly(list, readColour, fallback) {
 
 const ownTextNodes = (node) => Array.from(node?.childNodes || []).filter((child) => child.nodeType === 3 && /\S/.test(child.nodeValue || ''));
 
+// How much a transform stretches what it draws, along its narrower direction: the smaller singular value of its 2D
+// part, so a rotation or a move stretches nothing and a squash counts. A 3D matrix is read through its perspective.
+function transformStretch(value) {
+  const numbers = String(value || '').replace(/^[^(]*\(/, '').match(/-?[\d.]+(?:e-?\d+)?/gi)?.map(Number) || [];
+  let a = 1;
+  let b = 0;
+  let c = 0;
+  let d = 1;
+  if (/^matrix3d\(/.test(String(value)) && numbers.length >= 16) {
+    const w = numbers[15] > 0 ? numbers[15] : 1;
+    [a, b, c, d] = [numbers[0] / w, numbers[1] / w, numbers[4] / w, numbers[5] / w];
+  } else if (/^matrix\(/.test(String(value)) && numbers.length >= 6) {
+    [a, b, c, d] = numbers;
+  }
+  const sum = a * a + b * b + c * c + d * d;
+  const det = a * d - b * c;
+  return Math.sqrt(Math.max(0, (sum - Math.sqrt(Math.max(0, sum * sum - 4 * det * det))) / 2));
+}
+
+// How much transforms, the scale property and zoom on the element and its ancestors stretch its text, cached per
+// element. An inline element and display:contents draw no transformable box, so their transforms do nothing.
+function drawnScale(node, view, scan) {
+  if (!node || node.nodeType !== 1) return 1;
+  if (scan.scale.has(node)) return scan.scale.get(node);
+  const style = view.getComputedStyle(node);
+  let own = 1;
+  if (!/^(?:inline|contents)$/.test(String(style?.display || ''))) {
+    own *= transformStretch(style?.transform);
+    const scale = String(style?.scale || 'none').split(/\s+/).map(Number).filter(Number.isFinite);
+    if (scale.length) own *= Math.min(...scale.slice(0, 2).map(Math.abs));
+  }
+  const zoom = Number.parseFloat(style?.zoom);
+  if (zoom > 0) own *= zoom;
+  const value = own * drawnScale(node.parentElement, view, scan);
+  scan.scale.set(node, value);
+  return value;
+}
+
+// The size text is drawn at: its font size times how much transforms and zoom stretch it.
+function renderedFontPx(node, style, view, scan) {
+  return Number.parseFloat(style?.fontSize) * drawnScale(node, view, scan);
+}
+
 // Text a person cannot read: no size, or no ink. Ink is the text fill (or colour) times the opacity of the element
 // and every ancestor; near-zero counts as none. A visible shadow, a visible outline or a background clipped to the
 // text draws the glyphs anyway, so the text is kept. Text the colour of whatever is behind it is not judged: what
@@ -539,7 +582,7 @@ function ownTextIsInvisible(node, document, scan) {
   if (!ownTextNodes(node).length || typeof view?.getComputedStyle !== 'function') return false;
   try {
     const style = view.getComputedStyle(node);
-    if (Number.parseFloat(style?.fontSize) < MIN_READABLE_FONT_PX) return true;
+    if (renderedFontPx(node, style, view, scan) < MIN_READABLE_FONT_PX) return true;
     const ink = scan.readColour(style?.webkitTextFillColor) || scan.readColour(style?.color);
     if (!ink) return false;
     const opacity = effectiveOpacity(node, view, scan);
@@ -559,8 +602,15 @@ function ownTextIsInvisible(node, document, scan) {
 
 // An ancestor with a transform, filter, perspective, paint containment or a will-change for them becomes the box a
 // fixed (or absolute) element is positioned against, so that element moves with it instead of with the window.
+// Only a box can anchor: display:contents makes none, and an inline box ignores transforms and containment, so
+// only a filter (or a will-change for one) anchors from an inline element.
 function anchorsFixedDescendants(style) {
   const set = (value) => String(value || 'none') !== 'none';
+  const display = String(style?.display || '');
+  if (display === 'contents') return false;
+  if (display === 'inline') {
+    return set(style?.filter) || set(style?.backdropFilter) || /\b(?:filter|backdrop-filter)\b/.test(String(style?.willChange || ''));
+  }
   return set(style?.transform) || set(style?.translate) || set(style?.rotate) || set(style?.scale)
     || set(style?.filter) || set(style?.perspective) || set(style?.backdropFilter)
     || style?.transformStyle === 'preserve-3d'
@@ -585,7 +635,8 @@ function findContainingBlock(element, view) {
   if (position === 'fixed' || position === 'absolute') {
     for (let ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) {
       const style = view.getComputedStyle(ancestor);
-      if (anchorsFixedDescendants(style) || (position === 'absolute' && style?.position !== 'static')) return { box: ancestor };
+      const boxed = style?.display !== 'contents';
+      if (anchorsFixedDescendants(style) || (position === 'absolute' && boxed && style?.position !== 'static')) return { box: ancestor };
     }
     return position === 'fixed' ? { window: true } : { page: true };
   }
@@ -607,6 +658,8 @@ function findScrollBox(box, view) {
   if (box === document?.documentElement || box === document?.scrollingElement) return false;
   const style = view.getComputedStyle(box);
   if (!/\b(?:auto|scroll|overlay)\b/.test(`${style?.overflowX} ${style?.overflowY}`)) return false;
+  // overflow applies only to boxes that hold content: an inline element, display:contents and table rows ignore it
+  if (/^(?:inline|contents|table-(?:row|row-group|header-group|footer-group|column|column-group))$/.test(String(style?.display || ''))) return false;
   if (box === document?.body) {
     const root = view.getComputedStyle(document.documentElement);
     if (root?.overflowX === 'visible' && root?.overflowY === 'visible') return false;
@@ -639,70 +692,97 @@ function beyondScrollRange({ x, y, width, height }, { clientWidth, clientHeight,
   return outside(x, width, clientWidth, scrollWidth, reversed.x) || outside(y, height, clientHeight, scrollHeight, reversed.y);
 }
 
-// The places a rectangle can take while the box scrolls and it shows inside the box's visible area: the two
-// extremes on each axis, or null when no scroll position shows it. A box scrolls forwards over [0, travel], or
-// backwards over [-travel, 0] when reversed; scrolling by s moves the content by -(s - current).
-function placesInScrollBox(rect, box, view) {
+// How a scrolling box can move what it holds, on each screen axis: the range of shifts its scroll positions apply
+// (a box scrolls forwards over [0, travel], or backwards over [-travel, 0] when reversed; scrolling to s moves the
+// content by current - s) and the stretch of screen it shows. Measured once per box.
+function scrollReach(box, view, cache) {
+  if (cache?.reach.has(box)) return cache.reach.get(box);
   const frame = box.getBoundingClientRect();
   const reversed = reversedScroll(view.getComputedStyle(box));
-  // zoom and scaling transforms grow the rect but not the box's own scroll metrics: bring those to screen px
+  // zoom and scaling transforms grow the frame but not the box's own scroll metrics: bring those to screen px
   const scaleX = box.offsetWidth > 0 ? frame.width / box.offsetWidth : 1;
   const scaleY = box.offsetHeight > 0 ? frame.height / box.offsetHeight : 1;
-  const axis = (start, size, current, client, scrollSize, visibleStart, back, scale) => {
-    current *= scale;
-    client *= scale;
-    scrollSize *= scale;
-    const travel = Math.max(0, scrollSize - client);
+  const axis = (current, client, scrollSize, visibleStart, back, scale) => {
+    const travel = Math.max(0, scrollSize - client) * scale;
     const [low, high] = back ? [-travel, 0] : [0, travel];
-    // the rectangle's start at the furthest scroll positions
-    const earliest = start + current - high;
-    const latest = start + current - low;
-    // it shows while it overlaps [visibleStart, visibleStart + client]
-    const from = Math.max(earliest, visibleStart - size + 1);
-    const to = Math.min(latest, visibleStart + client - 1);
-    return from <= to ? [from, to] : null;
+    return { shift: [current * scale - high, current * scale - low], shows: [visibleStart, visibleStart + client * scale] };
   };
-  const x = axis(rect.left, rect.width, box.scrollLeft, box.clientWidth, box.scrollWidth, frame.left + box.clientLeft * scaleX, reversed.x, scaleX);
-  const y = axis(rect.top, rect.height, box.scrollTop, box.clientHeight, box.scrollHeight, frame.top + box.clientTop * scaleY, reversed.y, scaleY);
-  if (!x || !y) return [null];
-  const place = (left, top) => ({ left, top, right: left + rect.width, bottom: top + rect.height, width: rect.width, height: rect.height });
-  return [place(x[0], y[0]), place(x[1], y[1]), place(x[0], y[1]), place(x[1], y[0])];
+  const reach = {
+    x: axis(box.scrollLeft, box.clientWidth, box.scrollWidth, frame.left + box.clientLeft * scaleX, reversed.x, scaleX),
+    y: axis(box.scrollTop, box.clientHeight, box.scrollHeight, frame.top + box.clientTop * scaleY, reversed.y, scaleY),
+  };
+  cache?.reach.set(box, reach);
+  return reach;
 }
 
-// Where the text itself was laid out, not its box: wholly where no scrolling can bring it (outside the range of the
-// scrolling box it moves with, counting right-to-left, vertical and bottom-up scrolling, or before the start of the
-// page), or, for text fixed to the window, wholly outside the window. Only boxes that actually move the text count:
-// an absolute child anchored outside a scrolling box does not scroll with it. Screen-reader-only text overflows its
-// 1px box onto the page and is kept: it is real content for people who use a screen reader.
-function rectsOffPage(rects, node, view, depth = 0, holdsText = true, cache = null) {
-  if (!rects.length || depth > 24) return false;
+// Every place a rectangle can be brought to on screen while it shows inside the box, as a range of starts on each
+// axis: the starts it already had, moved by every scroll the box allows, kept where at least a pixel of it overlaps
+// what the box shows. Null when no scroll position shows it. Ranges stay ranges through any number of boxes, so the
+// middle of a range is never lost and the work grows with the depth of the page, not exponentially.
+function reachInScrollBox(span, box, view, cache) {
+  const reach = scrollReach(box, view, cache);
+  const axis = ([from, to], size, { shift, shows }) => {
+    // a box that shows less than a pixel shows nothing, however it scrolls
+    if (shows[1] - shows[0] < 1) return null;
+    const low = Math.max(from + shift[0], shows[0] - size + 1);
+    const high = Math.min(to + shift[1], shows[1] - 1);
+    return low <= high ? [low, high] : null;
+  };
+  const x = axis(span.x, span.width, reach.x);
+  const y = axis(span.y, span.height, reach.y);
+  return x && y ? { x, y, width: span.width, height: span.height } : null;
+}
+
+// Whether a rectangle, wherever in its ranges it sits, stays wholly where scrolling cannot bring it: past the window
+// for text fixed to it, or before the start of the page.
+function spanOffPage(span, node, view, holdsText, cache) {
   const margin = OFF_PAGE_MARGIN_PX;
   // text is laid out inside the element that holds it; a box's own frame is laid out by what contains the box
   let box = node;
   let judgeSelf = holdsText;
   for (;;) {
     if (judgeSelf && isScrollBox(box, view, cache)) {
-      const places = rects.flatMap((r) => placesInScrollBox(r, box, view));
-      // nowhere the box can scroll shows the text, or nowhere it shows is reachable from outside the box
-      return places.every((place) => !place || rectsOffPage([place], box, view, depth + 1, false, cache));
+      span = reachInScrollBox(span, box, view, cache);
+      if (!span) return true;
     }
     judgeSelf = true;
     const block = containingBlockOf(box, view, cache);
     if (block.window) {
-      return rects.every((r) => r.right < -margin || r.bottom < -margin || r.left > view.innerWidth + margin || r.top > view.innerHeight + margin);
+      return span.x[1] + span.width < -margin || span.y[1] + span.height < -margin
+        || span.x[0] > view.innerWidth + margin || span.y[0] > view.innerHeight + margin;
     }
     if (block.page) {
       const document = view.document;
-      const root = document?.scrollingElement || document?.documentElement;
-      const extent = { clientWidth: view.innerWidth, clientHeight: view.innerHeight, scrollWidth: root?.scrollWidth || 0, scrollHeight: root?.scrollHeight || 0 };
       // the page scrolls the way its principal writing mode (from <body>) runs
       const reversed = reversedScroll(view.getComputedStyle(document?.body || document?.documentElement));
-      // the page clips nothing past its far end: only before its start is unreachable
-      const before = { ...extent, scrollWidth: Number.POSITIVE_INFINITY, scrollHeight: Number.POSITIVE_INFINITY };
-      return rects.every((r) => beyondScrollRange({ x: r.left + (view.scrollX || 0), y: r.top + (view.scrollY || 0), width: r.width, height: r.height }, before, reversed));
+      // the page clips nothing past its far end: only before its start is unreachable, so the start nearest it counts
+      const before = { clientWidth: view.innerWidth, clientHeight: view.innerHeight, scrollWidth: Number.POSITIVE_INFINITY, scrollHeight: Number.POSITIVE_INFINITY };
+      const x = (reversed.x ? span.x[0] : span.x[1]) + (view.scrollX || 0);
+      const y = (reversed.y ? span.y[0] : span.y[1]) + (view.scrollY || 0);
+      return beyondScrollRange({ x, y, width: span.width, height: span.height }, before, reversed);
     }
     box = block.box;
   }
+}
+
+// Where the text itself was laid out, not its box: wholly where no scrolling can bring it (outside the range of the
+// scrolling boxes it moves with, counting right-to-left, vertical and bottom-up scrolling, or before the start of the
+// page), or, for text fixed to the window, wholly outside the window. Only boxes that actually move the text count:
+// an absolute child anchored outside a scrolling box does not scroll with it. Screen-reader-only text overflows its
+// 1px box onto the page and is kept: it is real content for people who use a screen reader. A text node with very
+// many line boxes is judged by their bounding rectangle, which keeps it whenever any part could be reached.
+const MAX_JUDGED_RECTS = 32;
+function rectsOffPage(rects, node, view, cache = null) {
+  if (!rects.length) return false;
+  let judged = rects;
+  if (rects.length > MAX_JUDGED_RECTS) {
+    const left = Math.min(...rects.map((r) => r.left));
+    const top = Math.min(...rects.map((r) => r.top));
+    const right = Math.max(...rects.map((r) => r.right));
+    const bottom = Math.max(...rects.map((r) => r.bottom));
+    judged = [{ left, top, right, bottom, width: right - left, height: bottom - top }];
+  }
+  return judged.every((r) => spanOffPage({ x: [r.left, r.left], y: [r.top, r.top], width: r.width, height: r.height }, node, view, true, cache));
 }
 
 function rangeRects(document, text, start, end) {
@@ -734,7 +814,7 @@ function removeOffPageText(liveNode, document, copies, cache) {
   for (const child of ownTextNodes(liveNode)) {
     try {
       const rects = rangeRects(document, child, 0, (child.nodeValue || '').length);
-      if (rects.length && rectsOffPage(rects, liveNode, view, 0, true, cache)) {
+      if (rects.length && rectsOffPage(rects, liveNode, view, cache)) {
         copies.get(child)?.remove?.();
         removed += 1;
       }
@@ -758,7 +838,7 @@ function cloneVisibleRoot(document, liveRoot) {
   const inspected = Math.min(liveNodes.length, cloneNodes.length, MAX_VISIBILITY_NODES);
   let omittedNodes = Math.max(0, cloneNodes.length - inspected);
   for (let index = cloneNodes.length - 1; index >= inspected; index -= 1) cloneNodes[index]?.remove?.();
-  const scan = { opacity: new Map(), readColour: colourReader(document), layout: { blocks: new Map(), scrollBoxes: new Map() } };
+  const scan = { opacity: new Map(), scale: new Map(), readColour: colourReader(document), layout: { blocks: new Map(), scrollBoxes: new Map(), reach: new Map() } };
   for (let index = inspected - 1; index >= 1; index -= 1) {
     if (hiddenOnlyByVisibility(liveNodes[index], document)) {
       removeOwnText(cloneNodes[index]);

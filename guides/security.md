@@ -21,7 +21,7 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
 
 - **Nothing is read in the background.** A page reaches Hermes only when you share it or ask about it.
 - **The common ways to hide text are filtered out.** The page reader leaves out text hidden by CSS or attributes,
-  text too small to read, text with no visible ink (transparent or nearly so, in any colour format), text laid out where
+  text drawn too small to read (counting zoom and scaling), text with no visible ink (transparent or nearly so, in any colour format), text laid out where
   no scrolling can reach it, and HTML comments. Text written for screen readers is kept while it stays on the page: it is
   real content for people who use one. This narrows what a page can slip in; it is not a guarantee (see below).
 - **Page text is marked as untrusted.** It reaches the model between `UNTRUSTED_BROWSER_CONTEXT_START` and
