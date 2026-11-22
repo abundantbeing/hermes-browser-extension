@@ -239,7 +239,8 @@ test('CSS-hidden content is removed before candidate scoring and structure extra
     value(node) {
       return {
         display: node?.classList?.contains('stylesheet-hidden') ? 'none' : 'block',
-        visibility: node?.classList?.contains('visibility-hidden') ? 'hidden' : 'visible',
+        // visibility inherits in CSS: a child of a visibility:hidden section is hidden too
+        visibility: node?.closest?.('.visibility-hidden') ? 'hidden' : 'visible',
         opacity: node?.classList?.contains('opacity-hidden') ? '0' : '1',
         contentVisibility: 'visible',
       };
