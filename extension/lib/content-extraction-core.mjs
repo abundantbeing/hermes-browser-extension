@@ -426,29 +426,12 @@ function computedStyleHidesNode(node, document) {
   }
 }
 
-// Placed where nobody can scroll to it: wholly beyond the top or left edge of the page. Screen-reader-only text
-// (a 1px clipped box at the edge) is real content for people who use a screen reader, so it is kept.
-const OFF_PAGE_MARGIN_PX = 8;
-function placedOutOfSight(node, document) {
-  const view = document?.defaultView;
-  if (typeof node?.getBoundingClientRect !== 'function' || typeof view?.getComputedStyle !== 'function') return false;
-  try {
-    const style = view.getComputedStyle(node);
-    if (!['absolute', 'fixed'].includes(style?.position)) return false;
-    const rect = node.getBoundingClientRect();
-    return rect.right + (view.scrollX || 0) < -OFF_PAGE_MARGIN_PX || rect.bottom + (view.scrollY || 0) < -OFF_PAGE_MARGIN_PX;
-  } catch {
-    return false;
-  }
-}
-
 function liveNodeIsHidden(node, document) {
   return node?.hasAttribute?.('hidden')
     || node?.hasAttribute?.('inert')
     || node?.getAttribute?.('aria-hidden') === 'true'
     || inlineStyleHidesNode(node)
-    || computedStyleHidesNode(node, document)
-    || placedOutOfSight(node, document);
+    || computedStyleHidesNode(node, document);
 }
 
 function rgbaOf(value) {
@@ -459,45 +442,110 @@ function rgbaOf(value) {
   return { r: Number(match[1]), g: Number(match[2]), b: Number(match[3]), a: alpha };
 }
 
-// The solid colour behind a node, or null when a picture or gradient may sit behind its text.
-function solidBackdrop(node, view, cache) {
+const paintsBackground = (style) => String(style?.backgroundImage || 'none') !== 'none' || (rgbaOf(style?.backgroundColor)?.a || 0) > 0.01;
+const PAINTING_TAGS = new Set(['IMG', 'VIDEO', 'CANVAS', 'SVG', 'PICTURE', 'IFRAME', 'OBJECT', 'EMBED', 'COL', 'COLGROUP']);
+
+// The solid colour behind a node's text through its own ancestors, or null when anything else may paint there:
+// a picture or gradient, a translucent layer, or a ::before / ::after with a background of its own.
+function solidBackdrop(node, view, scan) {
   const chain = [];
   let found = null;
   for (let current = node; current; current = current.parentElement) {
-    if (cache.has(current)) { found = cache.get(current); break; }
+    if (scan.backdrops.has(current)) { found = scan.backdrops.get(current); break; }
     chain.push(current);
     const style = view.getComputedStyle(current);
+    if (['::before', '::after'].some((pseudo) => paintsBackground(view.getComputedStyle(current, pseudo)))) { found = null; break; }
     if (String(style?.backgroundImage || 'none') !== 'none') { found = null; break; }
     const colour = rgbaOf(style?.backgroundColor);
-    if (colour && colour.a >= 0.99) { found = colour; break; }
+    if (colour && colour.a >= 0.99) { found = { colour, owner: current }; break; }
     if (colour && colour.a > 0.01) { found = null; break; }
-    if (!current.parentElement) found = { r: 255, g: 255, b: 255, a: 1 };
+    if (!current.parentElement) found = { colour: { r: 255, g: 255, b: 255, a: 1 }, owner: null };
   }
-  for (const element of chain) cache.set(element, found);
+  for (const element of chain) scan.backdrops.set(element, found);
   return found;
 }
 
-const hasOwnText = (node) => Array.from(node?.childNodes || []).some((child) => child.nodeType === 3 && /\S/.test(child.nodeValue || ''));
+// Every element that paints something (a background, a picture, a table column), measured once per page.
+function paintersOf(view, scan) {
+  if (!scan.painters) {
+    scan.painters = [];
+    for (const element of scan.liveNodes) {
+      try {
+        if (!PAINTING_TAGS.has(String(element.tagName || '').toUpperCase()) && !paintsBackground(view.getComputedStyle(element))) continue;
+        const rect = element.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) scan.painters.push({ element, rect });
+      } catch {
+        // an element that cannot be measured paints nothing that can be placed
+      }
+    }
+  }
+  return scan.painters;
+}
 
-// Text a person cannot read even though its box is on the page: no size, no ink, ink the colour of the solid
-// background, or indented far out of its box. Only the element's own text is judged (children carry their own
-// styles), and a gradient fill, a shadow or an outline keeps the text readable.
-function ownTextIsInvisible(node, document, cache) {
+const overlaps = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+// Same colour as the backdrop only counts when nothing but the backdrop's own ancestors paints under the text:
+// a table column, an overlay, a picture or a positioned layer that is not an ancestor makes it unknown, and kept.
+function nothingElsePaintsBehind(node, rects, backdropOwner, view, scan) {
+  for (const { element, rect } of paintersOf(view, scan)) {
+    if (element === node || element === backdropOwner || element.contains?.(node) || node.contains?.(element)) continue;
+    if (rects.some((textRect) => overlaps(textRect, rect))) return false;
+  }
+  return true;
+}
+
+const ownTextNodes = (node) => Array.from(node?.childNodes || []).filter((child) => child.nodeType === 3 && /\S/.test(child.nodeValue || ''));
+
+function textNodeRects(text, document) {
+  const range = document.createRange();
+  range.selectNodeContents(text);
+  return Array.from(range.getClientRects()).filter((rect) => rect.width > 0 || rect.height > 0);
+}
+
+const ownTextRects = (node, document) => ownTextNodes(node).flatMap((text) => textNodeRects(text, document));
+
+function fixedToViewport(node, view) {
+  for (let current = node; current; current = current.parentElement) {
+    if (view.getComputedStyle(current)?.position === 'fixed') return true;
+  }
+  return false;
+}
+
+// Where the text itself was laid out, not its box: wholly beyond the top or left edge of the page, or, for text
+// fixed to the window, wholly outside the window. Screen-reader-only text overflows its 1px box onto the page and
+// is kept: it is real content for people who use a screen reader.
+const OFF_PAGE_MARGIN_PX = 8;
+function textIsOffPage(rects, node, view) {
+  if (!rects.length) return false;
+  const margin = OFF_PAGE_MARGIN_PX;
+  if (fixedToViewport(node, view)) {
+    return rects.every((r) => r.right < -margin || r.bottom < -margin || r.left > view.innerWidth + margin || r.top > view.innerHeight + margin);
+  }
+  return rects.every((r) => r.right + (view.scrollX || 0) < -margin || r.bottom + (view.scrollY || 0) < -margin);
+}
+
+// Text a person cannot read: no size, no ink, or ink the colour of the solid background behind it (text laid out
+// off the page is removed per text node, by removeOffPageText). Only the element's own text is judged (children carry their own styles and positions), and a
+// gradient fill, a shadow or an outline keeps the text readable.
+function ownTextIsInvisible(node, document, scan) {
   const view = document?.defaultView;
-  if (!hasOwnText(node) || typeof view?.getComputedStyle !== 'function') return false;
+  if (!ownTextNodes(node).length || typeof view?.getComputedStyle !== 'function' || typeof document?.createRange !== 'function') return false;
   try {
     const style = view.getComputedStyle(node);
     if (Number.parseFloat(style?.fontSize) === 0) return true;
-    if (Number.parseFloat(style?.textIndent) <= -999) return true;
+    const rects = ownTextRects(node, document);
     const clippedFill = [style?.backgroundClip, style?.webkitBackgroundClip].some((clip) => String(clip || '').includes('text'));
     const outlined = String(style?.textShadow || 'none') !== 'none' || Number.parseFloat(style?.webkitTextStrokeWidth) > 0;
     if (clippedFill || outlined) return false;
     const ink = rgbaOf(style?.webkitTextFillColor) || rgbaOf(style?.color);
     if (!ink) return false;
     if (ink.a <= 0.01) return true;
-    const backdrop = solidBackdrop(node, view, cache);
-    return Boolean(backdrop) && ink.a >= 0.99
-      && Math.max(Math.abs(ink.r - backdrop.r), Math.abs(ink.g - backdrop.g), Math.abs(ink.b - backdrop.b)) <= 8;
+    if (ink.a < 0.99 || !rects.length) return false;
+    const backdrop = solidBackdrop(node, view, scan);
+    if (!backdrop) return false;
+    const { colour } = backdrop;
+    const same = Math.max(Math.abs(ink.r - colour.r), Math.abs(ink.g - colour.g), Math.abs(ink.b - colour.b)) <= 8;
+    return same && nothingElsePaintsBehind(node, rects, backdrop.owner, view, scan);
   } catch {
     return false;
   }
@@ -505,6 +553,28 @@ function ownTextIsInvisible(node, document, cache) {
 
 function removeOwnText(node) {
   for (const child of Array.from(node?.childNodes || [])) if (child.nodeType === 3) child.remove?.();
+}
+
+// Each own text node laid out wholly off the page is removed on its own, so a hidden first line goes and a
+// readable later line stays. Live and cloned children line up one to one.
+function removeOffPageText(liveNode, cloneNode, document) {
+  const view = document?.defaultView;
+  if (typeof view?.getComputedStyle !== 'function' || typeof document?.createRange !== 'function') return 0;
+  const liveChildren = Array.from(liveNode?.childNodes || []);
+  const cloneChildren = Array.from(cloneNode?.childNodes || []);
+  let removed = 0;
+  liveChildren.forEach((child, index) => {
+    if (child.nodeType !== 3 || !/\S/.test(child.nodeValue || '')) return;
+    try {
+      if (textIsOffPage(textNodeRects(child, document), liveNode, view)) {
+        cloneChildren[index]?.remove?.();
+        removed += 1;
+      }
+    } catch {
+      // text that cannot be measured is kept
+    }
+  });
+  return removed;
 }
 
 function cloneVisibleRoot(document, liveRoot) {
@@ -515,15 +585,24 @@ function cloneVisibleRoot(document, liveRoot) {
   const inspected = Math.min(liveNodes.length, cloneNodes.length, MAX_VISIBILITY_NODES);
   let omittedNodes = Math.max(0, cloneNodes.length - inspected);
   for (let index = cloneNodes.length - 1; index >= inspected; index -= 1) cloneNodes[index]?.remove?.();
-  const backdrops = new Map();
+  const scan = { liveNodes: liveNodes.slice(0, inspected), backdrops: new Map(), painters: null };
   for (let index = inspected - 1; index >= 1; index -= 1) {
     if (liveNodeIsHidden(liveNodes[index], document)) {
       cloneNodes[index]?.remove?.();
       omittedNodes += 1;
-    } else if (ownTextIsInvisible(liveNodes[index], document, backdrops)) {
+    } else if (ownTextIsInvisible(liveNodes[index], document, scan)) {
       removeOwnText(cloneNodes[index]);
       omittedNodes += 1;
+    } else {
+      omittedNodes += removeOffPageText(liveNodes[index], cloneNodes[index], document);
     }
+  }
+  // the root's own text (usually <body>'s) is judged the same way; its children were judged above
+  if (ownTextIsInvisible(liveRoot, document, scan)) {
+    removeOwnText(clone);
+    omittedNodes += 1;
+  } else {
+    omittedNodes += removeOffPageText(liveRoot, clone, document);
   }
   if (liveNodeIsHidden(liveRoot, document)) {
     for (const child of Array.from(clone.childNodes || [])) child.remove?.();
