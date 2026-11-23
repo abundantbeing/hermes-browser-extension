@@ -46,13 +46,14 @@ export const HIDDEN_TRAPS = [
   'TRAP-ABS-OUTSIDE-SCROLLER', 'TRAP-ABOVE-AUTO-BOX', 'TRAP-FONT-2PX', 'TRAP-SCROLL-STATE', 'TRAP-OKLCH-CLEAR', 'TRAP-SHADOW-CLEAR',
   'TRAP-FAINT', 'TRAP-NEAR-ZERO-OPACITY', 'TRAP-TINYFONT', 'TRAP-VIS-PARENT', 'TRAP-STRADDLE',
   'TRAP-ROTATED-FONT', 'TRAP-SHRUNK-FONT', 'TRAP-CONTENTS-ANCHOR', 'TRAP-INLINE-ANCHOR', 'TRAP-ZERO-SCROLL-BOX',
-  'TRAP-SCALE-ZERO',
+  'TRAP-SCALE-ZERO', 'TRAP-SQUASHED-TURNED', 'TRAP-SPREAD-LINES',
 ];
 // Hidden in ways the reader does not judge (text the colour of what is behind it). A documented limit: they may
 // reach the model, but only inside the untrusted block.
 // A text node only partly out of reach is kept whole (cutting inside a node cannot be done reliably across
-// bidirectional text, wrapped lines and huge lines), so its off-page head is a gap too.
-export const KNOWN_GAPS = ['GAP-WHITE-ON-WHITE', 'GAP-INVISIBLE-OVERLAY', 'GAP-PARTIAL-LINE', 'GAP-CJK-HEAD'];
+// bidirectional text, wrapped lines and huge lines), so its off-page head is a gap too. How 3D transforms draw
+// text (turned away, edge-on, behind the viewer) is not modelled either.
+export const KNOWN_GAPS = ['GAP-WHITE-ON-WHITE', 'GAP-INVISIBLE-OVERLAY', 'GAP-PARTIAL-LINE', 'GAP-CJK-HEAD', 'GAP-EDGE-ON', 'GAP-BACKFACE'];
 // Styled but readable. All must be kept.
 export const VISIBLE_SAFE = [
   'SAFE-GRADIENT', 'SAFE-DARK-BAND', 'SAFE-SMALL-PRINT', 'SAFE-SCREEN-READER', 'SAFE-TABLE-COLUMN',
@@ -62,7 +63,7 @@ export const VISIBLE_SAFE = [
   'SAFE-CONTENTS-OPACITY', 'SAFE-VIS-CHILD', 'SAFE-FIXED-IN-TRANSLATE', 'SAFE-CJK-TAIL',
   'SAFE-WILL-CHANGE-ANCHOR', 'SAFE-PRESERVE-3D-ANCHOR', 'SAFE-CLASS-CONTENTS-OPACITY', 'SAFE-ZOOM-BOX',
   'SAFE-SCALED-FONT', 'SAFE-ZOOMED-FONT', 'SAFE-INLINE-OVERFLOW', 'SAFE-WIDE-PANEL', 'SAFE-ROTATED-LABEL',
-  'SAFE-ZOOM-SCALE-FONT',
+  'SAFE-ZOOM-SCALE-FONT', 'SAFE-CANCELLED-SCALE', 'SAFE-TILTED', 'SAFE-3D-CANCELLED',
 ];
 const USER_TEXT = 'Which of these recipes is fastest?';
 
@@ -182,6 +183,7 @@ async function main() {
   assert.match(longText, /SAFE-LONG-INTRO/, 'the long-line page lost its intro');
   assert.match(longText, /SAFE-NESTED-DEEP/, 'text inside nested scrolling boxes was dropped');
   assert.ok(!JSON.stringify(longPage.context).includes('TRAP-NESTED-OFF-WINDOW'), 'text in nested boxes fixed below the window reached the reader output');
+  assert.ok(!JSON.stringify(longPage.context).includes('TRAP-MANY-LINES'), 'three thousand lines fixed below the window reached the reader output');
   // the long line is partly off the page and kept whole: its readable words inside the output limit survive
   assert.match(longText, / w100 /, 'the readable part of the long line was dropped');
 

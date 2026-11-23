@@ -518,47 +518,74 @@ function drawsVisibly(list, readColour, fallback) {
 
 const ownTextNodes = (node) => Array.from(node?.childNodes || []).filter((child) => child.nodeType === 3 && /\S/.test(child.nodeValue || ''));
 
-// How much a transform stretches what it draws, along its narrower direction: the smaller singular value of its 2D
-// part, so a rotation or a move stretches nothing and a squash counts. A 3D matrix is read through its perspective.
-function transformStretch(value) {
-  const numbers = String(value || '').replace(/^[^(]*\(/, '').match(/-?[\d.]+(?:e-?\d+)?/gi)?.map(Number) || [];
-  let a = 1;
-  let b = 0;
-  let c = 0;
-  let d = 1;
-  if (/^matrix3d\(/.test(String(value)) && numbers.length >= 16) {
-    const w = numbers[15] > 0 ? numbers[15] : 1;
-    [a, b, c, d] = [numbers[0] / w, numbers[1] / w, numbers[4] / w, numbers[5] / w];
-  } else if (/^matrix\(/.test(String(value)) && numbers.length >= 6) {
-    [a, b, c, d] = numbers;
-  }
-  const sum = a * a + b * b + c * c + d * d;
-  const det = a * d - b * c;
-  return Math.sqrt(Math.max(0, (sum - Math.sqrt(Math.max(0, sum * sum - 4 * det * det))) / 2));
+// A number as the browser writes it in computed styles (12, -0.5, .5, 1e+06, 1e-06).
+const CSS_NUMBER_RE = /-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi;
+
+// The flat [a, b, c, d] part of a computed transform, identity for none, or null for a 3D matrix (the browser writes
+// a transform as matrix() whenever it stays flat).
+const IDENTITY_2D = [1, 0, 0, 1];
+function transformMatrix(value) {
+  const text = String(value || 'none');
+  if (/^matrix3d\(/.test(text)) return null;
+  const numbers = text.replace(/^[^(]*\(/, '').match(CSS_NUMBER_RE)?.map(Number) || [];
+  return /^matrix\(/.test(text) && numbers.length >= 6 ? numbers.slice(0, 4) : IDENTITY_2D;
 }
 
-// How much transforms, the scale property and zoom on the element and its ancestors stretch its text, cached per
-// element. An inline element and display:contents draw no transformable box, so their transforms do nothing.
-function drawnScale(node, view, scan) {
-  if (!node || node.nodeType !== 1) return 1;
+// The rotate property as a flat turn: a bare angle or "z <angle>" turns about the screen axis; any other axis is a
+// 3D turn (null).
+function rotateMatrix(value) {
+  const text = String(value || 'none').trim();
+  if (text === 'none') return IDENTITY_2D;
+  const match = /^(?:z\s+|0\s+0\s+\d*\.?\d+\s+)?(-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(deg|rad|turn|grad)$/i.exec(text);
+  if (!match) return null;
+  const unit = { deg: Math.PI / 180, rad: 1, turn: 2 * Math.PI, grad: Math.PI / 200 }[match[2].toLowerCase()];
+  const angle = Number(match[1]) * unit;
+  return [Math.cos(angle), Math.sin(angle), -Math.sin(angle), Math.cos(angle)];
+}
+
+function scaleMatrix(value) {
+  const factors = String(value || 'none').split(/\s+/).map(Number).filter(Number.isFinite);
+  if (!factors.length) return IDENTITY_2D;
+  return [factors[0], 0, 0, factors.length > 1 ? factors[1] : factors[0]];
+}
+
+// [a, b, c, d] matrices in CSS order (x' = a·x + c·y, y' = b·x + d·y): first applied on the right.
+const multiply2D = ([a1, b1, c1, d1], [a2, b2, c2, d2]) => [a1 * a2 + c1 * b2, b1 * a2 + d1 * b2, a1 * c2 + c1 * d2, b1 * c2 + d1 * d2];
+
+// How everything above the text maps it flat onto the screen: each element's rotate, scale and transform (in that
+// CSS order), composed with every ancestor's before measuring, so scales that cancel cancel, times zoom. A chain with
+// any 3D (a 3D matrix or turn, or perspective) has no flat matrix (null): how it draws is not judged. An inline
+// element and display:contents draw no transformable box, so their transforms do nothing. Cached per element.
+function drawnTransform(node, view, scan) {
+  if (!node || node.nodeType !== 1) return { matrix: IDENTITY_2D, zoom: 1 };
   if (scan.scale.has(node)) return scan.scale.get(node);
+  const parent = drawnTransform(node.parentElement, view, scan);
   const style = view.getComputedStyle(node);
-  let own = 1;
+  let own = IDENTITY_2D;
   if (!/^(?:inline|contents)$/.test(String(style?.display || ''))) {
-    own *= transformStretch(style?.transform);
-    const scale = String(style?.scale || 'none').split(/\s+/).map(Number).filter(Number.isFinite);
-    if (scale.length) own *= Math.min(...scale.slice(0, 2).map(Math.abs));
+    const parts = [rotateMatrix(style?.rotate), scaleMatrix(style?.scale), transformMatrix(style?.transform)];
+    own = parts.includes(null) || String(style?.perspective || 'none') !== 'none' ? null : parts.reduce(multiply2D);
   }
   const zoom = Number.parseFloat(style?.zoom);
-  if (zoom > 0) own *= zoom;
-  const value = own * drawnScale(node.parentElement, view, scan);
+  const value = {
+    matrix: parent.matrix && own ? multiply2D(parent.matrix, own) : null,
+    zoom: parent.zoom * (zoom > 0 ? zoom : 1),
+  };
   scan.scale.set(node, value);
   return value;
 }
 
-// The size text is drawn at: its font size times how much transforms and zoom stretch it.
+// The size text is drawn at: its font size times zoom and the narrower stretch (smaller singular value) of the flat
+// transforms that map it to the screen, so a rotation stretches nothing and a squash in either direction counts.
+// Under a 3D transform only the font size and zoom count.
 function renderedFontPx(node, style, view, scan) {
-  return Number.parseFloat(style?.fontSize) * drawnScale(node, view, scan);
+  const { matrix, zoom } = drawnTransform(node, view, scan);
+  const size = Number.parseFloat(style?.fontSize) * zoom;
+  if (!matrix) return size;
+  const [a, b, c, d] = matrix;
+  const sum = a * a + b * b + c * c + d * d;
+  const det = a * d - b * c;
+  return size * Math.sqrt(Math.max(0, (sum - Math.sqrt(Math.max(0, sum * sum - 4 * det * det))) / 2));
 }
 
 // Text a person cannot read: no size, or no ink. Ink is the text fill (or colour) times the opacity of the element
@@ -758,20 +785,23 @@ function spanOffPage(span, node, view, holdsText, cache) {
 // scrolling boxes it moves with, counting right-to-left, vertical and bottom-up scrolling, or before the start of the
 // page), or, for text fixed to the window, wholly outside the window. Only boxes that actually move the text count:
 // an absolute child anchored outside a scrolling box does not scroll with it. Screen-reader-only text overflows its
-// 1px box onto the page and is kept: it is real content for people who use a screen reader. A text node with very
-// many line boxes is judged by their bounding rectangle, which keeps it whenever any part could be reached.
-const MAX_JUDGED_RECTS = 32;
+// 1px box onto the page and is kept: it is real content for people who use a screen reader. Every line box is
+// judged on its own (the gaps between lines hold no text); each is one walk up the containing blocks with every
+// box's reach measured once, and the first reachable line ends the check. When the rectangle around every line is
+// already out of reach, so is each line, and that one check settles it.
 function rectsOffPage(rects, node, view, cache = null) {
   if (!rects.length) return false;
-  let judged = rects;
-  if (rects.length > MAX_JUDGED_RECTS) {
-    const left = Math.min(...rects.map((r) => r.left));
-    const top = Math.min(...rects.map((r) => r.top));
-    const right = Math.max(...rects.map((r) => r.right));
-    const bottom = Math.max(...rects.map((r) => r.bottom));
-    judged = [{ left, top, right, bottom, width: right - left, height: bottom - top }];
+  if (rects.length > 1) {
+    let [left, top, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity];
+    for (const r of rects) {
+      left = Math.min(left, r.left);
+      top = Math.min(top, r.top);
+      right = Math.max(right, r.right);
+      bottom = Math.max(bottom, r.bottom);
+    }
+    if (spanOffPage({ x: [left, left], y: [top, top], width: right - left, height: bottom - top }, node, view, true, cache)) return true;
   }
-  return judged.every((r) => spanOffPage({ x: [r.left, r.left], y: [r.top, r.top], width: r.width, height: r.height }, node, view, true, cache));
+  return rects.every((r) => spanOffPage({ x: [r.left, r.left], y: [r.top, r.top], width: r.width, height: r.height }, node, view, true, cache));
 }
 
 function rangeRects(document, text, start, end) {

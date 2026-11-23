@@ -43,7 +43,8 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
 - **It cannot make a model immune to persuasion.** Marking page text as untrusted lowers the risk; the model still
   decides what to do.
 - **It cannot catch every way to hide text.** Text the same colour as whatever is behind it (white on white, text
-  under a picture, in a font that draws nothing, clipped out of a box that cannot scroll), or text in the same run as
+  under a picture, in a font that draws nothing, clipped out of a box that cannot scroll, turned away or pushed out of
+  sight by a 3D transform), or text in the same run as
   readable text but pushed partly off the page, is not detected: it still reaches the model, inside the untrusted
   block. So does anything the page shows openly.
 - **Reading is not an action.** Hermes can read what is on an attached tab without asking, including other content
