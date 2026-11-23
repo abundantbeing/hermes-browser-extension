@@ -275,6 +275,11 @@ dropped.
 
 ## Hermes Control
 
+> **Before you enable it:** Hermes Control acts in your own browser, signed in as you, and any page Hermes
+> reads can try to give it instructions. Read
+> [Using the Hermes Browser Extension safely](../guides/security.md) for what the extension guards against, what
+> it cannot, and a setup that keeps a mistake small (a separate Chrome profile, Hermes' own approvals on).
+
 The agent works in the person's own browser through the extension. Two more
 routes, wired by the same factory and answered only after the API server's own
 check (register) or a one-shot ticket (the live channel):

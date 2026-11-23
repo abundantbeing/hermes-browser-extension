@@ -398,54 +398,494 @@ function extractMetadata(document) {
   };
 }
 
-function inlineStyleHidesNode(node) {
+function inlineStyleHidesNode(node, { ignoreVisibility = false } = {}) {
   const style = String(node?.getAttribute?.('style') || '');
   return /(?:^|;)\s*display\s*:\s*none(?:\s*!important)?\s*(?:;|$)/i.test(style)
-    || /(?:^|;)\s*visibility\s*:\s*(?:hidden|collapse)(?:\s*!important)?\s*(?:;|$)/i.test(style)
-    || /(?:^|;)\s*content-visibility\s*:\s*hidden(?:\s*!important)?\s*(?:;|$)/i.test(style)
-    || /(?:^|;)\s*opacity\s*:\s*0(?:\.0+)?(?:\s*!important)?\s*(?:;|$)/i.test(style);
+    || (!ignoreVisibility && /(?:^|;)\s*visibility\s*:\s*(?:hidden|collapse)(?:\s*!important)?\s*(?:;|$)/i.test(style))
+    || /(?:^|;)\s*content-visibility\s*:\s*hidden(?:\s*!important)?\s*(?:;|$)/i.test(style);
+  // opacity is judged from the computed style, since a class may make the element display:contents, where opacity
+  // does nothing
 }
 
-function computedStyleHidesNode(node, document) {
+function computedStyleHidesNode(node, document, { ignoreVisibility = false } = {}) {
+  const view = document?.defaultView;
+  let style = null;
   try {
-    if (typeof node?.checkVisibility === 'function' && !node.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) return true;
+    style = view?.getComputedStyle?.(node) || null;
+  } catch {
+    style = null;
+  }
+  // an element with display:contents draws no box of its own (so neither its opacity nor checkVisibility applies
+  // to what it holds): it is judged by display and visibility only. Opacity is judged per element below, not
+  // through checkVisibility, which also counts the no-op opacity of a display:contents ancestor; an element whose
+  // own opacity is zero is removed with its whole subtree when the walk reaches it.
+  const contents = style?.display === 'contents';
+  try {
+    if (!contents && typeof node?.checkVisibility === 'function'
+      && !node.checkVisibility({ checkOpacity: false, checkVisibilityCSS: !ignoreVisibility })) return true;
   } catch {
     // Older engines may reject checkVisibility options; computed style remains available below.
   }
-  const getComputedStyle = document?.defaultView?.getComputedStyle;
-  if (typeof getComputedStyle !== 'function') return false;
+  if (!style) return false;
+  return style.display === 'none'
+    || (!ignoreVisibility && (style.visibility === 'hidden' || style.visibility === 'collapse'))
+    || style.contentVisibility === 'hidden'
+    || (!contents && Number.parseFloat(style.opacity) === 0);
+}
+
+function liveNodeIsHidden(node, document, options = {}) {
+  return node?.hasAttribute?.('hidden')
+    || node?.hasAttribute?.('inert')
+    || node?.getAttribute?.('aria-hidden') === 'true'
+    || inlineStyleHidesNode(node, options)
+    || computedStyleHidesNode(node, document, options);
+}
+
+// Hidden by visibility alone: its own text is hidden, but a child with visibility:visible still shows, so only the
+// element's own text goes and each child is judged on its own.
+function hiddenOnlyByVisibility(node, document) {
   try {
-    const style = getComputedStyle.call(document.defaultView, node);
-    return style?.display === 'none'
-      || style?.visibility === 'hidden'
-      || style?.visibility === 'collapse'
-      || style?.contentVisibility === 'hidden'
-      || Number.parseFloat(style?.opacity) === 0;
+    const visibility = document?.defaultView?.getComputedStyle?.(node)?.visibility;
+    return (visibility === 'hidden' || visibility === 'collapse') && !liveNodeIsHidden(node, document, { ignoreVisibility: true });
   } catch {
     return false;
   }
 }
 
-function liveNodeIsHidden(node, document) {
-  return node?.hasAttribute?.('hidden')
-    || node?.hasAttribute?.('inert')
-    || node?.getAttribute?.('aria-hidden') === 'true'
-    || inlineStyleHidesNode(node)
-    || computedStyleHidesNode(node, document);
+// Any CSS colour (rgb, hex, hsl, oklch, lab, color(), color-mix() ...) as 0-255 channels and a 0-1 alpha, read by
+// painting it into a 1px canvas, so no colour space is misread. Null when the page cannot draw or the value is not a
+// colour.
+function colourReader(document) {
+  const cache = new Map();
+  let context = null;
+  return (value) => {
+    const text = String(value || '').trim();
+    if (!text) return null;
+    if (cache.has(text)) return cache.get(text);
+    let colour = null;
+    try {
+      if (!context) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        context = canvas.getContext('2d', { willReadFrequently: true });
+      }
+      if (context) {
+        context.clearRect(0, 0, 1, 1);
+        // an unparseable value leaves the previous fill in place, so two different starting fills both survive it
+        context.fillStyle = '#010203';
+        context.fillStyle = text;
+        const first = String(context.fillStyle);
+        context.fillStyle = '#040506';
+        context.fillStyle = text;
+        if (!(first === '#010203' && String(context.fillStyle) === '#040506')) {
+          context.fillRect(0, 0, 1, 1);
+          const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data;
+          colour = { r, g, b, a: a / 255 };
+        }
+      }
+    } catch {
+      colour = null;
+    }
+    cache.set(text, colour);
+    return colour;
+  };
+}
+
+const CSS_COLOUR_RE = /(?:#[0-9a-f]{3,8}\b|(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\((?:[^()]|\([^()]*\))*\)|\btransparent\b|\bcurrentcolor\b)/gi;
+const FAINT_ALPHA = 0.05;
+const MIN_READABLE_FONT_PX = 4;
+
+// How opaque the node really is: its own opacity times every ancestor's, cached per element.
+function effectiveOpacity(node, view, scan) {
+  if (!node || node.nodeType !== 1) return 1;
+  if (scan.opacity.has(node)) return scan.opacity.get(node);
+  const style = view.getComputedStyle(node);
+  const own = style?.display === 'contents' ? 1 : Number.parseFloat(style?.opacity);
+  const value = (Number.isFinite(own) ? own : 1) * effectiveOpacity(node.parentElement, view, scan);
+  scan.opacity.set(node, value);
+  return value;
+}
+
+// Whether a shadow list or a stroke draws something visible.
+function drawsVisibly(list, readColour, fallback) {
+  const value = String(list || 'none');
+  if (value === 'none') return false;
+  const colours = value.match(CSS_COLOUR_RE) || [];
+  if (!colours.length) return (fallback?.a ?? 1) > FAINT_ALPHA;
+  return colours.some((token) => (/currentcolor/i.test(token) ? (fallback?.a ?? 1) : (readColour(token)?.a ?? 1)) > FAINT_ALPHA);
+}
+
+const ownTextNodes = (node) => Array.from(node?.childNodes || []).filter((child) => child.nodeType === 3 && /\S/.test(child.nodeValue || ''));
+
+// A number as the browser writes it in computed styles (12, -0.5, .5, 1e+06, 1e-06).
+const CSS_NUMBER_RE = /-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi;
+
+// The flat [a, b, c, d] part of a computed transform, identity for none, or null for a 3D matrix (the browser writes
+// a transform as matrix() whenever it stays flat).
+const IDENTITY_2D = [1, 0, 0, 1];
+function transformMatrix(value) {
+  const text = String(value || 'none');
+  if (/^matrix3d\(/.test(text)) return null;
+  const numbers = text.replace(/^[^(]*\(/, '').match(CSS_NUMBER_RE)?.map(Number) || [];
+  return /^matrix\(/.test(text) && numbers.length >= 6 ? numbers.slice(0, 4) : IDENTITY_2D;
+}
+
+// The rotate property as a flat turn: a bare angle or "z <angle>" turns about the screen axis; any other axis is a
+// 3D turn (null).
+function rotateMatrix(value) {
+  const text = String(value || 'none').trim();
+  if (text === 'none') return IDENTITY_2D;
+  const match = /^(?:z\s+|0\s+0\s+\d*\.?\d+\s+)?(-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)(deg|rad|turn|grad)$/i.exec(text);
+  if (!match) return null;
+  const unit = { deg: Math.PI / 180, rad: 1, turn: 2 * Math.PI, grad: Math.PI / 200 }[match[2].toLowerCase()];
+  const angle = Number(match[1]) * unit;
+  return [Math.cos(angle), Math.sin(angle), -Math.sin(angle), Math.cos(angle)];
+}
+
+function scaleMatrix(value) {
+  const factors = String(value || 'none').split(/\s+/).map(Number).filter(Number.isFinite);
+  if (!factors.length) return IDENTITY_2D;
+  return [factors[0], 0, 0, factors.length > 1 ? factors[1] : factors[0]];
+}
+
+// [a, b, c, d] matrices in CSS order (x' = a·x + c·y, y' = b·x + d·y): first applied on the right.
+const multiply2D = ([a1, b1, c1, d1], [a2, b2, c2, d2]) => [a1 * a2 + c1 * b2, b1 * a2 + d1 * b2, a1 * c2 + c1 * d2, b1 * c2 + d1 * d2];
+
+// How everything above the text maps it flat onto the screen: each element's rotate, scale and transform (in that
+// CSS order), composed with every ancestor's before measuring, so scales that cancel cancel, times zoom. A chain with
+// any 3D (a 3D matrix or turn, or perspective) has no flat matrix (null): how it draws is not judged. An inline
+// element and display:contents draw no transformable box, so their transforms do nothing. Cached per element.
+function drawnTransform(node, view, scan) {
+  if (!node || node.nodeType !== 1) return { matrix: IDENTITY_2D, zoom: 1 };
+  if (scan.scale.has(node)) return scan.scale.get(node);
+  const parent = drawnTransform(node.parentElement, view, scan);
+  const style = view.getComputedStyle(node);
+  let own = IDENTITY_2D;
+  if (!/^(?:inline|contents)$/.test(String(style?.display || ''))) {
+    const parts = [rotateMatrix(style?.rotate), scaleMatrix(style?.scale), transformMatrix(style?.transform)];
+    own = parts.includes(null) || String(style?.perspective || 'none') !== 'none' ? null : parts.reduce(multiply2D);
+  }
+  const zoom = Number.parseFloat(style?.zoom);
+  const value = {
+    matrix: parent.matrix && own ? multiply2D(parent.matrix, own) : null,
+    zoom: parent.zoom * (zoom > 0 ? zoom : 1),
+  };
+  scan.scale.set(node, value);
+  return value;
+}
+
+// The size text is drawn at: its font size times zoom and the narrower stretch (smaller singular value) of the flat
+// transforms that map it to the screen, so a rotation stretches nothing and a squash in either direction counts.
+// Under a 3D transform only the font size and zoom count.
+function renderedFontPx(node, style, view, scan) {
+  const { matrix, zoom } = drawnTransform(node, view, scan);
+  const size = Number.parseFloat(style?.fontSize) * zoom;
+  if (!matrix) return size;
+  const [a, b, c, d] = matrix;
+  const sum = a * a + b * b + c * c + d * d;
+  const det = a * d - b * c;
+  return size * Math.sqrt(Math.max(0, (sum - Math.sqrt(Math.max(0, sum * sum - 4 * det * det))) / 2));
+}
+
+// Text a person cannot read: no size, or no ink. Ink is the text fill (or colour) times the opacity of the element
+// and every ancestor; near-zero counts as none. A visible shadow, a visible outline or a background clipped to the
+// text draws the glyphs anyway, so the text is kept. Text the colour of whatever is behind it is not judged: what
+// paints behind text cannot be read reliably, so that stays a documented limit. Only the element's own text is
+// judged; children carry their own styles.
+function ownTextIsInvisible(node, document, scan) {
+  const view = document?.defaultView;
+  if (!ownTextNodes(node).length || typeof view?.getComputedStyle !== 'function') return false;
+  try {
+    const style = view.getComputedStyle(node);
+    if (renderedFontPx(node, style, view, scan) < MIN_READABLE_FONT_PX) return true;
+    const ink = scan.readColour(style?.webkitTextFillColor) || scan.readColour(style?.color);
+    if (!ink) return false;
+    const opacity = effectiveOpacity(node, view, scan);
+    const inkAlpha = ink.a * opacity;
+    if (inkAlpha > FAINT_ALPHA) return false;
+    const shadowed = drawsVisibly(style?.textShadow, scan.readColour, ink) && opacity > FAINT_ALPHA;
+    const stroked = Number.parseFloat(style?.webkitTextStrokeWidth) > 0
+      && (scan.readColour(style?.webkitTextStrokeColor)?.a ?? 0) * opacity > FAINT_ALPHA;
+    const clippedFill = [style?.backgroundClip, style?.webkitBackgroundClip].some((clip) => String(clip || '').includes('text'))
+      && opacity > FAINT_ALPHA
+      && (String(style?.backgroundImage || 'none') !== 'none' || (scan.readColour(style?.backgroundColor)?.a ?? 0) > FAINT_ALPHA);
+    return !shadowed && !stroked && !clippedFill;
+  } catch {
+    return false;
+  }
+}
+
+// An ancestor with a transform, filter, perspective, paint containment or a will-change for them becomes the box a
+// fixed (or absolute) element is positioned against, so that element moves with it instead of with the window.
+// Only a box can anchor: display:contents makes none, and an inline box ignores transforms and containment, so
+// only a filter (or a will-change for one) anchors from an inline element.
+function anchorsFixedDescendants(style) {
+  const set = (value) => String(value || 'none') !== 'none';
+  const display = String(style?.display || '');
+  if (display === 'contents') return false;
+  if (display === 'inline') {
+    return set(style?.filter) || set(style?.backdropFilter) || /\b(?:filter|backdrop-filter)\b/.test(String(style?.willChange || ''));
+  }
+  return set(style?.transform) || set(style?.translate) || set(style?.rotate) || set(style?.scale)
+    || set(style?.filter) || set(style?.perspective) || set(style?.backdropFilter)
+    || style?.transformStyle === 'preserve-3d'
+    || style?.contentVisibility === 'auto'
+    || /\b(?:size|inline-size)\b/.test(String(style?.containerType || ''))
+    || /\b(?:paint|layout|strict|content)\b/.test(String(style?.contain || ''))
+    || /\b(?:transform|translate|rotate|scale|filter|perspective|backdrop-filter|contain)\b/.test(String(style?.willChange || ''));
+}
+
+// What an element is laid out against, which is what moves it: its parent for normal flow, the nearest positioned
+// (or transformed) ancestor for position:absolute, the nearest transformed ancestor or else the window for
+// position:fixed, and the page when nothing is left.
+function containingBlockOf(element, view, cache) {
+  if (cache?.blocks.has(element)) return cache.blocks.get(element);
+  const block = findContainingBlock(element, view);
+  cache?.blocks.set(element, block);
+  return block;
+}
+
+function findContainingBlock(element, view) {
+  const position = view.getComputedStyle(element)?.position;
+  if (position === 'fixed' || position === 'absolute') {
+    for (let ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) {
+      const style = view.getComputedStyle(ancestor);
+      const boxed = style?.display !== 'contents';
+      if (anchorsFixedDescendants(style) || (position === 'absolute' && boxed && style?.position !== 'static')) return { box: ancestor };
+    }
+    return position === 'fixed' ? { window: true } : { page: true };
+  }
+  return element.parentElement ? { box: element.parentElement } : { page: true };
+}
+
+// A box a person can scroll (overflow auto, scroll or overlay). It clips what lies outside the range it can scroll
+// to, even when it has nothing to scroll. The root's scrolling is the window's, and <body>'s overflow belongs to the
+// window too unless <html> clips its own.
+function isScrollBox(box, view, cache) {
+  if (cache?.scrollBoxes.has(box)) return cache.scrollBoxes.get(box);
+  const scrolls = findScrollBox(box, view);
+  cache?.scrollBoxes.set(box, scrolls);
+  return scrolls;
+}
+
+function findScrollBox(box, view) {
+  const document = box.ownerDocument;
+  if (box === document?.documentElement || box === document?.scrollingElement) return false;
+  const style = view.getComputedStyle(box);
+  if (!/\b(?:auto|scroll|overlay)\b/.test(`${style?.overflowX} ${style?.overflowY}`)) return false;
+  // overflow applies only to boxes that hold content: an inline element, display:contents and table rows ignore it
+  if (/^(?:inline|contents|table-(?:row|row-group|header-group|footer-group|column|column-group))$/.test(String(style?.display || ''))) return false;
+  if (box === document?.body) {
+    const root = view.getComputedStyle(document.documentElement);
+    if (root?.overflowX === 'visible' && root?.overflowY === 'visible') return false;
+  }
+  return true;
+}
+
+// Which screen axes scroll backwards (start at the right or the bottom, offsets going negative). The block axis is
+// vertical in horizontal writing and horizontal in vertical writing (right to left in vertical-rl and sideways-rl);
+// the inline axis runs right to left, or bottom to top, with direction:rtl and in sideways-lr. A row-reverse flex
+// box flips its inline axis and a column-reverse one its block axis, so two flips cancel.
+function reversedScroll(style) {
+  const mode = String(style?.writingMode || 'horizontal-tb');
+  const vertical = /^(?:vertical|sideways)/.test(mode);
+  const flex = /flex/.test(String(style?.display || ''));
+  const inlineBack = (style?.direction === 'rtl') !== (mode === 'sideways-lr') !== (flex && style?.flexDirection === 'row-reverse');
+  const blockBack = /-rl$/.test(mode) !== (flex && style?.flexDirection === 'column-reverse');
+  return vertical ? { x: blockBack, y: inlineBack } : { x: inlineBack, y: blockBack };
+}
+
+// Whether a rectangle lies wholly where scrolling cannot bring it. `x` and `y` are its position measured from the
+// box's scroll origin (where it would sit with the box scrolled back to 0); a box shows [0, size] at that point and
+// scrolls forwards into [size, scrollSize] or, when reversed, backwards into [size - scrollSize, 0].
+const OFF_PAGE_MARGIN_PX = 8;
+function beyondScrollRange({ x, y, width, height }, { clientWidth, clientHeight, scrollWidth, scrollHeight }, reversed) {
+  const margin = OFF_PAGE_MARGIN_PX;
+  const outside = (start, size, client, scrollSize, back) => (back
+    ? start > client + margin || start + size < client - Math.max(client, scrollSize) - margin
+    : start + size < -margin || start > Math.max(client, scrollSize) + margin);
+  return outside(x, width, clientWidth, scrollWidth, reversed.x) || outside(y, height, clientHeight, scrollHeight, reversed.y);
+}
+
+// How a scrolling box can move what it holds, on each screen axis: the range of shifts its scroll positions apply
+// (a box scrolls forwards over [0, travel], or backwards over [-travel, 0] when reversed; scrolling to s moves the
+// content by current - s) and the stretch of screen it shows. Measured once per box.
+function scrollReach(box, view, cache) {
+  if (cache?.reach.has(box)) return cache.reach.get(box);
+  const frame = box.getBoundingClientRect();
+  const reversed = reversedScroll(view.getComputedStyle(box));
+  // zoom and scaling transforms grow the frame but not the box's own scroll metrics: bring those to screen px
+  const scaleX = box.offsetWidth > 0 ? frame.width / box.offsetWidth : 1;
+  const scaleY = box.offsetHeight > 0 ? frame.height / box.offsetHeight : 1;
+  const axis = (current, client, scrollSize, visibleStart, back, scale) => {
+    const travel = Math.max(0, scrollSize - client) * scale;
+    const [low, high] = back ? [-travel, 0] : [0, travel];
+    return { shift: [current * scale - high, current * scale - low], shows: [visibleStart, visibleStart + client * scale] };
+  };
+  const reach = {
+    x: axis(box.scrollLeft, box.clientWidth, box.scrollWidth, frame.left + box.clientLeft * scaleX, reversed.x, scaleX),
+    y: axis(box.scrollTop, box.clientHeight, box.scrollHeight, frame.top + box.clientTop * scaleY, reversed.y, scaleY),
+  };
+  cache?.reach.set(box, reach);
+  return reach;
+}
+
+// Every place a rectangle can be brought to on screen while it shows inside the box, as a range of starts on each
+// axis: the starts it already had, moved by every scroll the box allows, kept where at least a pixel of it overlaps
+// what the box shows. Null when no scroll position shows it. Ranges stay ranges through any number of boxes, so the
+// middle of a range is never lost and the work grows with the depth of the page, not exponentially.
+function reachInScrollBox(span, box, view, cache) {
+  const reach = scrollReach(box, view, cache);
+  const axis = ([from, to], size, { shift, shows }) => {
+    // a box that shows less than a pixel shows nothing, however it scrolls
+    if (shows[1] - shows[0] < 1) return null;
+    const low = Math.max(from + shift[0], shows[0] - size + 1);
+    const high = Math.min(to + shift[1], shows[1] - 1);
+    return low <= high ? [low, high] : null;
+  };
+  const x = axis(span.x, span.width, reach.x);
+  const y = axis(span.y, span.height, reach.y);
+  return x && y ? { x, y, width: span.width, height: span.height } : null;
+}
+
+// Whether a rectangle, wherever in its ranges it sits, stays wholly where scrolling cannot bring it: past the window
+// for text fixed to it, or before the start of the page.
+function spanOffPage(span, node, view, holdsText, cache) {
+  const margin = OFF_PAGE_MARGIN_PX;
+  // text is laid out inside the element that holds it; a box's own frame is laid out by what contains the box
+  let box = node;
+  let judgeSelf = holdsText;
+  for (;;) {
+    if (judgeSelf && isScrollBox(box, view, cache)) {
+      span = reachInScrollBox(span, box, view, cache);
+      if (!span) return true;
+    }
+    judgeSelf = true;
+    const block = containingBlockOf(box, view, cache);
+    if (block.window) {
+      return span.x[1] + span.width < -margin || span.y[1] + span.height < -margin
+        || span.x[0] > view.innerWidth + margin || span.y[0] > view.innerHeight + margin;
+    }
+    if (block.page) {
+      const document = view.document;
+      // the page scrolls the way its principal writing mode (from <body>) runs
+      const reversed = reversedScroll(view.getComputedStyle(document?.body || document?.documentElement));
+      // the page clips nothing past its far end: only before its start is unreachable, so the start nearest it counts
+      const before = { clientWidth: view.innerWidth, clientHeight: view.innerHeight, scrollWidth: Number.POSITIVE_INFINITY, scrollHeight: Number.POSITIVE_INFINITY };
+      const x = (reversed.x ? span.x[0] : span.x[1]) + (view.scrollX || 0);
+      const y = (reversed.y ? span.y[0] : span.y[1]) + (view.scrollY || 0);
+      return beyondScrollRange({ x, y, width: span.width, height: span.height }, before, reversed);
+    }
+    box = block.box;
+  }
+}
+
+// Where the text itself was laid out, not its box: wholly where no scrolling can bring it (outside the range of the
+// scrolling boxes it moves with, counting right-to-left, vertical and bottom-up scrolling, or before the start of the
+// page), or, for text fixed to the window, wholly outside the window. Only boxes that actually move the text count:
+// an absolute child anchored outside a scrolling box does not scroll with it. Screen-reader-only text overflows its
+// 1px box onto the page and is kept: it is real content for people who use a screen reader. Lines are judged by
+// halves: when the rectangle around a group of lines is out of reach, so is every line in it; otherwise the group
+// is split, down to single lines (the gaps between lines hold no text), and the first reachable line ends the check.
+// Lines run in reading order, so only the groups at a window or page edge split and the walks grow with the log of
+// the line count. A node that would need more than LINE_CHECK_BUDGET walks is kept, like a partly reachable one.
+const LINE_CHECK_BUDGET = 512;
+function rectsOffPage(rects, node, view, cache = null) {
+  if (!rects.length) return false;
+  let budget = LINE_CHECK_BUDGET;
+  const groupOff = (from, to) => {
+    if (budget <= 0) return false;
+    budget -= 1;
+    let [left, top, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity];
+    for (let i = from; i < to; i += 1) {
+      left = Math.min(left, rects[i].left);
+      top = Math.min(top, rects[i].top);
+      right = Math.max(right, rects[i].right);
+      bottom = Math.max(bottom, rects[i].bottom);
+    }
+    if (spanOffPage({ x: [left, left], y: [top, top], width: right - left, height: bottom - top }, node, view, true, cache)) return true;
+    if (to - from === 1) return false;
+    const middle = (from + to) >> 1;
+    return groupOff(from, middle) && groupOff(middle, to);
+  };
+  return groupOff(0, rects.length);
+}
+
+function rangeRects(document, text, start, end) {
+  const range = document.createRange();
+  range.setStart(text, start);
+  range.setEnd(text, end);
+  return Array.from(range.getClientRects()).filter((rect) => rect.width > 0 || rect.height > 0);
+}
+
+// Each live text node and its copy in the clone, paired while the two trees are still identical, so removing
+// one hidden child can never shift which copy another text node points at.
+function pairTextNodes(liveRoot, clone, document) {
+  const pairs = new Map();
+  if (typeof document?.createTreeWalker !== 'function') return pairs;
+  const live = document.createTreeWalker(liveRoot, 4);
+  const copy = document.createTreeWalker(clone, 4);
+  for (let a = live.nextNode(), b = copy.nextNode(); a && b; a = live.nextNode(), b = copy.nextNode()) pairs.set(a, b);
+  return pairs;
+}
+
+// A text node laid out wholly where no scrolling reaches it is removed from the copy. A node that is only partly out
+// of reach (a long line pushed half off the page) is kept whole: cutting inside a node cannot be done reliably
+// (bidirectional text, wrapped lines, huge lines), so that is a documented limit, and what is kept still reaches
+// the model only inside the untrusted block.
+function removeOffPageText(liveNode, document, copies, cache) {
+  const view = document?.defaultView;
+  if (typeof view?.getComputedStyle !== 'function' || typeof document?.createRange !== 'function') return 0;
+  let removed = 0;
+  for (const child of ownTextNodes(liveNode)) {
+    try {
+      const rects = rangeRects(document, child, 0, (child.nodeValue || '').length);
+      if (rects.length && rectsOffPage(rects, liveNode, view, cache)) {
+        copies.get(child)?.remove?.();
+        removed += 1;
+      }
+    } catch {
+      // text that cannot be measured is kept
+    }
+  }
+  return removed;
+}
+
+function removeOwnText(node) {
+  for (const child of Array.from(node?.childNodes || [])) if (child.nodeType === 3) child.remove?.();
 }
 
 function cloneVisibleRoot(document, liveRoot) {
   const clone = liveRoot?.cloneNode?.(true) || null;
   if (!clone) return { clone: null, omittedNodes: 0 };
+  const copies = pairTextNodes(liveRoot, clone, document);
   const liveNodes = [liveRoot, ...Array.from(liveRoot?.querySelectorAll?.('*') || [])];
   const cloneNodes = [clone, ...Array.from(clone?.querySelectorAll?.('*') || [])];
   const inspected = Math.min(liveNodes.length, cloneNodes.length, MAX_VISIBILITY_NODES);
   let omittedNodes = Math.max(0, cloneNodes.length - inspected);
   for (let index = cloneNodes.length - 1; index >= inspected; index -= 1) cloneNodes[index]?.remove?.();
+  const scan = { opacity: new Map(), scale: new Map(), readColour: colourReader(document), layout: { blocks: new Map(), scrollBoxes: new Map(), reach: new Map() } };
   for (let index = inspected - 1; index >= 1; index -= 1) {
-    if (!liveNodeIsHidden(liveNodes[index], document)) continue;
-    cloneNodes[index]?.remove?.();
+    if (hiddenOnlyByVisibility(liveNodes[index], document)) {
+      removeOwnText(cloneNodes[index]);
+      omittedNodes += 1;
+    } else if (liveNodeIsHidden(liveNodes[index], document)) {
+      cloneNodes[index]?.remove?.();
+      omittedNodes += 1;
+    } else if (ownTextIsInvisible(liveNodes[index], document, scan)) {
+      removeOwnText(cloneNodes[index]);
+      omittedNodes += 1;
+    } else {
+      omittedNodes += removeOffPageText(liveNodes[index], document, copies, scan.layout);
+    }
+  }
+  // the root's own text (usually <body>'s) is judged the same way; its children were judged above
+  if (ownTextIsInvisible(liveRoot, document, scan)) {
+    removeOwnText(clone);
     omittedNodes += 1;
+  } else {
+    omittedNodes += removeOffPageText(liveRoot, document, copies, scan.layout);
   }
   if (liveNodeIsHidden(liveRoot, document)) {
     for (const child of Array.from(clone.childNodes || [])) child.remove?.();

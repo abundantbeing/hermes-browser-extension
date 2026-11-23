@@ -239,7 +239,8 @@ test('CSS-hidden content is removed before candidate scoring and structure extra
     value(node) {
       return {
         display: node?.classList?.contains('stylesheet-hidden') ? 'none' : 'block',
-        visibility: node?.classList?.contains('visibility-hidden') ? 'hidden' : 'visible',
+        // visibility inherits in CSS: a child of a visibility:hidden section is hidden too
+        visibility: node?.closest?.('.visibility-hidden') ? 'hidden' : 'visible',
         opacity: node?.classList?.contains('opacity-hidden') ? '0' : '1',
         contentVisibility: 'visible',
       };
@@ -334,4 +335,64 @@ test('aggregate extraction and bridge payloads stay within serialized budgets', 
   assert.equal('text' in context.extraction.content, false);
   assert.ok(JSON.stringify(tightContext).length <= 8_000);
   assert.ok(tightContext.extraction.limits.serializedContextChars <= 8_000);
+});
+
+test('lines spread above and below the window are judged in bounded work and dropped', () => {
+  const lines = 100_000;
+  const document = documentFor(`<!doctype html><html><body><article>
+    <h1>Visible public article</h1><p>${'Visible public prose. '.repeat(24)}</p>
+    <div class="fixed">${'<div>'.repeat(400)}<pre>SPREAD_LINES_HIDDEN</pre>${'</div>'.repeat(400)}</div>
+  </article></body></html>`);
+  const view = document.defaultView;
+  // every walk up the containing blocks ends by reading the window's height
+  let walks = 0;
+  Object.defineProperty(view, 'innerWidth', { configurable: true, value: 800 });
+  Object.defineProperty(view, 'innerHeight', { configurable: true, get() { walks += 1; return 800; } });
+  Object.defineProperty(view, 'getComputedStyle', {
+    configurable: true,
+    value: (node) => ({
+      display: 'block', visibility: 'visible', opacity: '1', contentVisibility: 'visible', fontSize: '16px',
+      position: node?.classList?.contains('fixed') ? 'fixed' : 'static', overflowX: 'visible', overflowY: 'visible',
+    }),
+  });
+  // the hidden text is fixed: its first line sits above the window and every other line below it, so the rectangle
+  // around all of them crosses the window although no line shows
+  const line = (top) => ({ left: 0, top, right: 200, bottom: top + 18, width: 200, height: 18 });
+  const spread = Array.from({ length: lines }, (_, i) => line(i === 0 ? -100 : 1000 * i));
+  document.createRange = () => {
+    let text = null;
+    return { setStart(node) { text = node; }, setEnd() {}, getClientRects: () => (String(text?.nodeValue).includes('SPREAD_LINES') ? spread : [line(100)]) };
+  };
+
+  const result = extractPageContent(document);
+
+  assert.match(result.content.text, /Visible public prose/);
+  assert.doesNotMatch(JSON.stringify(result), /SPREAD_LINES_HIDDEN/);
+  assert.ok(walks < 200, `judging ${lines} spread lines took ${walks} walks`);
+});
+
+test('one reachable line among spread hidden lines keeps its text', () => {
+  const document = documentFor(`<!doctype html><html><body><article>
+    <h1>Visible public article</h1><p>${'Visible public prose. '.repeat(24)}</p>
+    <div class="fixed"><pre>SPREAD_WITH_ONE_SHOWN</pre></div>
+  </article></body></html>`);
+  const view = document.defaultView;
+  Object.defineProperty(view, 'innerWidth', { configurable: true, value: 800 });
+  Object.defineProperty(view, 'innerHeight', { configurable: true, value: 800 });
+  Object.defineProperty(view, 'getComputedStyle', {
+    configurable: true,
+    value: (node) => ({
+      display: 'block', visibility: 'visible', opacity: '1', contentVisibility: 'visible', fontSize: '16px',
+      position: node?.classList?.contains('fixed') ? 'fixed' : 'static', overflowX: 'visible', overflowY: 'visible',
+    }),
+  });
+  // 100,000 lines above and below the window, and one in the middle of them that shows
+  const line = (top) => ({ left: 0, top, right: 200, bottom: top + 18, width: 200, height: 18 });
+  const spread = Array.from({ length: 100_000 }, (_, i) => line(i === 0 ? -100 : i === 50_000 ? 300 : 1000 * i));
+  document.createRange = () => {
+    let text = null;
+    return { setStart(node) { text = node; }, setEnd() {}, getClientRects: () => (String(text?.nodeValue).includes('SPREAD_WITH') ? spread : [line(100)]) };
+  };
+
+  assert.match(extractPageContent(document).content.text, /SPREAD_WITH_ONE_SHOWN/);
 });
