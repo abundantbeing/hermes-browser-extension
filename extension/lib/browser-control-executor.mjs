@@ -183,11 +183,12 @@ function approvalCopy(reasonKey, reasonParams, reason) {
 
 function approvalTargetName(target) {
   if (!target || typeof target !== 'object') return '';
-  return compact(target.name || target.label || target.placeholder, 80);
+  // tabTitleText strips bidi/format marks so a page-controlled name cannot reverse the warning.
+  return tabTitleText(target.name || target.label || target.placeholder).slice(0, 80);
 }
 
 function approvalUrlPreview(value) {
-  return compact(safeNetworkUrl(value), 160);
+  return tabTitleText(safeNetworkUrl(value)).slice(0, 160);
 }
 
 function unlabelledApprovalPrompt(action) {

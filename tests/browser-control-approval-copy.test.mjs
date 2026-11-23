@@ -100,3 +100,15 @@ test('the panel formats a translated preview and batch prefix from keys, not a b
   }, { t, translateText: (value) => value });
   assert.equal(line, 'Schritt 2 von 3: Klick "Continue"?');
 });
+
+test('a page-controlled name cannot reverse the approval warning with a bidi mark', () => {
+  const click = approvalPrompt({
+    reason: 'page-changing-action',
+    action: 'browser_click',
+    target: { role: 'button', name: 'Continue\u202E' },
+  });
+  assert.doesNotMatch(click.reason, /\u202E/);
+  assert.doesNotMatch(JSON.stringify(click.reasonParams), /\u202E/);
+  assert.equal(click.reasonParams.name, 'Continue');
+  assert.match(click.reason, /It may change the page\.$/);
+});
