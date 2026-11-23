@@ -304,6 +304,11 @@ export function classifyBrowserControlAction({
     return decision(BROWSER_CONTROL_RISKS.SAFE);
   }
   if (normalizedAction === 'browser_click') {
+    const name = compact(target.name || target.label).toLowerCase();
+    if (/^https:\/\/drive\.google\.com\//.test(currentUrl || '')
+      && (name === 'download' || name === 'descargar')) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'download-click');
+    }
     if (!accessibleName(target)) {
       return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'unlabelled-target');
     }

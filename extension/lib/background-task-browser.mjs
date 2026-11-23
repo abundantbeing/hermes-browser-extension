@@ -180,6 +180,12 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
         ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
       }, {
         scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
+        onDownloadApproval: () => {
+          void browserApi.runtime?.sendMessage({ type: 'HERMES_BACKGROUND_DOWNLOAD_APPROVAL_CHANGED' })?.catch(() => {});
+          const popup = new URL(browserApi.runtime.getURL('background-download-approval.html'));
+          popup.searchParams.set('command', params.command_id);
+          void windows.create({ url: popup.href, type: 'popup', focused: true, width: 460, height: 275 }).catch(() => {});
+        },
         currentWindowId: tab.windowId,
         currentDocumentGeneration: () => lease.document,
         controlHalted: () => signal.aborted || !state.tabs.has(id),
@@ -288,6 +294,29 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   }
 
   return {
+    async decideDownloadApproval(message, approved) {
+      if (message.controllerId !== controllerId) return null;
+      const request = runtime.approvals.pending().find((entry) => entry.approvalId === message.approvalId);
+      const command = pending.get(message.commandId);
+      if (!request || !command || command.signal.aborted || request.action !== 'browser_click'
+        || request.state !== 'paused' || request.state !== message.state
+        || request.controllerId !== controllerId || request.commandId !== message.commandId
+        || request.approvalNonce !== message.approvalNonce || request.action !== message.action
+        || request.leaseId !== message.leaseId || request.leaseGeneration !== message.leaseGeneration
+        || request.tabId !== message.tabId || request.frameId !== message.frameId
+        || request.documentGeneration !== message.documentGeneration) return { ok: false, error: 'approval_missing' };
+      const lease = [...sessions.values()].map((state) => state.tabs.get(request.tabId)).find((item) => item?.leaseId === request.leaseId);
+      const tab = await getTab(request.tabId);
+      if (!lease || !tab || tab.incognito || command.signal.aborted || lease.document !== request.documentGeneration
+        || tab.url !== lease.url || !/^https:\/\/drive\.google\.com\//.test(tab.url || '')) {
+        return { ok: false, error: 'stale_document' };
+      }
+      if (!approved) {
+        runtime.approvals.cancelRequest(request.approvalId, 'approval_denied');
+        return { ok: true };
+      }
+      return runtime.approvals.grant(request);
+    },
     settingsChanged(changes) {
       const change = changes.hermesBrowserSettings;
       if (changes[BACKGROUND_BROWSER_CONSENT] || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || (change && (

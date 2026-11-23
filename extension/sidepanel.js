@@ -31416,6 +31416,10 @@ function bindEvents() {
     void clearElementPickState({ tabId: tab?.id });
   });
   browserApi.runtime.onMessage.addListener((message, sender) => {
+    if (message?.type === 'HERMES_BACKGROUND_DOWNLOAD_APPROVAL_CHANGED' && sender?.id === browserApi.runtime.id) {
+      void refreshBrowserControlStatus();
+      return;
+    }
     if (message?.type === ELEMENT_PICK_MESSAGES.RESULT) {
       applyPickedElementResult(message, sender);
       return;

@@ -327,6 +327,7 @@ export function createControllerServiceWorker({
   executeCommand = undefined,
   executeBrowserCommand = undefined,
   approvalStore = undefined,
+  decideBackgroundDownloadApproval = undefined,
   getControllerCapabilities = undefined,
   getTab = undefined,
   releaseTabDebugger = undefined,
@@ -2069,8 +2070,14 @@ export function createControllerServiceWorker({
     if (type === CONTROLLER_WORKER_MESSAGES.leaseRelease) return releaseLeases(message);
     if (type === CONTROLLER_WORKER_MESSAGES.targetResolve) return resolveControlTarget(message);
     if (type === CONTROLLER_WORKER_MESSAGES.prepareTurn) return prepareTurn(message);
-    if (type === CONTROLLER_WORKER_MESSAGES.approvalGrant) return grantApproval(message);
-    if (type === CONTROLLER_WORKER_MESSAGES.approvalReject) return rejectApproval(message);
+    if (type === CONTROLLER_WORKER_MESSAGES.approvalGrant || type === CONTROLLER_WORKER_MESSAGES.approvalReject) {
+      const approve = type === CONTROLLER_WORKER_MESSAGES.approvalGrant;
+      if (String(message.controllerId || '').startsWith('background-')) {
+        if (controlPaused()) return { ok: false, error: 'controller_paused' };
+        return (await decideBackgroundDownloadApproval?.(message, approve)) || { ok: false, error: 'approval_missing' };
+      }
+      return approve ? grantApproval(message) : rejectApproval(message);
+    }
     if (type === CONTROLLER_WORKER_MESSAGES.pause) return setPaused(true);
     if (type === CONTROLLER_WORKER_MESSAGES.resume) return setPaused(false);
     if (type === CONTROLLER_WORKER_MESSAGES.stop) return stopCommands();

@@ -91,6 +91,7 @@ const APPROVAL_MESSAGES = Object.freeze({
   'consequential-action': 'Run this consequential browser action?',
   'page-changing-action': 'Allow this action that may change the page?',
   'unlabelled-target': 'Allow this action on a control Hermes could not name?',
+  'download-click': 'Download the selected file(s) in Chrome?',
   'coordinate-click': 'Click these exact viewport coordinates?',
   'drag-action': 'Drag this target to the selected destination?',
   'tab-activate': 'Switch your view to this tab?',
@@ -985,7 +986,11 @@ export function createBrowserControlExecutor({
         );
       }
       if (policy.risk === BROWSER_CONTROL_RISKS.APPROVAL) {
-        if (context.backgroundTask === true) {
+        const driveDownload = context.backgroundTask === true && policy.reason === 'download-click'
+          && action === 'browser_click' && Boolean(args.ref) && scope.frameId === 0
+          && /^https:\/\/drive\.google\.com\//.test(pageState.currentUrl || '')
+          && typeof context.onDownloadApproval === 'function';
+        if (context.backgroundTask === true && !driveDownload) {
           return errorOutcome('approval_required', 'This action requires a person in a manually attached tab.');
         }
         const approval = {
@@ -1046,13 +1051,15 @@ export function createBrowserControlExecutor({
               : abort('approval_timeout', APPROVAL_TIMEOUT_MESSAGE)),
             Math.max(1, Math.min(deadlineAt, startedAt + APPROVAL_WAIT_CAP_MS) - Number(now())),
           );
-          const requested = await approvals.request({
+          const request = approvals.request({
             ...approval,
             reason: approvalReason,
             ...(approvalReasonKey ? { reasonKey: approvalReasonKey, reasonParams: approvalReasonParams } : {}),
             ...(step ? { stepNumber: step.number, stepTotal: step.total } : {}),
             ...(approvalDetail ? { detail: approvalDetail } : {}),
           });
+          if (driveDownload) context.onDownloadApproval();
+          const requested = await request;
           clearTimeout(approvalTimer);
           approvalTimer = null;
           if (!requested?.ok) {

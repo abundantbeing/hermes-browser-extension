@@ -164,6 +164,10 @@ function unsupportedView({ enabled = false } = {}) {
 // capabilities without extension control, otherwise 'supported' or 'unknown'.
 export function browserControlView({ settings = {}, status = {}, activeTab = null, currentTarget = null, support = 'unknown' } = {}) {
   const enabled = settings?.browserControlEnabled === true;
+  if (String(status?.pendingApproval?.controllerId || '').startsWith('background-')) {
+    return baseView({ state: 'approval', tone: 'warn', title: 'Approval needed',
+      detail: status.pendingApproval.reason, canEnable: false, attention: true });
+  }
   if (support === 'unsupported') return unsupportedView({ enabled });
   if (!enabled) return baseView();
   if (status?.connected !== true) {
