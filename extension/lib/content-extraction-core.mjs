@@ -785,23 +785,31 @@ function spanOffPage(span, node, view, holdsText, cache) {
 // scrolling boxes it moves with, counting right-to-left, vertical and bottom-up scrolling, or before the start of the
 // page), or, for text fixed to the window, wholly outside the window. Only boxes that actually move the text count:
 // an absolute child anchored outside a scrolling box does not scroll with it. Screen-reader-only text overflows its
-// 1px box onto the page and is kept: it is real content for people who use a screen reader. Every line box is
-// judged on its own (the gaps between lines hold no text); each is one walk up the containing blocks with every
-// box's reach measured once, and the first reachable line ends the check. When the rectangle around every line is
-// already out of reach, so is each line, and that one check settles it.
+// 1px box onto the page and is kept: it is real content for people who use a screen reader. Lines are judged by
+// halves: when the rectangle around a group of lines is out of reach, so is every line in it; otherwise the group
+// is split, down to single lines (the gaps between lines hold no text), and the first reachable line ends the check.
+// Lines run in reading order, so only the groups at a window or page edge split and the walks grow with the log of
+// the line count. A node that would need more than LINE_CHECK_BUDGET walks is kept, like a partly reachable one.
+const LINE_CHECK_BUDGET = 512;
 function rectsOffPage(rects, node, view, cache = null) {
   if (!rects.length) return false;
-  if (rects.length > 1) {
+  let budget = LINE_CHECK_BUDGET;
+  const groupOff = (from, to) => {
+    if (budget <= 0) return false;
+    budget -= 1;
     let [left, top, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity];
-    for (const r of rects) {
-      left = Math.min(left, r.left);
-      top = Math.min(top, r.top);
-      right = Math.max(right, r.right);
-      bottom = Math.max(bottom, r.bottom);
+    for (let i = from; i < to; i += 1) {
+      left = Math.min(left, rects[i].left);
+      top = Math.min(top, rects[i].top);
+      right = Math.max(right, rects[i].right);
+      bottom = Math.max(bottom, rects[i].bottom);
     }
     if (spanOffPage({ x: [left, left], y: [top, top], width: right - left, height: bottom - top }, node, view, true, cache)) return true;
-  }
-  return rects.every((r) => spanOffPage({ x: [r.left, r.left], y: [r.top, r.top], width: r.width, height: r.height }, node, view, true, cache));
+    if (to - from === 1) return false;
+    const middle = (from + to) >> 1;
+    return groupOff(from, middle) && groupOff(middle, to);
+  };
+  return groupOff(0, rects.length);
 }
 
 function rangeRects(document, text, start, end) {
