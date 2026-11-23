@@ -1159,6 +1159,22 @@
     "message": "Roster view",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Approval needed",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "This browser action requires approval.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "Allow this action that may change the page?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Allow this action on a control Hermes could not name?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approve once",
     "description": "Runtime interface message browser_control.approve_once"

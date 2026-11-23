@@ -89,6 +89,8 @@ const APPROVAL_MESSAGES = Object.freeze({
   'opaque-focus': 'Press this key? Hermes cannot tell what the focused element does with it.',
   'clipboard-paste': 'Paste your clipboard into this page?',
   'consequential-action': 'Run this consequential browser action?',
+  'page-changing-action': 'Allow this action that may change the page?',
+  'unlabelled-target': 'Allow this action on a control Hermes could not name?',
   'coordinate-click': 'Click these exact viewport coordinates?',
   'drag-action': 'Drag this target to the selected destination?',
   'tab-activate': 'Switch your view to this tab?',
@@ -167,6 +169,8 @@ function pressApprovalReason(reason, args, focused) {
   const key = pressKeyLabel(args);
   const label = focusedLabel(focused);
   if (reason === 'consequential-action' && label) return `Press ${key} while ${label} has focus? It acts like clicking it.`;
+  if (reason === 'page-changing-action' && label) return `Press ${key} while ${label} has focus? It may change the page.`;
+  if (reason === 'unlabelled-target') return `Press ${key}? Hermes could not name the control that has focus.`;
   if (reason === 'framed-focus') return label ? `Press ${key} inside the embedded frame ${label} on the page?` : `Press ${key} inside an embedded frame on the page?`;
   if (reason === 'opaque-focus' && label) return `Press ${key} while ${label} has focus? Hermes cannot tell what that element does with it.`;
   if (reason === 'unknown-focus') return `Press ${key}? Hermes could not tell what has focus on the page.`;

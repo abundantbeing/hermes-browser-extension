@@ -1159,6 +1159,22 @@
     "message": "มุมมองรายการ",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "ต้องได้รับอนุมัติ",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "การกระทำในเบราว์เซอร์นี้ต้องได้รับอนุมัติ",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "อนุญาตการกระทำนี้อาจเปลี่ยนหน้าได้หรือไม่?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "อนุญาตการกระทำนี้กับตัวควบคุมที่ Hermes ตั้งชื่อไม่ได้หรือไม่?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "อนุมัติครั้งเดียว",
     "description": "Runtime interface message browser_control.approve_once"

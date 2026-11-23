@@ -1159,6 +1159,22 @@
     "message": "Vista elenco",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Approvazione necessaria",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "Questa azione del browser richiede l’approvazione.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "Consentire questa azione che potrebbe modificare la pagina?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Consentire questa azione su un controllo che Hermes non è riuscito a nominare?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approva una volta",
     "description": "Runtime interface message browser_control.approve_once"

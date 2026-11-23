@@ -1159,6 +1159,22 @@
     "message": "Listenansicht",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Genehmigung erforderlich",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "Diese Browseraktion erfordert eine Genehmigung.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "Diese Aktion zulassen, die die Seite ändern kann?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Diese Aktion an einem Steuerelement zulassen, das Hermes nicht benennen konnte?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Einmal genehmigen",
     "description": "Runtime interface message browser_control.approve_once"

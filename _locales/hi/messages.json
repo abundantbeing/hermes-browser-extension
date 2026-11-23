@@ -1159,6 +1159,22 @@
     "message": "सूची दृश्य",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "अनुमोदन आवश्यक",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "इस ब्राउज़र क्रिया के लिए अनुमोदन आवश्यक है।",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "इस क्रिया की अनुमति दें जो पृष्ठ बदल सकती है?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "उस नियंत्रण पर यह क्रिया करने दें जिसका नाम Hermes नहीं बता सका?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "एक बार स्वीकृत करें",
     "description": "Runtime interface message browser_control.approve_once"

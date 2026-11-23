@@ -1159,6 +1159,22 @@
     "message": "リスト表示",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "承認が必要です",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "このブラウザー操作には承認が必要です。",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "ページを変更する可能性のある操作を許可しますか？",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Hermes が名前を特定できなかったコントロールで、この操作を許可しますか？",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "1回だけ許可",
     "description": "Runtime interface message browser_control.approve_once"

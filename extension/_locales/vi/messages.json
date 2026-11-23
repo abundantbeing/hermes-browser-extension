@@ -1159,6 +1159,22 @@
     "message": "Xem danh sách",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Cần phê duyệt",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "Hành động trình duyệt này cần được phê duyệt.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "Cho phép hành động này, hành động có thể thay đổi trang?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Cho phép hành động này trên một điều khiển mà Hermes không thể đặt tên?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Cho phép một lần",
     "description": "Runtime interface message browser_control.approve_once"

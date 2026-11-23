@@ -1159,6 +1159,22 @@
     "message": "Widok listy",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Wymagana akceptacja",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "Ta czynność w przeglądarce wymaga akceptacji.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "Zezwolić na tę czynność, która może zmienić stronę?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Zezwolić na tę czynność na elemencie, którego Hermes nie mógł nazwać?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Zatwierdź raz",
     "description": "Runtime interface message browser_control.approve_once"
