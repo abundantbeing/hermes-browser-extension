@@ -17,15 +17,15 @@ test('Phase 6 classifies ordinary reads and writes without trusting caller-suppl
 
   assert.equal(classifyBrowserControlAction({ action: 'browser_snapshot' }).risk, BROWSER_CONTROL_RISKS.SAFE);
   assert.equal(classifyBrowserControlAction({ action: 'browser_scroll', arguments: { direction: 'down' } }).risk, BROWSER_CONTROL_RISKS.SAFE);
-  assert.equal(classifyBrowserControlAction({ action: 'browser_click', target: { role: 'button', name: 'Search' } }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.deepEqual(classifyBrowserControlAction({ action: 'browser_click', target: { role: 'button', name: 'Search' } }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
   assert.equal(classifyBrowserControlAction({ action: 'browser_hover', target: { role: 'button', name: 'Search' } }).risk, BROWSER_CONTROL_RISKS.SAFE);
   assert.equal(classifyBrowserControlAction({ action: 'browser_scroll_to', target: { role: 'button', name: 'Search' } }).risk, BROWSER_CONTROL_RISKS.SAFE);
-  assert.equal(classifyBrowserControlAction({ action: 'browser_type', arguments: { text: 'ordinary search terms' }, target: { role: 'textbox', name: 'Search' } }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.deepEqual(classifyBrowserControlAction({ action: 'browser_type', arguments: { text: 'ordinary search terms' }, target: { role: 'textbox', name: 'Search' } }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
   assert.equal(classifyBrowserControlAction({ action: 'browser_drag', target: { role: 'slider', name: 'Volume' } }).risk, BROWSER_CONTROL_RISKS.APPROVAL);
   assert.equal(classifyBrowserControlAction({ action: 'browser_click', arguments: { x: 20, y: 30 } }).risk, BROWSER_CONTROL_RISKS.APPROVAL);
-  assert.equal(classifyBrowserControlAction({ action: 'browser_tab_create', arguments: { url: 'https://example.test/new' } }).risk, BROWSER_CONTROL_RISKS.SAFE);
-  assert.equal(classifyBrowserControlAction({ action: 'browser_tab_group', arguments: { tab_ids: [7, 8] } }).risk, BROWSER_CONTROL_RISKS.SAFE);
-  assert.equal(classifyBrowserControlAction({ action: 'browser_tab_ungroup', arguments: { tab_ids: [7, 8] } }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.deepEqual(classifyBrowserControlAction({ action: 'browser_tab_create', arguments: { url: 'https://example.test/new' } }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
+  assert.deepEqual(classifyBrowserControlAction({ action: 'browser_tab_group', arguments: { tab_ids: [7, 8] } }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
+  assert.deepEqual(classifyBrowserControlAction({ action: 'browser_tab_ungroup', arguments: { tab_ids: [7, 8] } }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
   assert.equal(classifyBrowserControlAction({ action: 'browser_tab_close', arguments: { tab_id: 7 } }).risk, BROWSER_CONTROL_RISKS.APPROVAL);
   // Switching the tab the person is looking at needs their approval, wherever the current page is.
   const activate = classifyBrowserControlAction({ action: 'browser_tab_activate', arguments: { tab_id: 7 } });
@@ -135,7 +135,7 @@ test('Phase 6 navigation permits ordinary HTTP(S), pauses cross-origin unsaved n
     currentUrl: 'https://example.test/start',
     hasUnsavedContent: true,
   });
-  assert.equal(sameOrigin.risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.deepEqual(sameOrigin, { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
 
   const crossOrigin = classifyBrowserControlAction({
     action: 'browser_navigate',
@@ -163,11 +163,11 @@ test('Phase 6 blocks reads and mutations on a restricted current page while allo
     assert.equal(result.risk, BROWSER_CONTROL_RISKS.BLOCKED, action);
     assert.equal(result.reason, 'restricted_current_page', action);
   }
-  assert.equal(classifyBrowserControlAction({
+  assert.deepEqual(classifyBrowserControlAction({
     action: 'browser_navigate',
     arguments: { url: 'https://example.test/docs' },
     currentUrl,
-  }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
 });
 
 test('Phase 6 approval grants are exact, short-lived, single-use, and action-bound', async () => {
@@ -376,9 +376,10 @@ test('Space presses whatever has focus, so it is judged as the click it is', asy
   assert.equal(press(' ', { role: 'checkbox', name: 'Subscribe to the newsletter', inputType: 'checkbox' }).reason, 'consequential-action');
   assert.equal(press(' ', { role: 'button', name: 'Pay now', inputType: 'submit' }).reason, 'consequential-action');
   // Harmless controls, text fields and the bare page stay free.
-  assert.equal(press(' ', { role: 'button', name: 'Open menu', inputType: '' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.deepEqual(press(' ', { role: 'button', name: 'Open menu', inputType: '' }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
   assert.equal(press(' ', { role: 'textbox', name: 'Send a message to the team', inputType: 'text' }).risk, BROWSER_CONTROL_RISKS.SAFE);
   assert.equal(press(' ', { role: '', name: '', inputType: '' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.deepEqual(press(' ', { role: 'button', name: '', inputType: '' }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'unlabelled-target' });
   // Other keys are not an activation, whatever has focus.
   assert.equal(press('ArrowDown', { role: 'button', name: 'Delete account', inputType: '' }).risk, BROWSER_CONTROL_RISKS.SAFE);
   assert.equal(press('Control+ ', { role: 'button', name: 'Delete account', inputType: '' }).risk, BROWSER_CONTROL_RISKS.SAFE);
@@ -403,4 +404,59 @@ test('a key that types or acts, pressed while an embedded frame has focus, asks 
   assert.equal(press({ key: 'Enter' }).reason, 'submission-key');
   assert.equal(press({ key: 'Control+v' }).reason, 'clipboard-paste');
   assert.equal(press({ key: 'a' }, { role: 'textbox', name: 'Search', inputType: 'text' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+});
+
+test('page-changing actions ask for approval even when the label is ordinary, non-English, or missing', async () => {
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await phase6();
+  const click = (name) => classifyBrowserControlAction({ action: 'browser_click', target: { role: 'button', name } });
+
+  const cases = [
+    ['Continue', 'page-changing-action'],
+    ['Save', 'page-changing-action'],
+    ['Allow', 'page-changing-action'],
+    ['Grant access', 'page-changing-action'],
+    ['Confirm and continue', 'page-changing-action'],
+    ['Weiter', 'page-changing-action'],
+    ['Continuar', 'page-changing-action'],
+    ['', 'unlabelled-target'],
+  ];
+  for (const [name, reason] of cases) {
+    const decision = click(name);
+    assert.equal(decision.risk, BROWSER_CONTROL_RISKS.APPROVAL, JSON.stringify({ name, decision }));
+    assert.equal(decision.reason, reason, JSON.stringify({ name, decision }));
+  }
+
+  const russianPassword = classifyBrowserControlAction({
+    action: 'browser_fill',
+    arguments: { value: 'x' },
+    target: { role: 'textbox', name: 'Пароль' },
+  });
+  assert.deepEqual(russianPassword, { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
+
+  const typedPassword = classifyBrowserControlAction({
+    action: 'browser_fill',
+    arguments: { value: 'x' },
+    target: { role: 'textbox', name: 'Пароль', inputType: 'password' },
+  });
+  assert.equal(typedPassword.risk, BROWSER_CONTROL_RISKS.BLOCKED);
+  assert.equal(typedPassword.reason, 'sensitive-credential-field');
+
+  const deleteAccount = click('Delete account');
+  assert.deepEqual(deleteAccount, { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'consequential-action' });
+
+  const unnamedType = classifyBrowserControlAction({
+    action: 'browser_type',
+    arguments: { text: 'hello' },
+    target: { role: 'textbox', name: '', inputType: 'text' },
+  });
+  assert.deepEqual(unnamedType, { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'unlabelled-target' });
+
+  // Reads stay free.
+  for (const action of ['browser_snapshot', 'browser_screenshot', 'browser_scroll', 'browser_scroll_to', 'browser_hover', 'browser_tabs', 'browser_back']) {
+    assert.equal(classifyBrowserControlAction({
+      action,
+      arguments: action === 'browser_scroll' ? { direction: 'down' } : {},
+      target: { role: 'button', name: 'Continue' },
+    }).risk, BROWSER_CONTROL_RISKS.SAFE, action);
+  }
 });

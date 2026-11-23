@@ -27,7 +27,7 @@ test('Space on a focusable element with no role of its own is judged as the clic
   // A role-less element that has a name is not the bare page either.
   assert.deepEqual(press(' ', { role: '', name: 'Pay now', inputType: '' }), { risk: APPROVAL, reason: 'consequential-action' });
   // With nothing to read from its label, a key it might act on still asks.
-  assert.deepEqual(press(' ', { role: 'generic', name: 'Open menu', inputType: '' }), { risk: APPROVAL, reason: 'opaque-focus' });
+  assert.deepEqual(press(' ', { role: 'generic', name: 'Open menu', inputType: '' }), { risk: APPROVAL, reason: 'page-changing-action' });
   assert.deepEqual(press('a', { role: 'generic', name: 'Widget', inputType: '' }), { risk: APPROVAL, reason: 'opaque-focus' });
   assert.deepEqual(press('Backspace', { role: 'generic', name: '', inputType: '' }), { risk: APPROVAL, reason: 'opaque-focus' });
   // Moving around asks nothing, and a real text field or the bare page stays free.

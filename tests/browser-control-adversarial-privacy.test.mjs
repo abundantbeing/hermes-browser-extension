@@ -220,7 +220,8 @@ test('Phase 8 adversarial: cross-origin navigation with unsaved content is pause
     currentUrl: 'https://form.example/entry',
     hasUnsavedContent: true,
   });
-  assert.equal(sameOrigin.risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.equal(sameOrigin.risk, BROWSER_CONTROL_RISKS.APPROVAL);
+  assert.equal(sameOrigin.reason, 'page-changing-action');
 });
 
 test('Phase 8 adversarial: consequential and submission actions pause for approval', () => {
