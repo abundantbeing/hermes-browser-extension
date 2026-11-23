@@ -4,6 +4,7 @@ import test, { mock } from 'node:test';
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 
 const scope = Object.freeze({
   controllerId: 'controller-1',
@@ -75,7 +76,7 @@ function makeExecutor(adapter, options = {}) {
   refs.replace({ ...scope, nodes: PAGE_NODES });
   const executor = createBrowserControlExecutor({
     adapter,
-    approvals: options.approvals || createBrowserControlApprovalStore(),
+    approvals: options.approvals || autoApprovingStore(),
     refs,
     ...(options.executorOptions || {}),
   });
@@ -346,7 +347,11 @@ test('Phase 2 inspects the page once per action and uses the URL-only probe for 
   const adapter = pageAdapter();
   const { executor } = makeExecutor(adapter);
   await executor.execute(frame('browser_click', { ref: '@e1' }), { scope });
-  assert.deepEqual(adapter.calls.filter((call) => call.method === 'inspect'), [{ method: 'inspect', light: false }]);
+  // A page-changing click waits for approval, then inspects again before running.
+  assert.deepEqual(adapter.calls.filter((call) => call.method === 'inspect'), [
+    { method: 'inspect', light: false },
+    { method: 'inspect', light: false },
+  ]);
 
   adapter.calls.length = 0;
   await executor.execute(frame('browser_scroll', { direction: 'down' }, { command_id: 'c2' }), { scope });

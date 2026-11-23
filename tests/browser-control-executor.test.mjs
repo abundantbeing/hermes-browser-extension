@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { createControllerLifecycle } from '../extension/lib/controller-lifecycle.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 
 async function executorModule() {
@@ -439,12 +440,15 @@ test('Phase 6 tab mutations require exact owned tabs and return sanitized metada
   const approvals = createBrowserControlApprovalStore();
   const executor = createBrowserControlExecutor({ adapter, approvals, refs: createBrowserControlRefStore() });
 
-  const created = await executor.execute(frame('browser_tab_create', { url: 'https://example.test/new', active: false }), {
+  const creating = executor.execute(frame('browser_tab_create', { url: 'https://example.test/new', active: false }), {
     scope,
     leasedTabIds: [7, 8],
     ownedTabIds: [7, 8],
     currentWindowId: 4,
   });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  approvals.grant(approvals.pending()[0]);
+  const created = await creating;
   assert.deepEqual(created, { ok: true, result: { tab: { id: 9, windowId: 4, active: false, url: 'https://example.test/new' } } });
   assert.equal((await executor.execute(frame('browser_tab_close', { tab_id: 99 }), {
     scope, leasedTabIds: [7, 8, 99], ownedTabIds: [7, 8], currentWindowId: 4,
@@ -484,29 +488,29 @@ test('Phase 6 keeps the stale_ref, navigation_failed and tab_hidden codes adapte
   let failure = null;
   const executor = createBrowserControlExecutor({
     adapter: fullAdapter(async () => { throw failure; }),
-    approvals: createBrowserControlApprovalStore(),
+    approvals: autoApprovingStore({ now: () => 5_000 }),
     refs,
     now: () => 5_000,
   });
   const coded = (code, message) => Object.assign(new Error(message), { code });
 
   failure = coded('stale_ref', 'That element is gone \u2014 use the refs in the latest result or call browser_snapshot.');
-  const stale = await executor.execute(frame('browser_click', { ref: '@e1' }), { scope });
+  const stale = await executor.execute(frame('browser_click', { ref: '@e1' }, { command_id: 'stale-click' }), { scope });
   assert.equal(stale.ok, false);
   assert.equal(stale.error.code, 'stale_ref');
   assert.match(stale.error.message, /browser_snapshot/);
 
   failure = coded('navigation_failed', 'Navigation failed: net::ERR_NAME_NOT_RESOLVED');
-  const navigation = await executor.execute(frame('browser_navigate', { url: 'https://nope.invalid/' }), { scope });
+  const navigation = await executor.execute(frame('browser_navigate', { url: 'https://nope.invalid/' }, { command_id: 'failed-nav' }), { scope });
   assert.equal(navigation.error.code, 'navigation_failed');
 
   failure = coded('tab_hidden', "This tab is in the background, so hover and drag can't run there. Ask the user to bring it to the front with Show tab in Hermes Control, or use click, type or scroll, which work in background tabs.");
-  const hidden = await executor.execute(frame('browser_click', { ref: '@e1' }), { scope });
+  const hidden = await executor.execute(frame('browser_click', { ref: '@e1' }, { command_id: 'hidden-click' }), { scope });
   assert.equal(hidden.error.code, 'tab_hidden');
   assert.match(hidden.error.message, /Show tab in Hermes Control/);
 
   failure = coded('debugger_conflict', 'Another debugger controls this tab: x');
-  assert.equal((await executor.execute(frame('browser_click', { ref: '@e1' }), { scope })).error.code, 'command_error');
+  assert.equal((await executor.execute(frame('browser_click', { ref: '@e1' }, { command_id: 'conflict-click' }), { scope })).error.code, 'command_error');
   failure = new Error('plain failure');
   assert.equal((await executor.execute(frame('browser_scroll', { direction: 'down' }), { scope })).error.code, 'command_error');
 });

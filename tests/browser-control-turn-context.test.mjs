@@ -10,6 +10,7 @@ import { CHROMIUM_ACTIONS } from '../extension/lib/browser-controller-adapter.mj
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 import { SNAPSHOT_VIEW_BUDGETS } from '../extension/lib/browser-control-snapshot-view.mjs';
 import { CONTROLLER_BROWSER_CAPABILITIES } from '../extension/lib/controller-protocol.mjs';
 import {
@@ -139,10 +140,11 @@ async function controlledWorker({
   tabIds = Object.keys(tabs).map(Number),
   kind = tabIds.length > 1 ? TAB_LEASE_KINDS.SELECTED_TABS : TAB_LEASE_KINDS.THIS_TAB,
   acquire = true,
+  autoApprove = true,
 } = {}) {
   const transport = connector();
   const refs = createBrowserControlRefStore();
-  const approvals = createBrowserControlApprovalStore();
+  const approvals = autoApprove ? autoApprovingStore() : createBrowserControlApprovalStore();
   const executor = createBrowserControlExecutor({ adapter, approvals, refs });
   const worker = createControllerServiceWorker({
     storageArea: storage.area,
@@ -398,6 +400,7 @@ test('the tab of the latest action is reported as lastActionTabId, survives a re
 test('tab-owned arguments.tab_id still means the tab to act on, not the command target', async () => {
   const { prepare, adapter, approvals, transport } = await twoTabWorker({
     adapter: pageAdapter({ actions: [...ADAPTER_ACTIONS, 'browser_tab_activate'] }),
+    autoApprove: false,
   });
   await prepare(41);
   // Switching tabs asks the person first, so the command is held until they grant it.

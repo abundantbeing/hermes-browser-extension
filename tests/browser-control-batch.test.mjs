@@ -6,6 +6,7 @@ import { CHROMIUM_ACTIONS, controllerAdapterContractFor } from '../extension/lib
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 import { CONTROLLER_BROWSER_CAPABILITIES, controllerRegistrationFor } from '../extension/lib/controller-protocol.mjs';
 
 const scope = Object.freeze({
@@ -51,8 +52,9 @@ function fixture({
   now = Date.now,
   refsSetup = true,
   adapterOverrides = {},
+  autoApprove = true,
 } = {}) {
-  const approvals = createBrowserControlApprovalStore();
+  const approvals = autoApprove ? autoApprovingStore({ now }) : createBrowserControlApprovalStore({ now });
   const refs = createBrowserControlRefStore();
   if (refsSetup) refs.replace({ ...scope, nodes: NODES });
   const calls = [];
@@ -292,7 +294,7 @@ test('an unknown ref fails its own step, not the whole command', async () => {
 });
 
 test('a step that needs approval pauses the batch for that approval and then continues', async () => {
-  const { approvals, executor, calls } = fixture();
+  const { approvals, executor, calls } = fixture({ autoApprove: false });
   let settled = false;
   const running = executor.execute(batchFrame({
     actions: [
@@ -322,7 +324,7 @@ test('a step that needs approval pauses the batch for that approval and then con
 });
 
 test('each approval-gated step asks on its own and an approval is spent once', async () => {
-  const { approvals, executor, calls } = fixture();
+  const { approvals, executor, calls } = fixture({ autoApprove: false });
   const running = executor.execute(batchFrame({
     actions: [{ action: 'browser_click', ref: '@e3' }, { action: 'browser_press', key: 'Enter' }],
   }), { scope });
@@ -344,7 +346,7 @@ test('each approval-gated step asks on its own and an approval is spent once', a
 });
 
 test('denying an approval stops the batch even when stop_on_error is off', async () => {
-  const { approvals, executor, calls } = fixture();
+  const { approvals, executor, calls } = fixture({ autoApprove: false });
   const running = executor.execute(batchFrame({
     stop_on_error: false,
     actions: [
@@ -369,6 +371,7 @@ test('denying an approval stops the batch even when stop_on_error is off', async
 test('the origin is re-checked after an approval wait inside a batch', async () => {
   let inspections = 0;
   const { approvals, executor, calls } = fixture({
+    autoApprove: false,
     inspect: async () => ({
       currentUrl: inspections++ === 0 ? 'https://example.test/editor' : 'https://other.test/replaced',
       hasUnsavedContent: false,
@@ -447,6 +450,7 @@ async function waitForPending(approvals, attempts = 200) {
 test('a click that needs approval after a navigation in the same batch asks under the new document generation', async () => {
   let generation = 3;
   const { approvals, executor, calls } = fixture({
+    autoApprove: false,
     settle: async () => ({ navigated: generation > 3, url: 'https://example.test/next', title: 'Next' }),
     onExecute: (action) => {
       if (action === 'browser_navigate') generation = 4;
@@ -459,10 +463,17 @@ test('a click that needs approval after a navigation in the same batch asks unde
       { action: 'browser_click', x: 120, y: 240 },
     ],
   }), { scope, currentDocumentGeneration: () => generation });
-  // The click waits for the person. Its request names the document the click will run on,
-  // which the navigation moved on from the generation the command arrived with.
-  const pending = await waitForPending(approvals);
-  assert.equal(pending.action, 'browser_click');
+  // Navigate now asks first. Grant that, then the click asks under the document it will run on.
+  const navigatePending = await waitForPending(approvals);
+  assert.equal(navigatePending.action, 'browser_navigate');
+  assert.equal(approvals.grant(navigatePending).ok, true);
+  let pending;
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    pending = approvals.pending().find((item) => item.action === 'browser_click');
+    if (pending) break;
+    await tick();
+  }
+  assert.equal(pending?.action, 'browser_click');
   assert.equal(pending.approvalId, 'batch-1:step-2');
   assert.equal(pending.documentGeneration, 4);
   assert.equal(pending.tabId, scope.tabId);
@@ -516,7 +527,7 @@ test('a step that waits too long for approval times out on its own and keeps ear
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const flush = async () => { for (let turn = 0; turn < 8; turn += 1) await new Promise((resolve) => setImmediate(resolve)); };
   let clock = 1_000_000;
-  const { approvals, executor, calls } = fixture({ now: () => clock });
+  const { approvals, executor, calls } = fixture({ now: () => clock, autoApprove: false });
   const running = executor.execute(batchFrame({
     actions: [
       { action: 'browser_hover', ref: '@e1' },

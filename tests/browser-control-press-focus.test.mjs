@@ -60,9 +60,15 @@ test('Space on a focused Delete button waits for the approval a click on it woul
   assert.equal(presses(), 0);
 });
 
-test('Space on a harmless focused control just presses', async () => {
-  const { approvals, executor, presses } = pressFixture({ role: 'button', name: 'Open menu', inputType: '' });
-  const outcome = await executor.execute(frame({ key: ' ' }), { scope: SCOPE });
+test('Space on a named focused control asks first, then presses', async () => {
+  const { approvals, executor, presses } = pressFixture({ role: 'button', name: 'Open menu', inputType: '', identity: '0123456789abcdef0123456789abcdef' });
+  const running = executor.execute(frame({ key: ' ' }), { scope: SCOPE });
+  await settle();
+  assert.equal(presses(), 0, 'nothing is pressed before the person answers');
+  const [shown] = approvals.pending();
+  assert.equal(shown.reason, 'Press Space while "Open menu" (button) has focus? It may change the page.');
+  approvals.grant(shown);
+  const outcome = await running;
   assert.equal(outcome.ok, true);
   assert.equal(presses(), 1);
   assert.equal(approvals.pending().length, 0);

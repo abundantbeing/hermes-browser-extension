@@ -4,6 +4,7 @@ import test from 'node:test';
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 
 const scope = Object.freeze({
   controllerId: 'controller-1',
@@ -42,7 +43,7 @@ function redirectingAdapter(landing = CARD_PAGE) {
 
 function makeExecutor(adapter) {
   const refs = createBrowserControlRefStore();
-  const executor = createBrowserControlExecutor({ adapter, approvals: createBrowserControlApprovalStore(), refs });
+  const executor = createBrowserControlExecutor({ adapter, approvals: autoApprovingStore(), refs });
   return { executor, refs };
 }
 
