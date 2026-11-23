@@ -13,6 +13,7 @@ import {
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 
 const PRODUCT = Object.freeze({ id: 'chromium', engine: 'chromium', label: 'Chromium browser' });
 
@@ -583,9 +584,19 @@ test('a batch click that needs approval after its own navigation is granted thro
       arguments: { actions: [{ action: 'navigate', url: 'https://example.test/next' }, { action: 'click', x: 10, y: 20 }] },
     },
   });
-  const pending = await waitForPendingApproval(worker);
-  assert.equal(pending.commandId, 'batch-nav-click');
-  assert.equal(pending.action, 'browser_click');
+  const navigatePending = await waitForPendingApproval(worker);
+  assert.equal(navigatePending.commandId, 'batch-nav-click');
+  assert.equal(navigatePending.action, 'browser_navigate');
+  const navigateGranted = await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.approvalGrant, ...navigatePending }, extensionSender());
+  assert.equal(navigateGranted.ok, true, JSON.stringify(navigateGranted));
+  let pending = null;
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    const current = worker.status().pendingApproval;
+    if (current && current.action === 'browser_click') { pending = current; break; }
+    await settle();
+  }
+  assert.equal(pending?.commandId, 'batch-nav-click');
+  assert.equal(pending?.action, 'browser_click');
   // The click runs on the document the navigation produced, so the request names that one.
   assert.ok(pending.documentGeneration > ready.documentGeneration, JSON.stringify(pending));
   const granted = await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.approvalGrant, ...pending }, extensionSender());
@@ -1173,7 +1184,7 @@ async function navigatingClickWorker({ announceDuring }) {
   };
   const executor = createBrowserControlExecutor({
     adapter,
-    approvals: createBrowserControlApprovalStore(),
+    approvals: autoApprovingStore(),
     refs: createBrowserControlRefStore(),
   });
   const worker = createControllerServiceWorker({

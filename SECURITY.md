@@ -29,7 +29,7 @@ Control is disabled by default. Enabling it registers one authenticated MV3 cont
 - stale refs, stale documents, stale owners, borrowed tabs, and changed origins fail closed;
 - stop and detach are terminal latches;
 - approvals cannot revive stopped, replaced, or stale work;
-- consequential actions pause for exact user approval;
+- actions that may change the page or tab set (click, type, fill, select, navigate, tab create or group) pause for exact user approval, as do other consequential or privileged actions;
 - evaluate and raw CDP require developer mode plus approval and method policy;
 - sensitive fields and restricted page categories remain blocked;
 - local HTML, browser-rendered PDF, and localhost control requires the local-document approval gate;

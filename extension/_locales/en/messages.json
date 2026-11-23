@@ -1159,6 +1159,94 @@
     "message": "Roster view",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Approval needed",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_click": {
+    "message": "Click \"{name}\"? It may change the page.",
+    "description": "Runtime interface message browser_control.approval.click"
+  },
+  "runtime_browser_control_approval_click_unlabelled": {
+    "message": "Click a control Hermes could not name?",
+    "description": "Runtime interface message browser_control.approval.click_unlabelled"
+  },
+  "runtime_browser_control_approval_consequential_click": {
+    "message": "Click \"{name}\"? This is a consequential action.",
+    "description": "Runtime interface message browser_control.approval.consequential_click"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "This browser action requires approval.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_fill": {
+    "message": "Fill \"{name}\"? It may change the page.",
+    "description": "Runtime interface message browser_control.approval.fill"
+  },
+  "runtime_browser_control_approval_fill_unlabelled": {
+    "message": "Fill a control Hermes could not name?",
+    "description": "Runtime interface message browser_control.approval.fill_unlabelled"
+  },
+  "runtime_browser_control_approval_navigate": {
+    "message": "Open {url}? It may change the page.",
+    "description": "Runtime interface message browser_control.approval.navigate"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "Allow this action that may change the page?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_press_consequential": {
+    "message": "Press {key} while {label} has focus? It acts like clicking it.",
+    "description": "Runtime interface message browser_control.approval.press_consequential"
+  },
+  "runtime_browser_control_approval_press_page_changing": {
+    "message": "Press {key} while {label} has focus? It may change the page.",
+    "description": "Runtime interface message browser_control.approval.press_page_changing"
+  },
+  "runtime_browser_control_approval_press_unlabelled": {
+    "message": "Press {key}? Hermes could not name the control that has focus.",
+    "description": "Runtime interface message browser_control.approval.press_unlabelled"
+  },
+  "runtime_browser_control_approval_select": {
+    "message": "Choose an option in \"{name}\"? It may change the page.",
+    "description": "Runtime interface message browser_control.approval.select"
+  },
+  "runtime_browser_control_approval_select_unlabelled": {
+    "message": "Choose an option in a control Hermes could not name?",
+    "description": "Runtime interface message browser_control.approval.select_unlabelled"
+  },
+  "runtime_browser_control_approval_step_prefix": {
+    "message": "Step {current} of {total}:",
+    "description": "Runtime interface message browser_control.approval.step_prefix"
+  },
+  "runtime_browser_control_approval_tab_create": {
+    "message": "Open a new tab to {url}?",
+    "description": "Runtime interface message browser_control.approval.tab_create"
+  },
+  "runtime_browser_control_approval_tab_create_blank": {
+    "message": "Open a new tab?",
+    "description": "Runtime interface message browser_control.approval.tab_create_blank"
+  },
+  "runtime_browser_control_approval_tab_group": {
+    "message": "Group the selected tabs?",
+    "description": "Runtime interface message browser_control.approval.tab_group"
+  },
+  "runtime_browser_control_approval_tab_ungroup": {
+    "message": "Ungroup the selected tabs?",
+    "description": "Runtime interface message browser_control.approval.tab_ungroup"
+  },
+  "runtime_browser_control_approval_type": {
+    "message": "Type into \"{name}\"? It may change the page.",
+    "description": "Runtime interface message browser_control.approval.type"
+  },
+  "runtime_browser_control_approval_type_unlabelled": {
+    "message": "Type into a control Hermes could not name?",
+    "description": "Runtime interface message browser_control.approval.type_unlabelled"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Allow this action on a control Hermes could not name?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approve once",
     "description": "Runtime interface message browser_control.approve_once"

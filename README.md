@@ -95,7 +95,7 @@ Hermes Control lets Hermes operate a tab you attach. It is opt-in and off until 
 - **The attached tab is announced to the model.** Each turn tells Hermes the tab is ready and lists its interactive elements with refs, so the first click works without a separate snapshot or navigate step.
 - **Every action returns the updated page.** Click, type, scroll, and navigate give back a compact, redacted view of the page with fresh refs, so Hermes can chain steps.
 - **One debugger session per attached tab.** Chrome shows its debugging banner while a tab is attached. The session detaches when you detach the tab, pause or turn off control, or after 60 seconds without a command.
-- **Approvals still gate risky actions.** Consequential or privileged actions wait for your approval, and restricted pages and sensitive fields stay blocked.
+- **Approvals still gate risky actions.** Actions that may change the page or tab set (click, type, fill, select, navigate, or opening or grouping tabs) wait for your approval, as do other consequential or privileged actions. Restricted pages and sensitive fields stay blocked.
 - **Frames are read and judged again at action time.** Hermes can reach controls inside same-site frames of an attached page, such as a live chat box. A frame on a restricted page is never read, and a click, type or hover is refused if the frame it would land in has moved to a restricted address since the page was read or is covered by one. Frames from another site, which Chrome runs in their own process, are not read or acted on.
 
 ## Quick start

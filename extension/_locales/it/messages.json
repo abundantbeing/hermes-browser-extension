@@ -1159,6 +1159,94 @@
     "message": "Vista elenco",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Approvazione necessaria",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_click": {
+    "message": "Fare clic su \"{name}\"? Potrebbe modificare la pagina.",
+    "description": "Runtime interface message browser_control.approval.click"
+  },
+  "runtime_browser_control_approval_click_unlabelled": {
+    "message": "Fare clic su un controllo che Hermes non è riuscito a nominare?",
+    "description": "Runtime interface message browser_control.approval.click_unlabelled"
+  },
+  "runtime_browser_control_approval_consequential_click": {
+    "message": "Fare clic su \"{name}\"? Questa è un’azione rilevante.",
+    "description": "Runtime interface message browser_control.approval.consequential_click"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "Questa azione del browser richiede l’approvazione.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_fill": {
+    "message": "Compilare \"{name}\"? Potrebbe modificare la pagina.",
+    "description": "Runtime interface message browser_control.approval.fill"
+  },
+  "runtime_browser_control_approval_fill_unlabelled": {
+    "message": "Compilare un controllo che Hermes non è riuscito a nominare?",
+    "description": "Runtime interface message browser_control.approval.fill_unlabelled"
+  },
+  "runtime_browser_control_approval_navigate": {
+    "message": "Aprire {url}? Potrebbe modificare la pagina.",
+    "description": "Runtime interface message browser_control.approval.navigate"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "Consentire questa azione che potrebbe modificare la pagina?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_press_consequential": {
+    "message": "Premere {key} mentre {label} ha il focus? È come fare clic.",
+    "description": "Runtime interface message browser_control.approval.press_consequential"
+  },
+  "runtime_browser_control_approval_press_page_changing": {
+    "message": "Premere {key} mentre {label} ha il focus? Potrebbe modificare la pagina.",
+    "description": "Runtime interface message browser_control.approval.press_page_changing"
+  },
+  "runtime_browser_control_approval_press_unlabelled": {
+    "message": "Premere {key}? Hermes non è riuscito a nominare il controllo che ha il focus.",
+    "description": "Runtime interface message browser_control.approval.press_unlabelled"
+  },
+  "runtime_browser_control_approval_select": {
+    "message": "Scegliere un’opzione in \"{name}\"? Potrebbe modificare la pagina.",
+    "description": "Runtime interface message browser_control.approval.select"
+  },
+  "runtime_browser_control_approval_select_unlabelled": {
+    "message": "Scegliere un’opzione in un controllo che Hermes non è riuscito a nominare?",
+    "description": "Runtime interface message browser_control.approval.select_unlabelled"
+  },
+  "runtime_browser_control_approval_step_prefix": {
+    "message": "Passaggio {current} di {total}:",
+    "description": "Runtime interface message browser_control.approval.step_prefix"
+  },
+  "runtime_browser_control_approval_tab_create": {
+    "message": "Aprire una nuova scheda su {url}?",
+    "description": "Runtime interface message browser_control.approval.tab_create"
+  },
+  "runtime_browser_control_approval_tab_create_blank": {
+    "message": "Aprire una nuova scheda?",
+    "description": "Runtime interface message browser_control.approval.tab_create_blank"
+  },
+  "runtime_browser_control_approval_tab_group": {
+    "message": "Raggruppare le schede selezionate?",
+    "description": "Runtime interface message browser_control.approval.tab_group"
+  },
+  "runtime_browser_control_approval_tab_ungroup": {
+    "message": "Dissociare le schede selezionate?",
+    "description": "Runtime interface message browser_control.approval.tab_ungroup"
+  },
+  "runtime_browser_control_approval_type": {
+    "message": "Digitare in \"{name}\"? Potrebbe modificare la pagina.",
+    "description": "Runtime interface message browser_control.approval.type"
+  },
+  "runtime_browser_control_approval_type_unlabelled": {
+    "message": "Digitare in un controllo che Hermes non è riuscito a nominare?",
+    "description": "Runtime interface message browser_control.approval.type_unlabelled"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Consentire questa azione su un controllo che Hermes non è riuscito a nominare?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Approva una volta",
     "description": "Runtime interface message browser_control.approve_once"

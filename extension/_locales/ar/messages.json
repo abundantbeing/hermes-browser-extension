@@ -1159,6 +1159,94 @@
     "message": "عرض القائمة",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "مطلوب الموافقة",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_click": {
+    "message": "النقر على \"{name}\"؟ قد يغيّر هذا الصفحة.",
+    "description": "Runtime interface message browser_control.approval.click"
+  },
+  "runtime_browser_control_approval_click_unlabelled": {
+    "message": "النقر على عنصر تحكم تعذّر على Hermes تسميته؟",
+    "description": "Runtime interface message browser_control.approval.click_unlabelled"
+  },
+  "runtime_browser_control_approval_consequential_click": {
+    "message": "النقر على \"{name}\"؟ هذا إجراء ذو عواقب.",
+    "description": "Runtime interface message browser_control.approval.consequential_click"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "يتطلّب إجراء المتصفح هذا موافقة.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_fill": {
+    "message": "ملء \"{name}\"؟ قد يغيّر هذا الصفحة.",
+    "description": "Runtime interface message browser_control.approval.fill"
+  },
+  "runtime_browser_control_approval_fill_unlabelled": {
+    "message": "ملء عنصر تحكم تعذّر على Hermes تسميته؟",
+    "description": "Runtime interface message browser_control.approval.fill_unlabelled"
+  },
+  "runtime_browser_control_approval_navigate": {
+    "message": "فتح {url}؟ قد يغيّر هذا الصفحة.",
+    "description": "Runtime interface message browser_control.approval.navigate"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "السماح بهذا الإجراء الذي قد يغيّر الصفحة؟",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_press_consequential": {
+    "message": "الضغط على {key} بينما التركيز على {label}؟ يعمل هذا مثل النقر.",
+    "description": "Runtime interface message browser_control.approval.press_consequential"
+  },
+  "runtime_browser_control_approval_press_page_changing": {
+    "message": "الضغط على {key} بينما التركيز على {label}؟ قد يغيّر هذا الصفحة.",
+    "description": "Runtime interface message browser_control.approval.press_page_changing"
+  },
+  "runtime_browser_control_approval_press_unlabelled": {
+    "message": "الضغط على {key}؟ تعذّر على Hermes تسمية عنصر التحكم الذي عليه التركيز.",
+    "description": "Runtime interface message browser_control.approval.press_unlabelled"
+  },
+  "runtime_browser_control_approval_select": {
+    "message": "اختيار خيار في \"{name}\"؟ قد يغيّر هذا الصفحة.",
+    "description": "Runtime interface message browser_control.approval.select"
+  },
+  "runtime_browser_control_approval_select_unlabelled": {
+    "message": "اختيار خيار في عنصر تحكم تعذّر على Hermes تسميته؟",
+    "description": "Runtime interface message browser_control.approval.select_unlabelled"
+  },
+  "runtime_browser_control_approval_step_prefix": {
+    "message": "الخطوة {current} من {total}:",
+    "description": "Runtime interface message browser_control.approval.step_prefix"
+  },
+  "runtime_browser_control_approval_tab_create": {
+    "message": "فتح علامة تبويب جديدة إلى {url}؟",
+    "description": "Runtime interface message browser_control.approval.tab_create"
+  },
+  "runtime_browser_control_approval_tab_create_blank": {
+    "message": "فتح علامة تبويب جديدة؟",
+    "description": "Runtime interface message browser_control.approval.tab_create_blank"
+  },
+  "runtime_browser_control_approval_tab_group": {
+    "message": "تجميع علامات التبويب المحددة؟",
+    "description": "Runtime interface message browser_control.approval.tab_group"
+  },
+  "runtime_browser_control_approval_tab_ungroup": {
+    "message": "إلغاء تجميع علامات التبويب المحددة؟",
+    "description": "Runtime interface message browser_control.approval.tab_ungroup"
+  },
+  "runtime_browser_control_approval_type": {
+    "message": "الكتابة في \"{name}\"؟ قد يغيّر هذا الصفحة.",
+    "description": "Runtime interface message browser_control.approval.type"
+  },
+  "runtime_browser_control_approval_type_unlabelled": {
+    "message": "الكتابة في عنصر تحكم تعذّر على Hermes تسميته؟",
+    "description": "Runtime interface message browser_control.approval.type_unlabelled"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "السماح بهذا الإجراء على عنصر تعذّر على Hermes تسميته؟",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "الموافقة مرة واحدة",
     "description": "Runtime interface message browser_control.approve_once"

@@ -12,17 +12,17 @@ import {
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 
 test('Phase 7 classifies browser_fill and browser_select with strict security boundaries', () => {
-  assert.equal(classifyBrowserControlAction({
+  assert.deepEqual(classifyBrowserControlAction({
     action: 'browser_fill',
     arguments: { value: 'normal text' },
     target: { role: 'textbox', name: 'Username' },
-  }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
 
-  assert.equal(classifyBrowserControlAction({
+  assert.deepEqual(classifyBrowserControlAction({
     action: 'browser_select',
     arguments: { value: 'option-1' },
     target: { role: 'combobox', name: 'Country' },
-  }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'page-changing-action' });
 
   // Sensitive fields blocked
   assert.equal(classifyBrowserControlAction({

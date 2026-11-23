@@ -10,6 +10,7 @@ import test from 'node:test';
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 import { SNAPSHOT_VIEW_BUDGETS } from '../extension/lib/browser-control-snapshot-view.mjs';
 import {
   CONTROLLER_WORKER_MESSAGES,
@@ -108,7 +109,7 @@ async function controlledWorker({ snapshot, act }) {
   });
   const transport = connector();
   const refs = createBrowserControlRefStore();
-  const approvals = createBrowserControlApprovalStore();
+  const approvals = autoApprovingStore();
   const executor = createBrowserControlExecutor({ adapter, approvals, refs });
   const uuids = ['controller-frames', 'profile-frames'];
   const worker = createControllerServiceWorker({

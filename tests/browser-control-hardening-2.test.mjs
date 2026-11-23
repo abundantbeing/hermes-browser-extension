@@ -6,6 +6,7 @@ import test from 'node:test';
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 import { createChromiumCdpAdapter, createFirefoxWebExtensionAdapter } from '../extension/lib/browser-control-browser-adapters.mjs';
 
 const openSignal = () => new AbortController().signal;
@@ -349,7 +350,7 @@ test('the executor reports a focus change to the model with its code', async () 
   };
   const refs = createBrowserControlRefStore();
   refs.replace({ ...executorScope, nodes: [{ role: 'textbox', name: 'Message', backendDOMNodeId: 44 }] });
-  const executor = createBrowserControlExecutor({ adapter, approvals: createBrowserControlApprovalStore(), refs });
+  const executor = createBrowserControlExecutor({ adapter, approvals: autoApprovingStore(), refs });
   const outcome = await executor.execute(frameOf('browser_type', { ref: '@e1', text: 'hi' }), { scope: executorScope });
   assert.equal(outcome.error.code, 'focus_changed');
 });

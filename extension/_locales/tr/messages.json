@@ -1159,6 +1159,94 @@
     "message": "Liste görünümü",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "Onay gerekli",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_click": {
+    "message": "\"{name}\" öğesine tıklansın mı? Bu, sayfayı değiştirebilir.",
+    "description": "Runtime interface message browser_control.approval.click"
+  },
+  "runtime_browser_control_approval_click_unlabelled": {
+    "message": "Hermes’in adını belirleyemediği bir denetime tıklansın mı?",
+    "description": "Runtime interface message browser_control.approval.click_unlabelled"
+  },
+  "runtime_browser_control_approval_consequential_click": {
+    "message": "\"{name}\" öğesine tıklansın mı? Bu, sonuçları olan bir eylemdir.",
+    "description": "Runtime interface message browser_control.approval.consequential_click"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "Bu tarayıcı eylemi onay gerektirir.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_fill": {
+    "message": "\"{name}\" doldurulsun mu? Bu, sayfayı değiştirebilir.",
+    "description": "Runtime interface message browser_control.approval.fill"
+  },
+  "runtime_browser_control_approval_fill_unlabelled": {
+    "message": "Hermes’in adını belirleyemediği bir denetim doldurulsun mu?",
+    "description": "Runtime interface message browser_control.approval.fill_unlabelled"
+  },
+  "runtime_browser_control_approval_navigate": {
+    "message": "{url} açılsın mı? Bu, sayfayı değiştirebilir.",
+    "description": "Runtime interface message browser_control.approval.navigate"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "Sayfayı değiştirebilecek bu eyleme izin verilsin mi?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_press_consequential": {
+    "message": "{label} odaktayken {key} tuşuna basılsın mı? Bu, tıklamak gibidir.",
+    "description": "Runtime interface message browser_control.approval.press_consequential"
+  },
+  "runtime_browser_control_approval_press_page_changing": {
+    "message": "{label} odaktayken {key} tuşuna basılsın mı? Bu, sayfayı değiştirebilir.",
+    "description": "Runtime interface message browser_control.approval.press_page_changing"
+  },
+  "runtime_browser_control_approval_press_unlabelled": {
+    "message": "{key} tuşuna basılsın mı? Hermes, odaktaki denetimin adını belirleyemedi.",
+    "description": "Runtime interface message browser_control.approval.press_unlabelled"
+  },
+  "runtime_browser_control_approval_select": {
+    "message": "\"{name}\" içinde bir seçenek seçilsin mi? Bu, sayfayı değiştirebilir.",
+    "description": "Runtime interface message browser_control.approval.select"
+  },
+  "runtime_browser_control_approval_select_unlabelled": {
+    "message": "Hermes’in adını belirleyemediği bir denetimde seçenek seçilsin mi?",
+    "description": "Runtime interface message browser_control.approval.select_unlabelled"
+  },
+  "runtime_browser_control_approval_step_prefix": {
+    "message": "Adım {current} / {total}:",
+    "description": "Runtime interface message browser_control.approval.step_prefix"
+  },
+  "runtime_browser_control_approval_tab_create": {
+    "message": "{url} adresine yeni bir sekme açılsın mı?",
+    "description": "Runtime interface message browser_control.approval.tab_create"
+  },
+  "runtime_browser_control_approval_tab_create_blank": {
+    "message": "Yeni bir sekme açılsın mı?",
+    "description": "Runtime interface message browser_control.approval.tab_create_blank"
+  },
+  "runtime_browser_control_approval_tab_group": {
+    "message": "Seçili sekmeler gruplansın mı?",
+    "description": "Runtime interface message browser_control.approval.tab_group"
+  },
+  "runtime_browser_control_approval_tab_ungroup": {
+    "message": "Seçili sekmelerin grubu kaldırılsın mı?",
+    "description": "Runtime interface message browser_control.approval.tab_ungroup"
+  },
+  "runtime_browser_control_approval_type": {
+    "message": "\"{name}\" alanına yazılsın mı? Bu, sayfayı değiştirebilir.",
+    "description": "Runtime interface message browser_control.approval.type"
+  },
+  "runtime_browser_control_approval_type_unlabelled": {
+    "message": "Hermes’in adını belirleyemediği bir denetime yazılsın mı?",
+    "description": "Runtime interface message browser_control.approval.type_unlabelled"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Hermes’in adını belirleyemediği bir denetimde bu eyleme izin verilsin mi?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Bir kez onayla",
     "description": "Runtime interface message browser_control.approve_once"

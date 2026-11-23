@@ -1159,6 +1159,94 @@
     "message": "มุมมองรายการ",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "ต้องได้รับอนุมัติ",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_click": {
+    "message": "คลิก \"{name}\" หรือไม่ อาจเปลี่ยนหน้าได้",
+    "description": "Runtime interface message browser_control.approval.click"
+  },
+  "runtime_browser_control_approval_click_unlabelled": {
+    "message": "คลิกตัวควบคุมที่ Hermes ตั้งชื่อไม่ได้หรือไม่",
+    "description": "Runtime interface message browser_control.approval.click_unlabelled"
+  },
+  "runtime_browser_control_approval_consequential_click": {
+    "message": "คลิก \"{name}\" หรือไม่ นี่เป็นการกระทำที่มีผลสำคัญ",
+    "description": "Runtime interface message browser_control.approval.consequential_click"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "การกระทำในเบราว์เซอร์นี้ต้องได้รับอนุมัติ",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_fill": {
+    "message": "กรอก \"{name}\" หรือไม่ อาจเปลี่ยนหน้าได้",
+    "description": "Runtime interface message browser_control.approval.fill"
+  },
+  "runtime_browser_control_approval_fill_unlabelled": {
+    "message": "กรอกตัวควบคุมที่ Hermes ตั้งชื่อไม่ได้หรือไม่",
+    "description": "Runtime interface message browser_control.approval.fill_unlabelled"
+  },
+  "runtime_browser_control_approval_navigate": {
+    "message": "เปิด {url} หรือไม่ อาจเปลี่ยนหน้าได้",
+    "description": "Runtime interface message browser_control.approval.navigate"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "อนุญาตการกระทำนี้อาจเปลี่ยนหน้าได้หรือไม่?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_press_consequential": {
+    "message": "กด {key} ในขณะที่ {label} มีโฟกัสหรือไม่ การกระทำนี้เหมือนการคลิก",
+    "description": "Runtime interface message browser_control.approval.press_consequential"
+  },
+  "runtime_browser_control_approval_press_page_changing": {
+    "message": "กด {key} ในขณะที่ {label} มีโฟกัสหรือไม่ อาจเปลี่ยนหน้าได้",
+    "description": "Runtime interface message browser_control.approval.press_page_changing"
+  },
+  "runtime_browser_control_approval_press_unlabelled": {
+    "message": "กด {key} หรือไม่ Hermes ตั้งชื่อตัวควบคุมที่มีโฟกัสไม่ได้",
+    "description": "Runtime interface message browser_control.approval.press_unlabelled"
+  },
+  "runtime_browser_control_approval_select": {
+    "message": "เลือกตัวเลือกใน \"{name}\" หรือไม่ อาจเปลี่ยนหน้าได้",
+    "description": "Runtime interface message browser_control.approval.select"
+  },
+  "runtime_browser_control_approval_select_unlabelled": {
+    "message": "เลือกตัวเลือกในตัวควบคุมที่ Hermes ตั้งชื่อไม่ได้หรือไม่",
+    "description": "Runtime interface message browser_control.approval.select_unlabelled"
+  },
+  "runtime_browser_control_approval_step_prefix": {
+    "message": "ขั้นตอนที่ {current} จาก {total}:",
+    "description": "Runtime interface message browser_control.approval.step_prefix"
+  },
+  "runtime_browser_control_approval_tab_create": {
+    "message": "เปิดแท็บใหม่ไปที่ {url} หรือไม่",
+    "description": "Runtime interface message browser_control.approval.tab_create"
+  },
+  "runtime_browser_control_approval_tab_create_blank": {
+    "message": "เปิดแท็บใหม่หรือไม่",
+    "description": "Runtime interface message browser_control.approval.tab_create_blank"
+  },
+  "runtime_browser_control_approval_tab_group": {
+    "message": "จัดกลุ่มแท็บที่เลือกหรือไม่",
+    "description": "Runtime interface message browser_control.approval.tab_group"
+  },
+  "runtime_browser_control_approval_tab_ungroup": {
+    "message": "เลิกจัดกลุ่มแท็บที่เลือกหรือไม่",
+    "description": "Runtime interface message browser_control.approval.tab_ungroup"
+  },
+  "runtime_browser_control_approval_type": {
+    "message": "พิมพ์ใน \"{name}\" หรือไม่ อาจเปลี่ยนหน้าได้",
+    "description": "Runtime interface message browser_control.approval.type"
+  },
+  "runtime_browser_control_approval_type_unlabelled": {
+    "message": "พิมพ์ในตัวควบคุมที่ Hermes ตั้งชื่อไม่ได้หรือไม่",
+    "description": "Runtime interface message browser_control.approval.type_unlabelled"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "อนุญาตการกระทำนี้กับตัวควบคุมที่ Hermes ตั้งชื่อไม่ได้หรือไม่?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "อนุมัติครั้งเดียว",
     "description": "Runtime interface message browser_control.approve_once"

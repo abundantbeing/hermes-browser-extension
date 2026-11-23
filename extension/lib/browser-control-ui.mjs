@@ -317,3 +317,23 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
     canDetach: true,
   });
 }
+
+// Build the visible approval line from a message key when the panel can translate,
+// and prefix a batch step only from the structured step fields so it stays translatable.
+export function formatBrowserControlApprovalReason(pendingApproval, { t, translateText } = {}) {
+  if (!pendingApproval || typeof pendingApproval !== 'object') return '';
+  const fallback = String(pendingApproval.reason || 'This browser action requires approval.');
+  const hasKey = Boolean(pendingApproval.reasonKey) && typeof t === 'function';
+  const body = hasKey
+    ? t(pendingApproval.reasonKey, pendingApproval.reasonParams || {})
+    : (typeof translateText === 'function' ? translateText(fallback) : fallback);
+  const step = Number(pendingApproval.stepNumber);
+  const total = Number(pendingApproval.stepTotal);
+  if (Number.isInteger(step) && step > 0 && Number.isInteger(total) && total > 0) {
+    const prefix = typeof t === 'function'
+      ? t('browser_control.approval.step_prefix', { current: step, total })
+      : `Step ${step} of ${total}:`;
+    return `${prefix} ${body}`;
+  }
+  return body;
+}

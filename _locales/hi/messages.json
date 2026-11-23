@@ -1159,6 +1159,94 @@
     "message": "सूची दृश्य",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "अनुमोदन आवश्यक",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_click": {
+    "message": "\"{name}\" पर क्लिक करें? इससे पृष्ठ बदल सकता है.",
+    "description": "Runtime interface message browser_control.approval.click"
+  },
+  "runtime_browser_control_approval_click_unlabelled": {
+    "message": "उस नियंत्रण पर क्लिक करें जिसका नाम Hermes नहीं बता सका?",
+    "description": "Runtime interface message browser_control.approval.click_unlabelled"
+  },
+  "runtime_browser_control_approval_consequential_click": {
+    "message": "\"{name}\" पर क्लिक करें? यह एक परिणामी क्रिया है.",
+    "description": "Runtime interface message browser_control.approval.consequential_click"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "इस ब्राउज़र क्रिया के लिए अनुमोदन आवश्यक है।",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_fill": {
+    "message": "\"{name}\" भरें? इससे पृष्ठ बदल सकता है.",
+    "description": "Runtime interface message browser_control.approval.fill"
+  },
+  "runtime_browser_control_approval_fill_unlabelled": {
+    "message": "उस नियंत्रण को भरें जिसका नाम Hermes नहीं बता सका?",
+    "description": "Runtime interface message browser_control.approval.fill_unlabelled"
+  },
+  "runtime_browser_control_approval_navigate": {
+    "message": "{url} खोलें? इससे पृष्ठ बदल सकता है.",
+    "description": "Runtime interface message browser_control.approval.navigate"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "इस क्रिया की अनुमति दें जो पृष्ठ बदल सकती है?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_press_consequential": {
+    "message": "{label} के फोकस में होते हुए {key} दबाएँ? यह क्लिक जैसा काम करता है.",
+    "description": "Runtime interface message browser_control.approval.press_consequential"
+  },
+  "runtime_browser_control_approval_press_page_changing": {
+    "message": "{label} के फोकस में होते हुए {key} दबाएँ? इससे पृष्ठ बदल सकता है.",
+    "description": "Runtime interface message browser_control.approval.press_page_changing"
+  },
+  "runtime_browser_control_approval_press_unlabelled": {
+    "message": "{key} दबाएँ? Hermes उस नियंत्रण का नाम नहीं बता सका जिस पर फोकस है.",
+    "description": "Runtime interface message browser_control.approval.press_unlabelled"
+  },
+  "runtime_browser_control_approval_select": {
+    "message": "\"{name}\" में एक विकल्प चुनें? इससे पृष्ठ बदल सकता है.",
+    "description": "Runtime interface message browser_control.approval.select"
+  },
+  "runtime_browser_control_approval_select_unlabelled": {
+    "message": "उस नियंत्रण में विकल्प चुनें जिसका नाम Hermes नहीं बता सका?",
+    "description": "Runtime interface message browser_control.approval.select_unlabelled"
+  },
+  "runtime_browser_control_approval_step_prefix": {
+    "message": "चरण {current} / {total}:",
+    "description": "Runtime interface message browser_control.approval.step_prefix"
+  },
+  "runtime_browser_control_approval_tab_create": {
+    "message": "{url} के लिए एक नया टैब खोलें?",
+    "description": "Runtime interface message browser_control.approval.tab_create"
+  },
+  "runtime_browser_control_approval_tab_create_blank": {
+    "message": "एक नया टैब खोलें?",
+    "description": "Runtime interface message browser_control.approval.tab_create_blank"
+  },
+  "runtime_browser_control_approval_tab_group": {
+    "message": "चयनित टैब समूहित करें?",
+    "description": "Runtime interface message browser_control.approval.tab_group"
+  },
+  "runtime_browser_control_approval_tab_ungroup": {
+    "message": "चयनित टैब का समूह हटाएँ?",
+    "description": "Runtime interface message browser_control.approval.tab_ungroup"
+  },
+  "runtime_browser_control_approval_type": {
+    "message": "\"{name}\" में टाइप करें? इससे पृष्ठ बदल सकता है.",
+    "description": "Runtime interface message browser_control.approval.type"
+  },
+  "runtime_browser_control_approval_type_unlabelled": {
+    "message": "उस नियंत्रण में टाइप करें जिसका नाम Hermes नहीं बता सका?",
+    "description": "Runtime interface message browser_control.approval.type_unlabelled"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "उस नियंत्रण पर यह क्रिया करने दें जिसका नाम Hermes नहीं बता सका?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "एक बार स्वीकृत करें",
     "description": "Runtime interface message browser_control.approve_once"

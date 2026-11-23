@@ -4,6 +4,7 @@ import test from 'node:test';
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import { createBrowserControlApprovalStore } from '../extension/lib/browser-control-safety.mjs';
+import { autoApprovingStore } from './helpers/auto-approving-store.mjs';
 
 const scope = Object.freeze({
   controllerId: 'controller-1',
@@ -23,7 +24,7 @@ const NODES = [
 const ACTIONS = ['browser_batch', 'browser_click', 'browser_hover', 'browser_scroll', 'browser_snapshot'];
 
 function fixture(onExecute) {
-  const approvals = createBrowserControlApprovalStore();
+  const approvals = autoApprovingStore();
   const refs = createBrowserControlRefStore();
   refs.replace({ ...scope, nodes: NODES });
   const calls = [];

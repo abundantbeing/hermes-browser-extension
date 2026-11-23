@@ -29,8 +29,9 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
   writes those markers itself cannot close the block or open a fake request.
 - **Control is off until you turn it on,** and then it acts only in tabs you attach (or, if you allow it, in its own
   Background task tab group).
-- **Risky actions wait for you.** A click on anything that sends, posts, pays, deletes, transfers, deploys or
-  uploads, the Enter key in a form, closing or switching tabs, and dialogs all pause for **Approve once**.
+- **Risky actions wait for you.** A click, type, fill, select, navigation, or opening or grouping a tab pauses for
+  **Approve once**, as do the Enter key in a form, closing or switching tabs, and dialogs. A click is not judged by
+  whether its English label looks risky: an unnamed button, a German *Weiter*, or a plain *Continue* asks first.
   Password, payment and one-time-code fields are refused outright, and so is typing anything shaped like a key or
   token.
 - **Secrets stay out of URLs.** The plugin refuses to open an address that carries an API key or token, and refuses
@@ -49,10 +50,12 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
   block. So does anything the page shows openly.
 - **Reading is not an action.** Hermes can read what is on an attached tab without asking, including other content
   you are signed in to on that site.
-- **The approval check goes by what a control says.** A button named something harmless that does something
-  harmful will not pause.
-- **Opening an ordinary web address is allowed.** A page could try to get Hermes to open a site of its choosing
-  with some of your data in the address; only addresses carrying key or token shapes are refused.
+- **A remembered approval for one click does not cover the next.** Each page-changing action asks again
+  (**Approve once**). There is no “remember this tab or site” grant for Hermes Control actions. Background
+  task tabs, which you opt into separately, still cannot present an approval card: an action that would
+  need one is refused there instead of running unapproved.
+- **Opening an ordinary web address still asks first.** Restricted addresses and those carrying key or token
+  shapes are refused; everything else waits for **Approve once**.
 - **Background task tabs can be driven by any chat of that Hermes profile,** including chats from messaging apps,
   once you turn the setting on. It is off by default.
 

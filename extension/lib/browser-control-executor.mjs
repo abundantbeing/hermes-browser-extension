@@ -89,6 +89,8 @@ const APPROVAL_MESSAGES = Object.freeze({
   'opaque-focus': 'Press this key? Hermes cannot tell what the focused element does with it.',
   'clipboard-paste': 'Paste your clipboard into this page?',
   'consequential-action': 'Run this consequential browser action?',
+  'page-changing-action': 'Allow this action that may change the page?',
+  'unlabelled-target': 'Allow this action on a control Hermes could not name?',
   'coordinate-click': 'Click these exact viewport coordinates?',
   'drag-action': 'Drag this target to the selected destination?',
   'tab-activate': 'Switch your view to this tab?',
@@ -167,11 +169,130 @@ function pressApprovalReason(reason, args, focused) {
   const key = pressKeyLabel(args);
   const label = focusedLabel(focused);
   if (reason === 'consequential-action' && label) return `Press ${key} while ${label} has focus? It acts like clicking it.`;
+  if (reason === 'page-changing-action' && label) return `Press ${key} while ${label} has focus? It may change the page.`;
+  if (reason === 'unlabelled-target') return `Press ${key}? Hermes could not name the control that has focus.`;
   if (reason === 'framed-focus') return label ? `Press ${key} inside the embedded frame ${label} on the page?` : `Press ${key} inside an embedded frame on the page?`;
   if (reason === 'opaque-focus' && label) return `Press ${key} while ${label} has focus? Hermes cannot tell what that element does with it.`;
   if (reason === 'unknown-focus') return `Press ${key}? Hermes could not tell what has focus on the page.`;
   return '';
 }
+
+function approvalCopy(reasonKey, reasonParams, reason) {
+  return { reason, reasonKey, reasonParams };
+}
+
+function approvalTargetName(target) {
+  if (!target || typeof target !== 'object') return '';
+  // tabTitleText strips bidi/format marks so a page-controlled name cannot reverse the warning.
+  return tabTitleText(target.name || target.label || target.placeholder).slice(0, 80);
+}
+
+function approvalUrlPreview(value) {
+  return tabTitleText(safeNetworkUrl(value)).slice(0, 160);
+}
+
+function unlabelledApprovalPrompt(action) {
+  if (action === 'browser_click') {
+    return approvalCopy('browser_control.approval.click_unlabelled', {}, 'Click a control Hermes could not name?');
+  }
+  if (action === 'browser_type') {
+    return approvalCopy('browser_control.approval.type_unlabelled', {}, 'Type into a control Hermes could not name?');
+  }
+  if (action === 'browser_fill') {
+    return approvalCopy('browser_control.approval.fill_unlabelled', {}, 'Fill a control Hermes could not name?');
+  }
+  if (action === 'browser_select') {
+    return approvalCopy('browser_control.approval.select_unlabelled', {}, 'Choose an option in a control Hermes could not name?');
+  }
+  return approvalCopy(
+    'browser_control.approval.unlabelled_target',
+    {},
+    APPROVAL_MESSAGES['unlabelled-target'],
+  );
+}
+
+function pageChangingApprovalPrompt(action, args, target) {
+  const name = approvalTargetName(target);
+  const url = approvalUrlPreview(args?.url);
+  if (action === 'browser_click') {
+    return name
+      ? approvalCopy('browser_control.approval.click', { name }, `Click "${name}"? It may change the page.`)
+      : unlabelledApprovalPrompt(action);
+  }
+  if (action === 'browser_type') {
+    return name
+      ? approvalCopy('browser_control.approval.type', { name }, `Type into "${name}"? It may change the page.`)
+      : unlabelledApprovalPrompt(action);
+  }
+  if (action === 'browser_fill') {
+    return name
+      ? approvalCopy('browser_control.approval.fill', { name }, `Fill "${name}"? It may change the page.`)
+      : unlabelledApprovalPrompt(action);
+  }
+  if (action === 'browser_select') {
+    return name
+      ? approvalCopy('browser_control.approval.select', { name }, `Choose an option in "${name}"? It may change the page.`)
+      : unlabelledApprovalPrompt(action);
+  }
+  if (action === 'browser_navigate') {
+    return url
+      ? approvalCopy('browser_control.approval.navigate', { url }, `Open ${url}? It may change the page.`)
+      : approvalCopy('browser_control.approval.page_changing_action', {}, APPROVAL_MESSAGES['page-changing-action']);
+  }
+  if (action === 'browser_tab_create') {
+    return url
+      ? approvalCopy('browser_control.approval.tab_create', { url }, `Open a new tab to ${url}?`)
+      : approvalCopy('browser_control.approval.tab_create_blank', {}, 'Open a new tab?');
+  }
+  if (action === 'browser_tab_group') {
+    return approvalCopy('browser_control.approval.tab_group', {}, 'Group the selected tabs?');
+  }
+  if (action === 'browser_tab_ungroup') {
+    return approvalCopy('browser_control.approval.tab_ungroup', {}, 'Ungroup the selected tabs?');
+  }
+  return approvalCopy('browser_control.approval.page_changing_action', {}, APPROVAL_MESSAGES['page-changing-action']);
+}
+
+// English card text plus a message key so the panel can translate it. Typed values stay off the card.
+export function approvalPrompt({ reason, action, arguments: args = {}, target, focused } = {}) {
+  if (action === 'browser_press') {
+    const text = pressApprovalReason(reason, args, focused);
+    const key = pressKeyLabel(args);
+    const label = focusedLabel(focused);
+    if (reason === 'page-changing-action' && label) {
+      return approvalCopy('browser_control.approval.press_page_changing', { key, label }, text);
+    }
+    if (reason === 'consequential-action' && label) {
+      return approvalCopy('browser_control.approval.press_consequential', { key, label }, text);
+    }
+    if (reason === 'unlabelled-target') {
+      return approvalCopy('browser_control.approval.press_unlabelled', { key }, text);
+    }
+    if (text) return { reason: text };
+  }
+  if (reason === 'page-changing-action') return pageChangingApprovalPrompt(action, args, target);
+  if (reason === 'unlabelled-target') return unlabelledApprovalPrompt(action);
+  if (reason === 'consequential-action') {
+    const name = approvalTargetName(target);
+    if (name && action === 'browser_click') {
+      return approvalCopy(
+        'browser_control.approval.consequential_click',
+        { name },
+        `Click "${name}"? This is a consequential action.`,
+      );
+    }
+    return { reason: APPROVAL_MESSAGES['consequential-action'] };
+  }
+  const text = APPROVAL_MESSAGES[reason] || 'This browser action requires approval.';
+  if (reason === 'page-changing-action') {
+    return approvalCopy('browser_control.approval.page_changing_action', {}, text);
+  }
+  if (reason === 'unlabelled-target') {
+    return approvalCopy('browser_control.approval.unlabelled_target', {}, text);
+  }
+  return { reason: text };
+}
+
 
 // Whether the element that has focus is still the one the person was asked about.
 function sameFocus(before, after) {
@@ -885,20 +1006,31 @@ export function createBrowserControlExecutor({
           ...approvalBindingFields(action, args, action === 'browser_press' ? focusAsTarget(pageState.focused) : target, destination),
           ...(action === 'browser_press' && pageState.focused?.identity ? { binding: `focus:${pageState.focused.identity}` } : {}),
         };
-        let approvalReason = (action === 'browser_press' && pressApprovalReason(policy.reason, args, pageState.focused))
-          || APPROVAL_MESSAGES[policy.reason]
-          || 'This browser action requires approval.';
+        const prompt = approvalPrompt({
+          reason: policy.reason,
+          action,
+          arguments: args,
+          target: action === 'browser_press' ? focusAsTarget(pageState.focused) : target,
+          focused: pageState.focused,
+        });
+        let approvalReason = prompt.reason || APPROVAL_MESSAGES[policy.reason] || 'This browser action requires approval.';
+        let approvalReasonKey = prompt.reasonKey || '';
+        let approvalReasonParams = prompt.reasonParams || {};
         if (step) approvalReason = `Step ${step.number} of ${step.total}: ${approvalReason}`;
         let approvalDetail = '';
         if (action === 'browser_evaluate') {
           const preview = compact(String(args.code ?? args.expression ?? ''), 800);
           approvalReason = `Run this evaluate code on the page?\n\n\`\`\`\n${preview}\n\`\`\``;
           approvalDetail = preview;
+          approvalReasonKey = '';
+          approvalReasonParams = {};
         }
         let consumed = approvals.consume(approval);
         if (!consumed.ok) {
           if (action === 'browser_tab_activate' || action === 'browser_tab_close') {
             approvalReason = await (action === 'browser_tab_activate' ? tabSwitchReason(args) : tabCloseReason(args));
+            approvalReasonKey = '';
+            approvalReasonParams = {};
             // A cancel that landed during the title read must not leave a request behind.
             if (controller.signal.aborted) {
               return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');
@@ -917,6 +1049,8 @@ export function createBrowserControlExecutor({
           const requested = await approvals.request({
             ...approval,
             reason: approvalReason,
+            ...(approvalReasonKey ? { reasonKey: approvalReasonKey, reasonParams: approvalReasonParams } : {}),
+            ...(step ? { stepNumber: step.number, stepTotal: step.total } : {}),
             ...(approvalDetail ? { detail: approvalDetail } : {}),
           });
           clearTimeout(approvalTimer);

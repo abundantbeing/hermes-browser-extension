@@ -1159,6 +1159,94 @@
     "message": "목록 보기",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_approval_needed": {
+    "message": "승인 필요",
+    "description": "Runtime interface message browser_control.approval_needed"
+  },
+  "runtime_browser_control_approval_click": {
+    "message": "\"{name}\"을(를) 클릭할까요? 페이지가 바뀔 수 있습니다.",
+    "description": "Runtime interface message browser_control.approval.click"
+  },
+  "runtime_browser_control_approval_click_unlabelled": {
+    "message": "Hermes가 이름을 확인할 수 없는 컨트롤을 클릭할까요?",
+    "description": "Runtime interface message browser_control.approval.click_unlabelled"
+  },
+  "runtime_browser_control_approval_consequential_click": {
+    "message": "\"{name}\"을(를) 클릭할까요? 이는 결과가 큰 작업입니다.",
+    "description": "Runtime interface message browser_control.approval.consequential_click"
+  },
+  "runtime_browser_control_approval_fallback": {
+    "message": "이 브라우저 작업에는 승인이 필요합니다.",
+    "description": "Runtime interface message browser_control.approval.fallback"
+  },
+  "runtime_browser_control_approval_fill": {
+    "message": "\"{name}\"을(를) 채울까요? 페이지가 바뀔 수 있습니다.",
+    "description": "Runtime interface message browser_control.approval.fill"
+  },
+  "runtime_browser_control_approval_fill_unlabelled": {
+    "message": "Hermes가 이름을 확인할 수 없는 컨트롤을 채울까요?",
+    "description": "Runtime interface message browser_control.approval.fill_unlabelled"
+  },
+  "runtime_browser_control_approval_navigate": {
+    "message": "{url}을(를) 열까요? 페이지가 바뀔 수 있습니다.",
+    "description": "Runtime interface message browser_control.approval.navigate"
+  },
+  "runtime_browser_control_approval_page_changing_action": {
+    "message": "페이지를 변경할 수 있는 이 작업을 허용할까요?",
+    "description": "Runtime interface message browser_control.approval.page_changing_action"
+  },
+  "runtime_browser_control_approval_press_consequential": {
+    "message": "{label}에 포커스가 있는 동안 {key}를 누를까요? 클릭과 같이 동작합니다.",
+    "description": "Runtime interface message browser_control.approval.press_consequential"
+  },
+  "runtime_browser_control_approval_press_page_changing": {
+    "message": "{label}에 포커스가 있는 동안 {key}를 누를까요? 페이지가 바뀔 수 있습니다.",
+    "description": "Runtime interface message browser_control.approval.press_page_changing"
+  },
+  "runtime_browser_control_approval_press_unlabelled": {
+    "message": "{key}를 누를까요? Hermes가 포커스가 있는 컨트롤의 이름을 확인할 수 없습니다.",
+    "description": "Runtime interface message browser_control.approval.press_unlabelled"
+  },
+  "runtime_browser_control_approval_select": {
+    "message": "\"{name}\"에서 옵션을 선택할까요? 페이지가 바뀔 수 있습니다.",
+    "description": "Runtime interface message browser_control.approval.select"
+  },
+  "runtime_browser_control_approval_select_unlabelled": {
+    "message": "Hermes가 이름을 확인할 수 없는 컨트롤에서 옵션을 선택할까요?",
+    "description": "Runtime interface message browser_control.approval.select_unlabelled"
+  },
+  "runtime_browser_control_approval_step_prefix": {
+    "message": "단계 {current} / {total}:",
+    "description": "Runtime interface message browser_control.approval.step_prefix"
+  },
+  "runtime_browser_control_approval_tab_create": {
+    "message": "{url}(으)로 새 탭을 열까요?",
+    "description": "Runtime interface message browser_control.approval.tab_create"
+  },
+  "runtime_browser_control_approval_tab_create_blank": {
+    "message": "새 탭을 열까요?",
+    "description": "Runtime interface message browser_control.approval.tab_create_blank"
+  },
+  "runtime_browser_control_approval_tab_group": {
+    "message": "선택한 탭을 그룹화할까요?",
+    "description": "Runtime interface message browser_control.approval.tab_group"
+  },
+  "runtime_browser_control_approval_tab_ungroup": {
+    "message": "선택한 탭 그룹을 해제할까요?",
+    "description": "Runtime interface message browser_control.approval.tab_ungroup"
+  },
+  "runtime_browser_control_approval_type": {
+    "message": "\"{name}\"에 입력할까요? 페이지가 바뀔 수 있습니다.",
+    "description": "Runtime interface message browser_control.approval.type"
+  },
+  "runtime_browser_control_approval_type_unlabelled": {
+    "message": "Hermes가 이름을 확인할 수 없는 컨트롤에 입력할까요?",
+    "description": "Runtime interface message browser_control.approval.type_unlabelled"
+  },
+  "runtime_browser_control_approval_unlabelled_target": {
+    "message": "Hermes가 이름을 확인할 수 없는 컨트롤에서 이 작업을 허용할까요?",
+    "description": "Runtime interface message browser_control.approval.unlabelled_target"
+  },
   "runtime_browser_control_approve_once": {
     "message": "한 번만 승인",
     "description": "Runtime interface message browser_control.approve_once"

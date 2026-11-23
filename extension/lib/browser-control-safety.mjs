@@ -25,6 +25,27 @@ const SAFE_ACTIONS = new Set([
   'browser_tabs',
 ]);
 
+// Actions in SAFE_ACTIONS that change the page or tab set. They stay in
+// SAFE_ACTIONS so they are not refused as unsupported, then ask for approval
+// after the blocked-target and restricted-URL rules have already run.
+const PAGE_CHANGING_ACTIONS = new Set([
+  'browser_click',
+  'browser_type',
+  'browser_fill',
+  'browser_select',
+  'browser_navigate',
+  'browser_tab_create',
+  'browser_tab_group',
+  'browser_tab_ungroup',
+]);
+
+const NAMED_TARGET_ACTIONS = new Set([
+  'browser_click',
+  'browser_type',
+  'browser_fill',
+  'browser_select',
+]);
+
 // What a focused control does with Space: roles and input types that act on it. Text
 // fields take the space as a character; the bare page scrolls. A focusable element with no role of its own
 // (a div with a tabindex, the host of a shadow root) is not inert: a page can make it act on a key, or hold a
@@ -91,6 +112,19 @@ function targetDescriptor(target = {}) {
     target.autocomplete,
     target.placeholder,
   ].map(compact).filter(Boolean).join(' ');
+}
+
+// The name a person could use to recognise the control. Role and input type
+// alone do not name it, so a button whose accessible name is empty is unlabelled.
+function accessibleName(target = {}) {
+  return compact(target?.name) || compact(target?.label) || compact(target?.placeholder);
+}
+
+function pageChangingDecision(action, target = {}) {
+  if (NAMED_TARGET_ACTIONS.has(action) && !accessibleName(target)) {
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'unlabelled-target');
+  }
+  return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'page-changing-action');
 }
 
 function decision(risk, reason = '', message = '') {
@@ -212,13 +246,13 @@ export function classifyBrowserControlAction({
         return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'cross-origin-unsaved-content');
       }
     }
-    return decision(BROWSER_CONTROL_RISKS.SAFE);
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'page-changing-action');
   }
 
   if (normalizedAction === 'browser_tab_create') {
     const destination = validateBrowserControlUrl(args?.url);
     if (!destination.ok) return decision(BROWSER_CONTROL_RISKS.BLOCKED, destination.error);
-    return decision(BROWSER_CONTROL_RISKS.SAFE);
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'page-changing-action');
   }
 
   if (normalizedAction === 'browser_press') {
@@ -252,10 +286,14 @@ export function classifyBrowserControlAction({
     }
     const opaque = focusKnown && opaqueFocus(focused);
     // Space presses the focused button or toggles the focused control: judge it as that click.
-    if (isSpaceActivation(resolved) && focusKnown) {
-      if (spaceActivatesFocus(focused) && APPROVAL_LABEL_RE.test(targetDescriptor(focused))) {
+    if (isSpaceActivation(resolved) && focusKnown && spaceActivatesFocus(focused)) {
+      if (!accessibleName(focused)) {
+        return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'unlabelled-target');
+      }
+      if (APPROVAL_LABEL_RE.test(targetDescriptor(focused))) {
         return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
       }
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'page-changing-action');
     }
     // An element with no role of its own gives no way to tell what a key does there, so a key that types or
     // acts asks first.
@@ -265,8 +303,17 @@ export function classifyBrowserControlAction({
     if (isCopyShortcut(resolved)) return decision(BROWSER_CONTROL_RISKS.SAFE, 'clipboard-copy');
     return decision(BROWSER_CONTROL_RISKS.SAFE);
   }
-  if (normalizedAction === 'browser_click' && APPROVAL_LABEL_RE.test(descriptor)) {
-    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
+  if (normalizedAction === 'browser_click') {
+    if (!accessibleName(target)) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'unlabelled-target');
+    }
+    if (APPROVAL_LABEL_RE.test(descriptor)) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
+    }
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'page-changing-action');
+  }
+  if (PAGE_CHANGING_ACTIONS.has(normalizedAction)) {
+    return pageChangingDecision(normalizedAction, target);
   }
   return decision(BROWSER_CONTROL_RISKS.SAFE);
 }
