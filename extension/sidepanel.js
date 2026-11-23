@@ -873,6 +873,7 @@ import {
   browserControlView,
   controlLeaseRequest,
   currentTabLeaseReplacement,
+  formatBrowserControlApprovalReason,
   showTabTargetId,
 } from './lib/browser-control-ui.mjs';
 import { browserControlScopeHelpKey, createBrowserControlDialog } from './lib/browser-control-dialog.mjs';
@@ -3755,16 +3756,26 @@ async function persistBrowserControlPreferences(patch = {}) {
 
 function renderBrowserControl() {
   if (!els.browserControlCard || !els.browserControlStrip) return;
+  const rawStatus = browserControlStatus || {};
+  const pendingApproval = rawStatus.pendingApproval;
+  const status = pendingApproval
+    ? {
+      ...rawStatus,
+      pendingApproval: {
+        ...pendingApproval,
+        reason: formatBrowserControlApprovalReason(pendingApproval, { t, translateText: translateUiText }),
+      },
+    }
+    : rawStatus;
   const view = browserControlView({
     settings,
-    status: browserControlStatus || {},
+    status,
     activeTab: browserControlActiveTab,
     currentTarget: browserControlCurrentTarget,
     support: browserControlSupportState(),
   });
   const enabled = settings.browserControlEnabled === true;
   const paused = browserControlStatus?.paused === true;
-  const pendingApproval = browserControlStatus?.pendingApproval || null;
   const lightState = browserControlLightState(view, { paused });
   const statusLine = browserControlStatusLine({ title: translateUiText(view.title), detail: translateUiText(view.detail) });
 
