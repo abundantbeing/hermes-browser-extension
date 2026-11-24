@@ -303,6 +303,7 @@ export default Object.freeze({
   "browser_control.approval.press_consequential": "Nacisnąć {key}, gdy fokus ma {label}? To działa jak kliknięcie.",
   "browser_control.approval.press_unlabelled": "Nacisnąć {key}? Hermes nie mógł nazwać elementu, który ma fokus.",
   "browser_control.approval.step_prefix": "Krok {current} z {total}:",
+  "browser_control.approval.background_task": "Karta zadania w tle {tab}: {reason}",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Autoryzuj kontrolę",
   "browser_control.control_ready": "Sterowanie gotowe",

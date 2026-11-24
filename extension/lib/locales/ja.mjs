@@ -303,6 +303,7 @@ export default Object.freeze({
   "browser_control.approval.press_consequential": "{label} にフォーカスがあるときに {key} を押しますか？クリックと同じ動作になります。",
   "browser_control.approval.press_unlabelled": "{key} を押しますか？Hermes はフォーカスのあるコントロールの名前を特定できませんでした。",
   "browser_control.approval.step_prefix": "ステップ {current} / {total}:",
+  "browser_control.approval.background_task": "バックグラウンドタスクのタブ {tab}: {reason}",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "操作を許可",
   "browser_control.control_ready": "操作の準備完了",

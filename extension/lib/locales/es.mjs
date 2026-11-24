@@ -303,6 +303,7 @@ export default Object.freeze({
   "browser_control.approval.press_consequential": "¿Pulsar {key} mientras {label} tiene el foco? Actúa como un clic.",
   "browser_control.approval.press_unlabelled": "¿Pulsar {key}? Hermes no pudo nombrar el control que tiene el foco.",
   "browser_control.approval.step_prefix": "Paso {current} de {total}:",
+  "browser_control.approval.background_task": "Pestaña de tarea en segundo plano {tab}: {reason}",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Autorizar control",
   "browser_control.control_ready": "Control listo",

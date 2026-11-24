@@ -3824,7 +3824,7 @@ function renderBrowserControl() {
       status: statusLine,
     },
   });
-  els.browserControlStrip.hidden = !enabled;
+  els.browserControlStrip.hidden = !enabled && view.state !== 'approval';
   els.browserControlStrip.dataset.tone = view.tone;
   // The title and detail stay in the DOM for screen readers; the window shows the detail only when the person must act.
   els.browserControlStrip.dataset.attention = String(view.attention === true);
@@ -3892,7 +3892,8 @@ async function refreshBrowserControlStatus() {
 function scheduleBrowserControlPoll() {
   if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
   browserControlPollTimer = null;
-  if (settings.browserControlEnabled !== true || document.visibilityState === 'hidden') return;
+  const pendingBackground = String(browserControlStatus?.pendingApproval?.controllerId || '').startsWith('background-');
+  if (((settings.browserControlEnabled !== true && !pendingBackground) || document.visibilityState === 'hidden')) return;
   // A Hermes without extension control never connects: polling it is a dead loop.
   // A gateway or settings change re-arms the poll (setGatewayCapabilities, enable).
   if (browserControlSupportState() === 'unsupported') return;
@@ -31416,8 +31417,8 @@ function bindEvents() {
     void clearElementPickState({ tabId: tab?.id });
   });
   browserApi.runtime.onMessage.addListener((message, sender) => {
-    if (message?.type === 'HERMES_BACKGROUND_DOWNLOAD_APPROVAL_CHANGED' && sender?.id === browserApi.runtime.id) {
-      void refreshBrowserControlStatus();
+    if (message?.type === 'HERMES_BACKGROUND_APPROVAL_CHANGED' && sender?.id === browserApi.runtime.id) {
+      void refreshBrowserControlStatus().then(scheduleBrowserControlPoll);
       return;
     }
     if (message?.type === ELEMENT_PICK_MESSAGES.RESULT) {

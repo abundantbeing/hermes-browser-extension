@@ -303,6 +303,7 @@ export default Object.freeze({
   "browser_control.approval.press_consequential": "{label}에 포커스가 있는 동안 {key}를 누를까요? 클릭과 같이 동작합니다.",
   "browser_control.approval.press_unlabelled": "{key}를 누를까요? Hermes가 포커스가 있는 컨트롤의 이름을 확인할 수 없습니다.",
   "browser_control.approval.step_prefix": "단계 {current} / {total}:",
+  "browser_control.approval.background_task": "백그라운드 작업 탭 {tab}: {reason}",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "제어 승인",
   "browser_control.control_ready": "제어 준비 완료",

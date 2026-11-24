@@ -233,7 +233,7 @@ const controllerWorker = typeof browserApi.storage?.local?.set === 'function'
       extensionOrigin,
       supportsTabGroups: Boolean(browserApi.tabGroups),
       approvalStore: browserControlRuntime.approvals,
-      decideBackgroundDownloadApproval: (message, approved) => backgroundTaskBrowser?.decideDownloadApproval(message, approved),
+      decideBackgroundApproval: (message, approved) => backgroundTaskBrowser?.decideBackgroundApproval(message, approved),
       getControllerCapabilities: async (settings) => (await browserControlRuntime.status(settings)).capabilities,
       executeBrowserCommand: (frame, context) => browserControlRuntime.execute(frame, context, context.settings),
       releaseTabDebugger: (tabId) => browserControlRuntime.releaseTab(tabId),

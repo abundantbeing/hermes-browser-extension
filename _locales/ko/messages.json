@@ -1163,6 +1163,10 @@
     "message": "승인 필요",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_background_task": {
+    "message": "백그라운드 작업 탭 {tab}: {reason}",
+    "description": "Runtime interface message browser_control.approval.background_task"
+  },
   "runtime_browser_control_approval_click": {
     "message": "\"{name}\"을(를) 클릭할까요? 페이지가 바뀔 수 있습니다.",
     "description": "Runtime interface message browser_control.approval.click"

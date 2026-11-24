@@ -327,7 +327,7 @@ export function createControllerServiceWorker({
   executeCommand = undefined,
   executeBrowserCommand = undefined,
   approvalStore = undefined,
-  decideBackgroundDownloadApproval = undefined,
+  decideBackgroundApproval = undefined,
   getControllerCapabilities = undefined,
   getTab = undefined,
   releaseTabDebugger = undefined,
@@ -2073,8 +2073,8 @@ export function createControllerServiceWorker({
     if (type === CONTROLLER_WORKER_MESSAGES.approvalGrant || type === CONTROLLER_WORKER_MESSAGES.approvalReject) {
       const approve = type === CONTROLLER_WORKER_MESSAGES.approvalGrant;
       if (String(message.controllerId || '').startsWith('background-')) {
-        if (controlPaused()) return { ok: false, error: 'controller_paused' };
-        return (await decideBackgroundDownloadApproval?.(message, approve)) || { ok: false, error: 'approval_missing' };
+        // Manual Control's pause does not decide a background-task request.
+        return (await decideBackgroundApproval?.(message, approve)) || { ok: false, error: 'approval_missing' };
       }
       return approve ? grantApproval(message) : rejectApproval(message);
     }

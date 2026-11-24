@@ -304,11 +304,6 @@ export function classifyBrowserControlAction({
     return decision(BROWSER_CONTROL_RISKS.SAFE);
   }
   if (normalizedAction === 'browser_click') {
-    const name = compact(target.name || target.label).toLowerCase();
-    if (/^https:\/\/drive\.google\.com\//.test(currentUrl || '')
-      && (name === 'download' || name === 'descargar')) {
-      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'download-click');
-    }
     if (!accessibleName(target)) {
       return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'unlabelled-target');
     }
@@ -474,10 +469,19 @@ export function createBrowserControlApprovalStore({
     }
     let resolve;
     const promise = new Promise((settle) => { resolve = settle; });
+    const reasonKey = compact(value.reasonKey).slice(0, 200);
+    const reasonParams = value.reasonParams && typeof value.reasonParams === 'object' && !Array.isArray(value.reasonParams)
+      ? value.reasonParams
+      : null;
+    const stepNumber = Number(value.stepNumber);
+    const stepTotal = Number(value.stepTotal);
     requests.set(normalized.approvalId, {
       ...normalized,
       reason: compact(value.reason).slice(0, 300),
       ...(compact(value.detail) ? { detail: compact(value.detail).slice(0, 1_000) } : {}),
+      ...(reasonKey ? { reasonKey, ...(reasonParams ? { reasonParams } : {}) } : {}),
+      ...(Number.isInteger(stepNumber) && stepNumber > 0 && Number.isInteger(stepTotal) && stepTotal > 0
+        ? { stepNumber, stepTotal } : {}),
       createdAt: Number(now()),
       promise,
       resolve,
@@ -494,7 +498,8 @@ export function createBrowserControlApprovalStore({
   function pending() {
     return [...requests.values()].map(({
       approvalId, approvalNonce, commandId, controllerId, leaseId, leaseGeneration,
-      tabId, frameId, documentGeneration, action, state, reason, binding, detail,
+      tabId, frameId, documentGeneration, action, state, reason, reasonKey, reasonParams,
+      stepNumber, stepTotal, binding, detail,
       targetRole, targetName, destination, valueHash,
     }) => ({
       approvalId,
@@ -509,6 +514,10 @@ export function createBrowserControlApprovalStore({
       action,
       ...(state ? { state } : {}),
       reason,
+      ...(reasonKey ? { reasonKey } : {}),
+      ...(reasonParams ? { reasonParams } : {}),
+      ...(stepNumber ? { stepNumber } : {}),
+      ...(stepTotal ? { stepTotal } : {}),
       ...(binding ? { binding } : {}),
       ...(targetRole ? { targetRole } : {}),
       ...(targetName ? { targetName } : {}),

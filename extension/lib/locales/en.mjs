@@ -281,6 +281,7 @@ export default Object.freeze({
   "browser_control.approval.press_consequential": "Press {key} while {label} has focus? It acts like clicking it.",
   "browser_control.approval.press_unlabelled": "Press {key}? Hermes could not name the control that has focus.",
   "browser_control.approval.step_prefix": "Step {current} of {total}:",
+  "browser_control.approval.background_task": "Background task tab {tab}: {reason}",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Authorize control",
   "browser_control.control_ready": "Control ready",

@@ -280,6 +280,7 @@ export default Object.freeze({
   "browser_control.approval.press_consequential": "在 {label} 具有焦点时按 {key}？这相当于点击。",
   "browser_control.approval.press_unlabelled": "按 {key}？Hermes 无法命名当前具有焦点的控件。",
   "browser_control.approval.step_prefix": "第 {current} 步，共 {total} 步：",
+  "browser_control.approval.background_task": "后台任务标签页 {tab}: {reason}",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "授权控制",
   "browser_control.control_ready": "控制已就绪",
