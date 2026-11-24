@@ -52,8 +52,10 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
   you are signed in to on that site.
 - **A remembered approval for one click does not cover the next.** Each page-changing action asks again
   (**Approve once**). There is no “remember this tab or site” grant for Hermes Control actions. Background
-  task tabs, which you opt into separately, still cannot present an approval card: an action that would
-  need one is refused there instead of running unapproved.
+  task tabs, which you opt into separately, use the same **Approve once** card for an action that would
+  change the page. The card names the background task tab. Each grant covers that one action only; a
+  rejection or timeout leaves the page unchanged and returns a refusal to the agent. Opening a new task
+  tab still does not ask first, and the card does not bring the tab forward.
 - **Opening an ordinary web address still asks first.** Restricted addresses and those carrying key or token
   shapes are refused; everything else waits for **Approve once**.
 - **Background task tabs can be driven by any chat of that Hermes profile,** including chats from messaging apps,
