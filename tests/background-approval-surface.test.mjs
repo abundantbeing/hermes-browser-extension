@@ -163,3 +163,76 @@ test('the approval page has no hardcoded copy and needs no new manifest permissi
   const manifest = JSON.parse(readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8'));
   assert.equal(manifest.permissions.includes('notifications'), false);
 });
+
+function manualTimers() {
+  const timers = new Map();
+  let next = 1;
+  return {
+    setTimer: (fn, ms) => { const id = next; next += 1; timers.set(id, { fn, ms }); return id; },
+    clearTimer: (id) => { timers.delete(id); },
+    pending: () => [...timers.values()],
+    async fire() {
+      const due = [...timers.entries()];
+      timers.clear();
+      for (const [, timer] of due) timer.fn();
+      await flush();
+    },
+  };
+}
+
+test('an open Hermes side panel asks instead of the approval window, and the window opens once the panel closes', async () => {
+  const { browserApi, calls } = fakeBrowser();
+  let panelOpen = true;
+  const timers = manualTimers();
+  browserApi.runtime.getContexts = async ({ contextTypes }) => {
+    assert.deepEqual(contextTypes, ['SIDE_PANEL']);
+    return panelOpen ? [{ contextType: 'SIDE_PANEL', documentUrl: 'chrome-extension://fixture/sidepanel.html' }] : [];
+  };
+  const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
+  const settled = deferred();
+  surface.show({ approvalId: 'p1' }, settled.promise);
+  await flush();
+  assert.equal(calls.created.length, 0, 'the open panel shows the card, so no second surface opens');
+  assert.equal(calls.badge.at(-1), '1', 'the toolbar still says a request is waiting');
+  await timers.fire();
+  assert.equal(calls.created.length, 0, 'still no window while the panel stays open');
+  panelOpen = false;
+  await timers.fire();
+  assert.equal(calls.created.length, 1, 'the window opens once the panel closes while the request waits');
+  settled.resolve({ ok: true });
+  await flush();
+  assert.deepEqual(calls.removed, [calls.created[0].id]);
+  assert.equal(timers.pending().length, 0, 'no panel re-check is left running');
+});
+
+test('a decided request stops the panel re-check without opening a window', async () => {
+  const { browserApi, calls } = fakeBrowser();
+  const timers = manualTimers();
+  browserApi.runtime.getContexts = async () => [{ contextType: 'SIDE_PANEL', documentUrl: 'chrome-extension://fixture/sidepanel.html' }];
+  const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
+  const settled = deferred();
+  surface.show({ approvalId: 'p2' }, settled.promise);
+  await flush();
+  settled.resolve({ ok: true });
+  await flush();
+  await timers.fire();
+  assert.equal(calls.created.length, 0);
+  assert.equal(timers.pending().length, 0);
+  assert.equal(calls.badge.at(-1), '');
+});
+
+test('the approval window still opens when the side panel cannot be detected', async () => {
+  for (const getContexts of [
+    undefined,
+    async () => { throw new Error('Invalid enumeration value "SIDE_PANEL"'); },
+    async () => [{ contextType: 'SIDE_PANEL', documentUrl: 'chrome-extension://fixture/sidepanel-preview.html' }],
+  ]) {
+    const { browserApi, calls } = fakeBrowser();
+    const timers = manualTimers();
+    if (getContexts) browserApi.runtime.getContexts = getContexts;
+    const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
+    surface.show({ approvalId: 'p3' }, deferred().promise);
+    await flush();
+    assert.equal(calls.created.length, 1, 'a missing, failing or non-panel answer reads as no panel open');
+  }
+});

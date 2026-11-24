@@ -4,7 +4,8 @@ import { formatBrowserControlApprovalReason } from './browser-control-ui.mjs';
 // side panel cannot be opened without a user gesture, and the extension has no
 // notifications permission, so the request gets its own small extension window
 // (the same card copy and the same controller grant path as the panel) and a
-// toolbar badge while anything is waiting.
+// toolbar badge while anything is waiting. An open Hermes side panel already
+// shows the request as its card, so the window only opens while no panel is open.
 export const BACKGROUND_APPROVAL_PAGE = 'background-approval.html';
 export const BACKGROUND_APPROVAL_GET = 'HERMES_BACKGROUND_APPROVAL_GET';
 const APPROVAL_DECISIONS = Object.freeze({
@@ -13,8 +14,33 @@ const APPROVAL_DECISIONS = Object.freeze({
 });
 const BADGE_COLOR = '#b45309';
 const WINDOW_SIZE = Object.freeze({ width: 440, height: 400 });
+const SIDE_PANEL_PAGE = 'sidepanel.html';
+export const PANEL_RECHECK_MS = 1500;
 
-export function createBackgroundApprovalSurface({ browserApi, translate = (key) => key }) {
+// Whether a Hermes side panel is open in any window. SIDE_PANEL contexts need
+// Chrome 121; a missing or failing lookup reads as no panel, so the window asks.
+export async function hermesSidePanelOpen(browserApi) {
+  try {
+    const contexts = await browserApi?.runtime?.getContexts?.({ contextTypes: ['SIDE_PANEL'] });
+    return Array.isArray(contexts) && contexts.some((context) => {
+      try {
+        return new URL(String(context?.documentUrl || '')).pathname.endsWith(`/${SIDE_PANEL_PAGE}`);
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return false;
+  }
+}
+
+export function createBackgroundApprovalSurface({
+  browserApi,
+  translate = (key) => key,
+  panelOpen = () => hermesSidePanelOpen(browserApi),
+  setTimer = setTimeout,
+  clearTimer = clearTimeout,
+}) {
   const waiting = new Map();
   let defaultTitle = null;
   let signalChain = Promise.resolve();
@@ -52,6 +78,8 @@ export function createBackgroundApprovalSurface({ browserApi, translate = (key) 
     const entry = waiting.get(approvalId);
     if (!entry) return;
     entry.done = true;
+    if (entry.recheck !== null) clearTimer(entry.recheck);
+    entry.recheck = null;
     waiting.delete(approvalId);
     closeWindow(entry);
     void signal();
@@ -64,23 +92,39 @@ export function createBackgroundApprovalSurface({ browserApi, translate = (key) 
     }
   });
 
+  function openWindow(approvalId, entry) {
+    const url = browserApi?.runtime?.getURL?.(`${BACKGROUND_APPROVAL_PAGE}?approval=${encodeURIComponent(approvalId)}`);
+    if (!url || !browserApi?.windows?.create) return;
+    void Promise.resolve(browserApi.windows.create({ url, type: 'popup', focused: true, ...WINDOW_SIZE }))
+      .then((created) => {
+        if (created?.id === undefined || created?.id === null) return;
+        entry.windowId = created.id;
+        if (entry.done) closeWindow(entry);
+      })
+      .catch(() => {});
+  }
+
+  // While a panel is open it asks; if every panel closes before a decision, the window asks.
+  async function askWhereVisible(approvalId, entry) {
+    entry.recheck = null;
+    const open = await Promise.resolve().then(panelOpen).catch(() => false);
+    if (entry.done) return;
+    if (!open) {
+      openWindow(approvalId, entry);
+      return;
+    }
+    entry.recheck = setTimer(() => { void askWhereVisible(approvalId, entry); }, PANEL_RECHECK_MS);
+  }
+
   return {
     show(approval, settled) {
       const approvalId = String(approval?.approvalId || '');
       if (!approvalId || waiting.has(approvalId)) return;
-      const entry = { windowId: null, done: false };
+      const entry = { windowId: null, done: false, recheck: null };
       waiting.set(approvalId, entry);
       void signal();
       Promise.resolve(settled).catch(() => {}).finally(() => finish(approvalId));
-      const url = browserApi?.runtime?.getURL?.(`${BACKGROUND_APPROVAL_PAGE}?approval=${encodeURIComponent(approvalId)}`);
-      if (!url || !browserApi?.windows?.create) return;
-      void Promise.resolve(browserApi.windows.create({ url, type: 'popup', focused: true, ...WINDOW_SIZE }))
-        .then((created) => {
-          if (created?.id === undefined || created?.id === null) return;
-          entry.windowId = created.id;
-          if (entry.done) closeWindow(entry);
-        })
-        .catch(() => {});
+      void askWhereVisible(approvalId, entry);
     },
     waitingCount: () => waiting.size,
   };
