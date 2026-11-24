@@ -103,9 +103,30 @@ test('a background approval opens the existing card and stays visible when Contr
   const f = fixture();
   f.ui.render({
     enabled: false,
-    view: { state: 'approval', tone: 'warn', title: 'Approval needed', detail: 'Click "Continue"?', autoOpen: true },
+    view: { state: 'approval', tone: 'warn', title: 'Approval needed', detail: 'Click "Continue"?', autoOpen: true, autoOpenKey: 'a1' },
   });
   await settle();
   assert.equal(f.byId('launch').hidden, false);
   assert.equal(f.dialog.open, true);
+});
+
+test('a background approval opens the card once per request and stays closed after the person dismisses it', async () => {
+  const f = fixture();
+  const view = (approvalId) => ({
+    state: 'approval', tone: 'warn', title: 'Approval needed', detail: 'Click "Continue"?',
+    autoOpen: true, autoOpenKey: approvalId,
+  });
+  f.ui.render({ enabled: false, view: view('a1') });
+  await settle();
+  assert.equal(f.dialog.open, true);
+  f.byId('close').click();
+  assert.equal(f.dialog.open, false);
+  // The 750 ms status poll renders the same request again: it must not reopen the card.
+  for (let poll = 0; poll < 3; poll += 1) f.ui.render({ enabled: false, view: view('a1') });
+  await settle();
+  assert.equal(f.dialog.open, false, 'a dismissed card stays closed for the same request');
+  assert.equal(f.byId('launch').hidden, false, 'the launcher still lets the person reopen it');
+  f.ui.render({ enabled: false, view: view('a2') });
+  await settle();
+  assert.equal(f.dialog.open, true, 'the next request opens the card once');
 });

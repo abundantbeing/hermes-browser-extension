@@ -182,6 +182,8 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       canDetach: enabled,
       attention: true,
       autoOpen: background,
+      // The card auto-opens once per request; a person who closes it is not interrupted again.
+      autoOpenKey: background ? String(pendingApproval.approvalId || '') : '',
     });
   }
   if (support === 'unsupported') return unsupportedView({ enabled });

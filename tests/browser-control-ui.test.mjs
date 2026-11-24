@@ -386,3 +386,19 @@ test('a background-task approval keeps Pause/Resume available and can open the c
   assert.equal(controlOff.canStop, false);
   assert.equal(controlOff.canDetach, false);
 });
+
+test('a background-task approval names its request so the card auto-opens once per approval', async () => {
+  const { browserControlView } = await uiModule();
+  const view = browserControlView({
+    settings: { browserControlEnabled: false },
+    status: { pendingApproval: { controllerId: 'background-test', approvalId: 'approval-7', reason: 'Click?' } },
+  });
+  assert.equal(view.autoOpen, true);
+  assert.equal(view.autoOpenKey, 'approval-7');
+  const manual = browserControlView({
+    settings: { browserControlEnabled: true },
+    status: { connected: true, controlEnabled: true, pendingApproval: { controllerId: 'controller-1', approvalId: 'approval-8', reason: 'Click?' } },
+  });
+  assert.equal(manual.autoOpen, false);
+  assert.equal(manual.autoOpenKey, '');
+});

@@ -195,6 +195,8 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
   };
 
   let canOpen = false;
+  // The approval the card last opened by itself; a dismissed card stays closed for that request.
+  let autoOpenedKey = '';
   const openDialog = (pointer = false) => {
     if (dialog.open) return;
     dialog.classList.toggle('is-pointer-open', pointer);
@@ -259,7 +261,10 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
       launcher.setAttribute('aria-label', `${label()}: ${view.title}`);
       launcher.title = `${label()}: ${view.title}\n${view.detail}`;
       if (!canOpen) close();
-      else if (view.autoOpen === true && !dialog.open) openDialog();
+      else if (view.autoOpen === true && view.autoOpenKey && view.autoOpenKey !== autoOpenedKey) {
+        autoOpenedKey = view.autoOpenKey;
+        openDialog();
+      }
     },
   };
 }
