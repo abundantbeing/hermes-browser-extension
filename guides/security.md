@@ -55,7 +55,9 @@ The technical detail is in [SECURITY.md](../SECURITY.md).
   task tabs, which you opt into separately, use the same **Approve once** card for an action that would
   change the page. The card names the background task tab. Each grant covers that one action only; a
   rejection or timeout leaves the page unchanged and returns a refusal to the agent. Opening a new task
-  tab still does not ask first, and the card does not bring the tab forward.
+  tab still does not ask first, and the card does not bring the tab forward. With no Hermes panel open,
+  the request opens a small approval window of its own (and a badge on the toolbar icon) so it does not
+  time out unseen.
 - **Opening an ordinary web address still asks first.** Restricted addresses and those carrying key or token
   shapes are refused; everything else waits for **Approve once**.
 - **Background task tabs can be driven by any chat of that Hermes profile,** including chats from messaging apps,
