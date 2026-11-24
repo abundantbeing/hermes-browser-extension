@@ -1420,6 +1420,8 @@ class SessionDB:
 module_state = types.ModuleType("hermes_state")
 module_state.SessionDB = SessionDB
 sys.modules["hermes_state"] = module_state
+# A Hermes before the storage interface: persistence_assembly does not import.
+sys.modules["persistence_assembly"] = None
 
 def fresh_store(**flags):
     tools._session_db = None
@@ -1498,6 +1500,45 @@ print(json.dumps(asyncio.run(main())))
   assert.deepEqual(data.no_lineage_api, [[], 'no_browser']);
   assert.deepEqual(data.open_failure, [[], [], 'no_browser']);
   assert.equal(data.open_attempts, 1);
+});
+
+test('on a Hermes with the storage interface the lineage comes from store.lineage, not the removed SessionDB call', () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}${FAKE_HERMES_STATE}
+# The v0.23 stand-in: SessionDB opens but carries no get_compression_lineage.
+del SessionDB.get_compression_lineage
+LINEAGES = {"seg-2": ("chat-root", "seg-1", "seg-2"), "late-sub": ("late-sub",)}
+OPENED = []
+
+class Lineage:
+    def lineage(self, sid):
+        return LINEAGES.get(sid, ())
+
+class Persistence:
+    lineage = Lineage()
+    def __getattr__(self, name):
+        raise AttributeError(name)
+
+module_assembly = types.ModuleType("persistence_assembly")
+module_assembly.profile_scope = lambda: "scope"
+module_assembly.open_persistence = lambda scope: OPENED.append(scope) or Persistence()
+sys.modules["persistence_assembly"] = module_assembly
+
+fresh_store()
+print(json.dumps({
+    "ancestors": tools._compression_ancestors("seg-2"),
+    "fork": tools._compression_ancestors("late-sub"),
+    "unknown": tools._compression_ancestors("nowhere"),
+    "opened": OPENED,
+    "state_db_opened": STORE["opened"],
+}))
+`);
+  const data = JSON.parse(out);
+  if (skipped(data)) return;
+  assert.deepEqual(data.ancestors, ['seg-1', 'chat-root']);
+  assert.deepEqual(data.fork, []);
+  assert.deepEqual(data.unknown, []);
+  assert.deepEqual(data.opened, ['scope']);
+  assert.equal(data.state_db_opened, 0);
 });
 
 test('an opted-in loopback controller receives the trusted session id without manual Attach', () => {

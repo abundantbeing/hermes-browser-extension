@@ -166,9 +166,15 @@ def _get_session_db() -> Any:
     with _session_db_lock:
         if _session_db is None:
             try:
-                from hermes_state import SessionDB
+                try:
+                    from persistence_assembly import open_persistence, profile_scope
 
-                _session_db = SessionDB()
+                    _session_db = open_persistence(profile_scope())
+                except ImportError:
+                    # Hermes before the storage interface (hermes_state's SessionDB is removed in v0.27.0).
+                    from hermes_state import SessionDB
+
+                    _session_db = SessionDB()
             except Exception:
                 logger.debug("Hermes Control has no session store for compression lineage", exc_info=True)
                 _session_db = False
@@ -181,7 +187,8 @@ def _compression_ancestors(session_id: str) -> list[str]:
     Compression ends the running session and continues the same conversation
     under a new id. The extension registered its controller on the chat's
     original session, so the agent's later tool calls carry the new id. The
-    lineage comes from Hermes itself (``SessionDB.get_compression_lineage``),
+    lineage comes from Hermes itself (``store.lineage.lineage``, or
+    ``SessionDB.get_compression_lineage`` on a core that predates the storage interface),
     which accepts a hop only when the child really is that session's
     compression continuation: a delegated subagent, branch or reset keeps a
     ``parent_session_id`` but is not one, even after its parent later ends by
@@ -192,7 +199,10 @@ def _compression_ancestors(session_id: str) -> list[str]:
     if db is None:
         return []
     try:
-        lineage = db.get_compression_lineage(session_id)
+        if hasattr(db, "get_compression_lineage"):
+            lineage = db.get_compression_lineage(session_id)
+        else:
+            lineage = db.lineage.lineage(session_id)
     except Exception:
         logger.debug("Hermes Control could not read the compression lineage of %s", session_id, exc_info=True)
         return []
