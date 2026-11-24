@@ -304,6 +304,8 @@ export default Object.freeze({
   "browser_control.approval.press_unlabelled": "Nhấn {key}? Hermes không thể đặt tên điều khiển đang có tiêu điểm.",
   "browser_control.approval.step_prefix": "Bước {current} / {total}:",
   "browser_control.approval.background_task": "Thẻ tác vụ nền {tab}: {reason}",
+  "browser_control.approval_waiting": "Hermes đang chờ bạn phê duyệt",
+  "browser_control.approval_window_gone": "Yêu cầu này không còn chờ nữa. Bạn có thể đóng cửa sổ này.",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Cho phép điều khiển",
   "browser_control.control_ready": "Điều khiển đã sẵn sàng",

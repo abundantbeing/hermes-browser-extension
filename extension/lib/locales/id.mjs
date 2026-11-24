@@ -304,6 +304,8 @@ export default Object.freeze({
   "browser_control.approval.press_unlabelled": "Tekan {key}? Hermes tidak dapat menamai kontrol yang memiliki fokus.",
   "browser_control.approval.step_prefix": "Langkah {current} dari {total}:",
   "browser_control.approval.background_task": "Tab tugas latar belakang {tab}: {reason}",
+  "browser_control.approval_waiting": "Hermes menunggu persetujuan Anda",
+  "browser_control.approval_window_gone": "Permintaan ini tidak lagi menunggu. Anda dapat menutup jendela ini.",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Izinkan kontrol",
   "browser_control.control_ready": "Kontrol siap",

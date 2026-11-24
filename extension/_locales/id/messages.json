@@ -1163,6 +1163,14 @@
     "message": "Persetujuan diperlukan",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_waiting": {
+    "message": "Hermes menunggu persetujuan Anda",
+    "description": "Runtime interface message browser_control.approval_waiting"
+  },
+  "runtime_browser_control_approval_window_gone": {
+    "message": "Permintaan ini tidak lagi menunggu. Anda dapat menutup jendela ini.",
+    "description": "Runtime interface message browser_control.approval_window_gone"
+  },
   "runtime_browser_control_approval_background_task": {
     "message": "Tab tugas latar belakang {tab}: {reason}",
     "description": "Runtime interface message browser_control.approval.background_task"

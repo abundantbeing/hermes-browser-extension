@@ -304,6 +304,8 @@ export default Object.freeze({
   "browser_control.approval.press_unlabelled": "Tryk på {key}? Hermes kunne ikke navngive det kontrolelement, der har fokus.",
   "browser_control.approval.step_prefix": "Trin {current} af {total}:",
   "browser_control.approval.background_task": "Baggrundsfane {tab}: {reason}",
+  "browser_control.approval_waiting": "Hermes venter på din godkendelse",
+  "browser_control.approval_window_gone": "Denne anmodning venter ikke længere. Du kan lukke dette vindue.",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Tillad kontrol",
   "browser_control.control_ready": "Styring klar",

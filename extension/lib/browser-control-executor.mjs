@@ -1051,7 +1051,7 @@ export function createBrowserControlExecutor({
             ...(approvalDetail ? { detail: approvalDetail } : {}),
           });
           if (context.backgroundTask === true && typeof context.onApprovalRequest === 'function') {
-            context.onApprovalRequest();
+            context.onApprovalRequest(approval, request);
           }
           const requested = await request;
           clearTimeout(approvalTimer);

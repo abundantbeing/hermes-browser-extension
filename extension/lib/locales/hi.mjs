@@ -304,6 +304,8 @@ export default Object.freeze({
   "browser_control.approval.press_unlabelled": "{key} दबाएँ? Hermes उस नियंत्रण का नाम नहीं बता सका जिस पर फोकस है.",
   "browser_control.approval.step_prefix": "चरण {current} / {total}:",
   "browser_control.approval.background_task": "पृष्ठभूमि कार्य टैब {tab}: {reason}",
+  "browser_control.approval_waiting": "Hermes आपकी मंज़ूरी का इंतज़ार कर रहा है",
+  "browser_control.approval_window_gone": "यह अनुरोध अब प्रतीक्षा में नहीं है। आप यह विंडो बंद कर सकते हैं।",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "नियंत्रण अधिकृत करें",
   "browser_control.control_ready": "नियंत्रण तैयार",

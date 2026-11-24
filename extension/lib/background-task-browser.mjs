@@ -60,7 +60,7 @@ export const BACKGROUND_BROWSER_ACTIONS = [
   ...PAGE_ACTIONS, 'browser_tabs', 'browser_tab_create', 'browser_tab_group',
 ];
 
-export function createBackgroundTaskBrowser({ browserApi, connector, runtime, product }) {
+export function createBackgroundTaskBrowser({ browserApi, connector, runtime, product, approvalSurface = null }) {
   const { tabs, windows, tabGroups, storage, alarms } = browserApi;
   const { waitForLoad } = createLoadWaiter({ browserApi });
   const sessions = new Map();
@@ -180,8 +180,10 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
         ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
       }, {
         scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
-        onApprovalRequest: () => {
+        onApprovalRequest: (approval, settled) => {
+          // An open panel refreshes its card; with no panel open, the approval window asks instead.
           void browserApi.runtime?.sendMessage({ type: 'HERMES_BACKGROUND_APPROVAL_CHANGED' })?.catch(() => {});
+          approvalSurface?.show(approval, settled);
         },
         currentWindowId: tab.windowId,
         currentDocumentGeneration: () => lease.document,
@@ -291,6 +293,12 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   }
 
   return {
+    /** The pending request one approval window shows; never another controller's. */
+    backgroundApproval(approvalId) {
+      const id = String(approvalId || '');
+      return runtime.approvals.pending()
+        .find((entry) => entry.approvalId === id && entry.controllerId === controllerId) || null;
+    },
     async decideBackgroundApproval(message, approved) {
       if (message.controllerId !== controllerId) return null;
       const request = runtime.approvals.pending().find((entry) => entry.approvalId === message.approvalId);

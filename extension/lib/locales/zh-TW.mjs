@@ -304,6 +304,8 @@ export default Object.freeze({
   "browser_control.approval.press_unlabelled": "按 {key}？Hermes 無法命名目前具有焦點的控制項。",
   "browser_control.approval.step_prefix": "第 {current} 步，共 {total} 步：",
   "browser_control.approval.background_task": "背景工作分頁 {tab}: {reason}",
+  "browser_control.approval_waiting": "Hermes 正在等待你的核准",
+  "browser_control.approval_window_gone": "此請求已不再等待。你可以關閉此視窗。",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "授權控制",
   "browser_control.control_ready": "控制已就緒",

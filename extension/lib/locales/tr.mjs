@@ -304,6 +304,8 @@ export default Object.freeze({
   "browser_control.approval.press_unlabelled": "{key} tuşuna basılsın mı? Hermes, odaktaki denetimin adını belirleyemedi.",
   "browser_control.approval.step_prefix": "Adım {current} / {total}:",
   "browser_control.approval.background_task": "Arka plan görev sekmesi {tab}: {reason}",
+  "browser_control.approval_waiting": "Hermes onayınızı bekliyor",
+  "browser_control.approval_window_gone": "Bu istek artık beklemiyor. Bu pencereyi kapatabilirsiniz.",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Denetimi yetkilendir",
   "browser_control.control_ready": "Kontrol hazır",

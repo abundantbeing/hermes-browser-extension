@@ -304,6 +304,8 @@ export default Object.freeze({
   "browser_control.approval.press_unlabelled": "Натиснути {key}? Hermes не зміг назвати елемент, на якому фокус.",
   "browser_control.approval.step_prefix": "Крок {current} з {total}:",
   "browser_control.approval.background_task": "Вкладка фонового завдання {tab}: {reason}",
+  "browser_control.approval_waiting": "Hermes чекає на ваше схвалення",
+  "browser_control.approval_window_gone": "Цей запит більше не очікує. Це вікно можна закрити.",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Дозволити керування",
   "browser_control.control_ready": "Керування готове",

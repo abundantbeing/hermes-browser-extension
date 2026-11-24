@@ -1163,6 +1163,14 @@
     "message": "Aprovação necessária",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_waiting": {
+    "message": "O Hermes está aguardando sua aprovação",
+    "description": "Runtime interface message browser_control.approval_waiting"
+  },
+  "runtime_browser_control_approval_window_gone": {
+    "message": "Esta solicitação não está mais aguardando. Você pode fechar esta janela.",
+    "description": "Runtime interface message browser_control.approval_window_gone"
+  },
   "runtime_browser_control_approval_background_task": {
     "message": "Aba de tarefa em segundo plano {tab}: {reason}",
     "description": "Runtime interface message browser_control.approval.background_task"

@@ -304,6 +304,8 @@ export default Object.freeze({
   "browser_control.approval.press_unlabelled": "Premere {key}? Hermes non è riuscito a nominare il controllo che ha il focus.",
   "browser_control.approval.step_prefix": "Passaggio {current} di {total}:",
   "browser_control.approval.background_task": "Scheda attività in background {tab}: {reason}",
+  "browser_control.approval_waiting": "Hermes è in attesa della tua approvazione",
+  "browser_control.approval_window_gone": "Questa richiesta non è più in attesa. Puoi chiudere questa finestra.",
   "browser_control.attach_not_ready": "This tab could not be attached because its page is not ready. Wait for the page to finish loading, then attach it again.",
   "browser_control.authorize": "Autorizza controllo",
   "browser_control.control_ready": "Controllo pronto",

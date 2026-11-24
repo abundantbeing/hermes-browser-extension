@@ -11,6 +11,7 @@ import {
   classifyBrowserControlAction,
   createBrowserControlApprovalStore,
 } from '../extension/lib/browser-control-safety.mjs';
+import { createBackgroundApprovalSurface } from '../extension/lib/background-approval-surface.mjs';
 import { createBrowserControlExecutor } from '../extension/lib/browser-control-executor.mjs';
 import { createBrowserControlRefStore } from '../extension/lib/browser-control-refs.mjs';
 import {
@@ -132,7 +133,7 @@ test('a background password field stays blocked without an approval card', async
   assert.equal(approvals.pending().length, 0);
 });
 
-test('a background click waits on the card, runs only after handleMessage grant, and stays blocked when rejected', async () => {
+async function backgroundHarness() {
   const settings = { connectionTransport: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'test-key' };
   const tabsById = new Map();
   let nextTabId = 21;
@@ -145,6 +146,9 @@ test('a background click waits on the card, runs only after handleMessage grant,
   let receive;
   let clicks = 0;
   const notifications = [];
+  const windowsOpened = [];
+  const windowsClosed = [];
+  const badge = [];
   const approvals = createBrowserControlApprovalStore();
   const refs = createBrowserControlRefStore();
   const adapter = {
@@ -168,7 +172,11 @@ test('a background click waits on the card, runs only after handleMessage grant,
   };
   const browser = createBackgroundTaskBrowser({
     browserApi: {
-      runtime: { sendMessage: (message) => { notifications.push(message); return Promise.resolve(); } },
+      runtime: {
+        getURL: (path) => `chrome-extension://fixture/${path}`,
+        // No side panel is open: nothing receives the runtime broadcast.
+        sendMessage: (message) => { notifications.push(message); return Promise.reject(new Error('Receiving end does not exist.')); },
+      },
       storage: { local: { get: async () => ({
         hermesBrowserSettings: settings, [BACKGROUND_BROWSER_CONSENT]: await backgroundBrowserConsentIdentity(settings),
       }) } },
@@ -198,6 +206,17 @@ test('a background click waits on the card, runs only after handleMessage grant,
     },
     runtime,
     product: { engine: 'chromium', id: 'chrome', label: 'Chrome' },
+    approvalSurface: createBackgroundApprovalSurface({
+      browserApi: {
+        runtime: { getURL: (path) => `chrome-extension://fixture/${path}` },
+        windows: {
+          create: async (options) => { const id = 700 + windowsOpened.length; windowsOpened.push({ id, ...options }); return { id }; },
+          remove: async (id) => { windowsClosed.push(id); },
+        },
+        action: { setBadgeText: async ({ text }) => { badge.push(text); } },
+      },
+      translate: (key) => key,
+    }),
   });
   const worker = createControllerServiceWorker({
     storageArea: memoryStorage({
@@ -231,7 +250,17 @@ test('a background click waits on the card, runs only after handleMessage grant,
     } });
     return reply.promise;
   }
+  function cancel(id) {
+    receive({ method: 'browser.controller.cancel', params: { command_id: id } });
+  }
+  return {
+    approvals, worker, browser, notifications, windowsOpened, windowsClosed, badge, sessionCommand, cancel,
+    clicks: () => clicks,
+  };
+}
 
+test('a background click waits on the card, runs only after handleMessage grant, and stays blocked when rejected', async () => {
+  const { approvals, worker, notifications, windowsOpened, windowsClosed, badge, sessionCommand, clicks: clickCount } = await backgroundHarness();
   const createdA = await sessionCommand('session-a', 'create-a', 'browser_tab_create', { url: 'https://example.test/files' });
   const createdB = await sessionCommand('session-b', 'create-b', 'browser_tab_create', { url: 'https://example.test/other' });
   assert.equal(createdA.ok, true, 'tab_create on the background path still does not wait for approval');
@@ -247,7 +276,7 @@ test('a background click waits on the card, runs only after handleMessage grant,
   assert.match(queued[0].controllerId, /^background-/);
   assert.equal(queued[0].action, 'browser_click');
   assert.equal(queued[0].reasonKey, 'browser_control.approval.click');
-  assert.equal(clicks, 0);
+  assert.equal(clickCount(), 0);
   assert.equal(notifications.some((message) => message?.type === 'HERMES_BACKGROUND_APPROVAL_CHANGED'), true);
 
   const grant = await worker.handleMessage({
@@ -258,7 +287,7 @@ test('a background click waits on the card, runs only after handleMessage grant,
   const granted = queued[0].tabId === tabA ? firstClick : secondClick;
   const remainingClick = queued[0].tabId === tabA ? secondClick : firstClick;
   assert.equal((await granted).ok, true);
-  assert.equal(clicks, 1);
+  assert.equal(clickCount(), 1);
   const remaining = approvals.pending();
   assert.equal(remaining.length, 1, 'approving the first request must not strand the next');
   const stale = await worker.handleMessage({
@@ -275,5 +304,36 @@ test('a background click waits on the card, runs only after handleMessage grant,
   const denied = await remainingClick;
   assert.equal(denied.ok, false);
   assert.equal(denied.error.code, 'approval_denied');
-  assert.equal(clicks, 1);
+  assert.equal(clickCount(), 1);
+  // With no side panel open, each request got its own focused approval window, closed once decided.
+  assert.deepEqual(windowsOpened.map((item) => new URL(item.url).searchParams.get('approval')).sort(),
+    queued.map((item) => item.approvalId).sort());
+  assert.ok(windowsOpened.every((item) => item.focused === true && item.type === 'popup'));
+  await waitFor(() => windowsClosed.length === 2);
+  assert.deepEqual([...windowsClosed].sort(), windowsOpened.map((item) => item.id).sort());
+  assert.equal(badge.at(-1), '', 'the toolbar signal clears when nothing is waiting');
+});
+
+test('the approval window reads its own request, and a cancelled command can no longer be approved through handleMessage', async () => {
+  const { approvals, worker, browser, windowsOpened, windowsClosed, sessionCommand, cancel, clicks } = await backgroundHarness();
+  const created = await sessionCommand('session-c', 'create-c', 'browser_tab_create', { url: 'https://example.test/files' });
+  const tabId = created.result.tab.id;
+  const click = sessionCommand('session-c', 'click-cancelled', 'browser_click', { ref: '@e1', tab_id: tabId });
+  await waitFor(() => approvals.pending().length === 1);
+  const [request] = approvals.pending();
+  await waitFor(() => windowsOpened.length === 1);
+  const approvalId = new URL(windowsOpened[0].url).searchParams.get('approval');
+  assert.equal(approvalId, request.approvalId);
+  assert.deepEqual(browser.backgroundApproval(approvalId), request, 'the window loads the same request the panel would show');
+  assert.equal(browser.backgroundApproval('someone-else'), null);
+
+  cancel('click-cancelled');
+  const outcome = await click;
+  assert.equal(outcome.ok, false);
+  const late = await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.approvalGrant, ...request }, TRUSTED);
+  assert.equal(late.ok, false, 'a cancelled command cannot be approved afterwards');
+  assert.equal(clicks(), 0);
+  assert.equal(approvals.pending().length, 0);
+  await waitFor(() => windowsClosed.length === 1);
+  assert.deepEqual(windowsClosed, [windowsOpened[0].id], 'the cancelled request closes its window');
 });
