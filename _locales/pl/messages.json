@@ -1167,8 +1167,12 @@
     "message": "Hermes czeka na Twoją zgodę",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Zamknij",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "To żądanie już nie czeka. Możesz zamknąć to okno.",
+    "message": "To żądanie zostało zakończone.",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

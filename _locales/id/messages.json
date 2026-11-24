@@ -1167,8 +1167,12 @@
     "message": "Hermes menunggu persetujuan Anda",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Tutup",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "Permintaan ini tidak lagi menunggu. Anda dapat menutup jendela ini.",
+    "message": "Permintaan ini telah berakhir.",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

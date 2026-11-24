@@ -1167,8 +1167,12 @@
     "message": "Hermes が承認を待っています",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "閉じる",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "このリクエストはもう待機していません。このウィンドウを閉じてかまいません。",
+    "message": "このリクエストは終了しました。",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

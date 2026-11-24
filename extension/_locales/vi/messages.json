@@ -1167,8 +1167,12 @@
     "message": "Hermes đang chờ bạn phê duyệt",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Đóng",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "Yêu cầu này không còn chờ nữa. Bạn có thể đóng cửa sổ này.",
+    "message": "Yêu cầu này đã kết thúc.",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

@@ -216,6 +216,7 @@ async function backgroundHarness() {
         action: { setBadgeText: async ({ text }) => { badge.push(text); } },
       },
       translate: (key) => key,
+      visibleGraceMs: 0,
     }),
   });
   const worker = createControllerServiceWorker({

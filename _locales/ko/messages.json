@@ -1167,8 +1167,12 @@
     "message": "Hermes가 승인을 기다리고 있습니다",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "닫기",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "이 요청은 더 이상 대기 중이 아닙니다. 이 창을 닫아도 됩니다.",
+    "message": "이 요청이 종료되었습니다.",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

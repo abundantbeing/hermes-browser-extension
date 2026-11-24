@@ -1167,8 +1167,12 @@
     "message": "Hermes กำลังรอการอนุมัติจากคุณ",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "ปิด",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "คำขอนี้ไม่ได้รออยู่แล้ว คุณปิดหน้าต่างนี้ได้",
+    "message": "คำขอนี้สิ้นสุดแล้ว",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

@@ -1167,8 +1167,12 @@
     "message": "Hermes ينتظر موافقتك",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "إغلاق",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "لم يعد هذا الطلب قيد الانتظار. يمكنك إغلاق هذه النافذة.",
+    "message": "انتهى هذا الطلب.",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

@@ -7,8 +7,14 @@ import { parseHTML } from 'linkedom';
 import {
   BACKGROUND_APPROVAL_GET,
   BACKGROUND_APPROVAL_PAGE,
+  BACKGROUND_APPROVAL_VISIBLE,
+  VISIBLE_CONFIRMATION_GRACE_MS,
+  VISIBLE_CONFIRMATION_TTL_MS,
+  VISIBLE_HEARTBEAT_MS,
+  backgroundApprovalVisibleNow,
   createBackgroundApprovalPage,
   createBackgroundApprovalSurface,
+  createBackgroundApprovalVisibleHeartbeat,
 } from '../extension/lib/background-approval-surface.mjs';
 
 function deferred() {
@@ -46,11 +52,14 @@ const translate = (key) => `t:${key}`;
 
 test('a background approval opens one focused approval window and an action signal without the side panel', async () => {
   const { browserApi, calls } = fakeBrowser();
-  const surface = createBackgroundApprovalSurface({ browserApi, translate });
+  const timers = manualTimers();
+  const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
   const settled = deferred();
   surface.show({ approvalId: 'a 1' }, settled.promise);
   surface.show({ approvalId: 'a 1' }, settled.promise);
   await flush();
+  assert.equal(calls.created.length, 0, 'the first look waits a short grace for a visible panel to confirm');
+  await timers.fire();
   assert.equal(calls.created.length, 1, 'one window per approval request');
   assert.equal(calls.created[0].url, `chrome-extension://fixture/${BACKGROUND_APPROVAL_PAGE}?approval=a%201`);
   assert.equal(calls.created[0].type, 'popup');
@@ -66,10 +75,12 @@ test('a background approval opens one focused approval window and an action sign
 
 test('a window the person closed is not reopened, and a request settled before its window opened closes it', async () => {
   const { browserApi, calls, closeByUser } = fakeBrowser();
-  const surface = createBackgroundApprovalSurface({ browserApi, translate });
+  const timers = manualTimers();
+  const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
   const first = deferred();
   surface.show({ approvalId: 'a1' }, first.promise);
   await flush();
+  await timers.fire();
   closeByUser(calls.created[0].id);
   surface.show({ approvalId: 'a1' }, first.promise);
   await flush();
@@ -87,6 +98,7 @@ test('a window the person closed is not reopened, and a request settled before i
   const second = deferred();
   surface.show({ approvalId: 'a2' }, second.promise);
   await flush();
+  await timers.fire();
   second.resolve({ ok: false, error: 'cancelled' });
   await flush();
   release();
@@ -147,20 +159,25 @@ test('the approval window rejects through the controller and says when the reque
   assert.ok(f.sent.find((message) => message.type === 'HERMES_CONTROLLER_APPROVAL_REJECT'));
 
   const { document } = parseHTML(readFileSync(new URL('../extension/background-approval.html', import.meta.url), 'utf8'));
+  let closed = 0;
   const gone = createBackgroundApprovalPage({
     doc: document, approvalId: 'missing', t: (key) => key, translateText: (text) => text,
-    sendMessage: async () => ({ ok: true, approval: null }), closeWindow: () => {},
+    sendMessage: async () => ({ ok: true, approval: null }), closeWindow: () => { closed += 1; },
     setTimer: () => 0, clearTimer: () => {},
   });
   await gone.load();
   assert.equal(document.getElementById('backgroundApprovalReason').textContent, 'browser_control.approval_window_gone');
   assert.equal(document.getElementById('backgroundApprovalApprove').hidden, true);
   assert.equal(document.getElementById('backgroundApprovalReject').hidden, true);
+  const close = document.getElementById('backgroundApprovalClose');
+  assert.equal(close.hidden, false, 'the ended screen shows a Close button');
+  close.click();
+  assert.equal(closed, 1, 'Close calls window.close()');
 });
 
 test('the approval page has no hardcoded copy and needs no new manifest permission', () => {
   const html = readFileSync(new URL('../extension/background-approval.html', import.meta.url), 'utf8');
-  for (const key of ['browser_control.kicker', 'browser_control.approval_needed', 'browser_control.approve_once', 'browser_control.reject']) {
+  for (const key of ['browser_control.kicker', 'browser_control.approval_needed', 'browser_control.approve_once', 'browser_control.reject', 'browser_control.approval_window_close']) {
     assert.match(html, new RegExp(`data-i18n="${key.replace(/\./g, '\\.')}"`));
   }
   const manifest = JSON.parse(readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8'));
@@ -183,37 +200,39 @@ function manualTimers() {
   };
 }
 
-test('an open Hermes side panel asks instead of the approval window, and the window opens once the panel closes', async () => {
+test('a fresh visible confirmation for this request suppresses the approval window, and a stale or missing confirmation opens it', async () => {
   const { browserApi, calls } = fakeBrowser();
-  let panelOpen = true;
   const timers = manualTimers();
-  browserApi.runtime.getContexts = async ({ contextTypes }) => {
-    assert.deepEqual(contextTypes, ['SIDE_PANEL']);
-    return panelOpen ? [{ contextType: 'SIDE_PANEL', documentUrl: 'chrome-extension://fixture/sidepanel.html' }] : [];
-  };
-  const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
+  let clock = 0;
+  const surface = createBackgroundApprovalSurface({
+    browserApi, translate, ...timers, now: () => clock,
+    visibleTtlMs: VISIBLE_CONFIRMATION_TTL_MS, visibleGraceMs: VISIBLE_CONFIRMATION_GRACE_MS,
+  });
   const settled = deferred();
+  surface.noteVisible('p1');
   surface.show({ approvalId: 'p1' }, settled.promise);
   await flush();
-  assert.equal(calls.created.length, 0, 'the open panel shows the card, so no second surface opens');
+  assert.equal(calls.created.length, 0, 'a fresh confirmation keeps the window closed');
   assert.equal(calls.badge.at(-1), '1', 'the toolbar still says a request is waiting');
+  clock += VISIBLE_CONFIRMATION_TTL_MS - 1;
+  surface.noteVisible('p1');
   await timers.fire();
-  assert.equal(calls.created.length, 0, 'still no window while the panel stays open');
-  panelOpen = false;
+  assert.equal(calls.created.length, 0, 'a refreshed confirmation stays fresh');
+  clock += VISIBLE_CONFIRMATION_TTL_MS;
   await timers.fire();
-  assert.equal(calls.created.length, 1, 'the window opens once the panel closes while the request waits');
+  assert.equal(calls.created.length, 1, 'a stale confirmation opens the window');
   settled.resolve({ ok: true });
   await flush();
   assert.deepEqual(calls.removed, [calls.created[0].id]);
-  assert.equal(timers.pending().length, 0, 'no panel re-check is left running');
+  assert.equal(timers.pending().length, 0, 'no confirmation re-check is left running');
 });
 
-test('a decided request stops the panel re-check without opening a window', async () => {
+test('a decided request stops the confirmation re-check without opening a window', async () => {
   const { browserApi, calls } = fakeBrowser();
   const timers = manualTimers();
-  browserApi.runtime.getContexts = async () => [{ contextType: 'SIDE_PANEL', documentUrl: 'chrome-extension://fixture/sidepanel.html' }];
   const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
   const settled = deferred();
+  surface.noteVisible('p2');
   surface.show({ approvalId: 'p2' }, settled.promise);
   await flush();
   settled.resolve({ ok: true });
@@ -224,20 +243,40 @@ test('a decided request stops the panel re-check without opening a window', asyn
   assert.equal(calls.badge.at(-1), '');
 });
 
-test('the approval window still opens when the side panel cannot be detected', async () => {
-  for (const getContexts of [
-    undefined,
-    async () => { throw new Error('Invalid enumeration value "SIDE_PANEL"'); },
-    async () => [{ contextType: 'SIDE_PANEL', documentUrl: 'chrome-extension://fixture/sidepanel-preview.html' }],
-  ]) {
-    const { browserApi, calls } = fakeBrowser();
-    const timers = manualTimers();
-    if (getContexts) browserApi.runtime.getContexts = getContexts;
-    const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
-    surface.show({ approvalId: 'p3' }, deferred().promise);
-    await flush();
-    assert.equal(calls.created.length, 1, 'a missing, failing or non-panel answer reads as no panel open');
-  }
+test('an existing side panel context is not enough: the window opens without a fresh confirmation for this request', async () => {
+  const { browserApi, calls } = fakeBrowser();
+  const timers = manualTimers();
+  browserApi.runtime.getContexts = async () => [
+    { contextType: 'SIDE_PANEL', documentUrl: 'chrome-extension://fixture/sidepanel.html' },
+  ];
+  const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
+  const settled = deferred();
+  surface.show({ approvalId: 'hidden-panel' }, settled.promise);
+  await flush();
+  assert.equal(calls.created.length, 0, 'the first look waits a short grace');
+  await timers.fire();
+  assert.equal(calls.created.length, 1, 'a minimized or silent panel does not suppress the window');
+
+  const other = fakeBrowser();
+  const otherTimers = manualTimers();
+  const otherSurface = createBackgroundApprovalSurface({ browserApi: other.browserApi, translate, ...otherTimers });
+  otherSurface.noteVisible('other-id');
+  otherSurface.show({ approvalId: 'this-id' }, deferred().promise);
+  await flush();
+  await otherTimers.fire();
+  assert.equal(other.calls.created.length, 1, 'a confirmation for a different request does not suppress this one');
+});
+
+test('a confirmation that arrives during the grace period keeps the window closed', async () => {
+  const { browserApi, calls } = fakeBrowser();
+  const timers = manualTimers();
+  const surface = createBackgroundApprovalSurface({ browserApi, translate, ...timers });
+  surface.show({ approvalId: 'p4' }, deferred().promise);
+  await flush();
+  assert.equal(calls.created.length, 0);
+  surface.noteVisible('p4');
+  await timers.fire();
+  assert.equal(calls.created.length, 0, 'the panel reported in time');
 });
 
 test('a worker restart clears the toolbar notice and closes approval windows whose request is gone', async () => {
@@ -310,5 +349,52 @@ test('an open approval window re-checks its request and says when it is no longe
   await flush();
   assert.equal(document.getElementById('backgroundApprovalReason').textContent, 'browser_control.approval_window_gone');
   assert.equal(document.getElementById('backgroundApprovalApprove').hidden, true);
+  assert.equal(document.getElementById('backgroundApprovalClose').hidden, false);
   assert.equal(timers.pending().length, 0, 'a gone request stops the re-check');
+});
+
+test('the panel reports it is showing a request only while visible with the card on screen, and the heartbeat keeps that report fresh', async () => {
+  assert.equal(backgroundApprovalVisibleNow({
+    visibilityState: 'visible', dialogOpen: true, approveVisible: true,
+    approvalId: 'a1', controllerId: 'background-x',
+  }), 'a1');
+  for (const state of [
+    { visibilityState: 'hidden', dialogOpen: true, approveVisible: true, approvalId: 'a1', controllerId: 'background-x' },
+    { visibilityState: 'visible', dialogOpen: false, approveVisible: true, approvalId: 'a1', controllerId: 'background-x' },
+    { visibilityState: 'visible', dialogOpen: true, approveVisible: false, approvalId: 'a1', controllerId: 'background-x' },
+    { visibilityState: 'visible', dialogOpen: true, approveVisible: true, approvalId: '', controllerId: 'background-x' },
+    { visibilityState: 'visible', dialogOpen: true, approveVisible: true, approvalId: 'a1', controllerId: 'manual' },
+  ]) {
+    assert.equal(backgroundApprovalVisibleNow(state), '', JSON.stringify(state));
+  }
+
+  const sent = [];
+  const timers = manualTimers();
+  let state = {
+    visibilityState: 'visible', dialogOpen: true, approveVisible: true,
+    approvalId: 'a1', controllerId: 'background-x',
+  };
+  const heartbeat = createBackgroundApprovalVisibleHeartbeat({
+    getState: () => state,
+    sendMessage: (message) => { sent.push(message); },
+    ...timers,
+    heartbeatMs: VISIBLE_HEARTBEAT_MS,
+  });
+  heartbeat.pulse();
+  assert.deepEqual(sent, [{ type: BACKGROUND_APPROVAL_VISIBLE, approvalId: 'a1' }]);
+  await timers.fire();
+  assert.equal(sent.length, 2, 'the heartbeat repeats while the card stays visible');
+  state = { ...state, visibilityState: 'hidden' };
+  await timers.fire();
+  assert.equal(sent.length, 2, 'a hidden panel stops confirming');
+  assert.equal(timers.pending().length, 0);
+
+  state = {
+    visibilityState: 'visible', dialogOpen: true, approveVisible: true,
+    approvalId: 'a1', controllerId: 'background-x',
+  };
+  heartbeat.pulse();
+  assert.equal(sent.length, 3);
+  heartbeat.stop();
+  assert.equal(timers.pending().length, 0, 'stop cancels the next heartbeat');
 });

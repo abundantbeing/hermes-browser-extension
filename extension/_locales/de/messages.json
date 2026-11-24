@@ -1167,8 +1167,12 @@
     "message": "Hermes wartet auf Ihre Freigabe",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Schließen",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "Diese Anfrage wartet nicht mehr. Sie können dieses Fenster schließen.",
+    "message": "Diese Anfrage ist beendet.",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

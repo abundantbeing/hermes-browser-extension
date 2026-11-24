@@ -864,6 +864,7 @@ import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteF
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
+import { createBackgroundApprovalVisibleHeartbeat } from './lib/background-approval-surface.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
@@ -2198,6 +2199,16 @@ let browserControlCurrentTarget = null;
 let browserControlShowTabId = null;
 let browserControlPollTimer = null;
 let browserControlDialogUi = null;
+const backgroundApprovalVisible = createBackgroundApprovalVisibleHeartbeat({
+  getState: () => ({
+    visibilityState: document.visibilityState,
+    dialogOpen: Boolean(els.browserControlDialog?.open),
+    approveVisible: Boolean(els.browserControlApproveButton && !els.browserControlApproveButton.hidden),
+    approvalId: browserControlStatus?.pendingApproval?.approvalId,
+    controllerId: browserControlStatus?.pendingApproval?.controllerId,
+  }),
+  sendMessage: (message) => browserApi.runtime.sendMessage(message),
+});
 let latestUpdateReview = null;
 let sessionsRefreshing = false;
 let contextMenuEditor = null;
@@ -3859,6 +3870,7 @@ function renderBrowserControl() {
   els.browserControlStopButton.hidden = !view.canStop;
   els.browserControlApproveButton.hidden = !pendingApproval;
   els.browserControlRejectButton.hidden = !pendingApproval;
+  backgroundApprovalVisible.pulse();
 }
 
 async function refreshBrowserControlStatus() {
@@ -32012,6 +32024,7 @@ function bindEvents() {
       persistCurrentComposerDraft({ immediate: true });
       if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
       browserControlPollTimer = null;
+      backgroundApprovalVisible.stop();
       return;
     }
     void refreshBrowserControlStatus().then(scheduleBrowserControlPoll);

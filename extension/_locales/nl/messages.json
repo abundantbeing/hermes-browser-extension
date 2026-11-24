@@ -1167,8 +1167,12 @@
     "message": "Hermes wacht op je goedkeuring",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Sluiten",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "Dit verzoek wacht niet meer. Je kunt dit venster sluiten.",
+    "message": "Dit verzoek is beëindigd.",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

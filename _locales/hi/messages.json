@@ -1167,8 +1167,12 @@
     "message": "Hermes आपकी मंज़ूरी का इंतज़ार कर रहा है",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "बंद करें",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "यह अनुरोध अब प्रतीक्षा में नहीं है। आप यह विंडो बंद कर सकते हैं।",
+    "message": "यह अनुरोध समाप्त हो गया है।",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

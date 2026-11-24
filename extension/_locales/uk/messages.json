@@ -1167,8 +1167,12 @@
     "message": "Hermes чекає на ваше схвалення",
     "description": "Runtime interface message browser_control.approval_waiting"
   },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Закрити",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
   "runtime_browser_control_approval_window_gone": {
-    "message": "Цей запит більше не очікує. Це вікно можна закрити.",
+    "message": "Цей запит завершено.",
     "description": "Runtime interface message browser_control.approval_window_gone"
   },
   "runtime_browser_control_approval_background_task": {

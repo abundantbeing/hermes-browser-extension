@@ -1,37 +1,65 @@
 import { formatBrowserControlApprovalReason } from './browser-control-ui.mjs';
 
-// A background task tab can ask for approval while no Hermes panel is open. The
-// side panel cannot be opened without a user gesture, and the extension has no
-// notifications permission, so the request gets its own small extension window
-// (the same card copy and the same controller grant path as the panel) and a
-// toolbar badge while anything is waiting. An open Hermes side panel already
-// shows the request as its card, so the window only opens while no panel is open.
+// A background task tab can ask for approval while no Hermes panel is visibly
+// showing that request. The side panel cannot be opened without a user gesture,
+// and the extension has no notifications permission, so the request gets its own
+// small extension window (the same card copy and the same controller grant path
+// as the panel) and a toolbar badge while anything is waiting. The window stays
+// closed only while the panel reports, with a short heartbeat, that it is
+// visibly showing this request. A hidden, minimized, unresponsive or outdated
+// panel, or a confirmation that has gone stale, opens the window instead.
 export const BACKGROUND_APPROVAL_PAGE = 'background-approval.html';
 export const BACKGROUND_APPROVAL_GET = 'HERMES_BACKGROUND_APPROVAL_GET';
+export const BACKGROUND_APPROVAL_VISIBLE = 'HERMES_BACKGROUND_APPROVAL_VISIBLE';
 const APPROVAL_DECISIONS = Object.freeze({
   approve: 'HERMES_CONTROLLER_APPROVAL_GRANT',
   reject: 'HERMES_CONTROLLER_APPROVAL_REJECT',
 });
 const BADGE_COLOR = '#b45309';
 const WINDOW_SIZE = Object.freeze({ width: 440, height: 400 });
-const SIDE_PANEL_PAGE = 'sidepanel.html';
 export const PANEL_RECHECK_MS = 1500;
+export const VISIBLE_HEARTBEAT_MS = 1000;
+export const VISIBLE_CONFIRMATION_TTL_MS = 2500;
+export const VISIBLE_CONFIRMATION_GRACE_MS = 500;
 
-// Whether a Hermes side panel is open in any window. SIDE_PANEL contexts need
-// Chrome 121; a missing or failing lookup reads as no panel, so the window asks.
-export async function hermesSidePanelOpen(browserApi) {
-  try {
-    const contexts = await browserApi?.runtime?.getContexts?.({ contextTypes: ['SIDE_PANEL'] });
-    return Array.isArray(contexts) && contexts.some((context) => {
-      try {
-        return new URL(String(context?.documentUrl || '')).pathname.endsWith(`/${SIDE_PANEL_PAGE}`);
-      } catch {
-        return false;
-      }
-    });
-  } catch {
-    return false;
+// The panel may say it is showing a request only while the document is visible
+// and the approval card itself is on screen. A minimized or hidden panel is not
+// showing the request, even if a SIDE_PANEL context still exists.
+export function backgroundApprovalVisibleNow({
+  visibilityState,
+  dialogOpen,
+  approveVisible,
+  approvalId,
+  controllerId,
+}) {
+  const id = String(approvalId || '');
+  if (visibilityState !== 'visible' || dialogOpen !== true || approveVisible !== true || !id) return '';
+  return String(controllerId || '').startsWith('background-') ? id : '';
+}
+
+export function createBackgroundApprovalVisibleHeartbeat({
+  getState,
+  sendMessage,
+  setTimer = setTimeout,
+  clearTimer = clearTimeout,
+  heartbeatMs = VISIBLE_HEARTBEAT_MS,
+}) {
+  let timer = null;
+
+  function stop() {
+    if (timer !== null) clearTimer(timer);
+    timer = null;
   }
+
+  function pulse() {
+    stop();
+    const approvalId = backgroundApprovalVisibleNow(getState() || {});
+    if (!approvalId) return;
+    void Promise.resolve(sendMessage({ type: BACKGROUND_APPROVAL_VISIBLE, approvalId })).catch(() => {});
+    timer = setTimer(pulse, heartbeatMs);
+  }
+
+  return { pulse, stop };
 }
 
 function manifestActionTitle(browserApi) {
@@ -67,11 +95,14 @@ async function openApprovalPages(browserApi, pageUrl) {
 export function createBackgroundApprovalSurface({
   browserApi,
   translate = (key) => key,
-  panelOpen = () => hermesSidePanelOpen(browserApi),
+  now = Date.now,
+  visibleTtlMs = VISIBLE_CONFIRMATION_TTL_MS,
+  visibleGraceMs = VISIBLE_CONFIRMATION_GRACE_MS,
   setTimer = setTimeout,
   clearTimer = clearTimeout,
 }) {
   const waiting = new Map();
+  const confirmedAt = new Map();
   let defaultTitle = null;
   let signalChain = Promise.resolve();
 
@@ -127,6 +158,7 @@ export function createBackgroundApprovalSurface({
     if (entry.recheck !== null) clearTimer(entry.recheck);
     entry.recheck = null;
     waiting.delete(approvalId);
+    confirmedAt.delete(approvalId);
     closeWindow(entry);
     void signal();
   }
@@ -152,16 +184,26 @@ export function createBackgroundApprovalSurface({
       .catch(() => {});
   }
 
-  // While a panel is open it asks; if every panel closes before a decision, the window asks.
-  async function askWhereVisible(approvalId, entry) {
+  function isFresh(approvalId) {
+    const seen = confirmedAt.get(approvalId);
+    return seen != null && (Number(now()) - seen) < visibleTtlMs;
+  }
+
+  // The window stays closed only while a fresh confirmation for this request is
+  // on file. The first look waits a short grace so a visible panel can report;
+  // after that, a missing or stale confirmation opens the window.
+  function askWhereVisible(approvalId, entry, allowOpen) {
     entry.recheck = null;
-    const open = await Promise.resolve().then(panelOpen).catch(() => false);
     if (entry.done) return;
-    if (!open) {
+    if (isFresh(approvalId)) {
+      entry.recheck = setTimer(() => { askWhereVisible(approvalId, entry, true); }, PANEL_RECHECK_MS);
+      return;
+    }
+    if (allowOpen || visibleGraceMs <= 0) {
       openWindow(approvalId, entry);
       return;
     }
-    entry.recheck = setTimer(() => { void askWhereVisible(approvalId, entry); }, PANEL_RECHECK_MS);
+    entry.recheck = setTimer(() => { askWhereVisible(approvalId, entry, true); }, visibleGraceMs);
   }
 
   return {
@@ -172,7 +214,12 @@ export function createBackgroundApprovalSurface({
       waiting.set(approvalId, entry);
       void signal();
       Promise.resolve(settled).catch(() => {}).finally(() => finish(approvalId));
-      void askWhereVisible(approvalId, entry);
+      askWhereVisible(approvalId, entry, false);
+    },
+    noteVisible(approvalId) {
+      const id = String(approvalId || '');
+      if (!id) return;
+      confirmedAt.set(id, Number(now()));
     },
     waitingCount: () => waiting.size,
   };
@@ -223,12 +270,15 @@ export function createBackgroundApprovalPage({
     return load();
   }
 
+  const close = doc.getElementById('backgroundApprovalClose');
+
   function showGone() {
     stopRecheck();
     request = null;
     reason.textContent = t('browser_control.approval_window_gone');
     approve.hidden = true;
     reject.hidden = true;
+    if (close) close.hidden = false;
   }
 
   async function decide(kind) {
@@ -268,12 +318,14 @@ export function createBackgroundApprovalPage({
     reason.textContent = formatBrowserControlApprovalReason(next, { t, translateText });
     approve.hidden = false;
     reject.hidden = false;
+    if (close) close.hidden = true;
     scheduleRecheck();
     return next;
   }
 
   approve.addEventListener('click', () => { void decide('approve'); });
   reject.addEventListener('click', () => { void decide('reject'); });
+  close?.addEventListener('click', () => { closeWindow(); });
   win?.addEventListener?.('focus', () => { void refresh(); });
   doc.addEventListener?.('visibilitychange', () => {
     if (doc.visibilityState !== 'hidden') void refresh();
