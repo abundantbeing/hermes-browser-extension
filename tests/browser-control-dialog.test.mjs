@@ -98,3 +98,14 @@ test('dialog flair arms on activation but does not restart on each status poll',
   f.render();
   assert.equal(f.dialog.classList.contains('is-energized'), false);
 });
+
+test('a background approval opens the existing card and stays visible when Control is off', async () => {
+  const f = fixture();
+  f.ui.render({
+    enabled: false,
+    view: { state: 'approval', tone: 'warn', title: 'Approval needed', detail: 'Click "Continue"?', autoOpen: true },
+  });
+  await settle();
+  assert.equal(f.byId('launch').hidden, false);
+  assert.equal(f.dialog.open, true);
+});
