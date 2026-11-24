@@ -115,6 +115,8 @@ function pageFixture(locale = 'en') {
       return { ok: true };
     },
     closeWindow: () => { closed += 1; },
+    setTimer: () => 0,
+    clearTimer: () => {},
   });
   return { document, page, sent, request, closed: () => closed };
 }
@@ -148,6 +150,7 @@ test('the approval window rejects through the controller and says when the reque
   const gone = createBackgroundApprovalPage({
     doc: document, approvalId: 'missing', t: (key) => key, translateText: (text) => text,
     sendMessage: async () => ({ ok: true, approval: null }), closeWindow: () => {},
+    setTimer: () => 0, clearTimer: () => {},
   });
   await gone.load();
   assert.equal(document.getElementById('backgroundApprovalReason').textContent, 'browser_control.approval_window_gone');
@@ -235,4 +238,77 @@ test('the approval window still opens when the side panel cannot be detected', a
     await flush();
     assert.equal(calls.created.length, 1, 'a missing, failing or non-panel answer reads as no panel open');
   }
+});
+
+test('a worker restart clears the toolbar notice and closes approval windows whose request is gone', async () => {
+  const { browserApi, calls } = fakeBrowser();
+  const tabRemoved = [];
+  browserApi.runtime.getManifest = () => ({ action: { default_title: '__MSG_openExtension__' } });
+  browserApi.i18n = { getMessage: (name) => (name === 'openExtension' ? 'Open Hermes' : '') };
+  browserApi.tabs = { remove: async (id) => { tabRemoved.push(id); } };
+  browserApi.runtime.getContexts = async ({ contextTypes }) => (contextTypes.includes('TAB') ? [
+    { contextType: 'TAB', tabId: 71, windowId: 701, documentUrl: `chrome-extension://fixture/${BACKGROUND_APPROVAL_PAGE}?approval=old` },
+    { contextType: 'TAB', tabId: 72, windowId: 702, documentUrl: 'chrome-extension://fixture/sidepanel-preview.html' },
+  ] : []);
+  createBackgroundApprovalSurface({ browserApi, translate });
+  await flush();
+  assert.equal(calls.badge.at(-1), '', 'the badge from the previous worker is cleared');
+  assert.equal(calls.titles.at(-1), 'Open Hermes', 'the toolbar title returns to the manifest default');
+  assert.deepEqual(tabRemoved, [71], 'only the approval window of the previous worker closes');
+});
+
+test('the startup sweep keeps the window of a request that is still waiting', async () => {
+  const { browserApi, calls } = fakeBrowser();
+  const tabRemoved = [];
+  browserApi.tabs = { remove: async (id) => { tabRemoved.push(id); } };
+  let contextsAsked;
+  const asked = new Promise((resolve) => { contextsAsked = resolve; });
+  browserApi.runtime.getContexts = async ({ contextTypes }) => {
+    if (!contextTypes.includes('TAB')) return [];
+    await asked;
+    return [{ contextType: 'TAB', tabId: 81, windowId: 801, documentUrl: `chrome-extension://fixture/${BACKGROUND_APPROVAL_PAGE}?approval=live` }];
+  };
+  const surface = createBackgroundApprovalSurface({ browserApi, translate });
+  surface.show({ approvalId: 'live' }, deferred().promise);
+  contextsAsked();
+  await flush(20);
+  assert.deepEqual(tabRemoved, []);
+  assert.equal(calls.badge.at(-1), '1', 'a request that arrives during the sweep keeps its badge');
+});
+
+test('the startup sweep tolerates a browser without context lookup', async () => {
+  const { browserApi, calls } = fakeBrowser();
+  createBackgroundApprovalSurface({ browserApi, translate });
+  await flush();
+  assert.equal(calls.badge.at(-1), '');
+});
+
+test('an open approval window re-checks its request and says when it is no longer waiting', async () => {
+  const { document } = parseHTML(readFileSync(new URL('../extension/background-approval.html', import.meta.url), 'utf8'));
+  const timers = manualTimers();
+  const win = new globalThis.EventTarget();
+  let alive = true;
+  let asks = 0;
+  const page = createBackgroundApprovalPage({
+    doc: document, approvalId: 'a1', t: (key) => key, translateText: (text) => text,
+    win, ...timers,
+    sendMessage: async (message) => {
+      if (message.type !== BACKGROUND_APPROVAL_GET) return { ok: true };
+      asks += 1;
+      return { ok: true, approval: alive ? { approvalId: 'a1', action: 'browser_click', reason: 'Click?' } : null };
+    },
+    closeWindow: () => {},
+  });
+  await page.load();
+  assert.equal(document.getElementById('backgroundApprovalApprove').hidden, false);
+  assert.equal(timers.pending().length, 1, 'the window keeps checking while the request waits');
+  await timers.fire();
+  assert.equal(asks, 2);
+  assert.equal(document.getElementById('backgroundApprovalApprove').hidden, false);
+  alive = false;
+  win.dispatchEvent(new Event('focus'));
+  await flush();
+  assert.equal(document.getElementById('backgroundApprovalReason').textContent, 'browser_control.approval_window_gone');
+  assert.equal(document.getElementById('backgroundApprovalApprove').hidden, true);
+  assert.equal(timers.pending().length, 0, 'a gone request stops the re-check');
 });

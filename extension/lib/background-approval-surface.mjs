@@ -34,6 +34,36 @@ export async function hermesSidePanelOpen(browserApi) {
   }
 }
 
+function manifestActionTitle(browserApi) {
+  const title = String(browserApi?.runtime?.getManifest?.()?.action?.default_title || '');
+  const key = /^__MSG_(\w+)__$/.exec(title)?.[1];
+  return key ? String(browserApi?.i18n?.getMessage?.(key) || '') : title;
+}
+
+function approvalIdOfPage(url, pageUrl) {
+  try {
+    const parsed = new URL(String(url || ''));
+    const page = new URL(pageUrl);
+    if (parsed.origin !== page.origin || parsed.pathname !== page.pathname) return null;
+    return parsed.searchParams.get('approval') || '';
+  } catch {
+    return null;
+  }
+}
+
+// Approval windows and toolbar notices outlive a restarted service worker, whose
+// requests were in memory. Every open approval page is found as a TAB context (or,
+// without context lookup, as a tab) and closed unless its request is waiting again.
+async function openApprovalPages(browserApi, pageUrl) {
+  const runtime = browserApi?.runtime;
+  if (typeof runtime?.getContexts === 'function') {
+    const contexts = await runtime.getContexts({ contextTypes: ['TAB'] });
+    return (contexts || []).map((context) => ({ tabId: context?.tabId, approvalId: approvalIdOfPage(context?.documentUrl, pageUrl) }));
+  }
+  const tabs = await browserApi?.tabs?.query?.({});
+  return (tabs || []).map((tab) => ({ tabId: tab?.id, approvalId: approvalIdOfPage(tab?.url, pageUrl) }));
+}
+
 export function createBackgroundApprovalSurface({
   browserApi,
   translate = (key) => key,
@@ -67,6 +97,22 @@ export function createBackgroundApprovalSurface({
     return signalChain;
   }
 
+  async function sweepPreviousWorker() {
+    const action = browserApi?.action;
+    if (!waiting.size) {
+      await action?.setBadgeText?.({ text: '' });
+      const title = manifestActionTitle(browserApi);
+      if (title && defaultTitle === null) await action?.setTitle?.({ title });
+    }
+    const pageUrl = browserApi?.runtime?.getURL?.(BACKGROUND_APPROVAL_PAGE);
+    if (!pageUrl || !browserApi?.tabs?.remove) return;
+    const pages = await openApprovalPages(browserApi, pageUrl);
+    for (const { tabId, approvalId } of pages) {
+      if (approvalId === null || waiting.has(approvalId) || !Number.isInteger(tabId)) continue;
+      await Promise.resolve(browserApi.tabs.remove(tabId)).catch(() => {});
+    }
+  }
+
   function closeWindow(entry) {
     const id = entry.windowId;
     entry.windowId = null;
@@ -84,6 +130,8 @@ export function createBackgroundApprovalSurface({
     closeWindow(entry);
     void signal();
   }
+
+  signalChain = signalChain.then(sweepPreviousWorker).catch(() => {});
 
   // A window the person closed is forgotten, never reopened for the same request.
   browserApi?.windows?.onRemoved?.addListener?.((windowId) => {
@@ -133,16 +181,50 @@ export function createBackgroundApprovalSurface({
 const DECISION_FIELDS = ['approvalId', 'approvalNonce', 'commandId', 'controllerId', 'leaseId', 'leaseGeneration',
   'action', 'tabId', 'frameId', 'documentGeneration', 'state'];
 
-// The approval window: one request, the panel's card copy, the panel's decision messages.
-export function createBackgroundApprovalPage({ doc, approvalId, t, translateText = (text) => text, sendMessage, closeWindow }) {
+export const APPROVAL_PAGE_RECHECK_MS = 2000;
+
+// The approval window: one request, the panel's card copy, the panel's decision
+// messages. It re-checks its request on focus and every few seconds, so a request
+// that was decided elsewhere, expired or died with its worker reads as gone.
+export function createBackgroundApprovalPage({
+  doc,
+  approvalId,
+  t,
+  translateText = (text) => text,
+  sendMessage,
+  closeWindow,
+  win = doc?.defaultView,
+  setTimer = setTimeout,
+  clearTimer = clearTimeout,
+}) {
   const reason = doc.getElementById('backgroundApprovalReason');
   const approve = doc.getElementById('backgroundApprovalApprove');
   const reject = doc.getElementById('backgroundApprovalReject');
   const status = doc.getElementById('backgroundApprovalStatus');
   let request = null;
   let deciding = false;
+  let recheck = null;
+
+  function stopRecheck() {
+    if (recheck !== null) clearTimer(recheck);
+    recheck = null;
+  }
+
+  function scheduleRecheck() {
+    stopRecheck();
+    recheck = setTimer(() => {
+      recheck = null;
+      void refresh();
+    }, APPROVAL_PAGE_RECHECK_MS);
+  }
+
+  function refresh() {
+    if (deciding || !request) return Promise.resolve(request);
+    return load();
+  }
 
   function showGone() {
+    stopRecheck();
     request = null;
     reason.textContent = t('browser_control.approval_window_gone');
     approve.hidden = true;
@@ -160,6 +242,7 @@ export function createBackgroundApprovalPage({ doc, approvalId, t, translateText
       for (const field of DECISION_FIELDS) message[field] = field === 'frameId' ? (request.frameId ?? 0) : request[field];
       const result = await sendMessage(message);
       if (result?.ok) {
+        stopRecheck();
         closeWindow();
         return;
       }
@@ -185,10 +268,15 @@ export function createBackgroundApprovalPage({ doc, approvalId, t, translateText
     reason.textContent = formatBrowserControlApprovalReason(next, { t, translateText });
     approve.hidden = false;
     reject.hidden = false;
+    scheduleRecheck();
     return next;
   }
 
   approve.addEventListener('click', () => { void decide('approve'); });
   reject.addEventListener('click', () => { void decide('reject'); });
-  return { load, decide };
+  win?.addEventListener?.('focus', () => { void refresh(); });
+  doc.addEventListener?.('visibilitychange', () => {
+    if (doc.visibilityState !== 'hidden') void refresh();
+  });
+  return { load, decide, refresh };
 }
