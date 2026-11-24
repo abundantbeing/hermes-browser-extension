@@ -299,6 +299,30 @@ function hiddenTabError() {
   );
 }
 
+// A click is only reported when the tab actually took it. Chrome drops synthetic mouse input for a
+// tab it is not rendering, so saying "clicked" there would be a guess.
+function hiddenClickError() {
+  return codedError(
+    'tab_hidden',
+    'This tab is in the background and did not accept the click. Ask the user to bring it to the front with Show tab in Hermes Control, then try again.',
+  );
+}
+
+// A background tab is hidden to Chrome: rendering stops, so synthetic mouse input is not delivered
+// (a click answers "clicked" and nothing happens) and the accessibility tree stops tracking the DOM
+// (a client-side route change is invisible to the next read). Focus emulation makes the renderer
+// behave as if the page were in front, without switching tabs or taking the person's focus. It is
+// the standard treatment for background tabs, and the flag is per-page state that a navigation, a
+// pushState or another CDP client detaching clears, so it is asserted before each action rather
+// than once per attachment.
+async function emulateFocusedPage(send, signal) {
+  try {
+    await send('Emulation.setFocusEmulationEnabled', { enabled: true });
+  } catch (error) {
+    if (abortError(signal)) throw error;
+  }
+}
+
 // A screenshot of a background tab can still succeed, so a capture that times out
 // says only that it did not finish; it never claims screenshots cannot run.
 function hiddenScreenshotError() {
@@ -1205,6 +1229,7 @@ function createChromiumCdpAdapter({
           await pending;
         }
       };
+      await emulateFocusedPage(send, signal);
       return await operation({ send, enable, tabId });
     } finally {
       const remaining = (activeOperations.get(tabId) || 1) - 1;
@@ -1992,17 +2017,22 @@ function createChromiumCdpAdapter({
           || (hitNodeId !== backendNodeId && await clickOpensNewTab(send, signal, hitNodeId));
         const modifiers = opensNewTab ? backgroundTabModifier : 0;
         const modifierFields = modifiers ? { modifiers } : {};
-        // Chrome holds a mouseMoved until the next frame, which a hidden tab
-        // never draws; the press and release are delivered regardless.
-        const hidden = await pageIsHidden(send, signal);
+        // Chrome holds a mouseMoved until the next frame, which a hidden tab never draws, and it
+        // drops the press and release with it. Focus emulation is re-asserted here because the
+        // checks above ran page script (a route change clears it); if the tab still reports hidden,
+        // the click is refused rather than reported as landed.
+        let hidden = await pageIsHidden(send, signal);
+        if (hidden) {
+          await emulateFocusedPage(send, signal);
+          hidden = await pageIsHidden(send, signal);
+        }
+        if (hidden) throw hiddenClickError();
         // The checks above ran page script, which can move things. The frame under the point is judged again as
         // the last step before the pointer moves, and once more before it presses, with nothing of ours running
         // in the page in between.
         await checkedHit(send, enable, signal, point, backendNodeId > 0 ? framing.target : undefined);
-        if (!hidden) {
-          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point, button: 'none', buttons: 0 });
-          await checkedHit(send, enable, signal, point, backendNodeId > 0 ? framing.target : undefined);
-        }
+        await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point, button: 'none', buttons: 0 });
+        await checkedHit(send, enable, signal, point, backendNodeId > 0 ? framing.target : undefined);
         await pressAndRelease(session, point, modifierFields, async () => {
           await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1, ...modifierFields });
         }, async () => {

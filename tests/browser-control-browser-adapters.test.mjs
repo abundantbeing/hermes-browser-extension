@@ -141,7 +141,12 @@ function chromiumApis({ failMethod = '' } = {}) {
   };
 }
 
-const commandMethods = (calls) => calls.filter((call) => call[0] === 'command').map((call) => call[2]);
+// Focus emulation is asserted before every action (covered by its own tests), so it is left out of
+// the page-command sequences these tests describe.
+const commandMethods = (calls) => calls
+  .filter((call) => call[0] === 'command')
+  .map((call) => call[2])
+  .filter((method) => method !== 'Emulation.setFocusEmulationEnabled');
 const countCalls = (calls, name) => calls.filter((call) => call[0] === name).length;
 const openSignal = () => new AbortController().signal;
 const clickTarget = { backendDOMNodeId: 44 };
@@ -220,6 +225,7 @@ test('Chromium Phase 6 adapter snapshots AX refs through one persistent session 
   ]);
   assert.deepEqual(calls.map((call) => call[0] === 'command' ? `${call[0]}:${call[2]}` : call[0]), [
     'attach',
+    'command:Emulation.setFocusEmulationEnabled',
     'command:Accessibility.enable',
     'command:Page.getFrameTree',
     'command:Accessibility.getFullAXTree',
@@ -1374,14 +1380,41 @@ function hiddenTabHandlers(chromium) {
   );
 }
 
-test('Chromium click in a hidden tab sends press and release but not the mouseMoved Chrome would hold', async () => {
+test('Chromium click in a hidden tab asks for focus emulation and refuses instead of clicking blind', async () => {
   const { createChromiumCdpAdapter } = await adaptersModule();
   const chromium = chromiumApis();
   hiddenTabHandlers(chromium);
   const adapter = createChromiumCdpAdapter({ browserApi: chromium.api, ...fakeClock() });
+  await assert.rejects(
+    adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget }),
+    (error) => error.code === 'tab_hidden' && /did not accept the click/.test(error.message),
+  );
+  assert.ok(
+    chromium.calls.some((call) => call[2] === 'Emulation.setFocusEmulationEnabled'),
+    'focus emulation is asserted for the tab',
+  );
+  assert.deepEqual(mouseEvents(chromium.calls), [], 'no mouse input is sent to a tab Chrome would drop it for');
+});
+
+test('Chromium click in a tab that focus emulation lifts uses ordinary mouse input', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  let emulated = false;
+  chromium.handlers['Emulation.setFocusEmulationEnabled'] = () => {
+    emulated = true;
+    return {};
+  };
+  chromium.handlers['Runtime.evaluate'] = ({ expression }) => (
+    /visibilityState/.test(expression) ? { result: { value: !emulated } } : { result: { value: null } }
+  );
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api, ...fakeClock() });
   const result = await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget });
   assert.equal(result.status, 'clicked');
-  assert.deepEqual(mouseEvents(chromium.calls).map(({ type }) => type), ['mousePressed', 'mouseReleased']);
+  assert.deepEqual(
+    mouseEvents(chromium.calls).map(({ type }) => type),
+    ['mouseMoved', 'mousePressed', 'mouseReleased'],
+    'a tab that now reports visible gets the full pointer sequence',
+  );
 });
 
 test('Chromium hover and drag in a hidden tab fail fast with tab_hidden instead of hanging', async () => {
