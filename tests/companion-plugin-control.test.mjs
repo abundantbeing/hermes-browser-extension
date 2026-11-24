@@ -1394,8 +1394,9 @@ def _fork(row):
     return any(cfg.get(m) == row.get("parent_session_id") for m in ("_branched_from", "_delegate_from", "_reset_from"))
 
 class SessionDB:
-    def __init__(self):
+    def __init__(self, db_path=None, read_only=False):
         STORE["opened"] += 1
+        STORE["paths"].append(str(db_path))
         if STORE["fail_open"]:
             raise RuntimeError("store cannot open")
 
@@ -1420,10 +1421,15 @@ class SessionDB:
 module_state = types.ModuleType("hermes_state")
 module_state.SessionDB = SessionDB
 sys.modules["hermes_state"] = module_state
+module_constants = types.ModuleType("hermes_constants")
+module_constants.get_default_hermes_root = lambda: pathlib.Path("/hermes-root")
+sys.modules["hermes_constants"] = module_constants
+# A Hermes before the storage interface: persistence_assembly does not import.
+sys.modules["persistence_assembly"] = None
 
 def fresh_store(**flags):
-    tools._session_db = None
-    STORE.update({"opened": 0, "fail_open": False, "fail_read": False}); STORE.update(flags)
+    tools._session_dbs.clear()
+    STORE.update({"opened": 0, "paths": [], "fail_open": False, "fail_read": False}); STORE.update(flags)
 `;
 
 test('after context compression a call from the continued session still reaches the browser attached to the chat', () => {
@@ -1438,7 +1444,7 @@ async def main():
         ws, _ = await attach(client, broker, session="chat-root")
         ws2, _ = await attach(client, broker, session="live-root")
         fresh_store()
-        seen["ancestors"] = tools._compression_ancestors("seg-2")
+        seen["ancestors"] = tools._compression_ancestors("seg-2", "luxord")
         task = asyncio.create_task(call("browser_snapshot", {}, session="seg-2"))
         frame = await ws.receive_json(timeout=5)
         await ws.send_json({"method": "browser.controller.result", "params": {
@@ -1447,8 +1453,8 @@ async def main():
         seen["continued"] = json.loads(await task).get("title")
         # The genuine continuation of a compressed session reaches its browser; a subagent that
         # was spawned while that session was live does not, even though the session later compressed.
-        seen["live_cont_ancestors"] = tools._compression_ancestors("live-cont")
-        seen["late_sub_ancestors"] = tools._compression_ancestors("late-sub")
+        seen["live_cont_ancestors"] = tools._compression_ancestors("live-cont", "luxord")
+        seen["late_sub_ancestors"] = tools._compression_ancestors("late-sub", "luxord")
         task = asyncio.create_task(call("browser_snapshot", {}, session="live-cont"))
         frame = await ws2.receive_json(timeout=5)
         await ws2.send_json({"method": "browser.controller.result", "params": {
@@ -1464,18 +1470,19 @@ async def main():
         seen["late_sub_frame"] = stray
         seen["loop"] = await code_for("loop-a")
         seen["unknown"] = await code_for("nowhere")
-        # One store open serves every lookup above.
+        # One store open, the control profile's own, serves every lookup above.
         seen["opened"] = STORE["opened"]
+        seen["paths"] = STORE["paths"]
         # A store that cannot read, or one without lineage support, never grants a browser.
         STORE["fail_read"] = True
-        seen["read_failure"] = [tools._compression_ancestors("seg-2"), await code_for("seg-2")]
+        seen["read_failure"] = [tools._compression_ancestors("seg-2", "luxord"), await code_for("seg-2")]
         STORE["fail_read"] = False
         SessionDB.get_compression_lineage, saved = None, SessionDB.get_compression_lineage
-        seen["no_lineage_api"] = [tools._compression_ancestors("seg-2"), await code_for("seg-2")]
+        seen["no_lineage_api"] = [tools._compression_ancestors("seg-2", "luxord"), await code_for("seg-2")]
         SessionDB.get_compression_lineage = saved
         # A failed open is remembered and never retried per call.
         fresh_store(fail_open=True)
-        seen["open_failure"] = [tools._compression_ancestors("seg-2"), tools._compression_ancestors("seg-2"), await code_for("seg-2")]
+        seen["open_failure"] = [tools._compression_ancestors("seg-2", "luxord"), tools._compression_ancestors("seg-2", "luxord"), await code_for("seg-2")]
         seen["open_attempts"] = STORE["opened"]
         await ws.close(); await ws2.close()
     return seen
@@ -1494,10 +1501,71 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.loop, 'no_browser');
   assert.equal(data.unknown, 'no_browser');
   assert.equal(data.opened, 1);
+  assert.deepEqual(data.paths, ['/hermes-root/profiles/luxord/state.db']);
   assert.deepEqual(data.read_failure, [[], 'no_browser']);
   assert.deepEqual(data.no_lineage_api, [[], 'no_browser']);
   assert.deepEqual(data.open_failure, [[], [], 'no_browser']);
   assert.equal(data.open_attempts, 1);
+});
+
+test("on a Hermes with the storage interface the lineage comes from the control profile's own store.lineage, not the removed SessionDB call", () => {
+  const out = runPython(`${PRELUDE}${SKIP_GUARD}${FAKE_HERMES_STATE}
+# The v0.23 stand-in: SessionDB opens but carries no get_compression_lineage.
+del SessionDB.get_compression_lineage
+# Each profile has its own store. Both hold the ids chat-root and seg-2, but only luxord's
+# seg-2 continues chat-root through compression; in vexen, seg-2 continues seg-1 only.
+LINEAGES = {
+    "luxord": {"seg-2": ("chat-root", "seg-1", "seg-2"), "late-sub": ("late-sub",)},
+    "vexen": {"seg-2": ("seg-1", "seg-2"), "chat-root": ("chat-root",)},
+}
+OPENED = []
+
+class Scope:
+    def __init__(self, name):
+        self.name = name
+
+class Lineage:
+    def __init__(self, profile):
+        self.profile = profile
+    def lineage(self, sid):
+        return LINEAGES[self.profile].get(sid, ())
+
+class Persistence:
+    def __init__(self, profile):
+        self.lineage = Lineage(profile)
+    def __getattr__(self, name):
+        raise AttributeError(name)
+
+module_assembly = types.ModuleType("persistence_assembly")
+# A name that is not a profile resolves to the default root, as Hermes' profile_scope does.
+module_assembly.profile_scope = lambda profile=None: Scope(profile if profile in LINEAGES or profile == "default" else "default")
+module_assembly.open_persistence = lambda scope: OPENED.append(scope.name) or Persistence(scope.name)
+sys.modules["persistence_assembly"] = module_assembly
+
+fresh_store()
+print(json.dumps({
+    "ancestors": tools._compression_ancestors("seg-2", "luxord"),
+    "fork": tools._compression_ancestors("late-sub", "luxord"),
+    "unknown": tools._compression_ancestors("nowhere", "luxord"),
+    # Read after luxord's store is cached: vexen answers from its own lineage only.
+    "other_profile": tools._compression_ancestors("seg-2", "vexen"),
+    "other_root": tools._compression_ancestors("chat-root", "vexen"),
+    # A profile Hermes cannot scope gets no lineage, not the default store's.
+    "unscoped": tools._compression_ancestors("seg-2", "ghost"),
+    "opened": OPENED,
+    "state_db_opened": STORE["opened"],
+}))
+`);
+  const data = JSON.parse(out);
+  if (skipped(data)) return;
+  assert.deepEqual(data.ancestors, ['seg-1', 'chat-root']);
+  assert.deepEqual(data.fork, []);
+  assert.deepEqual(data.unknown, []);
+  assert.deepEqual(data.other_profile, ['seg-1']);
+  assert.deepEqual(data.other_root, []);
+  assert.deepEqual(data.unscoped, []);
+  assert.deepEqual(data.opened, ['luxord', 'vexen']);
+  assert.equal(data.state_db_opened, 0);
 });
 
 test('an opted-in loopback controller receives the trusted session id without manual Attach', () => {

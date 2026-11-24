@@ -157,42 +157,63 @@ def _broker(kwargs: Optional[dict[str, Any]] = None) -> ControlBroker:
 
 
 _session_db_lock = threading.Lock()
-_session_db: Any = None
+# One store per control profile: a multiplex gateway serves several profiles, and each has its own lineage.
+_session_dbs: dict[str, Any] = {}
 
 
-def _get_session_db() -> Any:
-    """The Hermes session store, or ``None`` outside Hermes or when it cannot open (never retried per call)."""
-    global _session_db
+def _open_session_db(profile: str) -> Any:
+    """Open ``profile``'s own Hermes session store; raise when it cannot be resolved."""
+    try:
+        from persistence_assembly import open_persistence, profile_scope
+    except ImportError:
+        # Hermes before the storage interface (hermes_state's SessionDB is removed in v0.27.0).
+        from hermes_constants import get_default_hermes_root
+        from hermes_state import SessionDB
+
+        root = get_default_hermes_root()
+        home = root if profile == "default" else root / "profiles" / profile
+        return SessionDB(db_path=home / "state.db")
+    scope = profile_scope(profile)
+    if getattr(scope, "name", None) != profile:
+        raise LookupError(f"no store scope for profile {profile!r}")
+    return open_persistence(scope)
+
+
+def _get_session_db(profile: str) -> Any:
+    """``profile``'s Hermes session store, or ``None`` outside Hermes or when it cannot open (never retried per call)."""
     with _session_db_lock:
-        if _session_db is None:
+        if profile not in _session_dbs:
             try:
-                from hermes_state import SessionDB
-
-                _session_db = SessionDB()
+                _session_dbs[profile] = _open_session_db(profile)
             except Exception:
-                logger.debug("Hermes Control has no session store for compression lineage", exc_info=True)
-                _session_db = False
-        return _session_db or None
+                logger.debug("Hermes Control has no session store for compression lineage in %s", profile, exc_info=True)
+                _session_dbs[profile] = False
+        return _session_dbs[profile] or None
 
 
-def _compression_ancestors(session_id: str) -> list[str]:
+def _compression_ancestors(session_id: str, profile: str) -> list[str]:
     """Sessions this one continues through context compression, nearest first.
 
     Compression ends the running session and continues the same conversation
     under a new id. The extension registered its controller on the chat's
     original session, so the agent's later tool calls carry the new id. The
-    lineage comes from Hermes itself (``SessionDB.get_compression_lineage``),
+    lineage comes from Hermes itself (``store.lineage.lineage``, or
+    ``SessionDB.get_compression_lineage`` on a core that predates the storage interface),
     which accepts a hop only when the child really is that session's
     compression continuation: a delegated subagent, branch or reset keeps a
     ``parent_session_id`` but is not one, even after its parent later ends by
-    compression. When Hermes cannot establish the lineage, no browser is
-    inherited.
+    compression. The lineage is read from ``profile``'s own store, the profile
+    whose controllers the caller then queries. When Hermes cannot establish
+    the lineage, no browser is inherited.
     """
-    db = _get_session_db()
+    db = _get_session_db(profile)
     if db is None:
         return []
     try:
-        lineage = db.get_compression_lineage(session_id)
+        if hasattr(db, "get_compression_lineage"):
+            lineage = db.get_compression_lineage(session_id)
+        else:
+            lineage = db.lineage.lineage(session_id)
     except Exception:
         logger.debug("Hermes Control could not read the compression lineage of %s", session_id, exc_info=True)
         return []
@@ -209,7 +230,7 @@ def _session_lane_scopes(broker: ControlBroker, profile: str, session_id: str) -
     scopes = broker.lane_scopes(profile_id=profile, session_id=session_id)
     if scopes:
         return scopes
-    for ancestor in _compression_ancestors(session_id):
+    for ancestor in _compression_ancestors(session_id, profile):
         scopes = broker.lane_scopes(profile_id=profile, session_id=ancestor)
         if scopes:
             return scopes
