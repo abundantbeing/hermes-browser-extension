@@ -1163,6 +1163,22 @@
     "message": "Approbation requise",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_waiting": {
+    "message": "Hermes attend votre approbation",
+    "description": "Runtime interface message browser_control.approval_waiting"
+  },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Fermer",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
+  "runtime_browser_control_approval_window_gone": {
+    "message": "Cette demande est terminée.",
+    "description": "Runtime interface message browser_control.approval_window_gone"
+  },
+  "runtime_browser_control_approval_background_task": {
+    "message": "Onglet de tâche en arrière-plan {tab}: {reason}",
+    "description": "Runtime interface message browser_control.approval.background_task"
+  },
   "runtime_browser_control_approval_click": {
     "message": "Cliquer sur « {name} » ? Cela peut modifier la page.",
     "description": "Runtime interface message browser_control.approval.click"

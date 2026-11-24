@@ -864,6 +864,7 @@ import { INLINE_SITE_CONTEXT_STORAGE_KEY, explicitSiteCaptureAction, inlineSiteF
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { BACKGROUND_BROWSER_CONSENT, backgroundBrowserConsentIdentity } from './lib/background-task-browser.mjs';
+import { createBackgroundApprovalVisibleHeartbeat } from './lib/background-approval-surface.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import { describeBrowserLimits } from './lib/browser-limits-view.mjs';
@@ -2198,6 +2199,16 @@ let browserControlCurrentTarget = null;
 let browserControlShowTabId = null;
 let browserControlPollTimer = null;
 let browserControlDialogUi = null;
+const backgroundApprovalVisible = createBackgroundApprovalVisibleHeartbeat({
+  getState: () => ({
+    visibilityState: document.visibilityState,
+    dialogOpen: Boolean(els.browserControlDialog?.open),
+    approveVisible: Boolean(els.browserControlApproveButton && !els.browserControlApproveButton.hidden),
+    approvalId: browserControlStatus?.pendingApproval?.approvalId,
+    controllerId: browserControlStatus?.pendingApproval?.controllerId,
+  }),
+  sendMessage: (message) => browserApi.runtime.sendMessage(message),
+});
 let latestUpdateReview = null;
 let sessionsRefreshing = false;
 let contextMenuEditor = null;
@@ -3824,7 +3835,7 @@ function renderBrowserControl() {
       status: statusLine,
     },
   });
-  els.browserControlStrip.hidden = !enabled;
+  els.browserControlStrip.hidden = !enabled && view.state !== 'approval';
   els.browserControlStrip.dataset.tone = view.tone;
   // The title and detail stay in the DOM for screen readers; the window shows the detail only when the person must act.
   els.browserControlStrip.dataset.attention = String(view.attention === true);
@@ -3859,6 +3870,7 @@ function renderBrowserControl() {
   els.browserControlStopButton.hidden = !view.canStop;
   els.browserControlApproveButton.hidden = !pendingApproval;
   els.browserControlRejectButton.hidden = !pendingApproval;
+  backgroundApprovalVisible.pulse();
 }
 
 async function refreshBrowserControlStatus() {
@@ -3892,7 +3904,8 @@ async function refreshBrowserControlStatus() {
 function scheduleBrowserControlPoll() {
   if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
   browserControlPollTimer = null;
-  if (settings.browserControlEnabled !== true || document.visibilityState === 'hidden') return;
+  const pendingBackground = String(browserControlStatus?.pendingApproval?.controllerId || '').startsWith('background-');
+  if (((settings.browserControlEnabled !== true && !pendingBackground) || document.visibilityState === 'hidden')) return;
   // A Hermes without extension control never connects: polling it is a dead loop.
   // A gateway or settings change re-arms the poll (setGatewayCapabilities, enable).
   if (browserControlSupportState() === 'unsupported') return;
@@ -31416,6 +31429,10 @@ function bindEvents() {
     void clearElementPickState({ tabId: tab?.id });
   });
   browserApi.runtime.onMessage.addListener((message, sender) => {
+    if (message?.type === 'HERMES_BACKGROUND_APPROVAL_CHANGED' && sender?.id === browserApi.runtime.id) {
+      void refreshBrowserControlStatus().then(scheduleBrowserControlPoll);
+      return;
+    }
     if (message?.type === ELEMENT_PICK_MESSAGES.RESULT) {
       applyPickedElementResult(message, sender);
       return;
@@ -32007,6 +32024,7 @@ function bindEvents() {
       persistCurrentComposerDraft({ immediate: true });
       if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
       browserControlPollTimer = null;
+      backgroundApprovalVisible.stop();
       return;
     }
     void refreshBrowserControlStatus().then(scheduleBrowserControlPoll);

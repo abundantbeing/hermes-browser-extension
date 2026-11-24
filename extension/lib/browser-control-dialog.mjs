@@ -194,15 +194,22 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
       || event.clientY < rect.top || event.clientY > rect.bottom;
   };
 
-  launcher.addEventListener('click', (event) => {
-    if (!enabled || dialog.open) return;
-    dialog.classList.toggle('is-pointer-open', event.detail > 0);
+  let canOpen = false;
+  // The approval the card last opened by itself; a dismissed card stays closed for that request.
+  let autoOpenedKey = '';
+  const openDialog = (pointer = false) => {
+    if (dialog.open) return;
+    dialog.classList.toggle('is-pointer-open', pointer);
     dialog.showModal();
     playFlair();
     void resetScopeDraft();
     launcher.setAttribute('aria-expanded', 'true');
     // Refresh authority without activating another tab or blocking the dialog.
     Promise.resolve().then(refresh).catch(() => {});
+  };
+  launcher.addEventListener('click', (event) => {
+    if (!canOpen || dialog.open) return;
+    openDialog(event.detail > 0);
   });
   closeButton.addEventListener('click', close);
   dialog.addEventListener('cancel', (event) => {
@@ -230,6 +237,7 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
       if (!nextEnabled) flairPending = false;
       previousState = view.state;
       enabled = nextEnabled;
+      canOpen = nextEnabled || view.state === 'approval';
       canChangeScope = nextCanChangeScope;
       if (!dialog.open && scopeInput) scopeInput.value = getScope();
       syncScopeDraft();
@@ -247,12 +255,16 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
           if (helpTarget === button) showHelp(button);
         }
       }
-      launcher.hidden = !enabled;
+      launcher.hidden = !canOpen;
       launcher.dataset.state = view.state;
       launcher.dataset.tone = view.tone;
       launcher.setAttribute('aria-label', `${label()}: ${view.title}`);
       launcher.title = `${label()}: ${view.title}\n${view.detail}`;
-      if (!enabled) close();
+      if (!canOpen) close();
+      else if (view.autoOpen === true && view.autoOpenKey && view.autoOpenKey !== autoOpenedKey) {
+        autoOpenedKey = view.autoOpenKey;
+        openDialog();
+      }
     },
   };
 }

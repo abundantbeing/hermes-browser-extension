@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="browser_control.approval_needed">Approval needed</title>
+    <link rel="icon" href="assets/icons/icon-32.png" />
+    <link rel="stylesheet" href="sidepanel.css" />
+    <link rel="stylesheet" href="sidepanel-themes.css" />
+    <link rel="stylesheet" href="lib/fonts.css" />
+    <link rel="stylesheet" href="lib/surface-text-zoom.css" />
+    <style>
+      /* A background task tab's approval request, shown without the side panel:
+         the panel's Hermes Control card, standing alone in a small window. */
+      body.background-approval-page {
+        min-height: 100vh;
+        min-height: 100dvh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+      }
+      .background-approval-card {
+        position: relative;
+        inset: auto;
+        width: min(400px, 100%);
+        margin: 0;
+      }
+      .background-approval-card .browser-control-strip-actions { justify-content: flex-end; }
+      #backgroundApprovalStatus:empty { display: none; }
+    </style>
+  </head>
+  <body class="background-approval-page">
+    <dialog class="browser-control-dialog background-approval-card" open data-state="approval" aria-labelledby="backgroundApprovalTitle" aria-describedby="backgroundApprovalReason">
+      <div class="browser-control-titlebar">
+        <h1 id="backgroundApprovalTitle" class="browser-control-dialog-title" data-i18n="browser_control.kicker">HERMES CONTROL</h1>
+      </div>
+      <section class="browser-control-strip" data-tone="warn" data-attention="true" aria-live="polite">
+        <div class="browser-control-strip-copy">
+          <strong data-i18n="browser_control.approval_needed">Approval needed</strong>
+          <span id="backgroundApprovalReason"></span>
+          <span id="backgroundApprovalStatus" role="status"></span>
+        </div>
+        <div class="browser-control-strip-actions">
+          <button id="backgroundApprovalApprove" class="browser-control-action" type="button" hidden data-i18n="browser_control.approve_once">Approve once</button>
+          <button id="backgroundApprovalReject" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.reject">Reject</button>
+          <button id="backgroundApprovalClose" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.approval_window_close">Close</button>
+        </div>
+      </section>
+    </dialog>
+    <script type="module" src="background-approval.js"></script>
+  </body>
+</html>

@@ -1163,6 +1163,22 @@
     "message": "ต้องได้รับอนุมัติ",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_waiting": {
+    "message": "Hermes กำลังรอการอนุมัติจากคุณ",
+    "description": "Runtime interface message browser_control.approval_waiting"
+  },
+  "runtime_browser_control_approval_window_close": {
+    "message": "ปิด",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
+  "runtime_browser_control_approval_window_gone": {
+    "message": "คำขอนี้สิ้นสุดแล้ว",
+    "description": "Runtime interface message browser_control.approval_window_gone"
+  },
+  "runtime_browser_control_approval_background_task": {
+    "message": "แท็บงานเบื้องหลัง {tab}: {reason}",
+    "description": "Runtime interface message browser_control.approval.background_task"
+  },
   "runtime_browser_control_approval_click": {
     "message": "คลิก \"{name}\" หรือไม่ อาจเปลี่ยนหน้าได้",
     "description": "Runtime interface message browser_control.approval.click"

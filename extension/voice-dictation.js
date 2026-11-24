@@ -11,12 +11,9 @@ import {
   shouldUseLocalDashboardAudioTranscription,
 } from './lib/common.mjs';
 import { initI18n, t, translateUiText } from './lib/i18n.mjs';
-import { applyStoredPanelAppearance } from './lib/apply-stored-appearance.mjs';
+import { applyPanelTheme, applyStoredPanelAppearance } from './lib/apply-stored-appearance.mjs';
 import { createVoiceWingbeat, createVoiceLevelSource } from './lib/voice-wingbeat.mjs';
 import { formatVoiceElapsed } from './lib/voice-capture.mjs';
-import { normalizeAppearanceTheme, normalizeColorMode, resolveColorMode } from './lib/appearance-themes.mjs';
-import { customThemeSelection, customThemePaletteForMode, customThemeEffectiveMode, themeCssVariables } from './lib/custom-themes.mjs';
-import { readCustomThemeStore } from './lib/custom-theme-store.mjs';
 import {
   DEFAULT_GATEWAY_CAPABILITIES,
   normalizeGatewayCapabilities,
@@ -115,21 +112,10 @@ async function resolveVoicePageDashboardBaseUrl() {
 }
 
 async function applyVoiceTheme() {
-  const root = document.documentElement;
-  const store = await readCustomThemeStore(browserApi?.storage?.local);
-  const selection = customThemeSelection(settings.appearanceTheme, store.themes);
-  const colorMode = normalizeColorMode(settings.colorMode);
-  const mode = resolveColorMode(colorMode, window.matchMedia('(prefers-color-scheme: dark)').matches);
-  if (selection.kind === 'custom') {
-    const variables = themeCssVariables(customThemePaletteForMode(selection.document, mode));
-    for (const [property, value] of Object.entries(variables)) root.style.setProperty(property, value);
-  }
-  root.dataset.hermesTheme = selection.kind === 'custom' ? selection.id : normalizeAppearanceTheme(settings.appearanceTheme);
-  root.dataset.hermesColorMode = colorMode;
-  root.dataset.hermesMode = mode;
-  const effectiveMode = selection.kind === 'custom' ? customThemeEffectiveMode(selection.document, mode) : mode;
-  root.dataset.hermesEffectiveMode = effectiveMode;
-  root.style.colorScheme = effectiveMode;
+  await applyPanelTheme(document.documentElement, settings, {
+    storageArea: browserApi?.storage?.local,
+    prefersDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
+  });
 }
 
 // Composite statuses read "Headline\n\nDetail" in every locale. The headline

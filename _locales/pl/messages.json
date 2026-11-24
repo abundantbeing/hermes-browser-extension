@@ -1163,6 +1163,22 @@
     "message": "Wymagana akceptacja",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_waiting": {
+    "message": "Hermes czeka na Twoją zgodę",
+    "description": "Runtime interface message browser_control.approval_waiting"
+  },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Zamknij",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
+  "runtime_browser_control_approval_window_gone": {
+    "message": "To żądanie zostało zakończone.",
+    "description": "Runtime interface message browser_control.approval_window_gone"
+  },
+  "runtime_browser_control_approval_background_task": {
+    "message": "Karta zadania w tle {tab}: {reason}",
+    "description": "Runtime interface message browser_control.approval.background_task"
+  },
   "runtime_browser_control_approval_click": {
     "message": "Kliknąć „{name}”? To może zmienić stronę.",
     "description": "Runtime interface message browser_control.approval.click"

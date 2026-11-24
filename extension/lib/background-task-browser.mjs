@@ -60,7 +60,7 @@ export const BACKGROUND_BROWSER_ACTIONS = [
   ...PAGE_ACTIONS, 'browser_tabs', 'browser_tab_create', 'browser_tab_group',
 ];
 
-export function createBackgroundTaskBrowser({ browserApi, connector, runtime, product }) {
+export function createBackgroundTaskBrowser({ browserApi, connector, runtime, product, approvalSurface = null }) {
   const { tabs, windows, tabGroups, storage, alarms } = browserApi;
   const { waitForLoad } = createLoadWaiter({ browserApi });
   const sessions = new Map();
@@ -180,6 +180,11 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
         ...params, tab_id: id, frame_id: 0, document_generation: lease.document,
       }, {
         scope, signal, backgroundTask: true, leasedTabIds: [id], ownedTabIds: [id],
+        onApprovalRequest: (approval, settled) => {
+          // An open panel refreshes its card; with no panel open, the approval window asks instead.
+          void browserApi.runtime?.sendMessage({ type: 'HERMES_BACKGROUND_APPROVAL_CHANGED' })?.catch(() => {});
+          approvalSurface?.show(approval, settled);
+        },
         currentWindowId: tab.windowId,
         currentDocumentGeneration: () => lease.document,
         controlHalted: () => signal.aborted || !state.tabs.has(id),
@@ -288,6 +293,35 @@ export function createBackgroundTaskBrowser({ browserApi, connector, runtime, pr
   }
 
   return {
+    /** The pending request one approval window shows; never another controller's. */
+    backgroundApproval(approvalId) {
+      const id = String(approvalId || '');
+      return runtime.approvals.pending()
+        .find((entry) => entry.approvalId === id && entry.controllerId === controllerId) || null;
+    },
+    async decideBackgroundApproval(message, approved) {
+      if (message.controllerId !== controllerId) return null;
+      const request = runtime.approvals.pending().find((entry) => entry.approvalId === message.approvalId);
+      const command = pending.get(message.commandId);
+      if (!request || !command || command.signal.aborted
+        || request.state !== 'paused' || request.state !== message.state
+        || request.controllerId !== controllerId || request.commandId !== message.commandId
+        || request.approvalNonce !== message.approvalNonce || request.action !== message.action
+        || request.leaseId !== message.leaseId || request.leaseGeneration !== message.leaseGeneration
+        || request.tabId !== message.tabId || request.frameId !== message.frameId
+        || request.documentGeneration !== message.documentGeneration) return { ok: false, error: 'approval_missing' };
+      const lease = [...sessions.values()].map((state) => state.tabs.get(request.tabId)).find((item) => item?.leaseId === request.leaseId);
+      const tab = await getTab(request.tabId);
+      if (!lease || !tab || tab.incognito || command.signal.aborted || lease.document !== request.documentGeneration
+        || tab.url !== lease.url) {
+        return { ok: false, error: 'stale_document' };
+      }
+      if (!approved) {
+        runtime.approvals.cancelRequest(request.approvalId, 'approval_denied');
+        return { ok: true };
+      }
+      return runtime.approvals.grant(request);
+    },
     settingsChanged(changes) {
       const change = changes.hermesBrowserSettings;
       if (changes[BACKGROUND_BROWSER_CONSENT] || changes[SAVED_CONNECTION_SECRETS_STORAGE_KEY] || (change && (

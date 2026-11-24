@@ -1163,6 +1163,22 @@
     "message": "مطلوب الموافقة",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_waiting": {
+    "message": "Hermes ينتظر موافقتك",
+    "description": "Runtime interface message browser_control.approval_waiting"
+  },
+  "runtime_browser_control_approval_window_close": {
+    "message": "إغلاق",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
+  "runtime_browser_control_approval_window_gone": {
+    "message": "انتهى هذا الطلب.",
+    "description": "Runtime interface message browser_control.approval_window_gone"
+  },
+  "runtime_browser_control_approval_background_task": {
+    "message": "علامة تبويب المهمة في الخلفية {tab}: {reason}",
+    "description": "Runtime interface message browser_control.approval.background_task"
+  },
   "runtime_browser_control_approval_click": {
     "message": "النقر على \"{name}\"؟ قد يغيّر هذا الصفحة.",
     "description": "Runtime interface message browser_control.approval.click"

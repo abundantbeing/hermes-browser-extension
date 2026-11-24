@@ -174,6 +174,7 @@ for (const relativePath of [
   'extension/request-permissions.html',
   'extension/voice-dictation.html',
   'extension/hermes-web-opening.html',
+  'extension/background-approval.html',
 ]) {
   const source = fs.readFileSync(path.join(root, relativePath), 'utf8');
   for (const match of source.matchAll(markerPattern)) {
@@ -197,4 +198,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`i18n OK: ${englishKeys.length} messages, ${SUPPORTED_LOCALES.length} locales, 4 extension surfaces`);
+console.log(`i18n OK: ${englishKeys.length} messages, ${SUPPORTED_LOCALES.length} locales, 5 extension surfaces`);

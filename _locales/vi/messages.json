@@ -1163,6 +1163,22 @@
     "message": "Cần phê duyệt",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_waiting": {
+    "message": "Hermes đang chờ bạn phê duyệt",
+    "description": "Runtime interface message browser_control.approval_waiting"
+  },
+  "runtime_browser_control_approval_window_close": {
+    "message": "Đóng",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
+  "runtime_browser_control_approval_window_gone": {
+    "message": "Yêu cầu này đã kết thúc.",
+    "description": "Runtime interface message browser_control.approval_window_gone"
+  },
+  "runtime_browser_control_approval_background_task": {
+    "message": "Thẻ tác vụ nền {tab}: {reason}",
+    "description": "Runtime interface message browser_control.approval.background_task"
+  },
   "runtime_browser_control_approval_click": {
     "message": "Nhấp vào \"{name}\"? Thao tác này có thể thay đổi trang.",
     "description": "Runtime interface message browser_control.approval.click"

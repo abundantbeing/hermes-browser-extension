@@ -45,7 +45,7 @@ import {
 } from './lib/assist-model-contract.mjs';
 import { createWakeBackgroundController, wakeNeedsReconfigure } from './lib/wake-background.mjs';
 import { WAKE_MESSAGES } from './lib/wake-word.mjs';
-import { initI18n, subscribeLocale, translateUiText } from './lib/i18n.mjs';
+import { initI18n, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
   CONTEXT_MENU_CONFIG_GET,
   CONTEXT_MENU_CONFIG_MUTATE,
@@ -72,6 +72,7 @@ import { createBrowserControlRuntime } from './lib/browser-control-runtime.mjs';
 import {
   BACKGROUND_BROWSER_ALARM, BACKGROUND_BROWSER_CONSENT, createBackgroundTaskBrowser,
 } from './lib/background-task-browser.mjs';
+import { BACKGROUND_APPROVAL_GET, BACKGROUND_APPROVAL_VISIBLE, createBackgroundApprovalSurface } from './lib/background-approval-surface.mjs';
 import {
   createBrowserControlArtifactClient,
   createBrowserControlArtifactHttpTransport,
@@ -208,9 +209,13 @@ const controllerConnector = createControllerConnector({
   tabsApi: browserApi.tabs,
   scriptingApi: browserApi.scripting,
 });
-const backgroundTaskBrowser = browserProduct.engine === 'chromium' && browserApi.tabGroups
+const approvalSurface = browserProduct.engine === 'chromium' && browserApi.tabGroups
+  ? createBackgroundApprovalSurface({ browserApi, translate: (key) => t(key) })
+  : null;
+const backgroundTaskBrowser = approvalSurface
   ? createBackgroundTaskBrowser({
       browserApi, connector: controllerConnector, runtime: browserControlRuntime, product: browserProduct,
+      approvalSurface,
     })
   : null;
 function syncBackgroundTaskBrowser() {
@@ -233,6 +238,7 @@ const controllerWorker = typeof browserApi.storage?.local?.set === 'function'
       extensionOrigin,
       supportsTabGroups: Boolean(browserApi.tabGroups),
       approvalStore: browserControlRuntime.approvals,
+      decideBackgroundApproval: (message, approved) => backgroundTaskBrowser?.decideBackgroundApproval(message, approved),
       getControllerCapabilities: async (settings) => (await browserControlRuntime.status(settings)).capabilities,
       executeBrowserCommand: (frame, context) => browserControlRuntime.execute(frame, context, context.settings),
       releaseTabDebugger: (tabId) => browserControlRuntime.releaseTab(tabId),
@@ -1236,6 +1242,8 @@ const EXTENSION_PAGE_ONLY_MESSAGE_TYPES = new Set([
   'HERMES_GET_YOUTUBE_TRANSCRIPT',
   LOOPBACK_FETCH_MESSAGE,
   SYNC_GATEWAY_RULES_MESSAGE,
+  BACKGROUND_APPROVAL_GET,
+  BACKGROUND_APPROVAL_VISIBLE,
   ...Object.values(HERMES_WEB_OPENING_MESSAGES),
 ]);
 // A panel asks before it tests or pairs, and waits, so its first request never runs ahead of the rule.
@@ -1258,6 +1266,15 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // own sender checks further down.
   if (isExtensionPageOnlyMessageType(message?.type) && !isExtensionPageSender(sender, browserApi.runtime)) {
     sendResponse({ ...FORBIDDEN_SENDER_RESPONSE });
+    return false;
+  }
+  if (message?.type === BACKGROUND_APPROVAL_GET) {
+    sendResponse({ ok: true, approval: backgroundTaskBrowser?.backgroundApproval(message.approvalId) || null });
+    return false;
+  }
+  if (message?.type === BACKGROUND_APPROVAL_VISIBLE) {
+    approvalSurface?.noteVisible(message.approvalId);
+    sendResponse({ ok: true });
     return false;
   }
   const action = CONTROLLER_WORKER_MESSAGE_TYPES.has(message?.type)

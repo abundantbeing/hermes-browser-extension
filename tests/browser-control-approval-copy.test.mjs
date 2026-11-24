@@ -112,3 +112,21 @@ test('a page-controlled name cannot reverse the approval warning with a bidi mar
   assert.equal(click.reasonParams.name, 'Continue');
   assert.match(click.reason, /It may change the page\.$/);
 });
+
+test('a background-task approval names the task tab in the translated line', () => {
+  const messages = {
+    'browser_control.approval.click': 'Klick "{name}"?',
+    'browser_control.approval.background_task': 'Hintergrund-Tab {tab}: {reason}',
+  };
+  const t = (key, params = {}) => String(messages[key] || key).replace(/\{([A-Za-z][A-Za-z0-9_]*)\}/g, (_, name) => (
+    Object.hasOwn(params, name) ? String(params[name]) : `{${name}}`
+  ));
+  const line = formatBrowserControlApprovalReason({
+    controllerId: 'background-test',
+    tabId: 21,
+    reason: 'Click "Continue"? It may change the page.',
+    reasonKey: 'browser_control.approval.click',
+    reasonParams: { name: 'Continue' },
+  }, { t, translateText: (value) => value });
+  assert.equal(line, 'Hintergrund-Tab 21: Klick "Continue"?');
+});

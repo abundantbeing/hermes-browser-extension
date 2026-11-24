@@ -39,7 +39,7 @@ test('background router refuses tab senders for every extension-page-only messag
   assert.match(routerSource, /sendResponse\(\{ \.\.\.FORBIDDEN_SENDER_RESPONSE \}\);\s*return false;/);
 
   const setSource = background.match(/const EXTENSION_PAGE_ONLY_MESSAGE_TYPES = new Set\(\[([\s\S]*?)\]\);/)?.[1] || '';
-  for (const entry of ['...WAKE_BACKGROUND_MESSAGE_TYPES', 'CONTEXT_MENU_CONFIG_GET', 'CONTEXT_MENU_CONFIG_MUTATE', 'CONTEXT_MENU_REQUEST_CLAIM', "'HERMES_GET_YOUTUBE_TRANSCRIPT'", 'LOOPBACK_FETCH_MESSAGE']) {
+  for (const entry of ['...WAKE_BACKGROUND_MESSAGE_TYPES', 'CONTEXT_MENU_CONFIG_GET', 'CONTEXT_MENU_CONFIG_MUTATE', 'CONTEXT_MENU_REQUEST_CLAIM', "'HERMES_GET_YOUTUBE_TRANSCRIPT'", 'LOOPBACK_FETCH_MESSAGE', 'BACKGROUND_APPROVAL_GET', 'BACKGROUND_APPROVAL_VISIBLE']) {
     assert.ok(setSource.includes(entry), `${entry} is extension-page-only`);
   }
   assert.match(background, /themeMarketplaceController\.handles\(type\)/);

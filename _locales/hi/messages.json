@@ -1163,6 +1163,22 @@
     "message": "अनुमोदन आवश्यक",
     "description": "Runtime interface message browser_control.approval_needed"
   },
+  "runtime_browser_control_approval_waiting": {
+    "message": "Hermes आपकी मंज़ूरी का इंतज़ार कर रहा है",
+    "description": "Runtime interface message browser_control.approval_waiting"
+  },
+  "runtime_browser_control_approval_window_close": {
+    "message": "बंद करें",
+    "description": "Runtime interface message browser_control.approval_window_close"
+  },
+  "runtime_browser_control_approval_window_gone": {
+    "message": "यह अनुरोध समाप्त हो गया है।",
+    "description": "Runtime interface message browser_control.approval_window_gone"
+  },
+  "runtime_browser_control_approval_background_task": {
+    "message": "पृष्ठभूमि कार्य टैब {tab}: {reason}",
+    "description": "Runtime interface message browser_control.approval.background_task"
+  },
   "runtime_browser_control_approval_click": {
     "message": "\"{name}\" पर क्लिक करें? इससे पृष्ठ बदल सकता है.",
     "description": "Runtime interface message browser_control.approval.click"

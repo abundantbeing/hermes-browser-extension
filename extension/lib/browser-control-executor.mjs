@@ -985,9 +985,6 @@ export function createBrowserControlExecutor({
         );
       }
       if (policy.risk === BROWSER_CONTROL_RISKS.APPROVAL) {
-        if (context.backgroundTask === true) {
-          return errorOutcome('approval_required', 'This action requires a person in a manually attached tab.');
-        }
         const approval = {
           approvalId: stepApprovalId || compact(frame.approval_id || frame.command_id, 160),
           approvalNonce: stepApprovalNonce || compact(frame.approval_nonce || frame.approval_id || frame.command_id, 160),
@@ -1046,13 +1043,17 @@ export function createBrowserControlExecutor({
               : abort('approval_timeout', APPROVAL_TIMEOUT_MESSAGE)),
             Math.max(1, Math.min(deadlineAt, startedAt + APPROVAL_WAIT_CAP_MS) - Number(now())),
           );
-          const requested = await approvals.request({
+          const request = approvals.request({
             ...approval,
             reason: approvalReason,
             ...(approvalReasonKey ? { reasonKey: approvalReasonKey, reasonParams: approvalReasonParams } : {}),
             ...(step ? { stepNumber: step.number, stepTotal: step.total } : {}),
             ...(approvalDetail ? { detail: approvalDetail } : {}),
           });
+          if (context.backgroundTask === true && typeof context.onApprovalRequest === 'function') {
+            context.onApprovalRequest(approval, request);
+          }
+          const requested = await request;
           clearTimeout(approvalTimer);
           approvalTimer = null;
           if (!requested?.ok) {

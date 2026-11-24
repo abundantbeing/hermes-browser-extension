@@ -350,3 +350,55 @@ test('browser control strip typography scales with the Hermes text zoom setting'
   assert.match(css, /\.browser-control-strip-copy span \{[^}]*font: 400 calc\(12px \* var\(--hermes-text-zoom, 1\)\)\/1\.4 var\(--hermes-font-ui\)/);
   assert.match(css, /font: 650 calc\(13px \* var\(--hermes-text-zoom, 1\)\)\/1\.25 var\(--hermes-font-ui\)/);
 });
+
+test('a background-task approval keeps Pause/Resume available and can open the card when Control is off', async () => {
+  const { browserControlView } = await uiModule();
+  const pending = {
+    controllerId: 'background-test',
+    approvalId: 'a1',
+    commandId: 'c1',
+    action: 'browser_click',
+    tabId: 21,
+    documentGeneration: 1,
+    reason: 'Click "Continue"? It may change the page.',
+  };
+  const paused = browserControlView({
+    settings: { browserControlEnabled: true },
+    status: {
+      controlEnabled: true,
+      connected: true,
+      paused: true,
+      pendingApproval: pending,
+    },
+  });
+  assert.equal(paused.state, 'approval');
+  assert.equal(paused.canPause, true);
+  assert.equal(paused.canStop, true);
+  assert.equal(paused.autoOpen, true);
+
+  const controlOff = browserControlView({
+    settings: { browserControlEnabled: false },
+    status: { pendingApproval: pending },
+  });
+  assert.equal(controlOff.state, 'approval');
+  assert.equal(controlOff.autoOpen, true);
+  assert.equal(controlOff.canPause, false);
+  assert.equal(controlOff.canStop, false);
+  assert.equal(controlOff.canDetach, false);
+});
+
+test('a background-task approval names its request so the card auto-opens once per approval', async () => {
+  const { browserControlView } = await uiModule();
+  const view = browserControlView({
+    settings: { browserControlEnabled: false },
+    status: { pendingApproval: { controllerId: 'background-test', approvalId: 'approval-7', reason: 'Click?' } },
+  });
+  assert.equal(view.autoOpen, true);
+  assert.equal(view.autoOpenKey, 'approval-7');
+  const manual = browserControlView({
+    settings: { browserControlEnabled: true },
+    status: { connected: true, controlEnabled: true, pendingApproval: { controllerId: 'controller-1', approvalId: 'approval-8', reason: 'Click?' } },
+  });
+  assert.equal(manual.autoOpen, false);
+  assert.equal(manual.autoOpenKey, '');
+});

@@ -164,6 +164,28 @@ function unsupportedView({ enabled = false } = {}) {
 // capabilities without extension control, otherwise 'supported' or 'unknown'.
 export function browserControlView({ settings = {}, status = {}, activeTab = null, currentTarget = null, support = 'unknown' } = {}) {
   const enabled = settings?.browserControlEnabled === true;
+  const pendingApproval = status?.pendingApproval;
+  if (pendingApproval) {
+    // A background-task request must be answerable even if attached Control is
+    // off or reconnecting. Pause/Resume/Stop stay available when Control is on
+    // or already paused, so a pending card cannot hide Resume.
+    const controlReady = enabled && status?.connected === true && status?.controlEnabled === true;
+    const background = String(pendingApproval.controllerId || '').startsWith('background-');
+    return baseView({
+      state: 'approval',
+      tone: 'warn',
+      title: 'Approval needed',
+      detail: String(pendingApproval.reason || 'This browser action requires approval.'),
+      canEnable: false,
+      canPause: controlReady || status?.paused === true,
+      canStop: controlReady,
+      canDetach: enabled,
+      attention: true,
+      autoOpen: background,
+      // The card auto-opens once per request; a person who closes it is not interrupted again.
+      autoOpenKey: background ? String(pendingApproval.approvalId || '') : '',
+    });
+  }
   if (support === 'unsupported') return unsupportedView({ enabled });
   if (!enabled) return baseView();
   if (status?.connected !== true) {
@@ -217,20 +239,6 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       title: 'Control unavailable',
       detail: 'Chromium debugger access is not available for this browser profile, so Hermes cannot operate tabs.',
       canEnable: false,
-      canDetach: true,
-      attention: true,
-    });
-  }
-  const pendingApproval = status?.pendingApproval;
-  if (pendingApproval) {
-    return baseView({
-      state: 'approval',
-      tone: 'warn',
-      title: 'Approval needed',
-      detail: String(pendingApproval.reason || 'This browser action requires approval.'),
-      canEnable: false,
-      canPause: true,
-      canStop: true,
       canDetach: true,
       attention: true,
     });
@@ -324,7 +332,7 @@ export function formatBrowserControlApprovalReason(pendingApproval, { t, transla
   if (!pendingApproval || typeof pendingApproval !== 'object') return '';
   const fallback = String(pendingApproval.reason || 'This browser action requires approval.');
   const hasKey = Boolean(pendingApproval.reasonKey) && typeof t === 'function';
-  const body = hasKey
+  let body = hasKey
     ? t(pendingApproval.reasonKey, pendingApproval.reasonParams || {})
     : (typeof translateText === 'function' ? translateText(fallback) : fallback);
   const step = Number(pendingApproval.stepNumber);
@@ -333,7 +341,14 @@ export function formatBrowserControlApprovalReason(pendingApproval, { t, transla
     const prefix = typeof t === 'function'
       ? t('browser_control.approval.step_prefix', { current: step, total })
       : `Step ${step} of ${total}:`;
-    return `${prefix} ${body}`;
+    body = `${prefix} ${body}`;
+  }
+  if (String(pendingApproval.controllerId || '').startsWith('background-')) {
+    const tab = Number(pendingApproval.tabId);
+    const tabLabel = Number.isInteger(tab) && tab > 0 ? String(tab) : '';
+    return typeof t === 'function'
+      ? t('browser_control.approval.background_task', { tab: tabLabel, reason: body })
+      : (tabLabel ? `Background task tab ${tabLabel}: ${body}` : `Background task tab: ${body}`);
   }
   return body;
 }
